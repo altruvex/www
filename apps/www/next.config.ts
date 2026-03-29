@@ -76,8 +76,8 @@ const nextConfig: NextConfig = {
     async headers() {
         const isDev = process.env.NODE_ENV === "development";
         const scriptSrc = isDev
-            ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.clarity.ms https://www.googletagmanager.com"
-            : "'self' 'unsafe-inline' https://www.clarity.ms https://www.googletagmanager.com";
+            ? "'self' 'unsafe-inline' 'unsafe-eval' https://www.clarity.ms https://www.googletagmanager.com https://va.vercel-scripts.com"
+            : "'self' 'unsafe-inline' https://www.clarity.ms https://www.googletagmanager.com https://va.vercel-scripts.com";
 
         return [
             {
@@ -85,7 +85,7 @@ const nextConfig: NextConfig = {
                 headers: [
                     {
                         key: 'Content-Security-Policy',
-                        value: `default-src 'self'; script-src ${scriptSrc}; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.clarity.ms https://www.google-analytics.com https://analytics.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`,
+                        value: `default-src 'self'; script-src ${scriptSrc}; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; font-src 'self' data:; connect-src 'self' https://www.clarity.ms https://www.google-analytics.com https://analytics.google.com https://vitals.vercel-insights.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self';`,
                     },
                     {
                         key: 'Strict-Transport-Security',

@@ -3,6 +3,7 @@ import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import "@/lib/env";
 import { cn } from "@/lib/utils";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { Inter, Outfit, Vazirmatn } from "next/font/google";
 import { notFound } from "next/navigation";
@@ -140,6 +141,7 @@ export default async function RootLayout({
             <LayoutEffects>{children}</LayoutEffects>
           </Providers>
         </NextIntlClientProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
