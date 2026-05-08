@@ -299,7 +299,7 @@ export default function PricingPage() {
                 </div>
                 <div
                   ref={roiStatsRef}
-                  className="mt-12 p-6 rounded-sm bg-foreground/3 border border-foreground/8"
+                  className="mt-12 py-6 rounded-sm bg-foreground/3 border border-foreground/8"
                 >
                   <div className="grid md:grid-cols-3 gap-6">
                     {roiStats.map((stat, i) => (
