@@ -1,5 +1,5 @@
-import { ImageResponse } from "next/og";
 import { SITE_CONFIG, normalizeLocale } from "@/lib/metadata";
+import { ImageResponse } from "next/og";
 
 export const alt = "Altruvex social preview";
 export const contentType = "image/png";

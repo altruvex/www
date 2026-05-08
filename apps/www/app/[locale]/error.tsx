@@ -2,8 +2,8 @@
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
-import { monoCaps } from "@/lib/mono-caps";
 import { Link } from "@/i18n/navigation";
+import { monoCaps } from "@/lib/mono-caps";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -85,9 +85,8 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           aria-label="Error page"
         >
           <div
-            className={`flex flex-col items-center transition-all duration-700 ease-out ${
-              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            }`}
+            className={`flex flex-col items-center transition-all duration-700 ease-out ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+              }`}
           >
             <div className="mb-8 flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-destructive/80 animate-pulse" />
@@ -153,7 +152,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   </svg>
                 </span>
               </MagneticButton>
-              <MagneticButton  size="lg" variant="secondary" className="min-w-[160px] justify-center group">
+              <MagneticButton size="lg" variant="secondary" className="min-w-[160px] justify-center group">
                 <Link href="/">
                   <span className="flex items-center gap-2">
                     Go Home

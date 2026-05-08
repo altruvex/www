@@ -557,8 +557,7 @@ function PDFDownload({
 }) {
   return (
     <div className="mt-8 relative overflow-hidden rounded-sm border border-foreground/20 bg-foreground/5 p-6">
-      {/* Subtle gradient accent */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-40" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-primary/10 to-transparent opacity-40" />
       <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-1">

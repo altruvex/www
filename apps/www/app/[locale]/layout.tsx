@@ -1,6 +1,7 @@
 import { LayoutEffects } from "@/components/layout-effects";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/seo/json-ld";
+import { VercelAnalytics } from "@/components/vercel-analytics";
 import { routing } from "@/i18n/routing";
 import "@/lib/env";
 import { buildGlobalSchemas } from "@/lib/schema";
@@ -8,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Inter, Outfit, Vazirmatn } from "next/font/google";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
@@ -44,19 +44,7 @@ type Props = {
 
 export default async function RootLayout({ children, params }: Props) {
   const { locale } = await params;
-  const isVercel = process.env.VERCEL === "1";
-
-  const headersList = await headers();
-  const userAgent = headersList.get("user-agent") || "";
-  const isBot = /Lighthouse|Googlebot|Chrome-Lighthouse|Speed Insights|PageSpeed|GTmetrix/i.test(userAgent);
   const primaryFontVariable = locale === "ar" ? vazirmatn.variable : inter.variable;
-
-  const SpeedInsights = isVercel
-    ? (await import("@vercel/speed-insights/next")).SpeedInsights
-    : null;
-  const Analytics = isVercel
-    ? (await import("@vercel/analytics/next")).Analytics
-    : null;
 
   if (!hasLocale(routing.locales, locale)) {
     notFound();
@@ -92,12 +80,11 @@ export default async function RootLayout({ children, params }: Props) {
         </Script>
         <JsonLd schemas={buildGlobalSchemas(locale)} />
         <NextIntlClientProvider>
-          <Providers isBot={isBot}>
+          <Providers>
             <LayoutEffects>{children}</LayoutEffects>
           </Providers>
         </NextIntlClientProvider>
-        {SpeedInsights ? <SpeedInsights /> : null}
-        {Analytics ? <Analytics /> : null}
+        <VercelAnalytics />
       </body>
     </html>
   );
