@@ -160,7 +160,7 @@ export const ProcessSection = memo(function ProcessSection() {
 
         <div className="mb-1 h-px bg-s-border" />
 
-        <div className="mb-1 grid grid-cols-4 gap-0">
+        <div className="mb-1 grid grid-cols-2 lg:grid-cols-4 gap-0">
           {steps.map((step, i) => (
             <button
               key={i}

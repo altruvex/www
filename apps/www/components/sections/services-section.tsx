@@ -147,7 +147,7 @@ const ProcessRail = memo(function ProcessRail() {
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.5 },
+      { threshold: 0.1 }, 
     )
 
     io.observe(el)
@@ -157,12 +157,18 @@ const ProcessRail = memo(function ProcessRail() {
   return (
     <div
       ref={ref}
-      className="mt-[clamp(24px,3vw,40px)] flex flex-wrap items-center gap-2 border-t border-s-border pt-5"
+      className={cn(
+        "mt-[clamp(24px,3vw,40px)] border-t border-s-border pt-5",
+        "flex flex-col md:flex-row md:items-center gap-6 md:gap-2"
+      )}
     >
       {SERVICES.map((service, i) => (
         <div
           key={service.key}
-          className="group/rail flex min-w-0 flex-1 items-center"
+          className={cn(
+            "group/rail flex items-center",
+            "flex-none md:flex-1 min-w-0"
+          )}
         >
           <div className="flex shrink-0 flex-col gap-1">
             <div className="flex items-center gap-1.5">
@@ -171,7 +177,7 @@ const ProcessRail = memo(function ProcessRail() {
                 {service.index}
               </span>
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-s-mid ps-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-s-mid ps-3 whitespace-nowrap">
               {t(`${service.key}.tag`)}
             </span>
           </div>
@@ -179,7 +185,9 @@ const ProcessRail = memo(function ProcessRail() {
             <div
               style={{ animationDelay: `${i * 0.2}s` }}
               className={cn(
-                "mt-2 h-px flex-1 origin-left self-end bg-s-border mx-3 animate-services-rail paused rtl:origin-right",
+                "animate-services-rail paused",
+                "ms-4 h-8 w-px bg-s-border origin-top md:hidden",
+                "md:mt-2 md:block md:h-px md:flex-1 md:origin-left md:bg-s-border md:mx-3 md:self-end md:rtl:origin-right",
                 visible && "running",
               )}
             />
