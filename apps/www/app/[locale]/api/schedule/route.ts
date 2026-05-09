@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
             )
         }
 
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Meeting request error:", error)
         }

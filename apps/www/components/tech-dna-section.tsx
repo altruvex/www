@@ -3,7 +3,7 @@
 import { Container } from "@/components/container";
 import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface TechNode {
@@ -136,6 +136,9 @@ function getConnectedIds(nodeId: string): Set<string> {
 
 export function TechDNASection() {
   const t = useTranslations("serviceDetails.development");
+  const locale = useLocale();
+  const isRtl = locale === "ar";
+  const getX = (x: number) => (isRtl ? 700 - x : x);
 
   const sectionRef = useRef<HTMLElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -314,9 +317,9 @@ export function TechDNASection() {
                           key={i}
                           data-conn
                           {...(conn.dashed ? { "data-dashed": "" } : {})}
-                          x1={a.x}
+                          x1={getX(a.x)}
                           y1={a.y}
-                          x2={b.x}
+                          x2={getX(b.x)}
                           y2={b.y}
                           stroke={getConnStroke(conn)}
                           strokeWidth={getConnWidth(conn)}
@@ -335,7 +338,8 @@ export function TechDNASection() {
                       const isActive = node.id === activeId;
                       const isPrimary = !!node.primary;
                       const w = isPrimary ? NODE_W * 1.14 : NODE_W;
-                      const bx = node.x - w / 2;
+                      const nx = getX(node.x);
+                      const bx = nx - w / 2;
                       const by = node.y - NODE_H / 2;
 
                       return (
@@ -398,7 +402,7 @@ export function TechDNASection() {
                             />
                           )}
                           <circle
-                            cx={bx + w - 7}
+                            cx={bx + (isRtl ? 7 : w - 7)}
                             cy={by + 7}
                             r={2}
                             fill={node.accent}
@@ -406,7 +410,7 @@ export function TechDNASection() {
                             style={{ transition: "opacity 0.2s ease" }}
                           />
                           <text
-                            x={node.x}
+                            x={nx}
                             y={node.y - 4}
                             textAnchor="middle"
                             dominantBaseline="middle"
@@ -425,7 +429,7 @@ export function TechDNASection() {
                             {node.name}
                           </text>
                           <text
-                            x={node.x}
+                            x={nx}
                             y={node.y + 8}
                             textAnchor="middle"
                             dominantBaseline="middle"

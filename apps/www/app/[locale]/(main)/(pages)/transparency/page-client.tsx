@@ -101,9 +101,10 @@ export default function TransparencyPageClient() {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const isRtl = locale === "ar";
     gsap.fromTo(
       containerRef.current,
-      { opacity: 0, x: 40 },
+      { opacity: 0, x: isRtl ? -40 : 40 },
       {
         opacity: 1,
         x: 0,
@@ -111,7 +112,7 @@ export default function TransparencyPageClient() {
         ease: MOTION.ease.smooth,
       },
     );
-  }, [step, phoneDone]);
+  }, [step, phoneDone, locale]);
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-EG", {

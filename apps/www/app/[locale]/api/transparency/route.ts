@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
             { status: 201 },
         )
 
-    } catch (error) {
+    } catch (error: unknown) {
         if (error instanceof ZodError) {
             return NextResponse.json(
                 {

@@ -52,7 +52,7 @@ export async function POST(
             { success: true, message: "Estimate generated" },
             { status: 201 }
         )
-    } catch (error) {
+    } catch (error: unknown) {
         if (error instanceof ZodError) {
             return NextResponse.json(
                 {

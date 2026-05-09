@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             { success: true, message: "Contact captured" },
             { status: 201 }
         )
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Exit intent error:", error)
         return NextResponse.json(
             { success: false, message: "Failed to capture email" },

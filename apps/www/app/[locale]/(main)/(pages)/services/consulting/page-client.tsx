@@ -152,7 +152,7 @@ function AuditOfferSection() {
         <div
           ref={panelRef}
           data-scene="inverted"
-          className="overflow-hidden rounded-sm border border-white/10 bg-inverted-bg"
+          className="overflow-hidden rounded-sm border border-s-border bg-inverted-bg"
         >
           <div className="h-px w-full bg-brand/60" />
           <div className="grid gap-10 p-6 md:grid-cols-[minmax(0,1.1fr)_minmax(280px,360px)] md:p-10">
@@ -202,9 +202,9 @@ function AuditOfferSection() {
                 </MagneticButton>
               </div>
             </div>
-            <div className="border border-white/10 bg-white/3 p-5 md:p-6">
+            <div className="border border-s-border bg-s-surface p-5 md:p-6">
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
-                <div className="border-b border-white/10 pb-4">
+                <div className="border-b border-s-border pb-4">
                   <p className={cn(monoCaps, "text-s-muted mb-2")}>
                     {t("priceLabel")}
                   </p>
@@ -218,7 +218,7 @@ function AuditOfferSection() {
                     {t("price")}
                   </p>
                 </div>
-                <div className="border-b border-white/10 pb-4">
+                <div className="border-b border-s-border pb-4">
                   <p className={cn(monoCaps, "text-s-muted mb-2")}>
                     {t("durationLabel")}
                   </p>
@@ -237,7 +237,7 @@ function AuditOfferSection() {
                       key={item}
                       className="flex items-start gap-3 text-sm leading-relaxed text-s-mid"
                     >
-                      <div className="h-px w-3 bg-white/20 mt-2 shrink-0" />
+                      <div className="h-px w-3 bg-s-muted mt-2 shrink-0" />
                       {item}
                     </li>
                   ))}
