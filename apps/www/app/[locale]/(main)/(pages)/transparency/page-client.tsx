@@ -23,7 +23,6 @@ import {
   useTransparency,
 } from "@/hooks/use-transparency";
 import { Link } from "@/i18n/navigation";
-import { gsap } from "@/lib/gsap";
 import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import {
   buildPDFHtml,
@@ -37,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { Check, Download, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { JSX, useEffect, useRef, useState } from "react";
+import { JSX, useState } from "react";
 
 export default function TransparencyPageClient() {
   const t = useTranslations("transparency");
@@ -97,22 +96,7 @@ export default function TransparencyPageClient() {
     delay: 0.25,
   });
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const isRtl = locale === "ar";
-    gsap.fromTo(
-      containerRef.current,
-      { opacity: 0, x: isRtl ? -40 : 40 },
-      {
-        opacity: 1,
-        x: 0,
-        duration: MOTION.duration.fast,
-        ease: MOTION.ease.smooth,
-      },
-    );
-  }, [step, phoneDone, locale]);
+  const containerKey = `step-${step}-${phoneDone ? "done" : "pending"}`;
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-EG", {
@@ -248,7 +232,10 @@ export default function TransparencyPageClient() {
               </div>
             </div>
 
-            <div ref={containerRef} className="mb-12">
+            <div
+              key={containerKey}
+              className="mb-12 animate-step-in"
+            >
               {step === 1 && (
                 <StepBrandIdentity
                   selected={brandIdentity}

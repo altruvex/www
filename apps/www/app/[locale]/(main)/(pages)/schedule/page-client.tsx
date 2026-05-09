@@ -7,13 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TimePicker } from "@/components/ui/time-picker"
 import { usePathname, useRouter } from "@/i18n/navigation"
-import { gsap } from "@/lib/gsap"
-import { MOTION } from "@/lib/motion"
+import { MOTION, useReveal } from "@/lib/motion"
 import { cn } from "@/lib/utils"
 import { AlertCircle, ArrowLeft, Calendar, CheckCircle2, Clock, Phone } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 
 export default function SchedulePage() {
     const router = useRouter()
@@ -33,20 +32,8 @@ export default function SchedulePage() {
     const [submitSuccess, setSubmitSuccess] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
 
-    const backRef = useRef<HTMLDivElement>(null)
-    const headerRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        const ctx = gsap.context(() => {
-            gsap.set([backRef.current, headerRef.current], { opacity: 0, y: -MOTION.distance.sm })
-            gsap.set(".form-field", { opacity: 0, y: MOTION.distance.md })
-            const tl = gsap.timeline({ defaults: { ease: MOTION.ease.smooth, duration: MOTION.duration.base } })
-            tl.to(backRef.current, { opacity: 1, y: 0 })
-                .to(headerRef.current, { opacity: 1, y: 0 }, "-=0.4")
-                .to(".form-field", { opacity: 1, y: 0, stagger: MOTION.stagger.tight }, "-=0.3")
-        })
-        return () => ctx.revert()
-    }, [])
+    const backRef = useReveal<HTMLDivElement>({ direction: "down", distance: MOTION.distance.sm, delay: 0 })
+    const headerRef = useReveal<HTMLDivElement>({ direction: "down", distance: MOTION.distance.sm, delay: 0.15 })
 
     const handleInputChange = (field: string, value: string | Date | undefined) => {
         setFormData((prev) => ({ ...prev, [field]: value }))

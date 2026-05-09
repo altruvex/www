@@ -1,14 +1,12 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { DesignCompareSection } from "@/components/design-compare-section";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
+import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef } from "react";
@@ -137,37 +135,11 @@ function HeroSection() {
 
 function ShowcaseSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-showcase-item]", stagger: MOTION.stagger.tight, distance: MOTION.distance.sm });
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
   });
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const items = sectionRef.current.querySelectorAll("[data-showcase-item]");
-    const triggers: ScrollTrigger[] = [];
-    items.forEach((item, index) => {
-      gsap.set(item, {
-        opacity: 0,
-        y: MOTION.distance.sm,
-        willChange: "transform, opacity",
-      });
-      const tween = gsap.to(item, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: index * MOTION.stagger.tight,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: item, start: "top 90%", once: true },
-        onComplete() {
-          gsap.set(item, { willChange: "auto" });
-        },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
 
   const showcaseItems = [
     { labelKey: "showcaseEcommerce", number: "01" },
@@ -434,7 +406,7 @@ const FeatureCard = ({
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useBatch<HTMLElement>({ selector: ".feature-card-anim", stagger: 0.15, distance: 30 });
 
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
@@ -443,37 +415,12 @@ function FeaturesSection() {
     featured: i === 0,
   }));
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const cards = gsap.utils.toArray<HTMLElement>(".feature-card-anim");
-      gsap.set(cards, { opacity: 0, y: 30, filter: "blur(4px)" });
-      ScrollTrigger.batch(cards, {
-        start: "top 85%",
-        once: true,
-        onEnter: (elements) => {
-          gsap.to(elements, {
-            opacity: 1,
-            y: 0,
-            filter: "blur(0px)",
-            duration: 0.8,
-            stagger: 0.15,
-            ease: "power3.out",
-          });
-        },
-      });
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
-
   return (
     <section
       ref={sectionRef}
-      // توحيد لون الحدود والمسافات العلوية والسفلية لتماثل باقي الأقسام
       className="relative border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom) overflow-hidden"
     >
       <div className="pointer-events-none absolute inset-0 opacity-40 [background:radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.04),transparent_60%)]" />
-
-      {/* استبدال الديف العادي بمكون Container لتوحيد الهوامش الجانبية */}
       <Container>
         <div className="mb-16">
           <p className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}>
@@ -482,7 +429,6 @@ function FeaturesSection() {
           <h2 className="font-sans font-normal text-primary leading-[1.05] text-[clamp(28px,4.5vw,52px)] tracking-[-0.025em]">
             {tCommon("whatWeOffer")}
             <br />
-            {/* توحيد كلاسات الخط المائل (Italic) لتطابق الأقسام السابقة */}
             <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
               {tCommon("whatWeOfferItalic")}
             </span>
@@ -508,42 +454,14 @@ function CtaSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const locale = useLocale();
   const projectRangeCta = getCommercialCta(locale, "projectRange");
-  const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
   });
-  const cardsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!cardsRef.current) return;
-    const cards = cardsRef.current.querySelectorAll("[data-token-card]");
-    const triggers: ScrollTrigger[] = [];
-    cards.forEach((card, i) => {
-      gsap.set(card, {
-        opacity: 0,
-        y: MOTION.distance.sm,
-        willChange: "transform, opacity",
-      });
-      const tween = gsap.to(card, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: i * MOTION.stagger.base,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: card, start: "top 90%", once: true },
-        onComplete() {
-          gsap.set(card, { willChange: "auto" });
-        },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
+  const cardsRef = useBatch<HTMLDivElement>({ selector: "[data-token-card]", distance: MOTION.distance.sm });
 
   return (
     <section
-      ref={sectionRef}
       className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>

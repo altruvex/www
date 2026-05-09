@@ -6,12 +6,10 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { gsap } from "@/lib/gsap";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
+import { DEFAULTS, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 export default function ConsultingPage() {
   return (
@@ -253,52 +251,11 @@ function AuditOfferSection() {
 
 function CtaSection() {
   const t = useTranslations("serviceDetails.consulting");
-  const sectionRef = useRef<HTMLElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  const headlineRef = useRef<HTMLHeadingElement>(null);
-  const subRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        lineRef.current,
-        { scaleX: 0, transformOrigin: "left" },
-        {
-          scaleX: 1,
-          duration: MOTION.duration.slow,
-          ease: MOTION.ease.smooth,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 90%",
-            once: true,
-          },
-        },
-      );
-      const targets = [
-        headlineRef.current,
-        subRef.current,
-        ctaRef.current,
-      ].filter(Boolean);
-      targets.forEach((el, i) => {
-        if (!el) return;
-        gsap.from(el, {
-          opacity: 0,
-          y: MOTION.distance.md,
-          duration: MOTION.duration.base,
-          delay: i * MOTION.stagger.loose,
-          ease: MOTION.ease.smooth,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top 90%",
-            once: true,
-          },
-        });
-      });
-    }, sectionRef);
-    return () => ctx.revert();
-  }, []);
+  const sectionRef = useReveal<HTMLElement>({ direction: "fade" });
+  const lineRef = useReveal<HTMLDivElement>({ direction: "fade", delay: 0 });
+  const headlineRef = useReveal<HTMLHeadingElement>({ ...DEFAULTS.body, delay: 0.1 });
+  const subRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body, delay: 0.2 });
+  const ctaRef = useReveal<HTMLDivElement>({ ...DEFAULTS.element, delay: 0.3 });
 
   return (
     <section

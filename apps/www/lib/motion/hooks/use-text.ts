@@ -4,7 +4,7 @@ import { useLoading } from "@/components/providers/loading-provider"
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils"
 import { gsap } from "@/lib/gsap"
 import { RefObject, useRef } from "react"
-import { MOTION } from "../config"
+import { MOTION, getConstrainedDevice } from "../config"
 import { autoSplit } from "../utils/splite"
 
 export interface TextConfig {
@@ -33,7 +33,7 @@ const DEFAULTS: Required<TextConfig> = {
     scrubExit: false,
 }
 
-const MAX_TOTAL_STAGGER_DURATION = 0.6 // seconds
+const MAX_TOTAL_STAGGER_DURATION = 0.6
 
 export function useText<T extends HTMLElement = HTMLHeadingElement>(
     config: TextConfig = {},
@@ -57,110 +57,123 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
     useIsomorphicLayoutEffect(() => {
         const el = ref.current
         if (!el || !isInitialLoadComplete) return
+        const ctx = gsap.context(() => {
+            const mm = gsap.matchMedia()
 
-        const mm = gsap.matchMedia()
+            mm.add(
+                {
+                    motion: "(prefers-reduced-motion: no-preference)",
+                    reduced: "(prefers-reduced-motion: reduce)",
+                },
+                () => {
+                    const prefersReduced = window.matchMedia(
+                        "(prefers-reduced-motion: reduce)"
+                    ).matches
 
-        mm.add(
-            {
-                motion: "(prefers-reduced-motion: no-preference)",
-                reduced: "(prefers-reduced-motion: reduce)",
-            },
-            (ctx) => {
-                const { reduced } = ctx.conditions as { reduced: boolean }
+                    if (prefersReduced) {
+                        gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" })
+                        return
+                    }
+                    const constrained = getConstrainedDevice()
 
-                if (reduced) {
-                    gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" })
-                    return
-                }
+                    let targets: Element[]
+                    let isRTL = false
+                    let canBlur = blur && !constrained
 
-                let targets: Element[]
-                let isRTL = false
-                let canBlur = blur
+                    const alreadySplit = el.hasAttribute("data-m-split")
 
-                const alreadySplit = el.hasAttribute("data-m-split")
-
-                if (!alreadySplit) {
-                    el.setAttribute("data-m-split", splitBy)
-                    const result = autoSplit(el, splitBy)
-                    targets = result.targets
-                    isRTL = result.isRTL
-                    canBlur = blur && result.canBlur
-                } else {
-                    const splitType = el.getAttribute("data-m-split")
-                    const selector =
-                        splitType === "char" ? ".m-char"
-                            : splitType === "word" ? ".m-word"
-                                : ".m-line"
-                    targets = Array.from(el.querySelectorAll(selector))
-                    isRTL = targets.some((t) => (t as HTMLElement).dataset.script === "arabic")
-                    canBlur = blur && !isRTL
-                }
-
-                if (!targets.length) {
-                    targets = [el]
-                }
-
-                const effectiveStagger =
-                    targets.length > 1
-                        ? Math.min(stagger, MAX_TOTAL_STAGGER_DURATION / targets.length)
-                        : stagger
-
-                const from: gsap.TweenVars = {
-                    opacity: 0,
-                    y: distance,
-                    scale: 0.96,
-                    willChange: "transform, opacity",
-                }
-                if (canBlur) {
-                    from.filter = "blur(8px)"
-                }
-
-                gsap.set(targets, from)
-
-                const animProps: gsap.TweenVars = {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    duration,
-                    stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
-                    delay,
-                    ease: ease || "power4.out",
-                    scrollTrigger: {
-                        trigger: el,
-                        start: trigger,
-                        once,
-                        toggleActions: once ? "play none none none" : "play none none reverse",
-                    },
-                    onComplete() {
-                        gsap.set(targets, { clearProps: "willChange,filter" })
-                    },
-                }
-
-                if (canBlur) {
-                    animProps.filter = "blur(0px)"
-                }
-
-                gsap.to(targets, animProps)
-
-                if (scrubExit) {
-                    const section = el.closest("section") ?? el
-                    gsap.to(targets, {
-                        yPercent: isRTL ? 0 : -20,
+                    if (!alreadySplit) {
+                        el.setAttribute("data-m-split", splitBy)
+                        const result = autoSplit(el, splitBy)
+                        targets = result.targets
+                        isRTL = result.isRTL
+                        canBlur = blur && result.canBlur && !constrained
+                    } else {
+                        const splitType = el.getAttribute("data-m-split")
+                        const selector =
+                            splitType === "char" ? ".m-char"
+                                : splitType === "word" ? ".m-word"
+                                    : ".m-line"
+                        targets = Array.from(el.querySelectorAll(selector))
+                        isRTL = targets.some(
+                            (t) => (t as HTMLElement).dataset.script === "arabic"
+                        )
+                        canBlur = blur && !isRTL && !constrained
+                    }
+                    if (!targets.length) targets = [el]
+                    const effectiveStagger =
+                        targets.length > 1
+                            ? Math.min(stagger, MAX_TOTAL_STAGGER_DURATION / targets.length)
+                            : stagger
+                    const from: gsap.TweenVars = {
                         opacity: 0,
-                        ease: "power1.in",
+                        y: distance,
+                        willChange: "transform, opacity",
+                    }
+
+                    if (!constrained) {
+                        from.scale = 0.96
+                    }
+                    if (canBlur) {
+                        from.filter = "blur(4px)"
+                    }
+                    gsap.set(targets, from)
+
+                    const animProps: gsap.TweenVars = {
+                        opacity: 1,
+                        y: 0,
+                        duration,
+                        stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
+                        delay,
+                        ease: ease || "power4.out",
+                        force3D: true,
                         overwrite: "auto",
                         scrollTrigger: {
-                            trigger: section,
-                            start: "center top",
-                            end: "bottom top",
-                            scrub: 1.5,
+                            trigger: el,
+                            start: trigger,
+                            once,
+                            fastScrollEnd: true,
+                            toggleActions: once
+                                ? "play none none none"
+                                : "play none none reverse",
                         },
-                    })
-                }
-            },
-        )
+                        onComplete() {
+                            gsap.set(targets, {
+                                clearProps: "willChange,filter",
+                            })
+                        },
+                    }
 
-        return () => mm.revert()
+                    if (!constrained) {
+                        animProps.scale = 1
+                    }
+
+                    if (canBlur) {
+                        animProps.filter = "blur(0px)"
+                    }
+
+                    gsap.to(targets, animProps)
+                    if (scrubExit && !constrained) {
+                        const section = el.closest("section") ?? el
+                        gsap.to(targets, {
+                            yPercent: isRTL ? 0 : -20,
+                            opacity: 0,
+                            ease: "power1.in",
+                            overwrite: "auto",
+                            force3D: true,
+                            scrollTrigger: {
+                                trigger: section,
+                                start: "center top",
+                                end: "bottom top",
+                                scrub: 1.5,
+                            },
+                        })
+                    }
+                },
+            )
+        }, el)
+
+        return () => ctx.revert()
     }, [isInitialLoadComplete, delay, duration, stagger, distance, ease, trigger, once, splitBy, blur, scrubExit])
 
     return ref

@@ -1,12 +1,10 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { Link } from "@/i18n/navigation";
-import { gsap } from "@/lib/gsap";
+import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 type WritingPageClientProps = {
   articles: ArticleListItem[];
@@ -66,23 +64,7 @@ function OpeningSection() {
 }
 
 function ListSection({ articles, locale }: WritingPageClientProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const articles = sectionRef.current.querySelectorAll("[data-article]");
-    articles.forEach((article, index) => {
-      gsap.set(article, { opacity: 0, y: MOTION.distance.md });
-      gsap.to(article, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: index * MOTION.stagger.loose,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: article, start: "top 90%", once: true },
-      });
-    });
-  }, []);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-article]" });
 
   return (
     <section

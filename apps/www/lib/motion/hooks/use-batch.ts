@@ -3,8 +3,9 @@
 import { useLoading } from "@/components/providers/loading-provider"
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils"
 import { gsap } from "@/lib/gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { RefObject, useRef } from "react"
-import { MOTION } from "../config"
+import { MOTION, getConstrainedDevice } from "../config"
 import { RevealDirection } from "./use-reveal"
 
 export interface BatchConfig {
@@ -16,8 +17,8 @@ export interface BatchConfig {
     ease?: string
     trigger?: string
     once?: boolean
-    selector?: string   
-    alternate?: boolean 
+    selector?: string
+    alternate?: boolean
 }
 
 const DEFAULTS = {
@@ -61,63 +62,132 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
             : Array.from(container.children) as HTMLElement[]
 
         if (!items.length) return
+        const ctx = gsap.context(() => {
+            const mm = gsap.matchMedia()
 
-        const mm = gsap.matchMedia()
+            mm.add(
+                {
+                    motion: "(prefers-reduced-motion: no-preference)",
+                    reduced: "(prefers-reduced-motion: reduce)",
+                },
+                () => {
+                    const prefersReduced = window.matchMedia(
+                        "(prefers-reduced-motion: reduce)"
+                    ).matches
 
-        mm.add(
-            {
-                motion: "(prefers-reduced-motion: no-preference)",
-                reduced: "(prefers-reduced-motion: reduce)",
-            },
-            (ctx) => {
-                const { reduced } = ctx.conditions as { reduced: boolean }
+                    if (prefersReduced) {
+                        gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1 })
+                        return
+                    }
+                    const constrained = getConstrainedDevice()
+                    const effectiveDistance = constrained
+                        ? Math.round(distance * 0.6)
+                        : distance
+                    if (alternate && (direction === "left" || direction === "right")) {
+                        const evens = items.filter((_, i) => i % 2 === 0)
+                        const odds = items.filter((_, i) => i % 2 === 1)
+                        const evenFrom = buildFrom(direction, effectiveDistance)
+                        const oddDir: RevealDirection = direction === "left" ? "right" : "left"
+                        const oddFrom = buildFrom(oddDir, effectiveDistance)
 
-                if (reduced) {
-                    gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1 })
-                    return
-                }
-
-                items.forEach((item, i) => {
-                    const itemDir: RevealDirection =
-                        alternate && i % 2 === 1
-                            ? direction === "left" ? "right"
-                                : direction === "right" ? "left"
-                                    : direction
-                            : direction
-
-                    const from: gsap.TweenVars = { opacity: 0 }
-                    if (itemDir === "up") from.y = distance
-                    if (itemDir === "down") from.y = -distance
-                    if (itemDir === "left") from.x = distance
-                    if (itemDir === "right") from.x = -distance
-                    if (itemDir === "scale") from.scale = 0.95
-
-                    gsap.set(item, { ...from, willChange: "transform, opacity" })
-
-                    gsap.to(item, {
-                        opacity: 1,
-                        x: 0,
-                        y: 0,
-                        scale: 1,
-                        duration,
-                        delay: delay + i * stagger,
-                        ease,
-                        scrollTrigger: {
-                            trigger: item,
+                        gsap.set(evens, { ...evenFrom, willChange: "transform, opacity" })
+                        gsap.set(odds, { ...oddFrom, willChange: "transform, opacity" })
+                    } else {
+                        const from = buildFrom(direction, effectiveDistance)
+                        gsap.set(items, { ...from, willChange: "transform, opacity" })
+                    }
+                    if (!alternate) {
+                        ScrollTrigger.batch(items, {
                             start: trigger,
                             once,
-                            toggleActions: once ? "play none none none" : "play none none reverse",
-                        },
-                        onComplete() {
-                            gsap.set(item, { willChange: "auto" })
-                        },
-                    })
-                })
-            },
-        )
+                            batchMax: 6,
+                            onEnter(batch: Element[]) {
+                                gsap.to(batch, {
+                                    opacity: 1,
+                                    x: 0,
+                                    y: 0,
+                                    scale: 1,
+                                    duration,
+                                    delay,
+                                    ease,
+                                    force3D: true,
+                                    stagger: { each: stagger },
+                                    onComplete() {
+                                        gsap.set(batch, { willChange: "auto", clearProps: "willChange" })
+                                    },
+                                })
+                            },
+                            onLeaveBack: once
+                                ? undefined
+                                : (batch: Element[]) => {
+                                    const from = buildFrom(direction, effectiveDistance)
+                                    gsap.to(batch, {
+                                        ...from,
+                                        duration: duration * 0.6,
+                                        ease: "power1.in",
+                                        force3D: true,
+                                        overwrite: "auto",
+                                        onStart() {
+                                            gsap.set(batch, { willChange: "transform, opacity" })
+                                        },
+                                        onComplete() {
+                                            gsap.set(batch, { willChange: "auto", clearProps: "willChange" })
+                                        },
+                                    })
+                                },
+                        })
+                    } else {
+                        items.forEach((item, i) => {
+                            const itemDir: RevealDirection =
+                                alternate && i % 2 === 1
+                                    ? direction === "left" ? "right"
+                                        : direction === "right" ? "left"
+                                            : direction
+                                    : direction
 
-        return () => mm.revert()
+                            gsap.to(item, {
+                                opacity: 1,
+                                x: 0,
+                                y: 0,
+                                scale: 1,
+                                duration,
+                                delay: delay + i * stagger,
+                                ease,
+                                force3D: true,
+                                overwrite: "auto",
+                                scrollTrigger: {
+                                    trigger: item,
+                                    start: trigger,
+                                    once,
+                                    fastScrollEnd: true,
+                                    toggleActions: once
+                                        ? "play none none none"
+                                        : "play none none reverse",
+                                },
+                                onComplete() {
+                                    gsap.set(item, { willChange: "auto", clearProps: "willChange" })
+                                },
+                            })
+
+                            void itemDir
+                        })
+                    }
+                },
+            )
+        }, container)
+
+        return () => ctx.revert()
     }, [isInitialLoadComplete, direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate])
 
     return ref
+}
+
+function buildFrom(direction: RevealDirection, distance: number): gsap.TweenVars {
+    const base: gsap.TweenVars = { opacity: 0 }
+    if (direction === "up") return { ...base, y: distance }
+    if (direction === "down") return { ...base, y: -distance }
+    if (direction === "left") return { ...base, x: distance }
+    if (direction === "right") return { ...base, x: -distance }
+    if (direction === "scale") return { ...base, scale: 0.95 }
+    return base
 }

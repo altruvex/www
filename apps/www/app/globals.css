@@ -73,6 +73,7 @@
   --animate-slide-down: slide-down 1.8s ease-in-out infinite;
   --animate-ripple: ripple 0.6s ease-out forwards;
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
+  --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
 :root {
@@ -387,5 +388,16 @@ html.lenis body {
   }
   to {
     transform: scaleX(1);
+  }
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

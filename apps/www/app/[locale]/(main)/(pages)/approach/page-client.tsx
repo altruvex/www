@@ -1,10 +1,9 @@
 "use client"
 
 import { Container } from "@/components/container"
-import { gsap, ScrollTrigger } from "@/lib/gsap"
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion"
+import { DEFAULTS, MOTION, useReveal, useText, useBatch } from "@/lib/motion"
 import { useTranslations } from "next-intl"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 
 export default function ApproachPage() {
     return (
@@ -45,27 +44,8 @@ function OpeningSection() {
 
 function ProblemSection() {
     const t = useTranslations("approach.contrasts")
-    const sectionRef = useRef<HTMLElement>(null)
+    const sectionRef = useBatch<HTMLElement>({ selector: "[data-contrast-item]" })
     const titleRef = useText(DEFAULTS.heading)
-
-    useEffect(() => {
-        if (!sectionRef.current) return
-
-        const items = sectionRef.current.querySelectorAll("[data-contrast-item]")
-        const triggers: ScrollTrigger[] = []
-
-        items.forEach((item, index) => {
-            gsap.set(item, { opacity: 0, y: DEFAULTS.body.distance })
-            const tween = gsap.to(item, {
-                opacity: 1, y: 0, duration: MOTION.duration.base,
-                delay: index * MOTION.stagger.loose, ease: MOTION.ease.smooth,
-                scrollTrigger: { trigger: item, start: MOTION.trigger.late, toggleActions: "play none none none", once: true },
-            })
-            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger)
-        })
-
-        return () => triggers.forEach((t) => t.kill())
-    }, [])
 
     const contrasts = [
         { common: t("1.common"), altruvex: t("1.altruvex") },
@@ -112,27 +92,8 @@ function ProblemSection() {
 
 function DecisionsSection() {
     const t = useTranslations("approach.decisions")
-    const sectionRef = useRef<HTMLElement>(null)
+    const sectionRef = useBatch<HTMLElement>({ selector: "[data-decision-item]", direction: "right", distance: MOTION.distance.sm })
     const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text })
-
-    useEffect(() => {
-        if (!sectionRef.current) return
-
-        const items = sectionRef.current.querySelectorAll("[data-decision-item]")
-        const triggers: ScrollTrigger[] = []
-
-        items.forEach((item, index) => {
-            gsap.set(item, { opacity: 0, x: -MOTION.distance.sm })
-            const tween = gsap.to(item, {
-                opacity: 1, x: 0, duration: MOTION.duration.base,
-                delay: index * MOTION.stagger.base, ease: MOTION.ease.smooth,
-                scrollTrigger: { trigger: item, start: MOTION.trigger.late, toggleActions: "play none none none", once: true },
-            })
-            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger)
-        })
-
-        return () => triggers.forEach((t) => t.kill())
-    }, [])
 
     const decisions = [
         { title: t("data.title"), desc: t("data.description") },
@@ -249,27 +210,8 @@ function BilingualSection() {
 
 function BoundariesSection() {
     const t = useTranslations("approach.boundaries")
-    const sectionRef = useRef<HTMLElement>(null)
+    const sectionRef = useBatch<HTMLElement>({ selector: "[data-boundary-item]", direction: "right", distance: MOTION.distance.sm, duration: MOTION.duration.fast })
     const titleRef = useReveal({ ...DEFAULTS.body, direction: "up", ease: MOTION.ease.smooth, delay: 0 })
-
-    useEffect(() => {
-        if (!sectionRef.current) return
-
-        const items = sectionRef.current.querySelectorAll("[data-boundary-item]")
-        const triggers: ScrollTrigger[] = []
-
-        items.forEach((item, index) => {
-            gsap.set(item, { opacity: 0, x: -MOTION.distance.sm })
-            const tween = gsap.to(item, {
-                opacity: 1, x: 0, duration: MOTION.duration.fast,
-                delay: index * MOTION.stagger.base, ease: MOTION.ease.smooth,
-                scrollTrigger: { trigger: item, start: MOTION.trigger.late, toggleActions: "play none none none", once: true },
-            })
-            if (tween.scrollTrigger) triggers.push(tween.scrollTrigger)
-        })
-
-        return () => triggers.forEach((t) => t.kill())
-    }, [])
 
     const boundaries = ["1", "2", "3", "4", "5"]
 

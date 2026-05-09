@@ -62,50 +62,57 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
     useIsomorphicLayoutEffect(() => {
         const el = ref.current
         if (!el || !isInitialLoadComplete) return
+        const ctx = gsap.context(() => {
+            const mm = gsap.matchMedia()
 
-        const mm = gsap.matchMedia()
+            mm.add(
+                {
+                    motion: "(prefers-reduced-motion: no-preference)",
+                    reduced: "(prefers-reduced-motion: reduce)",
+                },
+                (context) => {
+                    const { reduced } = context.conditions as { reduced: boolean }
 
-        mm.add(
-            {
-                motion: "(prefers-reduced-motion: no-preference)",
-                reduced: "(prefers-reduced-motion: reduce)",
-            },
-            (ctx) => {
-                const { reduced } = ctx.conditions as { reduced: boolean }
+                    if (reduced) {
+                        gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
+                        return
+                    }
 
-                if (reduced) {
-                    gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1 })
-                    return
-                }
+                    gsap.set(el, {
+                        ...getFrom(direction, distance),
+                        willChange: "transform, opacity",
+                    })
 
-                gsap.set(el, {
-                    ...getFrom(direction, distance),
-                    willChange: "transform, opacity",
-                })
+                    gsap.to(el, {
+                        opacity: 1,
+                        x: 0,
+                        y: 0,
+                        scale: 1,
+                        duration,
+                        delay,
+                        ease,
+                        force3D: true,
+                        scrollTrigger: {
+                            trigger: el,
+                            start: trigger,
+                            once,
+                            scrub: scrub || false,
+                            toggleActions: once
+                                ? "play none none none"
+                                : "play none none reverse",
+                            fastScrollEnd: true,
+                        },
+                        onStart() {
+                        },
+                        onComplete() {
+                            gsap.set(el, { willChange: "auto", clearProps: "willChange" })
+                        },
+                    })
+                },
+            )
+        }, el)
 
-                gsap.to(el, {
-                    opacity: 1,
-                    x: 0,
-                    y: 0,
-                    scale: 1,
-                    duration,
-                    delay,
-                    ease,
-                    scrollTrigger: {
-                        trigger: el,
-                        start: trigger,
-                        once,
-                        scrub: scrub || false,
-                        toggleActions: once ? "play none none none" : "play none none reverse",
-                    },
-                    onComplete() {
-                        gsap.set(el, { willChange: "auto" })
-                    },
-                })
-            },
-        )
-
-        return () => mm.revert()
+        return () => ctx.revert()
     }, [isInitialLoadComplete, direction, delay, duration, distance, ease, trigger, once, scrub])
 
     return ref

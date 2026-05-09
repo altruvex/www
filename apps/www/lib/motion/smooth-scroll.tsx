@@ -5,10 +5,10 @@ import type Lenis from "lenis"
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
-        let cancelled = false
-        let gsapInstance: typeof import("@/lib/gsap") | null = null
-        let lenisInstance: Lenis | null = null
-        let tickFn: ((time: number) => void) | null = null
+        let cancelled  = false
+        let gsapRef:   typeof import("@/lib/gsap") | null = null
+        let lenisRef:  Lenis | null = null
+        let tickFn:    ((time: number) => void) | null = null
 
         const init = async () => {
             try {
@@ -20,28 +20,39 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
 
                 if (cancelled) return
 
-                gsapInstance = { gsap, ScrollTrigger }
-
-                const isTouch = typeof window !== "undefined" && window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+                gsapRef = { gsap, ScrollTrigger }
+                const isTouch = window.matchMedia(
+                    "(hover: none) and (pointer: coarse)"
+                ).matches
 
                 if (!isTouch) {
                     const lenis = new Lenis({
-                        duration: MOTION.lenis.duration,
-                        easing: MOTION.lenis.easing,
+                        duration:    MOTION.lenis.duration,
+                        easing:      MOTION.lenis.easing,
                         smoothWheel: MOTION.lenis.smoothWheel,
                     })
 
-                    lenisInstance = lenis
-
+                    lenisRef = lenis
+                    let stPending = false
                     lenis.on("scroll", () => {
-                        ScrollTrigger.update()
+                        if (!stPending) {
+                            stPending = true
+                            requestAnimationFrame(() => {
+                                ScrollTrigger.update()
+                                stPending = false
+                            })
+                        }
                     })
-
                     tickFn = (time: number) => lenis.raf(time * 1000)
-
                     gsap.ticker.add(tickFn)
+
                     gsap.ticker.lagSmoothing(0)
                 }
+
+                requestAnimationFrame(() => {
+                    if (!cancelled) ScrollTrigger.refresh()
+                })
+
             } catch (e) {
                 console.warn("Failed to initialize smooth scroll:", e)
             }
@@ -51,10 +62,10 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
 
         return () => {
             cancelled = true
-            if (gsapInstance && tickFn) {
-                gsapInstance.gsap.ticker.remove(tickFn)
+            if (gsapRef && tickFn) {
+                gsapRef.gsap.ticker.remove(tickFn)
             }
-            lenisInstance?.destroy()
+            lenisRef?.destroy()
         }
     }, [])
 

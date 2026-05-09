@@ -1,10 +1,8 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 export default function StandardsPage() {
   return (
@@ -103,26 +101,7 @@ function OpeningSection() {
 function CategoriesSection() {
   const t = useTranslations("standards");
   const tCat = useTranslations("standards.categories");
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const cats = sectionRef.current.querySelectorAll("[data-category]");
-    const triggers: ScrollTrigger[] = [];
-    cats.forEach((cat, i) => {
-      gsap.set(cat, { opacity: 0, y: MOTION.distance.md });
-      const tween = gsap.to(cat, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: i * MOTION.stagger.tight,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: cat, start: MOTION.trigger.late, once: true },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-category]" });
 
   const categories = ["code", "performance", "accessibility", "security"];
 

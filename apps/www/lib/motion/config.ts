@@ -97,6 +97,29 @@ export const MOTION = {
     },
 } as const
 
+export function isConstrainedDevice(): boolean {
+    if (typeof window === "undefined") return false
+
+    const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches
+    const lowCPU = (navigator.hardwareConcurrency ?? 8) <= 4
+
+    const lowRAM = ("deviceMemory" in navigator)
+        ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4
+        : false
+    const saveData = ("connection" in navigator)
+        ? (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
+        : false
+
+    return touch || lowCPU || lowRAM || saveData
+}
+
+
+let _constrainedCache: boolean | null = null
+export function getConstrainedDevice(): boolean {
+    if (_constrainedCache === null) _constrainedCache = isConstrainedDevice()
+    return _constrainedCache
+}
+
 export type MotionEase = keyof typeof MOTION.ease
 export type MotionDuration = keyof typeof MOTION.duration
 export type MotionDistance = keyof typeof MOTION.distance

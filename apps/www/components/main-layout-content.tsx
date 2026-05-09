@@ -15,10 +15,12 @@ function AnimationController() {
         let cancelled = false
 
         const raf = requestAnimationFrame(async () => {
-            const { refreshAllTriggers } = await import("@/lib/animation-utils")
+            const { ScrollTrigger } = await import("@/lib/gsap")
 
             if (!cancelled) {
-                refreshAllTriggers(100)
+                setTimeout(() => {
+                    ScrollTrigger.refresh(true)
+                }, 100)
             }
         })
 

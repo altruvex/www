@@ -3,11 +3,9 @@
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
+import { DEFAULTS, MOTION, useReveal, useText, useBatch } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 export default function ProcessPage() {
   return (
@@ -64,31 +62,8 @@ function OpeningSection() {
 
 function PhasesList() {
   const t = useTranslations("process.phases");
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-phase]" });
   const locale = useLocale();
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const phases = sectionRef.current.querySelectorAll("[data-phase]");
-    const triggers: ScrollTrigger[] = [];
-    phases.forEach((phase, index) => {
-      gsap.set(phase, { opacity: 0, y: MOTION.distance.md });
-      const tween = gsap.to(phase, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: index * MOTION.stagger.loose,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: {
-          trigger: phase,
-          start: MOTION.trigger.late,
-          once: true,
-        },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
 
   const phases = [
     { number: "1", key: "discovery" },

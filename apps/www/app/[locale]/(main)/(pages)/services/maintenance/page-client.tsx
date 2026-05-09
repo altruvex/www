@@ -5,12 +5,10 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
+import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 export default function MaintenancePage() {
   return (
@@ -210,37 +208,11 @@ function StatsSection() {
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.maintenance");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-feature-card]", stagger: MOTION.stagger.tight, distance: MOTION.distance.sm });
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
   });
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const cards = sectionRef.current.querySelectorAll("[data-feature-card]");
-    const triggers: ScrollTrigger[] = [];
-    cards.forEach((card, index) => {
-      gsap.set(card, {
-        opacity: 0,
-        y: MOTION.distance.sm,
-        willChange: "transform, opacity",
-      });
-      const tween = gsap.to(card, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: index * MOTION.stagger.tight,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: card, start: "top 90%", once: true },
-        onComplete() {
-          gsap.set(card, { willChange: "auto" });
-        },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
 
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
@@ -328,37 +300,11 @@ function FeaturesSection() {
 
 function PricingSection() {
   const t = useTranslations("serviceDetails.maintenance");
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useBatch<HTMLElement>({ selector: "[data-pricing-card]" });
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
   });
-
-  useEffect(() => {
-    if (!sectionRef.current) return;
-    const cards = sectionRef.current.querySelectorAll("[data-pricing-card]");
-    const triggers: ScrollTrigger[] = [];
-    cards.forEach((card, index) => {
-      gsap.set(card, {
-        opacity: 0,
-        y: MOTION.distance.md,
-        willChange: "transform, opacity",
-      });
-      const tween = gsap.to(card, {
-        opacity: 1,
-        y: 0,
-        duration: MOTION.duration.base,
-        delay: index * MOTION.stagger.base,
-        ease: MOTION.ease.smooth,
-        scrollTrigger: { trigger: card, start: "top 90%", once: true },
-        onComplete() {
-          gsap.set(card, { willChange: "auto" });
-        },
-      });
-      if (tween.scrollTrigger) triggers.push(tween.scrollTrigger);
-    });
-    return () => triggers.forEach((t) => t.kill());
-  }, []);
 
   const plans = [
     {
