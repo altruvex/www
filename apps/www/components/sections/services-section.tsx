@@ -240,7 +240,7 @@ function SectionHeader() {
 
 export const ServicesSection = memo(function ServicesSection() {
   return (
-    <section id="services" className="relative bg-neutral-950 py-[clamp(60px,8vw,120px)]">
+    <section id="services" className="dark relative bg-neutral-950 py-[clamp(60px,8vw,120px)]">
       <Container>
         <SectionHeader />
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border">
