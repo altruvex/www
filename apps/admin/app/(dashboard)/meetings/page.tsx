@@ -95,7 +95,7 @@ export default function MeetingsPage() {
             if (data.success) {
                 setMeetings(data.meetings || [])
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error fetching meetings:", error)
             toast.error("Failed to load meetings")
         } finally {
@@ -122,7 +122,7 @@ export default function MeetingsPage() {
             } else {
                 toast.error(data.message || "Failed to update meeting")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error updating meeting:", error)
             toast.error("Failed to update meeting")
         } finally {
@@ -151,7 +151,7 @@ export default function MeetingsPage() {
             } else {
                 toast.error(data.message || "Failed to delete meeting")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error deleting meeting:", error)
             toast.error("Failed to delete meeting")
         } finally {

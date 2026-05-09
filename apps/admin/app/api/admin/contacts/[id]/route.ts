@@ -64,7 +64,7 @@ export async function GET(
             success: true,
             submission,
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error fetching contact:", error)
         }

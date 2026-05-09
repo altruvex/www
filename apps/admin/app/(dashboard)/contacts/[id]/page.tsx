@@ -116,7 +116,7 @@ export default function ContactDetailPage() {
             } else {
                 setError(data.message || "Failed to load contact")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error fetching contact:", error)
             setError("Failed to load contact details")
         } finally {
@@ -139,7 +139,7 @@ export default function ContactDetailPage() {
             } else {
                 setError(data.message || "Failed to update contact")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error updating contact:", error)
             setError("Failed to update contact")
         } finally {

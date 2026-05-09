@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Mail, Calendar, Users, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+import { ThemeToggle } from "@/components/theme-toggle"
+
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/contacts", label: "Contacts", icon: Mail },
@@ -45,14 +47,18 @@ export function Navbar() {
               })}
             </div>
           </div>
-          <div className="flex items-center">
-            <Link
-              href="/login"
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            <button
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/login";
+              }}
               className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium flex items-center gap-2"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
-            </Link>
+            </button>
           </div>
         </div>
       </div>

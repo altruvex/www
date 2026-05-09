@@ -4,7 +4,7 @@ import { monoCaps } from "@/lib/mono-caps"
 import { useReveal } from "@/lib/motion"
 import { cn, splitHeadline } from "@/lib/utils"
 import { useLocale, useTranslations } from "next-intl"
-import { memo, useEffect, useRef, useState } from "react"
+import { Fragment, memo, useEffect, useRef, useState } from "react"
 import { Container } from "../container"
 
 interface ServiceData {
@@ -19,7 +19,6 @@ const SERVICES: ServiceData[] = [
   { key: "service3", index: "03", layout: "secondary-right" },
   { key: "service4", index: "04", layout: "anchor" },
 ]
-
 
 const ServiceCard = memo(function ServiceCard({
   service,
@@ -39,92 +38,93 @@ const ServiceCard = memo(function ServiceCard({
       ref={cardRef}
       data-service={service.index}
       className={cn(
-        "group relative isolate cursor-pointer overflow-hidden transition-colors duration-300",
+        "group relative isolate cursor-pointer overflow-hidden bg-neutral-950 transition-colors duration-300",
         "data-[service=01]:[--card-accent:rgba(99,102,241,0.08)]",
         "data-[service=02]:[--card-accent:rgba(20,184,166,0.08)]",
         "data-[service=03]:[--card-accent:rgba(245,158,11,0.07)]",
         "data-[service=04]:[--card-accent:rgba(16,185,129,0.07)]",
         isLarge
-          ? "min-h-[clamp(240px,28vw,380px)] p-[clamp(36px,4.5vw,60px)]"
-          : "p-[clamp(24px,3vw,40px)]",
+          ? "min-h-[clamp(240px,28vw,380px)] p-[clamp(32px,4vw,56px)]"
+          : "p-[clamp(24px,3vw,36px)]",
       )}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-2 h-0.5 bg-linear-to-r from-transparent via-(--card-accent) to-transparent opacity-0 transition-opacity duration-400 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-gradient-to-r from-transparent via-[var(--card-accent)] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-opacity duration-400 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 z-0 bg-[var(--card-accent)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-s-0 top-0 bottom-0 z-2 w-0.5 origin-top scale-y-0 bg-s-border opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-y-100"
+        className="pointer-events-none absolute inset-y-0 start-0 z-10 w-[2px] origin-top scale-y-0 bg-neutral-700 opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
       />
       <span
-        className={cn(
-          "pointer-events-none absolute -top-[0.05em] inset-e-0 z-0 select-none pe-[clamp(12px,2vw,28px)] font-mono font-extrabold leading-[0.85] tracking-[-0.06em] text-transparent opacity-0 transition-[opacity,transform] duration-400 translate-x-2 [-webkit-text-stroke-width:1px] [-webkit-text-stroke-color:var(--s-border)] group-hover:translate-x-0 group-hover:opacity-[0.55] rtl:-translate-x-2 rtl:group-hover:translate-x-0",
-          isLarge
-            ? "text-[clamp(88px,12vw,160px)]"
-            : "text-[clamp(64px,8vw,100px)]",
-        )}
         aria-hidden
+        className={cn(
+          "pointer-events-none absolute -top-[0.05em] end-0 z-0 select-none pe-[clamp(12px,2vw,28px)] font-mono font-extrabold leading-[0.85] tracking-[-0.06em] text-transparent opacity-0 transition-[opacity,transform] duration-500 [-webkit-text-stroke-color:var(--s-border)] [-webkit-text-stroke-width:1px]",
+          "translate-x-4 group-hover:translate-x-0 group-hover:opacity-40 rtl:-translate-x-4 rtl:group-hover:translate-x-0",
+          isLarge
+            ? "text-[clamp(90px,14vw,160px)]"
+            : "text-[clamp(64px,10vw,110px)]",
+        )}
       >
         {service.index}
       </span>
       <div
         className={cn(
-          "relative z-1 mb-[clamp(20px,2.5vw,32px)] flex items-center gap-2.5",
-          isLarge && "mb-[clamp(28px,3.5vw,44px)]",
+          "relative z-10 mb-6 flex items-center gap-3",
+          isLarge && "mb-8",
         )}
       >
-        <div className="inline-flex size-[22px] items-center justify-center rounded-full border border-s-border font-mono text-[9px] tabular-nums text-s-muted transition-[border-color,color,background-color] duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
+        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[10px] tabular-nums text-s-muted transition-[border-color,color,background-color] duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
           {service.index}
         </div>
         <span
           className={cn(
             monoCaps,
-            "rounded-xs border border-s-border px-2.5 py-1 text-s-muted transition-[color,border-color] duration-200 group-hover:border-current group-hover:text-s-mid",
+            "rounded-sm border border-s-border px-2.5 py-1 text-[11px] text-s-muted transition-[color,border-color] duration-200 group-hover:border-current group-hover:text-s-mid",
           )}
         >
           {t(`${service.key}.tag`)}
         </span>
-        <div className="h-px flex-1 bg-s-border opacity-50" />
+        <div className="h-px flex-1 bg-s-border opacity-40" />
         <svg
-          className="translate-y-1 text-s-mid opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 rtl:scale-x-[-1]"
-          width="14"
-          height="14"
+          aria-hidden
+          className="translate-x-[-4px] text-s-mid opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 rtl:scale-x-[-1]"
+          width="16"
+          height="16"
           viewBox="0 0 14 14"
           fill="none"
-          aria-hidden
         >
           <path
             d="M2 7H12M8 3L12 7L8 11"
             stroke="currentColor"
-            strokeWidth="1.4"
+            strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
       </div>
-      <div className={cn("relative z-1", isLarge ? "max-w-[560px]" : "max-w-full")}>
+      <div className={cn("relative z-10", isLarge ? "max-w-[580px]" : "max-w-full")}>
         <h3
           className={cn(
-            "font-serif text-s-high italic font-light rtl:font-sans rtl:not-italic rtl:font-bold",
+            "font-serif font-light italic text-s-high rtl:not-italic rtl:font-bold rtl:font-sans",
             isLarge
-              ? "mb-[18px] text-[clamp(24px,2.9vw,38px)]"
-              : "mb-3 text-[clamp(16px,2vw,22px)]",
+              ? "mb-4 text-[clamp(24px,2.8vw,36px)] leading-snug"
+              : "mb-3 text-[clamp(18px,2vw,24px)] leading-snug",
           )}
         >
-          <span className="mb-2 block font-mono text-[10px] uppercase tracking-[0.18em] text-s-muted rtl:tracking-normal">
+          <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-s-muted rtl:tracking-normal">
             {locale === "ar" ? "الخطوة" : "Step"} {service.index}
           </span>
           {t(`${service.key}.title`)}
         </h3>
         <p
           className={cn(
-            "font-mono text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.95] text-s-low transition-colors duration-200 group-hover:text-s-mid",
-            isLarge ? "max-w-[400px]" : "max-w-full",
+            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-low transition-colors duration-200 group-hover:text-s-mid",
+            isLarge ? "max-w-[460px]" : "max-w-full",
           )}
         >
           {t(`${service.key}.description`)}
@@ -147,7 +147,7 @@ const ProcessRail = memo(function ProcessRail() {
       ([entry]) => {
         if (entry.isIntersecting) setVisible(true)
       },
-      { threshold: 0.1 }, 
+      { threshold: 0.1 },
     )
 
     io.observe(el)
@@ -157,43 +157,41 @@ const ProcessRail = memo(function ProcessRail() {
   return (
     <div
       ref={ref}
-      className={cn(
-        "mt-[clamp(24px,3vw,40px)] border-t border-s-border pt-5",
-        "flex flex-col md:flex-row md:items-center gap-6 md:gap-2"
-      )}
+      className="mt-[clamp(32px,4vw,56px)] border-t border-s-border pt-6"
     >
-      {SERVICES.map((service, i) => (
-        <div
-          key={service.key}
-          className={cn(
-            "group/rail flex items-center",
-            "flex-none md:flex-1 min-w-0"
-          )}
-        >
-          <div className="flex shrink-0 flex-col gap-1">
-            <div className="flex items-center gap-1.5">
-              <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-[background-color,transform] duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
-              <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-s-muted">
-                {service.index}
+      <div className="flex flex-col md:flex-row md:items-center">
+        {SERVICES.map((service, i) => (
+          <Fragment key={service.key}>
+            <div
+              className={cn(
+                "group/rail flex shrink-0 items-center gap-3",
+                "md:flex-col md:items-start md:gap-1.5",
+              )}
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-[background-color,transform] duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
+                <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-s-muted">
+                  {service.index}
+                </span>
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-s-mid md:ps-3 whitespace-nowrap">
+                {t(`${service.key}.tag`)}
               </span>
             </div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-s-mid ps-3 whitespace-nowrap">
-              {t(`${service.key}.tag`)}
-            </span>
-          </div>
-          {i < SERVICES.length - 1 && (
-            <div
-              style={{ animationDelay: `${i * 0.2}s` }}
-              className={cn(
-                "animate-services-rail paused",
-                "ms-4 h-8 w-px bg-s-border origin-top md:hidden",
-                "md:mt-2 md:block md:h-px md:flex-1 md:origin-left md:bg-s-border md:mx-3 md:self-end md:rtl:origin-right",
-                visible && "running",
-              )}
-            />
-          )}
-        </div>
-      ))}
+            {i < SERVICES.length - 1 && (
+              <div
+                style={{ animationDelay: `${i * 0.2}s` }}
+                className={cn(
+                  "animate-services-rail paused shrink-0 bg-s-border",
+                  "ms-[2.5px] my-2 h-5 w-px origin-top",
+                  "md:ms-0 md:my-0 md:mx-3 md:h-px md:w-auto md:flex-1 md:origin-left md:self-center rtl:md:origin-right",
+                  visible && "running",
+                )}
+              />
+            )}
+          </Fragment>
+        ))}
+      </div>
     </div>
   )
 })
@@ -216,24 +214,22 @@ function SectionHeader() {
         </span>
       </div>
       <div className="h-px bg-s-border" />
-      <div className="flex flex-wrap items-end justify-between gap-[clamp(20px,4vw,56px)]">
+      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end md:gap-[clamp(20px,4vw,56px)]">
         <h2
           ref={headRef}
-          className="m-0 min-w-[min(100%,260px)] flex-1 font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-[clamp(28px,4.5vw,60px)] leading-[1.12] tracking-[-0.035em] text-s-high"
+          className="m-0 min-w-[min(100%,260px)] flex-1 font-serif font-light italic tracking-[-0.035em] text-s-high rtl:not-italic rtl:font-bold rtl:font-sans text-[clamp(28px,4.5vw,60px)] leading-[1.12]"
         >
           {first}
           {second ? (
             <>
               <br />
-              <span className="text-s-mid">
-                {second}
-              </span>
+              <span className="text-s-mid">{second}</span>
             </>
           ) : null}
         </h2>
         <p
           ref={subtitleRef}
-          className="m-0 max-w-[280px] self-end font-mono text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.9] text-s-low"
+          className="m-0 max-w-[340px] shrink-0 font-mono text-[clamp(0.875rem,0.92vw,0.95rem)] leading-[1.8] text-s-low"
         >
           {t("subtitle")}
         </p>
@@ -243,28 +239,23 @@ function SectionHeader() {
 }
 
 export const ServicesSection = memo(function ServicesSection() {
-  const t = useTranslations("services")
-
   return (
-    <section
-      id="services"
-      className="relative py-[clamp(60px,8vw,120px)]"
-    >
+    <section id="services" className="relative bg-neutral-950 py-[clamp(60px,8vw,120px)]">
       <Container>
         <SectionHeader />
-        <div className="grid grid-cols-1 gap-px bg-s-border ring-1 ring-s-border">
+        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border">
           <ServiceCard service={SERVICES[0]} isLarge revealDelay={0} />
-          <div className="grid grid-cols-1 gap-px bg-s-border md:grid-cols-[2fr_3fr]">
+          <div className="grid grid-cols-1 gap-px bg-s-border md:grid-cols-2">
             <ServiceCard service={SERVICES[1]} isLarge={false} revealDelay={0.1} />
             <ServiceCard service={SERVICES[2]} isLarge={false} revealDelay={0.15} />
           </div>
           <ServiceCard service={SERVICES[3]} isLarge revealDelay={0.2} />
         </div>
         <ProcessRail />
-        <div className="mt-5 flex items-center gap-4">
-          <div className="h-px flex-1 bg-s-border" />
-          <span className={cn(monoCaps, "whitespace-nowrap text-s-muted")}>
-            {t("footerText")}
+        <div className="mt-8 flex items-center gap-4">
+          <div className="h-px flex-1 bg-s-border opacity-60" />
+          <span className={cn(monoCaps, "whitespace-nowrap text-[11px] text-s-muted")}>
+            {useTranslations("services")("footerText")}
           </span>
         </div>
       </Container>

@@ -108,7 +108,7 @@ export function ContactsClient({ initialContacts, initialTotalPages }: ContactsC
                 setContacts(data.submissions || [])
                 setTotalPages(Math.ceil((data.total || 0) / 20))
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error fetching contacts:", error)
             toast.error("Failed to load contacts")
         } finally {
@@ -132,7 +132,7 @@ export function ContactsClient({ initialContacts, initialTotalPages }: ContactsC
             } else {
                 toast.error(data.message || "Failed to update contact")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error updating contact:", error)
             toast.error("Failed to update contact")
         } finally {
@@ -161,7 +161,7 @@ export function ContactsClient({ initialContacts, initialTotalPages }: ContactsC
             } else {
                 toast.error(data.message || "Failed to delete contact")
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error deleting contact:", error)
             toast.error("Failed to delete contact")
         } finally {

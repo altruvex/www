@@ -51,7 +51,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
         </span>
 
         <span
-          className="flex-1 text-start font-serif text-[clamp(16px,2.5vw,22px)] font-light italic leading-none tracking-[-0.02em] text-s-mid transition-colors duration-200 group-data-[open=true]:text-s-high rtl:font-sans rtl:not-italic rtl:font-bold"
+          className="flex-1 text-start font-serif text-[clamp(22px,2.6vw,28px)] font-light italic leading-none tracking-[-0.02em] text-s-mid transition-colors duration-200 group-data-[open=true]:text-s-high rtl:font-sans rtl:not-italic rtl:font-bold"
         >
           {t(`steps.${step.key}.title`)}
         </span>
@@ -157,9 +157,7 @@ export const ProcessSection = memo(function ProcessSection() {
             </p>
           </div>
         </div>
-
         <div className="mb-1 h-px bg-s-border" />
-
         <div className="mb-1 grid grid-cols-2 lg:grid-cols-4 gap-0">
           {steps.map((step, i) => (
             <button

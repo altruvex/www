@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
             page,
             pageSize,
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error fetching meetings:", error)
         }
@@ -175,7 +175,7 @@ export async function PATCH(request: NextRequest) {
             success: true,
             meeting: updated,
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error updating meeting:", error)
         }
@@ -242,7 +242,7 @@ export async function DELETE(request: NextRequest) {
             success: true,
             message: "Meeting deleted successfully",
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error deleting meeting:", error)
         }

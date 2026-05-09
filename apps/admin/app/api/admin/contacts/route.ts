@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
             page,
             pageSize,
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error fetching contacts:", error)
         }
@@ -151,7 +151,7 @@ export async function PATCH(request: NextRequest) {
             success: true,
             submission: updated,
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error updating contact:", error)
         }
@@ -218,7 +218,7 @@ export async function DELETE(request: NextRequest) {
             success: true,
             message: "Contact deleted successfully",
         })
-    } catch (error) {
+    } catch (error: unknown) {
         if (process.env.NODE_ENV !== "production") {
             console.error("Error deleting contact:", error)
         }
