@@ -49,7 +49,7 @@ const COMMERCIAL_CTAS: Record<
   technicalAudit: {
     href: "/contact?service=consulting&package=audit",
     label: {
-      ar: "ابدأ بتدقيق تقني",
+      ar: "ابدأ بفحص تقني",
       en: "Start with a Technical Audit",
     },
   },

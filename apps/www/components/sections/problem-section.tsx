@@ -38,21 +38,23 @@ export const ProblemSection = memo(function ProblemSection() {
       className="relative border-y border-border bg-background pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="max-w-3xl mb-12 space-y-4">
-          <p ref={eyebrowRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-            {t("problem.badge")}
-          </p>
-          <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] font-normal tracking-tight text-foreground">
-            {t("problem.title.pre")}{" "}
-            {t("problem.title.crossed")}{" "}
-            <br />
-            <span className="font-serif italic font-light text-foreground/45 rtl:font-sans rtl:not-italic rtl:font-bold">
-              {t("problem.title.gradient")}
-            </span>
-          </h2>
-          <p ref={descRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground max-w-2xl">
-            {t("problem.subtitle")}
-          </p>
+        <div className="mb-12 gap-6 flex flex-col md:flex-row items-center justify-between">
+          <div className="max-w-3xl space-y-4">
+            <p ref={eyebrowRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+              {t("problem.badge")}
+            </p>
+            <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] font-normal tracking-tight text-foreground">
+              {t("problem.title.pre")}{" "}
+              {t("problem.title.crossed")}{" "}
+              <br />
+              <span className="font-serif italic font-light text-foreground/45 rtl:font-sans rtl:not-italic rtl:font-bold">
+                {t("problem.title.gradient")}
+              </span>
+            </h2>
+            <p ref={descRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground max-w-2xl">
+              {t("problem.subtitle")}
+            </p>
+          </div>
           <MagneticButton size="lg" variant="secondary" className="group w-fit">
             <Link href={auditCta.href}>
               <ArrowLabel>{t("commercial.ctas.technicalAudit")}</ArrowLabel>

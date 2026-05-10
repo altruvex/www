@@ -38,7 +38,7 @@ const ServiceCard = memo(function ServiceCard({
       ref={cardRef}
       data-service={service.index}
       className={cn(
-        "group relative isolate cursor-pointer overflow-hidden bg-neutral-950 transition-colors duration-300",
+        "group relative isolate cursor-pointer overflow-hidden bg-inverted-bg/80 transition-colors duration-300",
         "data-[service=01]:[--card-accent:rgba(99,102,241,0.08)]",
         "data-[service=02]:[--card-accent:rgba(20,184,166,0.08)]",
         "data-[service=03]:[--card-accent:rgba(245,158,11,0.07)]",
@@ -58,7 +58,7 @@ const ServiceCard = memo(function ServiceCard({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 start-0 z-10 w-[2px] origin-top scale-y-0 bg-neutral-700 opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 start-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
       />
       <span
         aria-hidden
@@ -240,7 +240,7 @@ function SectionHeader() {
 
 export const ServicesSection = memo(function ServicesSection() {
   return (
-    <section id="services" className="dark relative bg-neutral-950 py-[clamp(60px,8vw,120px)]">
+    <section id="services" className="relative py-[clamp(60px,8vw,120px)]">
       <Container>
         <SectionHeader />
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border">
