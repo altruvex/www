@@ -319,7 +319,12 @@ function PricingSection() {
       featured: true,
       index: "02",
     },
-    { key: "enterprise", price: null, featured: false, index: "03" },
+    {
+      key: "enterprise",
+      price: t("pricing.plans.enterprise.price"),
+      featured: false,
+      index: "03",
+    },
   ];
   const commercialNotes = ["vat", "infra", "scope", "addons"].map((key) => ({
     key,

@@ -50,11 +50,11 @@ const ServiceCard = memo(function ServiceCard({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-gradient-to-r from-transparent via-[var(--card-accent)] to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-linear-to-r from-transparent via-(--card-accent) to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 bg-[var(--card-accent)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-opacity duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden

@@ -716,8 +716,10 @@
       "technicalAudit": "Start with a Technical Audit",
       "architecture": "Talk Through the Architecture",
       "maintenancePlans": "See Maintenance Plans",
-      "pricingEssential": "Get Pricing for This Scope",
+      "pricingSimpleLanding": "Get Pricing for This Scope",
+      "pricingEssential": "Scope Your Marketing Site",
       "pricingProfessional": "Continue in Transparency",
+      "pricingEcommerce": "Scope Your E-commerce Build",
       "pricingFlagship": "Talk Through the Architecture",
       "flagshipBuild": "Plan a Build Like This"
     },
@@ -791,19 +793,29 @@
       "sectionAriaLabel": "Call to action"
     },
     "pricing": {
+      "simple_landing": {
+        "buyerLabel": "Simple Landing Page",
+        "internalLabel": "Simple Landing",
+        "nextStep": "Next step: open Transparency and scope your static landing page."
+      },
       "essential": {
-        "buyerLabel": "Business Website",
-        "internalLabel": "Focused Website",
-        "nextStep": "Next step: open Transparency and scope the right investment range for your business."
+        "buyerLabel": "Full Marketing Site",
+        "internalLabel": "Marketing Site",
+        "nextStep": "Next step: open Transparency and scope your custom marketing platform."
       },
       "professional": {
-        "buyerLabel": "Integrated Platform",
-        "internalLabel": "Connected Platform",
-        "nextStep": "Next step: open Transparency and scope the right connected platform range for your business."
+        "buyerLabel": "Business Web System",
+        "internalLabel": "Business Web System",
+        "nextStep": "Next step: open Transparency and scope the right connected system for your business."
+      },
+      "ecommerce": {
+        "buyerLabel": "E-commerce",
+        "internalLabel": "E-commerce",
+        "nextStep": "Next step: open Transparency and scope your e-commerce project."
       },
       "flagship": {
-        "buyerLabel": "Custom Product / Portal",
-        "internalLabel": "Operational Product",
+        "buyerLabel": "Custom Platform",
+        "internalLabel": "Custom Platform",
         "nextStep": "Next step: book a technical call to plan the custom architecture."
       }
     },
@@ -1139,7 +1151,7 @@
         "title": "Technical Audit - Fixed Scope, Fixed Price",
         "description": "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into an execution-ready roadmap.",
         "priceLabel": "Fixed price",
-        "price": "3,500 EGP",
+        "price": "15,000 EGP",
         "durationLabel": "Duration",
         "duration": "5 business days",
         "includedLabel": "What is included",
@@ -1232,7 +1244,7 @@
         "plans": {
           "essential": {
             "name": "Essential",
-            "price": "3,500 EGP",
+            "price": "2,500 EGP",
             "features": [
               "Monthly security and dependency update cycle",
               "Uptime monitoring and backup verification",
@@ -1243,7 +1255,7 @@
           },
           "professional": {
             "name": "Professional",
-            "price": "6,500 EGP",
+            "price": "5,000 EGP",
             "features": [
               "Weekly checks and priority incident handling",
               "Daily monitoring with backup and uptime review",
@@ -1254,6 +1266,7 @@
           },
           "enterprise": {
             "name": "Enterprise",
+            "price": "10,000 EGP",
             "features": [
               "Custom SLA and dedicated response protocol",
               "Architecture, performance, and security review cadence",
@@ -1833,49 +1846,79 @@
       }
     },
     "tiers": {
-      "essential": {
-        "name": "Focused Website",
-        "priceRange": "35,000 – 70,000 EGP",
-        "originalPrice": "45,000 – 85,000 EGP",
-        "idealFor": "Custom marketing site with strong messaging, strong performance, and no template debt.",
+      "simple_landing": {
+        "name": "Simple Landing Page",
+        "priceRange": "25,000 – 32,000 EGP",
+        "originalPrice": "35,000 – 42,000 EGP",
+        "idealFor": "Focused, high-performance static page with no CMS or complex animations.",
         "cta": "Get Pricing for This Scope",
         "features": [
-          "Custom UI implementation for your core marketing pages",
-          "Responsive build with strong performance and clean deployment",
-          "Lead forms, analytics, and SEO fundamentals",
-          "Multilingual-ready structure where the scope calls for it",
-          "Domain, SSL, and base hosting setup for Year 1"
+          "Custom UI implementation for your core page",
+          "Responsive build with high performance",
+          "Lead forms and SEO fundamentals",
+          "Fast deployment on edge infrastructure",
+          "Domain and SSL setup included"
         ],
-        "notIncluded": "No dashboards, payment flows, or heavy operational integrations - see Connected Platform for those."
+        "notIncluded": "No CMS, animations, or multilingual support - see Full Marketing Site for those."
+      },
+      "essential": {
+        "name": "Full Marketing Site",
+        "priceRange": "35,000 – 50,000 EGP",
+        "originalPrice": "45,000 – 60,000 EGP",
+        "idealFor": "Custom marketing site with CMS, animations, and bilingual readiness.",
+        "cta": "Scope Your Marketing Site",
+        "features": [
+          "Everything in Simple Landing Page",
+          "CMS integration for content control",
+          "Custom animations and interactions",
+          "Bilingual-ready structure",
+          "Advanced SEO and analytics setup"
+        ],
+        "notIncluded": "No dashboards or payment flows - see Business Web System for those."
       },
       "professional": {
-        "name": "Connected Platform",
-        "priceRange": "70,000 – 140,000 EGP",
-        "originalPrice": "90,000 – 160,000 EGP",
-        "idealFor": "Integrated website or light product flow with content operations, bilingual UX, and one or two key integrations.",
+        "name": "Business Web System",
+        "priceRange": "65,000 – 130,000 EGP",
+        "originalPrice": "85,000 – 150,000 EGP",
+        "idealFor": "Integrated system with content operations, bilingual UX, and key integrations.",
         "cta": "Plan This Build",
         "features": [
-          "Everything in Focused Website",
-          "CMS, blog, landing page system, or editable content workflows",
-          "One key integration such as CRM, booking, auth, or payment",
-          "Full Multilingual implementation and QA where required",
-          "Structured discovery and architecture before build"
+          "Everything in Marketing Site",
+          "Complex CMS workflows or multi-site systems",
+          "One key integration (CRM, Booking, Auth)",
+          "Full Multilingual implementation & QA",
+          "Structured discovery and architecture"
         ],
-        "notIncluded": "No custom portals, deep automation, or internal operational products - see Operational Product for those."
+        "notIncluded": "No deep automation or e-commerce flows - see E-commerce for those."
+      },
+      "ecommerce": {
+        "name": "E-commerce",
+        "priceRange": "150,000 – 280,000 EGP",
+        "originalPrice": "180,000 – 320,000 EGP",
+        "idealFor": "Custom storefronts engineered for speed and revenue with payment flows.",
+        "cta": "Plan This Build",
+        "features": [
+          "Full E-commerce architecture and product catalog",
+          "Custom checkout flow with multiple payment gateways",
+          "Inventory, shipping, and order management",
+          "Performance optimization for fast load times",
+          "Scalable infrastructure for traffic events"
+        ],
+        "notIncluded": "No internal ERPs or custom platforms - see Custom Platform for those."
       },
       "flagship": {
-        "name": "Operational Product",
-        "priceRange": "140,000 EGP+",
-        "originalPrice": "180,000 EGP+",
-        "idealFor": "Portal, dashboard, internal workflow, or product system with real architectural complexity.",
+        "name": "Custom Platform",
+        "priceRange": "350,000 EGP+",
+        "originalPrice": "420,000 EGP+",
+        "idealFor": "Portal, dashboard, or product system with deep architectural complexity.",
         "cta": "Talk Through the Architecture",
         "features": [
-          "Everything in Connected Platform",
-          "Custom dashboards, portals, or operational workflows",
-          "Multiple integrations or data flows",
-          "Role-based logic, automation, or internal tooling where required",
+          "Everything in Business Web System",
+          "Custom dashboards or operational workflows",
+          "Multiple integrations and data flows",
+          "Role-based logic and deep automation",
           "Infrastructure, CI/CD, and launch planning",
-          "Phased roadmap for post-launch growth"
+          "Phased roadmap for long-term growth"
         ],
         "notIncluded": null
       }
@@ -1883,19 +1926,19 @@
     "maintenance": [
       {
         "key": "essential",
-        "price": "3,500 EGP",
+        "price": "2,500 EGP",
         "featured": false,
         "index": "01"
       },
       {
         "key": "professional",
-        "price": "6,500 EGP",
+        "price": "5,000 EGP",
         "featured": true,
         "index": "02"
       },
       {
         "key": "enterprise",
-        "price": null,
+        "price": "10,000 EGP",
         "featured": false,
         "index": "03"
       }
