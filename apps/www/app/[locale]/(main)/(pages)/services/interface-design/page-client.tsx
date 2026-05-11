@@ -267,6 +267,7 @@ const FeatureCard = ({
   index: number;
   palette: { r: number; g: number; b: number };
 }) => {
+  const t = useTranslations("serviceDetails.webDesign");
   const cardRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -394,7 +395,7 @@ const FeatureCard = ({
             className="pointer-events-none absolute bottom-0 right-0 select-none font-mono font-black leading-[0.82] text-[clamp(100px,17vw,200px)] tracking-[-0.05em] rtl:left-0 rtl:right-auto"
             style={{ color: rgba(0.04) }}
           >
-            01
+            {feature.num}
           </div>
         </div>
       ) : (
@@ -430,7 +431,7 @@ const FeatureCard = ({
 
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const tCommon = useTranslations("serviceDetails");
+  const tCommon = useTranslations("serviceDetails.webDesign");
   const sectionRef = useBatch<HTMLElement>({
     selector: ".feature-card-anim",
     stagger: 0.15,
