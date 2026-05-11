@@ -15,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Altruvex Admin",
-  description: "Altruvex internal admin dashboard for managing contacts, leads, and meetings.",
+  description:
+    "Altruvex internal admin dashboard for managing contacts, leads, and meetings.",
 };
 
 import { ThemeProvider } from "@/components/theme-provider";

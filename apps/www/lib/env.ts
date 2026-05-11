@@ -14,7 +14,7 @@ if (!parsed.success) {
   const errors = parsed.error.format();
   console.error(
     "❌ Invalid environment variables:",
-    JSON.stringify(errors, null, 2)
+    JSON.stringify(errors, null, 2),
   );
 
   const shouldThrow =
@@ -27,7 +27,7 @@ if (!parsed.success) {
       .filter((k) => k !== "_errors")
       .join(", ");
     throw new Error(
-      `Invalid environment variables: ${missingFields}. Check Vercel project settings.`
+      `Invalid environment variables: ${missingFields}. Check Vercel project settings.`,
     );
   }
 }

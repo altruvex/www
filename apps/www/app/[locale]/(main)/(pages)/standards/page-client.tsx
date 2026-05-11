@@ -198,9 +198,7 @@ function ClosingSection() {
             >
               {t("title")}
               <br />
-              <span
-                className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-              >
+              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
                 {t("titleItalic")}
               </span>
             </h2>

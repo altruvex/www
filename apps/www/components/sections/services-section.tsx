@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { monoCaps } from "@/lib/mono-caps"
-import { useReveal } from "@/lib/motion"
-import { cn, splitHeadline } from "@/lib/utils"
-import { useLocale, useTranslations } from "next-intl"
-import { Fragment, memo, useEffect, useRef, useState } from "react"
-import { Container } from "../container"
+import { monoCaps } from "@/lib/mono-caps";
+import { useReveal } from "@/lib/motion";
+import { cn, splitHeadline } from "@/lib/utils";
+import { useLocale, useTranslations } from "next-intl";
+import { Fragment, memo, useEffect, useRef, useState } from "react";
+import { Container } from "../container";
 
 interface ServiceData {
-  key: "service1" | "service2" | "service3" | "service4"
-  index: string
-  layout: "hero" | "secondary-left" | "secondary-right" | "anchor"
+  key: "service1" | "service2" | "service3" | "service4";
+  index: string;
+  layout: "hero" | "secondary-left" | "secondary-right" | "anchor";
 }
 
 const SERVICES: ServiceData[] = [
@@ -18,20 +18,20 @@ const SERVICES: ServiceData[] = [
   { key: "service2", index: "02", layout: "secondary-left" },
   { key: "service3", index: "03", layout: "secondary-right" },
   { key: "service4", index: "04", layout: "anchor" },
-]
+];
 
 const ServiceCard = memo(function ServiceCard({
   service,
   isLarge,
   revealDelay,
 }: {
-  service: ServiceData
-  isLarge: boolean
-  revealDelay: number
+  service: ServiceData;
+  isLarge: boolean;
+  revealDelay: number;
 }) {
-  const t = useTranslations("services")
-  const locale = useLocale()
-  const cardRef = useReveal<HTMLElement>({ delay: revealDelay })
+  const t = useTranslations("services");
+  const locale = useLocale();
+  const cardRef = useReveal<HTMLElement>({ delay: revealDelay });
 
   return (
     <article
@@ -107,7 +107,12 @@ const ServiceCard = memo(function ServiceCard({
           />
         </svg>
       </div>
-      <div className={cn("relative z-10", isLarge ? "max-w-[580px]" : "max-w-full")}>
+      <div
+        className={cn(
+          "relative z-10",
+          isLarge ? "max-w-[580px]" : "max-w-full",
+        )}
+      >
         <h3
           className={cn(
             "font-serif font-light italic text-s-high rtl:not-italic rtl:font-bold rtl:font-sans",
@@ -131,28 +136,28 @@ const ServiceCard = memo(function ServiceCard({
         </p>
       </div>
     </article>
-  )
-})
+  );
+});
 
 const ProcessRail = memo(function ProcessRail() {
-  const t = useTranslations("services")
-  const ref = useRef<HTMLDivElement>(null)
-  const [visible, setVisible] = useState(false)
+  const t = useTranslations("services");
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const el = ref.current
-    if (!el) return
+    const el = ref.current;
+    if (!el) return;
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) setVisible(true)
+        if (entry.isIntersecting) setVisible(true);
       },
       { threshold: 0.1 },
-    )
+    );
 
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div
@@ -193,15 +198,15 @@ const ProcessRail = memo(function ProcessRail() {
         ))}
       </div>
     </div>
-  )
-})
+  );
+});
 
 function SectionHeader() {
-  const t = useTranslations("services")
-  const eyebrowRef = useReveal<HTMLParagraphElement>({ delay: 0 })
-  const headRef = useReveal<HTMLHeadingElement>({ delay: 0.1 })
-  const subtitleRef = useReveal<HTMLParagraphElement>({ delay: 0.2 })
-  const { first, second } = splitHeadline(t("title"))
+  const t = useTranslations("services");
+  const eyebrowRef = useReveal<HTMLParagraphElement>({ delay: 0 });
+  const headRef = useReveal<HTMLHeadingElement>({ delay: 0.1 });
+  const subtitleRef = useReveal<HTMLParagraphElement>({ delay: 0.2 });
+  const { first, second } = splitHeadline(t("title"));
 
   return (
     <div className="mb-[clamp(40px,5vw,72px)] flex flex-col gap-[clamp(20px,2.5vw,32px)]">
@@ -235,7 +240,7 @@ function SectionHeader() {
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 export const ServicesSection = memo(function ServicesSection() {
@@ -246,19 +251,32 @@ export const ServicesSection = memo(function ServicesSection() {
         <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border">
           <ServiceCard service={SERVICES[0]} isLarge revealDelay={0} />
           <div className="grid grid-cols-1 gap-px bg-s-border md:grid-cols-2">
-            <ServiceCard service={SERVICES[1]} isLarge={false} revealDelay={0.1} />
-            <ServiceCard service={SERVICES[2]} isLarge={false} revealDelay={0.15} />
+            <ServiceCard
+              service={SERVICES[1]}
+              isLarge={false}
+              revealDelay={0.1}
+            />
+            <ServiceCard
+              service={SERVICES[2]}
+              isLarge={false}
+              revealDelay={0.15}
+            />
           </div>
           <ServiceCard service={SERVICES[3]} isLarge revealDelay={0.2} />
         </div>
         <ProcessRail />
         <div className="mt-8 flex items-center gap-4">
           <div className="h-px flex-1 bg-s-border opacity-60" />
-          <span className={cn(monoCaps, "whitespace-nowrap text-[11px] text-s-muted")}>
+          <span
+            className={cn(
+              monoCaps,
+              "whitespace-nowrap text-[11px] text-s-muted",
+            )}
+          >
             {useTranslations("services")("footerText")}
           </span>
         </div>
       </Container>
     </section>
-  )
-})
+  );
+});

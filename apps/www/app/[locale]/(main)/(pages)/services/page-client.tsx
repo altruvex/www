@@ -167,7 +167,7 @@ export default memo(function ServicesPage() {
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
             {HOMEPAGE_OFFERS.map((offer, index) => {
-              const cta = getCommercialCta(locale, offer.ctaKey);
+              const cta = getCommercialCta(offer.ctaKey);
               const featured =
                 index === 0 || index === HOMEPAGE_OFFERS.length - 1;
               return (

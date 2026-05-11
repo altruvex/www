@@ -10,8 +10,7 @@ type CaseStudyMetric = {
 const CASE_STUDY_SLUGS = [
   "altruvex-site",
   "art-lighting-store",
-  "custom-case-builder",
-  "bilingual-corporate-portal",
+  "newlight-lighting-store",
 ] as const;
 
 export type CaseStudySlug = (typeof CASE_STUDY_SLUGS)[number];
@@ -25,6 +24,7 @@ export type CaseStudyRecord = {
   slug: CaseStudySlug;
   summary: LocalizedValue;
   year: string;
+  externalUrl?: string;
 };
 
 export const CASE_STUDIES: CaseStudyRecord[] = [
@@ -84,6 +84,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "A bilingual multilingual proof build designed to demonstrate technical quality, native RTL execution, and lead qualification before the first call.",
     },
     year: "2025",
+    externalUrl: "https://altruvex.com",
   },
   {
     client: {
@@ -139,50 +140,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
     },
     year: "2024",
-  },
-  {
-    client: {
-      ar: "كيسز كوبرا",
-      en: "CasesCobra",
-    },
-    industry: {
-      ar: "إكسسوارات مباشرة للمستهلك",
-      en: "Direct-to-consumer accessories",
-    },
-    keywords: {
-      ar: ["مكوّن منتجات تفاعلي", "أداة تخصيص منتجات", "دراسة حالة React"],
-      en: [
-        "product configurator case study",
-        "custom ecommerce configurator",
-        "react product builder",
-      ],
-    },
-    metrics: [
-      {
-        label: {
-          ar: "تفاعل أداة التكوين",
-          en: "Configurator engagement",
-        },
-        value: "3.4×",
-      },
-      {
-        label: {
-          ar: "معدل الإرجاع",
-          en: "Return rate",
-        },
-        value: "-18%",
-      },
-    ],
-    name: {
-      ar: "منشئ حافظات مخصص",
-      en: "Custom Case Builder",
-    },
-    slug: "custom-case-builder",
-    summary: {
-      ar: "أداة تكوين منتج في الوقت الفعلي تتيح للعملاء تصميم ومعاينة حافظات الهاتف في المتصفح قبل الطلب.",
-      en: "A real-time product configurator that lets customers design and preview phone cases in the browser before ordering.",
-    },
-    year: "2024",
+    externalUrl: "https://www.artlighting-eg.com",
   },
   {
     client: {
@@ -190,43 +148,57 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "NewLight",
     },
     industry: {
-      ar: "التصنيع وB2B",
-      en: "Manufacturing & B2B",
+      ar: "إضاءة وتجارة إلكترونية",
+      en: "Lighting & E-Commerce",
     },
     keywords: {
-      ar: ["موقع شركة ثنائي اللغة", "معمارية RTL", "بوابة B2B"],
+      ar: [
+        "بناء أول متجر إلكتروني",
+        "تجارة إلكترونية للإضاءة",
+        "متجر Next.js مخصص",
+        "التحول الرقمي",
+      ],
       en: [
-        "bilingual corporate portal",
-        "rtl web architecture",
-        "b2b website case study",
+        "first e-commerce build",
+        "lighting online store",
+        "custom next.js shop",
+        "digital transformation",
       ],
     },
     metrics: [
       {
         label: {
-          ar: "الوقت المستغرق في الموقع",
-          en: "Time on site",
+          ar: "رضا العميل عن التنفيذ",
+          en: "Requirement Match",
         },
-        value: "+27%",
+        value: "100%",
       },
       {
         label: {
-          ar: "معدل الارتداد",
-          en: "Bounce rate",
+          ar: "نمو المبيعات الرقمية",
+          en: "Digital Sales Growth",
         },
-        value: "-22%",
+        value: "+45%",
+      },
+      {
+        label: {
+          ar: "سرعة تصفح المنتجات",
+          en: "Product Browsing Speed",
+        },
+        value: "< 0.8s",
       },
     ],
     name: {
-      ar: "واجهة شركة ثنائية اللغة",
-      en: "Bilingual Corporate Presence",
+      ar: "متجر نيو لايت للإضاءة - الانطلاق نحو التجارة الإلكترونية",
+      en: "NewLight Lighting Store - Venturing into E-Commerce",
     },
-    slug: "bilingual-corporate-portal",
+    slug: "newlight-lighting-store",
     summary: {
-      ar: "موقع شركة ثنائي اللغة مع دعم كامل للـ RTL وكتالوج منتجات وPWA لبيئات الشبكة الضعيفة.",
-      en: "A bilingual corporate site with full RTL support, product catalogue, and a PWA shell for poor-network environments.",
+      ar: "عندما قررت نيو لايت دخول عالم التجارة الإلكترونية لأول مرة، قمنا ببناء متجر متكامل يجمع بين التصميم الفاخر وسهولة الشراء، محققين كافة تطلعاتهم التقنية والتجارية.",
+      en: "When NewLight decided to launch their first online store, we built a comprehensive e-commerce platform that blends premium design with seamless shopping, fulfilling every technical and business requirement.",
     },
     year: "2024",
+    externalUrl: "https://www.newlight-eg.com/",
   },
 ];
 

@@ -9,10 +9,9 @@ import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 
 const TIER_DESTINATION = {
-  simple_landing: "/transparency?tier=small",
-  essential: "/transparency?tier=medium",
-  professional: "/transparency?tier=large",
-  ecommerce: "/transparency?tier=large&projectType=ecommerce",
+  essential: "/transparency?tier=essential",
+  professional: "/transparency?tier=professional",
+  ecommerce: "/transparency?tier=commerce&projectType=ecommerce",
   flagship: "/schedule",
 } as const;
 
@@ -42,22 +41,6 @@ export default function PricingPage() {
   const tCTAs = useTranslations("commercial.ctas");
   const tiers = [
     {
-      id: "simple_landing" as const,
-      name: t("tiers.simple_landing.name"),
-      buyerLabel: tp("simple_landing.buyerLabel"),
-      internalLabel: tp("simple_landing.internalLabel"),
-      ctaLabel: tCTAs("pricingSimpleLanding"),
-      priceRange: t("tiers.simple_landing.priceRange"),
-      originalPrice: t("tiers.simple_landing.originalPrice"),
-      idealFor: t("tiers.simple_landing.idealFor"),
-      notIncluded: t("tiers.simple_landing.notIncluded"),
-      highlight: false,
-      nextStep: tp("simple_landing.nextStep"),
-      features: Array.from({ length: 5 }, (_, i) =>
-        t(`tiers.simple_landing.features.${i}`),
-      ),
-    },
-    {
       id: "essential" as const,
       name: t("tiers.essential.name"),
       buyerLabel: tp("essential.buyerLabel"),
@@ -83,7 +66,7 @@ export default function PricingPage() {
       originalPrice: t("tiers.professional.originalPrice"),
       idealFor: t("tiers.professional.idealFor"),
       notIncluded: t("tiers.professional.notIncluded"),
-      highlight: false,
+      highlight: true,
       nextStep: tp("professional.nextStep"),
       features: Array.from({ length: 5 }, (_, i) =>
         t(`tiers.professional.features.${i}`),
@@ -99,7 +82,7 @@ export default function PricingPage() {
       originalPrice: t("tiers.ecommerce.originalPrice"),
       idealFor: t("tiers.ecommerce.idealFor"),
       notIncluded: t("tiers.ecommerce.notIncluded"),
-      highlight: true,
+      highlight: false,
       nextStep: tp("ecommerce.nextStep"),
       features: Array.from({ length: 5 }, (_, i) =>
         t(`tiers.ecommerce.features.${i}`),
@@ -163,7 +146,8 @@ export default function PricingPage() {
   ];
 
   return (
-    <section className="relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
+    <section
+      className="relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
       aria-label="Pricing section"
     >
       <Container>
@@ -182,9 +166,7 @@ export default function PricingPage() {
               >
                 {t("title")}
                 <br />
-                <span
-                  className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-                >
+                <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
                   {t("titleItalic")}
                 </span>
               </h1>
@@ -196,7 +178,10 @@ export default function PricingPage() {
               </p>
             </div>
             <div className="h-px w-full bg-foreground/8 mb-12" />
-            <div ref={tierCardsRef} className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-16">
+            <div
+              ref={tierCardsRef}
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-16"
+            >
               {tiers.map((tier, i) => (
                 <article
                   key={tier.id}
@@ -277,7 +262,9 @@ export default function PricingPage() {
                       className="w-full justify-center"
                       aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
                     >
-                      <ArrowLabel className="text-xs">{tier.ctaLabel}</ArrowLabel>
+                      <ArrowLabel className="text-xs">
+                        {tier.ctaLabel}
+                      </ArrowLabel>
                     </Link>
                   </MagneticButton>
                 </article>
@@ -361,4 +348,3 @@ export default function PricingPage() {
     </section>
   );
 }
-

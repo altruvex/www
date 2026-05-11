@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { Link } from "@/i18n/navigation"
-import { cn } from "@/lib/utils"
-import type { ReactNode } from "react"
+import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 const ARROW_CLASS =
-  "h-4 w-4 shrink-0 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
+  "h-4 w-4 shrink-0 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180";
 
 export function ArrowIcon({ className }: { className?: string }) {
   return (
@@ -23,7 +23,7 @@ export function ArrowIcon({ className }: { className?: string }) {
         d="M17 8l4 4m0 0l-4 4m4-4H3"
       />
     </svg>
-  )
+  );
 }
 
 export function ArrowLabel({
@@ -31,16 +31,16 @@ export function ArrowLabel({
   className,
   iconClassName,
 }: {
-  children: ReactNode
-  className?: string
-  iconClassName?: string
+  children: ReactNode;
+  className?: string;
+  iconClassName?: string;
 }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <span>{children}</span>
       <ArrowIcon className={iconClassName} />
     </span>
-  )
+  );
 }
 
 export function DirectionalLink({
@@ -49,10 +49,10 @@ export function DirectionalLink({
   className,
   ariaLabel,
 }: {
-  href: string
-  children: ReactNode
-  className?: string
-  ariaLabel?: string
+  href: string;
+  children: ReactNode;
+  className?: string;
+  ariaLabel?: string;
 }) {
   return (
     <Link
@@ -63,7 +63,7 @@ export function DirectionalLink({
       <span>{children}</span>
       <ArrowIcon />
     </Link>
-  )
+  );
 }
 
 export function ExternalDirectionalLink({
@@ -71,9 +71,9 @@ export function ExternalDirectionalLink({
   children,
   className,
 }: {
-  href: string
-  children: ReactNode
-  className?: string
+  href: string;
+  children: ReactNode;
+  className?: string;
 }) {
   return (
     <a
@@ -85,5 +85,5 @@ export function ExternalDirectionalLink({
       <span>{children}</span>
       <ArrowIcon />
     </a>
-  )
+  );
 }

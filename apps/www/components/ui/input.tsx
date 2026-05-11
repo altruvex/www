@@ -2,8 +2,8 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const normalizeNumbers = (str: string) => {
-  const arabicNumbers = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
-  const persianNumbers = ["۰","۱","۲","۳","۴","۵","۶","۷","۸","۹"];
+  const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+  const persianNumbers = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
 
   if (!str || typeof str !== "string") return str;
 
@@ -42,7 +42,7 @@ function Input({
         onChange(clonedEvent);
       }
     },
-    [onChange, normalize]
+    [onChange, normalize],
   );
 
   return (
@@ -59,7 +59,7 @@ function Input({
         "border-b border-border focus:border-accent",
         "focus-visible:outline-none",
         "aria-invalid:border-destructive",
-        className
+        className,
       )}
       style={{
         borderRadius: 0,

@@ -1,9 +1,18 @@
-export { MOTION, DEFAULTS } from "./config"
-export type { MotionDistance, MotionDuration, MotionEase, MotionStagger, MotionTrigger } from "./config"
-export { useBatch } from "@/lib/motion/hooks/use-batch"
-export { useReveal } from "@/lib/motion/hooks/use-reveal"
-export { useText } from "@/lib/motion/hooks/use-text"
-export type { BatchConfig } from "@/lib/motion/hooks/use-batch"
-export type { RevealConfig, RevealDirection } from "@/lib/motion/hooks/use-reveal"
-export type { TextConfig } from "@/lib/motion/hooks/use-text"
-export { motion } from "./utils/presets"
+export { MOTION, DEFAULTS } from "./config";
+export type {
+  MotionDistance,
+  MotionDuration,
+  MotionEase,
+  MotionStagger,
+  MotionTrigger,
+} from "./config";
+export { useBatch } from "@/lib/motion/hooks/use-batch";
+export { useReveal } from "@/lib/motion/hooks/use-reveal";
+export { useText } from "@/lib/motion/hooks/use-text";
+export type { BatchConfig } from "@/lib/motion/hooks/use-batch";
+export type {
+  RevealConfig,
+  RevealDirection,
+} from "@/lib/motion/hooks/use-reveal";
+export type { TextConfig } from "@/lib/motion/hooks/use-text";
+export { motion } from "./utils/presets";

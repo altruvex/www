@@ -1,16 +1,16 @@
 import { setRequestLocale } from "next-intl/server";
-import { generateRouteMetadata } from "@/lib/metadata"
-import { HomeClient } from "./home-client"
+import { generateRouteMetadata } from "@/lib/metadata";
+import { HomeClient } from "./home-client";
 import { HeroSectionServer } from "@/components/sections/hero-section.server";
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ locale: string }>
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params
+  const { locale } = await params;
   setRequestLocale(locale);
-  return generateRouteMetadata(locale, "home", "")
+  return generateRouteMetadata(locale, "home", "");
 }
 
 export default async function Home({
@@ -20,7 +20,7 @@ export default async function Home({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  
+
   return (
     <>
       <HeroSectionServer locale={locale} />

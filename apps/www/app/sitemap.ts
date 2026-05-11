@@ -41,7 +41,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemapEntries: MetadataRoute.Sitemap = [];
   const buildAlternates = (path: string) => ({
     languages: Object.fromEntries(
-      SUPPORTED_LOCALES.map((locale) => [locale, getLocalizedUrl(locale, path)]),
+      SUPPORTED_LOCALES.map((locale) => [
+        locale,
+        getLocalizedUrl(locale, path),
+      ]),
     ),
   });
 

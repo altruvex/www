@@ -44,6 +44,14 @@ export default function TransparencyPageClient() {
   const searchParams = useSearchParams();
 
   const incomingTier = searchParams.get("tier") ?? null;
+  const incomingProjectType = searchParams.get("projectType");
+  const initialProjectType = (
+    ["website", "webapp", "ecommerce", "pwa"].includes(
+      incomingProjectType ?? "",
+    )
+      ? incomingProjectType
+      : null
+  ) as ProjectType;
   const isPreselected = incomingTier !== null;
 
   const {
@@ -67,7 +75,7 @@ export default function TransparencyPageClient() {
     reset,
     canProceed,
     getEstimate,
-  } = useTransparency({ initialTier: incomingTier });
+  } = useTransparency({ initialTier: incomingTier, initialProjectType });
 
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -106,7 +114,13 @@ export default function TransparencyPageClient() {
     }).format(n);
 
   const visibleStep = isPreselected
-    ? (step === 5 ? 1 : step === 7 ? 2 : step === 8 ? 3 : 1)
+    ? step === 5
+      ? 1
+      : step === 7
+        ? 2
+        : step === 8
+          ? 3
+          : 1
     : step;
 
   const handlePhoneSubmit = async () => {
@@ -198,7 +212,10 @@ export default function TransparencyPageClient() {
               >
                 {t("title")}
               </h1>
-              <p ref={subtitleRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70">
+              <p
+                ref={subtitleRef}
+                className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70"
+              >
                 {t("subtitle")}
               </p>
               {incomingTier && (
@@ -232,10 +249,7 @@ export default function TransparencyPageClient() {
               </div>
             </div>
 
-            <div
-              key={containerKey}
-              className="mb-12 animate-step-in"
-            >
+            <div key={containerKey} className="mb-12 animate-step-in">
               {step === 1 && (
                 <StepBrandIdentity
                   selected={brandIdentity}
@@ -382,10 +396,17 @@ function TransparencyFaqSection({ t }: StepProps) {
             </h2>
           </div>
 
-          <div ref={contentRef} className="rounded-2xl border border-border bg-surface px-5 md:px-8">
+          <div
+            ref={contentRef}
+            className="rounded-2xl border border-border bg-foreground/3 px-5 md:px-8"
+          >
             <Accordion type="single" collapsible className="w-full">
               {items.map((item) => (
-                <AccordionItem key={item.value} value={item.value} className="border-border">
+                <AccordionItem
+                  key={item.value}
+                  value={item.value}
+                  className="border-border"
+                >
                   <AccordionTrigger className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] font-sans font-light hover:text-foreground transition-colors py-6 text-start">
                     {item.question}
                   </AccordionTrigger>
@@ -406,8 +427,7 @@ function TransparencyFaqSection({ t }: StepProps) {
 const OPTION_BASE =
   "relative border transition-all duration-300 cursor-pointer";
 
-const OPTION_SELECTED =
-  "border-foreground/60 bg-foreground/[0.08] shadow-lg";
+const OPTION_SELECTED = "border-foreground/60 bg-foreground/[0.08] shadow-lg";
 
 const OPTION_DEFAULT =
   "border-foreground/20 hover:border-foreground/40 hover:bg-foreground/[0.04] hover:shadow-md";
@@ -426,13 +446,7 @@ function SelectionCheck({ visible }: { visible: boolean }) {
 }
 
 // ── [IMPROVEMENT #3] Step header with title + contextual subtitle ──
-function StepHeader({
-  title,
-  hint,
-}: {
-  title: string;
-  hint?: string;
-}) {
+function StepHeader({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="text-center mb-10">
       <h2 className="text-[clamp(1.8rem,2.5vw,2.4rem)] tracking-tight font-normal text-primary mb-4">
@@ -502,7 +516,9 @@ function StepPhoneCapture({
             />
           </div>
           {error && (
-            <p className="mt-1.5 font-mono text-sm leading-normal tracking-wider text-destructive">{error}</p>
+            <p className="mt-1.5 font-mono text-sm leading-normal tracking-wider text-destructive">
+              {error}
+            </p>
           )}
           <p className="mt-2 font-mono text-sm leading-normal tracking-wider text-[10px] text-muted-foreground/70 uppercase">
             {t("phoneCapture.phoneHint")}
@@ -551,7 +567,9 @@ function PDFDownload({
           <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-1">
             {t("pdf.label")}
           </p>
-          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70">{t("pdf.description")}</p>
+          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70">
+            {t("pdf.description")}
+          </p>
         </div>
         <MagneticButton
           variant="secondary"
@@ -651,7 +669,9 @@ function StepResults({
           </p>
           <p className="text-3xl font-light text-primary">
             {estimate.minWeeks}–{estimate.maxWeeks}{" "}
-            <span className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/60">{t("results.weeks")}</span>
+            <span className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/60">
+              {t("results.weeks")}
+            </span>
           </p>
         </div>
         <div className="p-8 rounded-sm border border-foreground/50 bg-foreground/10">
@@ -753,10 +773,7 @@ function StepBrandIdentity({
   const options: BrandIdentity[] = ["complete", "partial", "scratch"];
   return (
     <div>
-      <StepHeader
-        title={t("steps.brand.title")}
-        hint={t("steps.brand.hint")}
-      />
+      <StepHeader title={t("steps.brand.title")} hint={t("steps.brand.hint")} />
       <div className="grid sm:grid-cols-3 gap-5">
         {options.map((opt) => (
           <button

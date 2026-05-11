@@ -84,7 +84,9 @@ export const ProposalNarrativeBlock = memo(function ProposalNarrativeBlock({
         <p
           className={cn(
             "text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground leading-relaxed",
-            isRtl ? "font-sans" : "font-mono text-sm leading-normal tracking-wider",
+            isRtl
+              ? "font-sans"
+              : "font-mono text-sm leading-normal tracking-wider",
           )}
         >
           {L(narrative.closing)}
@@ -96,6 +98,7 @@ export const ProposalNarrativeBlock = memo(function ProposalNarrativeBlock({
 
 export const TransparencySection = memo(function TransparencySection() {
   const t = useTranslations("transparency");
+  const tCommon = useTranslations("common");
   const translate = t as TransparencyTranslator;
   const locale = useLocale();
 
@@ -127,7 +130,7 @@ export const TransparencySection = memo(function TransparencySection() {
 
   useIsomorphicLayoutEffect(() => {
     if (!formContainerRef.current) return;
-    tweenCtxRef.current = gsap.context(() => { }, formContainerRef);
+    tweenCtxRef.current = gsap.context(() => {}, formContainerRef);
     return () => {
       tweenCtxRef.current?.revert();
       tweenCtxRef.current = null;
@@ -153,7 +156,8 @@ export const TransparencySection = memo(function TransparencySection() {
     (dir: "forward" | "back", cb: () => void) => {
       if (!formContainerRef.current || isAnimating) return;
       setIsAnimating(true);
-      const fromY = dir === "forward" ? MOTION.distance.md : -MOTION.distance.md;
+      const fromY =
+        dir === "forward" ? MOTION.distance.md : -MOTION.distance.md;
       const toY = dir === "forward" ? -MOTION.distance.md : MOTION.distance.md;
       gsap.killTweensOf(formContainerRef.current);
       tweenCtxRef.current?.add(() => {
@@ -199,7 +203,11 @@ export const TransparencySection = memo(function TransparencySection() {
   const selection = useMemo(
     () =>
       sel.projectType && sel.tier && sel.timeline
-        ? { projectType: sel.projectType, tier: sel.tier, timeline: sel.timeline }
+        ? {
+            projectType: sel.projectType,
+            tier: sel.tier,
+            timeline: sel.timeline,
+          }
         : null,
     [sel.projectType, sel.tier, sel.timeline],
   );
@@ -280,7 +288,13 @@ export const TransparencySection = memo(function TransparencySection() {
   }, [estimate, locale, sel.name, sel.phone, selection, translate]);
 
   useIsomorphicLayoutEffect(() => {
-    if (!leadCaptured || hasAutoDownloadedRef.current || !estimate || !sel.phone) return;
+    if (
+      !leadCaptured ||
+      hasAutoDownloadedRef.current ||
+      !estimate ||
+      !sel.phone
+    )
+      return;
     hasAutoDownloadedRef.current = true;
     void handleDownloadPDF();
   }, [leadCaptured, handleDownloadPDF, estimate, sel.phone]);
@@ -306,27 +320,33 @@ export const TransparencySection = memo(function TransparencySection() {
       className="flex w-full items-center pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-
         <div className="mb-12 space-y-3 text-center max-w-3xl mx-auto">
-          <p ref={badgeRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground block">
+          <p
+            ref={badgeRef}
+            className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground block"
+          >
             {t("badge")}
           </p>
-          <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground">
+          <h2
+            ref={titleRef}
+            className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground"
+          >
             {t("title")}
           </h2>
-          <p ref={descriptionRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground leading-relaxed">
+          <p
+            ref={descriptionRef}
+            className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground leading-relaxed"
+          >
             {t("description")}
           </p>
         </div>
 
         <div className="h-px w-full bg-border mb-12 max-w-3xl mx-auto" />
 
-
         <div
           ref={formRef}
           className="max-w-3xl mx-auto bg-background rounded-sm border border-border p-6 md:p-10 shadow-sm relative overflow-hidden"
         >
-
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-border">
             <div
               className="h-full bg-brand transition-all duration-500 ease-out"
@@ -335,20 +355,28 @@ export const TransparencySection = memo(function TransparencySection() {
           </div>
 
           <div ref={formContainerRef} className="pt-4">
-
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
                   <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-                    {locale === "ar" ? "الخطوة ١ من ٣" : "Step 1 of 3"}
+                    {tCommon("stepOf", { current: 1, total: 3 })}
                   </span>
                   {t("step1.question")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(["ecommerce", "corporate", "custom", "performance"] as DeliverableProject[]).map((type) => (
+                  {(
+                    [
+                      "ecommerce",
+                      "corporate",
+                      "custom",
+                      "performance",
+                    ] as DeliverableProject[]
+                  ).map((type) => (
                     <button
                       key={type}
-                      onClick={() => setSel((s) => ({ ...s, projectType: type }))}
+                      onClick={() =>
+                        setSel((s) => ({ ...s, projectType: type }))
+                      }
                       className={optCls(sel.projectType === type)}
                     >
                       <h4 className="font-medium text-foreground mb-1 text-base">
@@ -368,17 +396,23 @@ export const TransparencySection = memo(function TransparencySection() {
               </div>
             )}
 
-
             {step === 2 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
                   <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-                    {locale === "ar" ? "الخطوة ٢ من ٣" : "Step 2 of 3"}
+                    {tCommon("stepOf", { current: 2, total: 3 })}
                   </span>
                   {t("step2.question")}
                 </h3>
                 <div className="flex flex-col gap-3">
-                  {(["small", "medium", "large", "enterprise"] as DeliverableTier[]).map((tier) => (
+                  {(
+                    [
+                      "small",
+                      "medium",
+                      "large",
+                      "enterprise",
+                    ] as DeliverableTier[]
+                  ).map((tier) => (
                     <button
                       key={tier}
                       onClick={() => setSel((s) => ({ ...s, tier }))}
@@ -398,39 +432,39 @@ export const TransparencySection = memo(function TransparencySection() {
               </div>
             )}
 
-
             {step === 3 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
                   <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-                    {locale === "ar" ? "الخطوة ٣ من ٣" : "Step 3 of 3"}
+                    {tCommon("stepOf", { current: 3, total: 3 })}
                   </span>
                   {t("step3.question")}
                 </h3>
                 <div className="flex flex-col gap-3">
-                  {(["urgent", "soon", "flexible"] as SectionTimeline[]).map((timeline) => (
-                    <button
-                      key={timeline}
-                      onClick={() => setSel((s) => ({ ...s, timeline }))}
-                      className={optCls(sel.timeline === timeline)}
-                    >
-                      <h4 className="font-medium text-foreground text-base">
-                        {translate(`step3.options.${timeline}.title`)}
-                      </h4>
-                      <p className="text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-muted-foreground mt-0.5">
-                        {translate(`step3.options.${timeline}.desc`)}
-                      </p>
-                      {sel.timeline === timeline && (
-                        <div className="absolute top-1/2 -translate-y-1/2 inset-e-4 text-muted-foreground">
-                          <Check className="h-4 w-4" />
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                  {(["urgent", "soon", "flexible"] as SectionTimeline[]).map(
+                    (timeline) => (
+                      <button
+                        key={timeline}
+                        onClick={() => setSel((s) => ({ ...s, timeline }))}
+                        className={optCls(sel.timeline === timeline)}
+                      >
+                        <h4 className="font-medium text-foreground text-base">
+                          {translate(`step3.options.${timeline}.title`)}
+                        </h4>
+                        <p className="text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-muted-foreground mt-0.5">
+                          {translate(`step3.options.${timeline}.desc`)}
+                        </p>
+                        {sel.timeline === timeline && (
+                          <div className="absolute top-1/2 -translate-y-1/2 inset-e-4 text-muted-foreground">
+                            <Check className="h-4 w-4" />
+                          </div>
+                        )}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
             )}
-
 
             {step === 4 && (
               <div className="space-y-6">
@@ -501,17 +535,21 @@ export const TransparencySection = memo(function TransparencySection() {
                   onClick={handlePhoneSubmit}
                   disabled={isSubmitting || !sel.phone}
                 >
-                  {isSubmitting ? t("phoneCapture.submitting") : t("phoneCapture.button")}
+                  {isSubmitting
+                    ? t("phoneCapture.submitting")
+                    : t("phoneCapture.button")}
                 </MagneticButton>
               </div>
             )}
-
 
             {step === 5 && (
               <div className="space-y-7 py-2">
                 <div>
                   <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 mb-4">
-                    <Check className="h-3 w-3 text-muted-foreground" strokeWidth={2.5} />
+                    <Check
+                      className="h-3 w-3 text-muted-foreground"
+                      strokeWidth={2.5}
+                    />
                     <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
                       {t("results.badge")}
                     </span>
@@ -529,12 +567,20 @@ export const TransparencySection = memo(function TransparencySection() {
                         </p>
                         <p
                           className="font-sans font-light leading-none mb-1"
-                          style={{ fontSize: "clamp(18px,3.5vw,26px)", letterSpacing: "-0.03em" }}
+                          style={{
+                            fontSize: "clamp(18px,3.5vw,26px)",
+                            letterSpacing: "-0.03em",
+                          }}
                         >
-                          {formatEGP(estimate.priceMin)} – {formatEGP(estimate.priceMax)}
+                          {formatEGP(estimate.priceMin)} –{" "}
+                          {formatEGP(estimate.priceMax)}
                         </p>
-                        <p className="font-mono text-xs opacity-40">{t("results.vatExcluded")}</p>
-                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal opacity-30 mt-3">{t("results.hostingIncluded")}</p>
+                        <p className="font-mono text-xs opacity-40">
+                          {t("results.vatExcluded")}
+                        </p>
+                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal opacity-30 mt-3">
+                          {t("results.hostingIncluded")}
+                        </p>
                       </div>
                       <div className="p-6 rounded-sm bg-surface border border-border">
                         <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-3">
@@ -542,13 +588,24 @@ export const TransparencySection = memo(function TransparencySection() {
                         </p>
                         <p
                           className="font-sans font-light text-foreground leading-none mb-1"
-                          style={{ fontSize: "clamp(18px,3.5vw,26px)", letterSpacing: "-0.03em" }}
+                          style={{
+                            fontSize: "clamp(18px,3.5vw,26px)",
+                            letterSpacing: "-0.03em",
+                          }}
                         >
-                          {localizeNumbers(estimate.weeksMin.toString(), locale)}
+                          {localizeNumbers(
+                            estimate.weeksMin.toString(),
+                            locale,
+                          )}
                           –
-                          {localizeNumbers(estimate.weeksMax.toString(), locale)}
+                          {localizeNumbers(
+                            estimate.weeksMax.toString(),
+                            locale,
+                          )}
                         </p>
-                        <p className="font-mono text-xs text-muted-foreground">{t("results.weeks")}</p>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {t("results.weeks")}
+                        </p>
                       </div>
                     </div>
                     {selection && (
@@ -570,19 +627,26 @@ export const TransparencySection = memo(function TransparencySection() {
                             `pdfContent.deliverables.${selection.projectType}.${selection.tier}`,
                           );
                           const items = Array.isArray(rawItems)
-                            ? rawItems.filter((item): item is string => typeof item === "string")
+                            ? rawItems.filter(
+                                (item): item is string =>
+                                  typeof item === "string",
+                              )
                             : [];
                           return (
                             <>
                               {items.slice(0, 5).map((d: string, i: number) => (
                                 <div key={i} className="flex items-start gap-3">
                                   <div className="h-1.5 w-1.5 rounded-full bg-border-mid mt-[7px] shrink-0" />
-                                  <p className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground leading-relaxed">{d}</p>
+                                  <p className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground leading-relaxed">
+                                    {d}
+                                  </p>
                                 </div>
                               ))}
                               {items.length > 5 && (
                                 <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground ps-5 pt-1">
-                                  {t("results.moreInPdf", { count: items.length - 5 })}
+                                  {t("results.moreInPdf", {
+                                    count: items.length - 5,
+                                  })}
                                 </p>
                               )}
                             </>
@@ -593,9 +657,15 @@ export const TransparencySection = memo(function TransparencySection() {
                     <div className="flex gap-3 p-4 rounded-sm bg-surface border border-border">
                       <div className="h-1.5 w-1.5 rounded-full bg-border-mid mt-2 shrink-0" />
                       <p className="font-mono text-xs text-muted-foreground leading-relaxed">
-                        <span className="text-foreground font-medium">{t("results.infraLabel")}:</span>{" "}
+                        <span className="text-foreground font-medium">
+                          {t("results.infraLabel")}:
+                        </span>{" "}
                         {selection
-                          ? t("results.infraDescription", { amount: formatEGP(HOSTING_RENEWAL[selection.tier]) })
+                          ? t("results.infraDescription", {
+                              amount: formatEGP(
+                                HOSTING_RENEWAL[selection.tier],
+                              ),
+                            })
                           : null}
                       </p>
                     </div>
@@ -651,7 +721,6 @@ export const TransparencySection = memo(function TransparencySection() {
             )}
           </div>
 
-
           {step < 5 && step !== 4 && (
             <div className="mt-8 flex justify-between items-center border-t border-border pt-6">
               {step > 1 ? (
@@ -666,7 +735,9 @@ export const TransparencySection = memo(function TransparencySection() {
               ) : (
                 <div />
               )}
-              <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">{step} / 5</span>
+              <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                {step} / 5
+              </span>
               <button
                 onClick={goNext}
                 disabled={!canProceed || isAnimating}
@@ -677,7 +748,6 @@ export const TransparencySection = memo(function TransparencySection() {
               </button>
             </div>
           )}
-
 
           {step === 5 && (
             <div className="mt-6 border-t border-border pt-6 flex justify-between items-center">
@@ -698,7 +768,6 @@ export const TransparencySection = memo(function TransparencySection() {
           )}
         </div>
 
-
         <div className="mt-32 max-w-3xl mx-auto">
           <div className="text-center mb-10">
             <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground mb-3">
@@ -715,7 +784,11 @@ export const TransparencySection = memo(function TransparencySection() {
               { q: t("faq.q3"), a: t("faq.a3") },
               { q: t("faq.q4"), a: t("faq.a4") },
             ].map((item, i) => (
-              <AccordionItem key={i + 1} value={`item-${i + 1}`} className="border-border">
+              <AccordionItem
+                key={i + 1}
+                value={`item-${i + 1}`}
+                className="border-border"
+              >
                 <AccordionTrigger className="text-foreground font-sans text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75]">
                   {item.q}
                 </AccordionTrigger>

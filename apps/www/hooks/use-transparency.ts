@@ -99,31 +99,55 @@ const TIMELINE_WEEK_MULTIPLIERS = {
 
 interface UseTransparencyOptions {
   initialTier?: string | null;
+  initialProjectType?: ProjectType;
 }
 
 export function useTransparency({
   initialTier = null,
+  initialProjectType = null,
 }: UseTransparencyOptions = {}) {
   const isPreselected = initialTier !== null;
 
-  const preselectedBudget = initialTier === "essential" ? "small" :
-    initialTier === "professional" ? "medium" :
-      initialTier === "flagship" ? "large" : null;
+  const preselectedBudget =
+    initialTier === "essential" || initialTier === "small"
+      ? "small"
+      : initialTier === "professional" || initialTier === "medium"
+        ? "medium"
+        : initialTier === "commerce" ||
+            initialTier === "flagship" ||
+            initialTier === "large"
+          ? "large"
+          : null;
 
-  const preselectedComplexity = initialTier === "essential" ? "basic" :
-    initialTier === "professional" ? "standard" :
-      initialTier === "flagship" ? "premium" : null;
+  const preselectedComplexity =
+    initialTier === "essential" || initialTier === "small"
+      ? "basic"
+      : initialTier === "professional" || initialTier === "medium"
+        ? "standard"
+        : initialTier === "commerce" ||
+            initialTier === "flagship" ||
+            initialTier === "large"
+          ? "premium"
+          : null;
 
-  const createInitialState = useCallback((): TransparencyState => ({
-    step: isPreselected ? 5 : 1,
-    budget: preselectedBudget as Budget,
-    brandIdentity: isPreselected ? "complete" : null,
-    contentReadiness: isPreselected ? "provide" : null,
-    deadlineUrgency: isPreselected ? "flexible" : null,
-    projectType: null,
-    complexity: preselectedComplexity as Complexity,
-    timeline: null,
-  }), [isPreselected, preselectedBudget, preselectedComplexity]);
+  const createInitialState = useCallback(
+    (): TransparencyState => ({
+      step: isPreselected ? 5 : 1,
+      budget: preselectedBudget as Budget,
+      brandIdentity: isPreselected ? "complete" : null,
+      contentReadiness: isPreselected ? "provide" : null,
+      deadlineUrgency: isPreselected ? "flexible" : null,
+      projectType: initialProjectType,
+      complexity: preselectedComplexity as Complexity,
+      timeline: null,
+    }),
+    [
+      isPreselected,
+      preselectedBudget,
+      preselectedComplexity,
+      initialProjectType,
+    ],
+  );
 
   const [state, setState] = useState<TransparencyState>(createInitialState);
 

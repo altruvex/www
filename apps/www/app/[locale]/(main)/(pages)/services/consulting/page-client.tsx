@@ -26,8 +26,9 @@ export default function ConsultingPage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.consulting");
-  const locale = useLocale();
-  const auditCta = getCommercialCta(locale, "technicalAudit");
+  const tCommon = useTranslations("common");
+  const tCTAs = useTranslations("commercial.ctas");
+  const auditCta = getCommercialCta("technicalAudit");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText(DEFAULTS.heading);
@@ -40,9 +41,7 @@ function HeroSection() {
   });
 
   return (
-    <section
-      className="relative z-10 flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
-    >
+    <section className="relative z-10 flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>03</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
@@ -82,7 +81,10 @@ function HeroSection() {
             ref={descRef}
             className="mb-12 grid md:grid-cols-[80px_1fr] gap-8 items-start"
           >
-            <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" aria-hidden="true" />
+            <div
+              className="h-px w-full bg-foreground/8 mt-3 hidden md:block"
+              aria-hidden="true"
+            />
             <p className="text-base text-primary/60 leading-relaxed max-w-[52ch]">
               {t("description")}
             </p>
@@ -92,10 +94,14 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton size="lg" variant="primary" className="group w-full sm:w-auto">
+            <MagneticButton
+              size="lg"
+              variant="primary"
+              className="group w-full sm:w-auto"
+            >
               <Link href={auditCta.href}>
                 <span className="flex items-center justify-center gap-2">
-                  {auditCta.label}
+                  {tCTAs("technicalAudit")}
                   <svg
                     aria-hidden="true"
                     className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
@@ -113,7 +119,12 @@ function HeroSection() {
                 </span>
               </Link>
             </MagneticButton>
-            <MagneticButton asChild size="lg" variant="secondary" className="w-full sm:w-auto text-center">
+            <MagneticButton
+              asChild
+              size="lg"
+              variant="secondary"
+              className="w-full sm:w-auto text-center"
+            >
               <Link href="#audit-offer">{t("hero.ctaSecondary")}</Link>
             </MagneticButton>
           </div>
@@ -125,12 +136,14 @@ function HeroSection() {
         className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
         aria-hidden="true"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>Scroll</p>
+        <p className={cn(monoCaps, "text-muted-foreground/70")}>
+          {tCommon("scroll")}
+        </p>
         <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
           <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
         </div>
       </div>
-    </section >
+    </section>
   );
 }
 
@@ -145,7 +158,10 @@ function AuditOfferSection() {
   const included = t.raw("included") as string[];
 
   return (
-    <section id="audit-offer" className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
+    <section
+      id="audit-offer"
+      className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+    >
       <Container>
         <div
           ref={panelRef}
@@ -178,7 +194,12 @@ function AuditOfferSection() {
                 {t("description")}
               </p>
               <div className="mt-8">
-                <MagneticButton asChild size="lg" variant="primary" className="group">
+                <MagneticButton
+                  asChild
+                  size="lg"
+                  variant="primary"
+                  className="group"
+                >
                   <Link href="/contact?service=consulting&package=audit">
                     <span className="flex items-center gap-2">
                       {t("cta")}
@@ -253,7 +274,10 @@ function CtaSection() {
   const t = useTranslations("serviceDetails.consulting");
   const sectionRef = useReveal<HTMLElement>({ direction: "fade" });
   const lineRef = useReveal<HTMLDivElement>({ direction: "fade", delay: 0 });
-  const headlineRef = useReveal<HTMLHeadingElement>({ ...DEFAULTS.body, delay: 0.1 });
+  const headlineRef = useReveal<HTMLHeadingElement>({
+    ...DEFAULTS.body,
+    delay: 0.1,
+  });
   const subRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body, delay: 0.2 });
   const ctaRef = useReveal<HTMLDivElement>({ ...DEFAULTS.element, delay: 0.3 });
 
@@ -284,7 +308,11 @@ function CtaSection() {
               {t("cta.description")}
             </p>
             <div ref={ctaRef} className="flex flex-col gap-3">
-              <MagneticButton size="lg" variant="primary" className="group w-full justify-center">
+              <MagneticButton
+                size="lg"
+                variant="primary"
+                className="group w-full justify-center"
+              >
                 <Link href="/schedule">
                   <span className="flex items-center gap-2">
                     {t("cta.button")}
@@ -304,10 +332,12 @@ function CtaSection() {
                   </span>
                 </Link>
               </MagneticButton>
-              <MagneticButton size="lg" variant="secondary" className="w-full justify-center">
-                <Link href="/services">
-                  {t("cta.back")}
-                </Link>
+              <MagneticButton
+                size="lg"
+                variant="secondary"
+                className="w-full justify-center"
+              >
+                <Link href="/services">{t("cta.back")}</Link>
               </MagneticButton>
             </div>
           </div>

@@ -26,6 +26,14 @@ export const SITE_CONFIG = {
   },
   email: "hello@altruvex.com",
   founder: {
+    description: {
+      ar: "المؤسس والمهندس الرئيسي في Altruvex، ويقود بناء أنظمة الويب المخصصة وواجهات العربية والإنجليزية.",
+      en: "Founder and lead engineer at Altruvex, focused on custom web systems and Arabic/English product delivery.",
+    },
+    jobTitle: {
+      ar: "المؤسس والمهندس الرئيسي",
+      en: "Founder & Lead Engineer",
+    },
     linkedin: "https://www.linkedin.com/in/ali-abdelhadi-65094b283/",
     name: "Ali Abdelhadi",
   },
@@ -48,7 +56,11 @@ export const SITE_CONFIG = {
     dribbble: "https://dribbble.com/altruvex",
   },
   twitterHandle: "@altruvex",
-  url: process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "https://altruvex.com"),
+  url:
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://altruvex.com"),
 } as const;
 
 const METADATA_DEFAULTS = {
@@ -493,7 +505,7 @@ export const PAGE_METADATA = {
         "صيانة أنظمة ويب",
       ],
       title: "خدمات تطوير مواقع ويب مخصصة",
-    },  
+    },
     en: {
       breadcrumb: "Services",
       description:

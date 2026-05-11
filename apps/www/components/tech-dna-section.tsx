@@ -233,7 +233,8 @@ export function TechDNASection() {
     if (!activeId) return "hsl(var(--foreground))";
     if (conn.from === activeId || conn.to === activeId) {
       return (
-        NODES.find((n) => n.id === conn.from)?.accent ?? "hsl(var(--foreground))"
+        NODES.find((n) => n.id === conn.from)?.accent ??
+        "hsl(var(--foreground))"
       );
     }
     return "hsl(var(--foreground))";
@@ -273,9 +274,7 @@ export function TechDNASection() {
             >
               {t("techStack.title")}
               <br />
-              <span
-                className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-              >
+              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
                 {t("techStack.titleItalic")}
               </span>
             </h2>
@@ -304,7 +303,10 @@ export function TechDNASection() {
                   width="100%"
                   height="100%"
                   className="absolute inset-0"
-                  style={{ overflow: "visible", color: "hsl(var(--foreground))" }}
+                  style={{
+                    overflow: "visible",
+                    color: "hsl(var(--foreground))",
+                  }}
                   role="img"
                   aria-label={t("techStack.diagramLabel")}
                 >

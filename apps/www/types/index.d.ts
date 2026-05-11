@@ -1,7 +1,7 @@
 // Supported Locales Type
-export type SupportedLocales = 'en' | 'ar';
+export type SupportedLocales = "en" | "ar";
 
-// Layout Children Type 
+// Layout Children Type
 export type layoutChildren = {
-    children: React.ReactNode
-}
+  children: React.ReactNode;
+};

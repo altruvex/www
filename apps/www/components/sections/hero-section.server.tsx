@@ -19,7 +19,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
     label: string;
   }>;
 
-  const primaryCta = getCommercialCta(locale, "projectRange");
+  const primaryCta = getCommercialCta("projectRange");
 
   return (
     <section
@@ -41,7 +41,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       </h1>
       <Container>
         <div className="max-w-full sm:max-w-5xl lg:py-0 py-12">
-          <HeroReveal delay={0.1} className="mb-6 flex items-center gap-2 md:hidden">
+          <HeroReveal
+            delay={0.1}
+            className="mb-6 flex items-center gap-2 md:hidden"
+          >
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
             <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
               {t("hero.availability")}
@@ -61,9 +64,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               {t("hero.badge")}
             </span>
           </HeroReveal>
-          <HeroHeadline
-            className="text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none"
-          >
+          <HeroHeadline className="text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
             <span className="block">{title1}</span>
             <span className="block text-foreground/45 font-serif italic font-light tracking-[-0.02em] rtl:tracking-normal rtl:font-sans rtl:not-italic rtl:font-bold">
               {title2}
@@ -73,7 +74,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             delay={0.5}
             className="mb-8 md:mb-12 grid gap-6 md:grid-cols-[96px_1fr] md:gap-8 items-start"
           >
-            <div className="h-px w-full bg-border mt-3 hidden md:block" aria-hidden />
+            <div
+              className="h-px w-full bg-border mt-3 hidden md:block"
+              aria-hidden
+            />
             <div className="space-y-3 max-w-xl">
               <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                 {t("hero.problem")}
@@ -84,7 +88,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             delay={0.65}
             className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
           >
-            <MagneticButton size="lg" className="w-full sm:w-auto min-w-[180px]">
+            <MagneticButton
+              size="lg"
+              className="w-full sm:w-auto min-w-[180px]"
+            >
               <Link
                 href={primaryCta.href}
                 className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full"
@@ -139,7 +146,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
         >
           {t("hero.scrollHint")}
         </p>
-        <div className="relative h-10 w-px overflow-hidden bg-border" aria-hidden>
+        <div
+          className="relative h-10 w-px overflow-hidden bg-border"
+          aria-hidden
+        >
           <div className="absolute top-0 h-1/2 w-full bg-border-mid animate-slide-down" />
         </div>
       </HeroReveal>

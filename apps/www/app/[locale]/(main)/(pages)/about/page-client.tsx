@@ -1,7 +1,10 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { ArrowLabel, ExternalDirectionalLink } from "@/components/directional-link";
+import {
+  ArrowLabel,
+  ExternalDirectionalLink,
+} from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
@@ -37,8 +40,8 @@ export default memo(function AboutPageClient({ routeCards }: PageClientProps) {
 function HeroSection() {
   const t = useTranslations("about");
   const heroT = useTranslations("hero");
-  const locale = useLocale();
-  const projectRangeCta = getCommercialCta(locale, "projectRange");
+  const tCTAs = useTranslations("commercial.ctas");
+  const projectRangeCta = getCommercialCta("projectRange");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText(DEFAULTS.heading);
@@ -81,7 +84,10 @@ function HeroSection() {
       <Container>
         <div className="grid gap-14 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
           <div className="sm:max-w-5xl max-w-full">
-            <p ref={eyebrowRef} className={cn(monoCaps, "mb-6 text-muted-foreground/70")}>
+            <p
+              ref={eyebrowRef}
+              className={cn(monoCaps, "mb-6 text-muted-foreground/70")}
+            >
               {t("eyebrow")}
             </p>
             <h1
@@ -96,7 +102,10 @@ function HeroSection() {
                 {t("title3")}
               </span>
             </h1>
-            <div ref={descRef} className="grid gap-5 md:grid-cols-[72px_minmax(0,1fr)] md:gap-8">
+            <div
+              ref={descRef}
+              className="grid gap-5 md:grid-cols-[72px_minmax(0,1fr)] md:gap-8"
+            >
               <div className="hidden h-px w-full bg-border md:block mt-3" />
               <div className="space-y-4 max-w-3xl">
                 <p
@@ -113,10 +122,13 @@ function HeroSection() {
                 </p>
               </div>
             </div>
-            <div ref={ctaRef} className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div
+              ref={ctaRef}
+              className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center"
+            >
               <MagneticButton size="lg" variant="primary" className="group">
                 <Link href={projectRangeCta.href}>
-                  <ArrowLabel>{projectRangeCta.label}</ArrowLabel>
+                  <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
                 </Link>
               </MagneticButton>
               <MagneticButton size="lg" variant="secondary">
@@ -142,7 +154,10 @@ function HeroSection() {
                 {t("founderNote")}
               </p>
               <div className="mt-5">
-                <ExternalDirectionalLink href={FOUNDER_LINK} className={cn(monoCaps, "text-foreground")}>
+                <ExternalDirectionalLink
+                  href={FOUNDER_LINK}
+                  className={cn(monoCaps, "text-foreground")}
+                >
                   {t("founder.linkedInLabel")}
                 </ExternalDirectionalLink>
               </div>
@@ -161,8 +176,12 @@ function HeroSection() {
                     <p className="text-[clamp(1.75rem,2.6vw,2.25rem)] tracking-[-0.03em] font-light text-foreground leading-none">
                       {stat.value}
                     </p>
-                    <p className="mt-2 text-sm font-medium text-foreground">{stat.label}</p>
-                    <p className={cn(monoCaps, "mt-2 text-muted-foreground/70")}>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                      {stat.label}
+                    </p>
+                    <p
+                      className={cn(monoCaps, "mt-2 text-muted-foreground/70")}
+                    >
                       {stat.sub}
                     </p>
                   </div>
@@ -256,7 +275,10 @@ function PrinciplesSection() {
                     {t("founder.name")}
                   </h3>
                 </div>
-                <ExternalDirectionalLink href={FOUNDER_LINK} className={cn(monoCaps, "text-foreground")}>
+                <ExternalDirectionalLink
+                  href={FOUNDER_LINK}
+                  className={cn(monoCaps, "text-foreground")}
+                >
                   {t("founder.linkedInLabel")}
                 </ExternalDirectionalLink>
               </div>

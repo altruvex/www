@@ -1,59 +1,66 @@
-"use client"
+"use client";
 
-import { Slot } from "@radix-ui/react-slot"
-import React, { forwardRef, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react"
+import { Slot } from "@radix-ui/react-slot";
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost"
-type ButtonSize = "default" | "lg"
+type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonSize = "default" | "lg";
 
 interface Ripple {
-  x: number
-  y: number
-  id: number
+  x: number;
+  y: number;
+  id: number;
 }
 
 interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: React.ReactNode
-  className?: string
-  variant?: ButtonVariant
-  size?: ButtonSize
-  soundEnabled?: boolean
-  hapticEnabled?: boolean
-  asChild?: boolean
+  children: React.ReactNode;
+  className?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  soundEnabled?: boolean;
+  hapticEnabled?: boolean;
+  asChild?: boolean;
 }
 
 function useMergedRef<T>(...refs: (React.Ref<T> | null | undefined)[]) {
   return useCallback(
     (node: T) => {
       refs.forEach((ref) => {
-        if (typeof ref === "function") ref(node)
-        else if (ref) (ref as React.MutableRefObject<T>).current = node
-      })
+        if (typeof ref === "function") ref(node);
+        else if (ref) (ref as React.MutableRefObject<T>).current = node;
+      });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    refs
-  )
+    refs,
+  );
 }
 
 function subscribeToReducedMotion(onStoreChange: () => void) {
-  if (typeof window === "undefined") return () => undefined
-  const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
-  mediaQuery.addEventListener("change", onStoreChange)
-  return () => mediaQuery.removeEventListener("change", onStoreChange)
+  if (typeof window === "undefined") return () => undefined;
+  const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+  mediaQuery.addEventListener("change", onStoreChange);
+  return () => mediaQuery.removeEventListener("change", onStoreChange);
 }
 
 function getReducedMotionPreference() {
-  if (typeof window === "undefined") return false
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 // Ripple keyframes injected once into the document head
-const RIPPLE_STYLE_ID = "magnetic-button-ripple-keyframes"
+const RIPPLE_STYLE_ID = "magnetic-button-ripple-keyframes";
 function ensureRippleKeyframes() {
-  if (typeof document === "undefined") return
-  if (document.getElementById(RIPPLE_STYLE_ID)) return
-  const style = document.createElement("style")
-  style.id = RIPPLE_STYLE_ID
+  if (typeof document === "undefined") return;
+  if (document.getElementById(RIPPLE_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = RIPPLE_STYLE_ID;
   style.textContent = `
     @keyframes ripple-expand {
       0%   { transform: translate(-50%, -50%) scale(1);  opacity: 0.35; }
@@ -62,11 +69,14 @@ function ensureRippleKeyframes() {
     .magnetic-ripple {
       animation: ripple-expand 400ms ease-out forwards;
     }
-  `
-  document.head.appendChild(style)
+  `;
+  document.head.appendChild(style);
 }
 
-export const MagneticButton = forwardRef<HTMLButtonElement, MagneticButtonProps>(
+export const MagneticButton = forwardRef<
+  HTMLButtonElement,
+  MagneticButtonProps
+>(
   (
     {
       children,
@@ -79,133 +89,138 @@ export const MagneticButton = forwardRef<HTMLButtonElement, MagneticButtonProps>
       onClick,
       ...props
     },
-    forwardedRef
+    forwardedRef,
   ) => {
-    const internalRef = useRef<HTMLButtonElement>(null)
-    const rectRef = useRef<DOMRect | null>(null)
-    const magneticRef = useRef({ x: 0, y: 0 })
-    const isPressedRef = useRef(false)
-    const rafRef = useRef<number | null>(null)
+    const internalRef = useRef<HTMLButtonElement>(null);
+    const rectRef = useRef<DOMRect | null>(null);
+    const magneticRef = useRef({ x: 0, y: 0 });
+    const isPressedRef = useRef(false);
+    const rafRef = useRef<number | null>(null);
 
-    const mergedRef = useMergedRef(internalRef, forwardedRef)
+    const mergedRef = useMergedRef(internalRef, forwardedRef);
 
     const updateRect = useCallback(() => {
-      if (!internalRef.current) return
-      rectRef.current = internalRef.current.getBoundingClientRect()
-    }, [])
+      if (!internalRef.current) return;
+      rectRef.current = internalRef.current.getBoundingClientRect();
+    }, []);
 
     const prefersReducedMotion = useSyncExternalStore(
       subscribeToReducedMotion,
       getReducedMotionPreference,
-      () => false
-    )
+      () => false,
+    );
 
-    const [isPressed, setIsPressed] = useState(false)
-    const [ripples, setRipples] = useState<Ripple[]>([])
+    const [isPressed, setIsPressed] = useState(false);
+    const [ripples, setRipples] = useState<Ripple[]>([]);
 
-    const Comp = asChild ? Slot : "button"
+    const Comp = asChild ? Slot : "button";
 
     useEffect(() => {
       return () => {
         if (rafRef.current !== null) {
-          cancelAnimationFrame(rafRef.current)
+          cancelAnimationFrame(rafRef.current);
         }
-      }
-    }, [])
+      };
+    }, []);
 
     const flushTransform = useCallback(() => {
-      rafRef.current = null
-      if (!internalRef.current) return
-      const { x, y } = magneticRef.current
-      const scale = isPressedRef.current && !prefersReducedMotion ? 0.95 : 1
-      internalRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
-    }, [prefersReducedMotion])
+      rafRef.current = null;
+      if (!internalRef.current) return;
+      const { x, y } = magneticRef.current;
+      const scale = isPressedRef.current && !prefersReducedMotion ? 0.95 : 1;
+      internalRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
+    }, [prefersReducedMotion]);
 
     const scheduleTransform = useCallback(() => {
-      if (rafRef.current !== null) return
-      rafRef.current = requestAnimationFrame(flushTransform)
-    }, [flushTransform])
+      if (rafRef.current !== null) return;
+      rafRef.current = requestAnimationFrame(flushTransform);
+    }, [flushTransform]);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!internalRef.current || prefersReducedMotion) return
-      const rect = rectRef.current ?? internalRef.current.getBoundingClientRect()
-      rectRef.current = rect
+      if (!internalRef.current || prefersReducedMotion) return;
+      const rect =
+        rectRef.current ?? internalRef.current.getBoundingClientRect();
+      rectRef.current = rect;
       magneticRef.current = {
         x: (e.clientX - rect.left - rect.width / 2) * 0.15,
         y: (e.clientY - rect.top - rect.height / 2) * 0.15,
-      }
-      scheduleTransform()
-    }
+      };
+      scheduleTransform();
+    };
 
     const handleMouseLeave = () => {
-      if (prefersReducedMotion) return
-      magneticRef.current = { x: 0, y: 0 }
-      isPressedRef.current = false
-      setIsPressed(false)
-      scheduleTransform()
-    }
+      if (prefersReducedMotion) return;
+      magneticRef.current = { x: 0, y: 0 };
+      isPressedRef.current = false;
+      setIsPressed(false);
+      scheduleTransform();
+    };
 
     const handleMouseDown = () => {
       if (!prefersReducedMotion) {
-        isPressedRef.current = true
-        setIsPressed(true)
-        scheduleTransform()
+        isPressedRef.current = true;
+        setIsPressed(true);
+        scheduleTransform();
       }
-    }
+    };
     const handleMouseUp = () => {
-      isPressedRef.current = false
-      setIsPressed(false)
-      scheduleTransform()
-    }
+      isPressedRef.current = false;
+      setIsPressed(false);
+      scheduleTransform();
+    };
 
     const playClickSound = () => {
       try {
         const audioContext = new (
           window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-        )()
-        const oscillator = audioContext.createOscillator()
-        const gainNode = audioContext.createGain()
-        oscillator.connect(gainNode)
-        gainNode.connect(audioContext.destination)
-        oscillator.frequency.value = 800
-        oscillator.type = "sine"
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
-        oscillator.start(audioContext.currentTime)
-        oscillator.stop(audioContext.currentTime + 0.1)
+          (window as unknown as { webkitAudioContext: typeof AudioContext })
+            .webkitAudioContext
+        )();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = "sine";
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.currentTime + 0.1,
+        );
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
       } catch (error) {
-        console.warn("Audio playback failed:", error)
+        console.warn("Audio playback failed:", error);
       }
-    }
+    };
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!internalRef.current) return
+      if (!internalRef.current) return;
 
-      ensureRippleKeyframes()
+      ensureRippleKeyframes();
 
-      const rect = internalRef.current.getBoundingClientRect()
-      const rippleId = Date.now()
+      const rect = internalRef.current.getBoundingClientRect();
+      const rippleId = Date.now();
 
       setRipples((prev) => [
         ...prev,
         { x: e.clientX - rect.left, y: e.clientY - rect.top, id: rippleId },
-      ])
+      ]);
       setTimeout(
         () => setRipples((prev) => prev.filter((r) => r.id !== rippleId)),
-        420
-      )
+        420,
+      );
 
       if (hapticEnabled && "vibrate" in navigator) {
         try {
-          navigator.vibrate(10)
+          navigator.vibrate(10);
         } catch (err) {
-          console.warn("Haptic failed:", err)
+          console.warn("Haptic failed:", err);
         }
       }
-      if (soundEnabled) playClickSound()
-      onClick?.(e)
-    }
+      if (soundEnabled) playClickSound();
+      onClick?.(e);
+    };
 
     const variants: Record<ButtonVariant, string> = {
       primary:
@@ -214,12 +229,12 @@ export const MagneticButton = forwardRef<HTMLButtonElement, MagneticButtonProps>
         "bg-transparent text-primary/85 border border-foreground/40 hover:bg-foreground/5 hover:border-foreground/60",
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
-    }
+    };
 
     const sizes: Record<ButtonSize, string> = {
       default: "min-h-12 min-w-12 px-6 py-2.5 text-sm",
       lg: "min-h-12 min-w-12 px-8 py-3.5 text-base",
-    }
+    };
 
     return (
       <Comp
@@ -264,8 +279,8 @@ export const MagneticButton = forwardRef<HTMLButtonElement, MagneticButtonProps>
             />
           ))}
       </Comp>
-    )
-  }
-)
+    );
+  },
+);
 
-MagneticButton.displayName = "MagneticButton"
+MagneticButton.displayName = "MagneticButton";

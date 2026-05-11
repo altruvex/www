@@ -25,9 +25,10 @@ export default function InterfacePage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const locale = useLocale();
-  const projectRangeCta = getCommercialCta(locale, "projectRange");
-  const realBuildCta = getCommercialCta(locale, "realBuild");
+  const tCommon = useTranslations("common");
+  const tCTAs = useTranslations("commercial.ctas");
+  const projectRangeCta = getCommercialCta("projectRange");
+  const realBuildCta = getCommercialCta("realBuild");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText(DEFAULTS.heading);
@@ -40,9 +41,7 @@ function HeroSection() {
   });
 
   return (
-    <section
-      className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]"
-    >
+    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
       <SectionWatermark>01</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
@@ -90,10 +89,14 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton size="lg" variant="primary" className="group w-full sm:w-auto">
+            <MagneticButton
+              size="lg"
+              variant="primary"
+              className="group w-full sm:w-auto"
+            >
               <Link href={projectRangeCta.href}>
                 <span className="flex items-center justify-center gap-2">
-                  {projectRangeCta.label}
+                  {tCTAs("projectRange")}
                   <svg
                     aria-hidden="true"
                     className="h-4 w-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
@@ -111,8 +114,12 @@ function HeroSection() {
                 </span>
               </Link>
             </MagneticButton>
-            <MagneticButton size="lg" variant="secondary" className="w-full sm:w-auto text-center">
-              <Link href={realBuildCta.href}>{realBuildCta.label}</Link>
+            <MagneticButton
+              size="lg"
+              variant="secondary"
+              className="w-full sm:w-auto text-center"
+            >
+              <Link href={realBuildCta.href}>{tCTAs("realBuild")}</Link>
             </MagneticButton>
           </div>
         </div>
@@ -123,7 +130,7 @@ function HeroSection() {
         aria-hidden="true"
       >
         <p className={cn(monoCaps, "text-muted-foreground/70")}>
-          Scroll
+          {tCommon("scroll")}
         </p>
         <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
           <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
@@ -135,7 +142,11 @@ function HeroSection() {
 
 function ShowcaseSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-showcase-item]", stagger: MOTION.stagger.tight, distance: MOTION.distance.sm });
+  const sectionRef = useBatch<HTMLElement>({
+    selector: "[data-showcase-item]",
+    stagger: MOTION.stagger.tight,
+    distance: MOTION.distance.sm,
+  });
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
@@ -247,7 +258,12 @@ const FeatureCard = ({
   index,
   palette,
 }: {
-  feature: { num: string; title: string; description: string; featured: boolean };
+  feature: {
+    num: string;
+    title: string;
+    description: string;
+    featured: boolean;
+  };
   index: number;
   palette: { r: number; g: number; b: number };
 }) => {
@@ -257,7 +273,10 @@ const FeatureCard = ({
   const rectRef = useRef<DOMRect | null>(null);
 
   const isHero = feature.featured;
-  const rgba = useCallback((a: number) => `rgba(${palette.r},${palette.g},${palette.b},${a})`, [palette]);
+  const rgba = useCallback(
+    (a: number) => `rgba(${palette.r},${palette.g},${palette.b},${a})`,
+    [palette],
+  );
 
   useEffect(() => {
     if (!cardRef.current) return;
@@ -327,7 +346,7 @@ const FeatureCard = ({
       onMouseLeave={handleMouseLeave}
       className={cn(
         "feature-card-anim group relative overflow-hidden border-b border-foreground/8 p-6 transition-all duration-500 will-change-transform",
-        isHero ? "border-t py-14 md:py-20" : "py-8 hover:py-12"
+        isHero ? "border-t py-14 md:py-20" : "py-8 hover:py-12",
       )}
     >
       <div
@@ -345,7 +364,10 @@ const FeatureCard = ({
         className="pointer-events-none absolute inset-s-0 bottom-0 z-10 h-px w-0 bg-linear-to-r from-(--lc) to-transparent transition-[width] duration-500 ease-in-out group-hover:w-full"
       />
       {isHero ? (
-        <div ref={innerRef} className="relative z-10 transition-transform duration-100 ease-out translate-x-(--tx,0px) translate-y-(--ty,0px)">
+        <div
+          ref={innerRef}
+          className="relative z-10 transition-transform duration-100 ease-out translate-x-(--tx,0px) translate-y-(--ty,0px)"
+        >
           <div className="mb-8 flex items-center gap-3">
             <span
               className="inline-flex shrink-0 whitespace-nowrap rounded-sm border px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] transition-colors duration-300"
@@ -355,10 +377,10 @@ const FeatureCard = ({
                 background: rgba(0.05),
               }}
             >
-              SERVICE_01
+              {t("cta.tokens.featured")}_{feature.num}
             </span>
             <span className="font-mono text-[9px] uppercase leading-normal tracking-[0.22em] text-foreground/30">
-              Featured
+              {t("cta.tokens.featured")}
             </span>
           </div>
           <h3 className="font-sans font-normal text-primary mb-5 leading-[1.08] text-[clamp(26px,3.8vw,48px)] tracking-[-0.028em]">
@@ -380,10 +402,13 @@ const FeatureCard = ({
           <span className="hidden w-[72px] shrink-0 select-none font-mono text-[clamp(52px,7vw,80px)] font-extrabold leading-none tracking-[-0.04em] text-foreground/10 tabular-nums transition-colors duration-300 group-hover:text-(--nc) md:block">
             {feature.num}
           </span>
-          <div ref={innerRef} className="min-w-0 flex-1 transition-transform duration-100 ease-out translate-x-(--tx,0px) translate-y-(--ty,0px)">
+          <div
+            ref={innerRef}
+            className="min-w-0 flex-1 transition-transform duration-100 ease-out translate-x-(--tx,0px) translate-y-(--ty,0px)"
+          >
             <div className="mb-1.5 flex flex-wrap items-center gap-3">
               <span className="hidden shrink-0 whitespace-nowrap rounded-sm border border-foreground/10 px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] text-foreground/40 transition-colors duration-300 group-hover:border-(--tbc) group-hover:bg-(--tbg) group-hover:text-(--tc) sm:inline-flex">
-                SERVICE_{feature.num}
+                {t("cta.tokens.featured")}_{feature.num}
               </span>
               <h3 className="font-sans font-normal text-primary text-[clamp(17px,2.2vw,24px)] tracking-[-0.02em] leading-[1.2]">
                 {feature.title}
@@ -406,7 +431,11 @@ const FeatureCard = ({
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useBatch<HTMLElement>({ selector: ".feature-card-anim", stagger: 0.15, distance: 30 });
+  const sectionRef = useBatch<HTMLElement>({
+    selector: ".feature-card-anim",
+    stagger: 0.15,
+    distance: 30,
+  });
 
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
@@ -452,18 +481,19 @@ function FeaturesSection() {
 
 function CtaSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const locale = useLocale();
-  const projectRangeCta = getCommercialCta(locale, "projectRange");
+  const tCTAs = useTranslations("commercial.ctas");
+  const projectRangeCta = getCommercialCta("projectRange");
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
   });
-  const cardsRef = useBatch<HTMLDivElement>({ selector: "[data-token-card]", distance: MOTION.distance.sm });
+  const cardsRef = useBatch<HTMLDivElement>({
+    selector: "[data-token-card]",
+    distance: MOTION.distance.sm,
+  });
 
   return (
-    <section
-      className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)"
-    >
+    <section className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div
           ref={titleRef}
@@ -490,7 +520,7 @@ function CtaSection() {
             <MagneticButton size="lg" variant="primary" className="group">
               <Link href={projectRangeCta.href}>
                 <span className="flex items-center gap-2">
-                  {projectRangeCta.label}
+                  {tCTAs("projectRange")}
                   <svg
                     className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
                     fill="none"
@@ -518,7 +548,7 @@ function CtaSection() {
             className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-4"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
-              Colors
+              {t("cta.tokens.colors")}
             </span>
             <div className="flex gap-2">
               {[
@@ -532,7 +562,7 @@ function CtaSection() {
               ))}
             </div>
             <p className="font-mono text-xs uppercase tracking-widest text-foreground/20 rtl:font-sans rtl:normal-case">
-              Tailored palette for your brand
+              {t("cta.tokens.colorsSub")}
             </p>
           </div>
           <div
@@ -540,7 +570,7 @@ function CtaSection() {
             className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-3"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
-              Typography
+              {t("cta.tokens.typography")}
             </span>
             <div className="space-y-1">
               <div
@@ -553,10 +583,10 @@ function CtaSection() {
                 Aa
               </div>
               <div className="text-sm text-primary/70 font-sans">
-                Body regular
+                {t("cta.tokens.typographySub")}
               </div>
               <div className="font-mono text-xs uppercase tracking-[0.22em] text-foreground/20 rtl:font-sans rtl:normal-case">
-                Mono Label
+                {t("cta.tokens.monoLabel")}
               </div>
             </div>
           </div>
@@ -565,7 +595,7 @@ function CtaSection() {
             className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-4"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
-              Layout
+              {t("cta.tokens.layout")}
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -576,7 +606,7 @@ function CtaSection() {
               ))}
             </div>
             <p className="font-mono text-xs uppercase tracking-widest text-foreground/20 rtl:font-sans rtl:normal-case">
-              Responsive grid system
+              {t("cta.tokens.layoutSub")}
             </p>
           </div>
         </div>

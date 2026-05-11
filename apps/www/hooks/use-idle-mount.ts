@@ -7,7 +7,10 @@ type IdleMountOptions = {
   immediate?: boolean;
 };
 
-export function useIdleMount({ timeout = 1500, immediate = false }: IdleMountOptions = {}) {
+export function useIdleMount({
+  timeout = 1500,
+  immediate = false,
+}: IdleMountOptions = {}) {
   const [mounted, setMounted] = useState(immediate);
 
   useEffect(() => {

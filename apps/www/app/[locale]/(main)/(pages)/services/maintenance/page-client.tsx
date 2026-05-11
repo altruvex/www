@@ -24,9 +24,10 @@ export default function MaintenancePage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.maintenance");
-  const locale = useLocale();
-  const projectRangeCta = getCommercialCta(locale, "projectRange");
-  const maintenancePlansCta = getCommercialCta(locale, "maintenancePlans");
+  const tCommon = useTranslations("common");
+  const tCTAs = useTranslations("commercial.ctas");
+  const projectRangeCta = getCommercialCta("projectRange");
+  const maintenancePlansCta = getCommercialCta("maintenancePlans");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText(DEFAULTS.heading);
@@ -39,9 +40,7 @@ function HeroSection() {
   });
 
   return (
-    <section
-      className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]"
-    >
+    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
       <SectionWatermark>04</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
@@ -88,10 +87,14 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton size="lg" variant="primary" className="group w-full sm:w-auto">
+            <MagneticButton
+              size="lg"
+              variant="primary"
+              className="group w-full sm:w-auto"
+            >
               <Link href={projectRangeCta.href}>
                 <span className="flex items-center justify-center gap-2">
-                  {projectRangeCta.label}
+                  {tCTAs("projectRange")}
                   <svg
                     aria-hidden="true"
                     className="h-4 w-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
@@ -109,8 +112,13 @@ function HeroSection() {
                 </span>
               </Link>
             </MagneticButton>
-            <MagneticButton asChild size="lg" variant="secondary" className="w-full sm:w-auto text-center">
-              <Link href="#pricing">{maintenancePlansCta.label}</Link>
+            <MagneticButton
+              asChild
+              size="lg"
+              variant="secondary"
+              className="w-full sm:w-auto text-center"
+            >
+              <Link href="#pricing">{tCTAs("maintenancePlans")}</Link>
             </MagneticButton>
           </div>
         </div>
@@ -120,7 +128,9 @@ function HeroSection() {
         className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
         aria-hidden="true"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>Scroll</p>
+        <p className={cn(monoCaps, "text-muted-foreground/70")}>
+          {tCommon("scroll")}
+        </p>
         <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
           <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
         </div>
@@ -128,7 +138,6 @@ function HeroSection() {
     </section>
   );
 }
-
 
 function StatsSection() {
   const t = useTranslations("serviceDetails.maintenance");
@@ -208,7 +217,11 @@ function StatsSection() {
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.maintenance");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-feature-card]", stagger: MOTION.stagger.tight, distance: MOTION.distance.sm });
+  const sectionRef = useBatch<HTMLElement>({
+    selector: "[data-feature-card]",
+    stagger: MOTION.stagger.tight,
+    distance: MOTION.distance.sm,
+  });
   const titleRef = useReveal<HTMLDivElement>({
     ...DEFAULTS.body,
     ease: MOTION.ease.smooth,
@@ -245,7 +258,12 @@ function FeaturesSection() {
                 {tCommon("whatWeOfferItalic")}
               </span>
             </h2>
-            <p className={cn(monoCaps, "text-primary/35 max-w-[28ch] hidden md:block")}>
+            <p
+              className={cn(
+                monoCaps,
+                "text-primary/35 max-w-[28ch] hidden md:block",
+              )}
+            >
               {tCommon("whatWeOfferSubtitle")}
             </p>
           </div>
@@ -357,7 +375,12 @@ function PricingSection() {
                 {t("pricing.titleItalic")}
               </span>
             </h2>
-            <p className={cn(monoCaps, "text-primary/35 max-w-[36ch] hidden lg:block leading-relaxed")}>
+            <p
+              className={cn(
+                monoCaps,
+                "text-primary/35 max-w-[36ch] hidden lg:block leading-relaxed",
+              )}
+            >
               {t("pricing.subtitle")}
             </p>
           </div>
@@ -394,7 +417,12 @@ function PricingSection() {
                   {t(`pricing.plans.${key}.name`)}
                 </h3>
                 {featured && (
-                  <span className={cn(monoCaps, "text-primary/75 border border-foreground/15 px-2 py-0.5 rounded-full text-[9px]")}>
+                  <span
+                    className={cn(
+                      monoCaps,
+                      "text-primary/75 border border-foreground/15 px-2 py-0.5 rounded-full text-[9px]",
+                    )}
+                  >
                     {t("pricing.recommended")}
                   </span>
                 )}
@@ -427,7 +455,12 @@ function PricingSection() {
                       key={i}
                       className="flex items-start gap-3 text-sm text-primary/55 leading-relaxed"
                     >
-                      <span className={cn(monoCaps, "text-primary/30 mt-0.5 shrink-0 select-none")}>
+                      <span
+                        className={cn(
+                          monoCaps,
+                          "text-primary/30 mt-0.5 shrink-0 select-none",
+                        )}
+                      >
                         -
                       </span>
                       {feature}
@@ -518,7 +551,7 @@ function CtaSection() {
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
                 <span className={cn(monoCaps, "text-primary/70")}>
-                  all systems go
+                  {t("cta.status")}
                 </span>
               </div>
             </div>
@@ -543,7 +576,9 @@ function CtaSection() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span className={cn(monoCaps, "text-primary/30")}>active</span>
+                    <span className={cn(monoCaps, "text-primary/30")}>
+                      {t("cta.active")}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -554,7 +589,9 @@ function CtaSection() {
             className="md:col-span-7 border border-foreground/8 rounded-sm bg-foreground/2 p-8 md:p-10 flex flex-col justify-between gap-8"
           >
             <div>
-              <p className={cn(monoCaps, "text-muted-foreground/70 mb-6 block")}>
+              <p
+                className={cn(monoCaps, "text-muted-foreground/70 mb-6 block")}
+              >
                 {t("cta.eyebrow")}
               </p>
               <h2
@@ -571,7 +608,12 @@ function CtaSection() {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <MagneticButton asChild size="lg" variant="primary" className="group w-full justify-center">
+              <MagneticButton
+                asChild
+                size="lg"
+                variant="primary"
+                className="group w-full justify-center"
+              >
                 <Link href="/contact">
                   <span className="flex items-center gap-2">
                     {tCommon("ctaPrimary")}
@@ -591,10 +633,13 @@ function CtaSection() {
                   </span>
                 </Link>
               </MagneticButton>
-              <MagneticButton asChild size="lg" variant="secondary" className="w-full justify-center">
-                <Link href="/services">
-                  {t("cta.back")}
-                </Link>
+              <MagneticButton
+                asChild
+                size="lg"
+                variant="secondary"
+                className="w-full justify-center"
+              >
+                <Link href="/services">{t("cta.back")}</Link>
               </MagneticButton>
             </div>
           </div>

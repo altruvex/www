@@ -44,7 +44,8 @@ type Props = {
 
 export default async function RootLayout({ children, params }: Props) {
   const { locale } = await params;
-  const primaryFontVariable = locale === "ar" ? vazirmatn.variable : inter.variable;
+  const primaryFontVariable =
+    locale === "ar" ? vazirmatn.variable : inter.variable;
 
   if (!hasLocale(routing.locales, locale)) {
     notFound();

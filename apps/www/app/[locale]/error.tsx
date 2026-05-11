@@ -85,8 +85,9 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           aria-label="Error page"
         >
           <div
-            className={`flex flex-col items-center transition-all duration-700 ease-out ${mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-              }`}
+            className={`flex flex-col items-center transition-all duration-700 ease-out ${
+              mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+            }`}
           >
             <div className="mb-8 flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-destructive/80 animate-pulse" />
@@ -116,10 +117,12 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             {error.digest && (
               <div className="mb-12 w-full max-w-md text-left rtl:text-right">
                 <details className="group rounded-sm border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/3">
-                  <summary className={cn(
-                    monoCaps,
-                    "cursor-pointer text-muted-foreground/70 group-hover:text-primary/70 transition-colors select-none"
-                  )}>
+                  <summary
+                    className={cn(
+                      monoCaps,
+                      "cursor-pointer text-muted-foreground/70 group-hover:text-primary/70 transition-colors select-none",
+                    )}
+                  >
                     Error Digest
                   </summary>
                   <pre className="mt-4 overflow-auto rounded-sm bg-foreground/5 p-3 font-mono text-[10px] text-primary/70 leading-relaxed">
@@ -152,7 +155,11 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   </svg>
                 </span>
               </MagneticButton>
-              <MagneticButton size="lg" variant="secondary" className="min-w-[160px] justify-center group">
+              <MagneticButton
+                size="lg"
+                variant="secondary"
+                className="min-w-[160px] justify-center group"
+              >
                 <Link href="/">
                   <span className="flex items-center gap-2">
                     Go Home

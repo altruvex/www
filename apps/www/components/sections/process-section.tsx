@@ -1,33 +1,40 @@
-"use client"
+"use client";
 
-import { monoCaps } from "@/lib/mono-caps"
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion"
-import { cn, splitHeadline } from "@/lib/utils"
-import { useTranslations } from "next-intl"
-import { memo, useCallback, useState } from "react"
-import { Container } from "../container"
+import { monoCaps } from "@/lib/mono-caps";
+import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
+import { cn, splitHeadline } from "@/lib/utils";
+import { useTranslations } from "next-intl";
+import { memo, useCallback, useState } from "react";
+import { Container } from "../container";
 
-interface ProcessStep { index: string; key: string }
+interface ProcessStep {
+  index: string;
+  key: string;
+}
 
 const steps: ProcessStep[] = [
   { index: "01", key: "step1" },
   { index: "02", key: "step2" },
   { index: "03", key: "step3" },
   { index: "04", key: "step4" },
-]
+];
 
 interface StepItemProps {
-  i: number
-  active: number
-  step: ProcessStep
-  t: (key: string) => string
-  onToggle: (i: number) => void
+  i: number;
+  active: number;
+  step: ProcessStep;
+  t: (key: string) => string;
+  onToggle: (i: number) => void;
 }
 
 const ProcessStepItem = memo(function ProcessStepItem({
-  i, active, step, t, onToggle,
+  i,
+  active,
+  step,
+  t,
+  onToggle,
 }: StepItemProps) {
-  const isOpen = active === i
+  const isOpen = active === i;
 
   return (
     <div
@@ -50,18 +57,12 @@ const ProcessStepItem = memo(function ProcessStepItem({
           {step.index}
         </span>
 
-        <span
-          className="flex-1 text-start font-serif text-[clamp(22px,2.6vw,28px)] font-light italic leading-none tracking-[-0.02em] text-s-mid transition-colors duration-200 group-data-[open=true]:text-s-high rtl:font-sans rtl:not-italic rtl:font-bold"
-        >
+        <span className="flex-1 text-start font-serif text-[clamp(22px,2.6vw,28px)] font-light italic leading-none tracking-[-0.02em] text-s-mid transition-colors duration-200 group-data-[open=true]:text-s-high rtl:font-sans rtl:not-italic rtl:font-bold">
           {t(`steps.${step.key}.title`)}
         </span>
 
-        <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-full border border-s-border transition-colors duration-200 group-data-[open=true]:border-s-border-hover"
-        >
-          <span
-            className="block font-mono text-sm leading-none text-s-low transition-transform duration-300 group-data-[open=true]:rotate-45 group-data-[open=true]:text-s-high rtl:group-data-[open=true]:-rotate-45"
-          >
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-s-border transition-colors duration-200 group-data-[open=true]:border-s-border-hover">
+          <span className="block font-mono text-sm leading-none text-s-low transition-transform duration-300 group-data-[open=true]:rotate-45 group-data-[open=true]:text-s-high rtl:group-data-[open=true]:-rotate-45">
             +
           </span>
         </span>
@@ -80,16 +81,22 @@ const ProcessStepItem = memo(function ProcessStepItem({
             </p>
             <div className="mt-5 grid max-w-full grid-cols-1 gap-3 ps-0 sm:grid-cols-2 md:ps-[62px] lg:max-w-[620px] lg:ps-[72px]">
               {[
-                { label: t("meta.deliverables"), value: t(`steps.${step.key}.deliverables`), large: false },
-                { label: t("meta.timeline"), value: t(`steps.${step.key}.timeline`), large: true },
+                {
+                  label: t("meta.deliverables"),
+                  value: t(`steps.${step.key}.deliverables`),
+                  large: false,
+                },
+                {
+                  label: t("meta.timeline"),
+                  value: t(`steps.${step.key}.timeline`),
+                  large: true,
+                },
               ].map(({ label, value, large }) => (
                 <div
                   key={label}
                   className="rounded-sm border border-s-border bg-s-surface p-5"
                 >
-                  <p className={cn(monoCaps, "mb-2.5 text-s-muted")}>
-                    {label}
-                  </p>
+                  <p className={cn(monoCaps, "mb-2.5 text-s-muted")}>{label}</p>
                   <p
                     className={
                       large
@@ -106,20 +113,23 @@ const ProcessStepItem = memo(function ProcessStepItem({
         </div>
       </div>
     </div>
-  )
-})
+  );
+});
 
 export const ProcessSection = memo(function ProcessSection() {
-  const t = useTranslations("process")
-  const [active, setActive] = useState(0)
+  const t = useTranslations("process");
+  const [active, setActive] = useState(0);
 
-  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"))
+  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 })
-  const titleRef = useText<HTMLHeadingElement>({ ...DEFAULTS.heading, ease: MOTION.ease.text })
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 })
+  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
+  const titleRef = useText<HTMLHeadingElement>({
+    ...DEFAULTS.heading,
+    ease: MOTION.ease.text,
+  });
+  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
 
-  const handleToggle = useCallback((index: number) => setActive(index), [])
+  const handleToggle = useCallback((index: number) => setActive(index), []);
 
   return (
     <div
@@ -128,10 +138,7 @@ export const ProcessSection = memo(function ProcessSection() {
     >
       <Container className="relative">
         <div className="mb-14">
-          <p
-            ref={eyebrowRef}
-            className={cn(monoCaps, "mb-4 text-s-low")}
-          >
+          <p ref={eyebrowRef} className={cn(monoCaps, "mb-4 text-s-low")}>
             {t("eyebrow")}
           </p>
           <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
@@ -168,11 +175,16 @@ export const ProcessSection = memo(function ProcessSection() {
             >
               <div
                 className="mb-2.5 h-0.5 rounded-xs transition-colors duration-300"
-                style={{ background: i <= active ? "hsl(var(--brand))" : "var(--s-border)" }}
+                style={{
+                  background:
+                    i <= active ? "hsl(var(--brand))" : "var(--s-border)",
+                }}
               />
               <span
                 className={cn(monoCaps, "block transition-colors duration-200")}
-                style={{ color: i === active ? "var(--s-high)" : "var(--s-low)" }}
+                style={{
+                  color: i === active ? "var(--s-high)" : "var(--s-low)",
+                }}
               >
                 {step.index} · {t(`steps.${step.key}.tag`)}
               </span>
@@ -192,12 +204,10 @@ export const ProcessSection = memo(function ProcessSection() {
           ))}
         </div>
         <div className="mt-6 flex items-center gap-4">
-          <span className={cn(monoCaps, "text-s-low")}>
-            {t("footer")}
-          </span>
+          <span className={cn(monoCaps, "text-s-low")}>{t("footer")}</span>
           <div className="flex-1 h-px bg-s-border" />
         </div>
       </Container>
     </div>
-  )
-})
+  );
+});

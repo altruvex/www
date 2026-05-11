@@ -75,9 +75,7 @@ export default function HowWeWorkPage() {
           >
             {tProcessHero("title")}
             <br />
-            <span
-              className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-            >
+            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
               {t("hero.italic")}
             </span>
           </h1>
@@ -268,9 +266,7 @@ export default function HowWeWorkPage() {
               className="group inline-flex items-center gap-3 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
             >
               <span className="border-b border-transparent group-hover:border-foreground/30 transition-colors duration-300 pb-0.5">
-                {locale === "ar"
-                  ? "اقرأ المعايير الكاملة"
-                  : "Read the full standards"}
+                {t("standards.link")}
               </span>
               <svg
                 className="h-3.5 w-3.5 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
@@ -308,9 +304,7 @@ export default function HowWeWorkPage() {
               >
                 {t("cta.title")}
                 <br />
-                <span
-                  className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-                >
+                <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
                   {t("cta.titleItalic")}
                 </span>
               </h2>

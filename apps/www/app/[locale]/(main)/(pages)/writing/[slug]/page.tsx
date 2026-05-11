@@ -8,44 +8,13 @@ import { getAllArticles, getArticle, getRelatedArticles } from "@/lib/mdx";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
-type ArticleCtaConfig = {
-  href: string;
-  label: {
-    en: string;
-    ar: string;
-  };
-};
-
-const ARTICLE_CTA_MAP: Record<string, ArticleCtaConfig> = {
-  "why-not-wordpress": {
-    href: "/pricing?tier=professional",
-    label: {
-      en: "See what we build instead",
-      ar: "شاهد ما نبنيه بدلاً من ذلك",
-    },
-  },
-  "technical-debt": {
-    href: "/services/maintenance",
-    label: {
-      en: "Learn about our maintenance retainer",
-      ar: "تعرّف على عقد الصيانة لدينا",
-    },
-  },
-  "evaluating-developers": {
-    href: "/services/consulting",
-    label: {
-      en: "Talk to us about your technical team",
-      ar: "تحدث معنا عن فريقك التقني",
-    },
-  },
-  "multilingual-architecture": {
-    href: "/services/development",
-    label: {
-      en: "Build bilingual from day one",
-      ar: "ابنِ ثنائي اللغة من اليوم الأول",
-    },
-  },
+const ARTICLE_CTA_MAP: Record<string, { href: string }> = {
+  "why-not-wordpress": { href: "/pricing?tier=professional" },
+  "technical-debt": { href: "/services/maintenance" },
+  "evaluating-developers": { href: "/services/consulting" },
+  "multilingual-architecture": { href: "/services/development" },
 };
 
 interface ArticlePageProps {
@@ -69,13 +38,12 @@ export async function generateMetadata({
 }: ArticlePageProps): Promise<Metadata> {
   const { slug, locale } = await params;
   const article = await getArticle(slug, locale);
+  const t = await getTranslations({ locale, namespace: "writing" });
+
   if (!article) {
     return generateRouteMetadata(locale, "writing", `/writing/${slug}`, {
-      title: locale === "ar" ? "مقال غير موجود" : "Article not found",
-      description:
-        locale === "ar"
-          ? "المقال غير متوفر."
-          : "The article you are looking for is not available.",
+      title: t("notFound.title"),
+      description: t("notFound.body"),
     });
   }
   return generateRouteMetadata(locale, "writing", `/writing/${slug}`, {
@@ -92,12 +60,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const article = await getArticle(slug, locale);
   if (!article) notFound();
 
+  const t = await getTranslations({ locale, namespace: "writing" });
   const related = await getRelatedArticles(
     slug,
     article.frontmatter.tags,
     locale,
   );
-  const articleCta = ARTICLE_CTA_MAP[slug] ?? null;
+  const ctaConfig = ARTICLE_CTA_MAP[slug] ?? null;
 
   return (
     <>
@@ -121,7 +90,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 d="M7 16l-4-4m0 0l4-4m-4 4h18"
               />
             </svg>
-            Back to writing
+            {t("backLink")}
           </Link>
           <article>
             <header className="mb-16 md:mb-20 max-w-4xl">
@@ -181,16 +150,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <MDXRemote source={article.content} components={mdxComponents} />
             </div>
           </article>
-          {articleCta && (
+          {ctaConfig && (
             <section className="mt-16 border-t border-foreground/8 pt-10">
               <p className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
-                {locale === "ar" ? "الخطوة التالية" : "Next step"}
+                {t("nextStep")}
               </p>
               <Link
-                href={articleCta.href}
+                href={ctaConfig.href}
                 className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
               >
-                {articleCta.label[locale]}
+                {t(`ctas.${slug}`)}
                 <svg
                   className="h-3.5 w-3.5 transition-transform duration-300 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:-rotate-180"
                   fill="none"
@@ -210,7 +179,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           {related.length > 0 && (
             <section className="mt-20 md:mt-32 border-t border-foreground/8 pt-12 md:pt-16">
               <p className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
-                Related Articles
+                {t("relatedArticles")}
               </p>
               <h2
                 className="font-sans font-normal text-primary leading-[1.05] mb-10"
@@ -219,14 +188,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   letterSpacing: "-0.02em",
                 }}
               >
-                Keep reading
+                {t("keepReading")}
               </h2>
               <div className="grid gap-4 md:grid-cols-3">
                 {related.map((rel) => (
                   <Link
                     key={rel.slug}
                     href={`/writing/${rel.slug}`}
-                    className="group border border-foreground/8 rounded-sm bg-foreground/2 p-6 hover:bg-foreground/4transition-colors duration-300"
+                    className="group border border-foreground/8 rounded-sm bg-foreground/2 p-6 hover:bg-foreground/4 transition-colors duration-300"
                   >
                     <h3
                       className="font-sans font-medium text-primary mb-2 group-hover:text-primary/70 transition-colors duration-300"
@@ -263,7 +232,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   d="M7 16l-4-4m0 0l4-4m-4 4h18"
                 />
               </svg>
-              Back to writing
+              {t("backLink")}
             </Link>
           </footer>
         </Container>

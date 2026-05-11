@@ -2,10 +2,10 @@
 
 ## Supported Versions
 
-| Version | Supported |
-| ------- | --------- |
-| Latest (main branch) | ✅ |
-| Older releases | ❌ |
+| Version              | Supported |
+| -------------------- | --------- |
+| Latest (main branch) | ✅        |
+| Older releases       | ❌        |
 
 We maintain active security support on the latest production deployment only.
 

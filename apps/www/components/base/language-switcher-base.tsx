@@ -1,47 +1,63 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { Check, ChevronDown, Globe } from "lucide-react"
-import { useLocale } from "next-intl"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils";
+import { Check, ChevronDown, Globe } from "lucide-react";
+import { useLocale } from "next-intl";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-type LanguageSwitcherVariant = "default" | "compact" | "toggle"
+type LanguageSwitcherVariant = "default" | "compact" | "toggle";
 
 interface Language {
-  code: string
-  name: string
-  nativeName: string
-  flag: string
-  direction: 'ltr' | 'rtl'
+  code: string;
+  name: string;
+  nativeName: string;
+  flag: string;
+  direction: "ltr" | "rtl";
 }
 
 const LANGUAGES: Language[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "US", direction: 'ltr' },
-  { code: "ar", name: "Arabic", nativeName: "العربية", flag: "EG", direction: 'rtl' },
-]
+  {
+    code: "en",
+    name: "English",
+    nativeName: "English",
+    flag: "US",
+    direction: "ltr",
+  },
+  {
+    code: "ar",
+    name: "Arabic",
+    nativeName: "العربية",
+    flag: "EG",
+    direction: "rtl",
+  },
+];
 
 interface LanguageSwitcherBaseProps {
-  variant?: LanguageSwitcherVariant
-  className?: string
+  variant?: LanguageSwitcherVariant;
+  className?: string;
 }
 
-export function LanguageSwitcherBase({ variant = "default", className }: LanguageSwitcherBaseProps) {
-  const locale = useLocale()
-  const router = useRouter()
-  const pathname = usePathname()
-  const [isOpen, setIsOpen] = useState(false)
-  const menuRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
+export function LanguageSwitcherBase({
+  variant = "default",
+  className,
+}: LanguageSwitcherBaseProps) {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const currentLang = LANGUAGES.find((lang) => lang.code === locale) || LANGUAGES[0]
-  const isRTL = currentLang.direction === 'rtl'
+  const currentLang =
+    LANGUAGES.find((lang) => lang.code === locale) || LANGUAGES[0];
+  const isRTL = currentLang.direction === "rtl";
 
   const switchLocale = (newLocale: string) => {
-    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`)
-    router.push(newPath)
-    setIsOpen(false)
-  }
+    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
+    router.push(newPath);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -51,30 +67,30 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
         !menuRef.current.contains(event.target as Node) &&
         !buttonRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isOpen])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && isOpen) {
-        setIsOpen(false)
-        buttonRef.current?.focus()
+        setIsOpen(false);
+        buttonRef.current?.focus();
       }
-    }
+    };
 
-    document.addEventListener("keydown", handleEscape)
-    return () => document.removeEventListener("keydown", handleEscape)
-  }, [isOpen])
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen]);
 
   if (variant === "toggle") {
     return (
@@ -83,7 +99,7 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
         className={cn("flex items-center gap-1", className)}
       >
         {LANGUAGES.map((lang) => {
-          const isActive = locale === lang.code
+          const isActive = locale === lang.code;
 
           return (
             <button
@@ -95,7 +111,7 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
                 "relative z-10 px-3 py-1.5 font-mono text-sm leading-normal tracking-wider uppercase transition-all duration-300 ",
                 isActive
                   ? "bg-foreground/90 text-background shadow-md"
-                  : "text-primary/60 hover:bg-foreground/20 hover:text-primary"
+                  : "text-primary/60 hover:bg-foreground/20 hover:text-primary",
               )}
               aria-label={`Switch to ${lang.name}`}
               aria-pressed={isActive}
@@ -105,10 +121,10 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
                 <div className="absolute inset-0 rounded-md bg-foreground/10 blur-md -z-10" />
               )}
             </button>
-          )
+          );
         })}
       </div>
-    )
+    );
   }
 
   return (
@@ -120,7 +136,7 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
         data-cursor-pointer
         className={cn(
           "group flex items-center gap-2 rounded-lg border border-foreground/12 bg-background/70 px-3 py-1.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-foreground/50 focus:ring-offset-2 backdrop-blur-md",
-          variant === "compact" && "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center"
+          variant === "compact" && "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center",
         )}
         aria-label="Select language"
         aria-expanded={isOpen}
@@ -128,11 +144,14 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
       >
         {variant === "compact" ? (
           <>
-            <Globe className="h-4 w-4 mx-auto text-primary/80" strokeWidth={2.5} />
+            <Globe
+              className="h-4 w-4 mx-auto text-primary/80"
+              strokeWidth={2.5}
+            />
             <span
               className={cn(
                 "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background font-mono text-sm leading-normal tracking-wider font-semibold",
-                isRTL ? "-left-1" : "-right-1"
+                isRTL ? "-left-1" : "-right-1",
               )}
             >
               {currentLang.code.charAt(0).toUpperCase()}
@@ -146,7 +165,7 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
             <ChevronDown
               className={cn(
                 "h-3 w-3 text-primary/60 transition-transform duration-300",
-                isOpen && "rotate-180"
+                isOpen && "rotate-180",
               )}
             />
           </>
@@ -161,15 +180,15 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
           isRTL ? "left-0" : "right-0",
           isOpen
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none -translate-y-2 scale-95 opacity-0"
+            : "pointer-events-none -translate-y-2 scale-95 opacity-0",
         )}
         aria-hidden={!isOpen}
         role="menu"
         aria-orientation="vertical"
       >
         {LANGUAGES.map((lang) => {
-          const isActive = locale === lang.code
-          const langIsRTL = lang.direction === 'rtl'
+          const isActive = locale === lang.code;
+          const langIsRTL = lang.direction === "rtl";
 
           return (
             <button
@@ -185,7 +204,7 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
                 isActive
                   ? "bg-foreground/20 text-primary"
                   : "text-primary/80 hover:bg-foreground/15 hover:text-primary",
-                langIsRTL ? "text-right" : "text-left"
+                langIsRTL ? "text-right" : "text-left",
               )}
               role="menuitem"
               aria-current={isActive ? "true" : undefined}
@@ -195,7 +214,9 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
                   <span className="text-xs font-medium">{lang.nativeName}</span>
                 ) : (
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium">{lang.nativeName}</span>
+                    <span className="text-sm font-medium">
+                      {lang.nativeName}
+                    </span>
                     <span className="font-mono text-sm leading-normal tracking-wider text-primary/70">
                       {lang.name}
                     </span>
@@ -207,15 +228,15 @@ export function LanguageSwitcherBase({ variant = "default", className }: Languag
                 <Check
                   className={cn(
                     "text-primary shrink-0",
-                    variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"
+                    variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4",
                   )}
                   strokeWidth={2.5}
                 />
               )}
             </button>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }

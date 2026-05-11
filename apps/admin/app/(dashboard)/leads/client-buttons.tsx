@@ -1,15 +1,20 @@
+"use client";
 
-"use client"
-
-import { ExternalLink, FileDown, X } from "lucide-react"
-import { useState } from "react"
+import { ExternalLink, FileDown, X } from "lucide-react";
+import { useState } from "react";
 
 export function ExportCsvButton({ leads }: { leads: any[] }) {
   const handleExport = () => {
     const headers = [
-      "Timestamp", "Name", "Phone", "Project Type", "Timeline",
-      "Complexity", "Price Min", "Price Max",
-    ]
+      "Timestamp",
+      "Name",
+      "Phone",
+      "Project Type",
+      "Timeline",
+      "Complexity",
+      "Price Min",
+      "Price Max",
+    ];
 
     const csvContent = [
       headers.join(","),
@@ -23,20 +28,20 @@ export function ExportCsvButton({ leads }: { leads: any[] }) {
           `"${lead.complexity || ""}"`,
           lead.priceMin,
           lead.priceMax,
-        ].join(",")
+        ].join(","),
       ),
-    ].join("\n")
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `leads_export_${new Date().toISOString().split("T")[0]}.csv`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `leads_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <button
@@ -46,7 +51,7 @@ export function ExportCsvButton({ leads }: { leads: any[] }) {
       <FileDown className="h-3 w-3" />
       Export CSV
     </button>
-  )
+  );
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -61,36 +66,36 @@ const FIELD_LABELS: Record<string, string> = {
   priceMax: "Price Max (EGP)",
   source: "Source",
   message: "Message",
-}
+};
 
-const ORDERED_KEYS = Object.keys(FIELD_LABELS)
+const ORDERED_KEYS = Object.keys(FIELD_LABELS);
 
 function formatValue(key: string, value: any): string {
-  if (value === null || value === undefined || value === "") return "-"
+  if (value === null || value === undefined || value === "") return "-";
   if (key === "createdAt") {
     return new Date(value).toLocaleString("en-EG", {
       dateStyle: "medium",
       timeStyle: "short",
-    })
+    });
   }
   if (key === "priceMin" || key === "priceMax") {
-    return `EGP ${Number(value).toLocaleString()}`
+    return `EGP ${Number(value).toLocaleString()}`;
   }
-  return String(value)
+  return String(value);
 }
 
 function LeadDetailModal({
   lead,
   onClose,
 }: {
-  lead: any
-  onClose: () => void
+  lead: any;
+  onClose: () => void;
 }) {
-  const knownRows = ORDERED_KEYS.filter((k) => k in lead)
+  const knownRows = ORDERED_KEYS.filter((k) => k in lead);
   const extraRows = Object.keys(lead).filter(
-    (k) => !ORDERED_KEYS.includes(k) && k !== "id"
-  )
-  const rows = [...knownRows, ...extraRows]
+    (k) => !ORDERED_KEYS.includes(k) && k !== "id",
+  );
+  const rows = [...knownRows, ...extraRows];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -120,10 +125,7 @@ function LeadDetailModal({
           <table className="w-full text-sm">
             <tbody>
               {rows.map((key, i) => (
-                <tr
-                  key={key}
-                  className={i % 2 === 0 ? "bg-foreground/2" : ""}
-                >
+                <tr key={key} className={i % 2 === 0 ? "bg-foreground/2" : ""}>
                   <td className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider text-foreground/40 whitespace-nowrap w-40 align-top">
                     {FIELD_LABELS[key] ?? key}
                   </td>
@@ -151,11 +153,11 @@ function LeadDetailModal({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export function ViewDetailsButton({ lead }: { lead: any }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -168,5 +170,5 @@ export function ViewDetailsButton({ lead }: { lead: any }) {
       </button>
       {open && <LeadDetailModal lead={lead} onClose={() => setOpen(false)} />}
     </>
-  )
+  );
 }

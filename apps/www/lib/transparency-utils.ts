@@ -56,27 +56,27 @@ const SECTION_PRICING: Record<
   Record<DeliverableTier, [number, number]>
 > = {
   corporate: {
-    small: [25_000, 32_000],      
-    medium: [35_000, 50_000],    
-    large: [65_000, 130_000],    
+    small: [25_000, 32_000],
+    medium: [35_000, 50_000],
+    large: [65_000, 130_000],
     enterprise: [130_000, 200_000],
   },
   ecommerce: {
-    small: [60_000, 95_000],     
+    small: [60_000, 95_000],
     medium: [95_000, 150_000],
-    large: [150_000, 280_000],   
+    large: [150_000, 280_000],
     enterprise: [280_000, 450_000],
   },
   custom: {
-    small: [100_000, 180_000],    
-    medium: [180_000, 350_000], 
-    large: [350_000, 600_000],   
+    small: [100_000, 180_000],
+    medium: [180_000, 350_000],
+    large: [350_000, 600_000],
     enterprise: [600_000, 1_000_000],
   },
   performance: {
-    small: [15_000, 25_000],    
+    small: [15_000, 25_000],
     medium: [25_000, 40_000],
-    large: [40_000, 60_000],  
+    large: [40_000, 60_000],
     enterprise: [60_000, 100_000],
   },
 };
@@ -137,9 +137,9 @@ export function calculateQuickEstimate(
 }
 
 export const HOSTING_RENEWAL: Record<DeliverableTier, number> = {
-  small: 4_500,   
-  medium: 8_500, 
-  large: 14_500, 
+  small: 4_500,
+  medium: 8_500,
+  large: 14_500,
   enterprise: 22_000,
 };
 
@@ -553,6 +553,7 @@ const DELIVERABLES: Record<
     ],
   },
 };
+
 interface PDFParams {
   locale: string;
   t: TransparencyTranslator;
@@ -589,7 +590,9 @@ export function buildPDFHtml(p: PDFParams): string {
     year: "numeric",
   }).format(new Date());
 
-  const rawItems = p.t.raw?.(`pdfContent.deliverables.${p.projectType}.${p.tier}`);
+  const rawItems = p.t.raw?.(
+    `pdfContent.deliverables.${p.projectType}.${p.tier}`,
+  );
   const items =
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems.filter((item): item is string => typeof item === "string")
@@ -624,7 +627,8 @@ export function buildPDFHtml(p: PDFParams): string {
   const fontBody = isRtl ? "'Tajawal', sans-serif" : "'Inter', sans-serif";
   const fontDisplay = isRtl ? "'Tajawal', sans-serif" : "'Outfit', sans-serif";
   const safeName = p.name ? escapeHtml(p.name) : "";
-  const clientName = safeName || escapeHtml(p.t("pdfContent.prospectiveClient"));
+  const clientName =
+    safeName || escapeHtml(p.t("pdfContent.prospectiveClient"));
 
   const mkCol = (arr: string[]) =>
     arr
@@ -857,7 +861,9 @@ export async function generateEstimatePdf(html: string, filename: string) {
     source.style.colorScheme = "light";
     source.style.background = "#ffffff";
 
-    const pageNodes = Array.from(doc.querySelectorAll(".page")) as HTMLElement[];
+    const pageNodes = Array.from(
+      doc.querySelectorAll(".page"),
+    ) as HTMLElement[];
     const targets = pageNodes.length > 0 ? pageNodes : [source];
 
     const pageWidthMm = 210;

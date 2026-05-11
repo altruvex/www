@@ -18,13 +18,13 @@ Most websites do not fail because they look bad. They fail because the buyer doe
 
 ## What We Sell
 
-| Service | Business Value |
-| --- | --- |
-| Custom web applications | Turn real business logic into reliable digital systems. |
-| Conversion-focused websites | Make the offer clearer and move buyers toward action. |
-| E-commerce experiences | Improve product discovery, mobile speed, and buying flow. |
-| Bilingual Arabic / English systems | Serve Arabic and English audiences with equal quality. |
-| Technical audits and rescues | Find what is hurting speed, trust, conversion, or maintainability. |
+| Service                            | Business Value                                                     |
+| ---------------------------------- | ------------------------------------------------------------------ |
+| Custom web applications            | Turn real business logic into reliable digital systems.            |
+| Conversion-focused websites        | Make the offer clearer and move buyers toward action.              |
+| E-commerce experiences             | Improve product discovery, mobile speed, and buying flow.          |
+| Bilingual Arabic / English systems | Serve Arabic and English audiences with equal quality.             |
+| Technical audits and rescues       | Find what is hurting speed, trust, conversion, or maintainability. |
 
 ---
 
@@ -68,24 +68,24 @@ Most websites do not fail because they look bad. They fail because the buyer doe
 
 ## How We Work
 
-| Phase | Purpose | Outcome |
-| --- | --- | --- |
-| Diagnose | Understand the business, audience, offer, constraints, and friction. | A clear view of what the website must accomplish. |
-| Define | Map the structure, content hierarchy, conversion path, and technical approach. | A scope that can be built without vague middle ground. |
-| Build | Design and develop with bilingual precision, performance discipline, and commercial clarity. | A production-ready web system. |
-| Launch | Ship with deployment, documentation, and ownership transfer. | A live system the business can operate and grow. |
+| Phase    | Purpose                                                                                      | Outcome                                                |
+| -------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Diagnose | Understand the business, audience, offer, constraints, and friction.                         | A clear view of what the website must accomplish.      |
+| Define   | Map the structure, content hierarchy, conversion path, and technical approach.               | A scope that can be built without vague middle ground. |
+| Build    | Design and develop with bilingual precision, performance discipline, and commercial clarity. | A production-ready web system.                         |
+| Launch   | Ship with deployment, documentation, and ownership transfer.                                 | A live system the business can operate and grow.       |
 
 ---
 
 ## Brand Principles
 
-| Principle | Meaning |
-| --- | --- |
-| Clarity over decoration | Design exists to make the offer easier to understand and easier to trust. |
-| Engineering over assembly | The work is built around the business — not assembled from generic blocks. |
-| Proof over claims | Performance, structure, and case studies demonstrate the standard. |
-| Ownership over dependency | Clients leave with a system they own and understand. |
-| Bilingual by design | Arabic and English users deserve equal quality — by architecture, not by translation. |
+| Principle                 | Meaning                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------- |
+| Clarity over decoration   | Design exists to make the offer easier to understand and easier to trust.             |
+| Engineering over assembly | The work is built around the business — not assembled from generic blocks.            |
+| Proof over claims         | Performance, structure, and case studies demonstrate the standard.                    |
+| Ownership over dependency | Clients leave with a system they own and understand.                                  |
+| Bilingual by design       | Arabic and English users deserve equal quality — by architecture, not by translation. |
 
 ---
 

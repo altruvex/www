@@ -1,93 +1,93 @@
-"use client"
+"use client";
 
-import { MagneticButton } from "@/components/magnetic-button"
-import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent"
-import { trackEvent } from "@/lib/analytics"
-import { cn } from "@/lib/utils"
-import { X } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { MagneticButton } from "@/components/magnetic-button";
+import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent";
+import { trackEvent } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const ExitIntentModal = () => {
-  const t = useTranslations("exitIntent")
-  const [isVisible, setIsVisible] = useState(false)
-  const [phone, setPhone] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [error, setError] = useState("")
-  const locale = useLocale()
+  const t = useTranslations("exitIntent");
+  const [isVisible, setIsVisible] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const locale = useLocale();
   const handleExit = () => {
-    setIsVisible(true)
-    trackEvent("exit_intent_shown")
-  }
+    setIsVisible(true);
+    trackEvent("exit_intent_shown");
+  };
 
   useExitIntent(handleExit, {
     threshold: 10,
     cooldown: 24 * 60 * 60 * 1000,
     maxDisplays: 3,
-  })
+  });
 
   const validatePhone = (value: string) => {
-    const cleaned = value.replace(/\D/g, "")
-    return cleaned.length >= 8 && cleaned.length <= 15
-  }
+    const cleaned = value.replace(/\D/g, "");
+    return cleaned.length >= 8 && cleaned.length <= 15;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validatePhone(phone)) {
-      setError(t("phoneError"))
-      return
+      setError(t("phoneError"));
+      return;
     }
 
-    setIsSubmitting(true)
-    setError("")
+    setIsSubmitting(true);
+    setError("");
 
     try {
       const response = await fetch(`/${locale}/api/exit-intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, source: "exit_intent_modal" }),
-      })
+      });
 
       if (response.ok) {
-        setIsSuccess(true)
-        markAsConverted()
-        trackEvent("exit_intent_captured", { phone })
-        setTimeout(() => setIsVisible(false), 3000)
+        setIsSuccess(true);
+        markAsConverted();
+        trackEvent("exit_intent_captured", { phone });
+        setTimeout(() => setIsVisible(false), 3000);
       } else {
-        setError(t("phoneError"))
+        setError(t("phoneError"));
       }
     } catch {
-      setError(t("phoneError"))
+      setError(t("phoneError"));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleClose = useCallback(() => {
-    setIsVisible(false)
-    trackEvent("exit_intent_dismissed")
-  }, [])
+    setIsVisible(false);
+    trackEvent("exit_intent_dismissed");
+  }, []);
 
-  const panelRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isVisible) return
-    panelRef.current?.focus()
+    if (!isVisible) return;
+    panelRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose()
-    }
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    document.addEventListener("keydown", onKey)
+      if (e.key === "Escape") handleClose();
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prevOverflow
-      document.removeEventListener("keydown", onKey)
-    }
-  }, [isVisible, handleClose])
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [isVisible, handleClose]);
 
-  if (!isVisible) return null
+  if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -101,10 +101,12 @@ export const ExitIntentModal = () => {
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-labelledby={isSuccess ? "exit-intent-success-title" : "exit-intent-heading"}
+        aria-labelledby={
+          isSuccess ? "exit-intent-success-title" : "exit-intent-heading"
+        }
         className={cn(
           "relative w-full max-w-md rounded-[1.75rem] border border-border bg-background/96 shadow-2xl backdrop-blur-xl outline-none",
-          "animate-in fade-in zoom-in-95 duration-200"
+          "animate-in fade-in zoom-in-95 duration-200",
         )}
       >
         <button
@@ -150,7 +152,10 @@ export const ExitIntentModal = () => {
                 { value: "Free", label: t("stats.noCommitment") },
                 { value: "Direct", label: t("stats.founderAccess") },
               ].map(({ value, label }) => (
-                <div key={label} className="rounded-xl border border-foreground/8 bg-foreground/2 px-3 py-3">
+                <div
+                  key={label}
+                  className="rounded-xl border border-foreground/8 bg-foreground/2 px-3 py-3"
+                >
                   <p className="text-sm font-medium text-foreground">{value}</p>
                   <p className="text-xs text-foreground/40 mt-0.5">{label}</p>
                 </div>
@@ -161,7 +166,7 @@ export const ExitIntentModal = () => {
                 <div
                   className={cn(
                     "flex items-center border-b border-border pb-2 gap-2",
-                    error && "border-destructive"
+                    error && "border-destructive",
                   )}
                 >
                   <input
@@ -173,20 +178,23 @@ export const ExitIntentModal = () => {
                     aria-invalid={error ? true : undefined}
                     value={phone}
                     onChange={(e) => {
-                      setPhone(e.target.value)
-                      setError("")
+                      setPhone(e.target.value);
+                      setError("");
                     }}
                     disabled={isSubmitting}
                     className={cn(
                       "flex-1 bg-transparent text-sm text-foreground",
-                      "placeholder:text-foreground/30 outline-none"
+                      "placeholder:text-foreground/30 outline-none",
                     )}
                   />
                 </div>
                 {error && (
                   <p className="text-xs text-destructive mt-1.5">{error}</p>
                 )}
-                <p id="exit-intent-phone-hint" className="text-xs text-foreground/30 mt-1.5">
+                <p
+                  id="exit-intent-phone-hint"
+                  className="text-xs text-foreground/30 mt-1.5"
+                >
                   {t("phoneHint")}
                 </p>
               </div>
@@ -212,5 +220,5 @@ export const ExitIntentModal = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};

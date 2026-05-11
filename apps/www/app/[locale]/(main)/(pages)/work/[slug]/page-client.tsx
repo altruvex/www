@@ -4,6 +4,7 @@ import { Container } from "@/components/container";
 import { getTestimonialsForCaseStudy } from "@/lib/testimonials";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { getCaseStudyBySlug } from "@/lib/case-studies";
 
 type WorkCaseStudyPageClientProps = {
   locale: string;
@@ -17,7 +18,7 @@ export default function WorkCaseStudyPageClient({
   const tLabels = useTranslations("work.labels");
   const tCS = useTranslations("caseStudies");
   const testimonials = slug ? getTestimonialsForCaseStudy(slug) : [];
-  
+
   let exists = false;
   try {
     exists = !!tCS(slug + ".name");
@@ -70,14 +71,14 @@ export default function WorkCaseStudyPageClient({
     );
   }
 
-  const metrics = tCS.raw(slug + ".metrics") as Array<{ label: string; value: string }>;
+  const metrics = tCS.raw(slug + ".metrics") as Array<{
+    label: string;
+    value: string;
+  }>;
   const techStack = tCS.raw(slug + ".techStack") as string[];
   const year = tCS(slug + ".year");
-  const externalUrl = slug === "altruvex-site" ? "https://altruvex.com" 
-                  : slug === "art-lighting-store" ? "https://www.artlighting-eg.com"
-                  : slug === "custom-case-builder" ? "https://casescobra.vercel.app/"
-                  : slug === "bilingual-corporate-portal" ? "https://www.newlight-eg.com/"
-                  : "";
+  const csData = getCaseStudyBySlug(slug);
+  const externalUrl = csData?.externalUrl;
 
   return (
     <section className="pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
@@ -137,9 +138,9 @@ export default function WorkCaseStudyPageClient({
                   heading: tLabels("approach"),
                   content: tCS(slug + ".solution"),
                 },
-                { 
-                  heading: tLabels("results"), 
-                  content: tCS(slug + ".outcome") 
+                {
+                  heading: tLabels("results"),
+                  content: tCS(slug + ".outcome"),
                 },
               ].map(({ heading, content }) => (
                 <section key={heading}>
@@ -246,4 +247,3 @@ export default function WorkCaseStudyPageClient({
     </section>
   );
 }
-

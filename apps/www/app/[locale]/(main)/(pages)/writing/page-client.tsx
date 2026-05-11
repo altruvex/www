@@ -11,7 +11,10 @@ type WritingPageClientProps = {
   locale: "en" | "ar";
 };
 
-export default function WritingPage({ articles, locale }: WritingPageClientProps) {
+export default function WritingPage({
+  articles,
+  locale,
+}: WritingPageClientProps) {
   return (
     <div className="relative min-h-screen w-full">
       <OpeningSection />
@@ -42,9 +45,7 @@ function OpeningSection() {
           >
             {t("hero.title")}
             <br />
-            <span
-              className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45"
-            >
+            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
               {t("hero.titleItalic")}
             </span>
           </h1>

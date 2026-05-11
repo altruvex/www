@@ -8,12 +8,12 @@ import { splitHeadline } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
 
-
 export const TrustSection = memo(function TrustSection() {
   const locale = useLocale();
   const t = useTranslations("commercial.trust");
   const tW = useTranslations("work");
-  const stepLabel = locale === "ar" ? "الخطوة" : "Step";
+  const tCommon = useTranslations("common");
+  const stepLabel = tCommon("step");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText<HTMLHeadingElement>({
@@ -33,10 +33,16 @@ export const TrustSection = memo(function TrustSection() {
       <Container>
         <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 md:gap-12 mb-16">
           <div className="space-y-3">
-            <p ref={eyebrowRef} className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground m-0">
+            <p
+              ref={eyebrowRef}
+              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground m-0"
+            >
               {t("eyebrow")}
             </p>
-            <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground m-0">
+            <h2
+              ref={titleRef}
+              className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground m-0"
+            >
               {firstTitle}
               {secondTitle ? (
                 <>
@@ -48,7 +54,10 @@ export const TrustSection = memo(function TrustSection() {
               ) : null}
             </h2>
           </div>
-          <p ref={bodyRef} className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground max-w-sm leading-relaxed md:max-w-xs lg:max-w-[20rem] m-0">
+          <p
+            ref={bodyRef}
+            className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground max-w-sm leading-relaxed md:max-w-xs lg:max-w-[20rem] m-0"
+          >
             {t("body")}
           </p>
         </div>
@@ -97,7 +106,7 @@ export const TrustSection = memo(function TrustSection() {
         </div>
         <div className="flex items-center gap-4 mt-9">
           <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-            {tW("labels.integrity") || (locale === "ar" ? "النزاهة فوق كل شيء" : "Integrity above all")}
+            {tW("labels.integrity")}
           </span>
           <div className="flex-1 h-px bg-border" />
         </div>

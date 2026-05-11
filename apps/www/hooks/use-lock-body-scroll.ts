@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useLayoutEffect } from "react"
+import { useLayoutEffect } from "react";
 
 export function useLockBodyScroll(locked: boolean = true) {
   useLayoutEffect(() => {
-    if (!locked) return
+    if (!locked) return;
 
-    const originalStyle = window.getComputedStyle(document.body).overflow
-    document.body.style.overflow = "hidden"
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = originalStyle
-    }
-  }, [locked])
+      document.body.style.overflow = originalStyle;
+    };
+  }, [locked]);
 }

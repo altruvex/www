@@ -1,18 +1,17 @@
-"use client"
+"use client";
 
-import { Container } from "@/components/container"
-import { ArrowLabel, DirectionalLink } from "@/components/directional-link"
-import { MagneticButton } from "@/components/magnetic-button"
-import { Link } from "@/i18n/navigation"
+import { Container } from "@/components/container";
+import { ArrowLabel, DirectionalLink } from "@/components/directional-link";
+import { MagneticButton } from "@/components/magnetic-button";
+import { Link } from "@/i18n/navigation";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,
-} from "@/lib/commercial"
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion"
-import { splitHeadline } from "@/lib/utils"
-import { useLocale, useTranslations } from "next-intl"
-import { memo } from "react"
-
+} from "@/lib/commercial";
+import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
+import { splitHeadline } from "@/lib/utils";
+import { useLocale, useTranslations } from "next-intl";
+import { memo } from "react";
 
 export const WorkSection = memo(function WorkSection() {
   const locale = useLocale();
@@ -20,10 +19,11 @@ export const WorkSection = memo(function WorkSection() {
   const tCS = useTranslations("caseStudies");
   const tW = useTranslations("work");
   const tCTAs = useTranslations("commercial.ctas");
-  const stepLabel = locale === "ar" ? "الخطوة" : "Step";
+  const tCommon = useTranslations("common");
+  const stepLabel = tCommon("step");
 
-  const flagshipCta = getCommercialCta(locale, "flagshipBuild");
-  const genericProofCta = getCommercialCta(locale, "realBuild");
+  const flagshipCta = getCommercialCta("flagshipBuild");
+  const genericProofCta = getCommercialCta("realBuild");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText<HTMLHeadingElement>({
@@ -35,17 +35,26 @@ export const WorkSection = memo(function WorkSection() {
 
   const { first: firstTitle, second: secondTitle } = splitHeadline(tf("title"));
 
-  const flagshipMetrics = tCS.raw("altruvex-site.metrics") as Array<{ label: string; value: string }>;
+  const flagshipMetrics = tCS.raw("altruvex-site.metrics") as Array<{
+    label: string;
+    value: string;
+  }>;
 
   return (
     <section id="work" className="pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 md:gap-12 mb-16">
           <div className="space-y-3">
-            <p ref={eyebrowRef} className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+            <p
+              ref={eyebrowRef}
+              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground"
+            >
               {tf("eyebrow")}
             </p>
-            <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground m-0">
+            <h2
+              ref={titleRef}
+              className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground m-0"
+            >
               {firstTitle}
               {secondTitle ? (
                 <>
@@ -57,7 +66,10 @@ export const WorkSection = memo(function WorkSection() {
               ) : null}
             </h2>
           </div>
-          <p ref={bodyRef} className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground max-w-sm leading-relaxed md:max-w-xs lg:max-w-[20rem] m-0">
+          <p
+            ref={bodyRef}
+            className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground max-w-sm leading-relaxed md:max-w-xs lg:max-w-[20rem] m-0"
+          >
             {tf("summary")}
           </p>
         </div>
@@ -96,33 +108,22 @@ export const WorkSection = memo(function WorkSection() {
           ))}
         </div>
 
-        
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
           <div className="space-y-3">
             <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-              {tW("labels.liveProof") || (locale === "ar" ? "الدليل الحي" : "Live proof")}
+              {tW("labels.liveProof")}
             </p>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground max-w-xl">
-              {tW("labels.liveProofBody") || (locale === "ar"
-                ? "المشروع الأساسي هنا هو الموقع نفسه، مع دراسة حالة كاملة وتفاصيل التنفيذ."
-                : "The primary proof asset is the site itself, backed by a full case study and build detail.")}
+              {tW("labels.liveProofBody")}
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <MagneticButton
-              size="lg"
-              variant="primary"
-              className="group"
-            >
+            <MagneticButton size="lg" variant="primary" className="group">
               <Link href={flagshipCta.href}>
                 <ArrowLabel>{tCTAs("flagshipBuild")}</ArrowLabel>
               </Link>
             </MagneticButton>
-            <MagneticButton
-              size="lg"
-              variant="secondary"
-              className="group"
-            >
+            <MagneticButton size="lg" variant="secondary" className="group">
               <Link href={genericProofCta.href}>
                 <ArrowLabel>{tCTAs("realBuild")}</ArrowLabel>
               </Link>
@@ -139,7 +140,10 @@ export const WorkSection = memo(function WorkSection() {
             const client = tCS(slug + ".client");
             const year = tCS(slug + ".year");
             const summary = tCS(slug + ".summary");
-            const metrics = tCS.raw(slug + ".metrics") as Array<{ label: string; value: string }>;
+            const metrics = tCS.raw(slug + ".metrics") as Array<{
+              label: string;
+              value: string;
+            }>;
 
             return (
               <div
@@ -168,13 +172,9 @@ export const WorkSection = memo(function WorkSection() {
                 <DirectionalLink
                   href={`/work/${slug}`}
                   className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal inline-flex text-foreground transition-colors hover:text-muted-foreground"
-                  ariaLabel={
-                    locale === "ar"
-                      ? `اقرأ دراسة الحالة: ${name}`
-                      : `Read the case study: ${name}`
-                  }
+                  ariaLabel={tW("labels.readCaseStudyWith", { name })}
                 >
-                  {tW("labels.viewCaseStudy") || (locale === "ar" ? "اقرأ دراسة الحالة" : "Read the Case Study")}
+                  {tW("labels.viewCaseStudy")}
                 </DirectionalLink>
               </div>
             );
@@ -183,7 +183,7 @@ export const WorkSection = memo(function WorkSection() {
         <div className="flex items-center gap-4 mt-6">
           <div className="flex-1 h-px bg-border" />
           <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
-            {tW("labels.footer") || (locale === "ar" ? "أعمال مبنية على الأداء" : "Built on performance")}
+            {tW("labels.footer")}
           </span>
         </div>
       </Container>

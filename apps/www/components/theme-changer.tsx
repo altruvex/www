@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { ThemeToggle } from "./base/theme-toggle-base"
+import { ThemeToggle } from "./base/theme-toggle-base";
 
 export function ThemeChanger() {
-    return <ThemeToggle />
+  return <ThemeToggle />;
 }

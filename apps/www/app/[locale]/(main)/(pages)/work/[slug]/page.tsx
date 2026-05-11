@@ -3,6 +3,7 @@ import WorkCaseStudyPageClient from "./page-client";
 import { getCaseStudyBySlug } from "@/lib/case-studies";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { buildCaseStudyPageSchemas } from "@/lib/schema";
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -13,14 +14,13 @@ export async function generateMetadata({
   const { locale, slug } = await params;
   const loc = locale === "ar" ? "ar" : "en";
   const cs = getCaseStudyBySlug(slug);
+  const t = await getTranslations({ locale, namespace: "work.labels" });
   const pathSuffix = `/work/${slug}`;
+
   if (!cs) {
     return generateRouteMetadata(locale, "workCaseStudy", pathSuffix, {
-      title: loc === "ar" ? "دراسة غير موجودة" : "Case study not found",
-      description:
-        loc === "ar"
-          ? "دراسة الحالة التي تبحث عنها غير متوفرة."
-          : "The case study you are looking for does not exist or is not yet published.",
+      title: t("notFoundTitle"),
+      description: t("notFoundBody"),
       robots: {
         follow: false,
         googleBot: {
@@ -37,7 +37,7 @@ export async function generateMetadata({
       ...cs.keywords[loc],
       cs.client[loc],
       cs.industry[loc],
-      loc === "ar" ? "دراسة حالة" : "case study",
+      t("caseStudy"),
     ],
     title: cs.name[loc],
   });

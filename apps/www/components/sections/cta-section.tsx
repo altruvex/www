@@ -14,11 +14,19 @@ export function CtaSection() {
   const locale = useLocale();
   const t = useTranslations("commercial.cta");
   const tCTAs = useTranslations("commercial.ctas");
-  const callCta = getCommercialCta(locale, "technicalCall");
+  const callCta = getCommercialCta("technicalCall");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, ease: MOTION.ease.smooth, delay: 0 });
+  const eyebrowRef = useReveal({
+    ...DEFAULTS.body,
+    ease: MOTION.ease.smooth,
+    delay: 0,
+  });
   const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const contentRef = useReveal({ ...DEFAULTS.body, ease: MOTION.ease.smooth, delay: 0.15 });
+  const contentRef = useReveal({
+    ...DEFAULTS.body,
+    ease: MOTION.ease.smooth,
+    delay: 0.15,
+  });
 
   return (
     <section
@@ -31,10 +39,16 @@ export function CtaSection() {
         <div className="h-px w-full bg-border mb-16" />
         <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
           <div className="min-w-0">
-            <p ref={eyebrowRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block">
+            <p
+              ref={eyebrowRef}
+              className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block"
+            >
               {t("eyebrow")}
             </p>
-            <h2 ref={titleRef} className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] max-w-4xl font-normal text-primary">
+            <h2
+              ref={titleRef}
+              className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] max-w-4xl font-normal text-primary"
+            >
               {t("title")}
             </h2>
           </div>
@@ -45,9 +59,7 @@ export function CtaSection() {
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
               {t("body")}
             </p>
-            <MagneticButton
-              size="lg"
-            >
+            <MagneticButton size="lg">
               <Link href={callCta.href}>
                 <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
               </Link>

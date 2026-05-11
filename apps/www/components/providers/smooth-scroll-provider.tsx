@@ -1,3 +1,3 @@
-"use client"
+"use client";
 
-export { SmoothScrollProvider } from "@/lib/motion/smooth-scroll"
+export { SmoothScrollProvider } from "@/lib/motion/smooth-scroll";

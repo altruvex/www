@@ -231,12 +231,8 @@ function buildFounderSchema(locale: SupportedLocale): JsonLdSchema {
     "@context": "https://schema.org",
     "@id": FOUNDER_ID,
     "@type": "Person",
-    description:
-      locale === "ar"
-        ? "المؤسس والمهندس الرئيسي في Altruvex، ويقود بناء أنظمة الويب المخصصة وواجهات العربية والإنجليزية."
-        : "Founder and lead engineer at Altruvex, focused on custom web systems and Arabic/English product delivery.",
-    jobTitle:
-      locale === "ar" ? "المؤسس والمهندس الرئيسي" : "Founder & Lead Engineer",
+    description: SITE_CONFIG.founder.description[locale],
+    jobTitle: SITE_CONFIG.founder.jobTitle[locale],
     knowsAbout: [
       "Custom web development",
       "Technical web engineering",

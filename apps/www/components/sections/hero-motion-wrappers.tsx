@@ -6,7 +6,6 @@ import { useText } from "@/lib/motion/hooks/use-text";
 import { motion } from "@/lib/motion/utils/presets";
 import { type ReactNode } from "react";
 
-
 interface HeroHeadlineProps {
   children: ReactNode;
   className?: string;
@@ -50,11 +49,7 @@ interface HeroBatchProps {
   delay?: number;
 }
 
-export function HeroBatch({
-  children,
-  className,
-  delay = 0,
-}: HeroBatchProps) {
+export function HeroBatch({ children, className, delay = 0 }: HeroBatchProps) {
   const ref = useBatch<HTMLDivElement>(motion.listItems({ delay }));
 
   return (
