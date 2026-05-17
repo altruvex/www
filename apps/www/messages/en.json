@@ -193,20 +193,20 @@
             "industry": "Premium home lighting",
             "metrics": [
                 {
-                    "label": "Conversion lift",
-                    "value": "+34%"
+                    "label": "Delivery",
+                    "value": "Live site"
                 },
                 {
-                    "label": "Initial load",
-                    "value": "1.2s"
+                    "label": "Stack",
+                    "value": "Next.js"
                 },
                 {
-                    "label": "Lighthouse score",
-                    "value": "98"
+                    "label": "Scope",
+                    "value": "E-commerce"
                 }
             ],
-            "name": "Art Lighting Store",
-            "outcome": "Within the first month, the new store improved conversion rate by 34%, reduced perceived load time to near-instant, and eliminated overselling incidents. The client team can now manage products and inventory without engineering support.",
+            "name": "Premium lighting e-commerce",
+            "outcome": "A production storefront with high-resolution product imagery, synchronized inventory, and a handoff the client team can operate without engineering support.",
             "problem": "The client sold high-end fixtures where material and finish detail matter, but their existing platform compressed images aggressively and loaded slowly. Customers could not properly inspect finishes or scale, and inventory was fragmented across multiple systems - creating overselling risk.",
             "solution": "We designed a custom Next.js storefront with an image pipeline tuned for high-resolution zoom without sacrificing load time. Inventory is synchronized via webhooks into a single source of truth, and pages are statically generated with targeted revalidation for fast, consistent delivery.",
             "summary": "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
@@ -224,23 +224,23 @@
             "industry": "Lighting & E-Commerce",
             "metrics": [
                 {
-                    "label": "Requirement Match",
-                    "value": "100%"
+                    "label": "Delivery",
+                    "value": "Live site"
                 },
                 {
-                    "label": "Digital Sales Growth",
-                    "value": "+45%"
+                    "label": "Languages",
+                    "value": "EN / AR"
                 },
                 {
-                    "label": "Product Browsing Speed",
-                    "value": "< 0.8s"
+                    "label": "Scope",
+                    "value": "First store"
                 }
             ],
             "name": "NewLight Lighting Store - Venturing into E-Commerce",
-            "outcome": "We successfully launched NewLight's first online store, which has now become their primary sales channel. We met all requirements regarding performance, payment integration, and UX, leading to tangible sales growth from day one.",
+            "outcome": "NewLight's first online store launched on custom architecture with bilingual journeys, payments, and a catalog the team can manage day to day.",
             "problem": "As a leading lighting company, NewLight needed to transition their traditional showroom into a digital experience that allows customers to browse and buy easily while maintaining the brand's premium feel.",
-            "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a frictionless checkout process, with full bilingual support to ensure a superior shopping experience across all devices.",
-            "summary": "When NewLight decided to launch their first online store, we built a comprehensive e-commerce platform that blends premium design with seamless shopping, fulfilling every technical and business requirement.",
+            "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a structured checkout flow, with full bilingual support across all devices.",
+            "summary": "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports bilingual buying on every device.",
             "techStack": [
                 "Next.js App Router",
                 "next-intl (EN/AR)",
@@ -268,7 +268,7 @@
             "pricingEssential": "Get Launch Estimate",
             "pricingFlagship": "Book Architecture Call",
             "pricingProfessional": "Get Growth Estimate",
-            "projectRange": "Scope Your Project",
+            "projectRange": "Request a Scope",
             "realBuild": "See a Real Build",
             "technicalAudit": "Start with a Technical Audit",
             "technicalCall": "Book a Technical Call"
@@ -310,22 +310,22 @@
         },
         "pricing": {
             "ecommerce": {
-                "buyerLabel": "Commerce Platform",
+                "buyerLabel": "E-commerce Platform",
                 "internalLabel": "Storefront plus operations",
                 "nextStep": "Next step: open Transparency and scope the commerce path."
             },
             "essential": {
-                "buyerLabel": "Launch Website",
+                "buyerLabel": "Simple Marketing Site",
                 "internalLabel": "Focused launch scope",
                 "nextStep": "Next step: open Transparency and define the launch scope."
             },
             "flagship": {
-                "buyerLabel": "Custom Product Platform",
-                "internalLabel": "Product-level build",
-                "nextStep": "Next step: book a technical call to plan the architecture."
+                "buyerLabel": "Business Web System",
+                "internalLabel": "Operations and workflows",
+                "nextStep": "Next step: open Transparency and map dashboards, portals, or internal logic."
             },
             "professional": {
-                "buyerLabel": "Connected Growth System",
+                "buyerLabel": "Full Marketing Site",
                 "internalLabel": "Marketing plus operations",
                 "nextStep": "Next step: open Transparency and map the workflows and integrations."
             }
@@ -678,7 +678,7 @@
     },
     "notFound": {
         "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",
-        "contactUs": "Contact us",
+        "contactUs": "Start a Project",
         "eyebrow": "404 - Page not found",
         "goHome": "Go home",
         "titleLine1": "This page",
@@ -705,9 +705,9 @@
                     "label": "Quoted Separately",
                     "value": "Branding from scratch, copywriting, paid stock, SMS, email credits, premium SaaS tools, and third-party subscriptions are not included unless listed in scope."
                 },
-                "programs": {
-                    "label": "Altruvex Tools",
-                    "value": "Altruvex products and subscriptions are optional add-ons. They are only included when your scope needs them or they are bundled into a custom support plan."
+                "paymentTerms": {
+                    "label": "Payment Terms",
+                    "value": "50% to start · 30% at milestone · 20% before launch\nNo deposit = no project start."
                 },
                 "yearOne": {
                     "label": "Year 1 Setup",
@@ -716,6 +716,8 @@
             }
         },
         "description": "The tiers below help buyers self-qualify quickly before opening full Transparency.",
+        "minimumEngagement": "Projects from 22,000 EGP",
+        "ownershipNote": "Every project includes full source code ownership — not a Shopify subscription, not a WordPress plugin stack. You own everything, permanently.",
         "faq": {
             "questions": {
                 "01": {
@@ -748,19 +750,19 @@
                 "featured": false,
                 "index": "01",
                 "key": "essential",
-                "price": "2,500 EGP"
+                "price": "2,000 EGP / month"
             },
             {
                 "featured": true,
                 "index": "02",
                 "key": "professional",
-                "price": "5,000 EGP"
+                "price": "4,000 EGP / month"
             },
             {
                 "featured": false,
                 "index": "03",
                 "key": "enterprise",
-                "price": "10,000 EGP"
+                "price": "Custom"
             }
         ],
         "recommended": "Most common starting point",
@@ -798,10 +800,10 @@
                     "Operational handoff for managing products and orders"
                 ],
                 "idealFor": "For stores that need catalog, checkout, payments, shipping, order operations, and reliable performance.",
-                "name": "Commerce Platform",
-                "notIncluded": "No internal ERP replacement or complex product logic - see Custom Product Platform for those.",
-                "originalPrice": "180,000 – 320,000 EGP",
-                "priceRange": "150,000 – 280,000 EGP"
+                "name": "Commerce Engine",
+                "notIncluded": "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
+                "originalPrice": "",
+                "priceRange": "95,000 – 160,000 EGP"
             },
             "essential": {
                 "cta": "Get Launch Estimate",
@@ -813,13 +815,13 @@
                     "Domain, SSL, and base hosting setup"
                 ],
                 "idealFor": "For a focused launch or compact marketing site that needs custom design, speed, lead capture, and room to grow.",
-                "name": "Launch Website",
-                "notIncluded": "No advanced CMS workflows, dashboards, or payment flows - see Connected Growth System or Commerce Platform.",
-                "originalPrice": "45,000 – 60,000 EGP",
-                "priceRange": "35,000 – 50,000 EGP"
+                "name": "Marketing System",
+                "notIncluded": "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
+                "originalPrice": "",
+                "priceRange": "22,000 – 45,000 EGP"
             },
             "flagship": {
-                "cta": "Book Architecture Call",
+                "cta": "Request a Scope",
                 "features": [
                     "Custom product discovery and architecture",
                     "Dashboards, portals, or workflow engines",
@@ -827,26 +829,26 @@
                     "Multiple integrations and data flows",
                     "Phased delivery roadmap with infrastructure planning"
                 ],
-                "idealFor": "For portals, dashboards, SaaS-like products, or operational systems that need custom workflows.",
-                "name": "Custom Product Platform",
+                "idealFor": "For portals, dashboards, and operational systems that need custom workflows beyond a marketing site.",
+                "name": "Custom Infrastructure",
                 "notIncluded": null,
-                "originalPrice": "420,000 EGP+",
-                "priceRange": "350,000 EGP+"
+                "originalPrice": "",
+                "priceRange": "From 180,000 EGP"
             },
             "professional": {
                 "cta": "Get Growth Estimate",
                 "features": [
-                    "Everything in Launch Website",
+                    "Everything in Simple Marketing Site",
                     "CMS setup for repeatable content workflows",
                     "Bilingual structure with QA across key journeys",
                     "One key integration such as CRM, booking, or auth",
                     "Technical discovery, architecture, and analytics plan"
                 ],
                 "idealFor": "For businesses that need repeatable content operations, bilingual UX, and practical integrations with their tools.",
-                "name": "Connected Growth System",
-                "notIncluded": "No full product catalog, deep commerce operations, or custom internal product logic - see Commerce Platform or Custom Product Platform.",
-                "originalPrice": "85,000 – 150,000 EGP",
-                "priceRange": "65,000 – 130,000 EGP"
+                "name": "Business Platform",
+                "notIncluded": "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
+                "originalPrice": "",
+                "priceRange": "50,000 – 75,000 EGP"
             }
         },
         "title": "Pricing reflects system depth and engineering complexity.",
@@ -912,8 +914,8 @@
                 "title": "Borrowed thinking"
             },
             "templates": {
-                "description": "Visitors must understand what you do, who it is for, and what to do next within seconds. Confusion ends consideration before it begins.",
-                "title": "Unclear hierarchy"
+                "description": "WordPress and Shopify trade long-term ownership for monthly lock-in. We build on Next.js with full source code you own - no plugin stack, no platform ceiling.",
+                "title": "Platform lock-in"
             }
         },
         "subtitle": "The failure is rarely visual. It is weak positioning, slow delivery, and a structure that makes buyers work too hard to understand the offer.",
@@ -1329,7 +1331,7 @@
             "pricing": {
                 "customPrice": "Custom",
                 "eyebrow": "Maintenance Plans",
-                "getStarted": "Get Started",
+                "getStarted": "See Maintenance Plans",
                 "notes": {
                     "addons": {
                         "label": "Third-Party Tools",
@@ -1359,7 +1361,7 @@
                             "Optional tooling and integration management"
                         ],
                         "name": "Enterprise",
-                        "price": "10,000 EGP"
+                        "price": "Custom"
                     },
                     "essential": {
                         "features": [
@@ -1370,7 +1372,7 @@
                             "Quarterly health summary"
                         ],
                         "name": "Essential",
-                        "price": "2,500 EGP"
+                        "price": "2,000 EGP"
                     },
                     "professional": {
                         "features": [
@@ -1381,7 +1383,7 @@
                             "Support for small rollout or release updates"
                         ],
                         "name": "Professional",
-                        "price": "5,000 EGP"
+                        "price": "4,000 EGP"
                     }
                 },
                 "recommended": "Recommended",
@@ -1963,7 +1965,7 @@
             "investment": "Investment Range",
             "moreInPdf": "+ {count} more deliverables in the PDF",
             "or": "Or",
-            "rangeCopy": "Projects like yours typically fall between {min} – {max}, with a delivery window of {weeksMin}–{weeksMax} weeks.",
+            "rangeCopy": "Projects like yours typically fall between {min} – {max}, with a delivery window of {weeksMin}–{weeksMax} weeks. This is just an estimated timeframe; we will build your system in the time you require, rather than strictly adhering to this estimate.",
             "rangeCta": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing.",
             "rangeCtaLabel": "Engineering Note",
             "strategicNote": "This is a strategic estimate based on your inputs - not a generic price range.",
@@ -2203,7 +2205,7 @@
         }
     },
     "work": {
-        "description": "Three projects that demonstrate how we approach performance, bilingual architecture, and conversion - with the numbers to support them.",
+        "description": "Production builds you can inspect today - plus how we engineered this site as a live reference.",
         "eyebrow": "04 - Selected Work",
         "labels": {
             "approach": "Our approach",
@@ -2214,7 +2216,7 @@
             "footer": "Built on performance",
             "integrity": "Integrity above all",
             "liveProof": "Live proof",
-            "liveProofBody": "The primary proof asset is the site itself - backed by a full case study and complete build detail.",
+            "liveProofBody": "Two production builds are live today - inspect the sites, then read the case studies for scope and architecture.",
             "liveSite": "Live site",
             "notFoundBody": "The case study you are looking for does not exist or is not yet published.",
             "notFoundTitle": "Case study not found",
@@ -2248,7 +2250,7 @@
         "selectedWork": "Selected work",
         "subtitle": "Performance data, technical decisions, and what shifted after launch - not screenshots.",
         "title": "Real builds.",
-        "titleItalic": "Measurable results.",
+        "titleItalic": "In production.",
         "viewCaseStudy": "Read the Case Study"
     },
     "writing": {

@@ -20,6 +20,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
   }>;
 
   const primaryCta = getCommercialCta("projectRange");
+  const secondaryCta = getCommercialCta("realBuild");
 
   return (
     <section
@@ -97,6 +98,19 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
                 className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full"
               >
                 <span>{tCTAs("projectRange")}</span>
+                <ArrowIcon />
+              </Link>
+            </MagneticButton>
+            <MagneticButton
+              size="lg"
+              variant="secondary"
+              className="w-full sm:w-auto min-w-[180px]"
+            >
+              <Link
+                href={secondaryCta.href}
+                className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full"
+              >
+                <span>{tCTAs("realBuild")}</span>
                 <ArrowIcon />
               </Link>
             </MagneticButton>

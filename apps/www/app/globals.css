@@ -77,6 +77,8 @@
 }
 
 :root {
+  --duration-instant: 120ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --text-body-base: clamp(17px, 1.05vw, 18px);
   --leading-body: 1.75;
 

@@ -191,7 +191,7 @@ export function Nav() {
                   <Link
                     key={item.key}
                     href={item.href}
-                    className="group relative rounded-full px-3 py-1.5 font-mono text-sm leading-normal tracking-wider ltr:font-medium font-bold uppercase text-nowrap text-primary/60 transition-colors duration-200"
+                    className="group relative rounded-full px-3 py-1.5 font-mono text-sm leading-normal tracking-wider ltr:font-medium font-bold uppercase text-nowrap text-primary/60 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     {t(item.key)}
                     <span className="absolute -bottom-1 left-0 right-0 h-px bg-transparent group-hover:bg-foreground/25 transition-all duration-300" />
@@ -206,10 +206,9 @@ export function Nav() {
                 <NavDivider />
                 <ThemeChanger />
                 <NavDivider />
-                <Link href="/schedule">
+                <Link href="/transparency">
                   <MagneticButton className="h-11 w-full flex items-center justify-center">
-                    <Calendar className="h-4 w-4 transition-transform group-hover:scale-110" />
-                    <span>{t("schedule")}</span>
+                    <span>{t("getStarted")}</span>
                   </MagneticButton>
                 </Link>
               </div>
@@ -276,11 +275,22 @@ export function Nav() {
                 <div className="h-px w-full bg-foreground/8" />
                 <div className="mobile-menu-item">
                   <Link
-                    href="/schedule"
+                    href="/transparency"
                     className="block"
                     onClick={closeMobileMenu}
                   >
                     <MagneticButton className="w-full justify-center">
+                      <span>{t("getStarted")}</span>
+                    </MagneticButton>
+                  </Link>
+                </div>
+                <div className="mobile-menu-item">
+                  <Link
+                    href="/schedule"
+                    className="block"
+                    onClick={closeMobileMenu}
+                  >
+                    <MagneticButton variant="secondary" className="w-full justify-center">
                       <Calendar className="h-4 w-4" />
                       <span>{t("schedule")}</span>
                     </MagneticButton>

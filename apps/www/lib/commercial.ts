@@ -1,5 +1,3 @@
-type CommercialLocale = "en" | "ar";
-
 type CommercialCtaKey =
   | "projectRange"
   | "realBuild"
@@ -18,7 +16,7 @@ type CommercialCtaDefinition = {
 
 const COMMERCIAL_CTAS: Record<CommercialCtaKey, CommercialCtaDefinition> = {
   projectRange: { href: "/transparency" },
-  realBuild: { href: "/work/altruvex-site" },
+  realBuild: { href: "/work" },
   technicalCall: { href: "/schedule" },
   technicalAudit: { href: "/contact?service=consulting&package=audit" },
   architecture: { href: "/contact?service=development&track=architecture" },

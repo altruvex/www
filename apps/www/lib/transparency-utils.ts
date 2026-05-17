@@ -56,20 +56,20 @@ const SECTION_PRICING: Record<
   Record<DeliverableTier, [number, number]>
 > = {
   corporate: {
-    small: [25_000, 32_000],
-    medium: [35_000, 50_000],
-    large: [65_000, 130_000],
-    enterprise: [130_000, 200_000],
+    small: [22_000, 45_000],
+    medium: [50_000, 75_000],
+    large: [75_000, 120_000],
+    enterprise: [180_000, 250_000],
   },
   ecommerce: {
-    small: [60_000, 95_000],
-    medium: [95_000, 150_000],
-    large: [150_000, 280_000],
-    enterprise: [280_000, 450_000],
+    small: [95_000, 160_000],
+    medium: [120_000, 180_000],
+    large: [160_000, 220_000],
+    enterprise: [220_000, 350_000],
   },
   custom: {
-    small: [100_000, 180_000],
-    medium: [180_000, 350_000],
+    small: [180_000, 250_000],
+    medium: [250_000, 350_000],
     large: [350_000, 600_000],
     enterprise: [600_000, 1_000_000],
   },

@@ -22,16 +22,17 @@ export default function WorkCaseStudyPageClient({
   let exists = false;
   try {
     exists = !!tCS(slug + ".name");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     exists = false;
   }
 
   if (!slug || !exists) {
     return (
-      <section className="pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
+      <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="max-w-2xl py-32">
-            <p className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+            <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
               {tLabels("caseStudy")}
             </p>
             <h1
@@ -48,7 +49,7 @@ export default function WorkCaseStudyPageClient({
             </p>
             <Link
               href="/work"
-              className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+              className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
             >
               <svg
                 className="h-3.5 w-3.5 rtl:rotate-180"
@@ -81,11 +82,11 @@ export default function WorkCaseStudyPageClient({
   const externalUrl = csData?.externalUrl;
 
   return (
-    <section className="pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
+    <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="py-12 md:py-24">
           <div className="mb-16">
-            <p className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+            <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
               {tLabels("caseStudy")} · {year}
             </p>
             <h1
@@ -97,7 +98,7 @@ export default function WorkCaseStudyPageClient({
             >
               {tCS(slug + ".name")}
             </h1>
-            <p className="font-mono text-sm leading-normal tracking-wider text-xs uppercase tracking-[0.18em] text-primary/35 mb-5">
+            <p className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/35 mb-5">
               {tCS(slug + ".client")} · {tCS(slug + ".industry")}
             </p>
             <p className="text-base text-primary/60 leading-relaxed max-w-[52ch]">
@@ -110,7 +111,7 @@ export default function WorkCaseStudyPageClient({
                 key={metric.label}
                 className="border border-foreground/8 rounded-sm bg-foreground/2 p-5 md:p-6"
               >
-                <p className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
+                <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
                   {metric.label}
                 </p>
                 <p
@@ -161,7 +162,7 @@ export default function WorkCaseStudyPageClient({
             </div>
             <aside className="space-y-4">
               <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
-                <h3 className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
+                <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                   {tLabels("techStack")}
                 </h3>
                 <ul className="space-y-2">
@@ -178,14 +179,14 @@ export default function WorkCaseStudyPageClient({
               </div>
               {externalUrl && (
                 <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
-                  <h3 className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
+                  <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                     {tLabels("liveSite")}
                   </h3>
                   <a
                     href={externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider text-xs uppercase tracking-[0.15em] text-primary/60 hover:text-primary transition-colors duration-300"
+                    className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider uppercase text-primary/60 hover:text-primary transition-colors duration-300"
                   >
                     <span className="border-b border-foreground/8 group-hover:border-foreground/40 transition-colors duration-300 pb-0.5">
                       {tLabels("visitProj")}
@@ -208,13 +209,13 @@ export default function WorkCaseStudyPageClient({
               )}
               {testimonials.length > 0 && (
                 <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
-                  <h3 className="font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
+                  <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                     {tLabels("clientPersp")}
                   </h3>
                   <blockquote className="text-base text-primary/60 leading-relaxed mb-4">
                     &ldquo;{testimonials[0].quote[locale as "en" | "ar"]}&rdquo;
                   </blockquote>
-                  <p className="font-mono text-sm leading-normal tracking-wider text-xs text-primary/35 uppercase tracking-[0.15em]">
+                  <p className="font-mono text-sm leading-normal tracking-wider text-primary/35 uppercase">
                     {testimonials[0].author} · {testimonials[0].company}
                   </p>
                 </div>
@@ -222,7 +223,7 @@ export default function WorkCaseStudyPageClient({
               <div className="pt-2">
                 <Link
                   href="/work"
-                  className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                  className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
                 >
                   <svg
                     className="h-3.5 w-3.5 rtl:rotate-180 transition-transform duration-300 ltr:group-hover:-translate-x-0.5"

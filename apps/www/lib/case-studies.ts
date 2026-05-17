@@ -110,29 +110,29 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     metrics: [
       {
         label: {
-          ar: "زيادة التحويل",
-          en: "Conversion lift",
+          ar: "التسليم",
+          en: "Delivery",
         },
-        value: "+34%",
+        value: "Live site",
       },
       {
         label: {
-          ar: "التحميل الأولي",
-          en: "Initial load",
+          ar: "التقنية",
+          en: "Stack",
         },
-        value: "1.2s",
+        value: "Next.js",
       },
       {
         label: {
-          ar: "درجة Lighthouse",
-          en: "Lighthouse score",
+          ar: "النطاق",
+          en: "Scope",
         },
-        value: "98",
+        value: "E-commerce",
       },
     ],
     name: {
-      ar: "متجر آرت للإضاءة",
-      en: "Art Lighting Store",
+      ar: "تجارة إلكترونية للإضاءة (عميل سري)",
+      en: "Premium lighting e-commerce",
     },
     slug: "art-lighting-store",
     summary: {
@@ -168,24 +168,24 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     metrics: [
       {
         label: {
-          ar: "رضا العميل عن التنفيذ",
-          en: "Requirement Match",
+          ar: "التسليم",
+          en: "Delivery",
         },
-        value: "100%",
+        value: "Live site",
       },
       {
         label: {
-          ar: "نمو المبيعات الرقمية",
-          en: "Digital Sales Growth",
+          ar: "اللغات",
+          en: "Languages",
         },
-        value: "+45%",
+        value: "EN / AR",
       },
       {
         label: {
-          ar: "سرعة تصفح المنتجات",
-          en: "Product Browsing Speed",
+          ar: "النطاق",
+          en: "Scope",
         },
-        value: "< 0.8s",
+        value: "First store",
       },
     ],
     name: {
@@ -195,7 +195,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     slug: "newlight-lighting-store",
     summary: {
       ar: "عندما قررت نيو لايت دخول عالم التجارة الإلكترونية لأول مرة، قمنا ببناء متجر متكامل يجمع بين التصميم الفاخر وسهولة الشراء، محققين كافة تطلعاتهم التقنية والتجارية.",
-      en: "When NewLight decided to launch their first online store, we built a comprehensive e-commerce platform that blends premium design with seamless shopping, fulfilling every technical and business requirement.",
+      en: "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports bilingual buying on every device.",
     },
     year: "2024",
     externalUrl: "https://www.newlight-eg.com/",
