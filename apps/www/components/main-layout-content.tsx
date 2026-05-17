@@ -42,7 +42,17 @@ export function MainLayoutContent({ children }: layoutChildren) {
     >
       <AnimationController />
       <Nav />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10">
+        {children}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 40% at 50% -10%, var(--brand-soft), transparent)",
+          }}
+        />
+      </div>
       <Footer />
     </main>
   );

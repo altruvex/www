@@ -29,14 +29,6 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       aria-label="Hero section"
     >
       <SectionWatermark>{watermark}</SectionWatermark>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 40% at 50% -10%, var(--brand-soft), transparent)",
-        }}
-      />
       <h1 className="sr-only">
         {title1} {title2}
       </h1>
