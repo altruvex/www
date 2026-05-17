@@ -8,7 +8,7 @@ import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
 import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 export default function MaintenancePage() {
   return (
@@ -27,7 +27,6 @@ function HeroSection() {
   const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
-  const maintenancePlansCta = getCommercialCta("maintenancePlans");
 
   const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
   const titleRef = useText(DEFAULTS.heading);
@@ -40,7 +39,7 @@ function HeroSection() {
   });
 
   return (
-    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
+    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>04</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
@@ -344,7 +343,7 @@ function PricingSection() {
       index: "03",
     },
   ];
-  const commercialNotes = ["vat", "infra", "scope", "addons"].map((key) => ({
+  const commercialNotes = ["infra", "scope", "addons"].map((key) => ({
     key,
     label: t(`pricing.notes.${key}.label`),
     value: t(`pricing.notes.${key}.value`),
