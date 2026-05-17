@@ -65,7 +65,7 @@ export default async function OpenGraphImage({
                 textTransform: "uppercase",
               }}
             >
-              {isArabic ? "استوديو هندسة ويب" : "Web Engineering Studio"}
+              {isArabic ? "استوديو تطوير ويب" : "Web Development Studio"}
             </div>
             <div
               style={{
@@ -116,8 +116,8 @@ export default async function OpenGraphImage({
             }}
           >
             {isArabic
-              ? "هندسة ويب دقيقة للأنظمة ثنائية اللغة الموجّهة للأعمال."
-              : "Precision web engineering for bilingual B2B systems."}
+              ? "تطوير مواقع ويب مخصصة للأنظمة متعددة اللغات الموجّهة للأعمال."
+              : "Custom web development for multilingual B2B systems."}
           </div>
           <div
             style={{

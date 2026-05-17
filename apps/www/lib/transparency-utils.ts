@@ -244,7 +244,7 @@ const TIER_COPY: Record<DeliverableTier, { ar: string; en: string }> = {
 
 const TIMELINE_COPY: Record<string, { ar: string; en: string }> = {
   urgent: {
-    ar: "اخترت التسليم السريع - يعني لديك موعد حرج أو فرصة سوق لا تنتظر. سنُعيد هندسة نطاق العمل حول تاريخك لا العكس، مع تحديد ما يُطلق أولاً وما يأتي في المرحلة الثانية.",
+    ar: "اخترت التسليم السريع - يعني لديك موعد حرج أو فرصة سوق لا تنتظر. سنُعيد تصميم نطاق العمل حول تاريخك لا العكس، مع تحديد ما يُطلق أولاً وما يأتي في المرحلة الثانية.",
     en: "You chose fast delivery - you have a critical deadline or a market window that won't stay open. We'll engineer the scope around your date, not the other way around - identifying what launches first and what follows in a second phase.",
   },
   soon: {
@@ -256,7 +256,7 @@ const TIMELINE_COPY: Record<string, { ar: string; en: string }> = {
     en: "You chose a balanced timeline - the smartest choice in most cases. It gives us enough time to gather requirements precisely, build a solid system, and test it thoroughly before launch without unnecessary pressure.",
   },
   flexible: {
-    ar: "اخترت المرونة في التوقيت - وهذه ميزة هندسية حقيقية. وقت أطول يعني اختباراً أعمق، تحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
+    ar: "اخترت المرونة في التوقيت - وهذه ميزة مصممة حقيقية. وقت أطول يعني اختباراً أعمق، تحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
     en: "You chose a flexible timeline - a genuine engineering advantage. More time means deeper testing, more performance refinement, and a system built to hold up long-term without needing a rebuild.",
   },
 };

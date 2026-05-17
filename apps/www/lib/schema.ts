@@ -54,13 +54,13 @@ const SERVICE_DEFINITIONS: Record<
       en: "Technical Consulting & Web Audits",
     },
     serviceType: {
-      ar: "استشارات هندسة ويب تقنية",
+      ar: "استشارات تطوير مواقع ويب مخصصة",
       en: "Technical web engineering consulting",
     },
   },
   serviceDevelopment: {
     audience: {
-      ar: "للبوابات ولوحات التحكم والمنتجات التي تحتاج هندسة Next.js قابلة للتوسع وثنائية اللغة.",
+      ar: "للبوابات ولوحات التحكم والمنتجات التي تحتاج تطوير Next.js قابلة للتوسع وثنائية اللغة.",
       en: "For portals, dashboards, and product builds that need scalable bilingual Next.js engineering.",
     },
     name: {
@@ -78,11 +78,11 @@ const SERVICE_DEFINITIONS: Record<
       en: "For teams that need conversion-focused interfaces and implementation-ready systems in Arabic and English.",
     },
     name: {
-      ar: "هندسة الواجهات وأنظمة التصميم",
+      ar: "تصميم واجهات المواقع وأنظمة التصميم",
       en: "UI Engineering & Interface Systems",
     },
     serviceType: {
-      ar: "خدمات هندسة واجهات مخصصة",
+      ar: "خدمات تطوير واجهات مخصصة",
       en: "Custom UI engineering services",
     },
   },

@@ -34,7 +34,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "Internal / Altruvex",
     },
     industry: {
-      ar: "هندسة الويب / وكالة",
+      ar: "تطوير الويب / وكالة",
       en: "Web Engineering / Agency",
     },
     keywords: {
@@ -42,13 +42,13 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
         "دراسة حالة ألتروفيكس",
         "موقع وكالة Next.js",
         "موقع ثنائي اللغة",
-        "هندسة ويب تقنية",
+        "تطوير مواقع ويب مخصصة",
       ],
       en: [
         "altruvex case study",
         "next.js agency website",
         "bilingual website case study",
-        "technical web engineering",
+        "custom web development",
       ],
     },
     metrics: [
