@@ -1,10 +1,8 @@
 export function isRTLText(text: string): boolean {
-  const rtlRange =
-    /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u0590-\u05FF]/g;
+  const rtlRange = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u0590-\u05FF]/g;
   const stripped = text.replace(/\s/g, "");
   if (!stripped.length) return false;
-  const rtlCount = (stripped.match(rtlRange) ?? []).length;
-  return rtlCount / stripped.length > 0.3;
+  return (stripped.match(rtlRange) ?? []).length / stripped.length > 0.3;
 }
 
 export function splitIntoChars(element: HTMLElement): Element[] {
@@ -13,42 +11,31 @@ export function splitIntoChars(element: HTMLElement): Element[] {
   let node: Node | null;
 
   while ((node = walker.nextNode())) {
-    if ((node as Text).textContent?.trim()) {
-      textNodes.push(node as Text);
-    }
+    if ((node as Text).textContent?.trim()) textNodes.push(node as Text);
   }
 
   for (const textNode of textNodes) {
     const raw = textNode.textContent ?? "";
-    if (!raw.trim()) continue;
-
     const fragment = document.createDocumentFragment();
 
     for (const ch of raw) {
       if (/\s/.test(ch)) {
-        fragment.appendChild(
-          document.createTextNode(ch === " " ? "\u00A0" : ch),
-        );
+        fragment.appendChild(document.createTextNode(ch === " " ? "\u00A0" : ch));
       } else {
         const span = document.createElement("span");
-        span.className = "m-char";
+        span.className = "m-char inline-block";
         span.dataset.script = "latin";
-        span.style.cssText = "display:inline-block";
         span.textContent = ch;
         fragment.appendChild(span);
       }
     }
-
     textNode.parentNode?.replaceChild(fragment, textNode);
   }
 
   return Array.from(element.querySelectorAll(".m-char"));
 }
 
-export function splitIntoWords(
-  element: HTMLElement,
-  script: "arabic" | "latin" = "latin",
-): Element[] {
+export function splitIntoWords(element: HTMLElement, script: "arabic" | "latin" = "latin"): Element[] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let node: Node | null;
@@ -71,15 +58,13 @@ export function splitIntoWords(
         const span = document.createElement("span");
         span.className = "m-word";
         span.dataset.script = script;
-        span.style.cssText =
-          script === "arabic"
-            ? "display:inline;white-space:nowrap"
-            : "display:inline-block;white-space:nowrap";
+        span.style.cssText = script === "arabic" 
+          ? "display:inline;white-space:nowrap" 
+          : "display:inline-block;white-space:nowrap";
         span.textContent = part;
         fragment.appendChild(span);
       }
     }
-
     textNode.parentNode?.replaceChild(fragment, textNode);
   }
 
@@ -87,29 +72,50 @@ export function splitIntoWords(
 }
 
 export function splitIntoLines(element: HTMLElement): Element[] {
-  const childNodes = Array.from(element.childNodes);
-  element.innerHTML = "";
+  const text = element.textContent ?? "";
+  const script = isRTLText(text) ? "arabic" : "latin";
+  splitIntoWords(element, script);
 
-  const createLine = (): HTMLSpanElement => {
-    const span = document.createElement("span");
-    span.className = "m-line";
-    span.style.cssText = "display:block";
-    return span;
-  };
+  const words = Array.from(element.querySelectorAll(".m-word")) as HTMLElement[];
+  if (!words.length) return [];
 
-  let currentLine = createLine();
+  type LineGroup = { y: number; elements: HTMLElement[] };
+  const lines: LineGroup[] = [];
+  const tolerance = 5;
 
-  for (const child of childNodes) {
-    if ((child as Element).tagName === "BR") {
-      element.appendChild(currentLine);
-      currentLine = createLine();
-    } else {
-      currentLine.appendChild(child.cloneNode(true));
+  words.forEach((word) => {
+    const rect = word.getBoundingClientRect();
+    const top = rect.top;
+    
+    let matchedLine = lines.find((line) => Math.abs(line.y - top) < tolerance);
+    if (!matchedLine) {
+      matchedLine = { y: top, elements: [] };
+      lines.push(matchedLine);
     }
-  }
+    matchedLine.elements.push(word);
+  });
 
-  element.appendChild(currentLine);
-  return Array.from(element.querySelectorAll(".m-line"));
+  lines.sort((a, b) => a.y - b.y);
+
+  element.innerHTML = "";
+  const lineElements: Element[] = [];
+
+  lines.forEach((line) => {
+    const lineSpan = document.createElement("span");
+    lineSpan.className = "m-line block relative";
+    
+    line.elements.forEach((word, index) => {
+      lineSpan.appendChild(word.cloneNode(true));
+      if (index < line.elements.length - 1) {
+        lineSpan.appendChild(document.createTextNode(" "));
+      }
+    });
+
+    element.appendChild(lineSpan);
+    lineElements.push(lineSpan);
+  });
+
+  return lineElements;
 }
 
 export function autoSplit(
@@ -119,13 +125,12 @@ export function autoSplit(
   const text = element.textContent ?? "";
   const rtl = isRTLText(text);
 
-  let targets: Element[];
-
   if (rtl) {
-    targets = splitIntoWords(element, "arabic");
+    const targets = splitIntoWords(element, "arabic");
     return { targets, isRTL: true, canBlur: false };
   }
 
+  let targets: Element[];
   switch (preference) {
     case "char":
       targets = splitIntoChars(element);

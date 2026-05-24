@@ -1,7 +1,7 @@
 "use client";
+import { useSectionEyebrow, useSectionDescription, useSectionTitle } from "@/lib/motion";
 
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { cn, splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useState } from "react";
@@ -94,7 +94,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
               ].map(({ label, value, large }) => (
                 <div
                   key={label}
-                  className="rounded-sm border border-s-border bg-s-surface p-5"
+                  className="rounded-lg border border-s-border bg-s-surface p-5"
                 >
                   <p className={cn(monoCaps, "mb-2.5 text-s-muted")}>{label}</p>
                   <p
@@ -122,12 +122,9 @@ export const ProcessSection = memo(function ProcessSection() {
 
   const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText<HTMLHeadingElement>({
-    ...DEFAULTS.heading,
-    ease: MOTION.ease.text,
-  });
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription();
 
   const handleToggle = useCallback((index: number) => setActive(index), []);
 
@@ -174,7 +171,7 @@ export const ProcessSection = memo(function ProcessSection() {
               className="cursor-pointer p-0 bg-transparent border-none text-center py-2.5"
             >
               <div
-                className="mb-2.5 h-0.5 rounded-xs transition-colors duration-300"
+                className="mb-2.5 h-0.5 rounded-sm transition-colors duration-300"
                 style={{
                   background:
                     i <= active ? "hsl(var(--brand))" : "var(--s-border)",
@@ -191,7 +188,7 @@ export const ProcessSection = memo(function ProcessSection() {
             </button>
           ))}
         </div>
-        <div className="overflow-hidden rounded-sm border border-s-border">
+        <div className="overflow-hidden rounded-lg border border-s-border">
           {steps.map((step, i) => (
             <ProcessStepItem
               key={i}

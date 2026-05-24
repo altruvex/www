@@ -1,32 +1,22 @@
 "use client";
-
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
-import { useLocale, useTranslations } from "next-intl";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 
 export function CtaSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const locale = useLocale();
   const t = useTranslations("commercial.cta");
   const tCTAs = useTranslations("commercial.ctas");
   const callCta = getCommercialCta("technicalCall");
 
-  const eyebrowRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0,
-  });
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const contentRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const contentRef = useSectionDescription();
 
   return (
     <section

@@ -1,6 +1,8 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { PipelineSection } from "@/components/sections/pipeline-section";
@@ -8,7 +10,6 @@ import { TechDNASection } from "@/components/tech-dna-section";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -27,18 +28,14 @@ function HeroSection() {
   const t = useTranslations("serviceDetails.development");
   const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
+  const tHero = useTranslations("hero");
   const projectRangeCta = getCommercialCta("projectRange");
   const realBuildCta = getCommercialCta("realBuild");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
-  const scrollRef = useReveal({
-    ...DEFAULTS.element,
-    direction: "fade",
-    delay: 0.45,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
     <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -123,18 +120,20 @@ function HeroSection() {
           </div>
         </div>
       </Container>
-      <div
-        ref={scrollRef}
-        className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
-        aria-hidden="true"
+      <HeroReveal
+        delay={1.1}
+        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>
-          {tCommon("scroll")}
+        <p
+          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          aria-hidden
+        >
+          {tHero("scrollHint")}
         </p>
-        <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
-          <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
+        <div className="relative flex h-12 w-[1px] justify-center overflow-hidden bg-foreground/10" aria-hidden>
+          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
         </div>
-      </div>
+      </HeroReveal>
     </section>
   );
 }
@@ -143,10 +142,7 @@ function CtaSection() {
   const t = useTranslations("serviceDetails.development");
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
-  const cardRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
+  const cardRef = useSectionElement<HTMLDivElement>();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">

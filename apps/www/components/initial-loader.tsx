@@ -10,20 +10,12 @@ const INITIAL_LOAD_KEY = "Altruvex_initial_load_complete";
 const BOOT_LINES = [
   { text: "$ altruvex --init", delay: 0, type: "command" },
   { text: "", delay: 300, type: "blank" },
-  { text: "  runtime...........  ✓     Next.js 16", delay: 420, type: "check" },
-  {
-    text: "  compiler..........  ✓     TypeScript 6",
-    delay: 560,
-    type: "check",
-  },
-  {
-    text: "  design system.....  ✓     Tailwind v4",
-    delay: 700,
-    type: "check",
-  },
-  { text: "  locale............  ✓     AR / EN", delay: 840, type: "check" },
+  { label: "runtime", dots: "...........", status: "✓", value: "Next.js 16", delay: 420, type: "check" },
+  { label: "compiler", dots: "..........", status: "✓", value: "TypeScript 6", delay: 560, type: "check" },
+  { label: "design system", dots: ".....", status: "✓", value: "Tailwind v4", delay: 700, type: "check" },
+  { label: "locale", dots: "............", status: "✓", value: "AR / EN", delay: 840, type: "check" },
   { text: "", delay: 980, type: "blank" },
-  { text: "  ready.", delay: 1050, type: "ready" },
+  { text: "ready.", delay: 1050, type: "ready" },
 ] as const;
 
 export const InitialLoader = memo(function InitialLoader() {
@@ -77,7 +69,7 @@ export const InitialLoader = memo(function InitialLoader() {
     const exitDelay = BOOT_LINES[BOOT_LINES.length - 1].delay + 500;
     const wordmarkMs = MOTION.duration.base * 1000;
     const containerFadeMs = MOTION.duration.fast * 1000;
-    const holdAfterWordmark = 600;
+    const holdAfterWordmark = 800; // slightly longer hold for the elegant fade
 
     timeouts.push(window.setTimeout(() => setShowWordmark(true), exitDelay));
     timeouts.push(
@@ -118,123 +110,72 @@ export const InitialLoader = memo(function InitialLoader() {
     <div
       dir={"ltr"}
       ref={containerRef}
-      className="fixed inset-0 z-9999 flex flex-col justify-center overflow-hidden "
+      className="fixed inset-0 z-9999 flex flex-col justify-center overflow-hidden bg-background"
       style={{
-        background: "hsl(var(--background))",
         opacity: exiting ? 0 : 1,
         transition: `opacity ${MOTION.duration.fast}s ${MOTION.ease.ui}`,
       }}
       suppressHydrationWarning
       aria-hidden="true"
     >
-      <div
-        className="absolute top-0 left-0 right-0"
-        style={{
-          height: "0.5px",
-          background:
-            "color-mix(in srgb, hsl(var(--foreground)) 8%, transparent)",
-        }}
-      />
-
-      <div
-        className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5"
-        style={{ opacity: 0.22 }}
-      >
-        <span
-          className="font-mono text-sm leading-normal tracking-wider uppercase"
-          style={{
-            fontSize: "9px",
-            letterSpacing: "0.28em",
-            color: "var(--foreground)",
-          }}
-        >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,hsl(var(--background))_120%)] z-0" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.015] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-size-[100%_4px] z-0" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-foreground/10" />
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 opacity-40">
+        <span className="font-mono text-[9px] leading-normal tracking-[0.28em] uppercase text-foreground">
           Altruvex / Init
         </span>
         <span className="font-mono text-xs leading-normal tracking-wider text-primary">
-          v{process.env.NEXT_PUBLIC_APP_VERSION}
+          v{process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0"}
         </span>
       </div>
-
-      <div className="px-8 md:px-16 max-w-2xl">
+      <div className="px-8 md:px-16 max-w-2xl relative z-10">
         <div
-          className="mb-10"
+          className="mb-12"
           style={{ minHeight: `${BOOT_LINES.length * 1.6}em` }}
         >
           {BOOT_LINES.map((line, i) => (
             <div
               key={i}
+              className="flex items-center tracking-wide font-mono text-[clamp(11px,1vw,13px)] leading-[1.6] min-h-[1.6em]"
               style={{
                 fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-                fontSize: "clamp(11px, 1vw, 13px)",
-                lineHeight: 1.6,
-                color:
-                  line.type === "command"
-                    ? "var(--foreground)"
-                    : line.type === "check"
-                      ? "color-mix(in srgb, hsl(var(--foreground)) 55%, transparent)"
-                      : line.type === "ready"
-                        ? "var(--foreground)"
-                        : "transparent",
-                letterSpacing: "0.02em",
-                minHeight: "1.6em",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5em",
                 opacity: reduced ? 1 : 0,
-                transform: reduced ? "none" : "translateY(3px)",
+                transform: reduced ? "none" : "translateY(4px)",
                 animation: reduced
                   ? "none"
-                  : `altruvex-boot-line 0.2s ${MOTION.ease.smooth} ${line.delay}ms forwards`,
+                  : `altruvex-boot-line 0.25s ${MOTION.ease.smooth} ${line.delay}ms forwards`,
               }}
             >
               {line.type === "check" && (
-                <span style={{ color: "rgba(34,197,94,0.7)" }}>
-                  {line.text.includes("✓")
-                    ? line.text
-                        .replace("✓", "")
-                        .split("  ")
-                        .map((part, j) =>
-                          j === 0 ? (
-                            <span key={j} style={{ opacity: 0.35 }}>
-                              {part}
-                            </span>
-                          ) : j === 1 ? (
-                            <span
-                              key={j}
-                              style={{ color: "rgba(34,197,94,0.7)" }}
-                            >
-                              ✓
-                            </span>
-                          ) : (
-                            <span
-                              key={j}
-                              style={{
-                                color:
-                                  "color-mix(in srgb, hsl(var(--foreground)) 55%, transparent)",
-                              }}
-                            >
-                              {part}
-                            </span>
-                          ),
-                        )
-                    : line.text}
-                </span>
+                <div className="flex w-full ml-4">
+                  <span className="text-foreground/40 w-32 shrink-0">{line.label}</span>
+                  <span className="text-foreground/10 tracking-[0.2em] grow overflow-hidden whitespace-nowrap">
+                    {line.dots}
+                  </span>
+                  <span className="text-emerald-500/80 mx-4 w-4 shrink-0 text-center drop-shadow-[0_0_4px_rgba(34,197,94,0.4)]">
+                    {line.status}
+                  </span>
+                  <span className="text-foreground/60 w-28 shrink-0">{line.value}</span>
+                </div>
               )}
               {line.type !== "check" && (
-                <span>
+                <span
+                  className={`${
+                    line.type === "command"
+                      ? "text-foreground font-medium"
+                      : line.type === "ready"
+                      ? "text-primary ml-4"
+                      : "text-transparent"
+                  }`}
+                >
+                  {line.type === "ready" && <span className="mr-2 opacity-50">{">"}</span>}
                   {line.text}
                   {i === BOOT_LINES.length - 1 && (
                     <span
+                      className="inline-block w-[2px] h-[0.9em] bg-primary ml-2 align-middle"
                       style={{
-                        display: "inline-block",
-                        width: "2px",
-                        height: "0.9em",
-                        background: "var(--foreground)",
-                        marginLeft: "2px",
-                        verticalAlign: "middle",
-                        animation: hideCursor
-                          ? "none"
-                          : "altruvex-blink 1s step-end infinite",
+                        animation: hideCursor ? "none" : "altruvex-blink 1s step-end infinite",
                         opacity: hideCursor ? 0 : 1,
                         transition: `opacity ${MOTION.duration.instant}s ease`,
                       }}
@@ -245,50 +186,27 @@ export const InitialLoader = memo(function InitialLoader() {
             </div>
           ))}
         </div>
-
         <div
           style={{
             opacity: showWordmark ? 1 : 0,
-            transform: showWordmark ? "translateY(0)" : "translateY(8px)",
-            transition: `opacity ${MOTION.duration.base}s ${MOTION.ease.smooth}, transform ${MOTION.duration.base}s ${MOTION.ease.smooth}`,
+            transform: showWordmark ? "translateY(0) scale(1)" : "translateY(12px) scale(0.98)",
+            filter: showWordmark ? "blur(0px)" : "blur(4px)",
+            transition: `all ${MOTION.duration.slow || 0.8}s ${MOTION.ease.smooth}`,
           }}
         >
-          <div
-            className="font-sans font-light text-foreground"
-            style={{
-              fontSize: "clamp(36px, 6vw, 72px)",
-              letterSpacing: "-0.03em",
-              lineHeight: 1,
-            }}
-          >
+          <div className="font-sans font-light text-foreground text-[clamp(36px,6vw,72px)] tracking-tight leading-none">
             Altruvex
           </div>
-          <div
-            className="font-mono text-sm leading-normal tracking-wider text-foreground/25 mt-2"
-            style={{
-              fontSize: "10px",
-              letterSpacing: "0.3em",
-              textTransform: "uppercase",
-            }}
-          >
+          <div className="font-mono text-[10px] leading-normal tracking-[0.3em] text-foreground/30 mt-3 uppercase">
             Engineering Beyond Standard.
           </div>
         </div>
       </div>
-
-      <div
-        className="absolute bottom-0 left-0 right-0"
-        style={{
-          height: "0.5px",
-          background:
-            "color-mix(in srgb, hsl(var(--foreground)) 8%, transparent)",
-        }}
-      />
-
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-foreground/10" />
       <style>{`
         @keyframes altruvex-boot-line {
-          from { opacity: 0; transform: translateY(3px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
         @keyframes altruvex-blink {
           0%, 100% { opacity: 1; }

@@ -1,14 +1,15 @@
 "use client";
+import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef } from "react";
 
 export default function InterfacePage() {
@@ -25,23 +26,18 @@ export default function InterfacePage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
+  const tHero = useTranslations("hero");
   const projectRangeCta = getCommercialCta("projectRange");
   const realBuildCta = getCommercialCta("realBuild");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
-  const scrollRef = useReveal({
-    ...DEFAULTS.element,
-    direction: "fade",
-    delay: 0.45,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
-    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-[var(--section-y-top)] pb-[var(--section-y-bottom)]">
+    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>01</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
@@ -124,33 +120,32 @@ function HeroSection() {
           </div>
         </div>
       </Container>
-      <div
-        ref={scrollRef}
-        className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
-        aria-hidden="true"
+      <HeroReveal
+        delay={1.1}
+        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>
-          {tCommon("scroll")}
+        <p
+          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          aria-hidden
+        >
+          {tHero("scrollHint")}
         </p>
-        <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
-          <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
+        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
+          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
         </div>
-      </div>
+      </HeroReveal>
     </section>
   );
 }
 
 function ShowcaseSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const sectionRef = useBatch<HTMLElement>({
-    selector: "[data-showcase-item]",
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-showcase-item]",
     stagger: MOTION.stagger.tight,
     distance: MOTION.distance.sm,
   });
-  const titleRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
 
   const showcaseItems = [
     { labelKey: "showcaseEcommerce", number: "01" },
@@ -173,12 +168,16 @@ function ShowcaseSection() {
       className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div ref={titleRef} className="mb-16">
-          <p className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}>
+        <div className="mb-16">
+          <p
+            ref={eyebrowRef}
+            className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}
+          >
             {t("showcaseEyebrow")}
           </p>
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <h2
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.05]"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",
@@ -205,7 +204,7 @@ function ShowcaseSection() {
               key={i}
               data-showcase-item
               className={[
-                "group relative border border-foreground/8 rounded-sm bg-foreground/2 p-6 md:p-8 overflow-hidden flex flex-col justify-between hover:bg-foreground/4 transition-colors duration-300 cursor-pointer",
+                "group relative border border-foreground/8 rounded-lg bg-foreground/2 p-6 md:p-8 overflow-hidden flex flex-col justify-between hover:bg-foreground/4 transition-colors duration-300 cursor-pointer",
                 getSpan(i),
               ].join(" ")}
             >
@@ -371,7 +370,7 @@ const FeatureCard = ({
         >
           <div className="mb-8 flex items-center gap-3">
             <span
-              className="inline-flex shrink-0 whitespace-nowrap rounded-sm border px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] transition-colors duration-300"
+              className="inline-flex shrink-0 whitespace-nowrap rounded-lg border px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] transition-colors duration-300"
               style={{
                 color: rgba(0.55),
                 borderColor: rgba(0.2),
@@ -408,7 +407,7 @@ const FeatureCard = ({
             className="min-w-0 flex-1 transition-transform duration-100 ease-out translate-x-(--tx,0px) translate-y-(--ty,0px)"
           >
             <div className="mb-1.5 flex flex-wrap items-center gap-3">
-              <span className="hidden shrink-0 whitespace-nowrap rounded-sm border border-foreground/10 px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] text-foreground/40 transition-colors duration-300 group-hover:border-(--tbc) group-hover:bg-(--tbg) group-hover:text-(--tc) sm:inline-flex">
+              <span className="hidden shrink-0 whitespace-nowrap rounded-lg border border-foreground/10 px-[7px] py-[2.5px] font-mono text-[8.5px] font-medium uppercase tracking-[0.22em] text-foreground/40 transition-colors duration-300 group-hover:border-(--tbc) group-hover:bg-(--tbg) group-hover:text-(--tc) sm:inline-flex">
                 {t("cta.tokens.featured")}_{feature.num}
               </span>
               <h3 className="font-sans font-normal text-primary text-[clamp(17px,2.2vw,24px)] tracking-[-0.02em] leading-[1.2]">
@@ -432,8 +431,7 @@ const FeatureCard = ({
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const tCommon = useTranslations("serviceDetails.webDesign");
-  const sectionRef = useBatch<HTMLElement>({
-    selector: ".feature-card-anim",
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: ".feature-card-anim",
     stagger: 0.15,
     distance: 30,
   });
@@ -484,27 +482,25 @@ function CtaSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
-  const titleRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
-  const cardsRef = useBatch<HTMLDivElement>({
-    selector: "[data-token-card]",
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const cardsRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-token-card]",
     distance: MOTION.distance.sm,
   });
 
   return (
     <section className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        <div
-          ref={titleRef}
-          className="mb-16 flex items-end justify-between gap-8 flex-wrap"
-        >
+        <div className="mb-16 flex items-end justify-between gap-8 flex-wrap">
           <div className="max-w-xl">
-            <p className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}>
+            <p
+              ref={eyebrowRef}
+              className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}
+            >
               {t("cta.eyebrow")}
             </p>
             <h2
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.05] mb-4"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",
@@ -546,7 +542,7 @@ function CtaSection() {
         <div ref={cardsRef} className="grid md:grid-cols-3 gap-4">
           <div
             data-token-card
-            className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-4"
+            className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-4"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
               {t("cta.tokens.colors")}
@@ -559,7 +555,7 @@ function CtaSection() {
                 "bg-foreground/10",
                 "bg-foreground/4",
               ].map((c, i) => (
-                <div key={i} className={`flex-1 h-10 rounded-sm ${c}`} />
+                <div key={i} className={`flex-1 h-10 rounded-lg ${c}`} />
               ))}
             </div>
             <p className="font-mono text-xs uppercase tracking-widest text-foreground/20 rtl:font-sans rtl:normal-case">
@@ -568,7 +564,7 @@ function CtaSection() {
           </div>
           <div
             data-token-card
-            className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-3"
+            className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-3"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
               {t("cta.tokens.typography")}
@@ -593,7 +589,7 @@ function CtaSection() {
           </div>
           <div
             data-token-card
-            className="border border-foreground/8 rounded-sm bg-foreground/2 p-6 space-y-4"
+            className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-4"
           >
             <span className={cn(monoCaps, "block text-muted-foreground/70")}>
               {t("cta.tokens.layout")}
@@ -602,7 +598,7 @@ function CtaSection() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-7 rounded-sm ${i % 3 === 0 ? "col-span-2 bg-foreground/12" : "bg-foreground/6"}`}
+                  className={`h-7 rounded-lg ${i % 3 === 0 ? "col-span-2 bg-foreground/12" : "bg-foreground/6"}`}
                 />
               ))}
             </div>

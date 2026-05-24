@@ -3,7 +3,6 @@
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { ThemeScript } from "@/components/theme-script";
 import dynamic from "next/dynamic";
 import { Suspense, type ReactNode } from "react";
 
@@ -42,7 +41,6 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
   const content = (
     <>
       {shouldMountNonCritical ? <InitialLoaderLazy /> : null}
-      <ThemeScript />
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

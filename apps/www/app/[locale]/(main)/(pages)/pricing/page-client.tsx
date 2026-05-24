@@ -1,11 +1,11 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { FaqSection } from "@/components/sections/faq-section";
 import { Link } from "@/i18n/navigation";
-import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 
 const TIER_DESTINATION = {
@@ -19,24 +19,18 @@ export default function PricingPage() {
   const t = useTranslations("pricing");
   const tp = useTranslations("commercial.pricing");
 
-  const heroEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const heroTitleRef = useText<HTMLHeadingElement>(DEFAULTS.heading);
-  const heroDescRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const tierCardsRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".tier-card",
+  const heroEyebrowRef = useSectionEyebrow();
+  const heroTitleRef = useSectionTitle<HTMLHeadingElement>();
+  const heroDescRef = useSectionDescription();
+  const tierCardsRef = useSectionCardGrid<HTMLDivElement>({ selector: ".tier-card",
   });
-  const commercialNotesRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".commercial-note",
+  const commercialNotesRef = useSectionCardGrid<HTMLDivElement>({ selector: ".commercial-note",
   });
-  const roiEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const roiTitleRef = useText<HTMLHeadingElement>(DEFAULTS.heading);
-  const roiBodyRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".roi-p",
+  const roiEyebrowRef = useSectionEyebrow();
+  const roiTitleRef = useSectionTitle<HTMLHeadingElement>();
+  const roiBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".roi-p",
   });
-  const roiStatsRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const roiStatsRef = useSectionDescription();
 
   const tCTAs = useTranslations("commercial.ctas");
   const tiers = [
@@ -187,21 +181,16 @@ export default function PricingPage() {
                   <article
                     key={tier.id}
                     className={[
-                      "tier-card relative border rounded-sm p-6 md:p-8 flex flex-col",
+                      "tier-card relative border rounded-lg p-6 md:p-8 flex flex-col",
                       tier.highlight
-                        ? "border-foreground/40 bg-foreground/4"
+                        ? "border-foreground/40 border-t-2 border-t-foreground/60 bg-foreground/4"
                         : "border-foreground/8 bg-foreground/2",
                     ].join(" ")}
                   >
                     {tier.highlight && (
-                      <>
-                        <div className="absolute top-0 left-0 right-0 h-[2px] bg-foreground/60 rounded-t-sm" />
-                        <div className="mb-3">
-                          <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
-                            {t("recommended")}
-                          </p>
-                        </div>
-                      </>
+                      <p className="mb-3 font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+                        {t("recommended")}
+                      </p>
                     )}
                     <span
                       className="absolute top-6 end-6 font-mono font-light text-primary/5 select-none pointer-events-none"
@@ -274,8 +263,8 @@ export default function PricingPage() {
                   </article>
                 ))}
               </div>
-              <div className="mb-12 relative overflow-hidden rounded-sm border border-foreground/10 px-6 py-8 md:p-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-foreground/5 to-transparent pointer-events-none" />
+              <div className="mb-12 relative overflow-hidden rounded-lg border border-foreground/10 px-6 py-8 md:p-10 flex flex-col md:flex-row gap-8 items-start md:items-center">
+                <div className="absolute inset-0 bg-linear-to-br from-foreground/5 to-transparent pointer-events-none" />
                 <div className="relative z-10 shrink-0">
                   <p className="font-mono text-xs leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-2">
                     {t("minimumEngagement").includes("٢٢") ? "الحد الأدنى للمشاريع" : "Minimum Engagement"}
@@ -296,7 +285,7 @@ export default function PricingPage() {
                   {commercialNotes.filter(n => n.key !== "paymentTerms").map((note) => (
                     <div
                       key={note.key}
-                      className="commercial-note rounded-sm border border-foreground/8 bg-foreground/2 p-5 md:p-6 flex flex-col"
+                      className="commercial-note rounded-lg border border-foreground/8 bg-foreground/2 p-5 md:p-6 flex flex-col"
                     >
                       <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/70 mb-3">
                         {note.label}
@@ -339,7 +328,7 @@ export default function PricingPage() {
                 </div>
                 <div
                   ref={roiStatsRef}
-                  className="mt-12 py-6 px-6 md:px-8 rounded-sm bg-foreground/3 border border-foreground/8"
+                  className="mt-12 py-6 px-6 md:px-8 rounded-lg bg-foreground/3 border border-foreground/8"
                 >
                   <div className="grid md:grid-cols-3 gap-6">
                     {roiStats.map((stat, i) => (

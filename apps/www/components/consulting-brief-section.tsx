@@ -1,10 +1,10 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid, MOTION } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
 import {
   useCallback,
@@ -56,7 +56,7 @@ const BRIEF_STYLES = `
   [dir="rtl"] .cb-strike { transform-origin: right; }
   .cb-strike.drawn { transform: scaleX(1); }
   .cb-hl {
-    border-radius: 2px; padding: 0 1px;
+    border-radius: var(--radius-xs); padding: 0 1px;
     transition: background 0.52s ${CB_EASE};
   }
   .cb-hl.drawn { background: rgba(190, 145, 32, 0.14); }
@@ -292,7 +292,7 @@ function NoteCard({
 
   return (
     <div
-      className="rounded-sm bg-background"
+      className="rounded-lg bg-background"
       style={{
         padding: size === "md" ? "10px 14px" : "8px 11px",
         border:
@@ -588,7 +588,7 @@ function StageCTA({
 }) {
   return (
     <div
-      className="flex items-stretch sm:items-center justify-between flex-col sm:flex-row flex-wrap gap-3 rounded-sm border border-foreground/14"
+      className="flex items-stretch sm:items-center justify-between flex-col sm:flex-row flex-wrap gap-3 rounded-lg border border-foreground/14"
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(10px)",
@@ -609,7 +609,7 @@ function StageCTA({
       </p>
       <a
         href="#contact"
-        className="font-mono rounded-xs bg-foreground text-background no-underline whitespace-nowrap shrink-0 text-center"
+        className="font-mono rounded-sm bg-foreground text-background no-underline whitespace-nowrap shrink-0 text-center"
         style={{
           fontSize: "clamp(9px, 0.8vw, 12px)",
           letterSpacing: "0.18em",
@@ -880,11 +880,9 @@ export function ConsultingBriefSection() {
   const currentStage = useRef(-1);
   const lastScrollTime = useRef(0);
 
-  const headerRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body });
-  const headRef = useText({
-    ...DEFAULTS.heading,
+  const headerRef = useSectionEyebrow<HTMLDivElement>();
+  const headRef = useSectionTitle({
     trigger: MOTION.trigger.late,
-    delay: 0.15,
   });
 
   const [activeStage, setActiveStage] = useState(-1);

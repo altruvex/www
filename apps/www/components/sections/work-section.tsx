@@ -1,14 +1,14 @@
 "use client";
+import { useSectionEyebrow, useSectionDescription, useSectionCardGrid, useSectionTitle, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
-import { ArrowLabel, DirectionalLink } from "@/components/directional-link";
+import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,
 } from "@/lib/commercial";
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
@@ -24,14 +24,11 @@ export const WorkSection = memo(function WorkSection() {
   const proofCta = getCommercialCta("realBuild");
   const scopeCta = getCommercialCta("projectRange");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText<HTMLHeadingElement>({
-    ...DEFAULTS.heading,
-    ease: MOTION.ease.text,
-  });
-  const bodyRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const gridRef = useBatch({ ...DEFAULTS.card, selector: ".work-card" });
-  const metaRef = useReveal({ ...DEFAULTS.body, delay: 0.2 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const bodyRef = useSectionDescription();
+  const gridRef = useSectionCardGrid({ selector: ".work-card" });
+  const metaRef = useSectionElement();
 
   const { first: firstTitle, second: secondTitle } = splitHeadline(
     `${tW("title")} ${tW("titleItalic")}`,
@@ -163,8 +160,12 @@ function ClientWorkCard({
   }>;
 
   return (
-    <Link href={`/work/${slug}`} className="work-card border-b border-border md:border-b-0 md:not-last:border-e px-6 py-8 group hover:bg-surface transition-colors duration-300">
-      <div>
+    <Link
+      href={`/work/${slug}`}
+      aria-label={tW("labels.readCaseStudyWith", { name })}
+      className="work-card block border-b border-border md:border-b-0 md:not-last:border-e px-6 py-8 group hover:bg-surface transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-lg"
+    >
+      <div className="space-y-3">
         <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4">
           {client} · {year}
         </p>
@@ -184,13 +185,9 @@ function ClientWorkCard({
             </span>
           ))}
         </div>
-        <DirectionalLink
-          href={`/work/${slug}`}
-          className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal inline-flex text-foreground transition-colors hover:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-sm"
-          ariaLabel={tW("labels.readCaseStudyWith", { name })}
-        >
+        <ArrowLabel className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground transition-colors group-hover:text-muted-foreground">
           {tW("labels.viewCaseStudy")}
-        </DirectionalLink>
+        </ArrowLabel>
       </div>
     </Link>
   );

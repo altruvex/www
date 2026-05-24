@@ -1,9 +1,9 @@
 "use client";
+import { useSectionEyebrow, useSectionDescription, useSectionCardGrid, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ExternalDirectionalLink } from "@/components/directional-link";
 import { FOUNDER_LINK } from "@/lib/commercial";
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { splitHeadline } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
@@ -15,13 +15,10 @@ export const TrustSection = memo(function TrustSection() {
   const tCommon = useTranslations("common");
   const stepLabel = tCommon("step");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText<HTMLHeadingElement>({
-    ...DEFAULTS.heading,
-    ease: MOTION.ease.text,
-  });
-  const bodyRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const gridRef = useBatch({ ...DEFAULTS.card, selector: ".trust-card" });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const bodyRef = useSectionDescription();
+  const gridRef = useSectionCardGrid({ selector: ".trust-card" });
 
   const title = t("title");
   const { first: firstTitle, second: secondTitle } = splitHeadline(title);

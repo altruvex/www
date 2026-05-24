@@ -1,4 +1,5 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import {
@@ -7,7 +8,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { DEFAULTS, MOTION, useReveal } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
@@ -23,13 +23,9 @@ export const FaqSection = memo(function FaqSection({
 }: FaqSectionProps) {
   const t = useTranslations(namespace);
 
-  const headerRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body, delay: 0 });
-  const contentRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    delay: 0.15,
-    ease: MOTION.ease.smooth,
-    distance: 28,
-  });
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const titleRef = useSectionTitle();
+  const contentRef = useSectionDescription<HTMLDivElement>();
 
   const questionKeys = ["01", "02", "03", "04", "05"];
 
@@ -42,11 +38,17 @@ export const FaqSection = memo(function FaqSection({
     >
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-24">
-          <div ref={headerRef} className="max-w-md">
-            <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4 block">
+          <div className="max-w-md">
+            <p
+              ref={eyebrowRef}
+              className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4 block"
+            >
               {t("faq.title")}
             </p>
-            <h2 className="text-[clamp(2.125rem,4vw,3.25rem)] tracking-[-0.02em] font-normal text-foreground leading-[1.1] mb-6">
+            <h2
+              ref={titleRef}
+              className="text-[clamp(2.125rem,4vw,3.25rem)] tracking-[-0.02em] font-normal text-foreground leading-[1.1] mb-6"
+            >
               {t("faq.subtitle")}
             </h2>
           </div>

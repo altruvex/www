@@ -1,7 +1,7 @@
 "use client";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useReveal, useText, useBatch } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -21,8 +21,8 @@ export default function ApproachPage() {
 
 function OpeningSection() {
   const t = useTranslations("approach.hero");
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({ ...DEFAULTS.body, ease: MOTION.ease.smooth });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   return (
     <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -47,10 +47,10 @@ function OpeningSection() {
 
 function ProblemSection() {
   const t = useTranslations("approach.contrasts");
-  const sectionRef = useBatch<HTMLElement>({
+  const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-contrast-item]",
   });
-  const titleRef = useText(DEFAULTS.heading);
+  const titleRef = useSectionTitle();
 
   const contrasts = [
     { common: t("1.common"), altruvex: t("1.altruvex") },
@@ -105,12 +105,10 @@ function ProblemSection() {
 
 function DecisionsSection() {
   const t = useTranslations("approach.decisions");
-  const sectionRef = useBatch<HTMLElement>({
+  const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-decision-item]",
-    direction: "right",
-    distance: MOTION.distance.sm,
   });
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
+  const titleRef = useSectionTitle();
 
   const decisions = [
     { title: t("data.title"), desc: t("data.description") },
@@ -153,12 +151,8 @@ function DecisionsSection() {
 
 function ConstraintsSection() {
   const t = useTranslations("approach.constraints");
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -191,17 +185,9 @@ function ConstraintsSection() {
 function BilingualSection() {
   const t = useTranslations("approach.bilingual");
   const [isRTL, setIsRTL] = useState(false);
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
-  const demoRef = useReveal({
-    ...DEFAULTS.element,
-    ease: MOTION.ease.smooth,
-    delay: 0.25,
-  });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const demoRef = useSectionElement();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -237,7 +223,7 @@ function BilingualSection() {
             <button
               type="button"
               onClick={() => setIsRTL(!isRTL)}
-              className="rounded-full border border-foreground/25 bg-foreground/5 px-4 py-2 font-mono text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-primary transition-colors duration-300 hover:bg-foreground/10"
+              className="rounded-md border border-foreground/25 bg-foreground/5 px-4 py-2 font-mono text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-primary transition-colors duration-300 hover:bg-foreground/10"
             >
               {isRTL ? "EN" : "AR"}
             </button>
@@ -265,18 +251,10 @@ function BilingualSection() {
 
 function BoundariesSection() {
   const t = useTranslations("approach.boundaries");
-  const sectionRef = useBatch<HTMLElement>({
+  const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-boundary-item]",
-    direction: "right",
-    distance: MOTION.distance.sm,
-    duration: MOTION.duration.fast,
   });
-  const titleRef = useReveal({
-    ...DEFAULTS.body,
-    direction: "up",
-    ease: MOTION.ease.smooth,
-    delay: 0,
-  });
+  const titleRef = useSectionTitle();
 
   const boundaries = ["1", "2", "3", "4", "5"];
 
@@ -316,17 +294,9 @@ function BoundariesSection() {
 
 function ClosingSection() {
   const t = useTranslations("approach.closing");
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
-  const ctaRef = useReveal({
-    ...DEFAULTS.element,
-    ease: MOTION.ease.smooth,
-    delay: 0.25,
-  });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom)">

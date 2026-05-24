@@ -1,10 +1,10 @@
 "use client";
+import { useSectionTitle, useSectionDescription, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
-import { DEFAULTS, useReveal, useText } from "@/lib/motion";
 import { createContactFormSchema } from "@/lib/validations/contact";
 import { AlertCircle, CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -23,21 +23,13 @@ export default function ContactPage() {
   );
   const searchParams = useSearchParams();
 
-  const badgeRef = useReveal({ ...DEFAULTS.element, delay: 0 });
-  const titleRef = useText<HTMLHeadingElement>(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const badgeRef = useSectionElement({ delay: 0 });
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription();
 
-  const infoTitleRef = useText<HTMLHeadingElement>(DEFAULTS.heading);
-  const leftRef = useReveal({
-    ...DEFAULTS.body,
-    direction: "left",
-    delay: 0.1,
-  });
-  const rightRef = useReveal({
-    ...DEFAULTS.body,
-    direction: "right",
-    delay: 0.15,
-  });
+  const infoTitleRef = useSectionTitle<HTMLHeadingElement>();
+  const leftRef = useSectionDescription();
+  const rightRef = useSectionElement();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

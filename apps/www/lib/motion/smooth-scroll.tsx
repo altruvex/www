@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import type Lenis from "lenis";
+import { useEffect } from "react";
 
 export function SmoothScrollProvider({
   children,
@@ -13,6 +13,7 @@ export function SmoothScrollProvider({
     let gsapRef: typeof import("@/lib/gsap") | null = null;
     let lenisRef: Lenis | null = null;
     let tickFn: ((time: number) => void) | null = null;
+    let resizeObserver: ResizeObserver | null = null;
 
     const init = async () => {
       try {
@@ -26,9 +27,7 @@ export function SmoothScrollProvider({
         if (cancelled) return;
 
         gsapRef = { gsap, ScrollTrigger };
-        const isTouch = window.matchMedia(
-          "(hover: none) and (pointer: coarse)",
-        ).matches;
+        const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
 
         if (!isTouch) {
           const lenis = new Lenis({
@@ -39,6 +38,7 @@ export function SmoothScrollProvider({
 
           lenisRef = lenis;
           let stPending = false;
+
           lenis.on("scroll", () => {
             if (!stPending) {
               stPending = true;
@@ -48,17 +48,23 @@ export function SmoothScrollProvider({
               });
             }
           });
+
           tickFn = (time: number) => lenis.raf(time * 1000);
           gsap.ticker.add(tickFn);
-
           gsap.ticker.lagSmoothing(0);
+
+          // Handle page geometry changes automatically
+          resizeObserver = new ResizeObserver(() => {
+            lenis.resize();
+          });
+          resizeObserver.observe(document.body);
         }
 
         requestAnimationFrame(() => {
           if (!cancelled) ScrollTrigger.refresh();
         });
       } catch (e) {
-        console.warn("Failed to initialize smooth scroll:", e);
+        console.warn("Smooth scroll initialization bypassed:", e);
       }
     };
 
@@ -70,6 +76,7 @@ export function SmoothScrollProvider({
         gsapRef.gsap.ticker.remove(tickFn);
       }
       lenisRef?.destroy();
+      resizeObserver?.disconnect();
     };
   }, []);
 

@@ -5,7 +5,7 @@ import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RefObject, useRef } from "react";
-import { MOTION, getConstrainedDevice } from "../config";
+import { MOTION, MotionEase, MotionTrigger, getConstrainedDevice, resolveEase, resolveTrigger } from "../config";
 import { RevealDirection } from "./use-reveal";
 
 export interface BatchConfig {
@@ -14,8 +14,8 @@ export interface BatchConfig {
   duration?: number;
   distance?: number;
   stagger?: number;
-  ease?: string;
-  trigger?: string;
+  ease?: string | MotionEase;
+  trigger?: string | MotionTrigger;
   once?: boolean;
   selector?: string;
   alternate?: boolean;
@@ -62,6 +62,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
       : (Array.from(container.children) as HTMLElement[]);
 
     if (!items.length) return;
+
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
@@ -71,24 +72,21 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
           reduced: "(prefers-reduced-motion: reduce)",
         },
         () => {
-          const prefersReduced = window.matchMedia(
-            "(prefers-reduced-motion: reduce)",
-          ).matches;
-
-          if (prefersReduced) {
-            gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1 });
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" });
             return;
           }
+
           const constrained = getConstrainedDevice();
-          const effectiveDistance = constrained
-            ? Math.round(distance * 0.6)
-            : distance;
+          const effectiveDistance = constrained ? Math.round(distance * 0.6) : distance;
+          const resolvedEasing = resolveEase(ease);
+          const resolvedTriggering = resolveTrigger(trigger);
+
           if (alternate && (direction === "left" || direction === "right")) {
             const evens = items.filter((_, i) => i % 2 === 0);
             const odds = items.filter((_, i) => i % 2 === 1);
             const evenFrom = buildFrom(direction, effectiveDistance);
-            const oddDir: RevealDirection =
-              direction === "left" ? "right" : "left";
+            const oddDir: RevealDirection = direction === "left" ? "right" : "left";
             const oddFrom = buildFrom(oddDir, effectiveDistance);
 
             gsap.set(evens, { ...evenFrom, willChange: "transform, opacity" });
@@ -97,9 +95,10 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
             const from = buildFrom(direction, effectiveDistance);
             gsap.set(items, { ...from, willChange: "transform, opacity" });
           }
+
           if (!alternate) {
             ScrollTrigger.batch(items, {
-              start: trigger,
+              start: resolvedTriggering,
               once,
               batchMax: 6,
               onEnter(batch: Element[]) {
@@ -110,50 +109,33 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
                   scale: 1,
                   duration,
                   delay,
-                  ease,
+                  ease: resolvedEasing,
                   force3D: true,
                   stagger: { each: stagger },
                   onComplete() {
-                    gsap.set(batch, {
-                      willChange: "auto",
-                      clearProps: "willChange",
-                    });
+                    gsap.set(batch, { clearProps: "willChange,transform" });
                   },
                 });
               },
-              onLeaveBack: once
-                ? undefined
-                : (batch: Element[]) => {
-                    const from = buildFrom(direction, effectiveDistance);
-                    gsap.to(batch, {
-                      ...from,
-                      duration: duration * 0.6,
-                      ease: "power1.in",
-                      force3D: true,
-                      overwrite: "auto",
-                      onStart() {
-                        gsap.set(batch, { willChange: "transform, opacity" });
-                      },
-                      onComplete() {
-                        gsap.set(batch, {
-                          willChange: "auto",
-                          clearProps: "willChange",
-                        });
-                      },
-                    });
+              onLeaveBack: once ? undefined : (batch: Element[]) => {
+                const from = buildFrom(direction, effectiveDistance);
+                gsap.to(batch, {
+                  ...from,
+                  duration: duration * 0.6,
+                  ease: "power1.in",
+                  force3D: true,
+                  overwrite: "auto",
+                  onStart() {
+                    gsap.set(batch, { willChange: "transform, opacity" });
                   },
+                  onComplete() {
+                    gsap.set(batch, { clearProps: "willChange,transform" });
+                  },
+                });
+              },
             });
           } else {
             items.forEach((item, i) => {
-              const itemDir: RevealDirection =
-                alternate && i % 2 === 1
-                  ? direction === "left"
-                    ? "right"
-                    : direction === "right"
-                      ? "left"
-                      : direction
-                  : direction;
-
               gsap.to(item, {
                 opacity: 1,
                 x: 0,
@@ -161,55 +143,33 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
                 scale: 1,
                 duration,
                 delay: delay + i * stagger,
-                ease,
+                ease: resolvedEasing,
                 force3D: true,
                 overwrite: "auto",
                 scrollTrigger: {
                   trigger: item,
-                  start: trigger,
+                  start: resolvedTriggering,
                   once,
                   fastScrollEnd: true,
-                  toggleActions: once
-                    ? "play none none none"
-                    : "play none none reverse",
+                  toggleActions: once ? "play none none none" : "play none none reverse",
                 },
                 onComplete() {
-                  gsap.set(item, {
-                    willChange: "auto",
-                    clearProps: "willChange",
-                  });
+                  gsap.set(item, { clearProps: "willChange,transform" });
                 },
               });
-
-              void itemDir;
             });
           }
-        },
+        }
       );
     }, container);
 
     return () => ctx.revert();
-  }, [
-    isInitialLoadComplete,
-    direction,
-    delay,
-    duration,
-    distance,
-    stagger,
-    ease,
-    trigger,
-    once,
-    selector,
-    alternate,
-  ]);
+  }, [isInitialLoadComplete, direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate]);
 
   return ref;
 }
 
-function buildFrom(
-  direction: RevealDirection,
-  distance: number,
-): gsap.TweenVars {
+function buildFrom(direction: RevealDirection, distance: number): gsap.TweenVars {
   const base: gsap.TweenVars = { opacity: 0 };
   if (direction === "up") return { ...base, y: distance };
   if (direction === "down") return { ...base, y: -distance };

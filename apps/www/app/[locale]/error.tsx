@@ -116,7 +116,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             </p>
             {error.digest && (
               <div className="mb-12 w-full max-w-md text-left rtl:text-right">
-                <details className="group rounded-sm border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/3">
+                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/3">
                   <summary
                     className={cn(
                       monoCaps,
@@ -125,7 +125,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   >
                     Error Digest
                   </summary>
-                  <pre className="mt-4 overflow-auto rounded-sm bg-foreground/5 p-3 font-mono text-[10px] text-primary/70 leading-relaxed">
+                  <pre className="mt-4 overflow-auto rounded-lg bg-foreground/5 p-3 font-mono text-[10px] text-primary/70 leading-relaxed">
                     <code>{error.digest}</code>
                   </pre>
                 </details>

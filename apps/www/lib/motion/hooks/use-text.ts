@@ -4,7 +4,7 @@ import { useLoading } from "@/components/providers/loading-provider";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
 import { RefObject, useRef } from "react";
-import { MOTION, getConstrainedDevice } from "../config";
+import { MOTION, getConstrainedDevice, resolveEase, resolveTrigger, MotionEase, MotionTrigger } from "../config";
 import { autoSplit } from "../utils/splite";
 
 export interface TextConfig {
@@ -12,8 +12,8 @@ export interface TextConfig {
   duration?: number;
   stagger?: number;
   distance?: number;
-  ease?: string;
-  trigger?: string;
+  ease?: string | MotionEase;
+  trigger?: string | MotionTrigger;
   once?: boolean;
   splitBy?: "char" | "word" | "line";
   blur?: boolean;
@@ -57,6 +57,7 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el || !isInitialLoadComplete) return;
+
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
@@ -66,16 +67,12 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
           reduced: "(prefers-reduced-motion: reduce)",
         },
         () => {
-          const prefersReduced = window.matchMedia(
-            "(prefers-reduced-motion: reduce)",
-          ).matches;
-
-          if (prefersReduced) {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" });
             return;
           }
-          const constrained = getConstrainedDevice();
 
+          const constrained = getConstrainedDevice();
           let targets: Element[];
           let isRTL = false;
           let canBlur = blur && !constrained;
@@ -90,36 +87,31 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
             canBlur = blur && result.canBlur && !constrained;
           } else {
             const splitType = el.getAttribute("data-m-split");
-            const selector =
-              splitType === "char"
-                ? ".m-char"
-                : splitType === "word"
-                  ? ".m-word"
-                  : ".m-line";
+            const selector = splitType === "char" ? ".m-char" : splitType === "word" ? ".m-word" : ".m-line";
             targets = Array.from(el.querySelectorAll(selector));
-            isRTL = targets.some(
-              (t) => (t as HTMLElement).dataset.script === "arabic",
-            );
+            isRTL = targets.some((t) => (t as HTMLElement).dataset.script === "arabic");
             canBlur = blur && !isRTL && !constrained;
           }
+
           if (!targets.length) targets = [el];
-          const effectiveStagger =
-            targets.length > 1
-              ? Math.min(stagger, MAX_TOTAL_STAGGER_DURATION / targets.length)
-              : stagger;
-          const from: gsap.TweenVars = {
+          
+          const effectiveStagger = targets.length > 1
+            ? Math.min(stagger, MAX_TOTAL_STAGGER_DURATION / targets.length)
+            : stagger;
+
+          const fromVars: gsap.TweenVars = {
             opacity: 0,
             y: distance,
             willChange: "transform, opacity",
           };
 
-          if (!constrained) {
-            from.scale = 0.96;
-          }
-          if (canBlur) {
-            from.filter = "blur(4px)";
-          }
-          gsap.set(targets, from);
+          if (!constrained) fromVars.scale = 0.96;
+          if (canBlur) fromVars.filter = "blur(4px)";
+
+          gsap.set(targets, fromVars);
+
+          const resolvedEasing = resolveEase(ease);
+          const resolvedTriggering = resolveTrigger(trigger);
 
           const animProps: gsap.TweenVars = {
             opacity: 1,
@@ -127,34 +119,26 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
             duration,
             stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
             delay,
-            ease: ease || "power4.out",
+            ease: resolvedEasing,
             force3D: true,
             overwrite: "auto",
             scrollTrigger: {
               trigger: el,
-              start: trigger,
+              start: resolvedTriggering,
               once,
               fastScrollEnd: true,
-              toggleActions: once
-                ? "play none none none"
-                : "play none none reverse",
+              toggleActions: once ? "play none none none" : "play none none reverse",
             },
             onComplete() {
-              gsap.set(targets, {
-                clearProps: "willChange,filter",
-              });
+              gsap.set(targets, { clearProps: "willChange,filter,transform" });
             },
           };
 
-          if (!constrained) {
-            animProps.scale = 1;
-          }
-
-          if (canBlur) {
-            animProps.filter = "blur(0px)";
-          }
+          if (!constrained) animProps.scale = 1;
+          if (canBlur) animProps.filter = "blur(0px)";
 
           gsap.to(targets, animProps);
+
           if (scrubExit && !constrained) {
             const section = el.closest("section") ?? el;
             gsap.to(targets, {
@@ -171,24 +155,12 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
               },
             });
           }
-        },
+        }
       );
     }, el);
 
     return () => ctx.revert();
-  }, [
-    isInitialLoadComplete,
-    delay,
-    duration,
-    stagger,
-    distance,
-    ease,
-    trigger,
-    once,
-    splitBy,
-    blur,
-    scrubExit,
-  ]);
+  }, [isInitialLoadComplete, delay, duration, stagger, distance, ease, trigger, once, splitBy, blur, scrubExit]);
 
   return ref;
 }

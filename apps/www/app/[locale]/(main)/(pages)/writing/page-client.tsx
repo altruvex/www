@@ -1,8 +1,8 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { Link } from "@/i18n/navigation";
-import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
 
@@ -25,9 +25,9 @@ export default function WritingPage({
 
 function OpeningSection() {
   const t = useTranslations("writing");
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   return (
     <section className="relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -65,7 +65,7 @@ function OpeningSection() {
 }
 
 function ListSection({ articles, locale }: WritingPageClientProps) {
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-article]" });
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-article]" });
 
   return (
     <section

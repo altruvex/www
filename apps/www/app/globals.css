@@ -55,20 +55,22 @@
   --color-inverted-bg: hsl(var(--inverted-bg));
   --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
   --color-selection-accent: hsl(var(--selection-accent));
-
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono:
     var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif: Georgia, "Times New Roman", serif;
-
-  --radius-xs: 2px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-xs: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 12px);
-  --radius-2xl: calc(var(--radius) + 20px);
-  --radius-3xl: calc(var(--radius) + 28px);
+  --radius-xl: calc(var(--radius) + 8px);
+  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-3xl: calc(var(--radius) + 16px);
+  --radius-surface: var(--radius-lg);
+  --radius-overlay: var(--radius-xl);
+  --radius-section: var(--radius-2xl);
+  --radius-nested: var(--radius-sm);
 
   --animate-slide-down: slide-down 1.8s ease-in-out infinite;
   --animate-ripple: ripple 0.6s ease-out forwards;

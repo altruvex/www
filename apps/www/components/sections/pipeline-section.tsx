@@ -1,8 +1,8 @@
 "use client";
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, MOTION } from "@/lib/motion";
 
 const STAGE_COLORS = [
   "74,  110, 212",
@@ -118,9 +118,9 @@ export function PipelineSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const runningRef = useRef(false);
   const t = useTranslations("pipeline");
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -317,7 +317,7 @@ export function PipelineSection() {
 
           <div
             dir="ltr"
-            className="transition-[opacity,transform] overflow-hidden rounded-sm"
+            className="transition-[opacity,transform] overflow-hidden rounded-lg"
             style={{
               border: "0.5px solid hsl(var(--border))",
               opacity: revealed ? 1 : 0,
@@ -595,7 +595,7 @@ export function PipelineSection() {
               </div>
 
               <button
-                className="cursor-pointer transition-[color,border-color,background-color] disabled:opacity-30 disabled:cursor-not-allowed font-mono text-sm leading-normal tracking-wider rounded-sm"
+                className="cursor-pointer transition-[color,border-color,background-color] disabled:opacity-30 disabled:cursor-not-allowed font-mono text-sm leading-normal tracking-wider rounded-md"
                 disabled={running}
                 onClick={complete ? reset : execute}
                 style={{

@@ -1,4 +1,5 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import {
@@ -10,7 +11,6 @@ import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
 import { FOUNDER_LINK, getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
@@ -43,16 +43,11 @@ function HeroSection() {
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.body,
-    selector: "[data-about-body]",
-  });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
-  const railRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: "[data-about-rail]",
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
+  const railRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-about-rail]",
   });
 
   const stats = [
@@ -139,7 +134,7 @@ function HeroSection() {
           <div ref={railRef} className="flex flex-col gap-5">
             <div
               data-about-rail
-              className="rounded-xl border border-border bg-surface px-6 py-5"
+              className="rounded-lg border border-border bg-surface px-6 py-5"
             >
               <p className={cn(monoCaps, "mb-4 text-muted-foreground/70")}>
                 {t("founder.eyebrow")}
@@ -162,7 +157,7 @@ function HeroSection() {
                 </ExternalDirectionalLink>
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-surface px-6 py-5">
+            <div className="rounded-lg border border-border bg-surface px-6 py-5">
               <p className={cn(monoCaps, "mb-4 text-muted-foreground/70")}>
                 {heroT("scrollHint")}
               </p>
@@ -197,10 +192,8 @@ function HeroSection() {
 
 function PrinciplesSection() {
   const t = useTranslations("about");
-  const titleRef = useText(DEFAULTS.heading);
-  const bodyRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: "[data-principle-card]",
+  const titleRef = useSectionTitle();
+  const bodyRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-principle-card]",
   });
 
   const values = [
@@ -247,7 +240,7 @@ function PrinciplesSection() {
                 key={value.label}
                 data-principle-card
                 className={cn(
-                  "rounded-xl border border-border bg-surface p-6 md:p-7",
+                  "rounded-lg border border-border bg-surface p-6 md:p-7",
                   index === 0 && "md:col-span-2",
                 )}
               >
@@ -264,7 +257,7 @@ function PrinciplesSection() {
             ))}
             <article
               data-principle-card
-              className="rounded-xl border border-border bg-surface p-6 md:col-span-2 md:p-8"
+              className="rounded-lg border border-border bg-surface p-6 md:col-span-2 md:p-8"
             >
               <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -293,10 +286,8 @@ function PrinciplesSection() {
 function OperatingModelSection() {
   const t = useTranslations("process");
   const navT = useTranslations("nav");
-  const titleRef = useText(DEFAULTS.heading);
-  const listRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: "[data-process-card]",
+  const titleRef = useSectionTitle();
+  const listRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-process-card]",
   });
 
   const steps = ["step1", "step2", "step3", "step4"].map((key, index) => ({
@@ -332,7 +323,7 @@ function OperatingModelSection() {
             <article
               key={step.index}
               data-process-card
-              className="rounded-xl border border-border bg-surface p-6 md:p-7"
+              className="rounded-lg border border-border bg-surface p-6 md:p-7"
             >
               <div className="flex items-start justify-between gap-4">
                 <p className={cn(monoCaps, "text-muted-foreground/70")}>
@@ -384,9 +375,7 @@ function OperatingModelSection() {
 
 function PathwaysSection({ routeCards }: PageClientProps) {
   const t = useTranslations("commercial.cta");
-  const cardsRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: "[data-route-card]",
+  const cardsRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-route-card]",
   });
 
   return (
@@ -410,7 +399,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
                 key={card.href}
                 href={card.href}
                 data-route-card
-                className="group rounded-xl border border-border bg-surface p-6 transition-colors duration-300 hover:bg-background/80"
+                className="group rounded-lg border border-border bg-surface p-6 transition-colors duration-300 hover:bg-background/80"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>

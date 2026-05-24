@@ -1,4 +1,5 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ArrowIcon } from "@/components/directional-link";
@@ -8,14 +9,13 @@ import { CtaSection } from "@/components/sections/cta-section";
 import { Link } from "@/i18n/navigation";
 import { HOMEPAGE_OFFERS, getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
 
 const designTokens = {
   cardBase:
-    "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-surface/40 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)",
+    "group relative flex flex-col justify-between overflow-hidden rounded-lg border border-border bg-surface/40 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)",
   cardHover: "hover:border-border-mid hover:shadow-xl hover:-translate-y-1.5",
   capsLabel:
     "text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground",
@@ -27,17 +27,9 @@ export default memo(function ServicesPage() {
   const tc = useTranslations("commercial.offers");
   const tCTAs = useTranslations("commercial.ctas");
 
-  const eyebrowRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0,
-  });
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   const capabilityLinks = useMemo(
     () => [

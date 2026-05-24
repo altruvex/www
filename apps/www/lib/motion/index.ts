@@ -1,4 +1,4 @@
-export { MOTION, DEFAULTS } from "./config";
+export { MOTION, DEFAULTS, SECTION_DELAYS } from "./config";
 export type {
   MotionDistance,
   MotionDuration,
@@ -9,6 +9,14 @@ export type {
 export { useBatch } from "@/lib/motion/hooks/use-batch";
 export { useReveal } from "@/lib/motion/hooks/use-reveal";
 export { useText } from "@/lib/motion/hooks/use-text";
+export {
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionElement,
+  useSectionEyebrow,
+  useSectionScrollHint,
+  useSectionTitle,
+} from "@/lib/motion/hooks/use-section-motion";
 export type { BatchConfig } from "@/lib/motion/hooks/use-batch";
 export type {
   RevealConfig,

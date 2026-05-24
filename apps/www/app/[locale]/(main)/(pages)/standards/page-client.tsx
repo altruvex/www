@@ -1,7 +1,7 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 
 export default function StandardsPage() {
@@ -16,10 +16,10 @@ export default function StandardsPage() {
 
 function OpeningSection() {
   const t = useTranslations("standards.hero");
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.25 });
-  const metricsRef = useReveal({ ...DEFAULTS.element, delay: 0.35 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const metricsRef = useSectionElement();
 
   return (
     <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -66,7 +66,7 @@ function OpeningSection() {
             ].map(({ label, value, sub }, i) => (
               <div
                 key={i}
-                className="border border-foreground/8 rounded-sm bg-foreground/2 p-5"
+                className="border border-foreground/8 rounded-lg bg-foreground/2 p-5"
               >
                 <p className="font-mono text-sm leading-normal tracking-wider  uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
                   {label}
@@ -101,7 +101,7 @@ function OpeningSection() {
 function CategoriesSection() {
   const t = useTranslations("standards");
   const tCat = useTranslations("standards.categories");
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-category]" });
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-category]" });
 
   const categories = ["code", "performance", "accessibility", "security"];
 
@@ -147,7 +147,7 @@ function CategoriesSection() {
                   ].map(({ heading, items }) => (
                     <div
                       key={heading}
-                      className="border border-foreground/8 rounded-sm bg-foreground/2 p-6"
+                      className="border border-foreground/8 rounded-lg bg-foreground/2 p-6"
                     >
                       <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                         {heading}
@@ -176,12 +176,8 @@ function CategoriesSection() {
 
 function ClosingSection() {
   const t = useTranslations("standards.enforcement");
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal<HTMLParagraphElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription<HTMLParagraphElement>();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">

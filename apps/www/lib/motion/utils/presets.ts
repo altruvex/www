@@ -1,4 +1,4 @@
-import { MOTION } from "../config";
+import { DEFAULTS, MOTION, SECTION_DELAYS } from "../config";
 import type { RevealConfig } from "../hooks/use-reveal";
 import type { TextConfig } from "../hooks/use-text";
 import type { BatchConfig } from "../hooks/use-batch";
@@ -41,15 +41,48 @@ const scaleIn = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   ...overrides,
 });
 
-const headline = (overrides: Partial<TextConfig> = {}): TextConfig => ({
-  splitBy: "word",
-  blur: true,
-  duration: MOTION.duration.text,
-  stagger: MOTION.stagger.base,
-  distance: MOTION.distance.lg,
+const sectionTitle = (overrides: Partial<TextConfig> = {}): TextConfig => ({
+  ...DEFAULTS.heading,
   ease: MOTION.ease.text,
   ...overrides,
 });
+
+const sectionEyebrow = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  ...DEFAULTS.body,
+  delay: SECTION_DELAYS.eyebrow,
+  ...overrides,
+});
+
+const sectionDescription = (
+  overrides: Partial<RevealConfig> = {},
+): RevealConfig => ({
+  ...DEFAULTS.body,
+  delay: SECTION_DELAYS.description,
+  ...overrides,
+});
+
+const sectionElement = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  ...DEFAULTS.element,
+  delay: SECTION_DELAYS.element,
+  ...overrides,
+});
+
+const sectionScrollHint = (
+  overrides: Partial<RevealConfig> = {},
+): RevealConfig => ({
+  ...DEFAULTS.element,
+  direction: "fade",
+  delay: SECTION_DELAYS.scrollHint,
+  ...overrides,
+});
+
+const sectionCardGrid = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
+  ...DEFAULTS.card,
+  ...overrides,
+});
+
+const headline = (overrides: Partial<TextConfig> = {}): TextConfig =>
+  sectionTitle(overrides);
 
 const heroHeadline = (overrides: Partial<TextConfig> = {}): TextConfig => ({
   splitBy: "word",
@@ -112,4 +145,10 @@ export const motion = {
   body,
   cardGrid,
   listItems,
+  sectionTitle,
+  sectionEyebrow,
+  sectionDescription,
+  sectionElement,
+  sectionScrollHint,
+  sectionCardGrid,
 } as const;

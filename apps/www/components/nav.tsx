@@ -207,7 +207,7 @@ export function Nav() {
                 <ThemeChanger />
                 <NavDivider />
                 <Link href="/transparency">
-                  <MagneticButton className="h-11 w-full flex items-center justify-center">
+                  <MagneticButton className="w-full flex items-center justify-center">
                     <span>{t("getStarted")}</span>
                   </MagneticButton>
                 </Link>
@@ -264,7 +264,7 @@ export function Nav() {
                       <Link href={item.href} onClick={closeMobileMenu}>
                         <button
                           type="button"
-                          className="block w-full rounded-xl px-3 py-3 font-sans text-2xl font-light tracking-tight text-primary/70 transition-colors duration-200 ltr:text-left rtl:text-right"
+                          className="block w-full rounded-lg px-3 py-3 font-sans text-2xl font-light tracking-tight text-primary/70 transition-colors duration-200 ltr:text-left rtl:text-right"
                         >
                           {t(item.key)}
                         </button>

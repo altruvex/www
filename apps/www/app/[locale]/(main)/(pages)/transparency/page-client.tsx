@@ -1,4 +1,5 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
@@ -23,7 +24,6 @@ import {
   useTransparency,
 } from "@/hooks/use-transparency";
 import { Link } from "@/i18n/navigation";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import {
   buildPDFHtml,
   generateEstimatePdf,
@@ -90,19 +90,10 @@ export default function TransparencyPageClient() {
   const TOTAL_STEPS = isPreselected ? 3 : 8;
 
   const estimate = getEstimate();
-  const titleRef = useText<HTMLHeadingElement>(DEFAULTS.heading);
-  const subtitleRef = useReveal<HTMLParagraphElement>({
-    ...DEFAULTS.body,
-    delay: 0.15,
-  });
-  const badgeRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.element,
-    delay: 0.1,
-  });
-  const progressRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.element,
-    delay: 0.25,
-  });
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const subtitleRef = useSectionDescription<HTMLParagraphElement>();
+  const badgeRef = useSectionEyebrow<HTMLDivElement>();
+  const progressRef = useSectionElement<HTMLDivElement>();
 
   const containerKey = `step-${step}-${phoneDone ? "done" : "pending"}`;
 
@@ -221,7 +212,7 @@ export default function TransparencyPageClient() {
               {incomingTier && (
                 <div
                   ref={badgeRef}
-                  className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-sm border border-foreground/12 bg-foreground/4"
+                  className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-lg border border-foreground/12 bg-foreground/4"
                 >
                   <span className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/70">
                     {t("preselected")}
@@ -369,13 +360,8 @@ interface StepProps {
 }
 
 function TransparencyFaqSection({ t }: StepProps) {
-  const headerRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body, delay: 0 });
-  const contentRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    delay: 0.15,
-    ease: MOTION.ease.smooth,
-    distance: 28,
-  });
+  const headerRef = useSectionEyebrow<HTMLDivElement>();
+  const contentRef = useSectionDescription<HTMLDivElement>();
 
   const items = ["1", "2", "3", "4"].map((key) => ({
     answer: t(`faq.a${key}`),
@@ -560,7 +546,7 @@ function PDFDownload({
   t: StepProps["t"];
 }) {
   return (
-    <div className="mt-8 relative overflow-hidden rounded-sm border border-foreground/20 bg-foreground/5 p-6">
+    <div className="mt-8 relative overflow-hidden rounded-lg border border-foreground/20 bg-foreground/5 p-6">
       <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-primary/10 to-transparent opacity-40" />
       <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -663,7 +649,7 @@ function StepResults({
         })}
       </p>
       <div className="grid sm:grid-cols-2 gap-6 mb-8">
-        <div className="p-8 rounded-sm border border-foreground/25 bg-foreground/5">
+        <div className="p-8 rounded-lg border border-foreground/25 bg-foreground/5">
           <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-3">
             {t("results.timeline")}
           </p>
@@ -674,7 +660,7 @@ function StepResults({
             </span>
           </p>
         </div>
-        <div className="p-8 rounded-sm border border-foreground/50 bg-foreground/10">
+        <div className="p-8 rounded-lg border border-foreground/50 bg-foreground/10">
           <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-3">
             {t("results.investment")}
           </p>
@@ -698,7 +684,7 @@ function StepResults({
           deadlineUrgency={deadlineUrgency}
         />
       </div>
-      <div className="mb-8 p-6 rounded-sm border border-foreground/20 bg-foreground/5 text-start flex gap-4 items-start">
+      <div className="mb-8 p-6 rounded-lg border border-foreground/20 bg-foreground/5 text-start flex gap-4 items-start">
         <div className="w-1 self-stretch rounded-full bg-primary shrink-0" />
         <div>
           <p className="font-mono text-sm leading-normal tracking-wider uppercase text-primary mb-2">
@@ -742,7 +728,7 @@ function StepBudget({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-start flex p-3 gap-4",
+              "rounded-md text-start flex p-3 gap-4",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -781,7 +767,7 @@ function StepBrandIdentity({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-center p-3",
+              "rounded-md text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -823,7 +809,7 @@ function StepContentReadiness({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-center p-3",
+              "rounded-md text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -870,7 +856,7 @@ function StepDeadlineUrgency({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-center p-3",
+              "rounded-md text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -982,7 +968,7 @@ function StepProjectType({
             onClick={() => onSelect(option.key)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-start flex p-3 gap-4",
+              "rounded-md text-start flex p-3 gap-4",
               selected === option.key ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -990,7 +976,7 @@ function StepProjectType({
             <div className="p-4 sm:p-5">
               <div
                 className={cn(
-                  "w-12 h-12 rounded-sm flex items-center justify-center mb-4 transition-colors",
+                  "w-12 h-12 rounded-md flex items-center justify-center mb-4 transition-colors",
                   selected === option.key
                     ? "bg-foreground/20 text-primary"
                     : "bg-foreground/10 text-primary/70",
@@ -1031,7 +1017,7 @@ function StepComplexity({
             onClick={() => onSelect(option)}
             className={cn(
               OPTION_BASE,
-              "w-full rounded-sm text-start flex p-3 gap-4",
+              "w-full rounded-md text-start flex p-3 gap-4",
               selected === option ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -1039,7 +1025,7 @@ function StepComplexity({
             <div className="p-4 sm:p-5 flex items-center gap-4">
               <div
                 className={cn(
-                  "w-10 h-10 rounded-sm flex items-center justify-center shrink-0 font-mono text-sm leading-normal tracking-wider",
+                  "w-10 h-10 rounded-md flex items-center justify-center shrink-0 font-mono text-sm leading-normal tracking-wider",
                   selected === option
                     ? "bg-foreground/20 text-primary"
                     : "bg-foreground/10 text-primary/70",
@@ -1082,7 +1068,7 @@ function StepTimeline({
             onClick={() => onSelect(option)}
             className={cn(
               OPTION_BASE,
-              "rounded-sm text-center p-3",
+              "rounded-md text-center p-3",
               selected === option ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >

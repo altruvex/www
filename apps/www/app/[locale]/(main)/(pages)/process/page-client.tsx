@@ -1,9 +1,9 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
-import { DEFAULTS, MOTION, useReveal, useText, useBatch } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -19,9 +19,9 @@ export default function ProcessPage() {
 
 function OpeningSection() {
   const t = useTranslations("process.hero");
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   return (
     <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -60,7 +60,7 @@ function OpeningSection() {
 
 function PhasesList() {
   const t = useTranslations("process.phases");
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-phase]" });
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-phase]" });
   const locale = useLocale();
 
   const phases = [
@@ -141,9 +141,9 @@ function PhasesList() {
 
 function ClosingSection() {
   const t = useTranslations("process");
-  const titleRef = useText({ ...DEFAULTS.heading, ease: MOTION.ease.text });
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
     <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">

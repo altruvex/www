@@ -4,23 +4,17 @@ import { useLoading } from "@/components/providers/loading-provider";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
 import { RefObject, useRef } from "react";
-import { MOTION } from "../config";
+import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../config";
 
-export type RevealDirection =
-  | "up"
-  | "down"
-  | "left"
-  | "right"
-  | "fade"
-  | "scale";
+export type RevealDirection = "up" | "down" | "left" | "right" | "fade" | "scale";
 
 export interface RevealConfig {
   direction?: RevealDirection;
   delay?: number;
   duration?: number;
   distance?: number;
-  ease?: string;
-  trigger?: string;
+  ease?: string | MotionEase;
+  trigger?: string | MotionTrigger;
   once?: boolean;
   scrub?: boolean | number;
 }
@@ -39,18 +33,12 @@ const DEFAULTS: Required<RevealConfig> = {
 function getFrom(direction: RevealDirection, distance: number): gsap.TweenVars {
   const base: gsap.TweenVars = { opacity: 0 };
   switch (direction) {
-    case "up":
-      return { ...base, y: distance };
-    case "down":
-      return { ...base, y: -distance };
-    case "left":
-      return { ...base, x: distance };
-    case "right":
-      return { ...base, x: -distance };
-    case "scale":
-      return { ...base, scale: 0.95 };
-    case "fade":
-      return base;
+    case "up": return { ...base, y: distance };
+    case "down": return { ...base, y: -distance };
+    case "left": return { ...base, x: distance };
+    case "right": return { ...base, x: -distance };
+    case "scale": return { ...base, scale: 0.95 };
+    case "fade": default: return base;
   }
 }
 
@@ -74,6 +62,7 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el || !isInitialLoadComplete) return;
+
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
 
@@ -86,13 +75,7 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
           const { reduced } = context.conditions as { reduced: boolean };
 
           if (reduced) {
-            gsap.set(el, {
-              opacity: 1,
-              x: 0,
-              y: 0,
-              scale: 1,
-              clearProps: "willChange",
-            });
+            gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" });
             return;
           }
 
@@ -108,39 +91,26 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
             scale: 1,
             duration,
             delay,
-            ease,
+            ease: resolveEase(ease),
             force3D: true,
             scrollTrigger: {
               trigger: el,
-              start: trigger,
+              start: resolveTrigger(trigger),
               once,
               scrub: scrub || false,
-              toggleActions: once
-                ? "play none none none"
-                : "play none none reverse",
+              toggleActions: once ? "play none none none" : "play none none reverse",
               fastScrollEnd: true,
             },
-            onStart() {},
             onComplete() {
-              gsap.set(el, { willChange: "auto", clearProps: "willChange" });
+              gsap.set(el, { willChange: "auto", clearProps: "willChange,transform" });
             },
           });
-        },
+        }
       );
     }, el);
 
     return () => ctx.revert();
-  }, [
-    isInitialLoadComplete,
-    direction,
-    delay,
-    duration,
-    distance,
-    ease,
-    trigger,
-    once,
-    scrub,
-  ]);
+  }, [isInitialLoadComplete, direction, delay, duration, distance, ease, trigger, once, scrub]);
 
   return ref;
 }

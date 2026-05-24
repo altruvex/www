@@ -1,9 +1,9 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
-import { DEFAULTS, useBatch, useReveal, useText } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
 
 export default function HowWeWorkPage() {
@@ -23,41 +23,33 @@ export default function HowWeWorkPage() {
     "launch",
   ] as const;
 
-  const heroEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const heroTitleRef = useText(DEFAULTS.heading);
-  const heroDescRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const heroEyebrowRef = useSectionEyebrow();
+  const heroTitleRef = useSectionTitle();
+  const heroDescRef = useSectionDescription();
 
-  const archEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const archTitleRef = useText(DEFAULTS.heading);
-  const archBodyRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".arch-p",
+  const archEyebrowRef = useSectionEyebrow();
+  const archTitleRef = useSectionTitle();
+  const archBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".arch-p",
   });
 
-  const processEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const processTitleRef = useText(DEFAULTS.heading);
-  const processDescRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const phaseCardsRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".phase-card",
+  const processEyebrowRef = useSectionEyebrow();
+  const processTitleRef = useSectionTitle();
+  const processDescRef = useSectionDescription();
+  const phaseCardsRef = useSectionCardGrid<HTMLDivElement>({ selector: ".phase-card",
   });
 
-  const standardsEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const standardsTitleRef = useText(DEFAULTS.heading);
-  const standardsBodyRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".standards-p",
+  const standardsEyebrowRef = useSectionEyebrow();
+  const standardsTitleRef = useSectionTitle();
+  const standardsBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".standards-p",
   });
-  const standardsCardsRef = useBatch<HTMLDivElement>({
-    ...DEFAULTS.card,
-    selector: ".standard-card",
+  const standardsCardsRef = useSectionCardGrid<HTMLDivElement>({ selector: ".standard-card",
   });
-  const standardsLinkRef = useReveal({ ...DEFAULTS.element, delay: 0.15 });
+  const standardsLinkRef = useSectionElement();
 
-  const ctaEyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const ctaTitleRef = useText(DEFAULTS.heading);
-  const ctaDescRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaButtonsRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
+  const ctaEyebrowRef = useSectionEyebrow();
+  const ctaTitleRef = useSectionTitle();
+  const ctaDescRef = useSectionDescription();
+  const ctaButtonsRef = useSectionElement();
 
   return (
     <main className="pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -159,7 +151,7 @@ export default function HowWeWorkPage() {
             {phases.map((key, i) => (
               <article
                 key={key}
-                className="phase-card group border border-foreground/8 rounded-sm bg-foreground/2 p-6 md:p-8 hover:bg-foreground/4 transition-colors duration-300"
+                className="phase-card group border border-foreground/8 rounded-lg bg-foreground/2 p-6 md:p-8 hover:bg-foreground/4 transition-colors duration-300"
               >
                 <div className="flex items-start justify-between mb-4">
                   <span
@@ -249,7 +241,7 @@ export default function HowWeWorkPage() {
             ].map(({ key, label, desc }) => (
               <div
                 key={key}
-                className="standard-card border border-foreground/8 rounded-sm bg-foreground/2 p-5"
+                className="standard-card border border-foreground/8 rounded-lg bg-foreground/2 p-5"
               >
                 <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
                   {label}

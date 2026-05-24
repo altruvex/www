@@ -6,7 +6,6 @@ export const DEFAULTS = {
     stagger: 0.05,
     distance: 40,
   },
-
   subheading: {
     byLine: true,
     blur: false,
@@ -14,23 +13,27 @@ export const DEFAULTS = {
     stagger: 0.04,
     distance: 24,
   },
-
   body: {
     duration: 0.8,
     distance: 20,
   },
-
   element: {
     direction: "up" as const,
     duration: 0.7,
     distance: 16,
   },
-
   card: {
     duration: 0.7,
     stagger: 0.08,
     distance: 24,
   },
+} as const;
+
+export const SECTION_DELAYS = {
+  eyebrow: 0,
+  description: 0.15,
+  element: 0.25,
+  scrollHint: 0.45,
 } as const;
 
 export const MOTION = {
@@ -41,7 +44,6 @@ export const MOTION = {
     ui: "cubic-bezier(0.4, 0, 0.2, 1)",
     spring: "elastic.out(1, 0.75)",
   },
-
   duration: {
     micro: 0.15,
     instant: 0.2,
@@ -52,7 +54,6 @@ export const MOTION = {
     slow: 1.0,
     text: 0.9,
   },
-
   loader: {
     shaderReveal: 2.2,
     textReveal: 1.8,
@@ -68,7 +69,6 @@ export const MOTION = {
     orbMax: 6,
     orbStaggerEach: 0.5,
   },
-
   distance: {
     xs: 8,
     sm: 16,
@@ -76,19 +76,16 @@ export const MOTION = {
     lg: 40,
     xl: 64,
   },
-
   stagger: {
     tight: 0.04,
     base: 0.06,
     loose: 0.1,
   },
-
   trigger: {
     default: "top bottom",
     late: "top 85%",
     latest: "top 75%",
   },
-
   lenis: {
     duration: 0.9,
     smoothWheel: true,
@@ -99,20 +96,16 @@ export const MOTION = {
 export function isConstrainedDevice(): boolean {
   if (typeof window === "undefined") return false;
 
-  const touch = window.matchMedia(
-    "(hover: none) and (pointer: coarse)",
-  ).matches;
+  const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
   const lowCPU = (navigator.hardwareConcurrency ?? 8) <= 4;
-
-  const lowRAM =
-    "deviceMemory" in navigator
-      ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4
-      : false;
-  const saveData =
-    "connection" in navigator
-      ? (navigator as Navigator & { connection?: { saveData?: boolean } })
-          .connection?.saveData === true
-      : false;
+  
+  const lowRAM = "deviceMemory" in navigator
+    ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4
+    : false;
+    
+  const saveData = "connection" in navigator
+    ? (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
+    : false;
 
   return touch || lowCPU || lowRAM || saveData;
 }
@@ -128,3 +121,9 @@ export type MotionDuration = keyof typeof MOTION.duration;
 export type MotionDistance = keyof typeof MOTION.distance;
 export type MotionStagger = keyof typeof MOTION.stagger;
 export type MotionTrigger = keyof typeof MOTION.trigger;
+
+export const resolveEase = (ease: string | MotionEase): string => 
+  ease in MOTION.ease ? MOTION.ease[ease as MotionEase] : ease;
+
+export const resolveTrigger = (trigger: string | MotionTrigger): string => 
+  trigger in MOTION.trigger ? MOTION.trigger[trigger as MotionTrigger] : trigger;

@@ -1,7 +1,7 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, MOTION } from "@/lib/motion";
 
 import { Container } from "@/components/container";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useTranslations, useLocale } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -147,11 +147,8 @@ export function TechDNASection() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [detailKey, setDetailKey] = useState(0);
 
-  const titleRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
-  const headingRef = useText(DEFAULTS.heading);
+  const titleRef = useSectionEyebrow<HTMLDivElement>();
+  const headingRef = useSectionTitle();
 
   const activeNode = activeId
     ? (NODES.find((n) => n.id === activeId) ?? null)
@@ -288,7 +285,7 @@ export function TechDNASection() {
             <div className="min-w-[680px] md:min-w-0 relative">
               <div
                 aria-hidden
-                className="absolute inset-0 pointer-events-none rounded-sm"
+                className="absolute inset-0 pointer-events-none rounded-lg"
                 style={{
                   backgroundImage:
                     "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
@@ -493,7 +490,7 @@ export function TechDNASection() {
             >
               {activeNode && (
                 <div
-                  className="rounded-sm p-5 md:p-6 grid items-start gap-5 md:gap-6 border-foreground/10"
+                  className="rounded-lg p-5 md:p-6 grid items-start gap-5 md:gap-6 border-foreground/10"
                   style={{
                     gridTemplateColumns: "2px 1fr auto",
                     border: `1px solid ${activeNode.accent}24`,
@@ -504,7 +501,7 @@ export function TechDNASection() {
                     style={{
                       alignSelf: "stretch",
                       background: activeNode.accent,
-                      borderRadius: 1,
+                      borderRadius: "var(--radius-xs)",
                       opacity: 0.65,
                     }}
                   />
@@ -525,7 +522,7 @@ export function TechDNASection() {
                           fontSize: 8,
                           letterSpacing: "0.2em",
                           padding: "2px 8px",
-                          borderRadius: 2,
+                          borderRadius: "var(--radius-xs)",
                           color: activeNode.accent,
                           border: `1px solid ${activeNode.accent}32`,
                         }}
@@ -548,7 +545,7 @@ export function TechDNASection() {
                     ).map((h, i) => (
                       <span
                         key={h}
-                        className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/3 rounded-sm whitespace-nowrap"
+                        className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/3 rounded-lg whitespace-nowrap"
                         style={{
                           fontSize: 9,
                           letterSpacing: "0.13em",

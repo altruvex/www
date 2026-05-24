@@ -105,7 +105,7 @@ export const ExitIntentModal = () => {
           isSuccess ? "exit-intent-success-title" : "exit-intent-heading"
         }
         className={cn(
-          "relative w-full max-w-md rounded-[1.75rem] border border-border bg-background/96 shadow-2xl backdrop-blur-xl outline-none",
+          "relative w-full max-w-md rounded-xl border border-border bg-background/96 shadow-2xl backdrop-blur-xl outline-none",
           "animate-in fade-in zoom-in-95 duration-200",
         )}
       >
@@ -154,7 +154,7 @@ export const ExitIntentModal = () => {
               ].map(({ value, label }) => (
                 <div
                   key={label}
-                  className="rounded-xl border border-foreground/8 bg-foreground/2 px-3 py-3"
+                  className="rounded-lg border border-foreground/8 bg-foreground/2 px-3 py-3"
                 >
                   <p className="text-sm font-medium text-foreground">{value}</p>
                   <p className="text-xs text-foreground/40 mt-0.5">{label}</p>

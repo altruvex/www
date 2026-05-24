@@ -26,7 +26,7 @@ export default function OfflinePage() {
       <Container>
         <div className="flex flex-col items-center justify-center text-center max-w-lg mx-auto">
           <div className="mb-10 relative">
-            <div className="w-20 h-20 rounded-sm border border-foreground/8 bg-foreground/2 flex items-center justify-center">
+            <div className="w-20 h-20 rounded-lg border border-foreground/8 bg-foreground/2 flex items-center justify-center">
               <WifiOff className="w-8 h-8 text-primary/30" strokeWidth={1.5} />
             </div>
           </div>
@@ -49,7 +49,7 @@ export default function OfflinePage() {
             {t("description")} {t("description2")}
           </p>
           {stillOffline && (
-            <div className="mb-6 px-4 py-2.5 rounded-sm border border-destructive/30 bg-destructive/8">
+            <div className="mb-6 px-4 py-2.5 rounded-lg border border-destructive/30 bg-destructive/8">
               <p className="font-mono text-sm leading-normal tracking-wider text-destructive/80 uppercase">
                 Still offline - please check your connection
               </p>

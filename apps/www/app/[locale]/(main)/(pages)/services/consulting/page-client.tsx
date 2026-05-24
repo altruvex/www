@@ -1,13 +1,14 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
 
 import { ConsultingBriefSection } from "@/components/consulting-brief-section";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -28,17 +29,13 @@ function HeroSection() {
   const t = useTranslations("serviceDetails.consulting");
   const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
+  const tHero = useTranslations("hero");
   const auditCta = getCommercialCta("technicalAudit");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
-  const scrollRef = useReveal({
-    ...DEFAULTS.element,
-    direction: "fade",
-    delay: 0.45,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
     <section className="relative z-10 flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -131,18 +128,20 @@ function HeroSection() {
         </div>
       </Container>
 
-      <div
-        ref={scrollRef}
-        className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
-        aria-hidden="true"
+      <HeroReveal
+        delay={1.1}
+        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>
-          {tCommon("scroll")}
+        <p
+          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          aria-hidden
+        >
+          {tHero("scrollHint")}
         </p>
-        <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
-          <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
+        <div className="relative flex h-12 w-[1px] justify-center overflow-hidden bg-foreground/10" aria-hidden>
+          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
         </div>
-      </div>
+      </HeroReveal>
     </section>
   );
 }
@@ -150,10 +149,10 @@ function HeroSection() {
 function AuditOfferSection() {
   const t = useTranslations("serviceDetails.consulting.auditOffer");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const bodyRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const panelRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const bodyRef = useSectionDescription();
+  const panelRef = useSectionElement();
 
   const included = t.raw("included") as string[];
 
@@ -166,7 +165,7 @@ function AuditOfferSection() {
         <div
           ref={panelRef}
           data-scene="inverted"
-          className="overflow-hidden rounded-sm border border-s-border bg-inverted-bg"
+          className="overflow-hidden rounded-lg border border-s-border bg-inverted-bg"
         >
           <div className="h-px w-full bg-brand/60" />
           <div className="grid gap-10 p-6 md:grid-cols-[minmax(0,1.1fr)_minmax(280px,360px)] md:p-10">
@@ -272,14 +271,11 @@ function AuditOfferSection() {
 
 function CtaSection() {
   const t = useTranslations("serviceDetails.consulting");
-  const sectionRef = useReveal<HTMLElement>({ direction: "fade" });
-  const lineRef = useReveal<HTMLDivElement>({ direction: "fade", delay: 0 });
-  const headlineRef = useReveal<HTMLHeadingElement>({
-    ...DEFAULTS.body,
-    delay: 0.1,
-  });
-  const subRef = useReveal<HTMLDivElement>({ ...DEFAULTS.body, delay: 0.2 });
-  const ctaRef = useReveal<HTMLDivElement>({ ...DEFAULTS.element, delay: 0.3 });
+  const sectionRef = useSectionDescription<HTMLElement>();
+  const lineRef = useSectionEyebrow<HTMLDivElement>();
+  const headlineRef = useSectionTitle<HTMLHeadingElement>();
+  const subRef = useSectionDescription<HTMLDivElement>();
+  const ctaRef = useSectionElement<HTMLDivElement>();
 
   return (
     <section

@@ -109,7 +109,7 @@ export default function WorkCaseStudyPageClient({
             {metrics.map((metric) => (
               <div
                 key={metric.label}
-                className="border border-foreground/8 rounded-sm bg-foreground/2 p-5 md:p-6"
+                className="border border-foreground/8 rounded-lg bg-foreground/2 p-5 md:p-6"
               >
                 <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
                   {metric.label}
@@ -161,7 +161,7 @@ export default function WorkCaseStudyPageClient({
               ))}
             </div>
             <aside className="space-y-4">
-              <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
+              <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
                 <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                   {tLabels("techStack")}
                 </h3>
@@ -178,7 +178,7 @@ export default function WorkCaseStudyPageClient({
                 </ul>
               </div>
               {externalUrl && (
-                <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
+                <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
                   <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                     {tLabels("liveSite")}
                   </h3>
@@ -208,7 +208,7 @@ export default function WorkCaseStudyPageClient({
                 </div>
               )}
               {testimonials.length > 0 && (
-                <div className="border border-foreground/8 rounded-sm bg-foreground/2 p-5">
+                <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
                   <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
                     {tLabels("clientPersp")}
                   </h3>

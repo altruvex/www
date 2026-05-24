@@ -1,4 +1,5 @@
 "use client";
+import { useSectionEyebrow, useSectionDescription, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -7,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { MOTION, useReveal } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
@@ -39,16 +39,10 @@ export default function SchedulePage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const backRef = useReveal<HTMLDivElement>({
-    direction: "down",
-    distance: MOTION.distance.sm,
-    delay: 0,
-  });
-  const headerRef = useReveal<HTMLDivElement>({
-    direction: "down",
-    distance: MOTION.distance.sm,
-    delay: 0.15,
-  });
+  const backRef = useSectionEyebrow<HTMLDivElement>();
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const subtitleRef = useSectionDescription();
 
   const handleInputChange = (
     field: string,
@@ -132,11 +126,15 @@ export default function SchedulePage() {
               {t("back")}
             </button>
           </div>
-          <div ref={headerRef} className="mb-12">
-            <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+          <div className="mb-12">
+            <p
+              ref={eyebrowRef}
+              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+            >
               {t("eyebrow")}
             </p>
             <h1
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.03] mb-4"
               style={{
                 fontSize: "clamp(36px, 5vw, 64px)",
@@ -145,7 +143,10 @@ export default function SchedulePage() {
             >
               {t("title")}
             </h1>
-            <p className="font-mono text-sm leading-normal tracking-wider text-primary/70">
+            <p
+              ref={subtitleRef}
+              className="font-mono text-sm leading-normal tracking-wider text-primary/70"
+            >
               {t("subtitle")}
             </p>
           </div>
@@ -246,7 +247,7 @@ export default function SchedulePage() {
                 {t("form.riskReversal")}
               </p>
               {submitSuccess && (
-                <div className="p-4 rounded-sm bg-success/8 border border-success/15">
+                <div className="p-4 rounded-lg bg-success/8 border border-success/15">
                   <p className="text-center font-mono leading-normal tracking-wider text-sm text-primary flex items-center justify-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-success" />
                     {t("submit.success")}
@@ -254,7 +255,7 @@ export default function SchedulePage() {
                 </div>
               )}
               {submitError && (
-                <div className="p-4 rounded-sm bg-destructive/8 border border-destructive/15">
+                <div className="p-4 rounded-lg bg-destructive/8 border border-destructive/15">
                   <p className="text-center font-mono leading-normal tracking-wider text-sm text-primary flex items-center justify-center gap-2">
                     <AlertCircle className="h-4 w-4 text-destructive" />
                     {submitError}

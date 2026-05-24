@@ -1,12 +1,12 @@
 "use client";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { memo, useRef } from "react";
 
 const PAINS = [
@@ -34,19 +34,15 @@ const PAINS = [
 
 export const ProblemSection = memo(function ProblemSection() {
   const t = useTranslations();
-  const locale = useLocale();
   const tCommon = useTranslations("common");
   const stepLabel = tCommon("step");
   const auditCta = getCommercialCta("technicalAudit");
 
   const sectionRef = useRef<HTMLElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText<HTMLHeadingElement>({
-    ...DEFAULTS.heading,
-    ease: MOTION.ease.text,
-  });
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription();
 
   return (
     <section

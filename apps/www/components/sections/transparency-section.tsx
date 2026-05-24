@@ -1,9 +1,9 @@
 "use client";
+import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, MOTION } from "@/lib/motion";
 
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
-import { DEFAULTS, MOTION, useReveal, useText } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import {
   DeliverableProject,
@@ -79,7 +79,7 @@ export const ProposalNarrativeBlock = memo(function ProposalNarrativeBlock({
         </span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      <div className="flex gap-3 p-4 rounded-sm bg-surface border border-border">
+      <div className="flex gap-3 p-4 rounded-lg bg-surface border border-border">
         <div className="w-0.5 self-stretch rounded-full bg-border-mid shrink-0" />
         <p
           className={cn(
@@ -107,26 +107,10 @@ export const TransparencySection = memo(function TransparencySection() {
   const tweenCtxRef = useRef<gsap.Context | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const titleRef = useText<HTMLHeadingElement>({
-    ...DEFAULTS.heading,
-    ease: MOTION.ease.text,
-  });
-  const badgeRef = useReveal<HTMLParagraphElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.2,
-  });
-  const descriptionRef = useReveal<HTMLParagraphElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.35,
-  });
-  const formRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-    distance: MOTION.distance.sm,
-  });
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const badgeRef = useSectionEyebrow<HTMLParagraphElement>();
+  const descriptionRef = useSectionDescription<HTMLParagraphElement>();
+  const formRef = useSectionElement<HTMLDivElement>();
 
   useIsomorphicLayoutEffect(() => {
     if (!formContainerRef.current) return;
@@ -306,7 +290,7 @@ export const TransparencySection = memo(function TransparencySection() {
 
   const optCls = (selected: boolean) =>
     cn(
-      "relative p-5 rounded-sm border text-start transition-all duration-300",
+      "relative p-5 rounded-lg border text-start transition-all duration-300",
       selected
         ? "border-foreground/40 bg-surface ring-1 ring-foreground/30"
         : "border-border bg-surface/50 hover:border-foreground/20 hover:bg-surface",
@@ -345,7 +329,7 @@ export const TransparencySection = memo(function TransparencySection() {
 
         <div
           ref={formRef}
-          className="max-w-3xl mx-auto bg-background rounded-sm border border-border p-6 md:p-10 shadow-sm relative overflow-hidden"
+          className="max-w-3xl mx-auto bg-background rounded-lg border border-border p-6 md:p-10 shadow-sm relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-border">
             <div
@@ -561,7 +545,7 @@ export const TransparencySection = memo(function TransparencySection() {
                 {estimate && (
                   <>
                     <div className="grid gap-3 md:grid-cols-2">
-                      <div className="p-6 rounded-sm bg-foreground text-background">
+                      <div className="p-6 rounded-lg bg-foreground text-background">
                         <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal opacity-40 mb-3">
                           {t("results.investment")}
                         </p>
@@ -582,7 +566,7 @@ export const TransparencySection = memo(function TransparencySection() {
                           {t("results.hostingIncluded")}
                         </p>
                       </div>
-                      <div className="p-6 rounded-sm bg-surface border border-border">
+                      <div className="p-6 rounded-lg bg-surface border border-border">
                         <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-3">
                           {t("results.timeline")}
                         </p>
@@ -654,7 +638,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         })()}
                       </div>
                     </div>
-                    <div className="flex gap-3 p-4 rounded-sm bg-surface border border-border">
+                    <div className="flex gap-3 p-4 rounded-lg bg-surface border border-border">
                       <div className="h-1.5 w-1.5 rounded-full bg-border-mid mt-2 shrink-0" />
                       <p className="font-mono text-xs text-muted-foreground leading-relaxed">
                         <span className="text-foreground font-medium">
@@ -669,7 +653,7 @@ export const TransparencySection = memo(function TransparencySection() {
                           : null}
                       </p>
                     </div>
-                    <div className="p-6 rounded-sm border border-border bg-surface flex gap-5 items-start">
+                    <div className="p-6 rounded-lg border border-border bg-surface flex gap-5 items-start">
                       <div className="w-1.5 self-stretch rounded-full bg-border-mid shrink-0" />
                       <div>
                         <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-2">

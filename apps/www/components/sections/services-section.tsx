@@ -1,7 +1,7 @@
 "use client";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { monoCaps } from "@/lib/mono-caps";
-import { useReveal } from "@/lib/motion";
 import { cn, splitHeadline } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, memo, useEffect, useRef, useState } from "react";
@@ -23,19 +23,15 @@ const SERVICES: ServiceData[] = [
 const ServiceCard = memo(function ServiceCard({
   service,
   isLarge,
-  revealDelay,
 }: {
   service: ServiceData;
   isLarge: boolean;
-  revealDelay: number;
 }) {
   const t = useTranslations("services");
   const locale = useLocale();
-  const cardRef = useReveal<HTMLElement>({ delay: revealDelay });
 
   return (
     <article
-      ref={cardRef}
       data-service={service.index}
       className={cn(
         "group relative isolate cursor-pointer overflow-hidden bg-inverted-bg/80 transition-colors duration-300",
@@ -203,9 +199,9 @@ const ProcessRail = memo(function ProcessRail() {
 
 function SectionHeader() {
   const t = useTranslations("services");
-  const eyebrowRef = useReveal<HTMLParagraphElement>({ delay: 0 });
-  const headRef = useReveal<HTMLHeadingElement>({ delay: 0.1 });
-  const subtitleRef = useReveal<HTMLParagraphElement>({ delay: 0.2 });
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const headRef = useSectionTitle<HTMLHeadingElement>();
+  const subtitleRef = useSectionDescription<HTMLParagraphElement>();
   const { first, second } = splitHeadline(t("title"));
 
   return (
@@ -244,25 +240,24 @@ function SectionHeader() {
 }
 
 export const ServicesSection = memo(function ServicesSection() {
+  const cardsRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-service]",
+  });
+
   return (
     <section id="services" className="relative py-[clamp(60px,8vw,120px)]">
       <Container>
         <SectionHeader />
-        <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border">
-          <ServiceCard service={SERVICES[0]} isLarge revealDelay={0} />
+        <div
+          ref={cardsRef}
+          className="grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-s-border ring-1 ring-s-border"
+        >
+          <ServiceCard service={SERVICES[0]} isLarge />
           <div className="grid grid-cols-1 gap-px bg-s-border md:grid-cols-2">
-            <ServiceCard
-              service={SERVICES[1]}
-              isLarge={false}
-              revealDelay={0.1}
-            />
-            <ServiceCard
-              service={SERVICES[2]}
-              isLarge={false}
-              revealDelay={0.15}
-            />
+            <ServiceCard service={SERVICES[1]} isLarge={false} />
+            <ServiceCard service={SERVICES[2]} isLarge={false} />
           </div>
-          <ServiceCard service={SERVICES[3]} isLarge revealDelay={0.2} />
+          <ServiceCard service={SERVICES[3]} isLarge />
         </div>
         <ProcessRail />
         <div className="mt-8 flex items-center gap-4">

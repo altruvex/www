@@ -1,12 +1,13 @@
 "use client";
+import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
-import { DEFAULTS, MOTION, useBatch, useReveal, useText } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -24,19 +25,14 @@ export default function MaintenancePage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.maintenance");
-  const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
+  const tHero = useTranslations("hero");
   const projectRangeCta = getCommercialCta("projectRange");
 
-  const eyebrowRef = useReveal({ ...DEFAULTS.body, delay: 0 });
-  const titleRef = useText(DEFAULTS.heading);
-  const descRef = useReveal({ ...DEFAULTS.body, delay: 0.15 });
-  const ctaRef = useReveal({ ...DEFAULTS.element, delay: 0.25 });
-  const scrollRef = useReveal({
-    ...DEFAULTS.element,
-    direction: "fade",
-    delay: 0.45,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const ctaRef = useSectionElement();
 
   return (
     <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -122,33 +118,28 @@ function HeroSection() {
           </div>
         </div>
       </Container>
-      <div
-        ref={scrollRef}
-        className="pointer-events-none absolute bottom-7 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2"
-        aria-hidden="true"
+      <HeroReveal
+        delay={1.1}
+        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
-        <p className={cn(monoCaps, "text-muted-foreground/70")}>
-          {tCommon("scroll")}
+        <p
+          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          aria-hidden
+        >
+          {tHero("scrollHint")}
         </p>
-        <div className="relative h-10 w-px overflow-hidden bg-foreground/8">
-          <div className="absolute top-0 h-1/2 w-full bg-foreground/40 animate-slide-down" />
+        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
+          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
         </div>
-      </div>
+      </HeroReveal>
     </section>
   );
 }
 
 function StatsSection() {
   const t = useTranslations("serviceDetails.maintenance");
-  const leftRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
-  const rightRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.15,
-  });
+  const leftRef = useSectionDescription<HTMLDivElement>();
+  const rightRef = useSectionElement<HTMLDivElement>();
 
   const stats = [
     { value: "99.9%", labelKey: "stats.uptime" },
@@ -163,7 +154,7 @@ function StatsSection() {
         <div className="grid md:grid-cols-12 gap-4">
           <div
             ref={leftRef}
-            className="md:col-span-7 border border-foreground/8 rounded-sm bg-foreground/2 p-8 md:p-12"
+            className="md:col-span-7 border border-foreground/8 rounded-lg bg-foreground/2 p-8 md:p-12"
           >
             <p className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}>
               {t("stats.eyebrow")}
@@ -190,7 +181,7 @@ function StatsSection() {
             {stats.map((stat, i) => (
               <div
                 key={i}
-                className="border border-foreground/8 rounded-sm bg-foreground/2 p-5 md:p-6 flex flex-col justify-between group hover:bg-foreground/4 transition-colors duration-300"
+                className="border border-foreground/8 rounded-lg bg-foreground/2 p-5 md:p-6 flex flex-col justify-between group hover:bg-foreground/4 transition-colors duration-300"
               >
                 <p className={cn(monoCaps, "text-foreground/35 mb-4")}>
                   {t(stat.labelKey)}
@@ -216,15 +207,12 @@ function StatsSection() {
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.maintenance");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useBatch<HTMLElement>({
-    selector: "[data-feature-card]",
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-feature-card]",
     stagger: MOTION.stagger.tight,
     distance: MOTION.distance.sm,
   });
-  const titleRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
 
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
@@ -239,12 +227,16 @@ function FeaturesSection() {
       className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
-        <div ref={titleRef} className="mb-16">
-          <p className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}>
+        <div className="mb-16">
+          <p
+            ref={eyebrowRef}
+            className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}
+          >
             {tCommon("whatWeOfferEyebrow")}
           </p>
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <h2
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.05]"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",
@@ -273,7 +265,7 @@ function FeaturesSection() {
               key={i}
               data-feature-card
               className={[
-                "group relative border border-foreground/8 rounded-sm bg-foreground/2 p-6 md:p-8 overflow-hidden hover:bg-foreground/4 transition-colors duration-300",
+                "group relative border border-foreground/8 rounded-lg bg-foreground/2 p-6 md:p-8 overflow-hidden hover:bg-foreground/4 transition-colors duration-300",
                 feature.wide ? "md:col-span-3" : "md:col-span-2",
               ].join(" ")}
             >
@@ -317,11 +309,9 @@ function FeaturesSection() {
 
 function PricingSection() {
   const t = useTranslations("serviceDetails.maintenance");
-  const sectionRef = useBatch<HTMLElement>({ selector: "[data-pricing-card]" });
-  const titleRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
+  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-pricing-card]" });
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
 
   const plans = [
     {
@@ -356,12 +346,16 @@ function PricingSection() {
       className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
-        <div ref={titleRef} className="mb-16">
-          <p className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}>
+        <div className="mb-16">
+          <p
+            ref={eyebrowRef}
+            className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}
+          >
             {t("pricing.eyebrow")}
           </p>
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <h2
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.05]"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",
@@ -390,7 +384,7 @@ function PricingSection() {
               key={key}
               data-pricing-card
               className={cn(
-                "group relative border rounded-sm bg-foreground/2 p-7 md:p-8 overflow-hidden flex flex-col transition-colors duration-300",
+                "group relative border rounded-lg bg-foreground/2 p-7 md:p-8 overflow-hidden flex flex-col transition-colors duration-300",
                 featured
                   ? "border-foreground/20"
                   : "border-foreground/8 hover:bg-foreground/4",
@@ -499,7 +493,7 @@ function PricingSection() {
           {commercialNotes.map((note) => (
             <div
               key={note.key}
-              className="rounded-sm border border-foreground/8 bg-foreground/2 p-5 md:p-6"
+              className="rounded-lg border border-foreground/8 bg-foreground/2 p-5 md:p-6"
             >
               <p className={cn(monoCaps, "text-primary/70 mb-3")}>
                 {note.label}
@@ -518,15 +512,8 @@ function PricingSection() {
 function CtaSection() {
   const t = useTranslations("serviceDetails.maintenance");
   const tCommon = useTranslations("serviceDetails");
-  const leftRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-  });
-  const rightRef = useReveal<HTMLDivElement>({
-    ...DEFAULTS.body,
-    ease: MOTION.ease.smooth,
-    delay: 0.12,
-  });
+  const leftRef = useSectionDescription<HTMLDivElement>();
+  const rightRef = useSectionElement<HTMLDivElement>();
 
   const checks = [
     { label: t("cta.checks.uptime") },
@@ -541,7 +528,7 @@ function CtaSection() {
         <div className="grid md:grid-cols-12 gap-4">
           <div
             ref={leftRef}
-            className="md:col-span-5 border border-foreground/8 rounded-sm bg-foreground/2 p-7 md:p-8"
+            className="md:col-span-5 border border-foreground/8 rounded-lg bg-foreground/2 p-7 md:p-8"
           >
             <div className="flex items-center justify-between mb-8">
               <p className={cn(monoCaps, "text-muted-foreground/70")}>
@@ -558,7 +545,7 @@ function CtaSection() {
               {checks.map((check, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between border border-foreground/8 rounded-sm bg-foreground/2 px-4 py-3"
+                  className="flex items-center justify-between border border-foreground/8 rounded-lg bg-foreground/2 px-4 py-3"
                 >
                   <span className="text-sm text-primary/60">{check.label}</span>
                   <div className="flex items-center gap-2">
@@ -585,7 +572,7 @@ function CtaSection() {
           </div>
           <div
             ref={rightRef}
-            className="md:col-span-7 border border-foreground/8 rounded-sm bg-foreground/2 p-8 md:p-10 flex flex-col justify-between gap-8"
+            className="md:col-span-7 border border-foreground/8 rounded-lg bg-foreground/2 p-8 md:p-10 flex flex-col justify-between gap-8"
           >
             <div>
               <p
