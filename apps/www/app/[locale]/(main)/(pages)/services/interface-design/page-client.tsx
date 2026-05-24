@@ -430,7 +430,7 @@ const FeatureCard = ({
 
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.webDesign");
-  const tCommon = useTranslations("serviceDetails.webDesign");
+  const tCommon = useTranslations("serviceDetails");
   const sectionRef = useSectionCardGrid<HTMLElement>({ selector: ".feature-card-anim",
     stagger: 0.15,
     distance: 30,

@@ -164,7 +164,7 @@ export function Nav() {
             ? "opacity-100"
             : "opacity-0 pointer-events-none",
           isScrolled
-            ? "bg-background/60 backdrop-blur-xl border-b border-foreground/6 shadow-sm"
+            ? "liquid-glass"
             : "bg-transparent",
         )}
       >
@@ -252,7 +252,7 @@ export function Nav() {
         <div
           dir={dir}
           ref={mobileMenuRef}
-          className="fixed inset-0 z-40 bg-background/95 backdrop-blur-2xl lg:hidden"
+          className="fixed inset-0 z-40 liquid-glass lg:hidden"
           style={{ top: "64px" }}
         >
           <Container className="h-full">

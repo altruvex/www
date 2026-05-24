@@ -27,7 +27,7 @@ export function AltruvexLogo({
     return (
       <div
         className={cn(
-          "flex items-center justify-center rounded-lg border border-foreground/10 bg-background/80 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/5",
+          "flex items-center justify-center rounded-lg liquid-glass transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/5",
           iconSizeClasses[size],
         )}
       >

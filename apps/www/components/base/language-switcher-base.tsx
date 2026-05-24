@@ -135,7 +135,7 @@ export function LanguageSwitcherBase({
         onClick={() => setIsOpen(!isOpen)}
         data-cursor-pointer
         className={cn(
-          "group flex items-center gap-2 rounded-lg border border-foreground/12 bg-background/70 px-3 py-1.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-foreground/50 focus:ring-offset-2 backdrop-blur-md",
+          "group flex items-center gap-2 rounded-lg liquid-glass px-3 py-1.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-foreground/50 focus:ring-offset-2",
           variant === "compact" && "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center",
         )}
         aria-label="Select language"
@@ -175,7 +175,7 @@ export function LanguageSwitcherBase({
       <div
         ref={menuRef}
         className={cn(
-          "absolute top-full z-50 mt-2 rounded-xl border border-foreground/12 bg-background/92 p-1 shadow-xl backdrop-blur-xl transition-all duration-200 ease-out",
+          "absolute top-full z-50 mt-2 rounded-xl liquid-glass p-1 transition-all duration-200 ease-out",
           variant === "compact" ? "w-40" : "w-48",
           isRTL ? "left-0" : "right-0",
           isOpen

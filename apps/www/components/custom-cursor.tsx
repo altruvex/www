@@ -131,7 +131,7 @@ function CustomCursor() {
     <>
       <div
         ref={outerRef}
-        className="pointer-events-none fixed left-0 top-0 rounded-full border border-foreground/20 bg-background/20 backdrop-blur-md transition-transform duration-300 ease-out"
+        className="pointer-events-none fixed left-0 top-0 rounded-full liquid-glass transition-transform duration-300 ease-out"
         style={{
           width: CURSOR_SIZE.outer,
           height: CURSOR_SIZE.outer,
