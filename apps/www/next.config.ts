@@ -59,6 +59,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@repo/database"],
   compress: true,
+  allowedDevOrigins: ['192.168.1.6'],
   poweredByHeader: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: require("./package.json").version,
@@ -72,7 +73,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["lucide-react"],
   },
-  allowedDevOrigins: ["192.168.1.15"],
   async headers() {
     // Avoid custom Cache-Control on Next internals in dev — Next warns and it can break HMR.
     const prodOnlyNextAssetCache =
