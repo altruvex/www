@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -37,38 +38,43 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black px-4">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-black dark:text-zinc-50 mb-2">
-            Admin Access
+          <p className="font-sans text-sm font-medium tracking-tight text-muted-foreground mb-2">
+            Altruvex
+          </p>
+          <h1 className="text-2xl font-medium text-foreground mb-2">
+            Admin access
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-muted-foreground">
             Enter password to continue
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm text-black placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-600"
-              autoFocus
-              required
-            />
-          </div>
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-          <button
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            autoFocus
+            required
+          />
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <Button
             type="submit"
+            variant="brand"
+            className="w-full h-11"
             disabled={loading}
-            className="w-full rounded-lg bg-black px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            aria-busy={loading}
           >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+            {loading ? "Signing in…" : "Sign in"}
+          </Button>
         </form>
       </div>
     </div>
@@ -79,8 +85,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-black dark:border-zinc-800 dark:border-t-white" />
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-brand" />
         </div>
       }
     >

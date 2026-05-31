@@ -9,16 +9,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  submissionPriorityBadge,
+  submissionStatusBadge,
+} from "@/lib/status-badges";
+import {
+  AlertCircle,
+  Building2,
   Calendar,
   Clock,
+  Eye,
+  FileText,
   MessageSquare,
+  Phone,
   Tag,
   User,
-  AlertCircle,
-  FileText,
-  Building2,
-  Eye,
-  Phone,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -117,6 +121,7 @@ export default function ContactDetailPage() {
 
   useEffect(() => {
     if (id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchContact();
     }
   }, [id, fetchContact]);
@@ -147,33 +152,11 @@ export default function ContactDetailPage() {
     }
   };
 
-  const getStatusColor = (status: SubmissionStatus) => {
-    const colors: Record<SubmissionStatus, string> = {
-      NEW: "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30",
-      VIEWED:
-        "bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-500/30",
-      CONTACTED:
-        "bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-500/30",
-      QUALIFIED:
-        "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30",
-      PROPOSAL_SENT:
-        "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
-      WON: "bg-emerald-600/20 text-emerald-700 dark:text-emerald-400 border-emerald-600/30",
-      LOST: "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30",
-      SPAM: "bg-gray-400/20 text-gray-600 dark:text-gray-500 border-gray-400/30",
-    };
-    return colors[status] || colors.NEW;
-  };
+  const getStatusColor = (status: SubmissionStatus) =>
+    submissionStatusBadge[status] ?? submissionStatusBadge.NEW;
 
-  const getPriorityColor = (priority: Priority) => {
-    const colors: Record<Priority, string> = {
-      LOW: "bg-gray-500/20 text-gray-700 dark:text-gray-400",
-      MEDIUM: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
-      HIGH: "bg-orange-500/20 text-orange-700 dark:text-orange-400",
-      URGENT: "bg-red-600/20 text-red-700 dark:text-red-400",
-    };
-    return colors[priority] || colors.MEDIUM;
-  };
+  const getPriorityColor = (priority: Priority) =>
+    submissionPriorityBadge[priority] ?? submissionPriorityBadge.MEDIUM;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -417,7 +400,7 @@ export default function ContactDetailPage() {
                 {contact.tags.map((tag) => (
                   <span
                     key={tag.id}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/25"
                   >
                     {tag.name}
                   </span>
@@ -438,7 +421,7 @@ export default function ContactDetailPage() {
                 {contact.notes.map((note) => (
                   <div
                     key={note.id}
-                    className="border-l-2 border-primary/30 pl-4 py-2"
+                    className="border-l-2 border-brand/30 pl-4 py-2"
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {note.content}
@@ -479,9 +462,9 @@ export default function ContactDetailPage() {
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           meeting.status === "SCHEDULED"
-                            ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                            ? "bg-brand/10 text-brand"
                             : meeting.status === "COMPLETED"
-                              ? "bg-green-500/20 text-green-700 dark:text-green-400"
+                              ? "bg-success/10 text-success"
                               : "bg-gray-500/20 text-gray-700 dark:text-gray-400"
                         }`}
                       >

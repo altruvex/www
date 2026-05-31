@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Mail, Calendar, Users, LogOut } from "lucide-react";
+import { Calendar, LayoutDashboard, LogOut, Mail, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { monoCaps } from "@/lib/mono-caps";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -18,48 +19,54 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+    <nav className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 justify-between">
           <div className="flex">
-            <div className="flex-shrink-0 flex items-center pr-4 border-r border-zinc-200 dark:border-zinc-800 mr-4">
-              <span className="text-xl font-bold text-black dark:text-white">
+            <div className="me-4 flex shrink-0 items-center border-e border-border pe-4">
+              <span className="font-sans text-xl font-medium tracking-tight text-foreground">
                 Altruvex
               </span>
+              <span className={cn(monoCaps, "ms-3 text-muted-foreground")}>
+                Admin
+              </span>
             </div>
-            <div className="hidden sm:-my-px sm:flex sm:space-x-8 rtl:space-x-reverse">
+            <div className="hidden sm:-my-px sm:flex sm:gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200",
+                      "inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                       isActive
-                        ? "border-black dark:border-white text-black dark:text-white"
-                        : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-zinc-300 dark:hover:border-zinc-700",
+                        ? "bg-brand-soft text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
+                    <Icon className="size-4" />
                     {item.label}
                   </Link>
                 );
               })}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
             <button
+              type="button"
               onClick={async () => {
                 await fetch("/api/auth/logout", { method: "POST" });
                 window.location.href = "/login";
               }}
-              className="text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             >
-              <LogOut className="w-4 h-4" />
-              Sign Out
+              <LogOut className="size-4" />
+              Sign out
             </button>
           </div>
         </div>

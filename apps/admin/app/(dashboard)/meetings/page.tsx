@@ -19,13 +19,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  meetingStatusBadge,
+  meetingTypeBadge,
+} from "@/lib/status-badges";
+import {
   Calendar,
   Clock,
+  Phone,
   Search,
   Trash2,
   User,
   Video,
-  Phone,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -88,11 +92,6 @@ export default function MeetingsPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    fetchMeetings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, typeFilter, debouncedSearchQuery]);
-
   const fetchMeetings = async () => {
     try {
       setLoading(true);
@@ -113,6 +112,12 @@ export default function MeetingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchMeetings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, typeFilter, debouncedSearchQuery]);
 
   const updateMeeting = async (
     id: string,
@@ -195,33 +200,11 @@ export default function MeetingsPage() {
     return true;
   });
 
-  const getStatusColor = (status: MeetingStatus) => {
-    const colors: Record<MeetingStatus, string> = {
-      PENDING:
-        "bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
-      APPROVED:
-        "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30",
-      REJECTED:
-        "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30",
-      COMPLETED:
-        "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30",
-      CANCELLED:
-        "bg-gray-500/20 text-gray-700 dark:text-gray-400 border-gray-500/30",
-      RESCHEDULED:
-        "bg-purple-500/20 text-purple-700 dark:text-purple-400 border-purple-500/30",
-    };
-    return colors[status] || colors.PENDING;
-  };
+  const getStatusColor = (status: MeetingStatus) =>
+    meetingStatusBadge[status] ?? meetingStatusBadge.PENDING;
 
-  const getTypeColor = (type: MeetingType) => {
-    const colors: Record<MeetingType, string> = {
-      DISCOVERY: "bg-blue-500/20 text-blue-700 dark:text-blue-400",
-      CONSULTATION: "bg-green-500/20 text-green-700 dark:text-green-400",
-      PROPOSAL: "bg-purple-500/20 text-purple-700 dark:text-purple-400",
-      FOLLOWUP: "bg-orange-500/20 text-orange-700 dark:text-orange-400",
-    };
-    return colors[type] || colors.DISCOVERY;
-  };
+  const getTypeColor = (type: MeetingType) =>
+    meetingTypeBadge[type] ?? meetingTypeBadge.DISCOVERY;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -254,10 +237,10 @@ export default function MeetingsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Scheduled Meetings</h1>
+          <h1 className="text-foreground">Scheduled meetings</h1>
           <p className="text-muted-foreground mt-1">
             Manage and track all meeting requests and scheduled calls
           </p>
@@ -276,7 +259,7 @@ export default function MeetingsPage() {
             placeholder="Search by title, guest name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-border bg-input py-2 ps-10 pe-4 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>

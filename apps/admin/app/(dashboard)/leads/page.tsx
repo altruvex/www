@@ -1,9 +1,9 @@
+import { Button } from "@/components/ui/button";
 import { prisma } from "@repo/database";
 import { format } from "date-fns";
-import { Phone, MessageCircle, Users } from "lucide-react";
-import { ExportCsvButton, ViewDetailsButton } from "./client-buttons";
+import { MessageCircle, Phone, Users } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { ExportCsvButton, ViewDetailsButton } from "./client-buttons";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +32,8 @@ export default async function LeadsPage({
     <div className="space-y-10">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-normal text-primary mb-2">
-            Transparency Leads
-          </h1>
-          <p className="text-sm text-primary/50">
+          <h1 className="mb-2 text-foreground">Transparency leads</h1>
+          <p className="text-sm text-muted-foreground">
             Manage and contact all prospective clients who used the transparency
             flow.
           </p>
@@ -45,53 +43,53 @@ export default async function LeadsPage({
         </div>
       </div>
 
-      <div className="rounded-sm border border-foreground/10 bg-background overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-foreground/5 border-b border-foreground/10">
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/40">
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   Timestamp
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/40">
+                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   Contact Info
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/40">
+                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   Project Summary
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/40">
+                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                   Transparency Range
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-primary/40 text-right">
+                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-right">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-foreground/5">
+            <tbody className="divide-y divide-border">
               {leads.length > 0 ? (
                 leads.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="hover:bg-foreground/2 transition-colors group"
+                    className="hover:bg-muted/40 transition-colors group"
                   >
                     <td className="px-6 py-5 align-top">
                       <div className="flex flex-col">
-                        <span className="text-sm text-primary">
+                        <span className="text-sm text-foreground">
                           {format(lead.createdAt, "MMM d, yyyy")}
                         </span>
-                        <span className="text-[10px] font-mono text-primary/30">
+                        <span className="text-[10px] font-mono text-foreground/30">
                           {format(lead.createdAt, "HH:mm:ss")}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-5 align-top">
                       <div className="flex flex-col gap-1">
-                        <span className="font-medium text-primary">
+                        <span className="font-medium text-foreground">
                           {lead.name || "Anonymous Client"}
                         </span>
                         <a
                           href={`tel:${lead.phone}`}
-                          className="text-xs font-mono text-primary/60 hover:text-primary flex items-center gap-1.5"
+                          className="text-xs font-mono text-foreground/60 hover:text-foreground flex items-center gap-1.5"
                         >
                           <Phone className="h-3 w-3" />
                           {lead.phone}
@@ -101,16 +99,16 @@ export default async function LeadsPage({
                     <td className="px-6 py-5 align-top">
                       <div className="flex flex-col gap-1">
                         <div className="flex gap-2 items-center">
-                          <span className="px-2 py-0.5 rounded-[2px] bg-foreground/5 text-primary/60 text-[10px] font-mono uppercase tracking-wider border border-foreground/5">
+                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[10px] font-mono uppercase tracking-wider border border-border">
                             {lead.projectType}
                           </span>
-                          <span className="px-2 py-0.5 rounded-[2px] bg-foreground/5 text-primary/60 text-[10px] font-mono uppercase tracking-wider border border-foreground/5">
+                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[10px] font-mono uppercase tracking-wider border border-border">
                             {lead.complexity}
                           </span>
                         </div>
-                        <span className="text-xs text-primary/40">
+                        <span className="text-xs text-muted-foreground">
                           Timeline:{" "}
-                          <span className="text-primary/60">
+                          <span className="text-foreground/60">
                             {lead.timeline}
                           </span>
                         </span>
@@ -118,7 +116,7 @@ export default async function LeadsPage({
                     </td>
                     <td className="px-6 py-5 align-top">
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-primary">
+                        <span className="text-sm font-medium text-foreground">
                           {new Intl.NumberFormat("en-EG", {
                             style: "currency",
                             currency: "EGP",
@@ -131,7 +129,7 @@ export default async function LeadsPage({
                             maximumFractionDigits: 0,
                           }).format(lead.priceMax)}
                         </span>
-                        <span className="text-[10px] font-mono text-primary/40 uppercase tracking-wider">
+                        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
                           {lead.weeksMin}–{lead.weeksMax} Weeks Delivery
                         </span>
                       </div>
@@ -158,11 +156,11 @@ export default async function LeadsPage({
                 <tr>
                   <td colSpan={5} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center gap-2">
-                      <Users className="h-8 w-8 text-primary/10" />
-                      <p className="text-primary/30 font-medium">
+                      <Users className="h-8 w-8 text-foreground/10" />
+                      <p className="text-foreground/30 font-medium">
                         No leads found in the database.
                       </p>
-                      <p className="text-xs text-primary/20">
+                      <p className="text-xs text-foreground/20">
                         Check back later or test the transparency flow yourself.
                       </p>
                     </div>

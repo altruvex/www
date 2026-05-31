@@ -50,6 +50,7 @@ export default function ContactPage() {
       incomingService === "consulting" ||
       incomingService === "maintenance"
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setService(incomingService);
     }
   }, [searchParams, service]);

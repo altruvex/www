@@ -34,6 +34,7 @@ export function TimePicker({
   React.useEffect(() => {
     if (value) {
       const [h, m] = value.split(":");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHour(h);
       setMinute(m);
     }

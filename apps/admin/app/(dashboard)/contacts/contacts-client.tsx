@@ -18,6 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  submissionPriorityBadge,
+  submissionStatusBadge,
+} from "@/lib/status-badges";
 import { cn } from "@/lib/utils";
 import { Calendar, Eye, Phone, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -80,21 +84,6 @@ export function ContactsClient({
 
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    if (!mounted) {
-      setMounted(true);
-      return;
-    }
-    fetchContacts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, priorityFilter, page]);
-
-  const handleSearchSubmit = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setPage(1);
-    fetchContacts();
-  };
-
   const fetchContacts = async () => {
     try {
       setLoading(true);
@@ -118,6 +107,22 @@ export function ContactsClient({
       setLoading(false);
     }
   };
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setPage(1);
+    fetchContacts();
+  };
+
+  useEffect(() => {
+    if (!mounted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMounted(true);
+      return;
+    }
+    fetchContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, priorityFilter, page]);
 
   const updateContact = async (
     id: string,
@@ -180,29 +185,11 @@ export function ContactsClient({
     }
   };
 
-  const getStatusColor = (status: SubmissionStatus) => {
-    const colors: Record<SubmissionStatus, string> = {
-      NEW: "bg-[#2196F3]/10 text-[#2196F3] border-[#2196F3]/20",
-      VIEWED: "bg-gray-500/10 text-gray-600 border-gray-500/20",
-      CONTACTED: "bg-[#9C27B0]/10 text-[#9C27B0] border-[#9C27B0]/20",
-      QUALIFIED: "bg-[#28c840]/10 text-[#28c840] border-[#28c840]/20",
-      PROPOSAL_SENT: "bg-[#febc2e]/10 text-[#d49e24] border-[#febc2e]/20",
-      WON: "bg-emerald-600/10 text-emerald-600 border-emerald-600/20",
-      LOST: "bg-[#ff5f57]/10 text-[#ff5f57] border-[#ff5f57]/20",
-      SPAM: "bg-gray-400/10 text-gray-500 border-gray-400/20",
-    };
-    return colors[status] || colors.NEW;
-  };
+  const getStatusColor = (status: SubmissionStatus) =>
+    submissionStatusBadge[status] ?? submissionStatusBadge.NEW;
 
-  const getPriorityColor = (priority: Priority) => {
-    const colors: Record<Priority, string> = {
-      LOW: "bg-gray-500/10 text-gray-600 border-gray-500/20",
-      MEDIUM: "bg-[#2196F3]/10 text-[#2196F3] border-[#2196F3]/20",
-      HIGH: "bg-[#ff9500]/10 text-[#e68600] border-[#ff9500]/20",
-      URGENT: "bg-[#ff5f57]/10 text-[#ff5f57] border-[#ff5f57]/20",
-    };
-    return colors[priority] || colors.MEDIUM;
-  };
+  const getPriorityColor = (priority: Priority) =>
+    submissionPriorityBadge[priority] ?? submissionPriorityBadge.MEDIUM;
 
   const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -215,7 +202,7 @@ export function ContactsClient({
   };
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 max-w-[1400px] mx-auto bg-[#fff] dark:bg-background min-h-screen transition-colors duration-300">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-foreground mb-2">
@@ -226,10 +213,7 @@ export function ContactsClient({
           </p>
         </div>
       </div>
-
-      <div className="bg-[#fff] dark:bg-card border border-black/5 dark:border-white/10 rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none p-6 sm:p-8 transition-all duration-300">
-        
-        {/* Filters Section */}
+      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <form className="relative flex-1" onSubmit={handleSearchSubmit}>
             <Search className="absolute start-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
@@ -238,7 +222,7 @@ export function ContactsClient({
               placeholder="Search by name, phone, or message (Press enter)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full ps-11 pe-4 h-11 border border-black/5 dark:border-white/10 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] focus:outline-none focus:bg-transparent focus:ring-1 focus:ring-foreground/20 transition-all font-sans text-[14px]"
+              className="w-full ps-11 pe-4 h-11 border border-border rounded-xl bg-muted/50 focus:outline-none focus:bg-transparent focus:ring-1 focus:ring-foreground/20 transition-all font-sans text-[14px]"
             />
           </form>
           <div className="flex gap-4 shrink-0">
@@ -249,10 +233,10 @@ export function ContactsClient({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[160px] h-11 border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl text-[14px]">
+              <SelectTrigger className="w-[160px] h-11 border-border bg-muted/50 rounded-xl text-[14px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border-black/5 shadow-xl">
+              <SelectContent className="rounded-xl border-border shadow-lg">
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="NEW">New</SelectItem>
                 <SelectItem value="VIEWED">Viewed</SelectItem>
@@ -271,10 +255,10 @@ export function ContactsClient({
                 setPage(1);
               }}
             >
-              <SelectTrigger className="w-[160px] h-11 border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded-xl text-[14px]">
+              <SelectTrigger className="w-[160px] h-11 border-border bg-muted/50 rounded-xl text-[14px]">
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border-black/5 shadow-xl">
+              <SelectContent className="rounded-xl border-border shadow-lg">
                 <SelectItem value="all">All Priorities</SelectItem>
                 <SelectItem value="LOW">Low</SelectItem>
                 <SelectItem value="MEDIUM">Medium</SelectItem>
@@ -284,17 +268,15 @@ export function ContactsClient({
             </Select>
           </div>
         </div>
-
-        {/* Table Section */}
-        <div className="relative rounded-2xl overflow-hidden border border-black/5 dark:border-white/10">
+        <div className="relative rounded-2xl overflow-hidden border border-border">
           {loading && (
-            <div className="absolute inset-0 bg-[#fff]/60 dark:bg-background/60 flex items-center justify-center z-10 backdrop-blur-[2px]">
+            <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10 backdrop-blur-[2px]">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
             </div>
           )}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-black/[0.02] dark:bg-white/[0.02] border-b border-black/5 dark:border-white/10">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
                   <th className="px-6 py-4 text-xs font-medium text-muted-foreground/60 uppercase tracking-widest">
                     Contact
@@ -316,7 +298,7 @@ export function ContactsClient({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5 dark:divide-white/10">
+              <tbody className="divide-y divide-border">
                 {contacts.length === 0 ? (
                   <tr>
                     <td
@@ -330,7 +312,7 @@ export function ContactsClient({
                   contacts.map((contact) => (
                     <tr
                       key={contact.id}
-                      className="group hover:bg-black/[0.01] dark:hover:bg-white/[0.01] transition-colors"
+                      className="group hover:bg-muted/40 transition-colors"
                     >
                       <td className="px-6 py-4">
                         <div className="font-medium text-foreground mb-1">
@@ -341,7 +323,7 @@ export function ContactsClient({
                           <bdi>{contact.phone}</bdi>
                         </div>
                         {contact.serviceInterest && (
-                          <div className="text-[12px] text-muted-foreground/80 mt-1.5 bg-black/[0.03] dark:bg-white/[0.03] inline-block px-2 py-0.5 rounded-md">
+                          <div className="text-[12px] text-muted-foreground/80 mt-1.5 bg-muted inline-block px-2 py-0.5 rounded-md">
                             {contact.serviceInterest.replace(/_/g, " ")}
                           </div>
                         )}
@@ -417,7 +399,7 @@ export function ContactsClient({
                         <div className="flex items-center justify-end gap-1">
                           <Link
                             href={`/contacts/${contact.id}`}
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:bg-black/5 dark:hover:bg-white/10 hover:text-foreground transition-colors"
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                             title="View Details"
                           >
                             <Eye className="h-4 w-4" />
@@ -425,7 +407,7 @@ export function ContactsClient({
                           <button
                             onClick={() => openDeleteDialog(contact.id, contact.name)}
                             disabled={deleting === contact.id}
-                            className="inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:bg-[#ff5f57]/10 hover:text-[#ff5f57] transition-colors"
+                            className="inline-flex items-center justify-center h-8 w-8 rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                             title="Delete Contact"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -439,10 +421,8 @@ export function ContactsClient({
             </table>
           </div>
         </div>
-
-        {/* Pagination Section */}
         {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6 pt-6 border-t border-black/5 dark:border-white/10">
+          <div className="flex justify-between items-center mt-6 pt-6 border-t border-border">
             <span className="text-[13px] text-muted-foreground font-medium">
               Showing page {page} of {totalPages}
             </span>
@@ -452,7 +432,7 @@ export function ContactsClient({
                 size="sm"
                 disabled={page === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-lg h-9 px-4 border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] shadow-none"
+                className="rounded-lg h-9 px-4 border-border bg-muted/50 hover:bg-muted shadow-none"
               >
                 Previous
               </Button>
@@ -461,7 +441,7 @@ export function ContactsClient({
                 size="sm"
                 disabled={page === totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="rounded-lg h-9 px-4 border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] shadow-none"
+                className="rounded-lg h-9 px-4 border-border bg-muted/50 hover:bg-muted shadow-none"
               >
                 Next
               </Button>
@@ -469,9 +449,8 @@ export function ContactsClient({
           </div>
         )}
       </div>
-
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-3xl border-black/5 shadow-2xl">
+        <AlertDialogContent className="rounded-2xl border-border shadow-lg">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-light text-xl tracking-tight">Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription className="text-[15px]">
@@ -483,10 +462,10 @@ export function ContactsClient({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0 mt-4">
-            <AlertDialogCancel className="rounded-xl border-black/5 h-11">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl h-11">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="rounded-xl h-11 bg-[#ff5f57] hover:bg-[#ff5f57]/90 text-white border-none shadow-none"
+              className="rounded-xl h-11 bg-destructive text-white hover:bg-destructive/90 border-none shadow-none"
             >
               Delete
             </AlertDialogAction>

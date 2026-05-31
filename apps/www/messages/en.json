@@ -428,7 +428,9 @@
             "serviceWebDesign": "Website Systems",
             "submit": "Send Message",
             "submitting": "Sending...",
-            "success": "Received. We will reply within 24 hours."
+            "success": "Received. We will reply within 24 hours.",
+            "errorGeneric": "Something went wrong. Please try again.",
+            "errorNetwork": "Network error. Check your connection and try again."
         },
         "heroDescription": "A focused briefing is enough to surface the real constraint, establish a realistic scope, and determine if a deeper technical partnership is warranted.",
         "heroTitle": "Bring the real problem - not the polished brief.",

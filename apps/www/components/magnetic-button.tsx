@@ -37,7 +37,7 @@ function useMergedRef<T>(...refs: (React.Ref<T> | null | undefined)[]) {
         else if (ref) (ref as React.MutableRefObject<T>).current = node;
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
     refs,
   );
 }

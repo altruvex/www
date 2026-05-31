@@ -1,42 +1,87 @@
 import Link from "next/link";
-import { Mail, Calendar, Users } from "lucide-react";
+import { Calendar, Mail, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { monoCaps } from "@/lib/mono-caps";
+
+const cards = [
+  {
+    href: "/contacts",
+    title: "Contacts",
+    description: "View and manage incoming contact requests and inquiries",
+    cta: "View all messages",
+    icon: Mail,
+    iconClass: "bg-brand/10 text-brand",
+    linkClass: "text-brand",
+  },
+  {
+    href: "/meetings",
+    title: "Meetings",
+    description: "Manage scheduled meetings and appointments with clients",
+    cta: "View all meetings",
+    icon: Calendar,
+    iconClass: "bg-success/10 text-success",
+    linkClass: "text-success",
+  },
+  {
+    href: "/leads",
+    title: "Leads",
+    description: "Track leads from the transparency estimator flow",
+    cta: "View all leads",
+    icon: Users,
+    iconClass: "bg-warning/10 text-warning",
+    linkClass: "text-warning",
+  },
+] as const;
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-5xl flex-col items-center justify-center py-32 px-8 sm:px-16">
-        <div className="w-full">
-          <div className="mb-12 text-center">
-            <h1 className="mb-4 text-4xl font-semibold leading-tight tracking-tight text-black dark:text-zinc-50 sm:text-5xl">
-              Admin Dashboard
-            </h1>
-            <p className="text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-              Choose the section you want to manage
-            </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-10">
+      <div>
+        <p className={cn(monoCaps, "text-muted-foreground mb-3")}>Overview</p>
+        <h1 className="text-foreground mb-2">Admin dashboard</h1>
+        <p className="max-w-xl text-muted-foreground">
+          Choose a section to manage inbound requests, meetings, and estimator
+          leads.
+        </p>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {cards.map((card) => {
+          const Icon = card.icon;
+          return (
             <Link
-              href="/contacts"
-              className="group relative flex flex-col items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-8 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
+              key={card.href}
+              href={card.href}
+              className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:border-border-mid hover:shadow-lg"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
-                <Mail className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+              <div
+                className={cn(
+                  "flex size-14 items-center justify-center rounded-xl",
+                  card.iconClass,
+                )}
+              >
+                <Icon className="size-7" />
               </div>
               <div className="flex-1">
-                <h2 className="mb-2 text-2xl font-semibold text-black dark:text-zinc-50">
-                  Contacts
+                <h2 className="mb-2 text-xl font-medium text-foreground">
+                  {card.title}
                 </h2>
-                <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  View and manage incoming contact requests and inquiries
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {card.description}
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">
-                <span>View all messages</span>
+              <span
+                className={cn(
+                  "inline-flex items-center gap-2 text-sm font-medium",
+                  card.linkClass,
+                )}
+              >
+                {card.cta}
                 <svg
-                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
+                  className="size-4 transition-transform group-hover:translate-x-0.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden
                 >
                   <path
                     strokeLinecap="round"
@@ -45,75 +90,11 @@ export default function Home() {
                     d="M9 5l7 7-7 7"
                   />
                 </svg>
-              </div>
+              </span>
             </Link>
-            <Link
-              href="/meetings"
-              className="group relative flex flex-col items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-8 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-950/30">
-                <Calendar className="h-7 w-7 text-teal-600 dark:text-teal-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="mb-2 text-2xl font-semibold text-black dark:text-zinc-50">
-                  Meetings
-                </h2>
-                <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  Manage scheduled meetings and appointments with clients
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-teal-600 dark:text-teal-400">
-                <span>View all meetings</span>
-                <svg
-                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
-            </Link>
-            <Link
-              href="/leads"
-              className="group relative flex flex-col items-start gap-4 rounded-2xl border border-zinc-200 bg-white p-8 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-950/30">
-                <Users className="h-7 w-7 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div className="flex-1">
-                <h2 className="mb-2 text-2xl font-semibold text-black dark:text-zinc-50">
-                  Leads
-                </h2>
-                <p className="text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  Track and manage potential clients from the transparency flow
-                </p>
-              </div>
-              <div className="flex items-center gap-2 text-sm font-medium text-orange-600 dark:text-orange-400">
-                <span>View all leads</span>
-                <svg
-                  className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </main>
+          );
+        })}
+      </div>
     </div>
   );
 }
