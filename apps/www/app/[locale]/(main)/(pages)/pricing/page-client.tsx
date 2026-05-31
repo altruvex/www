@@ -215,7 +215,7 @@ export default function PricingPage() {
                           </span>
                         </div>
                         <span
-                          className="absolute top-5 end-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
+                          className="absolute top-5 inset-e-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
                           style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
                         >
                           {String(i + 1).padStart(2, "0")}
@@ -284,7 +284,7 @@ export default function PricingPage() {
                     >
                       <div className="relative z-20 flex flex-col h-full">
                         <span
-                          className="absolute bottom-4 end-1 font-mono font-bold select-none pointer-events-none leading-none text-foreground/3"
+                          className="absolute bottom-4 inset-e-1 font-mono font-bold select-none pointer-events-none leading-none text-foreground/3"
                           style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
                         >
                           {String(i + 1).padStart(2, "0")}

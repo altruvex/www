@@ -43,7 +43,7 @@ export default async function LeadsPage({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-[2rem] liquid-glass p-2">
+      <div className="overflow-hidden rounded-4xl liquid-glass p-2">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

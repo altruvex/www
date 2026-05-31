@@ -42,7 +42,7 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-[2rem] liquid-glass p-8">
+      <div className="w-full max-w-sm rounded-4xl liquid-glass p-8">
         <div className="mb-8 text-center">
           <p className="font-sans text-sm font-medium tracking-tight text-muted-foreground mb-2">
             Altruvex

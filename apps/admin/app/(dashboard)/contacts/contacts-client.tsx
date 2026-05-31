@@ -214,10 +214,10 @@ export function ContactsClient({
           </p>
         </div>
       </div>
-      <div className="rounded-[2rem] liquid-glass p-6 sm:p-8">
+      <div className="rounded-4xl liquid-glass p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <form className="relative flex-1" onSubmit={handleSearchSubmit}>
-            <Search className="absolute start-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+            <Search className="absolute inset-s-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
             <input
               type="text"
               placeholder="Search by name, phone, or message (Press enter)..."

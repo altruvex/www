@@ -290,7 +290,7 @@ export default function MeetingsPage() {
           </SelectContent>
         </Select>
       </div>
-      <div className="liquid-glass rounded-[2rem] overflow-hidden p-2">
+      <div className="liquid-glass rounded-4xl overflow-hidden p-2">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/50">
