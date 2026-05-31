@@ -141,6 +141,16 @@
   --s-border-hover: hsl(225 33% 6% / 0.18);
   --s-high-soft: hsl(225 33% 6% / 0.03);
   --messaging-whatsapp: 142 70% 49%;
+
+  --tech-accent-nextjs: 239 84% 74%;
+  --tech-accent-react: 187 85% 53%;
+  --tech-accent-typescript: 217 91% 60%;
+  --tech-accent-nodejs: 142 69% 58%;
+  --tech-accent-postgresql: 213 94% 68%;
+  --tech-accent-prisma: 258 90% 76%;
+  --tech-accent-tailwind: 187 85% 53%;
+  --tech-accent-vercel: 240 5% 90%;
+  --tech-accent-vps: 215 16% 65%;
   --section-y-top: clamp(5rem, 10vh, 8rem);
   --section-y-bottom: clamp(5rem, 14vh, 10rem);
 }

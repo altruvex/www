@@ -1,4 +1,4 @@
-type CommercialCtaKey =
+export type CommercialCtaKey =
   | "projectRange"
   | "realBuild"
   | "technicalCall"

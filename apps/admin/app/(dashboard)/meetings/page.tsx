@@ -19,10 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
-  Mail,
   Search,
   Trash2,
   User,
@@ -92,6 +90,7 @@ export default function MeetingsPage() {
 
   useEffect(() => {
     fetchMeetings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, typeFilter, debouncedSearchQuery]);
 
   const fetchMeetings = async () => {
@@ -232,15 +231,7 @@ export default function MeetingsPage() {
     });
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+
 
   const getTimeSlot = (time: string) => {
     const slots: Record<string, string> = {

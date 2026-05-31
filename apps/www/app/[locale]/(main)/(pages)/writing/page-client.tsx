@@ -2,6 +2,7 @@
 import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Link } from "@/i18n/navigation";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
@@ -19,6 +20,7 @@ export default function WritingPage({
     <div className="relative min-h-screen w-full">
       <OpeningSection />
       <ListSection articles={articles} locale={locale} />
+      <SectionEndCta variant="transparency" />
     </div>
   );
 }

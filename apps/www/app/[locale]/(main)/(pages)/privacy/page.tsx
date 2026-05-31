@@ -1,4 +1,5 @@
 import { Container } from "@/components/container";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
@@ -130,6 +131,7 @@ export default async function PrivacyPolicyPage({
           </div>
         </Container>
       </section>
+      <SectionEndCta variant="contact" />
     </>
   );
 }

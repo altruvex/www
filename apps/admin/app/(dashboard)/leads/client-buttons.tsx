@@ -3,7 +3,23 @@
 import { ExternalLink, FileDown, X } from "lucide-react";
 import { useState } from "react";
 
-export function ExportCsvButton({ leads }: { leads: any[] }) {
+export interface Lead {
+  id: string;
+  createdAt: string | Date;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  projectType?: string | null;
+  timeline?: string | null;
+  complexity?: string | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  source?: string | null;
+  message?: string | null;
+  [key: string]: unknown;
+}
+
+export function ExportCsvButton({ leads }: { leads: Lead[] }) {
   const handleExport = () => {
     const headers = [
       "Timestamp",
@@ -20,7 +36,7 @@ export function ExportCsvButton({ leads }: { leads: any[] }) {
       headers.join(","),
       ...leads.map((lead) =>
         [
-          `"${new Date(lead.createdAt).toISOString()}"`,
+          `"${new Date(lead.createdAt as string | number | Date).toISOString()}"`,
           `"${lead.name || "Anonymous"}"`,
           `"${lead.phone || ""}"`,
           `"${lead.projectType || ""}"`,
@@ -70,10 +86,10 @@ const FIELD_LABELS: Record<string, string> = {
 
 const ORDERED_KEYS = Object.keys(FIELD_LABELS);
 
-function formatValue(key: string, value: any): string {
+function formatValue(key: string, value: unknown): string {
   if (value === null || value === undefined || value === "") return "-";
   if (key === "createdAt") {
-    return new Date(value).toLocaleString("en-EG", {
+    return new Date(value as string | number | Date).toLocaleString("en-EG", {
       dateStyle: "medium",
       timeStyle: "short",
     });
@@ -88,7 +104,7 @@ function LeadDetailModal({
   lead,
   onClose,
 }: {
-  lead: any;
+  lead: Lead;
   onClose: () => void;
 }) {
   const knownRows = ORDERED_KEYS.filter((k) => k in lead);
@@ -156,7 +172,7 @@ function LeadDetailModal({
   );
 }
 
-export function ViewDetailsButton({ lead }: { lead: any }) {
+export function ViewDetailsButton({ lead }: { lead: Lead }) {
   const [open, setOpen] = useState(false);
 
   return (

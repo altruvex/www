@@ -245,7 +245,10 @@ export const ServicesSection = memo(function ServicesSection() {
   });
 
   return (
-    <section id="services" className="relative py-[clamp(60px,8vw,120px)]">
+    <section
+      id="services"
+      className="relative pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
       <Container>
         <SectionHeader />
         <div

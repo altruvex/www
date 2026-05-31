@@ -1,9 +1,13 @@
+import {
+  MANIFEST_BACKGROUND_COLOR,
+  MANIFEST_THEME_COLOR,
+} from "@/lib/brand-manifest";
 import { SITE_CONFIG } from "@/lib/metadata";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    background_color: "#f7f8fa",
+    background_color: MANIFEST_BACKGROUND_COLOR,
     description: SITE_CONFIG.description.en,
     dir: "auto",
     display: "standalone",
@@ -30,6 +34,6 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     short_name: SITE_CONFIG.name,
     start_url: "/en?source=pwa",
-    theme_color: "#4a6ed4",
+    theme_color: MANIFEST_THEME_COLOR,
   };
 }

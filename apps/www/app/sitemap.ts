@@ -19,10 +19,12 @@ const STATIC_ROUTES = [
   "/services/development",
   "/services/interface-design",
   "/services/maintenance",
+  "/services/ecommerce",
   "/standards",
   "/terms",
   "/work",
   "/writing",
+  "/offline",
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

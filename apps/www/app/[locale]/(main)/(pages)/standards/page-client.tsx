@@ -2,6 +2,7 @@
 import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { useTranslations } from "next-intl";
 
 export default function StandardsPage() {
@@ -10,6 +11,7 @@ export default function StandardsPage() {
       <OpeningSection />
       <CategoriesSection />
       <ClosingSection />
+      <SectionEndCta variant="contact" />
     </div>
   );
 }

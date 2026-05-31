@@ -1,57 +1,64 @@
+import { buildContentSecurityPolicy } from "@/lib/csp";
 import { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
-const withPWA = require("@ducanh2912/next-pwa").default({
+import withPWAInit from "@ducanh2912/next-pwa";
+import pkg from "./package.json";
+import mdxInit from "@next/mdx";
+import bundleAnalyzerInit from "@next/bundle-analyzer";
+
+const withPWA = withPWAInit({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  skipWaiting: true,
-  runtimeCaching: [
-    {
-      urlPattern: /\/_next\/static\/.*/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "static-assets",
-        expiration: {
-          maxEntries: 64,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
+  workboxOptions: {
+    runtimeCaching: [
+      {
+        urlPattern: /\/_next\/static\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "static-assets",
+          expiration: {
+            maxEntries: 64,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          },
         },
       },
-    },
-    {
-      urlPattern: /\.(png|jpg|jpeg|svg|gif|ico|webp|avif)$/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "image-cache",
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 30 * 24 * 60 * 60,
+      {
+        urlPattern: /\.(png|jpg|jpeg|svg|gif|ico|webp|avif)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "image-cache",
+          expiration: {
+            maxEntries: 100,
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+          },
         },
       },
-    },
-    {
-      urlPattern: /\.(woff|woff2|ttf|otf|eot)$/i,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "font-cache",
-        expiration: {
-          maxEntries: 20,
-          maxAgeSeconds: 365 * 24 * 60 * 60,
+      {
+        urlPattern: /\.(woff|woff2|ttf|otf|eot)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "font-cache",
+          expiration: {
+            maxEntries: 20,
+            maxAgeSeconds: 365 * 24 * 60 * 60,
+          },
         },
       },
-    },
-    {
-      urlPattern: /^https:\/\/.*/i,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "offlineCache",
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 24 * 60 * 60,
+      {
+        urlPattern: /^https:\/\/.*/i,
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "offlineCache",
+          expiration: {
+            maxEntries: 200,
+            maxAgeSeconds: 24 * 60 * 60,
+          },
+          networkTimeoutSeconds: 10,
         },
-        networkTimeoutSeconds: 10,
       },
-    },
-  ],
+    ],
+  },
 });
 
 const nextConfig: NextConfig = {
@@ -62,7 +69,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.1.6'],
   poweredByHeader: false,
   env: {
-    NEXT_PUBLIC_APP_VERSION: require("./package.json").version,
+    NEXT_PUBLIC_APP_VERSION: pkg.version,
   },
   images: {
     formats: ["image/avif", "image/webp"],
@@ -72,6 +79,20 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/estimator",
+        destination: "/en/transparency",
+        permanent: true,
+      },
+      {
+        source: "/:locale(en|ar)/estimator",
+        destination: "/:locale/transparency",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     // Avoid custom Cache-Control on Next internals in dev — Next warns and it can break HMR.
@@ -159,12 +180,16 @@ const nextConfig: NextConfig = {
             key: "X-DNS-Prefetch-Control",
             value: "on",
           },
+          {
+            key: "Content-Security-Policy",
+            value: buildContentSecurityPolicy(),
+          },
         ],
       },
     ];
   },
 };
-const withMDX = require("@next/mdx")({
+const withMDX = mdxInit({
   extension: /\.mdx?$/,
   options: {
     remarkPlugins: [],
@@ -173,7 +198,7 @@ const withMDX = require("@next/mdx")({
 });
 
 const withNextIntl = createNextIntlPlugin();
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
+const withBundleAnalyzer = bundleAnalyzerInit({
   enabled: process.env.ANALYZE === "true",
 });
 

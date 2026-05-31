@@ -13,6 +13,7 @@ export function CtaSection() {
   const t = useTranslations("commercial.cta");
   const tCTAs = useTranslations("commercial.ctas");
   const callCta = getCommercialCta("technicalCall");
+  const scopeCta = getCommercialCta("projectRange");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
@@ -49,11 +50,18 @@ export function CtaSection() {
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
               {t("body")}
             </p>
-            <MagneticButton size="lg">
-              <Link href={callCta.href}>
-                <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
+            <div className="flex flex-col gap-3">
+              <MagneticButton size="lg">
+                <Link href={callCta.href}>
+                  <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
+                </Link>
+              </MagneticButton>
+              <MagneticButton size="lg" variant="secondary">
+                <Link href={scopeCta.href}>
+                  <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
+                </Link>
+              </MagneticButton>
+            </div>
             <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/55 text-center">
               {t("footnote")}
             </p>

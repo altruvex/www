@@ -1,10 +1,10 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid, MOTION } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
 import {
   useCallback,
@@ -186,7 +186,7 @@ function BriefUnderline({
     if (!p) return;
     try {
       p.style.setProperty("--path-len", String(Math.ceil(p.getTotalLength())));
-    } catch {}
+    } catch { }
   }, []);
   return (
     <svg
@@ -237,7 +237,7 @@ function ConnectorsSvg({
           "--path-len",
           String(Math.ceil(p.getTotalLength())),
         );
-      } catch {}
+      } catch { }
     }
   }, []);
   return (
@@ -282,13 +282,13 @@ function NoteCard({
   const accentPx = size === "md" ? 3 : 2;
   const borderSide = isRtl
     ? {
-        borderRight: `${accentPx}px solid ${INK[note.color]}`,
-        borderLeft: "none",
-      }
+      borderRight: `${accentPx}px solid ${INK[note.color]}`,
+      borderLeft: "none",
+    }
     : {
-        borderLeft: `${accentPx}px solid ${INK[note.color]}`,
-        borderRight: "none",
-      };
+      borderLeft: `${accentPx}px solid ${INK[note.color]}`,
+      borderRight: "none",
+    };
 
   return (
     <div

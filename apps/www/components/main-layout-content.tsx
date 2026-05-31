@@ -5,6 +5,7 @@ import { useLoading } from "@/components/providers/loading-provider";
 import { layoutChildren } from "@/types";
 import { useEffect } from "react";
 import { Footer } from "./footer";
+import { WhatsAppFab } from "./whatsapp-fab";
 
 function AnimationController() {
   const { isInitialLoadComplete } = useLoading();
@@ -54,6 +55,7 @@ export function MainLayoutContent({ children }: layoutChildren) {
         />
       </div>
       <Footer />
+      <WhatsAppFab />
     </main>
   );
 }

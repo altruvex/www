@@ -1,8 +1,8 @@
 "use client";
 import { Container } from "@/components/container";
+import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, MOTION } from "@/lib/motion";
 
 const STAGE_COLORS = [
   "74,  110, 212",
@@ -213,7 +213,7 @@ export function PipelineSection() {
         }
         @keyframes pl-breathe {
           0%,100% { opacity: 1;   }
-          50%     { opacity: .2;  }
+          50%     { opacity: .3;  }
         }
         @keyframes pl-blink {
           0%,100% { opacity: 1; }
@@ -221,8 +221,8 @@ export function PipelineSection() {
         }
         @keyframes pl-scan {
           0%   { transform: translateX(-100%); opacity: 0;  }
-          8%   { opacity: 1;                               }
-          92%  { opacity: 1;                               }
+          8%   { opacity: 1;                                }
+          92%  { opacity: 1;                                }
           100% { transform: translateX(200%);  opacity: 0;  }
         }
         @keyframes pl-line-in {
@@ -233,20 +233,17 @@ export function PipelineSection() {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0);    }
         }
-        @keyframes pl-shimmer {
-          0%   { background-position: -200% center; }
-          100% { background-position:  200% center; }
-        }
         @keyframes pl-bar-in {
           from { transform: scaleY(0); }
           to   { transform: scaleY(1); }
         }
 
-        .pl-breathe  { animation: pl-breathe  .9s ease-in-out infinite; }
+        .pl-breathe  { animation: pl-breathe  1.2s ease-in-out infinite; }
         .pl-blink    { animation: pl-blink    1.1s step-end    infinite; }
         .pl-scan     { animation: pl-scan     2.4s linear      infinite; }
         .pl-log-line { animation: pl-line-in  .28s ease both; }
         .pl-bar-in   { transform-origin: top; animation: pl-bar-in .32s cubic-bezier(.22,1,.36,1) both; }
+        
         .pl-row {
           display: grid;
           grid-template-columns: auto 1fr auto;
@@ -270,16 +267,13 @@ export function PipelineSection() {
       <section
         ref={sectionRef}
         id="pipeline"
-        className="font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom)"
-        style={{ background: "hsl(var(--n-8))" }}
+        className="font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-gray-50 dark:bg-background transition-colors duration-300"
       >
         <Container>
           <p
-            className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal transition-[opacity,transform]"
+            className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/60 transition-[opacity,transform] mb-3"
             ref={eyebrowRef}
             style={{
-              color: "rgba(var(--pipeline-text, 247, 248, 250), 0.22)",
-              marginBottom: "11px",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(6px)",
               transitionDuration: dur(MOTION.duration.base),
@@ -291,10 +285,8 @@ export function PipelineSection() {
 
           <h2
             ref={titleRef}
-            className="font-sans font-light leading-[1.06] transition-[opacity,transform] text-[clamp(2.125rem,4vw,3.25rem)] tracking-[-0.02em]"
+            className="font-sans font-light leading-[1.06] transition-[opacity,transform] text-[clamp(2.125rem,4vw,3.25rem)] tracking-tight text-foreground mb-8"
             style={{
-              color: "hsl(var(--n-0))",
-              marginBottom: "32px",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(10px)",
               transitionDuration: dur(MOTION.duration.text),
@@ -309,17 +301,17 @@ export function PipelineSection() {
             </span>
             <p
               ref={descRef}
-              className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed"
+              className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed mt-4 font-sans tracking-normal"
             >
               {t("description")}
             </p>
           </h2>
 
+          {/* PIPELINE CARD */}
           <div
             dir="ltr"
-            className="transition-[opacity,transform] overflow-hidden rounded-lg"
+            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-black/5 dark:border-white/10 bg-gray-50 dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none"
             style={{
-              border: "0.5px solid hsl(var(--border))",
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(16px)",
               transitionDuration: dur(MOTION.duration.base),
@@ -327,46 +319,29 @@ export function PipelineSection() {
               transitionTimingFunction: ease,
             }}
           >
-            <div
-              className="flex items-center justify-between flex-wrap gap-2"
-              style={{
-                padding: "9px 16px",
-                borderBottom: "0.5px solid hsl(var(--border))",
-              }}
-            >
-              <span
-                className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
-                style={{ color: "hsl(var(--n-5))" }}
-              >
+            <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 border-b border-black/5 dark:border-white/10 bg-black/2 dark:bg-transparent">
+              <span className="font-mono text-xs font-semibold leading-normal tracking-widest uppercase text-muted-foreground">
                 system.build.pipeline / production
               </span>
               <div className="flex items-center gap-3 sm:gap-4">
-                <span
-                  style={{
-                    fontSize: "11px",
-                    letterSpacing: ".1em",
-                    color: "hsl(var(--n-5))",
-                  }}
-                >
+                <span className="text-[11px] tracking-widest text-muted-foreground">
                   <span
-                    className="inline-block transition-transform duration-300"
-                    style={{
-                      color: "hsl(var(--n-3))",
-                      transform: doneCount > 0 ? "scale(1.1)" : "scale(1)",
-                    }}
+                    className="inline-block transition-transform duration-300 text-foreground font-medium"
+                    style={{ transform: doneCount > 0 ? "scale(1.1)" : "scale(1)" }}
                   >
                     {doneCount}
                   </span>
                   /6 deployed
                 </span>
                 <span
-                  className="transition-colors duration-300 font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                  className="transition-colors duration-300 font-mono text-xs leading-normal tracking-widest uppercase font-semibold"
                   style={{
                     color: complete
-                      ? `rgba(${STAGE_COLORS[1]},.65)`
+                      ? `rgb(${STAGE_COLORS[1]})`
                       : running
-                        ? `rgba(${STAGE_COLORS[2]},.65)`
-                        : "hsl(var(--n-6))",
+                        ? `rgb(${STAGE_COLORS[2]})`
+                        : "currentColor",
+                    opacity: complete || running ? 1 : 0.5,
                   }}
                 >
                   {statusLabel}
@@ -381,20 +356,17 @@ export function PipelineSection() {
               const isDone = status === "done";
               const isActive = isRunning || isDone;
               const color = STAGE_COLORS[i];
+
               return (
                 <React.Fragment key={stage.id}>
                   <div
-                    className="pl-row relative items-start cursor-pointer overflow-hidden transition-colors duration-300"
+                    className="pl-row relative items-start cursor-pointer overflow-hidden transition-all duration-300 border-b border-black/5 dark:border-white/5 px-4 py-3.5 hover:bg-black/2 dark:hover:bg-white/2"
                     style={{
-                      padding: "13px 16px",
-                      borderBottom: "0.5px solid hsl(var(--border))",
                       backgroundColor: isExp
-                        ? `rgba(${color},.055)`
+                        ? `rgba(${color},.04)`
                         : isRunning
-                          ? `rgba(${color},.03)`
-                          : isActive
-                            ? "rgba(var(--pipeline-text, 247, 248, 250), 0.008)"
-                            : "transparent",
+                          ? `rgba(${color},.02)`
+                          : "transparent",
                       animation: revealed
                         ? `pl-row-in ${dur(MOTION.duration.fast)} cubic-bezier(.22,1,.36,1) ${dur(i * 0.065)} both`
                         : "none",
@@ -405,93 +377,67 @@ export function PipelineSection() {
                       <div
                         className="pl-scan pointer-events-none absolute inset-0"
                         style={{
-                          background: `linear-gradient(90deg, transparent, rgba(${color},.07), transparent)`,
+                          background: `linear-gradient(90deg, transparent, rgba(${color},.05), transparent)`,
                           width: "40%",
                         }}
                       />
                     )}
                     <div
-                      className="absolute inset-y-0 inset-s-0 transition-opacity duration-300"
+                      className="absolute inset-y-0 left-0 transition-opacity duration-300"
                       style={{
-                        width: "2.5px",
+                        width: "3px",
                         backgroundColor: `rgb(${color})`,
                         opacity: isActive || isExp ? 1 : 0,
-                        animation:
-                          isActive || isExp
-                            ? "pl-bar-in .32s cubic-bezier(.22,1,.36,1) both"
-                            : "none",
+                        animation: isActive || isExp ? "pl-bar-in .32s cubic-bezier(.22,1,.36,1) both" : "none",
                       }}
                     />
+                    
                     <span
-                      className="pl-col-ts tabular-nums transition-colors duration-300"
-                      style={{
-                        fontSize: "11.5px",
-                        letterSpacing: ".06em",
-                        paddingTop: "1px",
-                        color: isActive
-                          ? `rgba(${color},.5)`
-                          : "hsl(var(--n-6))",
-                      }}
+                      className="pl-col-ts tabular-nums transition-colors duration-300 text-[11.5px] tracking-wider pt-px"
+                      style={{ color: isActive ? `rgba(${color},.6)` : "currentColor", opacity: isActive ? 1 : 0.4 }}
                     >
                       {times[i]}
                     </span>
+
                     <span
-                      className="pl-col-stage items-center gap-1.5 transition-colors duration-300 self-start"
-                      style={{
-                        fontSize: "11.5px",
-                        letterSpacing: ".12em",
-                        textTransform: "uppercase",
-                        paddingTop: "1px",
-                        color: isActive ? `rgb(${color})` : "hsl(var(--n-5))",
-                        whiteSpace: "nowrap",
-                      }}
+                      className="pl-col-stage items-center gap-1.5 transition-colors duration-300 self-start text-[11.5px] tracking-widest uppercase font-semibold whitespace-nowrap pt-px"
+                      style={{ color: isActive ? `rgb(${color})` : "currentColor", opacity: isActive ? 1 : 0.5 }}
                     >
-                      <span style={{ color: "hsl(var(--n-6))" }}>
-                        [{stage.id}]
-                      </span>
+                      <span className="opacity-50 font-normal">[{stage.id}]</span>
                       <span className="hidden sm:inline">{stage.key}</span>
                       <span className="sm:hidden">{stage.key.slice(0, 4)}</span>
                       {stage.parallel && (
                         <span
-                          className="text-[9px] border px-1 py-px hidden sm:inline"
+                          className="text-[9px] border px-1 py-px hidden sm:inline rounded-sm"
                           style={{
-                            borderRadius: "var(--radius-xs)",
-                            color: `rgba(${color},.6)`,
-                            borderColor: `rgba(${color},.25)`,
+                            color: `rgba(${color},.7)`,
+                            borderColor: `rgba(${color},.3)`,
                           }}
                         >
                           ||
                         </span>
                       )}
                     </span>
+
                     <span
-                      className="transition-colors duration-300 text-sm sm:text-[13px] leading-relaxed"
-                      style={{
-                        letterSpacing: ".01em",
-                        paddingTop: "1px",
-                        color: isActive ? "hsl(var(--n-3))" : "hsl(var(--n-6))",
-                      }}
+                      className="transition-colors duration-300 text-sm sm:text-[13px] leading-relaxed tracking-wide pt-px"
+                      style={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
                     >
                       {stage.desc}
                     </span>
+
                     <span
-                      className="flex items-center gap-1.5 transition-colors duration-300 self-start justify-end"
+                      className="flex items-center gap-2 transition-colors duration-300 self-start justify-end text-[11px] tracking-widest uppercase font-semibold pt-[2px]"
                       style={{
-                        fontSize: "11px",
-                        letterSpacing: ".10em",
-                        textTransform: "uppercase",
-                        paddingTop: "2px",
                         color: isRunning
-                          ? `rgba(${color},.75)`
+                          ? `rgb(${color})`
                           : isDone
-                            ? `rgba(${color},.55)`
-                            : "hsl(var(--n-6))",
+                            ? `rgba(${color},.6)`
+                            : "currentColor",
+                        opacity: isRunning || isDone ? 1 : 0.4,
                       }}
                     >
-                      <span
-                        className="relative flex items-center justify-center shrink-0"
-                        style={{ width: 8, height: 8, marginTop: 1 }}
-                      >
+                      <span className="relative flex items-center justify-center shrink-0 w-2 h-2 mt-px">
                         {isRunning && (
                           <span
                             className="absolute inset-0 rounded-full"
@@ -504,11 +450,10 @@ export function PipelineSection() {
                         <span
                           className={`relative rounded-full transition-colors duration-300 ${isRunning ? "pl-breathe" : ""}`}
                           style={{
-                            width: 5,
-                            height: 5,
-                            backgroundColor: isActive
-                              ? `rgb(${color})`
-                              : "hsl(var(--n-6))",
+                            width: "6px",
+                            height: "6px",
+                            backgroundColor: isActive ? `rgb(${color})` : "currentColor",
+                            opacity: isActive ? 1 : 0.3,
                           }}
                         />
                       </span>
@@ -517,44 +462,29 @@ export function PipelineSection() {
                   </div>
 
                   <div
-                    className="overflow-hidden transition-[max-height,opacity]"
+                    className="overflow-hidden transition-all ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
-                      maxHeight: isExp ? "280px" : "0px",
+                      maxHeight: isExp ? "300px" : "0px",
                       opacity: isExp ? 1 : 0,
                       transitionDuration: dur(MOTION.duration.fast),
-                      transitionTimingFunction: "cubic-bezier(.22,1,.36,1)",
                     }}
                   >
-                    <div
-                      className="space-y-0.5"
-                      style={{
-                        padding: "12px 16px 14px",
-                        borderTop: "0.5px solid hsl(var(--border))",
-                        background: "hsl(var(--n-8))",
-                      }}
-                    >
+                    <div className="space-y-1 px-4 py-3 bg-black/2 dark:bg-black/20 border-b border-black/5 dark:border-white/5 shadow-inner">
                       {stage.logs.map((line, li) => (
                         <div
                           key={li}
-                          className="pl-log-line"
+                          className="pl-log-line text-[11.5px] leading-[1.85] tracking-wide flex items-start"
                           style={{
-                            fontSize: "11.5px",
-                            lineHeight: 1.85,
-                            letterSpacing: ".04em",
                             animationDelay: `${li * 55}ms`,
                             color: line.startsWith("[ok]")
-                              ? `rgba(${STAGE_COLORS[1]},.65)`
+                              ? `rgb(${STAGE_COLORS[1]})`
                               : line.startsWith("[warn]")
-                                ? `rgba(${STAGE_COLORS[2]},.6)`
-                                : `rgba(${STAGE_COLORS[3]},.55)`,
+                                ? `rgb(${STAGE_COLORS[2]})`
+                                : `rgba(${STAGE_COLORS[3]},.8)`,
                           }}
                         >
-                          <span
-                            style={{ color: "hsl(var(--n-7))", marginRight: 8 }}
-                          >
-                            -
-                          </span>
-                          {line}
+                          <span className="text-muted-foreground/40 mr-2 shrink-0">-</span>
+                          <span>{line}</span>
                         </div>
                       ))}
                     </div>
@@ -563,31 +493,19 @@ export function PipelineSection() {
               );
             })}
 
-            <div
-              className="flex items-center justify-between flex-wrap gap-3"
-              style={{
-                padding: "11px 16px",
-                borderTop: "0.5px solid hsl(var(--border))",
-              }}
-            >
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 bg-black/1 dark:bg-transparent">
+              <div className="flex items-center gap-2">
                 <span
-                  className="text-[11.5px] transition-colors duration-500"
+                  className="text-[11.5px] tracking-widest font-medium transition-colors duration-500 uppercase"
                   style={{
-                    letterSpacing: ".10em",
-                    color: complete
-                      ? `rgba(${STAGE_COLORS[1]},.65)`
-                      : "hsl(var(--n-6))",
+                    color: complete ? `rgb(${STAGE_COLORS[1]})` : "var(--muted-foreground)",
                   }}
                 >
                   {footerMsg}
                 </span>
                 <span
-                  className="pl-blink inline-block"
+                  className="pl-blink inline-block w-[5px] h-[11px] bg-foreground rounded-sm"
                   style={{
-                    width: "5px",
-                    height: "11px",
-                    background: "hsl(var(--n-3))",
                     opacity: running ? 1 : 0,
                     transition: `opacity ${dur(MOTION.duration.instant)}`,
                   }}
@@ -595,45 +513,16 @@ export function PipelineSection() {
               </div>
 
               <button
-                className="cursor-pointer transition-[color,border-color,background-color] disabled:opacity-30 disabled:cursor-not-allowed font-mono text-sm leading-normal tracking-wider rounded-md"
+                className="cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed font-mono text-[11.5px] font-semibold leading-normal tracking-[0.18em] uppercase rounded-md px-4 py-2 border hover:shadow-sm"
                 disabled={running}
                 onClick={complete ? reset : execute}
                 style={{
-                  fontSize: "11.5px",
-                  letterSpacing: ".18em",
-                  textTransform: "uppercase",
-                  background: "transparent",
-                  border: `0.5px solid ${
-                    complete
-                      ? `rgba(${STAGE_COLORS[1]},.28)`
-                      : "hsl(var(--border))"
-                  }`,
-                  padding: "7px 16px",
-                  color: complete
-                    ? `rgba(${STAGE_COLORS[1]},.7)`
-                    : "hsl(var(--n-4))",
-                  transitionDuration: dur(MOTION.duration.instant),
-                }}
-                onMouseEnter={(e) => {
-                  if (!running) {
-                    const btn = e.currentTarget;
-                    btn.style.color = "hsl(var(--n-1))";
-                    btn.style.borderColor = "hsl(var(--border-mid))";
-                    btn.style.background = "rgba(255,255,255,0.04)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  const btn = e.currentTarget;
-                  btn.style.color = complete
-                    ? `rgba(${STAGE_COLORS[1]},.7)`
-                    : "hsl(var(--n-4))";
-                  btn.style.borderColor = complete
-                    ? `rgba(${STAGE_COLORS[1]},.28)`
-                    : "hsl(var(--border))";
-                  btn.style.background = "transparent";
+                  borderColor: complete ? `rgba(${STAGE_COLORS[1]},.4)` : "var(--border)",
+                  color: complete ? `rgb(${STAGE_COLORS[1]})` : "var(--foreground)",
+                  backgroundColor: complete ? `rgba(${STAGE_COLORS[1]},.05)` : "transparent",
                 }}
               >
-                {complete ? "↺ re-execute" : running ? "running…" : "▶ execute"}
+                {complete ? "↺ Re-Execute" : running ? "Running…" : "▶ Execute"}
               </button>
             </div>
           </div>

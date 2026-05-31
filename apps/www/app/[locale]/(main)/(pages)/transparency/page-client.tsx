@@ -1,6 +1,4 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -24,6 +22,7 @@ import {
   useTransparency,
 } from "@/hooks/use-transparency";
 import { Link } from "@/i18n/navigation";
+import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import {
   buildPDFHtml,
   generateEstimatePdf,
@@ -223,8 +222,6 @@ export default function TransparencyPageClient() {
                 </div>
               )}
             </div>
-
-            {/* ── [IMPROVEMENT #2] Progress bar with step counter + percentage ── */}
             <div ref={progressRef} className="mb-12">
               <div className="flex justify-between items-center text-[10px] font-mono tracking-[0.18em] uppercase text-primary/40 mb-2.5">
                 <span>
@@ -239,7 +236,6 @@ export default function TransparencyPageClient() {
                 />
               </div>
             </div>
-
             <div key={containerKey} className="mb-12 animate-step-in">
               {step === 1 && (
                 <StepBrandIdentity
@@ -323,7 +319,6 @@ export default function TransparencyPageClient() {
                 </>
               )}
             </div>
-
             <div className="flex items-center justify-between">
               {(isPreselected ? step > 5 : step > 1) || isResultsStep ? (
                 <MagneticButton
@@ -381,7 +376,6 @@ function TransparencyFaqSection({ t }: StepProps) {
               {t("faq.subtitle")}
             </h2>
           </div>
-
           <div
             ref={contentRef}
             className="rounded-2xl border border-border bg-foreground/3 px-5 md:px-8"
@@ -409,7 +403,6 @@ function TransparencyFaqSection({ t }: StepProps) {
   );
 }
 
-// ── [IMPROVEMENT #3 & #4] Premium card styles with elevation, glow, and hierarchy ──
 const OPTION_BASE =
   "relative border transition-all duration-300 cursor-pointer";
 
@@ -431,7 +424,6 @@ function SelectionCheck({ visible }: { visible: boolean }) {
   );
 }
 
-// ── [IMPROVEMENT #3] Step header with title + contextual subtitle ──
 function StepHeader({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="text-center mb-10">
@@ -447,7 +439,6 @@ function StepHeader({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-// ── [IMPROVEMENT #7] Phone capture with trust signals ──
 function StepPhoneCapture({
   phone,
   name,
@@ -472,12 +463,9 @@ function StepPhoneCapture({
         title={t("phoneCapture.title")}
         hint={t("phoneCapture.subtitle")}
       />
-
-      {/* Trust signal — sits flush under header with no double gap */}
       <p className="text-primary/45 text-sm text-center mb-8">
         {t("phoneCapture.trustNote")}
       </p>
-
       <div className="space-y-4 mb-6">
         <div>
           <Label className="mb-2 block text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
@@ -668,9 +656,6 @@ function StepResults({
             {formatCurrency(estimate.minPrice)} -{" "}
             {formatCurrency(estimate.maxPrice)}
           </p>
-          <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/35 mt-2">
-            {t("results.vatExcluded")}
-          </p>
         </div>
       </div>
       <div className="mb-8">
@@ -767,7 +752,7 @@ function StepBrandIdentity({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-md text-center p-3",
+              "rounded-lg text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -809,7 +794,7 @@ function StepContentReadiness({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-md text-center p-3",
+              "rounded-lg text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -856,7 +841,7 @@ function StepDeadlineUrgency({
             onClick={() => onSelect(opt)}
             className={cn(
               OPTION_BASE,
-              "rounded-md text-center p-3",
+              "rounded-lg text-center p-3",
               selected === opt ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -968,7 +953,7 @@ function StepProjectType({
             onClick={() => onSelect(option.key)}
             className={cn(
               OPTION_BASE,
-              "rounded-md text-start flex p-3 gap-4",
+              "rounded-lg text-start flex p-3 gap-4",
               selected === option.key ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >
@@ -1017,7 +1002,7 @@ function StepComplexity({
             onClick={() => onSelect(option)}
             className={cn(
               OPTION_BASE,
-              "w-full rounded-md text-start flex p-3 gap-4",
+              "w-full rounded-lg text-start flex p-3 gap-4",
               selected === option ? OPTION_SELECTED : OPTION_DEFAULT,
             )}
           >

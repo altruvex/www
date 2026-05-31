@@ -1,5 +1,3 @@
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import { SITE_CONFIG } from "./metadata";
 import { localizeNumbers, normalizeNumeralsToEnglish } from "./number";
 
@@ -827,7 +825,11 @@ export function buildPDFHtml(p: PDFParams): string {
 </html>`;
 }
 
-export async function generateEstimatePdf(html: string, filename: string) {
+export async function generateEstimatePdf(html: string, filename: string): Promise<void> {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+    import("html2canvas"),
+    import("jspdf"),
+  ]);
   const iframe = document.createElement("iframe");
   iframe.style.cssText =
     "position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none;opacity:0;pointer-events:none;";

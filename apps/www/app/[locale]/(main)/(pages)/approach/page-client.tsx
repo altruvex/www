@@ -2,6 +2,10 @@
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
+import { ArrowLabel } from "@/components/directional-link";
+import { MagneticButton } from "@/components/magnetic-button";
+import { Link } from "@/i18n/navigation";
+import { getCommercialCta } from "@/lib/commercial";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -218,7 +222,7 @@ function BilingualSection() {
         >
           <div className="mb-8 flex items-center justify-between">
             <p className="font-mono text-sm leading-normal tracking-wider text-primary/60">
-              {t("bilingual.demo.title")}
+              {t("demo.title")}
             </p>
             <button
               type="button"
@@ -234,13 +238,13 @@ function BilingualSection() {
           >
             <h3 className="font-sans font-medium text-primary">
               {isRTL
-                ? t("bilingual.demo.ar_heading")
-                : t("bilingual.demo.en_heading")}
+                ? t("demo.ar_heading")
+                : t("demo.en_heading")}
             </h3>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/75">
               {isRTL
-                ? t("bilingual.demo.ar_body")
-                : t("bilingual.demo.en_body")}
+                ? t("demo.ar_body")
+                : t("demo.en_body")}
             </p>
           </div>
         </div>
@@ -294,6 +298,9 @@ function BoundariesSection() {
 
 function ClosingSection() {
   const t = useTranslations("approach.closing");
+  const tCTAs = useTranslations("commercial.ctas");
+  const contactCta = getCommercialCta("technicalCall");
+  const scopeCta = getCommercialCta("projectRange");
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
   const ctaRef = useSectionElement();
@@ -315,25 +322,22 @@ function ClosingSection() {
               {t("description")}
             </p>
           </div>
-          <div ref={ctaRef}>
+          <div ref={ctaRef} className="flex flex-col sm:flex-row flex-wrap gap-3">
+            <MagneticButton size="lg">
+              <Link href={contactCta.href}>
+                <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
+              </Link>
+            </MagneticButton>
+            <MagneticButton size="lg" variant="secondary">
+              <Link href={scopeCta.href}>
+                <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
+              </Link>
+            </MagneticButton>
             <a
               href="mailto:hello@altruvex.com"
-              className="inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider text-[clamp(1.0625rem,1.05vw,1.125rem)] text-primary transition-colors duration-300 hover:text-primary/70"
+              className="inline-flex items-center self-center gap-2 px-2 font-mono text-sm leading-normal tracking-wider text-muted-foreground transition-colors duration-300 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
             >
               {t("cta")}
-              <svg
-                className="h-4 w-4 rtl:-rotate-180"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
             </a>
           </div>
         </div>

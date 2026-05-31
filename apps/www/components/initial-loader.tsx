@@ -60,16 +60,21 @@ export const InitialLoader = memo(function InitialLoader() {
       setIsLoading(false);
     };
 
+    const isMobile =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches;
+
     if (reduced) {
       timeouts.push(window.setTimeout(() => setShowWordmark(true), 0));
-      timeouts.push(window.setTimeout(finish, 800));
+      timeouts.push(window.setTimeout(finish, isMobile ? 400 : 800));
       return () => timeouts.forEach((id) => window.clearTimeout(id));
     }
 
-    const exitDelay = BOOT_LINES[BOOT_LINES.length - 1].delay + 500;
-    const wordmarkMs = MOTION.duration.base * 1000;
+    const exitDelay =
+      (BOOT_LINES[BOOT_LINES.length - 1].delay + 500) * (isMobile ? 0.55 : 1);
+    const wordmarkMs = MOTION.duration.base * 1000 * (isMobile ? 0.7 : 1);
     const containerFadeMs = MOTION.duration.fast * 1000;
-    const holdAfterWordmark = 800; // slightly longer hold for the elegant fade
+    const holdAfterWordmark = isMobile ? 350 : 800;
 
     timeouts.push(window.setTimeout(() => setShowWordmark(true), exitDelay));
     timeouts.push(

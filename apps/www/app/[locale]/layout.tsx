@@ -18,7 +18,7 @@ const vazirmatn = Vazirmatn({
   weight: ["400", "600"],
   variable: "--font-vazirmatn",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 const inter = Inter({
@@ -34,7 +34,7 @@ const outfit = Outfit({
   weight: ["400", "600"],
   variable: "--font-outfit",
   display: "swap",
-  preload: false,
+  preload: true,
 });
 
 type Props = {

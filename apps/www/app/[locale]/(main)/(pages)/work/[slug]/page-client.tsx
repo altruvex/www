@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { getTestimonialsForCaseStudy } from "@/lib/testimonials";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -82,6 +83,7 @@ export default function WorkCaseStudyPageClient({
   const externalUrl = csData?.externalUrl;
 
   return (
+    <>
     <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="py-12 md:py-24">
@@ -246,5 +248,7 @@ export default function WorkCaseStudyPageClient({
         </div>
       </Container>
     </section>
+    <SectionEndCta variant="work" />
+    </>
   );
 }

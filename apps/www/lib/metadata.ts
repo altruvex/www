@@ -493,6 +493,33 @@ export const PAGE_METADATA = {
     },
     path: "/services/maintenance",
   },
+  serviceEcommerce: {
+    ar: {
+      breadcrumb: "التجارة الإلكترونية",
+      description:
+        "ابنِ متجراً إلكترونياً مخصصاً على Next.js مع كتالوج عالي الدقة ومخزون متزامن وسداد ثنائي اللغة—مصمم للتجزئة الفاخرة في مصر والمنطقة.",
+      keywords: [
+        "تطوير متجر إلكتروني مخصص",
+        "وكالة تجارة إلكترونية القاهرة",
+        "متجر Next.js ثنائي اللغة",
+        "بناء متجر إضاءة إلكتروني",
+      ],
+      title: "تطوير متاجر إلكترونية مخصصة | Next.js",
+    },
+    en: {
+      breadcrumb: "E-Commerce",
+      description:
+        "Build a custom Next.js e-commerce store with high-resolution catalogs, synced inventory, bilingual checkout, and production-grade performance for Cairo and MENA retail brands.",
+      keywords: [
+        "custom ecommerce development cairo",
+        "next.js ecommerce agency",
+        "bilingual online store development",
+        "custom shopify alternative nextjs",
+      ],
+      title: "Custom E-Commerce Development | Next.js Stores",
+    },
+    path: "/services/ecommerce",
+  },
   services: {
     ar: {
       breadcrumb: "الخدمات",

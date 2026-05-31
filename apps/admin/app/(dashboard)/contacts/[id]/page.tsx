@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -9,10 +9,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
-  Mail,
   MessageSquare,
   Tag,
   User,
@@ -22,9 +20,8 @@ import {
   Eye,
   Phone,
 } from "lucide-react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type SubmissionStatus =
   | "NEW"
@@ -98,13 +95,7 @@ export default function ContactDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      fetchContact();
-    }
-  }, [id]);
-
-  const fetchContact = async () => {
+  const fetchContact = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -122,7 +113,13 @@ export default function ContactDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchContact();
+    }
+  }, [id, fetchContact]);
 
   const updateContact = async (updates: {
     status?: SubmissionStatus;

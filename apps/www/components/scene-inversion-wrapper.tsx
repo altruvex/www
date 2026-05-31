@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { SectionSkeleton } from "@/components/section-skeleton";
@@ -26,108 +27,78 @@ const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='h
 
 export function SceneInversionWrapper() {
   const wrapperRef = useRef<HTMLDivElement>(null);
+  
   const mounted = useSyncExternalStore(
     () => () => undefined,
     () => true,
     () => false,
   );
+  
   const [entered, setEntered] = useState(false);
+  
   const isDark = useSyncExternalStore(
     (onStoreChange) => {
-      if (typeof document === "undefined") {
-        return () => undefined;
-      }
-
+      if (typeof document === "undefined") return () => undefined;
       const observer = new MutationObserver(() => onStoreChange());
       observer.observe(document.documentElement, {
         attributes: true,
         attributeFilter: ["class"],
       });
-
       return () => observer.disconnect();
     },
-    () =>
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("dark"),
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
     () => false,
   );
 
   useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el || !mounted) return;
-
-    let cancelled = false;
-    let cleanup: (() => void) | null = null;
-
-    void (async () => {
-      const { gsap, ScrollTrigger } = await import("@/lib/gsap");
-
-      if (cancelled || !wrapperRef.current) return;
-
-      const ctx = gsap.context(() => {
+    if (!wrapperRef.current || !mounted) return;
+    let ctx: any;
+    void import("@/lib/gsap").then(({ gsap, ScrollTrigger }) => {
+      if (!wrapperRef.current) return;
+      
+      ctx = gsap.context(() => {
         ScrollTrigger.create({
           trigger: wrapperRef.current,
-          start: "top 65%",
+          start: "top 60%",
           once: true,
           onEnter: () => setEntered(true),
         });
       });
-
-      cleanup = () => ctx.revert();
-    })();
+    });
 
     return () => {
-      cancelled = true;
-      cleanup?.();
+      if (ctx) ctx.revert();
     };
   }, [mounted]);
-
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el || !mounted) return;
-
-    if (!entered) {
-      el.style.backgroundColor = "transparent";
-      return;
-    }
-
-    const raw = getComputedStyle(document.documentElement)
-      .getPropertyValue("--inverted-bg")
-      .trim();
-    el.style.backgroundColor = raw ? `hsl(${raw})` : "transparent";
-  }, [entered, isDark, mounted]);
-
   return (
     <div
       id="services-wrapper"
       ref={wrapperRef}
-      className="ps-section relative overflow-hidden transition-colors duration-420 ease-in-out rtl:text-right"
+      className="ps-section relative overflow-hidden transition-colors duration-800 ease-[cubic-bezier(0.16,1,0.3,1)] bg-transparent data-[scene=inverted]:bg-inverted-bg rtl:text-right"
       data-scene={entered ? "inverted" : undefined}
     >
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none z-0"
+        className="absolute inset-0 pointer-events-none z-0 mix-blend-overlay transition-opacity duration-800"
         style={{
           backgroundImage: NOISE_SVG,
-          opacity: isDark ? 0.018 : 0.012,
+          opacity: isDark ? 0.025 : 0.015,
         }}
       />
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none z-0"
+        className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-800"
         style={{
           backgroundImage: `radial-gradient(circle, ${
-            isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.04)"
+            isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)"
           } 1px, transparent 1px)`,
-          backgroundSize: "40px 40px",
+          backgroundSize: "48px 48px", 
         }}
       />
-
       <div className="relative z-1">
         <Suspense fallback={<SectionSkeleton />}>
           <ServicesSection />
         </Suspense>
-
         <Suspense fallback={<SectionSkeleton />}>
           <ProcessSection />
         </Suspense>

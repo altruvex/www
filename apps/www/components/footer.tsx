@@ -1,7 +1,9 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { SITE_CONFIG } from "@/lib/metadata";
 import { localizeNumbers } from "@/lib/number";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
 import { AltruvexLogo } from "./altruvex-logo";
@@ -25,6 +27,7 @@ export const Footer = memo(function Footer() {
       { href: "/services/development", label: t("development") },
       { href: "/services/consulting", label: t("consulting") },
       { href: "/services/maintenance", label: t("maintenance") },
+      { href: "/services/ecommerce", label: t("ecommerce") },
     ],
     [t],
   );
@@ -63,6 +66,8 @@ export const Footer = memo(function Footer() {
     { title: t("companyTitle"), links: companyLinks },
     { title: t("resourcesTitle"), links: resourceLinks },
   ];
+
+  const whatsappUrl = getWhatsAppUrl();
 
   return (
     <footer
@@ -127,10 +132,26 @@ export const Footer = memo(function Footer() {
               </span>
             </h2>
           </div>
-          <div className="mb-10 md:mb-14 max-w-xl">
+          <div className="mb-10 md:mb-14 max-w-xl space-y-8">
             <p className="text-[13px] sm:text-[14px] md:text-[15px] text-primary/75 leading-relaxed">
               {t("description")}
             </p>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+              <a
+                href={`mailto:${SITE_CONFIG.email}`}
+                className="text-primary/70 hover:text-primary underline underline-offset-4 decoration-border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                {t("emailLabel")}: {SITE_CONFIG.email}
+              </a>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary/70 hover:text-primary underline underline-offset-4 decoration-border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                {t("whatsappLabel")}: {SITE_CONFIG.phone}
+              </a>
+            </div>
           </div>
         </div>
         <div

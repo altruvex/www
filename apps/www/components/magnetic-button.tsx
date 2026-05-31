@@ -248,7 +248,7 @@ export const MagneticButton = forwardRef<
         className={[
           "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
           "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
-          "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-foreground/50",
+          "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
           variants[variant],
           sizes[size],
           className,

@@ -1,17 +1,16 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
-
 import { Container } from "@/components/container";
-import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { PipelineSection } from "@/components/sections/pipeline-section";
 import { TechDNASection } from "@/components/tech-dna-section";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
+import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 export default function DevelopmentPage() {
   return (
@@ -26,7 +25,6 @@ export default function DevelopmentPage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.development");
-  const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
   const tHero = useTranslations("hero");
   const projectRangeCta = getCommercialCta("projectRange");
@@ -130,7 +128,7 @@ function HeroSection() {
         >
           {tHero("scrollHint")}
         </p>
-        <div className="relative flex h-12 w-[1px] justify-center overflow-hidden bg-foreground/10" aria-hidden>
+        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
           <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
         </div>
       </HeroReveal>
@@ -138,50 +136,62 @@ function HeroSection() {
   );
 }
 
-function CtaSection() {
+export function CtaSection() {
   const t = useTranslations("serviceDetails.development");
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
   const cardRef = useSectionElement<HTMLDivElement>();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
+    <section className="pt-(--section-y-top) pb-(--section-y-bottom bg-gray-50 dark:bg-background transition-colors duration-300">
       <Container>
         <div
           ref={cardRef}
-          className="border border-foreground/8 rounded-2xl overflow-hidden"
+          className="border border-black/5 dark:border-white/10 rounded-2xl overflow-hidden bg-gray-50 dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none transition-all duration-300"
         >
-          <div className="flex items-center gap-3 px-5 py-3.5 border-b border-foreground/8 bg-foreground/2">
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-destructive/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/70" />
-              <div className="w-2.5 h-2.5 rounded-full bg-green-500/70" />
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-black/5 dark:border-white/10 bg-black/2 dark:bg-white/2">
+            <div className="flex gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#ff5c5f] border border-black/10 shadow-sm" />
+              <div className="w-3 h-3 rounded-full bg-[#fac800] border border-black/10 shadow-sm" />
+              <div className="w-3 h-3 rounded-full bg-[#34c759] border border-black/10 shadow-sm" />
             </div>
-            <span className={cn(monoCaps, "text-muted-foreground/70 mx-auto")}>
-              new-project - bash
+            <span
+              className={cn(
+                monoCaps,
+                "text-muted-foreground/60 mx-auto text-[11px] tracking-widest font-semibold"
+              )}
+            >
+              new-project — bash
             </span>
+            <div className="w-[42px]" />
           </div>
           <div className="grid md:grid-cols-2">
-            <div className="p-8 md:p-10 border-b border-foreground/8 md:border-b-0 ltr:md:border-r rtl:md:border-l font-mono text-sm leading-normal tracking-wider space-y-3">
-              <div className="flex gap-3 text-primary/70">
-                <span className="select-none">~</span>
-                <span className="text-primary/70">$</span>
-                <span className="text-primary/70">npx start-project</span>
+            <div className="p-8 md:p-10 border-b border-black/5 dark:border-white/10 md:border-b-0 md:border-e font-mono text-[13px] leading-relaxed tracking-wide space-y-5 bg-black/1 dark:bg-transparent">
+              <div className="flex gap-3 text-muted-foreground">
+                <span className="select-none opacity-50">~</span>
+                <span className="text-brand opacity-80">$</span>
+                <span className="text-foreground font-medium">npx start-project</span>
               </div>
-              <div className="pl-6 space-y-1.5 text-primary/30">
-                <div>✓ {t("cta.terminal.step1")}</div>
-                <div>✓ {t("cta.terminal.step2")}</div>
-                <div>✓ {t("cta.terminal.step3")}</div>
+              <div className="pl-6 space-y-2 text-muted-foreground/70">
+                <div className="flex items-center gap-2">
+                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step1")}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step2")}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step3")}
+                </div>
               </div>
-              <div className="flex gap-3 text-primary/70">
-                <span className="select-none">~</span>
-                <span className="text-primary/70">$</span>
-                <span className="text-primary/70">contact --team</span>
+              <div className="flex gap-3 text-muted-foreground">
+                <span className="select-none opacity-50">~</span>
+                <span className="text-brand opacity-80">$</span>
+                <span className="text-foreground font-medium">contact --team</span>
               </div>
-              <div className="flex gap-2 text-primary/55">
-                <span>→</span>
+              <div className="flex gap-2 text-foreground/80 font-medium items-center">
+                <span className="text-brand opacity-80">→</span>
                 <span>{t("cta.terminal.ready")}</span>
-                <span className="inline-block w-2 h-4 bg-primary/35 animate-pulse" />
+                <span className="inline-block w-2 h-4 bg-foreground/40 animate-[pulse_1s_step-end_infinite] -mb-0.5" />
               </div>
             </div>
             <div className="p-8 md:p-10 flex flex-col justify-between gap-8">
@@ -189,21 +199,20 @@ function CtaSection() {
                 <p
                   className={cn(
                     monoCaps,
-                    "text-muted-foreground/70 mb-5 block",
+                    "text-muted-foreground/60 mb-4 block text-xs tracking-[0.2em]"
                   )}
                 >
                   {t("cta.eyebrow")}
                 </p>
                 <h2
-                  className="font-sans font-normal text-primary leading-[1.05] mb-4"
+                  className="font-sans font-light text-foreground leading-[1.05] mb-5 tracking-tight"
                   style={{
                     fontSize: "clamp(22px, 3.5vw, 38px)",
-                    letterSpacing: "-0.02em",
                   }}
                 >
                   {t("cta.title")}
                 </h2>
-                <p className="text-base text-primary/60 leading-relaxed max-w-[40ch]">
+                <p className="text-[15px] sm:text-base text-muted-foreground leading-relaxed max-w-[40ch] font-sans">
                   {t("cta.description")}
                 </p>
               </div>
@@ -211,33 +220,39 @@ function CtaSection() {
                 <MagneticButton
                   size="lg"
                   variant="primary"
-                  className="group w-full justify-center"
+                  className="group w-full"
                 >
-                  <Link href={projectRangeCta.href}>
-                    <span className="flex items-center gap-2">
-                      {tCTAs("projectRange")}
-                      <svg
-                        className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
-                    </span>
+                  <Link
+                    href={projectRangeCta.href}
+                    className="flex w-full h-full items-center justify-center gap-2"
+                  >
+                    <span>{tCTAs("projectRange")}</span>
+                    <svg
+                      className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                      />
+                    </svg>
                   </Link>
                 </MagneticButton>
                 <MagneticButton
                   size="lg"
                   variant="secondary"
-                  className="w-full justify-center"
+                  className="w-full"
                 >
-                  <Link href="/services">{t("cta.back")}</Link>
+                  <Link
+                    href="/services"
+                    className="flex w-full h-full items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    {t("cta.back")}
+                  </Link>
                 </MagneticButton>
               </div>
             </div>

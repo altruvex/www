@@ -20,6 +20,7 @@ type BreadcrumbItem = {
 type ServiceSchemaKey =
   | "serviceConsulting"
   | "serviceDevelopment"
+  | "serviceEcommerce"
   | "serviceInterfaceDesign"
   | "serviceMaintenance";
 
@@ -98,6 +99,20 @@ const SERVICE_DEFINITIONS: Record<
     serviceType: {
       ar: "صيانة الأنظمة المخصصة",
       en: "Website maintenance for custom systems",
+    },
+  },
+  serviceEcommerce: {
+    audience: {
+      ar: "للعلامات التي تبيع منتجات فاخرة وتحتاج متجراً مخصصاً ثنائي اللغة بمخزون موثوق.",
+      en: "For retail brands that need a bilingual custom store with trustworthy inventory and checkout.",
+    },
+    name: {
+      ar: "هندسة التجارة الإلكترونية المخصصة",
+      en: "Custom E-Commerce Engineering",
+    },
+    serviceType: {
+      ar: "تطوير متاجر إلكترونية مخصصة",
+      en: "Custom ecommerce development",
     },
   },
 };
@@ -368,6 +383,7 @@ function buildStaticBreadcrumbs(
   if (
     pageKey === "serviceConsulting" ||
     pageKey === "serviceDevelopment" ||
+    pageKey === "serviceEcommerce" ||
     pageKey === "serviceInterfaceDesign" ||
     pageKey === "serviceMaintenance"
   ) {
@@ -432,12 +448,14 @@ export function buildPageSchemas(
       SCHEMAS.service(loc, "serviceConsulting"),
       SCHEMAS.service(loc, "serviceInterfaceDesign"),
       SCHEMAS.service(loc, "serviceMaintenance"),
+      SCHEMAS.service(loc, "serviceEcommerce"),
     );
   }
 
   if (
     pageKey === "serviceConsulting" ||
     pageKey === "serviceDevelopment" ||
+    pageKey === "serviceEcommerce" ||
     pageKey === "serviceInterfaceDesign" ||
     pageKey === "serviceMaintenance"
   ) {

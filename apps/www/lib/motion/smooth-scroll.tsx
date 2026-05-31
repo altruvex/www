@@ -28,8 +28,11 @@ export function SmoothScrollProvider({
 
         gsapRef = { gsap, ScrollTrigger };
         const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+        const prefersReducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
 
-        if (!isTouch) {
+        if (!isTouch && !prefersReducedMotion) {
           const lenis = new Lenis({
             duration: MOTION.lenis.duration,
             easing: MOTION.lenis.easing,

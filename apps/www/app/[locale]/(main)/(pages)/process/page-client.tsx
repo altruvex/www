@@ -1,9 +1,9 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import { useLocale, useTranslations } from "next-intl";
 

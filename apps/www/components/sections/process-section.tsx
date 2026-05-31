@@ -1,7 +1,6 @@
 "use client";
-import { useSectionEyebrow, useSectionDescription, useSectionTitle } from "@/lib/motion";
-
 import { monoCaps } from "@/lib/mono-caps";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn, splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useState } from "react";

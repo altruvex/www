@@ -1,5 +1,5 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import {
@@ -8,11 +8,12 @@ import {
 } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Link } from "@/i18n/navigation";
 import { FOUNDER_LINK, getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 export type RouteCard = {
@@ -33,6 +34,7 @@ export default memo(function AboutPageClient({ routeCards }: PageClientProps) {
       <PrinciplesSection />
       <OperatingModelSection />
       <PathwaysSection routeCards={routeCards} />
+      <SectionEndCta variant="contact" />
     </div>
   );
 });

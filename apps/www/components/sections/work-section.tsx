@@ -1,14 +1,16 @@
 "use client";
-import { useSectionEyebrow, useSectionDescription, useSectionCardGrid, useSectionTitle, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
+
 import { Link } from "@/i18n/navigation";
+import { WorkItem } from "@/components/work-item";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,
 } from "@/lib/commercial";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
@@ -16,7 +18,6 @@ import { memo } from "react";
 export const WorkSection = memo(function WorkSection() {
   const tW = useTranslations("work");
   const tf = useTranslations("commercial.flagship");
-  const tCS = useTranslations("caseStudies");
   const tCTAs = useTranslations("commercial.ctas");
   const tCommon = useTranslations("common");
   const stepLabel = tCommon("step");
@@ -52,16 +53,16 @@ export const WorkSection = memo(function WorkSection() {
             {tW("description")}
           </p>
         </div>
-
-        <div
-          ref={gridRef}
-          className="grid gap-0 border border-border md:grid-cols-2"
-        >
-          {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug) => (
-            <ClientWorkCard key={slug} slug={slug} tCS={tCS} tW={tW} />
+        <div ref={gridRef}>
+          <div className="h-px w-full bg-foreground/8" />
+          {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
+            <WorkItem
+              key={slug}
+              slug={slug}
+              index={index}
+            />
           ))}
         </div>
-
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
           <div className="space-y-3">
             <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
@@ -84,13 +85,11 @@ export const WorkSection = memo(function WorkSection() {
             </MagneticButton>
           </div>
         </div>
-
         <FlagshipMetaBlock
           metaRef={metaRef}
           tf={tf}
           stepLabel={stepLabel}
         />
-
         <div className="flex items-center gap-4 mt-6">
           <div className="flex-1 h-px bg-border" />
           <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
@@ -141,57 +140,6 @@ function WorkSectionHeader({
   );
 }
 
-function ClientWorkCard({
-  slug,
-  tCS,
-  tW,
-}: {
-  slug: string;
-  tCS: ReturnType<typeof useTranslations<"caseStudies">>;
-  tW: ReturnType<typeof useTranslations<"work">>;
-}) {
-  const name = tCS(`${slug}.name`);
-  const client = tCS(`${slug}.client`);
-  const year = tCS(`${slug}.year`);
-  const summary = tCS(`${slug}.summary`);
-  const metrics = tCS.raw(`${slug}.metrics`) as Array<{
-    label: string;
-    value: string;
-  }>;
-
-  return (
-    <Link
-      href={`/work/${slug}`}
-      aria-label={tW("labels.readCaseStudyWith", { name })}
-      className="work-card block border-b border-border md:border-b-0 md:not-last:border-e px-6 py-8 group hover:bg-surface transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring rounded-lg"
-    >
-      <div className="space-y-3">
-        <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4">
-          {client} · {year}
-        </p>
-        <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-medium text-foreground mb-3">
-          {name}
-        </h3>
-        <p className="text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-muted-foreground mb-5">
-          {summary}
-        </p>
-        <div className="flex flex-wrap gap-2 mb-5">
-          {metrics.slice(0, 2).map((metric) => (
-            <span
-              key={metric.label}
-              className="rounded-full border border-border px-3 py-1 font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground"
-            >
-              {metric.label} · {metric.value}
-            </span>
-          ))}
-        </div>
-        <ArrowLabel className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground transition-colors group-hover:text-muted-foreground">
-          {tW("labels.viewCaseStudy")}
-        </ArrowLabel>
-      </div>
-    </Link>
-  );
-}
 
 function FlagshipMetaBlock({
   metaRef,

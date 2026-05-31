@@ -407,6 +407,7 @@ export default function ContactPage() {
                       size="lg"
                       className="w-full text-base"
                       disabled={isSubmitting}
+                      aria-busy={isSubmitting}
                     >
                       {isSubmitting ? t("form.submitting") : t("form.submit")}
                     </MagneticButton>

@@ -5,15 +5,12 @@ import { Container } from "@/components/container";
 import { ExternalDirectionalLink } from "@/components/directional-link";
 import { FOUNDER_LINK } from "@/lib/commercial";
 import { splitHeadline } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 
 export const TrustSection = memo(function TrustSection() {
-  const locale = useLocale();
   const t = useTranslations("commercial.trust");
   const tW = useTranslations("work");
-  const tCommon = useTranslations("common");
-  const stepLabel = tCommon("step");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
@@ -63,7 +60,7 @@ export const TrustSection = memo(function TrustSection() {
           ref={gridRef}
           className="grid gap-0 border-t border-l border-r border-border md:grid-cols-3"
         >
-          {points.map((point, i) => (
+          {points.map((point) => (
             <div
               key={point.title}
               className="trust-card border-r border-b border-border px-6 py-8 group hover:bg-surface transition-colors duration-300"

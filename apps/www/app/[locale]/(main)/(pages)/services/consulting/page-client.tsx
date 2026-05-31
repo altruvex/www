@@ -1,16 +1,16 @@
-"use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement } from "@/lib/motion";
+"use client"
 
 import { ConsultingBriefSection } from "@/components/consulting-brief-section";
-import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
+import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
+import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 
 export default function ConsultingPage() {
   return (
@@ -27,7 +27,6 @@ export default function ConsultingPage() {
 
 function HeroSection() {
   const t = useTranslations("serviceDetails.consulting");
-  const tCommon = useTranslations("common");
   const tCTAs = useTranslations("commercial.ctas");
   const tHero = useTranslations("hero");
   const auditCta = getCommercialCta("technicalAudit");
@@ -165,7 +164,7 @@ function AuditOfferSection() {
         <div
           ref={panelRef}
           data-scene="inverted"
-          className="overflow-hidden rounded-lg border border-s-border bg-inverted-bg"
+          className="overflow-hidden rounded-2xl border border-s-border bg-inverted-bg"
         >
           <div className="h-px w-full bg-brand/60" />
           <div className="grid gap-10 p-6 md:grid-cols-[minmax(0,1.1fr)_minmax(280px,360px)] md:p-10">
@@ -272,7 +271,6 @@ function AuditOfferSection() {
 function CtaSection() {
   const t = useTranslations("serviceDetails.consulting");
   const sectionRef = useSectionDescription<HTMLElement>();
-  const lineRef = useSectionEyebrow<HTMLDivElement>();
   const headlineRef = useSectionTitle<HTMLHeadingElement>();
   const subRef = useSectionDescription<HTMLDivElement>();
   const ctaRef = useSectionElement<HTMLDivElement>();

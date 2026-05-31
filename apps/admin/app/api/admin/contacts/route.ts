@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@repo/database";
+import { prisma, Prisma, SubmissionStatus, Priority } from "@repo/database";
 import { isAdminAuthed } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "50");
 
-    const where: any = {};
+    const where: Prisma.ContactSubmissionWhereInput = {};
 
     if (status && status !== "all") {
-      where.status = status;
+      where.status = status as SubmissionStatus;
     }
 
     if (priority && priority !== "all") {
-      where.priority = priority;
+      where.priority = priority as Priority;
     }
 
     if (search) {
@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const validatedData = updateContactSchema.parse(body);
 
-    const updateData: any = {};
+    const updateData: Prisma.ContactSubmissionUpdateInput = {};
 
     if (validatedData.status) {
       updateData.status = validatedData.status;
@@ -146,7 +146,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (validatedData.assignedToId !== undefined) {
-      updateData.assignedToId = validatedData.assignedToId;
+      if (validatedData.assignedToId === null) {
+        updateData.assignedTo = { disconnect: true };
+      } else {
+        updateData.assignedTo = { connect: { id: validatedData.assignedToId } };
+      }
     }
 
     const updated = await prisma.contactSubmission.update({

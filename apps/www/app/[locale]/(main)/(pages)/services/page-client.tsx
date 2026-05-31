@@ -1,6 +1,4 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import { ArrowIcon } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -9,20 +7,20 @@ import { CtaSection } from "@/components/sections/cta-section";
 import { Link } from "@/i18n/navigation";
 import { HOMEPAGE_OFFERS, getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
 
 const designTokens = {
   cardBase:
-    "group relative flex flex-col justify-between overflow-hidden rounded-lg border border-border bg-surface/40 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)",
+    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface/40 transition-all duration-700 cubic-bezier(0.16, 1, 0.3, 1)",
   cardHover: "hover:border-border-mid hover:shadow-xl hover:-translate-y-1.5",
   capsLabel:
     "text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground",
 };
 
 export default memo(function ServicesPage() {
-  const locale = useLocale();
   const t = useTranslations("servicesPage");
   const tc = useTranslations("commercial.offers");
   const tCTAs = useTranslations("commercial.ctas");
@@ -40,6 +38,7 @@ export default memo(function ServicesPage() {
       { href: "/services/development", title: t("capabilities.development") },
       { href: "/services/consulting", title: t("capabilities.consulting") },
       { href: "/services/maintenance", title: t("capabilities.maintenance") },
+      { href: "/services/ecommerce", title: t("capabilities.ecommerce") },
     ],
     [t],
   );
@@ -135,10 +134,10 @@ export default memo(function ServicesPage() {
           </div>
           <div className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-8">
             <div className="max-w-xl">
-              <h3 className="text-2xl font-medium tracking-tight text-foreground mb-3">
+              <h3 className="text-3xl md:text-4xl  font-normal leading-snug tracking-tight text-foreground mb-3">
                 {t("comprehensiveSolutions.title")}
               </h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
+              <p className="text-muted-foreground text-base leading-relaxed font-light">
                 {t("comprehensiveSolutions.description")}
               </p>
             </div>
@@ -182,13 +181,6 @@ export default memo(function ServicesPage() {
   );
 });
 
-interface ServiceRowProps {
-  index: number;
-  href: string;
-  title: string;
-  description: string;
-  detailLabel: string;
-}
 
 interface OfferCardProps {
   offer: (typeof HOMEPAGE_OFFERS)[number];
@@ -207,6 +199,8 @@ const OfferCard = memo(function OfferCard({
   t,
   tc,
 }: OfferCardProps) {
+  const detailLabel = `${t("detailLabel")}: ${tc(`${offer.id}.title`)}`;
+
   return (
     <div
       className={cn(
@@ -229,8 +223,7 @@ const OfferCard = memo(function OfferCard({
       >
         {String(index + 1).padStart(2, "0")}
       </span>
-
-      <div className="relative z-10 flex flex-col gap-8 h-full">
+      <div className="relative z-2 flex flex-col gap-8 h-full pointer-events-none">
         <div className="flex items-center justify-between border-b border-border pb-6">
           <span className={designTokens.capsLabel}>
             STEP {String(index + 1).padStart(2, "0")}
@@ -244,7 +237,6 @@ const OfferCard = memo(function OfferCard({
             {t("detailLabel")}
           </span>
         </div>
-
         <div className="flex-1">
           <h2 className="text-3xl font-medium tracking-tight text-foreground mb-4">
             {tc(`${offer.id}.title`)}
@@ -263,7 +255,7 @@ const OfferCard = memo(function OfferCard({
                 <span
                   key={tag}
                   className={cn(
-                    "rounded-md border border-border bg-surface px-4 py-1.5 text-[10px] text-muted-foreground",
+                    "rounded-2xl border border-border bg-surface px-4 py-1.5 text-[10px] text-muted-foreground",
                     "group-hover:border-border-mid group-hover:text-foreground transition-colors",
                     monoCaps,
                   )}
@@ -274,7 +266,6 @@ const OfferCard = memo(function OfferCard({
             </div>
           )}
         </div>
-
         <div className="mt-6 pt-8 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-8">
           <div className="flex-1 max-w-lg">
             <p className={cn(designTokens.capsLabel, "mb-2")}>
@@ -284,26 +275,31 @@ const OfferCard = memo(function OfferCard({
               &ldquo;{tc(`${offer.id}.outcome`)}&rdquo;
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="relative z-3 flex items-center gap-4 pointer-events-auto">
             {featured && (
               <MagneticButton
                 asChild
                 size="lg"
                 variant="primary"
-                className="relative z-10 rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold transition-all"
+                className="rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold transition-all"
               >
                 <Link href={cta.href}>{cta.label}</Link>
               </MagneticButton>
             )}
-            <Link
-              href={offer.detailHref}
-              className="relative z-10 size-12 flex items-center justify-center rounded-full bg-background border border-border transition-all duration-500 group-hover:bg-foreground group-hover:text-background group-hover:border-foreground after:absolute after:inset-0"
+            <span
+              aria-hidden
+              className="size-12 flex items-center justify-center rounded-full bg-background border border-border transition-all duration-500 group-hover:bg-foreground group-hover:text-background group-hover:border-foreground"
             >
               <ArrowIcon className="size-5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
+            </span>
           </div>
         </div>
       </div>
+      <Link
+        href={offer.detailHref}
+        aria-label={detailLabel}
+        className="absolute inset-0 z-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background after:absolute after:inset-0"
+      />
     </div>
   );
 });

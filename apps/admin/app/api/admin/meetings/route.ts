@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { prisma, Prisma, MeetingStatus, MeetingType } from "@repo/database";
 import { z } from "zod";
 import { isAdminAuthed } from "@/lib/admin-auth";
 
@@ -20,24 +20,25 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const pageSize = parseInt(searchParams.get("pageSize") || "50");
 
-    const where: any = {};
+    const where: Prisma.MeetingWhereInput = {};
 
     if (status && status !== "all") {
-      where.status = status;
+      where.status = status as MeetingStatus;
     }
 
     if (type && type !== "all") {
-      where.type = type;
+      where.type = type as MeetingType;
     }
 
     if (dateFrom || dateTo) {
-      where.scheduledDate = {};
+      const scheduledDateFilter: Prisma.DateTimeFilter = {};
       if (dateFrom) {
-        where.scheduledDate.gte = new Date(dateFrom);
+        scheduledDateFilter.gte = new Date(dateFrom);
       }
       if (dateTo) {
-        where.scheduledDate.lte = new Date(dateTo);
+        scheduledDateFilter.lte = new Date(dateTo);
       }
+      where.scheduledDate = scheduledDateFilter;
     }
 
     const [meetings, total] = await Promise.all([
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
         },
         skip: (page - 1) * pageSize,
         take: pageSize,
-      } as any),
+      }),
       prisma.meeting.count({ where }),
     ]);
 
@@ -126,7 +127,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const validatedData = updateMeetingSchema.parse(body);
 
-    const updateData: any = {};
+    const updateData: Prisma.MeetingUpdateInput = {};
 
     if (validatedData.status) {
       updateData.status = validatedData.status;
@@ -153,7 +154,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (validatedData.assignedToId !== undefined) {
-      updateData.assignedToId = validatedData.assignedToId;
+      if (validatedData.assignedToId === null) {
+        updateData.assignedTo = { disconnect: true };
+      } else {
+        updateData.assignedTo = { connect: { id: validatedData.assignedToId } };
+      }
     }
 
     if (validatedData.meetingUrl !== undefined) {
@@ -183,7 +188,7 @@ export async function PATCH(request: NextRequest) {
           },
         },
       },
-    } as any);
+    });
 
     return NextResponse.json({
       success: true,

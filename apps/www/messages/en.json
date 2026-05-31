@@ -13,7 +13,7 @@
             "linkedInLabel": "LinkedIn",
             "linkedInUrl": "https://www.linkedin.com/in/ali-abdelhadi-65094b283/",
             "name": "Ali Abdelhadi",
-            "philosophy1": "I am building Altruvex to become the reference standard in its category - a company recognized for engineering precision, structural clarity, and execution that holds under scrutiny.",
+            "philosophy1": "Altruvex is being built to become the reference standard in its category - a company recognized for engineering precision, structural clarity, and execution that holds under scrutiny.",
             "philosophy2": "The goal is not to appear premium. It is to build work with sufficient quality and positioning that others can copy the surface - but not the standard behind it.",
             "role": "Founder & Lead Engineer"
         },
@@ -21,7 +21,7 @@
         "stat1": {
             "label": "Performance Baseline",
             "sublabel": "Minimum Lighthouse score for production",
-            "value": "98/100"
+            "value": "95+"
         },
         "stat2": {
             "label": "Recycled Code",
@@ -193,16 +193,16 @@
             "industry": "Premium home lighting",
             "metrics": [
                 {
-                    "label": "Delivery",
-                    "value": "Live site"
+                    "label": "Performance",
+                    "value": "95+ Lighthouse"
                 },
                 {
-                    "label": "Stack",
-                    "value": "Next.js"
+                    "label": "Catalog",
+                    "value": "High-res zoom"
                 },
                 {
-                    "label": "Scope",
-                    "value": "E-commerce"
+                    "label": "Inventory",
+                    "value": "Synced live"
                 }
             ],
             "name": "Premium lighting e-commerce",
@@ -224,16 +224,16 @@
             "industry": "Lighting & E-Commerce",
             "metrics": [
                 {
-                    "label": "Delivery",
-                    "value": "Live site"
+                    "label": "Launch",
+                    "value": "Production live"
                 },
                 {
                     "label": "Languages",
                     "value": "EN / AR"
                 },
                 {
-                    "label": "Scope",
-                    "value": "First store"
+                    "label": "Commerce",
+                    "value": "Full checkout"
                 }
             ],
             "name": "NewLight Lighting Store - Venturing into E-Commerce",
@@ -368,6 +368,14 @@
         }
     },
     "common": {
+        "endCta": {
+            "body": "Share your scope and we will respond within one business day with a clear next step—no pitch deck.",
+            "eyebrow": "Next step",
+            "footnote": "Replies within 24 hours on business days.",
+            "title": "Ready to scope your build?"
+        },
+        "whatsappFabAria": "Open WhatsApp chat with Altruvex",
+        "whatsappFabLabel": "WhatsApp",
         "scroll": "Scroll",
         "step": "Step",
         "stepOf": "Step {current} of {total}"
@@ -418,7 +426,9 @@
             "serviceMaintenance": "Ongoing Support",
             "servicePlaceholder": "Select a service",
             "serviceWebDesign": "Website Systems",
-            "submit": "Send Message"
+            "submit": "Send Message",
+            "submitting": "Sending...",
+            "success": "Received. We will reply within 24 hours."
         },
         "heroDescription": "A focused briefing is enough to surface the real constraint, establish a realistic scope, and determine if a deeper technical partnership is warranted.",
         "heroTitle": "Bring the real problem - not the polished brief.",
@@ -428,7 +438,7 @@
         "locationLabel": "Base",
         "phoneLabel": "Phone",
         "phoneValue": "+20 102 312 5493",
-        "responseTime": "Usually within 24 hours.",
+        "responseTime": "Within 24 hours on business days. For a faster reply, message us on WhatsApp.",
         "scheduleCall": "Book a technical call",
         "sideNotes": [
             {
@@ -436,7 +446,7 @@
                 "title": "Best for"
             },
             {
-                "description": "Usually within 24 hours.",
+                "description": "Within 24 hours on business days. WhatsApp is fastest for urgent questions.",
                 "title": "Response"
             }
         ],
@@ -499,7 +509,7 @@
         "mockupPromoCta": "CLAIM NOW",
         "mockupPromoHeadline": "LIMITED TIME OFFER",
         "mockupPromoSub": "Get 30% off your first project!",
-        "mockupSvc1Desc": "Beautiful responsive websites designed to convert visitors.",
+        "mockupSvc1Desc": "Production-grade sites and storefronts built to convert—fast loads, clear journeys, bilingual when you need it.",
         "mockupSvc1Title": "Interface Design",
         "mockupSvc2Desc": "Full-stack solutions built with the latest technologies.",
         "mockupSvc2Title": "Development",
@@ -544,7 +554,11 @@
         "contactLabel": "Contact",
         "copyright": "© {year} Altruvex. All rights reserved.",
         "description": "Every line of code is engineered for your specific needs. We reject off-the-shelf shortcuts to ensure a standard of uniqueness that admits no compromise.",
+        "emailLabel": "Email",
+        "liveClientsLabel": "Live client builds",
+        "whatsappLabel": "WhatsApp",
         "development": "Development",
+        "ecommerce": "E-Commerce",
         "groups": {
             "company": {
                 "links": {
@@ -650,7 +664,7 @@
             "eyebrow": "Quality Standards",
             "link": "Read the full standards",
             "performance": {
-                "description": "Lighthouse > 90, fast initial load, lean JS bundles tuned for real devices - not lab conditions.",
+                "description": "Lighthouse 95+ on primary pages, fast initial load, lean JS bundles tuned for real devices - not lab conditions.",
                 "label": "Performance"
             },
             "title": "Benchmarks we ship against."
@@ -725,7 +739,7 @@
                     "q": "How do you determine the investment range?"
                 },
                 "02": {
-                    "a": "No hidden fees. All project prices shown are before 14% VAT. Year 1 includes domain, SSL, deployment, and base hosting where relevant. Renewals, paid third-party tools, and channels like SMS are only billed if your scope actually uses them.",
+                    "a": "No hidden fees. Year 1 includes domain, SSL, deployment, and base hosting where relevant. Renewals, paid third-party tools, and channels like SMS are only billed if your scope actually uses them.",
                     "q": "Are there hidden recurring costs?"
                 },
                 "03": {
@@ -1182,7 +1196,7 @@
                     "ready": "Ready. Let's go.",
                     "step1": "Requirements gathered",
                     "step2": "Timeline estimated",
-                    "step3": "Team assigned"
+                    "step3": "Build plan confirmed"
                 },
                 "title": "Ready to build the internal tool that scales?"
             },
@@ -1276,6 +1290,22 @@
                             "Zero implicit any",
                             "Shared types"
                         ]
+                    },
+                    "vercel": {
+                        "description": "Cloud platform for serverless deployment, automated CI/CD pipelines, dynamic edge scaling, and instant global delivery.",
+                        "highlights": [
+                            "Serverless",
+                            "CI/CD Pipeline",
+                            "Global Edge"
+                        ]
+                    },
+                    "vps": {
+                        "description": "Virtual Private Server for fully custom infrastructure, dedicated resources, and high-performance server configurations.",
+                        "highlights": [
+                            "Dedicated CPU",
+                            "Root Access",
+                            "Custom Nginx"
+                        ]
                     }
                 },
                 "subtitle": "No trend-chasing. Every dependency earns its place in the architecture.",
@@ -1344,10 +1374,6 @@
                     "scope": {
                         "label": "Scope Limit",
                         "value": "Maintenance plans cover system stability and small updates. Major features, rebuilds, or new page systems are scoped and priced separately."
-                    },
-                    "vat": {
-                        "label": "VAT",
-                        "value": "All maintenance retainers shown are before 14% VAT."
                     }
                 },
                 "perMonth": "/ mo",
@@ -1419,6 +1445,53 @@
             "subtitle": "Focus on the business. We handle the system.",
             "title": "Ongoing Support",
             "titleItalic": "built for reliability."
+        },
+        "ecommerce": {
+            "capabilities": {
+                "eyebrow": "Engineering scope",
+                "items": [
+                    {
+                        "description": "Product catalogs, variants, and high-resolution imagery without the compression trade-offs that kill premium retail.",
+                        "title": "Catalog & PDP systems"
+                    },
+                    {
+                        "description": "Inventory synced through webhooks into a single source of truth—so overselling risk drops before launch day.",
+                        "title": "Inventory synchronization"
+                    },
+                    {
+                        "description": "Checkout, payments, and fulfillment flows designed for Egyptian and regional buyers—not a generic plugin stack.",
+                        "title": "Payments & checkout"
+                    },
+                    {
+                        "description": "Arabic and English journeys with mirrored UX, RTL typography, and QA on both locales before go-live.",
+                        "title": "Bilingual EN / AR"
+                    },
+                    {
+                        "description": "Static generation with targeted revalidation so category and product pages stay fast under real catalog weight.",
+                        "title": "Performance at scale"
+                    },
+                    {
+                        "description": "Handoff documentation and admin workflows your team can run without opening a ticket for every copy change.",
+                        "title": "Operator-ready handoff"
+                    }
+                ],
+                "title": "What a custom store includes"
+            },
+            "cta": {
+                "back": "View All Services",
+                "description": "Use Transparency to scope catalog complexity, integrations, and bilingual requirements—or book a call if you already have a brief.",
+                "eyebrow": "Ready to scope",
+                "title": "Planning a store that has to perform in production?"
+            },
+            "description": "Custom Next.js storefronts for lighting, home, and premium retail brands in Cairo and MENA—built for conversion, bilingual buyers, and inventory you can trust.",
+            "proof": {
+                "body": "Two live client stores with bilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds.",
+                "eyebrow": "Live proof",
+                "title": "Stores you can inspect today"
+            },
+            "subtitle": "Custom E-Commerce · Cairo",
+            "title": "E-Commerce Engineering",
+            "titleItalic": "beyond templates."
         },
         "webDesign": {
             "cta": {
@@ -1528,7 +1601,8 @@
             "consulting": "Technical Audits",
             "development": "Portals & Product Builds",
             "interfaceDesign": "Website Systems",
-            "maintenance": "Ongoing Support"
+            "maintenance": "Ongoing Support",
+            "ecommerce": "E-Commerce Stores"
         },
         "comparison": {
             "eyebrow": "How To Choose",
@@ -1548,6 +1622,10 @@
                 {
                     "description": "Choose Ongoing Support.",
                     "title": "04 - Need reliable execution after launch?"
+                },
+                {
+                    "description": "Choose E-Commerce Stores.",
+                    "title": "05 - Launching or rebuilding an online store?"
                 }
             ],
             "title": "Start from the problem you need solved - not the deliverable name."
@@ -1604,7 +1682,7 @@
                 "title": "Clean, Maintainable Code"
             },
             "performance": {
-                "benchmarks": "Lighthouse Performance > 90 | LCP < 2.5s | CLS < 0.1",
+                "benchmarks": "Lighthouse Performance 95+ | LCP < 2.5s | CLS < 0.1",
                 "description": "Every 100ms of latency is a conversion leak. Performance is a design constraint from day one - not an optimization pass squeezed in post-launch.",
                 "requirements": "Edge-first delivery | Modern image formats | Minimal JS execution | Font optimization",
                 "title": "Speed as a Revenue Driver"
@@ -1893,7 +1971,7 @@
             "deliveryMode": "Delivery Mode",
             "discoverySeparate": "Discovery phase separate",
             "engineeringBeyond": "Engineering Beyond Standards",
-            "estimateValid": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing. Preliminary estimate valid 30 days. 14% VAT excluded. Year 1 domain, SSL, and base hosting included where relevant; third-party subscriptions excluded unless scoped.",
+            "estimateValid": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing. Preliminary estimate valid 30 days. Year 1 domain, SSL, and base hosting included where relevant; third-party subscriptions excluded unless scoped.",
             "estimatedDelivery": "Estimated Delivery",
             "fullDeliverablesList": "Full Deliverables List",
             "howWeWork": "How We Work",
@@ -1971,7 +2049,6 @@
             "strategicNote": "This is a strategic estimate based on your inputs - not a generic price range.",
             "timeline": "Estimated Timeline",
             "title": "Your Project Investment Estimate",
-            "vatExcluded": "Excl. 14% VAT",
             "weeks": "weeks",
             "whatYouGet": "What you get"
         },

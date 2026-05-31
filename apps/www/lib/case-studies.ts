@@ -7,7 +7,7 @@ type CaseStudyMetric = {
   value: string;
 };
 
-const CASE_STUDY_SLUGS = [
+export const CASE_STUDY_SLUGS = [
   "altruvex-site",
   "art-lighting-store",
   "newlight-lighting-store",

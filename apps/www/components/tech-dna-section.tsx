@@ -1,9 +1,13 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, MOTION } from "@/lib/motion";
-
 import { Container } from "@/components/container";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { useTranslations, useLocale } from "next-intl";
+import { ScrollTrigger, gsap } from "@/lib/gsap";
+import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import {
+  techAccentHsl,
+  techAccentHsla,
+  type TechAccentId,
+} from "@/lib/tech-accents";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface TechNode {
@@ -14,7 +18,7 @@ interface TechNode {
   y: number;
   r: number;
   primary?: boolean;
-  accent: string;
+  accentId: TechAccentId;
 }
 
 interface Connection {
@@ -32,7 +36,7 @@ const NODES: TechNode[] = [
     y: 220,
     r: 30,
     primary: true,
-    accent: "#818CF8",
+    accentId: "nextjs",
   },
   {
     id: "react",
@@ -41,7 +45,7 @@ const NODES: TechNode[] = [
     x: 160,
     y: 155,
     r: 21,
-    accent: "#61DAFB",
+    accentId: "react",
   },
   {
     id: "typescript",
@@ -50,7 +54,7 @@ const NODES: TechNode[] = [
     x: 350,
     y: 55,
     r: 21,
-    accent: "#3B82F6",
+    accentId: "typescript",
   },
   {
     id: "nodejs",
@@ -59,7 +63,7 @@ const NODES: TechNode[] = [
     x: 540,
     y: 155,
     r: 21,
-    accent: "#4ADE80",
+    accentId: "nodejs",
   },
   {
     id: "postgresql",
@@ -68,7 +72,7 @@ const NODES: TechNode[] = [
     x: 490,
     y: 365,
     r: 21,
-    accent: "#60A5FA",
+    accentId: "postgresql",
   },
   {
     id: "prisma",
@@ -77,7 +81,7 @@ const NODES: TechNode[] = [
     x: 285,
     y: 385,
     r: 21,
-    accent: "#A78BFA",
+    accentId: "prisma",
   },
   {
     id: "tailwind",
@@ -86,7 +90,7 @@ const NODES: TechNode[] = [
     x: 130,
     y: 320,
     r: 21,
-    accent: "#22D3EE",
+    accentId: "tailwind",
   },
   {
     id: "vercel",
@@ -95,7 +99,7 @@ const NODES: TechNode[] = [
     x: 585,
     y: 305,
     r: 21,
-    accent: "#E4E4E7",
+    accentId: "vercel",
   },
   {
     id: "vps",
@@ -104,7 +108,7 @@ const NODES: TechNode[] = [
     x: 640,
     y: 180,
     r: 21,
-    accent: "#94A3B8",
+    accentId: "vps",
   },
 ];
 
@@ -230,8 +234,10 @@ export function TechDNASection() {
     if (!activeId) return "hsl(var(--foreground))";
     if (conn.from === activeId || conn.to === activeId) {
       return (
-        NODES.find((n) => n.id === conn.from)?.accent ??
-        "hsl(var(--foreground))"
+        (() => {
+          const from = NODES.find((n) => n.id === conn.from);
+          return from ? techAccentHsl(from.accentId) : "hsl(var(--foreground))";
+        })()
       );
     }
     return "hsl(var(--foreground))";
@@ -376,11 +382,13 @@ export function TechDNASection() {
                             rx={NODE_RX}
                             fill={
                               isActive
-                                ? `${node.accent}0D`
+                                ? techAccentHsla(node.accentId, 0.05)
                                 : "hsl(var(--background))"
                             }
                             stroke={
-                              isActive ? node.accent : "hsl(var(--foreground))"
+                              isActive
+                                ? techAccentHsl(node.accentId)
+                                : "hsl(var(--foreground))"
                             }
                             strokeWidth={isActive ? 1 : 0.5}
                             strokeOpacity={isActive ? 0.6 : 0.16}
@@ -396,7 +404,7 @@ export function TechDNASection() {
                               width={2}
                               height={NODE_H}
                               rx={NODE_RX}
-                              fill={node.accent}
+                              fill={techAccentHsl(node.accentId)}
                               opacity={0.75}
                             />
                           )}
@@ -404,7 +412,7 @@ export function TechDNASection() {
                             cx={bx + (isRtl ? 7 : w - 7)}
                             cy={by + 7}
                             r={2}
-                            fill={node.accent}
+                            fill={techAccentHsl(node.accentId)}
                             opacity={isActive ? 0.9 : 0.3}
                             style={{ transition: "opacity 0.2s ease" }}
                           />
@@ -434,7 +442,7 @@ export function TechDNASection() {
                             dominantBaseline="middle"
                             style={{
                               fill: isActive
-                                ? node.accent
+                                ? techAccentHsl(node.accentId)
                                 : "hsl(var(--foreground))",
                               fontSize: "7px",
                               fontFamily: "var(--font-mono, monospace)",
@@ -490,23 +498,19 @@ export function TechDNASection() {
             >
               {activeNode && (
                 <div
-                  className="rounded-lg p-5 md:p-6 grid items-start gap-5 md:gap-6 border-foreground/10"
-                  style={{
-                    gridTemplateColumns: "2px 1fr auto",
-                    border: `1px solid ${activeNode.accent}24`,
-                    background: `${activeNode.accent}07`,
-                  }}
+                  className="h-full rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm backdrop-blur-xl bg-background/80 overflow-hidden relative group"
+                  style={{ borderColor: techAccentHsla(activeNode.accentId, 0.15) }}
                 >
                   <div
                     style={{
                       alignSelf: "stretch",
-                      background: activeNode.accent,
+                      background: techAccentHsl(activeNode.accentId),
                       borderRadius: "var(--radius-xs)",
                       opacity: 0.65,
                     }}
                   />
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2.5 mb-2.5 flex-wrap">
+                  <div className="flex-1 flex flex-col justify-center relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
                       <h3
                         className="font-mono text-sm leading-normal tracking-wider font-semibold text-primary"
                         style={{
@@ -523,8 +527,8 @@ export function TechDNASection() {
                           letterSpacing: "0.2em",
                           padding: "2px 8px",
                           borderRadius: "var(--radius-xs)",
-                          color: activeNode.accent,
-                          border: `1px solid ${activeNode.accent}32`,
+                          color: techAccentHsl(activeNode.accentId),
+                          border: `1px solid ${techAccentHsla(activeNode.accentId, 0.2)}`,
                         }}
                       >
                         {t(`techStack.categories.${activeNode.category}`)}
@@ -538,24 +542,32 @@ export function TechDNASection() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
-                    {(
-                      t.raw(
-                        `techStack.nodes.${activeNode.id}.highlights`,
-                      ) as string[]
-                    ).map((h, i) => (
-                      <span
-                        key={h}
-                        className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/3 rounded-lg whitespace-nowrap"
-                        style={{
-                          fontSize: 9,
-                          letterSpacing: "0.13em",
-                          padding: "4px 10px",
-                          animation: `chipIn 0.2s ease ${i * 0.055}s both`,
-                        }}
-                      >
-                        {h}
-                      </span>
-                    ))}
+                    {(() => {
+                      try {
+                        const rawHighlights = t.raw(
+                          `techStack.nodes.${activeNode.id}.highlights`,
+                        );
+                        const highlights = Array.isArray(rawHighlights)
+                          ? rawHighlights
+                          : [];
+                        return highlights.map((h, i) => (
+                          <span
+                            key={h}
+                            className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/3 rounded-lg whitespace-nowrap"
+                            style={{
+                              fontSize: 9,
+                              letterSpacing: "0.13em",
+                              padding: "4px 10px",
+                              animation: `chipIn 0.2s ease ${i * 0.055}s both`,
+                            }}
+                          >
+                            {h}
+                          </span>
+                        ));
+                      } catch {
+                        return null;
+                      }
+                    })()}
                   </div>
                 </div>
               )}

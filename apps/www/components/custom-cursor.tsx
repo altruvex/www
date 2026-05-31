@@ -131,6 +131,7 @@ function CustomCursor() {
     <>
       <div
         ref={outerRef}
+        aria-hidden
         className="pointer-events-none fixed left-0 top-0 rounded-full liquid-glass transition-transform duration-300 ease-out"
         style={{
           width: CURSOR_SIZE.outer,
@@ -142,6 +143,7 @@ function CustomCursor() {
       />
       <div
         ref={innerRef}
+        aria-hidden
         className="pointer-events-none fixed left-0 top-0 rounded-full bg-brand"
         style={{
           width: CURSOR_SIZE.inner,
