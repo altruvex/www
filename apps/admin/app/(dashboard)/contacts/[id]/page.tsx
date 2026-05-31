@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { LoadingIcon } from "@/components/loading-icon";
 
 type SubmissionStatus =
   | "NEW"
@@ -179,7 +180,7 @@ export default function ContactDetailPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <LoadingIcon size={24} />
           <p className="mt-4 text-muted-foreground">
             Loading contact details...
           </p>
@@ -269,7 +270,7 @@ export default function ContactDetailPage() {
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">
-          <div className="border rounded-lg p-6 space-y-4">
+          <div className="liquid-glass rounded-2xl p-6 space-y-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
               <User className="h-5 w-5" />
               Contact Information
@@ -378,7 +379,7 @@ export default function ContactDetailPage() {
             </div>
           </div>
 
-          <div className="border rounded-lg p-6">
+          <div className="liquid-glass rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               Message
@@ -391,7 +392,7 @@ export default function ContactDetailPage() {
 
         <div className="space-y-6">
           {contact.tags.length > 0 && (
-            <div className="border rounded-lg p-6">
+            <div className="liquid-glass rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Tag className="h-5 w-5" />
                 Tags
@@ -409,7 +410,7 @@ export default function ContactDetailPage() {
             </div>
           )}
 
-          <div className="border rounded-lg p-6">
+          <div className="liquid-glass rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Notes ({contact.notes.length})
@@ -438,7 +439,7 @@ export default function ContactDetailPage() {
           </div>
 
           {contact.meetings.length > 0 && (
-            <div className="border rounded-lg p-6">
+            <div className="liquid-glass rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 Related Meetings ({contact.meetings.length})
@@ -447,7 +448,7 @@ export default function ContactDetailPage() {
                 {contact.meetings.map((meeting) => (
                   <div
                     key={meeting.id}
-                    className="border rounded-lg p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    className="liquid-glass rounded-2xl p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                     onClick={() =>
                       router.push(`/meetings?contactId=${contact.id}`)
                     }
@@ -460,13 +461,12 @@ export default function ContactDetailPage() {
                         </p>
                       </div>
                       <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          meeting.status === "SCHEDULED"
+                        className={`text-xs px-2 py-1 rounded ${meeting.status === "SCHEDULED"
                             ? "bg-brand/10 text-brand"
                             : meeting.status === "COMPLETED"
                               ? "bg-success/10 text-success"
                               : "bg-gray-500/20 text-gray-700 dark:text-gray-400"
-                        }`}
+                          }`}
                       >
                         {meeting.status}
                       </span>

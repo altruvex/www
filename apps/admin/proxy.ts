@@ -16,7 +16,9 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (!adminSecret) {
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  if (!adminSecret || !adminEmail) {
     return NextResponse.json(
       { error: "Admin access not configured" },
       { status: 503 },

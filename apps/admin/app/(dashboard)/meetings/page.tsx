@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LoadingIcon } from "@/components/loading-icon";
 
 type MeetingStatus =
   | "PENDING"
@@ -229,7 +230,7 @@ export default function MeetingsPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <LoadingIcon size={24} />
           <p className="mt-4 text-muted-foreground">Loading meetings...</p>
         </div>
       </div>
@@ -289,7 +290,7 @@ export default function MeetingsPage() {
           </SelectContent>
         </Select>
       </div>
-      <div className="border rounded-lg overflow-hidden">
+      <div className="liquid-glass rounded-[2rem] overflow-hidden p-2">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted/50">

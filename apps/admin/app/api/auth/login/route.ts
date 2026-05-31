@@ -17,10 +17,11 @@ function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const { password } = await request.json();
+    const { email, password } = await request.json();
     const adminSecret = process.env.ADMIN_SECRET;
+    const adminEmail = process.env.ADMIN_EMAIL;
 
-    if (!adminSecret) {
+    if (!adminSecret || !adminEmail) {
       return NextResponse.json(
         { error: "Admin access not configured" },
         { status: 503 },
@@ -39,10 +40,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supplied = typeof password === "string" ? password : "";
-    const matches = (() => {
+    const suppliedEmail = typeof email === "string" ? email : "";
+    const emailMatches = (() => {
       try {
-        const a = Buffer.from(supplied);
+        const a = Buffer.from(suppliedEmail);
+        const b = Buffer.from(adminEmail);
+        if (a.length !== b.length) return false;
+        return timingSafeEqual(a, b);
+      } catch {
+        return false;
+      }
+    })();
+
+    const suppliedPassword = typeof password === "string" ? password : "";
+    const passwordMatches = (() => {
+      try {
+        const a = Buffer.from(suppliedPassword);
         const b = Buffer.from(adminSecret);
         if (a.length !== b.length) return false;
         return timingSafeEqual(a, b);
@@ -51,8 +64,8 @@ export async function POST(request: NextRequest) {
       }
     })();
 
-    if (!matches) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    if (!emailMatches || !passwordMatches) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
     const msgUint8 = new TextEncoder().encode(

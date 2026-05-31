@@ -27,6 +27,7 @@ import { Calendar, Eye, Phone, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { LoadingIcon } from "@/components/loading-icon";
 
 type SubmissionStatus =
   | "NEW"
@@ -213,7 +214,7 @@ export function ContactsClient({
           </p>
         </div>
       </div>
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm">
+      <div className="rounded-[2rem] liquid-glass p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <form className="relative flex-1" onSubmit={handleSearchSubmit}>
             <Search className="absolute start-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
@@ -271,7 +272,7 @@ export function ContactsClient({
         <div className="relative rounded-2xl overflow-hidden border border-border">
           {loading && (
             <div className="absolute inset-0 bg-background/60 flex items-center justify-center z-10 backdrop-blur-[2px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
+              <LoadingIcon size={24} />
             </div>
           )}
           <div className="overflow-x-auto">

@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LoadingIcon } from "@/components/loading-icon";
 
 function LoginForm() {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,14 +23,15 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (res.ok) {
         router.push(redirect);
         router.refresh();
       } else {
-        setError("Invalid password");
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Invalid credentials");
       }
     } catch {
       setError("Something went wrong");
@@ -39,7 +42,7 @@ function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-8 shadow-sm">
+      <div className="w-full max-w-sm rounded-[2rem] liquid-glass p-8">
         <div className="mb-8 text-center">
           <p className="font-sans text-sm font-medium tracking-tight text-muted-foreground mb-2">
             Altruvex
@@ -48,17 +51,25 @@ function LoginForm() {
             Admin access
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter password to continue
+            Enter credentials to continue
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email address"
+            className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            autoFocus
+            required
+          />
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             className="w-full rounded-lg border border-border bg-input px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            autoFocus
             required
           />
           {error ? (
@@ -86,7 +97,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center">
-          <div className="size-8 animate-spin rounded-full border-2 border-muted border-t-brand" />
+          <LoadingIcon size={24} />
         </div>
       }
     >

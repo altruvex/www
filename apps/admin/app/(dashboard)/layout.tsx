@@ -21,9 +21,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex-1 flex flex-col">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <main className="flex-1 w-full mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <Suspense fallback={<DashboardSkeleton />}>{children}</Suspense>
       </main>
     </div>

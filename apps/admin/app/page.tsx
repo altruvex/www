@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Calendar, Mail, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { monoCaps } from "@/lib/mono-caps";
+import { Container } from "@/components/container";
+import { LoadingIcon } from "@/components/loading-icon";
 
 const cards = [
   {
@@ -35,66 +37,70 @@ const cards = [
 
 export default function Home() {
   return (
-    <div className="space-y-10">
-      <div>
-        <p className={cn(monoCaps, "text-muted-foreground mb-3")}>Overview</p>
-        <h1 className="text-foreground mb-2">Admin dashboard</h1>
-        <p className="max-w-xl text-muted-foreground">
-          Choose a section to manage inbound requests, meetings, and estimator
-          leads.
-        </p>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-8 transition-all duration-300 hover:border-border-mid hover:shadow-lg"
-            >
-              <div
-                className={cn(
-                  "flex size-14 items-center justify-center rounded-xl",
-                  card.iconClass,
-                )}
-              >
-                <Icon className="size-7" />
-              </div>
-              <div className="flex-1">
-                <h2 className="mb-2 text-xl font-medium text-foreground">
-                  {card.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {card.description}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "inline-flex items-center gap-2 text-sm font-medium",
-                  card.linkClass,
-                )}
-              >
-                {card.cta}
-                <svg
-                  className="size-4 transition-transform group-hover:translate-x-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden
+    <div className="py-24">
+      <Container>
+        <div className="space-y-10">
+          <div>
+            <p className={cn(monoCaps, "text-muted-foreground mb-3")}>Overview</p>
+            <h1 className="text-foreground mb-2">Admin dashboard</h1>
+            <p className="max-w-xl text-muted-foreground">
+              Choose a section to manage inbound requests, meetings, and estimator
+              leads.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map((card) => {
+              const Icon = card.icon;
+              return (
+                <Link
+                  key={card.href}
+                  href={card.href}
+                  className="group flex flex-col gap-4 rounded-4xl liquid-glass p-8 transition-all duration-300 hover:-translate-y-1"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+                  <div
+                    className={cn(
+                      "flex size-14 items-center justify-center rounded-xl",
+                      card.iconClass,
+                    )}
+                  >
+                    <Icon className="size-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="mb-2 text-xl font-medium text-foreground">
+                      {card.title}
+                    </h2>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {card.description}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-2 text-sm font-medium",
+                      card.linkClass,
+                    )}
+                  >
+                    {card.cta}
+                    <svg
+                      className="size-4 transition-transform group-hover:translate-x-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </Container>
     </div>
   );
 }

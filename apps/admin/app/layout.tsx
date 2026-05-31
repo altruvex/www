@@ -41,7 +41,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${outfit.variable} ${geistMono.variable} font-body antialiased`}
+        className={`min-h-screen flex flex-col antialiased overflow-x-auto ${inter.variable} ${outfit.variable} ${geistMono.variable} font-body`}
       >
         <ThemeProvider
           attribute="class"

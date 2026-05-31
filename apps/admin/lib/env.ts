@@ -4,6 +4,7 @@ const envSchema = z.object({
   ADMIN_SECRET: z.string().min(1),
   ADMIN_SECRET_PEPPER: z.string().min(1).optional().default("default-pepper"),
   DATABASE_URL: z.string().url(),
+  ADMIN_EMAIL: z.string().email(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -3,8 +3,9 @@ import type { NextRequest } from "next/server";
 export async function isAdminAuthed(request: NextRequest): Promise<boolean> {
   const adminSession = request.cookies.get("admin-session");
   const adminSecret = process.env.ADMIN_SECRET;
+  const adminEmail = process.env.ADMIN_EMAIL;
 
-  if (!adminSecret || !adminSession) return false;
+  if (!adminSecret || !adminEmail || !adminSession) return false;
 
   const msgUint8 = new TextEncoder().encode(
     adminSecret + (process.env.ADMIN_SECRET_PEPPER || "default-pepper"),
