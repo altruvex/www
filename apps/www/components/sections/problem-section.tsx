@@ -75,11 +75,6 @@ export const ProblemSection = memo(function ProblemSection() {
               {t("problem.subtitle")}
             </p>
           </div>
-          <MagneticButton size="lg" variant="secondary" className="group w-fit">
-            <Link href={auditCta.href}>
-              <ArrowLabel>{t("commercial.ctas.technicalAudit")}</ArrowLabel>
-            </Link>
-          </MagneticButton>
         </div>
         <div
           ref={gridRef}

@@ -24,7 +24,7 @@ export const WhatsAppFab = memo(function WhatsAppFab() {
       rel="noopener noreferrer"
       aria-label={t("whatsappFabAria")}
       className={cn(
-        "fixed z-50 md:hidden",
+        "fixed z-50",
         "bottom-[max(1.25rem,env(safe-area-inset-bottom))]",
         "ltr:right-[max(1.25rem,env(safe-area-inset-right))]",
         "rtl:left-[max(1.25rem,env(safe-area-inset-left))]",

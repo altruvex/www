@@ -171,7 +171,7 @@ export const Footer = memo(function Footer() {
                 <li key={label}>
                   <Link
                     href={href}
-                    className="font-mono text-[13px] leading-normal tracking-widest ltr:uppercase text-primary/70 transition-colors duration-200 hover:text-primary"
+                    className="font-mono text-sm leading-normal tracking-widest ltr:uppercase text-primary/70 transition-colors duration-200 hover:text-primary"
                   >
                     {label}
                   </Link>

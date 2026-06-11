@@ -96,7 +96,7 @@ export function LanguageSwitcherBase({
     return (
       <div
         dir={isRTL ? "rtl" : "ltr"}
-        className={cn("flex items-center gap-1", className)}
+        className={cn("flex items-center gap-1 liquid-glass rounded-xl p-1 outline-none", className)}
       >
         {LANGUAGES.map((lang) => {
           const isActive = locale === lang.code;
@@ -108,18 +108,15 @@ export function LanguageSwitcherBase({
               onClick={() => switchLocale(lang.code)}
               data-cursor-pointer
               className={cn(
-                "relative z-10 px-3 py-1.5 font-mono text-sm leading-normal tracking-wider uppercase transition-all duration-300 ",
+                "relative z-10 px-3 py-1.5 font-mono text-sm rounded-lg font-medium leading-normal tracking-wider uppercase transition-all duration-300 outline-none",
                 isActive
-                  ? "bg-foreground/90 text-background shadow-md"
-                  : "text-primary/60 hover:bg-foreground/20 hover:text-primary",
+                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                  : "text-primary/60 hover:bg-foreground/10 hover:text-primary",
               )}
               aria-label={`Switch to ${lang.name}`}
               aria-pressed={isActive}
             >
               {lang.code}
-              {isActive && (
-                <div className="absolute inset-0 rounded-md bg-foreground/10 blur-md -z-10" />
-              )}
             </button>
           );
         })}
@@ -135,7 +132,7 @@ export function LanguageSwitcherBase({
         onClick={() => setIsOpen(!isOpen)}
         data-cursor-pointer
         className={cn(
-          "group flex items-center gap-2 rounded-lg liquid-glass px-3 py-1.5 transition-all duration-300 hover:border-foreground/20 hover:bg-foreground/5 focus:outline-none focus:ring-2 focus:ring-foreground/50 focus:ring-offset-2",
+          "group flex items-center gap-2 rounded-lg liquid-glass px-3 py-1.5 transition-all duration-300 hover:bg-foreground/5 outline-none focus:outline-none",
           variant === "compact" && "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center",
         )}
         aria-label="Select language"
@@ -150,7 +147,7 @@ export function LanguageSwitcherBase({
             />
             <span
               className={cn(
-                "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-foreground text-background font-mono text-sm leading-normal tracking-wider font-semibold",
+                "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground font-mono text-[10px] font-bold leading-none",
                 isRTL ? "-left-1" : "-right-1",
               )}
             >
@@ -171,11 +168,10 @@ export function LanguageSwitcherBase({
           </>
         )}
       </button>
-
       <div
         ref={menuRef}
         className={cn(
-          "absolute top-full z-50 mt-2 rounded-xl liquid-glass p-1 transition-all duration-200 ease-out",
+          "absolute top-full z-50 mt-2 rounded-xl liquid-glass p-1 transition-all duration-200 ease-out outline-none",
           variant === "compact" ? "w-40" : "w-48",
           isRTL ? "left-0" : "right-0",
           isOpen
@@ -198,12 +194,13 @@ export function LanguageSwitcherBase({
               onClick={() => switchLocale(lang.code)}
               data-cursor-pointer
               dir={langIsRTL ? "rtl" : "ltr"}
+
               className={cn(
-                "flex w-full items-center justify-between gap-2 px-3 py-2 transition-colors first:rounded-t-lg last:rounded-b-lg",
+                "flex w-full items-center justify-between gap-2 px-3 py-2 transition-colors rounded-lg outline-none",
                 variant === "compact" ? "gap-2 px-3 py-2" : "gap-3 px-4 py-2.5",
                 isActive
-                  ? "bg-foreground/20 text-primary"
-                  : "text-primary/80 hover:bg-foreground/15 hover:text-primary",
+                  ? "bg-foreground/15 text-primary font-medium"
+                  : "text-primary/80 hover:bg-foreground/10 hover:text-primary",
                 langIsRTL ? "text-right" : "text-left",
               )}
               role="menuitem"
@@ -217,7 +214,7 @@ export function LanguageSwitcherBase({
                     <span className="text-sm font-medium">
                       {lang.nativeName}
                     </span>
-                    <span className="font-mono text-sm leading-normal tracking-wider text-primary/70">
+                    <span className="font-mono text-xs tracking-wider text-primary/50">
                       {lang.name}
                     </span>
                   </div>

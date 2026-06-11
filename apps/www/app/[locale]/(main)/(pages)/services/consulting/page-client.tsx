@@ -37,7 +37,7 @@ function HeroSection() {
   const ctaRef = useSectionElement();
 
   return (
-    <section className="relative z-10 flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>03</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />

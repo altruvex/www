@@ -1,6 +1,4 @@
 "use client";
-import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
@@ -8,6 +6,7 @@ import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
+import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -35,7 +34,7 @@ function HeroSection() {
   const ctaRef = useSectionElement();
 
   return (
-    <section className="relative flex min-h-[80vh] lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>04</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
         <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />

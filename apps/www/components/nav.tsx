@@ -27,7 +27,7 @@ const NAV_ITEMS = [
 export function Nav() {
   const t = useTranslations("nav");
   const locale = useLocale();
-  const pathname = usePathname(); 
+  const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -51,7 +51,6 @@ export function Nav() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // [GSAP Logic Remains Unchanged for Desktop]
   useEffect(() => {
     if (!isInitialLoadComplete) return;
     if (!logoRef.current || !navItemsRef.current || !actionsRef.current) return;
@@ -64,7 +63,7 @@ export function Nav() {
         if (navChildren?.length) gsap.set(Array.from(navChildren), { opacity: 1, y: 0 });
         return;
       }
-      
+
       gsap.set([logoRef.current, actionsRef.current], { opacity: 0, y: -10 });
       if (navChildren?.length) gsap.set(Array.from(navChildren), { opacity: 0, y: -10 });
 
@@ -135,12 +134,14 @@ export function Nav() {
     () => (isMobileMenuOpen ? closeMobileMenu() : setIsMobileMenuOpen(true)),
     [isMobileMenuOpen, closeMobileMenu]
   );
+
   return (
     <>
       <header
         dir={dir}
         className={cn(
-          "fixed top-0 z-40 w-full transition-all duration-500",
+          "fixed top-0 z-40 w-full",
+          "transition-[background-color,backdrop-filter,border-color] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
           isInitialLoadComplete
             ? "opacity-100"
             : "opacity-0 pointer-events-none",
@@ -175,7 +176,7 @@ export function Nav() {
                     className="group relative rounded-full px-3 py-1.5 font-mono text-sm leading-normal tracking-wider ltr:font-medium font-bold uppercase text-nowrap text-primary/60 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     {t(item.key)}
-                    <span className="absolute -bottom-1 left-0 right-0 h-px bg-transparent group-hover:bg-foreground/25 transition-all duration-300" />
+                    <span className="absolute -bottom-1 left-0 right-0 h-px bg-transparent group-hover:bg-foreground/25 transition-[background-color] duration-300" />
                   </Link>
                 ))}
               </nav>
@@ -210,15 +211,17 @@ export function Nav() {
               >
                 <span
                   className={cn(
-                    "absolute h-[2px] w-full bg-foreground transition-all duration-300 ease-in-out",
+                    "absolute h-[2px] w-full bg-foreground",
+                    "transition-transform duration-300 ease-out",
                     isMobileMenuOpen
                       ? "rotate-45 translate-y-0"
-                      : "-translate-y-[6px]",
+                      : "translate-y-[-6px]",
                   )}
                 />
                 <span
                   className={cn(
-                    "absolute h-[2px] w-full bg-foreground transition-all duration-300 ease-in-out",
+                    "absolute h-[2px] w-full bg-foreground",
+                    "transition-transform duration-300 ease-out",
                     isMobileMenuOpen
                       ? "-rotate-45 translate-y-0"
                       : "translate-y-[6px]",
