@@ -1,9 +1,8 @@
 "use client";
-import { useSectionEyebrow, useSectionDescription, useSectionCardGrid, useSectionTitle } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import { ExternalDirectionalLink } from "@/components/directional-link";
 import { FOUNDER_LINK } from "@/lib/commercial";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";

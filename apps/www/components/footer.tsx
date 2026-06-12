@@ -72,23 +72,16 @@ export const Footer = memo(function Footer() {
   return (
     <footer
       data-animate-section
-      className="relative overflow-hidden w-full border-t border-foreground/8"
+      className="relative w-full overflow-hidden border-t border-foreground/8"
     >
       <Container className="py-10 sm:py-12 md:py-16">
         <div
           data-reveal
           data-beat="0"
-          className="mb-10 sm:mb-12 md:mb-16 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between"
+          className="mb-10 flex flex-col gap-8 sm:mb-12 md:mb-16 lg:flex-row lg:items-start lg:justify-between"
         >
           <div className="max-w-xs shrink-0 lg:max-w-sm">
-            <p
-              className="font-sans font-normal text-primary/88"
-              style={{
-                fontSize: "clamp(15px, 2.5vw, 20px)",
-                letterSpacing: "-0.015em",
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="font-sans font-normal leading-[1.5] text-primary/88 ltr:tracking-tight rtl:tracking-normal text-[clamp(15px,2.5vw,20px)]">
               {t("tagline")}
             </p>
           </div>
@@ -96,7 +89,7 @@ export const Footer = memo(function Footer() {
             <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-8 md:gap-x-12">
               {linkColumns.map(({ title, links }) => (
                 <div key={title}>
-                  <h3 className="font-mono text-sm leading-normal tracking-wider lg:text-base uppercase text-primary/70 mb-3">
+                  <h3 className="mb-3 font-mono text-sm leading-normal text-primary/70 ltr:uppercase ltr:tracking-wider rtl:tracking-normal lg:text-base">
                     {title}
                   </h3>
                   <ul className="flex flex-col gap-2.5">
@@ -104,7 +97,7 @@ export const Footer = memo(function Footer() {
                       <li key={label}>
                         <Link
                           href={href}
-                          className="text-xs tracking-wider lg:text-sm text-primary/70 transition-colors duration-200 hover:text-primary leading-snug hover:underline"
+                          className="text-xs leading-snug text-primary/70 transition-colors duration-200 hover:text-primary hover:underline underline-offset-4 ltr:tracking-wider rtl:tracking-normal lg:text-sm"
                         >
                           {label}
                         </Link>
@@ -116,15 +109,10 @@ export const Footer = memo(function Footer() {
             </div>
           </nav>
         </div>
+
         <div data-reveal data-beat="1">
-          <div className="relative mb-6 md:mb-8 overflow-hidden">
-            <h2
-              className="select-none font-sans font-semibold text-primary"
-              style={{
-                fontSize: "clamp(56px, 17vw, 380px)",
-                lineHeight: "0.84",
-              }}
-            >
+          <div className="relative mb-6 overflow-hidden md:mb-8">
+            <h2 className="select-none font-sans font-semibold leading-[0.84] text-primary text-[clamp(56px,17vw,380px)]">
               <span className="block overflow-hidden">
                 <span data-heading-line data-motion-accent className="block">
                   Altruvex
@@ -132,36 +120,37 @@ export const Footer = memo(function Footer() {
               </span>
             </h2>
           </div>
-          <div className="mb-10 md:mb-14 max-w-xl space-y-8">
-            <p className="text-[13px] sm:text-[14px] md:text-[15px] text-primary/75 leading-relaxed">
+          <div className="mb-10 max-w-xl space-y-8 md:mb-14">
+            <p className="text-[13px] leading-relaxed text-primary/75 sm:text-[14px] md:text-[15px]">
               {t("description")}
             </p>
             <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="text-primary/70 hover:text-primary underline underline-offset-4 decoration-border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                className="rounded-sm text-primary/70 underline decoration-border underline-offset-4 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {t("emailLabel")}: {SITE_CONFIG.email}
+                {t("emailLabel")}: <bdi>{SITE_CONFIG.email}</bdi>
               </a>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary/70 hover:text-primary underline underline-offset-4 decoration-border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                className="rounded-sm text-primary/70 underline decoration-border underline-offset-4 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {t("whatsappLabel")}: {SITE_CONFIG.phone}
+                {t("whatsappLabel")}: <bdi>{SITE_CONFIG.phone}</bdi>
               </a>
             </div>
           </div>
         </div>
+
         <div
           data-reveal
           data-beat="2"
-          className="border-t border-foreground/8 pt-5 sm:pt-6 md:pt-8 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center"
+          className="flex flex-col gap-3 border-t border-foreground/8 pt-5 sm:flex-row sm:items-center sm:justify-between sm:pt-6 md:pt-8"
         >
-          <div className="flex items-center gap-2 order-2 sm:order-1">
+          <div className="order-2 flex items-center gap-2 sm:order-1">
             <AltruvexLogo size="sm" variant="icon" />
-            <span className="font-mono leading-normal text-[13px] text-primary/70 uppercase tracking-widest">
+            <span className="font-mono text-[13px] leading-normal text-primary/70 ltr:uppercase ltr:tracking-widest rtl:tracking-normal">
               {t("copyright", { year: localizedYear })}
             </span>
           </div>
@@ -171,7 +160,7 @@ export const Footer = memo(function Footer() {
                 <li key={label}>
                   <Link
                     href={href}
-                    className="font-mono text-sm leading-normal tracking-widest ltr:uppercase text-primary/70 transition-colors duration-200 hover:text-primary"
+                    className="font-mono text-sm leading-normal text-primary/70 transition-colors duration-200 hover:text-primary hover:underline underline-offset-4 ltr:uppercase ltr:tracking-widest rtl:tracking-normal"
                   >
                     {label}
                   </Link>

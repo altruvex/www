@@ -138,7 +138,7 @@ function HeroSection() {
           {tHero("scrollHint")}
         </p>
         <div className="relative flex h-12 w-[1px] justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
+          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
         </div>
       </HeroReveal>
     </section>
@@ -164,7 +164,7 @@ function AuditOfferSection() {
         <div
           ref={panelRef}
           data-scene="inverted"
-          className="overflow-hidden rounded-2xl border border-s-border bg-inverted-bg"
+          className="overflow-hidden rounded-section border border-s-border bg-inverted-bg"
         >
           <div className="h-px w-full bg-brand/60" />
           <div className="grid gap-10 p-6 md:grid-cols-[minmax(0,1.1fr)_minmax(280px,360px)] md:p-10">

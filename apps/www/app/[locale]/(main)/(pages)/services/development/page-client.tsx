@@ -129,7 +129,7 @@ function HeroSection() {
           {tHero("scrollHint")}
         </p>
         <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
+          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
         </div>
       </HeroReveal>
     </section>
@@ -143,17 +143,17 @@ export function CtaSection() {
   const cardRef = useSectionElement<HTMLDivElement>();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom bg-gray-50 dark:bg-background transition-colors duration-300">
+    <section className="pt-(--section-y-top) pb-(--section-y-bottom) bg-surface transition-colors duration-300">
       <Container>
         <div
           ref={cardRef}
-          className="border border-black/5 dark:border-white/10 rounded-2xl overflow-hidden bg-gray-50 dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none transition-all duration-300"
+          className="overflow-hidden rounded-section border border-border bg-card shadow-sm transition-all duration-300"
         >
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-black/5 dark:border-white/10 bg-black/2 dark:bg-white/2">
+          <div className="flex items-center gap-3 border-b border-border bg-surface px-5 py-3">
             <div className="flex gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#ff5c5f] border border-black/10 shadow-sm" />
-              <div className="w-3 h-3 rounded-full bg-[#fac800] border border-black/10 shadow-sm" />
-              <div className="w-3 h-3 rounded-full bg-[#34c759] border border-black/10 shadow-sm" />
+              <div className="h-3 w-3 rounded-full border border-border bg-error shadow-sm" />
+              <div className="h-3 w-3 rounded-full border border-border bg-warning shadow-sm" />
+              <div className="h-3 w-3 rounded-full border border-border bg-success shadow-sm" />
             </div>
             <span
               className={cn(
@@ -166,7 +166,7 @@ export function CtaSection() {
             <div className="w-[42px]" />
           </div>
           <div className="grid md:grid-cols-2">
-            <div className="p-8 md:p-10 border-b border-black/5 dark:border-white/10 md:border-b-0 md:border-e font-mono text-[13px] leading-relaxed tracking-wide space-y-5 bg-black/1 dark:bg-transparent">
+            <div className="space-y-5 border-b border-border bg-surface/50 p-8 font-mono text-[13px] leading-relaxed tracking-wide md:border-b-0 md:border-e md:p-10">
               <div className="flex gap-3 text-muted-foreground">
                 <span className="select-none opacity-50">~</span>
                 <span className="text-brand opacity-80">$</span>
@@ -174,13 +174,13 @@ export function CtaSection() {
               </div>
               <div className="pl-6 space-y-2 text-muted-foreground/70">
                 <div className="flex items-center gap-2">
-                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step1")}
+                  <span className="text-success">✓</span> {t("cta.terminal.step1")}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step2")}
+                  <span className="text-success">✓</span> {t("cta.terminal.step2")}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[#34c759]">✓</span> {t("cta.terminal.step3")}
+                  <span className="text-success">✓</span> {t("cta.terminal.step3")}
                 </div>
               </div>
               <div className="flex gap-3 text-muted-foreground">

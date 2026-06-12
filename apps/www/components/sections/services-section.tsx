@@ -1,7 +1,6 @@
 "use client";
-import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-
 import { monoCaps } from "@/lib/mono-caps";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn, splitHeadline } from "@/lib/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, memo, useEffect, useRef, useState } from "react";
@@ -35,10 +34,10 @@ const ServiceCard = memo(function ServiceCard({
       data-service={service.index}
       className={cn(
         "group relative isolate cursor-pointer overflow-hidden bg-inverted-bg/80 transition-colors duration-300",
-        "data-[service=01]:[--card-accent:rgba(99,102,241,0.08)]",
-        "data-[service=02]:[--card-accent:rgba(20,184,166,0.08)]",
-        "data-[service=03]:[--card-accent:rgba(245,158,11,0.07)]",
-        "data-[service=04]:[--card-accent:rgba(16,185,129,0.07)]",
+        "data-[service=01]:[--card-accent:hsl(var(--tech-accent-nextjs)/0.08)]",
+        "data-[service=02]:[--card-accent:hsl(var(--tech-accent-react)/0.08)]",
+        "data-[service=03]:[--card-accent:hsl(var(--warning)/0.08)]",
+        "data-[service=04]:[--card-accent:hsl(var(--tech-accent-nodejs)/0.08)]",
         isLarge
           ? "min-h-[clamp(240px,28vw,380px)] p-[clamp(32px,4vw,56px)]"
           : "p-[clamp(24px,3vw,36px)]",
@@ -54,12 +53,12 @@ const ServiceCard = memo(function ServiceCard({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 start-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
       />
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute -top-[0.05em] end-0 z-0 select-none pe-[clamp(12px,2vw,28px)] font-mono font-extrabold leading-[0.85] tracking-[-0.06em] text-transparent opacity-0 transition-[opacity,transform] duration-500 [-webkit-text-stroke-color:var(--s-border)] [-webkit-text-stroke-width:1px]",
+          "pointer-events-none absolute top-[-0.05em] inset-e-0 z-0 select-none pe-[clamp(12px,2vw,28px)] font-mono font-extrabold leading-[0.85] tracking-[-0.06em] text-transparent opacity-0 transition-[opacity,transform] duration-500 [-webkit-text-stroke-color:var(--s-border)] [-webkit-text-stroke-width:1px]",
           "translate-x-4 group-hover:translate-x-0 group-hover:opacity-40 rtl:-translate-x-4 rtl:group-hover:translate-x-0",
           isLarge
             ? "text-[clamp(90px,14vw,160px)]"

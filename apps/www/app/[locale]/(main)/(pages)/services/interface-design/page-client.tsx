@@ -130,7 +130,7 @@ function HeroSection() {
           {tHero("scrollHint")}
         </p>
         <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
+          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
         </div>
       </HeroReveal>
     </section>

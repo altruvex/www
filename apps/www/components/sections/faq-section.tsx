@@ -1,6 +1,4 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import {
   Accordion,
@@ -8,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";

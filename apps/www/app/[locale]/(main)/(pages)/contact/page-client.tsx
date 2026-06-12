@@ -1,10 +1,12 @@
 "use client";
-import { useSectionTitle, useSectionDescription, useSectionElement } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Input, SelectField, Textarea } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
+import { useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { createContactFormSchema } from "@/lib/validations/contact";
 import { AlertCircle, CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -283,19 +285,21 @@ export default function ContactPage() {
               </div>
             </div>
             <div ref={rightRef} className="flex flex-col justify-center">
-              <div className="p-8 rounded-2xl liquid-glass">
+              <div className="p-8 rounded-section liquid-glass">
                 <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-primary/60 sm:text-sm">
+                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.nameLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t("form.namePlaceholder")}
-                      className={`w-full border-b bg-transparent py-2.5 text-sm text-primary placeholder:text-primary/60 focus:outline-none border-foreground/25 focus:border-foreground/50 transition-all ${formErrors.name ? "border-destructive focus:border-destructive" : ""}`}
+                      className={cn(
+                        formErrors.name && "border-destructive",
+                      )}
                       aria-invalid={!!formErrors.name}
                       aria-describedby={
                         formErrors.name ? "contact-name-error" : undefined
@@ -313,16 +317,18 @@ export default function ContactPage() {
                     )}
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-primary/60 sm:text-sm">
+                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.phoneLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
-                    <input
+                    <Input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder={t("form.phonePlaceholder")}
-                      className={`w-full border-b bg-transparent py-2.5 text-sm text-primary placeholder:text-primary/60 focus:outline-none border-foreground/25 focus:border-foreground/50 transition-all ${formErrors.phone ? "border-destructive focus:border-destructive" : ""}`}
+                      className={cn(
+                        formErrors.phone && "border-destructive",
+                      )}
                       aria-invalid={!!formErrors.phone}
                       aria-describedby={
                         formErrors.phone ? "contact-phone-error" : undefined
@@ -341,13 +347,12 @@ export default function ContactPage() {
                     )}
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-primary/60 sm:text-sm">
+                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.serviceLabel")}
                     </label>
-                    <select
+                    <SelectField
                       value={service}
                       onChange={(e) => setService(e.target.value)}
-                      className="w-full border-b bg-transparent py-2.5 text-sm text-primary focus:outline-none border-foreground/25 focus:border-foreground/50 transition-all"
                       disabled={isSubmitting}
                     >
                       <option value="">{t("form.servicePlaceholder")}</option>
@@ -363,19 +368,21 @@ export default function ContactPage() {
                       <option value="maintenance">
                         {t("form.serviceMaintenance")}
                       </option>
-                    </select>
+                    </SelectField>
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-primary/60 sm:text-sm">
+                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.messageLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
-                    <textarea
+                    <Textarea
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder={t("form.messagePlaceholder")}
                       rows={4}
-                      className={`w-full border-b bg-transparent py-2.5 text-sm text-primary placeholder:text-primary/60 focus:outline-none resize-none border-foreground/25 focus:border-foreground/50 transition-all ${formErrors.message ? "border-destructive focus:border-destructive" : ""}`}
+                      className={cn(
+                        formErrors.message && "border-destructive",
+                      )}
                       aria-invalid={!!formErrors.message}
                       aria-describedby={
                         formErrors.message ? "contact-message-error" : undefined

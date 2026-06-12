@@ -3,9 +3,8 @@
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
-
-import { Link } from "@/i18n/navigation";
 import { WorkItem } from "@/components/work-item";
+import { Link } from "@/i18n/navigation";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,

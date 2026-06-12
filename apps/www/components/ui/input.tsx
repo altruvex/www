@@ -12,8 +12,17 @@ const normalizeNumbers = (str: string) => {
     .replace(/[۰-۹]/g, (w) => persianNumbers.indexOf(w).toString());
 };
 
+export const formControlClasses = cn(
+  "w-full min-w-0 bg-transparent px-0 py-2.5 text-base md:text-sm text-foreground",
+  "placeholder:text-muted-foreground selection:bg-accent selection:text-accent-foreground",
+  "border-b border-border",
+  "focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+  "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+  "aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:outline-destructive",
+);
+
 type InputProps = React.ComponentProps<"input"> & {
-  normalize?: boolean; // optional behavior
+  normalize?: boolean;
 };
 
 function Input({
@@ -47,18 +56,13 @@ function Input({
 
   return (
     <input
-      type={type === "number" ? "text" : type} // نمنع number
+      type={type === "number" ? "text" : type}
       inputMode={inputMode || (type === "number" ? "numeric" : undefined)}
       data-slot="input"
       onChange={handleChange}
       className={cn(
-        "file:text-foreground placeholder:text-muted-foreground selection:bg-accent selection:text-accent-foreground",
-        "h-9 w-full min-w-0 bg-transparent px-0 py-2.5 text-base outline-none transition-[border-color] md:text-sm",
-        "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
-        "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-        "border-b border-border focus:border-accent",
-        "focus-visible:outline-none",
-        "aria-invalid:border-destructive",
+        formControlClasses,
+        "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
         className,
       )}
       style={{
@@ -71,4 +75,38 @@ function Input({
   );
 }
 
-export { Input };
+type TextareaProps = React.ComponentProps<"textarea">;
+
+function Textarea({ className, ...props }: TextareaProps) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(formControlClasses, "resize-none", className)}
+      style={{
+        borderRadius: 0,
+        transitionDuration: "var(--duration-instant)",
+        transitionTimingFunction: "var(--ease-default)",
+      }}
+      {...props}
+    />
+  );
+}
+
+type SelectFieldProps = React.ComponentProps<"select">;
+
+function SelectField({ className, ...props }: SelectFieldProps) {
+  return (
+    <select
+      data-slot="select-field"
+      className={cn(formControlClasses, className)}
+      style={{
+        borderRadius: 0,
+        transitionDuration: "var(--duration-instant)",
+        transitionTimingFunction: "var(--ease-default)",
+      }}
+      {...props}
+    />
+  );
+}
+
+export { Input, SelectField, Textarea };

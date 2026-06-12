@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { getTranslations } from "next-intl/server";
 import { ArrowIcon } from "../directional-link";
-import { HeroHeadline, HeroReveal, HeroBatch } from "./hero-motion-wrappers";
+import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -152,8 +152,8 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
         >
           {t("hero.scrollHint")}
         </p>
-        <div className="relative flex h-12 w-[1px] justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite]" />
+        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
+          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
         </div>
       </HeroReveal>
     </section>

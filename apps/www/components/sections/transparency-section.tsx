@@ -1,9 +1,8 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, MOTION } from "@/lib/motion";
-
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
+import { MOTION, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import {
   DeliverableProject,

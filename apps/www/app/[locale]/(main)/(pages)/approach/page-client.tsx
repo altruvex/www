@@ -1,11 +1,10 @@
 "use client";
-import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
-
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 

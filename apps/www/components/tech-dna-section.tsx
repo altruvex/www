@@ -217,11 +217,17 @@ export function TechDNASection() {
     return () => st.kill();
   }, []);
 
+  // Use a functional update to prevent animation re-triggers on the same node
   const enter = useCallback((id: string) => {
-    setActiveId(id);
-    setDetailKey((k) => k + 1);
+    setActiveId((prev) => {
+      if (prev !== id) {
+        setDetailKey((k) => k + 1);
+      }
+      return id;
+    });
   }, []);
-  const leave = useCallback(() => setActiveId(null), []);
+
+  const clearSelection = useCallback(() => setActiveId(null), []);
 
   const getNodeOpacity = (id: string): number => {
     if (!activeId) return 1;
@@ -305,13 +311,14 @@ export function TechDNASection() {
                   viewBox="0 0 700 462"
                   width="100%"
                   height="100%"
-                  className="absolute inset-0"
+                  className="absolute inset-0 cursor-default"
                   style={{
                     overflow: "visible",
                     color: "hsl(var(--foreground))",
                   }}
                   role="img"
                   aria-label={t("techStack.diagramLabel")}
+                  onClick={clearSelection}
                 >
                   <g>
                     {CONNECTIONS.map((conn, i) => {
@@ -357,9 +364,11 @@ export function TechDNASection() {
                             transition: "opacity 0.2s ease",
                           }}
                           onMouseEnter={() => enter(node.id)}
-                          onMouseLeave={leave}
                           onFocus={() => enter(node.id)}
-                          onBlur={leave}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            enter(node.id);
+                          }}
                           role="button"
                           tabIndex={0}
                           aria-label={`${node.name} - ${t(`techStack.categories.${node.category}`)}`}
@@ -367,10 +376,12 @@ export function TechDNASection() {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
                               if (isActive) {
-                                leave();
+                                clearSelection();
                               } else {
                                 enter(node.id);
                               }
+                            } else if (e.key === "Escape") {
+                              clearSelection();
                             }
                           }}
                         >
@@ -499,8 +510,32 @@ export function TechDNASection() {
               {activeNode && (
                 <div
                   className="h-full rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm backdrop-blur-xl bg-background/80 overflow-hidden relative group"
-                  style={{ borderColor: techAccentHsla(activeNode.accentId, 0.15) }}
+                  style={{
+                    borderColor: techAccentHsla(activeNode.accentId, 0.15),
+                  }}
                 >
+                  <button
+                    onClick={clearSelection}
+                    className="absolute top-3 right-3 rtl:right-auto rtl:left-3 p-2 rounded-full text-primary/40 hover:text-primary hover:bg-foreground/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-20"
+                    aria-label="Close"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M11 1L1 11M1 1L11 11"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+
                   <div
                     style={{
                       alignSelf: "stretch",
@@ -528,7 +563,10 @@ export function TechDNASection() {
                           padding: "2px 8px",
                           borderRadius: "var(--radius-xs)",
                           color: techAccentHsl(activeNode.accentId),
-                          border: `1px solid ${techAccentHsla(activeNode.accentId, 0.2)}`,
+                          border: `1px solid ${techAccentHsla(
+                            activeNode.accentId,
+                            0.2,
+                          )}`,
                         }}
                       >
                         {t(`techStack.categories.${activeNode.category}`)}
