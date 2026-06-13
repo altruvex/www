@@ -48,19 +48,19 @@ export default async function LeadsPage({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <th className="px-6 py-4 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
                   Timestamp
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <th className="px-6 py-4 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
                   Contact Info
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <th className="px-6 py-4 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
                   Project Summary
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                <th className="px-6 py-4 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
                   Transparency Range
                 </th>
-                <th className="px-6 py-4 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground text-right">
+                <th className="px-6 py-4 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground text-right">
                   Actions
                 </th>
               </tr>
@@ -77,7 +77,7 @@ export default async function LeadsPage({
                         <span className="text-sm text-foreground">
                           {format(lead.createdAt, "MMM d, yyyy")}
                         </span>
-                        <span className="text-[10px] font-mono text-foreground/30">
+                        <span className="text-[13px] font-mono text-foreground/30">
                           {format(lead.createdAt, "HH:mm:ss")}
                         </span>
                       </div>
@@ -99,10 +99,10 @@ export default async function LeadsPage({
                     <td className="px-6 py-5 align-top">
                       <div className="flex flex-col gap-1">
                         <div className="flex gap-2 items-center">
-                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[10px] font-mono uppercase tracking-wider border border-border">
+                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[13px] font-mono uppercase tracking-wider border border-border">
                             {lead.projectType}
                           </span>
-                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[10px] font-mono uppercase tracking-wider border border-border">
+                          <span className="px-2 py-0.5 rounded-[2px] bg-muted text-foreground/60 text-[13px] font-mono uppercase tracking-wider border border-border">
                             {lead.complexity}
                           </span>
                         </div>
@@ -129,7 +129,7 @@ export default async function LeadsPage({
                             maximumFractionDigits: 0,
                           }).format(lead.priceMax)}
                         </span>
-                        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
+                        <span className="text-[13px] font-mono text-muted-foreground uppercase tracking-wider">
                           {lead.weeksMin}–{lead.weeksMax} Weeks Delivery
                         </span>
                       </div>

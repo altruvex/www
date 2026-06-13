@@ -126,7 +126,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   >
                     Error Digest
                   </summary>
-                  <pre className="mt-4 overflow-auto rounded-lg bg-foreground/5 p-3 font-mono text-[10px] text-primary/70 leading-relaxed">
+                  <pre className="mt-4 overflow-auto rounded-lg bg-foreground/5 p-3 font-mono text-[13px] text-primary/70 leading-relaxed">
                     <code>{error.digest}</code>
                   </pre>
                 </details>

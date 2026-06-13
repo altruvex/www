@@ -147,7 +147,7 @@ export default memo(function ServicesPage() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-full border border-border px-6 py-2.5 text-[11px] font-bold uppercase tracking-wider bg-background text-muted-foreground hover:border-foreground hover:text-foreground transition-all",
+                    "rounded-full border border-border px-6 py-2.5 text-sm font-bold uppercase tracking-wider bg-background text-muted-foreground hover:border-foreground hover:text-foreground transition-all",
                     monoCaps,
                   )}
                 >
@@ -255,7 +255,7 @@ const OfferCard = memo(function OfferCard({
                 <span
                   key={tag}
                   className={cn(
-                    "rounded-2xl border border-border bg-surface px-4 py-1.5 text-[10px] text-muted-foreground",
+                    "rounded-2xl border border-border bg-surface px-4 py-1.5 text-[13px] text-muted-foreground",
                     "group-hover:border-border-mid group-hover:text-foreground transition-colors",
                     monoCaps,
                   )}

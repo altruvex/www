@@ -17,7 +17,6 @@
             "philosophy2": "The goal is not to appear premium. It is to build work with sufficient quality and positioning that others can copy the surface - but not the standard behind it.",
             "role": "Founder & Lead Engineer"
         },
-        "founderNote": "You work directly with the founder - no account managers, no handoffs, no dilution between strategy and execution.",
         "stat1": {
             "label": "Performance Baseline",
             "sublabel": "Minimum Lighthouse score for production",
@@ -332,11 +331,6 @@
         },
         "transparency": {
             "body": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing.",
-            "checklist": [
-                "3-minute qualification flow",
-                "Range shaped by real custom-development scope",
-                "A clear next step after results"
-            ],
             "eyebrow": "Transparency",
             "title": "Get a realistic project investment range before the first call."
         },
@@ -396,7 +390,6 @@
             "success": "Received. We will reply within 24 hours."
         },
         "location": "Location",
-        "locationValue": "Cairo, Egypt",
         "social": {
             "dribbble": "Dribbble",
             "instagram": "Instagram",
@@ -442,16 +435,6 @@
         "phoneValue": "+20 102 312 5493",
         "responseTime": "Within 24 hours on business days. For a faster reply, message us on WhatsApp.",
         "scheduleCall": "Book a technical call",
-        "sideNotes": [
-            {
-                "description": "Early-stage conversations, technical questions, and scope clarification before scheduling a full working call.",
-                "title": "Best for"
-            },
-            {
-                "description": "Within 24 hours on business days. WhatsApp is fastest for urgent questions.",
-                "title": "Response"
-            }
-        ],
         "social": {
             "dribbble": "Dribbble",
             "instagram": "Instagram",
@@ -465,68 +448,6 @@
         "eyebrow": "07 - Let's Build",
         "footnote": "Direct founder conversation. No sales script. No pitch deck.",
         "title": "Pressure-test your scope before you commit budget."
-    },
-    "designCompare": {
-        "axAvailability": "Taking projects - Q2 2026",
-        "axCta": "Start a project",
-        "axEyebrow": "Web Engineering Studio · Cairo",
-        "axFooter": "Altruvex · Cairo, EG",
-        "axHeroLine1": "We build digital",
-        "axHeroLine2": "infrastructure.",
-        "axHeroSub": "Bespoke systems engineered for precision - not templates assembled for speed.",
-        "axMetricBadge": "Tracked per build",
-        "axMetricLabel": "Avg. conversion lift",
-        "axNavServices": "Services",
-        "axNavStudio": "Studio",
-        "axNavWork": "Work",
-        "axSecondaryCta": "View case studies",
-        "axStackLabel": "Stack",
-        "axSvc1Desc": "Intent-driven interfaces.",
-        "axSvc1Title": "Interface Design",
-        "axSvc2Desc": "Production-grade, not demos.",
-        "axSvc2Title": "Engineering",
-        "axSvc3Desc": "Architecture that ages well.",
-        "axSvc3Title": "Consulting",
-        "compareAltruvexLabel": "Altruvex engineered",
-        "compareDragHint": "← drag to compare →",
-        "compareEyebrow": "SVC_CMP · See the difference",
-        "compareGenericLabel": "Generic template",
-        "compareSubtitle": "Drag the divider to compare a generic template against an Altruvex-engineered design.",
-        "compareTitle": "Same content.",
-        "compareTitleItalic": "Entirely different result.",
-        "mockupBadgeNew": "NEW",
-        "mockupBrandName": "Meridian",
-        "mockupCta1": "GET STARTED",
-        "mockupCta2": "LEARN MORE",
-        "mockupCta3": "FREE TRIAL",
-        "mockupHeroLine1": "Transform your",
-        "mockupHeroLine2": "digital presence",
-        "mockupHeroSub": "We create stunning websites that drive real results for your business growth and online visibility.",
-        "mockupImagePlaceholder": "IMAGE\nHERE",
-        "mockupNavAbout": "About",
-        "mockupNavBlog": "Blog",
-        "mockupNavCta": "GET QUOTE",
-        "mockupNavPortfolio": "Portfolio",
-        "mockupNavServices": "Services",
-        "mockupPromoCta": "CLAIM NOW",
-        "mockupPromoHeadline": "LIMITED TIME OFFER",
-        "mockupPromoSub": "Get 30% off your first project!",
-        "mockupSvc1Desc": "Production-grade sites and storefronts built to convert—fast loads, clear journeys, bilingual when you need it.",
-        "mockupSvc1Title": "Interface Design",
-        "mockupSvc2Desc": "Full-stack solutions built with the latest technologies.",
-        "mockupSvc2Title": "Development",
-        "mockupSvc3Desc": "Data-driven strategies to boost your search rankings.",
-        "mockupSvc3Title": "SEO & Growth",
-        "mockupTrust1": "100% Satisfaction",
-        "mockupTrust2": "Free Consultation",
-        "mockupTrust3": "24/7 Support",
-        "mockupTrust4": "500+ Reviews",
-        "qualityPoint1Body": "Precise visual hierarchy ensures the most important message is processed first - not just made larger.",
-        "qualityPoint1Label": "Typography",
-        "qualityPoint2Body": "Intentional spacing reduces cognitive load and creates a premium, calm reading experience.",
-        "qualityPoint2Label": "Whitespace",
-        "qualityPoint3Body": "We remove every element that doesn't serve a conversion goal, keeping the interface lean and fast.",
-        "qualityPoint3Label": "Zero Bloat"
     },
     "exitIntent": {
         "buttonText": "Request a Call",
@@ -557,7 +478,6 @@
         "copyright": "© {year} Altruvex. All rights reserved.",
         "description": "Every line of code is engineered for your specific needs. We reject off-the-shelf shortcuts to ensure a standard of uniqueness that admits no compromise.",
         "emailLabel": "Email",
-        "liveClientsLabel": "Live client builds",
         "whatsappLabel": "WhatsApp",
         "development": "Development",
         "ecommerce": "E-Commerce",
@@ -590,7 +510,6 @@
         },
         "how-we-work": "How We Work",
         "locationLabel": "Base",
-        "locationValue": "Cairo, Egypt",
         "maintenance": "Maintenance",
         "pricing": "Pricing",
         "privacy": "Privacy",
@@ -733,6 +652,7 @@
         },
         "description": "The tiers below help buyers self-qualify quickly before opening full Transparency.",
         "minimumEngagement": "Projects from 22,000 EGP",
+        "minimumEngagementLabel": "Minimum Engagement",
         "ownershipNote": "Every project includes full source code ownership — not a Shopify subscription, not a WordPress plugin stack. You own everything, permanently.",
         "faq": {
             "questions": {
@@ -1036,11 +956,6 @@
     },
     "schedule": {
         "back": "Back",
-        "expectations": [
-            "30 minutes, direct and practical",
-            "Focused on risk, architecture, and the right next step",
-            "No sales deck, no generic discovery script"
-        ],
         "eyebrow": "14 - Technical Call",
         "form": {
             "date": {
@@ -1203,21 +1118,6 @@
                 "title": "Ready to build the internal tool that scales?"
             },
             "description": "We build custom dashboards, portals, and operational flows that remove human friction from delivery so your team can focus on growth, not administrative overhead.",
-            "sections": {
-                "deliverables": [
-                    "Custom dashboard and portal engineering",
-                    "Operational workflows and internal product logic",
-                    "Database architecture and API integrations",
-                    "Role-based access control and user management"
-                ],
-                "deliverablesTitle": "What this service includes",
-                "fitItems": [
-                    "You need a custom portal that does not exist off the shelf.",
-                    "Legacy systems or spreadsheets are throttling your operations.",
-                    "You need a secure, scalable product build with a clean handoff."
-                ],
-                "fitTitle": "Best fit"
-            },
             "subtitle": "Build the internal system your team actually needs - not the one easiest to spec.",
             "techStack": {
                 "categories": {
@@ -1419,21 +1319,6 @@
                 "title": "Support Plans",
                 "titleItalic": "transparent, predictable."
             },
-            "sections": {
-                "deliverables": [
-                    "Proactive monitoring and security updates",
-                    "Regular feature updates and maintenance cycles",
-                    "Performance optimization and bug resolution",
-                    "Priority support with defined response times for critical issues"
-                ],
-                "deliverablesTitle": "What this service includes",
-                "fitItems": [
-                    "You have a live system that needs dependable, consistent maintenance.",
-                    "Your team does not have bandwidth for regular technical operations.",
-                    "You want a long-term technical partner for iterative growth after launch."
-                ],
-                "fitTitle": "Best fit"
-            },
             "stats": {
                 "body1": "Maintenance is not reactive patching - it is the ongoing discipline that keeps a system performing the way it was built to perform.",
                 "body2": "We manage the technical layer so you can grow without being anchored by infrastructure that is quietly degrading.",
@@ -1538,21 +1423,6 @@
                     "description": "WCAG 2.1 AA compliance built into the design system - not patched in after development closes.",
                     "title": "Accessibility Compliance"
                 }
-            },
-            "sections": {
-                "deliverables": [
-                    "Offer positioning and page hierarchy",
-                    "Responsive interface system for desktop and mobile",
-                    "Multilingual page logic with true directional parity",
-                    "Conversion-led layouts, CTA placement, and proof structure"
-                ],
-                "deliverablesTitle": "What this service includes",
-                "fitItems": [
-                    "The current site looks acceptable but does not convert.",
-                    "Your offer is strong but the hierarchy and message are unclear.",
-                    "You need a custom website - not a template with brand paint."
-                ],
-                "fitTitle": "Best fit"
             },
             "showcaseCorporate": "Corporate Presence",
             "showcaseEcommerce": "E-Commerce Systems",
@@ -1659,11 +1529,6 @@
                 "description": "Sharper positioning, faster pages, and a direct conversion path for serious service or product businesses.",
                 "title": "01 - Website Systems"
             }
-        },
-        "stats": {
-            "industryExperience": "Industry experience",
-            "productsShipped": "Products shipped",
-            "uptimeAverage": "Uptime average"
         },
         "title": "Four focused disciplines.",
         "titleItalic": "One uncompromising standard."

@@ -91,7 +91,7 @@ export const ProblemSection = memo(function ProblemSection() {
                 </span>
                 <div className="space-y-3">
                   <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-medium text-foreground">
-                    <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground rtl:tracking-normal">
+                    <span className="mb-1.5 block font-mono text-[13px] uppercase tracking-[0.18em] text-muted-foreground rtl:tracking-normal">
                       {stepLabel} {pain.number}
                     </span>
                     {t(pain.titleKey)}

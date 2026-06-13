@@ -62,7 +62,7 @@ export function ExportCsvButton({ leads }: { leads: Lead[] }) {
   return (
     <button
       onClick={handleExport}
-      className="px-4 py-2 rounded-sm border border-foreground/10 bg-foreground/5 font-mono text-[10px] uppercase tracking-wider text-primary/60 hover:text-primary transition-colors flex items-center gap-2"
+      className="px-4 py-2 rounded-sm border border-foreground/10 bg-foreground/5 font-mono text-[13px] uppercase tracking-wider text-primary/60 hover:text-primary transition-colors flex items-center gap-2"
     >
       <FileDown className="h-3 w-3" />
       Export CSV
@@ -122,7 +122,7 @@ function LeadDetailModal({
       <div className="relative w-full max-w-lg bg-background border border-border animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-foreground/40">
+            <p className="font-mono text-[13px] uppercase tracking-[0.25em] text-foreground/40">
               Lead Detail
             </p>
             <p className="text-sm font-medium text-foreground mt-0.5">
@@ -142,7 +142,7 @@ function LeadDetailModal({
             <tbody>
               {rows.map((key, i) => (
                 <tr key={key} className={i % 2 === 0 ? "bg-foreground/2" : ""}>
-                  <td className="px-6 py-3 font-mono text-[11px] uppercase tracking-wider text-foreground/40 whitespace-nowrap w-40 align-top">
+                  <td className="px-6 py-3 font-mono text-sm uppercase tracking-wider text-foreground/40 whitespace-nowrap w-40 align-top">
                     {FIELD_LABELS[key] ?? key}
                   </td>
                   <td className="px-6 py-3 text-foreground/80 wrap-break-word">
@@ -154,14 +154,14 @@ function LeadDetailModal({
           </table>
         </div>
         <div className="px-6 py-4 border-t border-border flex justify-between items-center">
-          <p className="font-mono text-[10px] text-foreground/30">
+          <p className="font-mono text-[13px] text-foreground/30">
             ID: {lead.id ?? "-"}
           </p>
           <a
             href={`https://wa.me/${(lead.phone ?? "").replace(/\D/g, "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[10px] uppercase tracking-wider text-foreground/60 hover:text-foreground transition-colors flex items-center gap-1.5"
+            className="font-mono text-[13px] uppercase tracking-wider text-foreground/60 hover:text-foreground transition-colors flex items-center gap-1.5"
           >
             Open WhatsApp
             <ExternalLink className="w-3 h-3" />

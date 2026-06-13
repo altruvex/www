@@ -123,7 +123,7 @@ function HeroSection() {
         className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
         <p
-          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          className="font-mono text-xs leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
           aria-hidden
         >
           {tHero("scrollHint")}
@@ -158,7 +158,7 @@ export function CtaSection() {
             <span
               className={cn(
                 monoCaps,
-                "text-muted-foreground/60 mx-auto text-[11px] tracking-widest font-semibold"
+                "text-muted-foreground/60 mx-auto text-sm tracking-widest font-semibold"
               )}
             >
               new-project — bash

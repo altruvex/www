@@ -4,10 +4,12 @@ import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } fro
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 
+/* Stage colors as RGB triplets for rgba() interpolation.
+   Values match design tokens: brand indigo, success, warning, info, violet, emerald */
 const STAGE_COLORS = [
-  "74,  110, 212",
-  "93,  202, 165",
-  "248, 163,  50",
+  "80,  71, 229",
+  "5,  150, 105",
+  "217, 119,   6",
   "96,  165, 250",
   "167, 139, 250",
   "52,  211, 153",
@@ -267,7 +269,7 @@ export function PipelineSection() {
       <section
         ref={sectionRef}
         id="pipeline"
-        className="font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-gray-50 dark:bg-background transition-colors duration-300"
+        className="font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-surface dark:bg-background transition-colors duration-300"
       >
         <Container>
           <p
@@ -310,7 +312,7 @@ export function PipelineSection() {
           {/* PIPELINE CARD */}
           <div
             dir="ltr"
-            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-black/5 dark:border-white/10 bg-gray-50 dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none"
+            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none"
             style={{
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(16px)",
@@ -324,7 +326,7 @@ export function PipelineSection() {
                 system.build.pipeline / production
               </span>
               <div className="flex items-center gap-3 sm:gap-4">
-                <span className="text-[11px] tracking-widest text-muted-foreground">
+                <span className="text-sm tracking-widest text-muted-foreground">
                   <span
                     className="inline-block transition-transform duration-300 text-foreground font-medium"
                     style={{ transform: doneCount > 0 ? "scale(1.1)" : "scale(1)" }}
@@ -408,7 +410,7 @@ export function PipelineSection() {
                       <span className="sm:hidden">{stage.key.slice(0, 4)}</span>
                       {stage.parallel && (
                         <span
-                          className="text-[9px] border px-1 py-px hidden sm:inline rounded-sm"
+                          className="text-xs border px-1 py-px hidden sm:inline rounded-sm"
                           style={{
                             color: `rgba(${color},.7)`,
                             borderColor: `rgba(${color},.3)`,
@@ -427,7 +429,7 @@ export function PipelineSection() {
                     </span>
 
                     <span
-                      className="flex items-center gap-2 transition-colors duration-300 self-start justify-end text-[11px] tracking-widest uppercase font-semibold pt-[2px]"
+                      className="flex items-center gap-2 transition-colors duration-300 self-start justify-end text-sm tracking-widest uppercase font-semibold pt-[2px]"
                       style={{
                         color: isRunning
                           ? `rgb(${color})`

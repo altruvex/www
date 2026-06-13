@@ -27,6 +27,7 @@ interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
   soundEnabled?: boolean;
   hapticEnabled?: boolean;
   asChild?: boolean;
+  isLoading?: boolean;
 }
 
 function useMergedRef<T>(...refs: (React.Ref<T> | null | undefined)[]) {
@@ -86,6 +87,7 @@ export const MagneticButton = forwardRef<
       soundEnabled = false,
       hapticEnabled = true,
       asChild = false,
+      isLoading = false,
       onClick,
       ...props
     },
@@ -239,16 +241,19 @@ export const MagneticButton = forwardRef<
     return (
       <Comp
         ref={mergedRef}
-        onClick={handleClick}
-        onMouseMove={prefersReducedMotion ? undefined : handleMouseMove}
-        onMouseEnter={prefersReducedMotion ? undefined : updateRect}
-        onMouseLeave={prefersReducedMotion ? undefined : handleMouseLeave}
-        onMouseDown={prefersReducedMotion ? undefined : handleMouseDown}
-        onMouseUp={prefersReducedMotion ? undefined : handleMouseUp}
+        onClick={isLoading ? undefined : handleClick}
+        onMouseMove={prefersReducedMotion || isLoading ? undefined : handleMouseMove}
+        onMouseEnter={prefersReducedMotion || isLoading ? undefined : updateRect}
+        onMouseLeave={prefersReducedMotion || isLoading ? undefined : handleMouseLeave}
+        onMouseDown={prefersReducedMotion || isLoading ? undefined : handleMouseDown}
+        onMouseUp={prefersReducedMotion || isLoading ? undefined : handleMouseUp}
+        disabled={props.disabled || isLoading}
+        aria-busy={isLoading}
         className={[
           "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
           "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
           "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
+          "disabled:opacity-50 disabled:cursor-not-allowed",
           variants[variant],
           sizes[size],
           className,
@@ -263,6 +268,18 @@ export const MagneticButton = forwardRef<
         {...props}
       >
         <span className="relative z-10 flex items-center justify-center gap-2">
+          {isLoading && (
+            <svg
+              className="animate-spin h-4 w-4 shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
           {children}
         </span>
         {!prefersReducedMotion &&

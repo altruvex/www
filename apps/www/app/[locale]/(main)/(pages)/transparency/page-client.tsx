@@ -213,17 +213,17 @@ export default function TransparencyPageClient() {
                   ref={badgeRef}
                   className="inline-flex items-center gap-2 mt-4 px-3 py-1.5 rounded-lg border border-foreground/12 bg-foreground/4"
                 >
-                  <span className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/70">
+                  <span className="font-mono text-sm leading-normal tracking-wider text-[13px] uppercase text-primary/70">
                     {t("preselected")}
                   </span>
-                  <span className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/70">
+                  <span className="font-mono text-sm leading-normal tracking-wider text-[13px] uppercase text-primary/70">
                     {t(`tierNames.${incomingTier}`)}
                   </span>
                 </div>
               )}
             </div>
             <div ref={progressRef} className="mb-12">
-              <div className="flex justify-between items-center text-[10px] font-mono tracking-[0.18em] uppercase text-primary/40 mb-2.5">
+              <div className="flex justify-between items-center text-[13px] font-mono tracking-[0.18em] uppercase text-primary/40 mb-2.5">
                 <span>
                   {t("step")} {visibleStep} / {TOTAL_STEPS}
                 </span>
@@ -494,7 +494,7 @@ function StepPhoneCapture({
               {error}
             </p>
           )}
-          <p className="mt-2 font-mono text-sm leading-normal tracking-wider text-[10px] text-muted-foreground/70 uppercase">
+          <p className="mt-2 font-mono text-sm leading-normal tracking-wider text-[13px] text-muted-foreground/70 uppercase">
             {t("phoneCapture.phoneHint")}
           </p>
         </div>
@@ -538,7 +538,7 @@ function PDFDownload({
       <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-primary/10 to-transparent opacity-40" />
       <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-1">
+          <p className="font-mono text-sm leading-normal tracking-wider text-[13px] uppercase text-primary/40 mb-1">
             {t("pdf.label")}
           </p>
           <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70">
@@ -638,7 +638,7 @@ function StepResults({
       </p>
       <div className="grid sm:grid-cols-2 gap-6 mb-8">
         <div className="p-8 rounded-lg border border-foreground/25 bg-foreground/5">
-          <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-3">
+          <p className="font-mono text-sm leading-normal tracking-wider text-[13px] uppercase text-primary/40 mb-3">
             {t("results.timeline")}
           </p>
           <p className="text-3xl font-light text-primary">
@@ -649,7 +649,7 @@ function StepResults({
           </p>
         </div>
         <div className="p-8 rounded-lg border border-foreground/50 bg-foreground/10">
-          <p className="font-mono text-sm leading-normal tracking-wider text-[10px] uppercase text-primary/40 mb-3">
+          <p className="font-mono text-sm leading-normal tracking-wider text-[13px] uppercase text-primary/40 mb-3">
             {t("results.investment")}
           </p>
           <p className="text-3xl font-light text-primary">

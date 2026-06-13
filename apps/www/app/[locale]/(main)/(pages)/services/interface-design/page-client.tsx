@@ -124,7 +124,7 @@ function HeroSection() {
         className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
       >
         <p
-          className="font-mono text-[9px] leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
+          className="font-mono text-xs leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
           aria-hidden
         >
           {tHero("scrollHint")}
@@ -266,7 +266,7 @@ const FeatureCard = ({
       >
         <div className="flex items-center gap-4 shrink-0 w-32">
           <div className="w-1.5 h-1.5 rounded-full bg-foreground/20 group-hover:bg-foreground/60 transition-colors duration-500" />
-          <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-foreground/40 group-hover:text-foreground/70 transition-colors duration-500">
+          <span className="font-mono text-[13px] tracking-[0.25em] uppercase text-foreground/40 group-hover:text-foreground/70 transition-colors duration-500">
             SYS // {feature.num}
           </span>
         </div>

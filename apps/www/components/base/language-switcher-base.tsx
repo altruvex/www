@@ -187,7 +187,7 @@ export function LanguageSwitcherBase({
               />
               <span
                 className={cn(
-                  "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground font-mono text-[10px] font-bold leading-none",
+                  "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground font-mono text-[13px] font-bold leading-none",
                   isRTL ? "-left-1" : "-right-1"
                 )}
               >

@@ -127,7 +127,7 @@ export const InitialLoader = memo(function InitialLoader() {
       <div className="pointer-events-none absolute inset-0 opacity-[0.015] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-size-[100%_4px] z-0" />
       <div className="absolute top-0 left-0 right-0 h-px bg-foreground/10" />
       <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 opacity-40">
-        <span className="font-mono text-[9px] leading-normal tracking-[0.28em] uppercase text-foreground">
+        <span className="font-mono text-xs leading-normal tracking-[0.28em] uppercase text-foreground">
           Altruvex / Init
         </span>
         <span className="font-mono text-xs leading-normal tracking-wider text-primary">
@@ -202,7 +202,7 @@ export const InitialLoader = memo(function InitialLoader() {
           <div className="font-sans font-light text-foreground text-[clamp(36px,6vw,72px)] tracking-tight leading-none">
             Altruvex
           </div>
-          <div className="font-mono text-[10px] leading-normal tracking-[0.3em] text-foreground/30 mt-3 uppercase">
+          <div className="font-mono text-[13px] leading-normal tracking-[0.3em] text-foreground/30 mt-3 uppercase">
             Engineering Beyond Standard.
           </div>
         </div>

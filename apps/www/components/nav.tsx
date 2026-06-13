@@ -27,16 +27,28 @@ export function Nav() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNavInverted, setIsNavInverted] = useState(false);
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   useLockBodyScroll(isMobileMenuOpen);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+      const servicesWrapper = document.getElementById("services-wrapper");
+      if (servicesWrapper) {
+        const rect = servicesWrapper.getBoundingClientRect();
+        const overlaps = rect.top <= 64 && rect.bottom >= 0;
+        setIsNavInverted(overlaps && !isMobileMenuOpen);
+      } else {
+        setIsNavInverted(false);
+      }
+    };
     window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isMobileMenuOpen]);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const toggleMobileMenu = () => setIsMobileMenuOpen((open) => !open);
@@ -46,8 +58,9 @@ export function Nav() {
       <header
         dir={dir}
         className={cn(
-          "fixed top-0 z-40 w-full",
+          "fixed top-0 z-40 w-full transition-colors duration-300",
           isScrolled ? "liquid-glass" : "bg-transparent",
+          isNavInverted && "nav-inverted",
         )}
       >
         <Container>
@@ -71,10 +84,14 @@ export function Nav() {
                       key={item.key}
                       href={item.href}
                       className={cn(
-                        "rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                        isActive
-                          ? "bg-foreground/8 text-foreground"
-                          : "text-primary/65 hover:bg-foreground/5 hover:text-foreground",
+                        "rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors duration-300",
+                        isNavInverted
+                          ? isActive
+                            ? "bg-white/10 text-white"
+                            : "text-white/70 hover:bg-white/10 hover:text-white"
+                          : isActive
+                            ? "bg-foreground/8 text-foreground"
+                            : "text-primary/65 hover:bg-foreground/5 hover:text-foreground",
                       )}
                     >
                       {t(item.key)}
@@ -89,7 +106,12 @@ export function Nav() {
                 <NavDivider />
                 <Link
                   href="/transparency"
-                  className="inline-flex h-10 items-center justify-center rounded-full bg-foreground px-4 text-sm font-medium text-background hover:bg-foreground/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  className={cn(
+                    "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    isNavInverted
+                      ? "bg-white text-gray-900 hover:bg-white/90"
+                      : "bg-foreground text-background hover:bg-foreground/90",
+                  )}
                 >
                   {t("getStarted")}
                 </Link>
@@ -108,8 +130,8 @@ export function Nav() {
               >
                 <span
                   className={cn(
-                    "absolute h-[2px] w-full bg-foreground",
-                    "transition-transform duration-300 ease-out",
+                    "absolute h-[2px] w-full transition-all duration-300 ease-out",
+                    isNavInverted ? "bg-white" : "bg-foreground",
                     isMobileMenuOpen
                       ? "rotate-45 translate-y-0"
                       : "translate-y-[-6px]",
@@ -117,8 +139,8 @@ export function Nav() {
                 />
                 <span
                   className={cn(
-                    "absolute h-[2px] w-full bg-foreground",
-                    "transition-transform duration-300 ease-out",
+                    "absolute h-[2px] w-full transition-all duration-300 ease-out",
+                    isNavInverted ? "bg-white" : "bg-foreground",
                     isMobileMenuOpen
                       ? "-rotate-45 translate-y-0"
                       : "translate-y-[6px]",
