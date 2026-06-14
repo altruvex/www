@@ -21,19 +21,46 @@ const TIER_DESTINATION = {
   flagship: "/transparency?tier=flagship",
 } as const;
 
-function HighlightBlob() {
+function HighlightBlobs() {
   return (
     <div
-      className="absolute inset-0 overflow-hidden z-0 pointer-events-none transition-opacity duration-700"
+      className="absolute inset-0 overflow-hidden z-0 pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-opacity duration-700"
       aria-hidden="true"
     >
       <div
-        className="absolute -top-16 -left-16 w-80 h-80 rounded-full blur-3xl opacity-25 dark:opacity-15"
-        style={{ background: "radial-gradient(circle at center, hsl(var(--brand)), transparent 70%)" }}
+        className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-2xl"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(192,132,252,0.45), transparent 70%)",
+        }}
       />
       <div
-        className="absolute -bottom-8 -right-8 w-64 h-64 rounded-full blur-3xl opacity-15 dark:opacity-10"
-        style={{ background: "radial-gradient(circle at center, hsl(var(--brand) / 0.6), transparent 70%)" }}
+        className="absolute top-1/4 left-1/4 w-60 h-60 rounded-full blur-[35px]"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(167,139,250,0.4), transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute top-1/3 -right-12 w-72 h-72 rounded-full blur-2xl"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(249,168,212,0.4), transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute -bottom-10 right-1/4 w-64 h-64 rounded-full blur-[35px]"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(94,234,212,0.4), transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute bottom-1/4 left-1/3 w-72 h-72 rounded-full blur-2xl"
+        style={{
+          background:
+            "radial-gradient(circle at center, rgba(134,239,172,0.35), transparent 70%)",
+        }}
       />
     </div>
   );
@@ -161,6 +188,8 @@ export default function PricingPage() {
         <Container>
           <div className="mb-16">
             <div className="py-12 md:py-24">
+              
+              {/* ORIGINAL HERO SECTION */}
               <div className="mb-20 sm:max-w-5xl max-w-full">
                 <p
                   ref={heroEyebrowRef}
@@ -186,6 +215,8 @@ export default function PricingPage() {
                 </p>
               </div>
               <div className="h-px w-full bg-border mb-14" />
+              
+              {/* ORIGINAL PRICING CARDS */}
               <div
                 ref={tierCardsRef}
                 className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-24 items-start"
@@ -194,14 +225,16 @@ export default function PricingPage() {
                   tier.highlight ? (
                     <article
                       key={tier.id}
-                      className="tier-card group relative rounded-2xl flex flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1"
+                      className="tier-card group relative rounded-2xl flex flex-col transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10"
                     >
-                      <div className="absolute inset-0 bg-background/40 z-0" />
-                      <HighlightBlob />
+                      <div className="absolute inset-0 overflow-hidden rounded-2xl z-0">
+                        <div className="absolute inset-0 bg-background/40 z-0" />
+                        <HighlightBlobs />
+                      </div>
                       <div className="absolute inset-0 z-10 liquid-glass rounded-2xl pointer-events-none" />
                       <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
                         <div className="mb-5">
-                          <span className="inline-flex font-mono text-xs tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border backdrop-blur-md shadow-sm">
+                          <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border backdrop-blur-md shadow-sm">
                             {t("recommended")}
                           </span>
                         </div>
@@ -211,7 +244,7 @@ export default function PricingPage() {
                         >
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <p className="font-mono text-[13px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
+                        <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
                           {tier.internalLabel}
                         </p>
                         <h2
@@ -221,7 +254,7 @@ export default function PricingPage() {
                           {tier.buyerLabel}
                         </h2>
                         {tier.originalPrice && (
-                          <span className="font-mono text-sm line-through text-muted-foreground mb-0.5">
+                          <span className="font-mono text-[11px] line-through text-muted-foreground mb-0.5">
                             {tier.originalPrice}
                           </span>
                         )}
@@ -245,14 +278,6 @@ export default function PricingPage() {
                           ))}
                         </ul>
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3.5 relative z-20">
-                          {tier.notIncluded && (
-                            <p className="text-[13px] text-muted-foreground leading-relaxed font-medium">
-                              {tier.notIncluded}
-                            </p>
-                          )}
-                          <p className="text-sm text-muted-foreground leading-relaxed font-medium">
-                            {tier.nextStep}
-                          </p>
                           <MagneticButton
                             variant="primary"
                             className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
@@ -280,7 +305,7 @@ export default function PricingPage() {
                         >
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <p className="font-mono text-[13px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
+                        <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
                           {tier.internalLabel}
                         </p>
                         <h2
@@ -307,14 +332,6 @@ export default function PricingPage() {
                           ))}
                         </ul>
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3 relative z-20">
-                          {tier.notIncluded && (
-                            <p className="text-[13px] text-muted-foreground/70 leading-relaxed">
-                              {tier.notIncluded}
-                            </p>
-                          )}
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            {tier.nextStep}
-                          </p>
                           <MagneticButton
                             variant="secondary"
                             className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface transition-colors"
@@ -333,10 +350,12 @@ export default function PricingPage() {
                   )
                 )}
               </div>
+
+              {/* REDESIGNED LOGISTICS & COMMERCIAL TERMS */}
               <div className="mb-32 grid grid-cols-1 gap-12 border-t border-border pt-16 md:grid-cols-3">
                 <div className="md:col-span-1">
-                  <p className="mb-3 font-mono text-[13px] uppercase tracking-widest text-muted-foreground/70">
-                    {t("minimumEngagementLabel")}
+                  <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                    {t("minimumEngagement").includes("٢٢") ? "الحد الأدنى للمشاريع" : "Minimum Engagement"}
                   </p>
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
                     {t("minimumEngagement")}
@@ -345,11 +364,11 @@ export default function PricingPage() {
                     {t("ownershipNote")}
                   </p>
                 </div>
-
+                
                 <div ref={commercialNotesRef} className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2">
                   {commercialNotes.map((note) => (
                     <div key={note.key} className="commercial-note">
-                      <p className="mb-3 font-mono text-[13px] uppercase tracking-widest text-muted-foreground/70">
+                      <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
                         {note.label}
                       </p>
                       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -359,9 +378,11 @@ export default function PricingPage() {
                   ))}
                 </div>
               </div>
+
+              {/* REDESIGNED ROI SECTION */}
               <section className="border-t border-border pt-24 pb-12">
                 <div className="mb-16 max-w-3xl">
-                  <p ref={roiEyebrowRef} className="mb-6 font-mono text-[13px] uppercase tracking-[0.22em] text-muted-foreground/70">
+                  <p ref={roiEyebrowRef} className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
                     {t("roi.eyebrow")}
                   </p>
                   <h2 ref={roiTitleRef} className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground">
@@ -376,10 +397,11 @@ export default function PricingPage() {
                     </p>
                   </div>
                 </div>
+
                 <div ref={roiStatsRef} className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12">
                   {roiStats.map((stat) => (
                     <div key={stat.key}>
-                      <p className="mb-4 font-mono text-[13px] uppercase tracking-widest text-muted-foreground/70">
+                      <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
                         {stat.label}
                       </p>
                       <p className="mb-2 text-4xl font-light tracking-tight text-foreground md:text-5xl">
@@ -392,11 +414,12 @@ export default function PricingPage() {
                   ))}
                 </div>
               </section>
+
             </div>
           </div>
         </Container>
       </section>
-
+      
       <FaqSection namespace="pricing" className="border-t border-border pt-12 pb-32" />
       <SectionEndCta variant="transparency" />
     </>

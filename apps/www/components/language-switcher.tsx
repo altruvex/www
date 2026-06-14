@@ -2,6 +2,11 @@
 
 import { LanguageSwitcherBase } from "./base/language-switcher-base";
 
-export function LanguageChanger() {
-  return <LanguageSwitcherBase variant="default" />;
+interface LanguageChangerProps {
+  isInverted?: boolean;
+  isDark?: boolean;
+}
+
+export function LanguageChanger({ isInverted = false, isDark = false }: LanguageChangerProps) {
+  return <LanguageSwitcherBase variant="default" isInverted={isInverted} isDark={isDark} />;
 }

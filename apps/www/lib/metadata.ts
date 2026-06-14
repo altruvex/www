@@ -666,6 +666,34 @@ export const PAGE_METADATA = {
     },
     path: "/writing",
   },
+  faq: {
+    ar: {
+      breadcrumb: "الأسئلة الشائعة",
+      description:
+        "أجوبة على الأسئلة الشائعة حول بناء أنظمة مخصصة ودفع المشاريع وكيفية عمل Altruvex. تعرف على كيفية ملكيتك الكاملة للكود وعدم قفل البائع.",
+      keywords: [
+        "الأسئلة الشائعة عن تطوير الويب",
+        "أسئلة شائعة عن Next.js",
+        "أسعار تطوير مواقع مخصصة",
+        "دعم ما بعد الإطلاق",
+      ],
+      title: "الأسئلة الشائعة | Altruvex",
+    },
+    en: {
+      breadcrumb: "FAQ",
+      description:
+        "Answers to common questions about building custom tech stacks, project pricing, timelines, and how Altruvex works. Learn about code ownership, maintenance plans, and Egyptian payment integrations.",
+      keywords: [
+        "faq web development",
+        "custom build timeline",
+        "web development pricing",
+        "maintenance retainer",
+        "code ownership",
+      ],
+      title: "FAQ | Altruvex - Custom Web Systems",
+    },
+    path: "/faq",
+  },
 } as const satisfies Record<string, PageMetadataEntry>;
 
 export type RouteMetaKey = keyof typeof PAGE_METADATA;

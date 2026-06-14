@@ -436,7 +436,7 @@ export function TechDNASection() {
                               fill: "hsl(var(--foreground))",
                               fontSize: isPrimary ? "11px" : "10px",
                               fontFamily:
-                                "var(--font-mono, 'JetBrains Mono', monospace)",
+                                "var(--font-mono, ui-monospace, monospace)",
                               fontWeight: isActive ? "600" : "400",
                               opacity: isActive ? 1 : 0.7,
                               transition: "opacity 0.2s ease",
@@ -456,7 +456,7 @@ export function TechDNASection() {
                                 ? techAccentHsl(node.accentId)
                                 : "hsl(var(--foreground))",
                               fontSize: "7px",
-                              fontFamily: "var(--font-mono, monospace)",
+                              fontFamily: "var(--font-mono, ui-monospace, monospace)",
                               letterSpacing: "0.12em",
                               opacity: isActive ? 0.85 : 0.25,
                               transition: "fill 0.2s ease, opacity 0.2s ease",

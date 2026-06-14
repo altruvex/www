@@ -45,6 +45,7 @@ export const Footer = memo(function Footer() {
   const resourceLinks = useMemo(
     () => [
       { href: "/pricing", label: t("pricing") },
+      { href: "/faq", label: t("faq") },
       { href: "/writing", label: t("writing") },
       { href: "/schedule", label: t("schedule") },
       { href: "/contact", label: t("contact") },

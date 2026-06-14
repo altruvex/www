@@ -8,14 +8,14 @@ import { buildGlobalSchemas } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Inter, Outfit, Vazirmatn } from "next/font/google";
+import { Geist_Mono, Inter, Outfit, Vazirmatn } from "next/font/google";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-vazirmatn",
   display: "swap",
   preload: true,
@@ -31,8 +31,16 @@ const inter = Inter({
 
 const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-outfit",
+  display: "swap",
+  preload: true,
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-geist-mono",
   display: "swap",
   preload: true,
 });
@@ -68,6 +76,7 @@ export default async function RootLayout({ children, params }: Props) {
           "min-h-screen flex flex-col antialiased overflow-x-auto",
           primaryFontVariable,
           outfit.variable,
+          geistMono.variable,
         )}
       >
         <a

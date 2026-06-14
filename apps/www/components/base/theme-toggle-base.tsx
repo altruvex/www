@@ -1,10 +1,16 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  isInverted?: boolean;
+  isDark?: boolean;
+}
+
+export function ThemeToggle({ isInverted = false, isDark = false }: ThemeToggleProps) {
   const { setTheme, resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
     () => () => undefined,
@@ -20,11 +26,14 @@ export function ThemeToggle() {
     }
   };
 
+  const iconColor = isInverted && isDark ? "text-gray-900" : "text-foreground";
+  const buttonHoverColor = isInverted && isDark ? "hover:text-gray-900/80" : "hover:text-foreground/80";
+
   if (!mounted || !resolvedTheme) {
     return (
       <button
         type="button"
-        className="group rounded-lg p-2.5 sm:p-2 h-11 w-11 sm:h-9 sm:w-9 flex items-center justify-center transition-all duration-200"
+        className={cn("group flex h-11 w-11 items-center justify-center rounded-lg transition-all duration-200", iconColor)}
         disabled
         aria-label="Toggle theme"
       >
@@ -38,7 +47,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="group flex h-11 w-11 items-center justify-center transition-all duration-200"
+      className={cn("group flex h-11 w-11 items-center justify-center transition-all duration-200", iconColor, buttonHoverColor)}
       aria-label={`Switch to ${resolvedTheme === "light" ? "dark" : "light"} mode`}
     >
       {resolvedTheme === "light" ? (

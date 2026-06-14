@@ -9,7 +9,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { AltruvexLogo } from "./altruvex-logo";
 
 const NAV_ITEMS = [
@@ -28,6 +28,20 @@ export function Nav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavInverted, setIsNavInverted] = useState(false);
+
+  const isDark = useSyncExternalStore(
+    (onStoreChange) => {
+      if (typeof document === "undefined") return () => undefined;
+      const observer = new MutationObserver(() => onStoreChange());
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+      return () => observer.disconnect();
+    },
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+    () => false,
+  );
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
@@ -71,7 +85,7 @@ export function Nav() {
             >
               <div className="flex order-1 justify-start">
                 <Link href="/" className="flex items-baseline gap-1 group">
-                  <AltruvexLogo size="md" variant="full" />
+                  <AltruvexLogo size="md" variant="full" inverted={isNavInverted} isDark={isDark} />
                 </Link>
               </div>
               <nav className="flex items-center justify-center gap-1 order-2">
@@ -86,9 +100,13 @@ export function Nav() {
                       className={cn(
                         "rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors duration-300",
                         isNavInverted
-                          ? isActive
-                            ? "bg-white/10 text-white"
-                            : "text-white/70 hover:bg-white/10 hover:text-white"
+                          ? isDark
+                            ? isActive
+                              ? "bg-gray-900/20 text-gray-900"
+                              : "text-gray-900/70 hover:bg-gray-900/10 hover:text-gray-900"
+                            : isActive
+                              ? "bg-white/10 text-white"
+                              : "text-white/70 hover:bg-white/10 hover:text-white"
                           : isActive
                             ? "bg-foreground/8 text-foreground"
                             : "text-primary/65 hover:bg-foreground/5 hover:text-foreground",
@@ -100,16 +118,18 @@ export function Nav() {
                 })}
               </nav>
               <div className="flex items-center gap-2 order-3 justify-end text-nowrap">
-                <LanguageChanger />
-                <NavDivider />
-                <ThemeChanger />
-                <NavDivider />
+                <LanguageChanger isInverted={isNavInverted} isDark={isDark} />
+                <NavDivider isInverted={isNavInverted} isDark={isDark} />
+                <ThemeChanger isInverted={isNavInverted} isDark={isDark} />
+                <NavDivider isInverted={isNavInverted} isDark={isDark} />
                 <Link
                   href="/transparency"
                   className={cn(
                     "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isNavInverted
-                      ? "bg-white text-gray-900 hover:bg-white/90"
+                      ? isDark
+                        ? "bg-gray-900 text-white hover:bg-gray-900/90"
+                        : "bg-white text-gray-900 hover:bg-white/90"
                       : "bg-foreground text-background hover:bg-foreground/90",
                   )}
                 >
@@ -119,7 +139,7 @@ export function Nav() {
             </div>
             <div className="flex lg:hidden w-full items-center justify-between">
               <Link href="/" className="flex items-baseline gap-1 group z-50">
-                <AltruvexLogo size="md" variant="full" />
+                <AltruvexLogo size="md" variant="full" inverted={isNavInverted} isDark={isDark} />
               </Link>
               <button
                 type="button"
@@ -131,7 +151,7 @@ export function Nav() {
                 <span
                   className={cn(
                     "absolute h-[2px] w-full transition-all duration-300 ease-out",
-                    isNavInverted ? "bg-white" : "bg-foreground",
+                    isNavInverted ? (isDark ? "bg-gray-900" : "bg-white") : "bg-foreground",
                     isMobileMenuOpen
                       ? "rotate-45 translate-y-0"
                       : "translate-y-[-6px]",
@@ -140,7 +160,7 @@ export function Nav() {
                 <span
                   className={cn(
                     "absolute h-[2px] w-full transition-all duration-300 ease-out",
-                    isNavInverted ? "bg-white" : "bg-foreground",
+                    isNavInverted ? (isDark ? "bg-gray-900" : "bg-white") : "bg-foreground",
                     isMobileMenuOpen
                       ? "-rotate-45 translate-y-0"
                       : "translate-y-[6px]",
@@ -228,6 +248,17 @@ export function Nav() {
   );
 }
 
-function NavDivider() {
-  return <div className="h-4 w-px bg-foreground/8 ltr:mx-1 rtl:mx-1" />;
+function NavDivider({ isInverted = false, isDark = false }: { isInverted?: boolean; isDark?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "h-4 w-px ltr:mx-1 rtl:mx-1 transition-colors duration-300",
+        isInverted
+          ? isDark
+            ? "bg-gray-900/20"
+            : "bg-white/20"
+          : "bg-foreground/8"
+      )}
+    />
+  );
 }

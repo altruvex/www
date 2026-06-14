@@ -144,7 +144,7 @@ export const InitialLoader = memo(function InitialLoader() {
               key={i}
               className="flex items-center tracking-wide font-mono text-[clamp(11px,1vw,13px)] leading-[1.6] min-h-[1.6em]"
               style={{
-                fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+                fontFamily: "var(--font-mono, ui-monospace, monospace)",
                 opacity: reduced ? 1 : 0,
                 transform: reduced ? "none" : "translateY(4px)",
                 animation: reduced

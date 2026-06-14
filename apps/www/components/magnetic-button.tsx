@@ -10,7 +10,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "filled";
 type ButtonSize = "default" | "lg";
 
 interface Ripple {
@@ -231,6 +231,8 @@ export const MagneticButton = forwardRef<
         "bg-transparent text-primary/85 border border-foreground/40 hover:bg-foreground/5 hover:border-foreground/60",
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
+      filled:
+        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-all duration-300",
     };
 
     const sizes: Record<ButtonSize, string> = {
@@ -253,7 +255,7 @@ export const MagneticButton = forwardRef<
           "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
           "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
           "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
+          "disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-primary/20 disabled:hover:text-primary/75",
           variants[variant],
           sizes[size],
           className,
