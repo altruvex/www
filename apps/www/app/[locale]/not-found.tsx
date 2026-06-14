@@ -45,10 +45,10 @@ export default function NotFoundPage() {
             {t("body")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <MagneticButton size="lg" variant="primary">
+            <MagneticButton asChild size="lg" variant="primary">
               <Link href="/">{t("goHome")}</Link>
             </MagneticButton>
-            <MagneticButton size="lg" variant="secondary">
+            <MagneticButton asChild size="lg" variant="secondary">
               <Link href="/contact">{t("contactUs")}</Link>
             </MagneticButton>
           </div>

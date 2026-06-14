@@ -289,7 +289,7 @@ export const TransparencySection = memo(function TransparencySection() {
 
   const optCls = (selected: boolean) =>
     cn(
-      "relative p-5 rounded-lg border text-start transition-all duration-300",
+      "relative p-5 rounded-lg border text-start transition-[border-color,background-color,box-shadow] duration-300",
       selected
         ? "border-foreground/40 bg-surface ring-1 ring-foreground/30"
         : "border-border bg-surface/50 hover:border-foreground/20 hover:bg-surface",
@@ -332,7 +332,7 @@ export const TransparencySection = memo(function TransparencySection() {
         >
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-border">
             <div
-              className="h-full bg-brand transition-all duration-500 ease-out"
+              className="h-full bg-brand transition-[width] duration-500 ease-out"
               style={{ width: `${(step / 5) * 100}%` }}
             />
           </div>
@@ -683,6 +683,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         </span>
                       </MagneticButton>
                       <MagneticButton
+                        asChild
                         variant="secondary"
                         size="lg"
                         className="w-full justify-center group"

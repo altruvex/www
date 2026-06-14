@@ -100,9 +100,10 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
               scrub: scrub || false,
               toggleActions: once ? "play none none none" : "play none none reverse",
               fastScrollEnd: true,
+              invalidateOnRefresh: true,
             },
             onComplete() {
-              gsap.set(el, { willChange: "auto", clearProps: "willChange,transform" });
+              gsap.set(el, { clearProps: "willChange,transform" });
             },
           });
         }

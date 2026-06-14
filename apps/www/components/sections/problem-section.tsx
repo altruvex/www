@@ -1,9 +1,12 @@
 "use client";
 import { Container } from "@/components/container";
+import { ArrowLabel } from "@/components/directional-link";
+import { MagneticButton } from "@/components/magnetic-button";
+import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
-import { memo, useRef } from "react";
+import { memo } from "react";
 
 const PAINS = [
   {
@@ -31,19 +34,18 @@ const PAINS = [
 export const ProblemSection = memo(function ProblemSection() {
   const t = useTranslations();
   const tCommon = useTranslations("common");
+  const tCTAs = useTranslations("commercial.ctas");
   const stepLabel = tCommon("step");
   const auditCta = getCommercialCta("technicalAudit");
 
-  const sectionRef = useRef<HTMLElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const descRef = useSectionDescription();
+  const gridRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-pain]", stagger: 0.06 });
 
   return (
     <section
       id="problem"
-      ref={sectionRef}
       className="relative border-y border-border bg-background pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
@@ -101,9 +103,16 @@ export const ProblemSection = memo(function ProblemSection() {
                   </p>
                 </div>
               </div>
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none bg-linear-to-br from-muted/50 to-transparent" />
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-linear-to-br from-muted/50 to-transparent" />
             </div>
           ))}
+        </div>
+        <div className="mt-12 flex">
+          <MagneticButton asChild size="lg" variant="secondary" className="group">
+            <Link href={auditCta.href}>
+              <ArrowLabel>{tCTAs("technicalAudit")}</ArrowLabel>
+            </Link>
+          </MagneticButton>
         </div>
       </Container>
     </section>

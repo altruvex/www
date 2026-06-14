@@ -322,12 +322,12 @@ function ClosingSection() {
             </p>
           </div>
           <div ref={ctaRef} className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <MagneticButton size="lg">
+            <MagneticButton asChild size="lg">
               <Link href={contactCta.href}>
                 <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
               </Link>
             </MagneticButton>
-            <MagneticButton size="lg" variant="secondary">
+            <MagneticButton asChild size="lg" variant="secondary">
               <Link href={scopeCta.href}>
                 <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
               </Link>

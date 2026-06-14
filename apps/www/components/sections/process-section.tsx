@@ -5,6 +5,7 @@ import { cn, splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useState } from "react";
 import { Container } from "../container";
+import { Plus } from "lucide-react";
 
 interface ProcessStep {
   index: string;
@@ -62,7 +63,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
 
         <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-s-border transition-colors duration-200 group-data-[open=true]:border-s-border-hover">
           <span className="block font-mono text-sm leading-none text-s-low transition-transform duration-300 group-data-[open=true]:rotate-45 group-data-[open=true]:text-s-high rtl:group-data-[open=true]:-rotate-45">
-            +
+            <Plus className="pointer-events-none size-4 shrink-0 transition-transform duration-200" />
           </span>
         </span>
       </button>

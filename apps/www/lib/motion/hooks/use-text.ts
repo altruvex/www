@@ -128,6 +128,7 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
               once,
               fastScrollEnd: true,
               toggleActions: once ? "play none none none" : "play none none reverse",
+              invalidateOnRefresh: true,
             },
             onComplete() {
               gsap.set(targets, { clearProps: "willChange,filter,transform" });

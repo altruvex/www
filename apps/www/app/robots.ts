@@ -1,14 +1,27 @@
 import { MetadataRoute } from "next";
+import { SITE_CONFIG } from "@/lib/metadata";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://altruvex.com";
+  const baseUrl = SITE_CONFIG.url;
 
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin/", "/_next/"],
+        disallow: ["/api/", "/admin/"],
+      },
+      {
+        userAgent: [
+          "GPTBot",
+          "ChatGPT-User",
+          "OAI-SearchBot",
+          "PerplexityBot",
+          "ClaudeBot",
+          "Google-Extended",
+        ],
+        allow: "/",
+        disallow: ["/api/", "/admin/"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

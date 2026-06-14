@@ -51,12 +51,12 @@ export function CtaSection() {
               {t("body")}
             </p>
             <div className="flex flex-col gap-3">
-              <MagneticButton size="lg">
+              <MagneticButton asChild size="lg">
                 <Link href={callCta.href}>
                   <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
                 </Link>
               </MagneticButton>
-              <MagneticButton size="lg" variant="secondary">
+              <MagneticButton asChild size="lg" variant="secondary">
                 <Link href={scopeCta.href}>
                   <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
                 </Link>

@@ -59,7 +59,7 @@
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-dm-serif), serif;
   --radius-xs: calc(var(--radius) - 4px);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -75,11 +75,15 @@
   --animate-ripple: ripple 0.6s ease-out forwards;
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
   --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  --animate-menu-panel-in: menu-panel-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 :root {
   --duration-instant: 120ms;
+  --duration-hover: 150ms;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
   --radius: 0.5rem;
   --text-body-base: clamp(17px, 1.05vw, 18px);
   --text-label: 12px;
@@ -187,7 +191,6 @@
 }
 
 [data-scene="inverted"] {
-  background-color: hsl(var(--inverted-bg));
   --foreground: 0 0% 94%;
   --primary: 0 0% 94%;
   --border: 0 0% 100% / 0.08;
@@ -217,30 +220,16 @@
   --s-high-soft: hsl(0 0% 6% / 0.03);
 }
 
-header[data-scene="inverted"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
-    0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
-}
-
-.dark header[data-scene="inverted"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.05) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow: 
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
-    0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
+/* Paint the solid inverted backdrop on scene containers (e.g. the services
+   wrapper) — but never the fixed header. The header carries
+   data-scene="inverted" only so its foreground tokens flip while it overlaps
+   the inverted scene; its surface stays transparent until the `.liquid-glass`
+   class (scroll state) layers the scene-aware glass material on top.
+   This is split out from the token block above so it can exclude the header
+   without an !important override (which would otherwise be needed because this
+   unlayered rule outranks the layered .liquid-glass utilities). */
+[data-scene="inverted"]:not(header) {
+  background-color: hsl(var(--inverted-bg));
 }
 
 @layer base {
@@ -415,32 +404,155 @@ html.lenis body {
   }
 }
 
+@keyframes menu-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    backdrop-filter: blur(20px);
+  }
+}
+
 @layer utilities {
+  /*
+   * Liquid glass material.
+   *
+   * Two visual treatments — "light glass" (frosted bright pane, for dark/
+   * vivid backdrops with dark content) and "dark glass" (translucent dark
+   * pane, for light backdrops) — mapped onto four contexts:
+   *
+   *   light mode, normal scene        -> light glass   (.liquid-glass)
+   *   dark mode,  normal scene        -> dark glass
+   *   light mode, inverted scene      -> dark glass   (backdrop is dark)
+   *   dark mode,  inverted scene      -> light glass  (backdrop is light)
+   *
+   * The inverted-scene selectors cover both the scene element itself
+   * (e.g. the header: `.liquid-glass[data-scene="inverted"]`) and any glass
+   * nested inside it (`[data-scene="inverted"] .liquid-glass`).
+   */
   .liquid-glass {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.4) 0%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
-    backdrop-filter: blur(16px) saturate(140%);
-    -webkit-backdrop-filter: blur(16px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    --lg-blur: 20px;
+    background:
+      radial-gradient(
+        130% 130% at 0% 0%,
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.1) 45%,
+        transparent 100%
+      ),
+      linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+      );
+    backdrop-filter: blur(var(--lg-blur)) saturate(180%) brightness(1.06);
+    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(180%)
+      brightness(1.06);
+    border: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow:
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
-      0 8px 32px 0 rgba(0, 0, 0, 0.1);
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.04),
+      inset 0 0 20px 0 rgba(255, 255, 255, 0.12),
+      0 10px 30px -10px rgba(0, 0, 0, 0.18);
   }
 
-  .dark .liquid-glass {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(255, 255, 255, 0.02) 100%
-    );
-    border-color: rgba(255, 255, 255, 0.1);
+  .dark .liquid-glass,
+  .liquid-glass[data-scene="inverted"],
+  [data-scene="inverted"] .liquid-glass {
+    background:
+      radial-gradient(
+        130% 130% at 0% 0%,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.03) 45%,
+        transparent 100%
+      ),
+      linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.02) 100%
+      );
+    border-color: rgba(255, 255, 255, 0.14);
     box-shadow:
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
-      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
-      0 8px 32px 0 rgba(0, 0, 0, 0.4);
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
+      inset 0 0 24px 0 rgba(255, 255, 255, 0.04),
+      0 12px 36px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Dark mode over the inverted (now light) scene flips back to light glass. */
+  .dark .liquid-glass[data-scene="inverted"],
+  .dark [data-scene="inverted"] .liquid-glass {
+    background:
+      radial-gradient(
+        130% 130% at 0% 0%,
+        rgba(255, 255, 255, 0.55) 0%,
+        rgba(255, 255, 255, 0.1) 45%,
+        transparent 100%
+      ),
+      linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(255, 255, 255, 0.08) 100%
+      );
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.04),
+      inset 0 0 20px 0 rgba(255, 255, 255, 0.12),
+      0 10px 30px -10px rgba(0, 0, 0, 0.18);
+  }
+
+  /*
+   * Lighter, token-driven glass for content surfaces (cards, panels, the
+   * mobile menu). Cheaper blur and a higher base opacity than `.liquid-glass`
+   * so text stays legible over flat section backgrounds, and it themes
+   * automatically via the --card / --foreground tokens (no rgba leaks).
+   */
+  .liquid-glass-panel {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.72) 0%,
+      hsl(var(--card) / 0.5) 100%
+    );
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid hsl(var(--foreground) / 0.08);
+    box-shadow:
+      inset 0 1px 0 0 hsl(var(--foreground) / 0.06),
+      0 8px 24px -14px hsl(0 0% 0% / 0.2);
+  }
+
+  .dark .liquid-glass-panel {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--card) / 0.62) 0%,
+      hsl(var(--card) / 0.4) 100%
+    );
+    border-color: hsl(0 0% 100% / 0.08);
+    box-shadow:
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.06),
+      0 12px 32px -14px hsl(0 0% 0% / 0.55);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .liquid-glass {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: hsl(var(--background) / 0.92);
+    }
+    .dark .liquid-glass,
+    .liquid-glass[data-scene="inverted"],
+    [data-scene="inverted"] .liquid-glass {
+      background: hsl(var(--background) / 0.92);
+    }
+    .liquid-glass-panel,
+    .dark .liquid-glass-panel {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: hsl(var(--card));
+    }
   }
 }

@@ -81,7 +81,7 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton
+            <MagneticButton asChild
               size="lg"
               variant="primary"
               className="group w-full sm:w-auto"

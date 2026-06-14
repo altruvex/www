@@ -86,7 +86,7 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton
+            <MagneticButton asChild
               size="lg"
               variant="primary"
               className="group w-full sm:w-auto"
@@ -248,10 +248,10 @@ function ClosingCtaSection() {
             {t("description")}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <MagneticButton size="lg" variant="primary" className="w-full sm:w-auto">
+            <MagneticButton asChild size="lg" variant="primary" className="w-full sm:w-auto">
               <Link href={technicalCallCta.href}>{tCTAs("technicalCall")}</Link>
             </MagneticButton>
-            <MagneticButton
+            <MagneticButton asChild
               size="lg"
               variant="secondary"
               className="w-full sm:w-auto"

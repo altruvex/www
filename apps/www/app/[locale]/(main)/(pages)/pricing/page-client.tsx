@@ -278,7 +278,7 @@ export default function PricingPage() {
                           ))}
                         </ul>
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3.5 relative z-20">
-                          <MagneticButton
+                          <MagneticButton asChild
                             variant="primary"
                             className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
                           >
@@ -332,7 +332,7 @@ export default function PricingPage() {
                           ))}
                         </ul>
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3 relative z-20">
-                          <MagneticButton
+                          <MagneticButton asChild
                             variant="secondary"
                             className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface transition-colors"
                           >
@@ -420,7 +420,7 @@ export default function PricingPage() {
         </Container>
       </section>
       
-      <FaqSection namespace="pricing" className="border-t border-border pt-12 pb-32" />
+      <FaqSection namespace="pricing.faq" className="border-t border-border pt-12 pb-32" />
       <SectionEndCta variant="transparency" />
     </>
   );

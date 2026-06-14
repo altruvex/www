@@ -188,7 +188,7 @@
       "year": "2025"
     },
     "art-lighting-store": {
-      "client": "Confidential E-Commerce Brand",
+      "client": "Art Lighting Store",
       "industry": "Premium home lighting",
       "metrics": [
         {
@@ -204,7 +204,7 @@
           "value": "Synced live"
         }
       ],
-      "name": "Premium lighting e-commerce",
+      "name": "Art Lighting Store",
       "outcome": "A production storefront with high-resolution product imagery, synchronized inventory, and a handoff the client team can operate without engineering support.",
       "problem": "The client sold high-end fixtures where material and finish detail matter, but their existing platform compressed images aggressively and loaded slowly. Customers could not properly inspect finishes or scale, and inventory was fragmented across multiple systems - creating overselling risk.",
       "solution": "We designed a custom Next.js storefront with an image pipeline tuned for high-resolution zoom without sacrificing load time. Inventory is synchronized via webhooks into a single source of truth, and pages are statically generated with targeted revalidation for fast, consistent delivery.",
@@ -346,8 +346,8 @@
       },
       "points": [
         {
-          "body": "Multilingual are engineered as equal experiences - not mirrored afterthoughts layered on an LTR base.",
-          "title": "01 - Development of a website that supports multiple languages"
+          "body": "Both languages are engineered as equal experiences — not mirrored afterthoughts on an LTR base.",
+          "title": "01 - Bilingual by architecture."
         },
         {
           "body": "Every scope starts from business requirements - not a recycled theme, a plugin stack, or a purchased UI kit.",
@@ -597,7 +597,7 @@
     "approach": "Approach",
     "closeMenu": "Close menu",
     "contact": "Contact",
-    "getStarted": "Start a Project",
+    "getStarted": "Get an Estimate",
     "home": "Home",
     "how-we-work": "How We Work",
     "language": "Language",
@@ -633,6 +633,14 @@
     "eyebrow": "Service Architecture",
     "title": "How we build",
     "titleItalic": "systems that last"
+  },
+  "pricingSignal": {
+    "eyebrow": "Pricing",
+    "title": "Transparent pricing. No hidden costs.",
+    "subtitle": "Fixed scopes, clear ranges, full ownership. Know the investment before the first call.",
+    "fromLabel": "Starting from",
+    "ctaLabel": "See full pricing",
+    "footnote": "Final quote depends on scope, confirmed in discovery."
   },
   "pricing": {
     "commercial": {
@@ -2287,19 +2295,19 @@
       },
       "08": {
         "question": "What happens after the 30-day post-launch warranty ends?",
-        "answer": "You have three options:\n\n1. **Maintenance Retainer** (Recommended for most): Essential tier is 2,000 EGP/month, Professional is 4,000 EGP/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.\n\n2. **As-Needed Support**: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.\n\n3. **Bring Your Own Team**: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.\n\nMost clients choose the retainer because it means someone's always watching for performance degradation or security issues."
+        "answer": "<p>You have three options:</p><ol><li><strong>Maintenance Retainer</strong> (Recommended for most): Essential tier is 2,000 EGP/month, Professional is 4,000 EGP/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because it means someone's always watching for performance degradation or security issues.</p>"
       },
       "09": {
         "question": "Can we hire a different developer to maintain our system later?",
-        "answer": "Yes. That's why we build the way we do.\n\nThe handover package makes it possible for any competent full-stack developer to take over. They'll understand:\n\n• The technology choices (Next.js, databases, deployment strategy)\n• The business logic (why workflows are structured the way they are)\n• The operational concerns (monitoring, error tracking, scaling)\n\nWe typically do a 4-6 hour knowledge transfer call, then your developer is on their own. Some clients do this immediately after launch; others wait 2 years. It's your call."
+        "answer": "<p>Yes. That's why we build the way we do.</p><p>The handover package makes it possible for any competent full-stack developer to take over. They'll understand:</p><ul><li>The technology choices (Next.js, databases, deployment strategy)</li><li>The business logic (why workflows are structured the way they are)</li><li>The operational concerns (monitoring, error tracking, scaling)</li></ul><p>We typically do a 4-6 hour knowledge transfer call, then your developer is on their own. Some clients do this immediately after launch; others wait 2 years. It's your call.</p>"
       },
       "10": {
         "question": "What if I need something complex that doesn't fit the pricing tiers?",
-        "answer": "Custom quotes exist for a reason. The tiers (Essential, Professional, Flagship, E-commerce) are reference points, not ceilings.\n\nCommon custom scenarios:\n\n• Multi-tenant SaaS platform (different from single-business dashboard)\n• Complex ERP integration (SAP, NetSuite, Odoo connectivity)\n• Real-time analytics or reporting engine\n• API-first architecture for third-party integrations\n• Hybrid mobile + web system\n\nWe scope these in discovery, then quote based on engineering complexity, timeline, and infrastructure needs. If it's genuinely custom, you get a custom price."
+        "answer": "<p>Custom quotes exist for a reason. The tiers (Essential, Professional, Flagship, E-commerce) are reference points, not ceilings.</p><p>Common custom scenarios:</p><ul><li>Multi-tenant SaaS platform (different from single-business dashboard)</li><li>Complex ERP integration (SAP, NetSuite, Odoo connectivity)</li><li>Real-time analytics or reporting engine</li><li>API-first architecture for third-party integrations</li><li>Hybrid mobile + web system</li></ul><p>We scope these in discovery, then quote based on engineering complexity, timeline, and infrastructure needs. If it's genuinely custom, you get a custom price.</p>"
       },
       "11": {
         "question": "How do you charge for projects? What's the payment schedule?",
-        "answer": "Milestone-based, not time-and-materials:\n\n• **Deposit** (typically 30-40% of total): Secures your build window\n• **Mid-project** (typically 30%): Upon completion of discovery and design approval\n• **Final** (typically 30%): Upon delivery to production\n\nNo hidden fees. Your quote includes:\n\n• Domain and SSL setup\n• Base hosting (Vercel or your infrastructure)\n• Deployment and CI/CD\n• Post-launch monitoring for 30 days\n\nThird-party tools (Stripe, Fawry, SMS services, analytics) are only billed if your project actually uses them — and at their standard rates, not marked up."
+        "answer": "<p>Milestone-based, not time-and-materials:</p><ul><li><strong>Deposit</strong> (typically 30-40% of total): Secures your build window</li><li><strong>Mid-project</strong> (typically 30%): Upon completion of discovery and design approval</li><li><strong>Final</strong> (typically 30%): Upon delivery to production</li></ul><p>No hidden fees. Your quote includes:</p><ul><li>Domain and SSL setup</li><li>Base hosting (Vercel or your infrastructure)</li><li>Deployment and CI/CD</li><li>Post-launch monitoring for 30 days</li></ul><p>Third-party tools (Stripe, Fawry, SMS services, analytics) are only billed if your project actually uses them — and at their standard rates, not marked up.</p>"
       },
       "12": {
         "question": "Can we start small and expand later?",
@@ -2311,7 +2319,7 @@
       },
       "14": {
         "question": "What's your actual experience? Can you show me projects?",
-        "answer": "We've built:\n\n• **Altruvex.com** — Our own website (Web Engineering, 2025). Built with Next.js, Turborepo, deployed to Vercel.\n• **NewLight Lighting Store** — E-commerce with Fawry integration, inventory management, multi-tier workflows (2024)\n• **Art Lighting Store** — E-commerce platform with advanced filtering and performance optimization (2024)\n\nYou can examine these live to understand our engineering standards. We don't use stock imagery or templates — what you see is what we build.\n\nFor more detailed case studies and technical breakdowns, check the Work section on our site."
+        "answer": "<p>We've built:</p><ul><li><strong>Altruvex.com</strong> — Our own website (Web Engineering, 2025). Built with Next.js, Turborepo, deployed to Vercel.</li><li><strong>NewLight Lighting Store</strong> — E-commerce with Fawry integration, inventory management, multi-tier workflows (2024)</li><li><strong>Art Lighting Store</strong> — E-commerce platform with advanced filtering and performance optimization (2024)</li></ul><p>You can examine these live to understand our engineering standards. We don't use stock imagery or templates — what you see is what we build.</p><p>For more detailed case studies and technical breakdowns, check the Work section on our site.</p>"
       }
     }
   }

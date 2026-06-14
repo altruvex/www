@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { getTranslations } from "next-intl/server";
 import { ArrowIcon } from "../directional-link";
-import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
+import { HeroBatch, HeroHeadline, HeroMetricValue, HeroReveal } from "./hero-motion-wrappers";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -82,6 +82,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
           >
             <MagneticButton
+              asChild
               size="lg"
               className="w-full sm:w-auto min-w-[180px]"
             >
@@ -94,6 +95,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               </Link>
             </MagneticButton>
             <MagneticButton
+              asChild
               size="lg"
               variant="secondary"
               className="w-full sm:w-auto min-w-[180px]"
@@ -127,7 +129,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
                 }}
               >
                 <span className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-light tabular-nums text-foreground block">
-                  {s.value}
+                  <HeroMetricValue value={s.value} delay={i * 0.1} />
                 </span>
                 <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal mt-2 block text-muted-foreground">
                   {s.label}

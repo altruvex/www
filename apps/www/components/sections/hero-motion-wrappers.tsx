@@ -1,8 +1,10 @@
 "use client";
 
 import { useBatch } from "@/lib/motion/hooks/use-batch";
+import { useCounter } from "@/lib/motion/hooks/use-counter";
 import { useReveal } from "@/lib/motion/hooks/use-reveal";
 import { useText } from "@/lib/motion/hooks/use-text";
+import { MOTION } from "@/lib/motion/config";
 import { motion } from "@/lib/motion/utils/presets";
 import { type ReactNode } from "react";
 
@@ -34,7 +36,7 @@ export function HeroReveal({
   delay = 0,
   distance,
 }: HeroRevealProps) {
-  const ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay, distance }));
+  const ref = useReveal<HTMLDivElement>(motion.heroReveal({ delay, distance }));
 
   return (
     <div ref={ref} className={className}>
@@ -57,4 +59,24 @@ export function HeroBatch({ children, className, delay = 0 }: HeroBatchProps) {
       {children}
     </div>
   );
+}
+
+function parseMetricValue(raw: string): { num: number; suffix: string } {
+  const match = raw.match(/^([\d.]+)(.*)$/);
+  if (!match) return { num: 0, suffix: raw };
+  return { num: parseFloat(match[1]), suffix: match[2] };
+}
+
+export function HeroMetricValue({ value, delay = 0 }: { value: string; delay?: number }) {
+  const { num, suffix } = parseMetricValue(value);
+  const ref = useCounter<HTMLSpanElement>({
+    to: num,
+    suffix,
+    duration: MOTION.duration.slow,
+    delay: 0.9 + delay,
+    ease: MOTION.ease.strong,
+    trigger: "top 110%",
+    once: true,
+  });
+  return <span ref={ref}>{value}</span>;
 }

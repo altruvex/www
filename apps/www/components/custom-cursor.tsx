@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 const CURSOR_SIZE = { outer: 32, inner: 8 };
 const IDLE_TIMEOUT = 2000;
-const LERP_FACTOR = 0.05;
+const LERP_FACTOR = 0.1;
 const MAGNETIC_STRENGTH = 0.15;
 
 function CustomCursor() {

@@ -31,10 +31,23 @@ const FOUNDER_ID = `${SITE_CONFIG.url}#founder`;
 
 const AREA_SERVED = [
   "Egypt",
+  "Cairo",
   "Saudi Arabia",
   "United Arab Emirates",
   "Middle East",
   "Worldwide",
+];
+
+const KNOWS_ABOUT = [
+  "Altruvex",
+  "Custom web development",
+  "Technical web engineering",
+  "Next.js delivery",
+  "Bilingual web systems",
+  "Arabic and English websites",
+  "RTL web architecture",
+  "Website performance engineering",
+  "Technical SEO implementation",
 ];
 
 const SERVICE_DEFINITIONS: Record<
@@ -123,6 +136,7 @@ function buildBreadcrumbSchema(
 ): JsonLdSchema {
   return {
     "@context": "https://schema.org",
+    "@id": `${getLocalizedUrl(locale, items.at(-1)?.path ?? "/")}#breadcrumb`,
     "@type": "BreadcrumbList",
     itemListElement: items.map((item, index) => ({
       "@type": "ListItem",
@@ -139,8 +153,21 @@ function buildOrganizationSchema(): JsonLdSchema {
   return {
     "@context": "https://schema.org",
     "@id": ORGANIZATION_ID,
-    "@type": "Organization",
+    "@type": ["Organization", "ProfessionalService"],
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: SITE_CONFIG.location.countryCode,
+      addressLocality: SITE_CONFIG.location.city,
+      addressRegion: SITE_CONFIG.location.region,
+    },
+    alternateName: SITE_CONFIG.alternateNames,
     areaServed: AREA_SERVED,
+    brand: {
+      "@type": "Brand",
+      name: SITE_CONFIG.name,
+      slogan: SITE_CONFIG.slogan,
+      url: SITE_CONFIG.url,
+    },
     contactPoint: {
       "@type": "ContactPoint",
       areaServed: AREA_SERVED,
@@ -156,16 +183,28 @@ function buildOrganizationSchema(): JsonLdSchema {
       name: SITE_CONFIG.founder.name,
       sameAs: SITE_CONFIG.founder.linkedin,
     },
-    knowsAbout: [
-      "Custom web development",
-      "Technical web engineering",
-      "Next.js delivery",
-      "Bilingual web systems",
-      "RTL web architecture",
-    ],
+    foundingLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: SITE_CONFIG.location.countryCode,
+        addressLocality: SITE_CONFIG.location.city,
+        addressRegion: SITE_CONFIG.location.region,
+      },
+      name: `${SITE_CONFIG.location.city}, ${SITE_CONFIG.location.country}`,
+    },
+    identifier: {
+      "@type": "PropertyValue",
+      name: "Official website",
+      propertyID: "domain",
+      value: "altruvex.com",
+    },
+    knowsAbout: KNOWS_ABOUT,
+    knowsLanguage: ["English", "Arabic"],
     logo: `${SITE_CONFIG.url}/apple-touch-icon.png`,
     name: SITE_CONFIG.name,
     sameAs: socialProfiles,
+    slogan: SITE_CONFIG.slogan,
     telephone: SITE_CONFIG.phone,
     url: SITE_CONFIG.url,
   };
@@ -177,21 +216,31 @@ function buildLocalBusinessSchema(locale: SupportedLocale): JsonLdSchema {
   return {
     "@context": "https://schema.org",
     "@id": LOCAL_BUSINESS_ID,
-    "@type": "LocalBusiness",
+    "@type": ["LocalBusiness", "ProfessionalService"],
     address: {
       "@type": "PostalAddress",
       addressCountry: SITE_CONFIG.location.countryCode,
       addressLocality: SITE_CONFIG.location.city,
       addressRegion: SITE_CONFIG.location.region,
     },
+    alternateName: SITE_CONFIG.alternateNames,
     areaServed: AREA_SERVED,
     description: home.description,
     image: getLocalizedUrl(locale, "/opengraph-image"),
+    knowsAbout: KNOWS_ABOUT,
+    makesOffer: [
+      "Custom web development",
+      "Next.js development",
+      "Technical consulting",
+      "Custom ecommerce development",
+      "Website maintenance",
+    ],
     name: SITE_CONFIG.name,
     parentOrganization: {
       "@id": ORGANIZATION_ID,
     },
     priceRange: "$$",
+    sameAs: Object.values(SITE_CONFIG.social),
     telephone: SITE_CONFIG.phone,
     url: getLocalizedUrl(locale, "/"),
   };
@@ -204,6 +253,10 @@ function buildWebsiteSchema(locale: SupportedLocale): JsonLdSchema {
     "@context": "https://schema.org",
     "@id": WEBSITE_ID,
     "@type": "WebSite",
+    about: {
+      "@id": ORGANIZATION_ID,
+    },
+    alternateName: SITE_CONFIG.alternateNames,
     description: home.description,
     inLanguage: locale,
     name: SITE_CONFIG.name,
@@ -219,6 +272,45 @@ function buildWebsiteSchema(locale: SupportedLocale): JsonLdSchema {
       },
     },
     url: getLocalizedUrl(locale, "/"),
+  };
+}
+
+function buildWebPageSchema(
+  locale: SupportedLocale,
+  pageKey: RouteMetaKey,
+): JsonLdSchema {
+  const entry = PAGE_METADATA[pageKey][locale];
+  const url = getLocalizedUrl(locale, PAGE_METADATA[pageKey].path);
+
+  return {
+    "@context": "https://schema.org",
+    "@id": `${url}#webpage`,
+    "@type":
+      pageKey === "services" || pageKey === "work" || pageKey === "writing"
+        ? "CollectionPage"
+        : "WebPage",
+    about: {
+      "@id": ORGANIZATION_ID,
+    },
+    breadcrumb:
+      pageKey === "home" ? undefined : `${url}#breadcrumb`,
+    description: entry.description,
+    inLanguage: locale,
+    isPartOf: {
+      "@id": WEBSITE_ID,
+    },
+    mainEntity: {
+      "@id": pageKey === "about" ? FOUNDER_ID : ORGANIZATION_ID,
+    },
+    name: entry.title,
+    primaryImageOfPage: {
+      "@type": "ImageObject",
+      url: getLocalizedUrl(locale, "/opengraph-image"),
+    },
+    publisher: {
+      "@id": ORGANIZATION_ID,
+    },
+    url,
   };
 }
 
@@ -248,13 +340,7 @@ function buildFounderSchema(locale: SupportedLocale): JsonLdSchema {
     "@type": "Person",
     description: SITE_CONFIG.founder.description[locale],
     jobTitle: SITE_CONFIG.founder.jobTitle[locale],
-    knowsAbout: [
-      "Custom web development",
-      "Technical web engineering",
-      "Next.js architecture",
-      "Bilingual web systems",
-      "RTL product design",
-    ],
+    knowsAbout: KNOWS_ABOUT,
     name: SITE_CONFIG.founder.name,
     sameAs: [SITE_CONFIG.founder.linkedin],
     url: SITE_CONFIG.founder.linkedin,
@@ -413,6 +499,7 @@ const SCHEMAS = {
   localBusiness: buildLocalBusinessSchema,
   organization: buildOrganizationSchema,
   service: buildServiceSchema,
+  webPage: buildWebPageSchema,
   website: buildWebsiteSchema,
 } as const;
 
@@ -430,13 +517,20 @@ export function buildPageSchemas(
   locale: string,
   pageKey: RouteMetaKey,
 ): JsonLdSchema[] {
-  if (pageKey === "home" || pageKey === "workCaseStudy") {
+  if (pageKey === "workCaseStudy") {
     return [];
   }
 
   const loc = normalizeLocale(locale);
+  if (pageKey === "home") {
+    return [SCHEMAS.webPage(loc, pageKey)];
+  }
+
   const breadcrumbs = buildStaticBreadcrumbs(loc, pageKey);
-  const schemas: JsonLdSchema[] = [SCHEMAS.breadcrumb(loc, breadcrumbs)];
+  const schemas: JsonLdSchema[] = [
+    SCHEMAS.webPage(loc, pageKey),
+    SCHEMAS.breadcrumb(loc, breadcrumbs),
+  ];
 
   if (pageKey === "about") {
     schemas.push(SCHEMAS.aboutPage(loc), SCHEMAS.founder(loc));

@@ -1,7 +1,9 @@
 import { DEFAULTS, MOTION, SECTION_DELAYS } from "../config";
+import type { BatchConfig } from "../hooks/use-batch";
+import type { CounterConfig } from "../hooks/use-counter";
+import type { ParallaxConfig } from "../hooks/use-parallax";
 import type { RevealConfig } from "../hooks/use-reveal";
 import type { TextConfig } from "../hooks/use-text";
-import type { BatchConfig } from "../hooks/use-batch";
 
 const fadeUp = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   direction: "up",
@@ -84,6 +86,14 @@ const sectionCardGrid = (overrides: Partial<BatchConfig> = {}): BatchConfig => (
 const headline = (overrides: Partial<TextConfig> = {}): TextConfig =>
   sectionTitle(overrides);
 
+const heroReveal = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  direction: "up",
+  duration: MOTION.duration.base,
+  distance: MOTION.distance.md,
+  ease: MOTION.ease.strong,
+  ...overrides,
+});
+
 const heroHeadline = (overrides: Partial<TextConfig> = {}): TextConfig => ({
   splitBy: "word",
   blur: true,
@@ -133,6 +143,30 @@ const listItems = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
   ...overrides,
 });
 
+const parallax = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig => ({
+  speed: 0.3,
+  direction: "y",
+  scrub: 1.5,
+  anchor: "section",
+  ...overrides,
+});
+
+const parallaxSlow = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
+  parallax({ speed: 0.15, ...overrides });
+
+const parallaxFast = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
+  parallax({ speed: 0.5, ...overrides });
+
+const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterConfig => ({
+  from: 0,
+  to,
+  duration: MOTION.duration.slow,
+  ease: MOTION.ease.strong,
+  trigger: MOTION.trigger.late,
+  once: true,
+  ...overrides,
+});
+
 export const motion = {
   fadeUp,
   fadeIn,
@@ -140,11 +174,16 @@ export const motion = {
   slideRight,
   scaleIn,
   headline,
+  heroReveal,
   heroHeadline,
   subheading,
   body,
   cardGrid,
   listItems,
+  parallax,
+  parallaxSlow,
+  parallaxFast,
+  counter,
   sectionTitle,
   sectionEyebrow,
   sectionDescription,

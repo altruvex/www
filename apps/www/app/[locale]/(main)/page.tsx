@@ -2,6 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { HomeClient } from "./home-client";
 import { HeroSectionServer } from "@/components/sections/hero-section.server";
+import { JsonLd } from "@/components/seo/json-ld";
+import { buildPageSchemas } from "@/lib/schema";
 
 export async function generateMetadata({
   params,
@@ -23,6 +25,7 @@ export default async function Home({
 
   return (
     <>
+      <JsonLd schemas={buildPageSchemas(locale, "home")} />
       <HeroSectionServer locale={locale} />
       <HomeClient />
     </>

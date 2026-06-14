@@ -48,4 +48,8 @@ export function getTestimonialsForCaseStudy(slug: string): Testimonial[] {
   return TESTIMONIALS.filter((t) => t.caseStudySlug === slug);
 }
 
+export function getAllTestimonials(): Testimonial[] {
+  return TESTIMONIALS;
+}
+
 export type { Testimonial };

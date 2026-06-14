@@ -25,6 +25,8 @@ export type CaseStudyRecord = {
   summary: LocalizedValue;
   year: string;
   externalUrl?: string;
+  /** Base path for production screenshots; `-light.png`/`-dark.png` are appended. */
+  screenshot?: string;
 };
 
 export const CASE_STUDIES: CaseStudyRecord[] = [
@@ -88,8 +90,8 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
   },
   {
     client: {
-      ar: "علامة تجارية سرية للتجارة الإلكترونية",
-      en: "Confidential E-Commerce Brand",
+      ar: "متجر آرت لايتنج",
+      en: "Art Lighting Store",
     },
     industry: {
       ar: "إضاءة منزلية فاخرة",
@@ -110,29 +112,29 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     metrics: [
       {
         label: {
-          ar: "التسليم",
-          en: "Delivery",
+          ar: "الأداء",
+          en: "Performance",
         },
-        value: "Live site",
+        value: "95+ Lighthouse",
       },
       {
         label: {
-          ar: "التقنية",
-          en: "Stack",
+          ar: "الكتالوج",
+          en: "Catalog",
         },
-        value: "Next.js",
+        value: "High-res zoom",
       },
       {
         label: {
-          ar: "النطاق",
-          en: "Scope",
+          ar: "المخزون",
+          en: "Inventory",
         },
-        value: "E-commerce",
+        value: "Synced live",
       },
     ],
     name: {
-      ar: "تجارة إلكترونية للإضاءة (عميل سري)",
-      en: "Premium lighting e-commerce",
+      ar: "متجر آرت لايتنج للإضاءة",
+      en: "Art Lighting Store",
     },
     slug: "art-lighting-store",
     summary: {
@@ -141,6 +143,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     },
     year: "2024",
     externalUrl: "https://www.artlighting-eg.com",
+    screenshot: "/projects/artlighting-eg.com",
   },
   {
     client: {
@@ -199,6 +202,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     },
     year: "2024",
     externalUrl: "https://www.newlight-eg.com/",
+    screenshot: "/projects/newlight-eg.com",
   },
 ];
 

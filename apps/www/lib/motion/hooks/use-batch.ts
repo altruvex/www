@@ -19,6 +19,7 @@ export interface BatchConfig {
   once?: boolean;
   selector?: string;
   alternate?: boolean;
+  batchMax?: number;
 }
 
 const DEFAULTS = {
@@ -32,6 +33,7 @@ const DEFAULTS = {
   once: true,
   selector: "",
   alternate: false,
+  batchMax: 6,
 } as const;
 
 export function useBatch<T extends HTMLElement = HTMLDivElement>(
@@ -51,6 +53,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
     once = DEFAULTS.once,
     selector = DEFAULTS.selector,
     alternate = DEFAULTS.alternate,
+    batchMax = DEFAULTS.batchMax,
   } = config;
 
   useIsomorphicLayoutEffect(() => {
@@ -100,7 +103,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
             ScrollTrigger.batch(items, {
               start: resolvedTriggering,
               once,
-              batchMax: 6,
+              batchMax,
               onEnter(batch: Element[]) {
                 gsap.to(batch, {
                   opacity: 1,
@@ -152,6 +155,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
                   once,
                   fastScrollEnd: true,
                   toggleActions: once ? "play none none none" : "play none none reverse",
+                  invalidateOnRefresh: true,
                 },
                 onComplete() {
                   gsap.set(item, { clearProps: "willChange,transform" });
@@ -164,7 +168,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
     }, container);
 
     return () => ctx.revert();
-  }, [isInitialLoadComplete, direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate]);
+  }, [isInitialLoadComplete, direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate, batchMax]);
 
   return ref;
 }

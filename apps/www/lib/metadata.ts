@@ -4,6 +4,27 @@ export const SUPPORTED_LOCALES = ["en", "ar"] as const;
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
+const DEFAULT_SITE_URL = "https://www.altruvex.com";
+
+function resolveSiteUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+  if (
+    configuredUrl &&
+    (process.env.NODE_ENV !== "production" ||
+      !/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(configuredUrl))
+  ) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  if (vercelProductionUrl) {
+    return `https://${vercelProductionUrl}`.replace(/\/$/, "");
+  }
+
+  return DEFAULT_SITE_URL;
+}
+
 type LocalizedSeoEntry = {
   breadcrumb: string;
   description: string;
@@ -19,10 +40,11 @@ type PageMetadataEntry = {
 };
 
 export const SITE_CONFIG = {
+  alternateNames: ["Altruvex Web Engineering", "Altruvex Cairo"],
   defaultLocale: "en" as SupportedLocale,
   description: {
-    ar: "ألتروفيكس تبني أنظمة ويب دقيقة ثنائية اللغة للفرق التي تحتاج أداءً حقيقياً ووضوحاً تقنياً وتجربة عربية/إنجليزية متكافئة.",
-    en: "Altruvex builds precision web systems for teams that need bilingual execution, technical clarity, and performance that holds up in production.",
+    ar: "Altruvex هي شركة هندسة ويب مخصصة في القاهرة تبني أنظمة Next.js ثنائية اللغة للفرق التي تحتاج أداءً حقيقياً ووضوحاً تقنياً وتجربة عربية/إنجليزية متكافئة.",
+    en: "Altruvex is a Cairo-based custom web engineering company building bilingual Next.js systems for teams that need technical clarity, production performance, and Arabic/English execution.",
   },
   email: "hello@altruvex.com",
   founder: {
@@ -46,6 +68,7 @@ export const SITE_CONFIG = {
   locales: SUPPORTED_LOCALES,
   name: "Altruvex",
   phone: "+20 102 312 5493",
+  slogan: "Precision web engineering in Cairo",
   social: {
     facebook: "https://www.facebook.com/profile.php?id=61580710300593",
     github: "https://github.com/altruvex/www",
@@ -56,18 +79,30 @@ export const SITE_CONFIG = {
     dribbble: "https://dribbble.com/altruvex",
   },
   twitterHandle: "@altruvex",
-  url:
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://altruvex.com"),
+  url: resolveSiteUrl(),
 } as const;
 
 const METADATA_DEFAULTS = {
   defaultDescription: SITE_CONFIG.description,
   entityKeywords: {
-    ar: ["ألتروفيكس", "علي عبد الهادي", "القاهرة", "مصر"],
-    en: ["Altruvex", "Ali Abdelhadi", "Cairo", "Egypt"],
+    ar: [
+      "Altruvex",
+      "ألتروفيكس",
+      "altruvex.com",
+      "علي عبد الهادي",
+      "القاهرة",
+      "مصر",
+      "شركة هندسة ويب في القاهرة",
+    ],
+    en: [
+      "Altruvex",
+      "Altruvex Cairo",
+      "altruvex.com",
+      "Ali Abdelhadi",
+      "Cairo",
+      "Egypt",
+      "Cairo web engineering company",
+    ],
   },
   keywords: {
     ar: [
@@ -224,14 +259,17 @@ export const PAGE_METADATA = {
     en: {
       breadcrumb: "Home",
       description:
-        "Custom web development and Next.js engineering for Cairo and MENA brands. Build bilingual, high-performance systems with a founder-led team.",
+        "Altruvex is a Cairo web engineering company for custom web development and Next.js systems. Build bilingual, high-performance websites with a founder-led team.",
       keywords: [
+        "altruvex",
+        "altruvex cairo",
+        "altruvex web engineering",
         "precision web development cairo",
         "custom web development cairo",
         "next.js development agency",
         "technical web engineering",
       ],
-      title: "Precision Web Development",
+      title: "Altruvex: Precision Web Engineering in Cairo",
     },
     path: "/",
   },
@@ -813,6 +851,7 @@ export function generateRouteMetadata(
   } as Metadata["openGraph"];
 
   return {
+    applicationName: SITE_CONFIG.name,
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -821,6 +860,8 @@ export function generateRouteMetadata(
       },
     },
     authors: [{ name: SITE_CONFIG.founder.name }],
+    category: "technology",
+    classification: "Custom web development, Next.js engineering, bilingual web systems",
     creator: SITE_CONFIG.name,
     description,
     keywords,
@@ -832,7 +873,16 @@ export function generateRouteMetadata(
         : undefined,
     },
     openGraph,
+    other: {
+      "business:contact_data:country_name": SITE_CONFIG.location.country,
+      "business:contact_data:locality": SITE_CONFIG.location.city,
+      "business:contact_data:region": SITE_CONFIG.location.region,
+      "og:email": SITE_CONFIG.email,
+      "profile:first_name": SITE_CONFIG.founder.name.split(" ")[0] ?? "",
+      "profile:last_name": SITE_CONFIG.founder.name.split(" ").slice(1).join(" "),
+    },
     publisher: SITE_CONFIG.name,
+    referrer: "strict-origin-when-cross-origin",
     robots,
     title,
     twitter: {

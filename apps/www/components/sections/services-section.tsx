@@ -53,7 +53,7 @@ const ServiceCard = memo(function ServiceCard({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-[transform,opacity] duration-300 group-hover:scale-y-100 group-hover:opacity-100"
       />
       <span
         aria-hidden
@@ -87,7 +87,7 @@ const ServiceCard = memo(function ServiceCard({
         <div className="h-px flex-1 bg-s-border opacity-40" />
         <svg
           aria-hidden
-          className="translate-x-[-4px] text-s-mid opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 rtl:scale-x-[-1]"
+          className="translate-x-[-4px] text-s-mid opacity-0 transition-[transform,opacity] duration-300 group-hover:translate-x-0 group-hover:opacity-100 rtl:scale-x-[-1]"
           width="16"
           height="16"
           viewBox="0 0 14 14"
@@ -239,6 +239,7 @@ function SectionHeader() {
 }
 
 export const ServicesSection = memo(function ServicesSection() {
+  const t = useTranslations("services");
   const cardsRef = useSectionCardGrid<HTMLDivElement>({
     selector: "[data-service]",
   });
@@ -270,7 +271,7 @@ export const ServicesSection = memo(function ServicesSection() {
               "whitespace-nowrap text-sm text-s-muted",
             )}
           >
-            {useTranslations("services")("footerText")}
+            {t("footerText")}
           </span>
         </div>
       </Container>

@@ -43,8 +43,11 @@ export const MOTION = {
     gentle: "cubic-bezier(0.65, 0, 0.35, 1)",
     ui: "cubic-bezier(0.4, 0, 0.2, 1)",
     spring: "elastic.out(1, 0.75)",
+    strong: "cubic-bezier(0.23, 1, 0.32, 1)",
+    exit: "cubic-bezier(0.55, 0, 1, 0.45)",
   },
   duration: {
+    hover: 0.15,
     micro: 0.15,
     instant: 0.2,
     drawer: 0.3,
@@ -79,7 +82,7 @@ export const MOTION = {
   stagger: {
     tight: 0.04,
     base: 0.06,
-    loose: 0.1,
+    loose: 0.08,
   },
   trigger: {
     default: "top bottom",

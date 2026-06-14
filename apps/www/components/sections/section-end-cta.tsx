@@ -5,6 +5,7 @@ import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta, type CommercialCtaKey } from "@/lib/commercial";
+import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 
 type SectionEndCtaVariant = "contact" | "transparency" | "work";
@@ -35,21 +36,26 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
   const secondaryKey = VARIANT_SECONDARY[variant];
   const secondaryCta = secondaryKey ? getCommercialCta(secondaryKey) : null;
 
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const bodyRef = useSectionDescription();
+  const ctaRef = useSectionElement();
+
   return (
     <section className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="max-w-3xl">
-          <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4">
+          <p ref={eyebrowRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4">
             {t("eyebrow")}
           </p>
-          <h2 className="text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4">
+          <h2 ref={titleRef} className="text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4">
             {t("title")}
           </h2>
-          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-8 max-w-xl">
+          <p ref={bodyRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-8 max-w-xl">
             {t("body")}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <MagneticButton size="lg" className="w-full sm:w-auto">
+          <div ref={ctaRef} className="flex flex-col sm:flex-row gap-3">
+            <MagneticButton asChild size="lg" className="w-full sm:w-auto">
               <Link href={primaryCta.href} className="w-full sm:w-auto">
                 <ArrowLabel>
                   {tCTAs(VARIANT_PRIMARY[variant])}
@@ -58,6 +64,7 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
             </MagneticButton>
             {secondaryCta && secondaryKey ? (
               <MagneticButton
+                asChild
                 size="lg"
                 variant="secondary"
                 className="w-full sm:w-auto"

@@ -83,7 +83,7 @@ function HeroSection() {
             ref={ctaRef}
             className="flex flex-col sm:flex-row sm:items-center gap-4"
           >
-            <MagneticButton
+            <MagneticButton asChild
               size="lg"
               variant="primary"
               className="group w-full sm:w-auto"
@@ -108,7 +108,7 @@ function HeroSection() {
                 </span>
               </Link>
             </MagneticButton>
-            <MagneticButton
+            <MagneticButton asChild
               size="lg"
               variant="secondary"
               className="w-full sm:w-auto text-center"
@@ -217,7 +217,7 @@ export function CtaSection() {
                 </p>
               </div>
               <div className="flex flex-col gap-3">
-                <MagneticButton
+                <MagneticButton asChild
                   size="lg"
                   variant="primary"
                   className="group w-full"
@@ -242,7 +242,7 @@ export function CtaSection() {
                     </svg>
                   </Link>
                 </MagneticButton>
-                <MagneticButton
+                <MagneticButton asChild
                   size="lg"
                   variant="secondary"
                   className="w-full"

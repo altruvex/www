@@ -157,6 +157,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 </span>
               </MagneticButton>
               <MagneticButton
+                asChild
                 size="lg"
                 variant="secondary"
                 className="min-w-[160px] justify-center group"

@@ -4,16 +4,12 @@ interface AltruvexLogoProps {
 className?: string;
 size?: "sm" | "md" | "lg";
 variant?: "full" | "icon";
-inverted?: boolean;
-isDark?: boolean;
 }
 
 export function AltruvexLogo({
 className,
 size = "md",
 variant = "full",
-inverted = false,
-isDark = false,
 }: AltruvexLogoProps) {
 const sizeClasses = {
   sm: "text-xl",
@@ -31,13 +27,13 @@ if (variant === "icon") {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg liquid-glass transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/5",
+        "flex items-center justify-center rounded-lg liquid-glass transition-[border-color,background-color] duration-200 hover:border-foreground/20 hover:bg-foreground/5",
         iconSizeClasses[size],
       )}
     >
       <span className={cn(
         "font-sans text-sm font-semibold tracking-[-0.04em] transition-colors duration-300",
-        inverted ? (isDark ? "text-gray-900" : "text-white") : "text-primary",
+        "text-primary",
       )}>
         A
       </span>
@@ -49,9 +45,9 @@ return (
   <div className={cn("flex items-center", className)}>
     <span
       className={cn(
-        "font-sans font-semibold uppercase tracking-[-0.05em] transition-all duration-300 group-hover:opacity-75",
+        "font-sans font-semibold uppercase tracking-[-0.05em] transition-opacity duration-300 group-hover:opacity-75",
         sizeClasses[size],
-        inverted ? (isDark ? "text-gray-900" : "text-white") : "text-primary",
+        "text-primary",
       )}
     >
       Altruvex

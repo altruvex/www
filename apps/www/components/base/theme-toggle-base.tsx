@@ -5,12 +5,7 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
 
-interface ThemeToggleProps {
-  isInverted?: boolean;
-  isDark?: boolean;
-}
-
-export function ThemeToggle({ isInverted = false, isDark = false }: ThemeToggleProps) {
+export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
   const mounted = useSyncExternalStore(
     () => () => undefined,
@@ -26,8 +21,8 @@ export function ThemeToggle({ isInverted = false, isDark = false }: ThemeToggleP
     }
   };
 
-  const iconColor = isInverted && isDark ? "text-gray-900" : "text-foreground";
-  const buttonHoverColor = isInverted && isDark ? "hover:text-gray-900/80" : "hover:text-foreground/80";
+  const iconColor = "text-foreground";
+  const buttonHoverColor = "hover:text-foreground/80";
 
   if (!mounted || !resolvedTheme) {
     return (

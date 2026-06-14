@@ -1,18 +1,24 @@
 "use client";
 
+import { memo } from "react";
+import { useTranslations } from "next-intl";
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
-import { WorkItem } from "@/components/work-item";
 import { Link } from "@/i18n/navigation";
+import { WorkItem } from "@/components/work-item"; 
+import { splitHeadline } from "@/lib/utils";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,
 } from "@/lib/commercial";
-import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { splitHeadline } from "@/lib/utils";
-import { useTranslations } from "next-intl";
-import { memo } from "react";
+import {
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionElement,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
 
 export const WorkSection = memo(function WorkSection() {
   const tW = useTranslations("work");
@@ -52,6 +58,7 @@ export const WorkSection = memo(function WorkSection() {
             {tW("description")}
           </p>
         </div>
+        
         <div ref={gridRef}>
           <div className="h-px w-full bg-foreground/8" />
           {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
@@ -62,6 +69,7 @@ export const WorkSection = memo(function WorkSection() {
             />
           ))}
         </div>
+        
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
           <div className="space-y-3">
             <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
@@ -72,23 +80,25 @@ export const WorkSection = memo(function WorkSection() {
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <MagneticButton size="lg" variant="primary" className="group">
+            <MagneticButton asChild size="lg" variant="primary" className="group">
               <Link href={proofCta.href}>
                 <ArrowLabel>{tCTAs("realBuild")}</ArrowLabel>
               </Link>
             </MagneticButton>
-            <MagneticButton size="lg" variant="secondary" className="group">
+            <MagneticButton asChild size="lg" variant="secondary" className="group">
               <Link href={scopeCta.href}>
                 <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
               </Link>
             </MagneticButton>
           </div>
         </div>
+        
         <FlagshipMetaBlock
           metaRef={metaRef}
           tf={tf}
           stepLabel={stepLabel}
         />
+        
         <div className="flex items-center gap-4 mt-6">
           <div className="flex-1 h-px bg-border" />
           <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
@@ -138,7 +148,6 @@ function WorkSectionHeader({
     </div>
   );
 }
-
 
 function FlagshipMetaBlock({
   metaRef,

@@ -684,7 +684,7 @@ function StepResults({
         {t("results.consultationGate")}
       </p>
       <div className="flex flex-col gap-4 justify-center items-center mb-6">
-        <MagneticButton size="lg" variant="primary" className="group">
+        <MagneticButton asChild size="lg" variant="primary" className="group">
           <Link href="/schedule">
             <ArrowLabel>{t("results.ctaPrimary")}</ArrowLabel>
           </Link>

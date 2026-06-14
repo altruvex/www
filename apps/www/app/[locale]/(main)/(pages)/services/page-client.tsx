@@ -277,7 +277,7 @@ const OfferCard = memo(function OfferCard({
           </div>
           <div className="relative z-3 flex items-center gap-4 pointer-events-auto">
             {featured && (
-              <MagneticButton
+              <MagneticButton asChild
                 size="lg"
                 variant="primary"
                 className="rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold transition-all"

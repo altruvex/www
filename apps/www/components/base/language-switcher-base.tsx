@@ -40,15 +40,11 @@ const LANGUAGES: Language[] = [
 interface LanguageSwitcherBaseProps {
   variant?: LanguageSwitcherVariant;
   className?: string;
-  isInverted?: boolean;
-  isDark?: boolean;
 }
 
 export function LanguageSwitcherBase({
   variant = "default",
   className,
-  isInverted = false,
-  isDark = false,
 }: LanguageSwitcherBaseProps) {
   const locale = useLocale();
   const router = useRouter();
@@ -176,7 +172,7 @@ export function LanguageSwitcherBase({
           data-cursor-pointer
           className={cn(
             "group flex items-center gap-2 rounded-lg liquid-glass px-3 py-1.5 transition-all duration-300",
-            isInverted && isDark ? "hover:bg-gray-900/10" : "hover:bg-foreground/5",
+            "hover:bg-foreground/5",
             focusRingClasses,
             variant === "compact" && "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center"
           )}
@@ -187,13 +183,13 @@ export function LanguageSwitcherBase({
           {variant === "compact" ? (
             <>
               <Globe
-                className={cn("h-4 w-4 mx-auto", isInverted && isDark ? "text-gray-900/80" : "text-primary/80")}
+                className={cn("h-4 w-4 mx-auto", "text-primary/80")}
                 strokeWidth={2.5}
               />
               <span
                 className={cn(
                   "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full font-mono text-[13px] font-bold leading-none",
-                  isInverted && isDark ? "bg-gray-900 text-white" : "bg-primary text-primary-foreground",
+                  "bg-primary text-primary-foreground",
                   isRTL ? "-left-1" : "-right-1"
                 )}
               >
@@ -202,13 +198,13 @@ export function LanguageSwitcherBase({
             </>
           ) : (
             <>
-              <span className={cn("font-mono text-sm leading-normal tracking-wider uppercase", isInverted && isDark ? "text-gray-900/80" : "text-primary/80")}>
+              <span className={cn("font-mono text-sm leading-normal tracking-wider uppercase", "text-primary/80")}>
                 {currentLang.code}
               </span>
               <ChevronDown
                 className={cn(
                   "h-3 w-3 transition-transform duration-300",
-                  isInverted && isDark ? "text-gray-900/60" : "text-primary/60",
+                  "text-primary/60",
                   isOpen && "rotate-180"
                 )}
               />
@@ -252,8 +248,8 @@ export function LanguageSwitcherBase({
                     focusRingClasses,
                     variant === "compact" ? "gap-2 px-3 py-2" : "gap-3 px-4 py-2.5",
                     isActive
-                      ? isInverted && isDark ? "bg-gray-900/15 text-gray-900 font-medium" : "bg-foreground/15 text-primary font-medium"
-                      : isInverted && isDark ? "text-gray-900/80 hover:bg-gray-900/10 hover:text-gray-900" : "text-primary/80 hover:bg-foreground/10 hover:text-primary",
+                      ? "bg-foreground/15 text-primary font-medium"
+                      : "text-primary/80 hover:bg-foreground/10 hover:text-primary",
                     langIsRTL ? "text-right" : "text-left"
                   )}
                   role="menuitem"
@@ -280,7 +276,7 @@ export function LanguageSwitcherBase({
                     <Check
                       className={cn(
                         "shrink-0",
-                        isInverted && isDark ? "text-gray-900" : "text-primary",
+                        "text-primary",
                         variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4"
                       )}
                       strokeWidth={2.5}

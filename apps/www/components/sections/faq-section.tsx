@@ -11,7 +11,6 @@ import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
-import ReactMarkdown from "react-markdown";
 
 interface FaqSectionProps {
   namespace: string;
@@ -80,18 +79,8 @@ export const FaqSection = memo(function FaqSection({
                     <AccordionTrigger className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] font-sans font-light hover:text-foreground transition-colors py-6 text-start">
                       {question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground leading-relaxed pb-8">
-                      <ReactMarkdown
-                        components={{
-                          p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
-                          ul: ({ children }) => <ul className="list-disc list-inside space-y-2 mb-3 ml-2">{children}</ul>,
-                          ol: ({ children }) => <ol className="list-decimal list-inside space-y-2 mb-3 ml-2">{children}</ol>,
-                          li: ({ children }) => <li className="text-muted-foreground">{children}</li>,
-                          strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                        }}
-                      >
-                        {answer}
-                      </ReactMarkdown>
+                    <AccordionContent className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground leading-relaxed pb-8 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-2 [&_ol]:mb-3 [&_ol]:ml-2 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-2 [&_ul]:mb-3 [&_ul]:ml-2 [&_li]:text-muted-foreground [&_strong]:font-semibold [&_strong]:text-foreground">
+                      <div dangerouslySetInnerHTML={{ __html: answer }} />
                     </AccordionContent>
                   </AccordionItem>
                 );

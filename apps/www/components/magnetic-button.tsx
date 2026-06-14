@@ -89,6 +89,7 @@ export const MagneticButton = forwardRef<
       asChild = false,
       isLoading = false,
       onClick,
+      disabled,
       ...props
     },
     forwardedRef,
@@ -114,8 +115,6 @@ export const MagneticButton = forwardRef<
 
     const [isPressed, setIsPressed] = useState(false);
     const [ripples, setRipples] = useState<Ripple[]>([]);
-
-    const Comp = asChild ? Slot : "button";
 
     useEffect(() => {
       return () => {
@@ -232,7 +231,7 @@ export const MagneticButton = forwardRef<
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
       filled:
-        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-all duration-300",
+        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-[background-color,border-color,color] duration-300 ease-out",
     };
 
     const sizes: Record<ButtonSize, string> = {
@@ -240,66 +239,99 @@ export const MagneticButton = forwardRef<
       lg: "min-h-12 min-w-12 px-8 py-3.5 text-base",
     };
 
+    const sharedClassName = [
+      "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
+      "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
+      "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
+      "disabled:opacity-50 disabled:cursor-not-allowed",
+      variants[variant],
+      sizes[size],
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const sharedStyle: React.CSSProperties = {
+      transform: `translate3d(0px, 0px, 0) scale(${isPressed && !prefersReducedMotion ? 0.95 : 1})`,
+      transition: `transform 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease-out, border-color 300ms ease-out, color 300ms ease-out, box-shadow 300ms ease-out`,
+    };
+
+    const interactionHandlers = {
+      onClick: isLoading ? undefined : handleClick,
+      onMouseMove:
+        prefersReducedMotion || isLoading ? undefined : handleMouseMove,
+      onMouseEnter:
+        prefersReducedMotion || isLoading ? undefined : updateRect,
+      onMouseLeave:
+        prefersReducedMotion || isLoading ? undefined : handleMouseLeave,
+      onMouseDown:
+        prefersReducedMotion || isLoading ? undefined : handleMouseDown,
+      onMouseUp: prefersReducedMotion || isLoading ? undefined : handleMouseUp,
+    };
+
+    const rippleNodes =
+      !prefersReducedMotion &&
+      ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          className="magnetic-ripple absolute pointer-events-none rounded-full bg-current opacity-30"
+          style={{
+            left: `${ripple.x}px`,
+            top: `${ripple.y}px`,
+            width: "10px",
+            height: "10px",
+          }}
+        />
+      ));
+
+    // asChild: render the consumer's element (e.g. <Link>) as the interactive
+    // root so we never produce invalid <button><a> nesting. The magnetic
+    // handlers, styles and ripples are merged/composed onto that element.
+    if (asChild) {
+      return (
+        <Slot
+          ref={mergedRef as React.Ref<HTMLElement>}
+          {...interactionHandlers}
+          aria-busy={isLoading || undefined}
+          className={sharedClassName}
+          style={sharedStyle}
+          data-cursor-pointer
+          {...props}
+        >
+          <Slottable>{children}</Slottable>
+          {rippleNodes}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         ref={mergedRef}
-        onClick={isLoading ? undefined : handleClick}
-        onMouseMove={prefersReducedMotion || isLoading ? undefined : handleMouseMove}
-        onMouseEnter={prefersReducedMotion || isLoading ? undefined : updateRect}
-        onMouseLeave={prefersReducedMotion || isLoading ? undefined : handleMouseLeave}
-        onMouseDown={prefersReducedMotion || isLoading ? undefined : handleMouseDown}
-        onMouseUp={prefersReducedMotion || isLoading ? undefined : handleMouseUp}
-        disabled={props.disabled || isLoading}
+        {...interactionHandlers}
+        disabled={disabled || isLoading}
         aria-busy={isLoading}
-        className={[
-          "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
-          "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
-          "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
-          "disabled:opacity-50 disabled:cursor-not-allowed",
-          variants[variant],
-          sizes[size],
-          className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        style={{
-          transform: `translate3d(0px, 0px, 0) scale(${isPressed && !prefersReducedMotion ? 0.95 : 1})`,
-          transition: `transform 300ms ease-out, background-color 300ms ease-out, border-color 300ms ease-out, color 300ms ease-out, box-shadow 300ms ease-out`,
-        }}
+        className={sharedClassName}
+        style={sharedStyle}
         data-cursor-pointer
         {...props}
       >
-        <Slottable>
-          <span className="relative z-10 flex items-center justify-center gap-2">
-            {isLoading && (
-              <svg
-                className="animate-spin h-4 w-4 shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            )}
-            {children}
-          </span>
-        </Slottable>
-        {!prefersReducedMotion &&
-          ripples.map((ripple) => (
-            <span
-              key={ripple.id}
-              className="magnetic-ripple absolute pointer-events-none rounded-full bg-current opacity-30"
-              style={{
-                left: `${ripple.x}px`,
-                top: `${ripple.y}px`,
-                width: "10px",
-                height: "10px",
-              }}
-            />
-          ))}
-      </Comp>
+        <span className="relative z-10 flex items-center justify-center gap-2">
+          {isLoading && (
+            <svg
+              className="animate-spin h-4 w-4 shrink-0"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden
+            >
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          )}
+          {children}
+        </span>
+        {rippleNodes}
+      </button>
     );
   },
 );

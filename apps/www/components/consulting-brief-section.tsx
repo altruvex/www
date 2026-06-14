@@ -1163,6 +1163,7 @@ export function ConsultingBriefSection() {
               aria-hidden={!hintVisible}
             >
               <MagneticButton
+                asChild
                 size="lg"
                 variant="secondary"
                 aria-label={t("cta.button")}
