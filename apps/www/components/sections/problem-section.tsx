@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
@@ -51,12 +52,9 @@ export const ProblemSection = memo(function ProblemSection() {
       <Container>
         <div className="mb-12 gap-6 flex flex-col md:flex-row items-center justify-between">
           <div className="max-w-3xl space-y-4">
-            <p
-              ref={eyebrowRef}
-              className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground"
-            >
+            <Eyebrow ref={eyebrowRef}>
               {t("problem.badge")}
-            </p>
+            </Eyebrow>
             <h2
               ref={titleRef}
               className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] font-normal tracking-tight text-foreground"

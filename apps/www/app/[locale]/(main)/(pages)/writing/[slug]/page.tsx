@@ -75,7 +75,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <Container>
           <Link
             href="/writing"
-            className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal mb-12"
+            className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow mb-12"
           >
             <svg
               className="h-3.5 w-3.5 transition-transform duration-300 ltr:group-hover:-translate-x-0.5"
@@ -97,7 +97,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <div className="flex items-center gap-4 mb-6">
                 <time
                   dateTime={article.frontmatter.date}
-                  className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70"
+                  className="eyebrow text-muted-foreground/70"
                 >
                   {new Date(article.frontmatter.date).toLocaleDateString(
                     locale,
@@ -109,7 +109,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   )}
                 </time>
                 <span className="text-primary/20">·</span>
-                <span                   className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+                <span                   className="eyebrow text-muted-foreground/70">
                   {article.frontmatter.readTime}
                 </span>
               </div>
@@ -130,7 +130,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {article.frontmatter.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="border border-foreground/8 bg-foreground/2 rounded-full px-3 py-1 font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground/35"
+                    className="border border-foreground/8 bg-foreground/2 rounded-full px-3 py-1 eyebrow text-foreground/35"
                   >
                     {tag}
                   </span>
@@ -152,12 +152,12 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </article>
           {ctaConfig && (
             <section className="mt-16 border-t border-foreground/8 pt-10">
-              <p                   className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+              <p                   className="eyebrow text-muted-foreground/70 mb-4 block">
                 {t("nextStep")}
               </p>
               <Link
                 href={ctaConfig.href}
-                className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow"
               >
                 {t(`ctas.${slug}`)}
                 <svg
@@ -178,7 +178,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           )}
           {related.length > 0 && (
             <section className="mt-20 md:mt-32 border-t border-foreground/8 pt-12 md:pt-16">
-              <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+              <p className="eyebrow text-muted-foreground/70 mb-4 block">
                 {t("relatedArticles")}
               </p>
               <h2
@@ -217,7 +217,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <footer className="mb-20 mt-16 border-t border-foreground/8 pt-10">
             <Link
               href="/writing"
-              className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+              className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow"
             >
               <svg
                 className="h-3.5 w-3.5 transition-transform duration-300 ltr:group-hover:-translate-x-0.5"

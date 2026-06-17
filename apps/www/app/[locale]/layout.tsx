@@ -4,19 +4,11 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { VercelAnalytics } from "@/components/vercel-analytics";
 import { routing } from "@/i18n/routing";
 import "@/lib/env";
-import { SITE_CONFIG } from "@/lib/metadata";
 import { buildGlobalSchemas } from "@/lib/schema";
 import { cn } from "@/lib/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import {
-  DM_Serif_Display,
-  Geist_Mono,
-  Inter,
-  Outfit,
-  Vazirmatn,
-} from "next/font/google";
-import type { Metadata } from "next";
+import { Geist_Mono, Inter, Outfit, Vazirmatn } from "next/font/google";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
@@ -53,22 +45,6 @@ const geistMono = Geist_Mono({
   preload: true,
 });
 
-const dmSerifDisplay = DM_Serif_Display({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
-  variable: "--font-dm-serif",
-  display: "swap",
-  preload: true,
-});
-
-export const metadata: Metadata = {
-  applicationName: SITE_CONFIG.name,
-  creator: SITE_CONFIG.name,
-  metadataBase: new URL(SITE_CONFIG.url),
-  publisher: SITE_CONFIG.name,
-};
-
 type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -101,7 +77,6 @@ export default async function RootLayout({ children, params }: Props) {
           primaryFontVariable,
           outfit.variable,
           geistMono.variable,
-          dmSerifDisplay.variable,
         )}
       >
         <a

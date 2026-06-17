@@ -1,5 +1,6 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
+import { PageHero } from "@/components/sections/page-hero";
+import { useSectionTitle, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
@@ -18,37 +19,19 @@ export default function StandardsPage() {
 
 function OpeningSection() {
   const t = useTranslations("standards.hero");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
   const metricsRef = useSectionElement();
 
   return (
-    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="sm:max-w-5xl max-w-full">
-          <p
-            ref={eyebrowRef}
-            className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block"
-          >
-            {t("eyebrow")}
-          </p>
-          <h1
-            ref={titleRef}
-            className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-          >
-            {t("title")}
-          </h1>
-          <div className="grid md:grid-cols-[80px_1fr] gap-8 items-start mb-12">
-            <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />
-            <p
-              ref={descRef}
-              className="text-base text-primary/60 leading-relaxed max-w-[52ch]"
-            >
-              {t("description")}
-            </p>
-          </div>
-          <div ref={metricsRef} className="grid gap-4 md:grid-cols-3">
+    <PageHero
+      eyebrow={t("eyebrow")}
+      title={t("title")}
+      description={t("description")}
+    >
+      <div
+        ref={metricsRef}
+        // Color world: forest green. Proof archetype — quality benchmarks.
+        className="accent-world-green grid gap-4 md:grid-cols-3"
+      >
             {[
               {
                 label: t("metrics.performance.label"),
@@ -70,12 +53,12 @@ function OpeningSection() {
                 key={i}
                 className="border border-foreground/8 rounded-lg bg-foreground/2 p-5"
               >
-                <p className="font-mono text-sm leading-normal tracking-wider  uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
+                <p className="font-mono text-sm leading-normal tracking-wider  uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-local-accent mb-3">
                   {label}
                 </p>
                 {value ? (
                   <p
-                    className="font-sans font-light text-primary leading-none"
+                    className="font-sans font-light text-local-accent leading-none"
                     style={{
                       fontSize: "clamp(28px, 4vw, 40px)",
                       letterSpacing: "-0.03em",
@@ -94,9 +77,7 @@ function OpeningSection() {
               </div>
             ))}
           </div>
-        </div>
-      </Container>
-    </section>
+    </PageHero>
   );
 }
 
@@ -110,7 +91,7 @@ function CategoriesSection() {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+      className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
         <div>
@@ -151,7 +132,7 @@ function CategoriesSection() {
                       key={heading}
                       className="border border-foreground/8 rounded-lg bg-foreground/2 p-6"
                     >
-                      <h3 className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4">
+                      <h3 className="eyebrow text-muted-foreground/70 mb-4">
                         {heading}
                       </h3>
                       <div className="space-y-3">
@@ -182,7 +163,7 @@ function ClosingSection() {
   const descRef = useSectionDescription<HTMLParagraphElement>();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
+    <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
       <Container>
         <div className="max-w-3xl">
           <div className="mb-10">

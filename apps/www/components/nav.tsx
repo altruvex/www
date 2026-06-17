@@ -1,7 +1,6 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { LanguageChanger } from "@/components/language-switcher";
 import { ThemeChanger } from "@/components/theme-changer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
@@ -11,6 +10,7 @@ import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { AltruvexLogo } from "./altruvex-logo";
+import { LanguageSwitcherBase } from "./base/language-switcher-base";
 
 const NAV_ITEMS = [
   { key: "work", href: "/work" },
@@ -83,11 +83,13 @@ export function Nav() {
                     <Link
                       key={item.key}
                       href={item.href}
+                      aria-current={isActive ? "page" : undefined}
                       className={cn(
-                        "rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring transition-colors duration-300",
+                        "relative rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                        "after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-brand after:origin-center after:transition-transform after:duration-300 motion-reduce:after:transition-none",
                         isActive
-                          ? "bg-foreground/8 text-foreground"
-                          : "text-primary/65 hover:bg-foreground/5 hover:text-foreground",
+                          ? "text-brand-text after:scale-x-100"
+                          : "text-primary/65 hover:text-foreground after:bg-foreground/25 after:scale-x-0 hover:after:scale-x-100",
                       )}
                     >
                       {t(item.key)}
@@ -96,14 +98,14 @@ export function Nav() {
                 })}
               </nav>
               <div className="flex items-center gap-2 order-3 justify-end text-nowrap">
-                <LanguageChanger />
+              <LanguageSwitcherBase variant="default" />
                 <NavDivider />
                 <ThemeChanger />
                 <NavDivider />
                 <Link
                   href="/transparency"
                   className={cn(
-                    "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    "inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isNavInverted
                       ? "bg-foreground text-inverted-bg hover:bg-foreground/90"
                       : "bg-foreground text-background hover:bg-foreground/90",
@@ -166,10 +168,11 @@ export function Nav() {
                         key={item.key}
                         href={item.href}
                         onClick={closeMobileMenu}
+                        aria-current={isActive ? "page" : undefined}
                         className={cn(
-                          "flex w-full items-center rounded-md px-4 py-4",
+                          "flex w-full items-center rounded-md border-s-2 border-transparent px-4 py-4 transition-colors duration-200",
                           isActive
-                            ? "bg-foreground/8 text-foreground"
+                            ? "bg-brand/8 text-brand-text border-brand"
                             : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
                         )}
                       >
@@ -205,7 +208,7 @@ export function Nav() {
                       <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
                         {t("language")}
                       </span>
-                      <LanguageChanger />
+                      <LanguageSwitcherBase variant="toggle" />
                     </div>
                     <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
                       <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">

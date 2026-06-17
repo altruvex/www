@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
@@ -269,11 +270,11 @@ export function PipelineSection() {
       <section
         ref={sectionRef}
         id="pipeline"
-        className="font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-surface dark:bg-background transition-colors duration-300"
+        className="accent-world-green font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-surface dark:bg-background transition-colors duration-300"
       >
         <Container>
-          <p
-            className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/60 transition-[opacity,transform] mb-3"
+          <Eyebrow
+            className="text-muted-foreground/60 transition-[opacity,transform] mb-3"
             ref={eyebrowRef}
             style={{
               opacity: revealed ? 1 : 0,
@@ -283,7 +284,7 @@ export function PipelineSection() {
             }}
           >
             {t("eyebrow")}
-          </p>
+          </Eyebrow>
 
           <h2
             ref={titleRef}
@@ -312,7 +313,7 @@ export function PipelineSection() {
           {/* PIPELINE CARD */}
           <div
             dir="ltr"
-            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:shadow-none"
+            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card shadow-card dark:shadow-none"
             style={{
               opacity: revealed ? 1 : 0,
               transform: revealed ? "translateY(0)" : "translateY(16px)",

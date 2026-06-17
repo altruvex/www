@@ -1,9 +1,10 @@
 "use client";
 
+import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
-import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -19,42 +20,14 @@ export default function ProcessPage() {
 
 function OpeningSection() {
   const t = useTranslations("process.hero");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
 
   return (
-    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="sm:max-w-5xl max-w-full">
-          <p
-            ref={eyebrowRef}
-            className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block"
-          >
-            {t("eyebrow")}
-          </p>
-          <h1
-            ref={titleRef}
-            className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-          >
-            {t("title")}
-            <br />
-            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-              {t("titleItalic")}
-            </span>
-          </h1>
-          <div className="grid md:grid-cols-[80px_1fr] gap-8 items-start">
-            <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />
-            <p
-              ref={descRef}
-              className="text-base text-primary/60 leading-relaxed max-w-[52ch]"
-            >
-              {t("description")}
-            </p>
-          </div>
-        </div>
-      </Container>
-    </section>
+    <PageHero
+      eyebrow={t("eyebrow")}
+      title={t("title")}
+      titleItalic={t("titleItalic")}
+      description={t("description")}
+    />
   );
 }
 
@@ -74,7 +47,7 @@ function PhasesList() {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+      className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
         <div>
@@ -95,7 +68,7 @@ function PhasesList() {
                 >
                   {localizeNumbers(phase.number, locale)}
                 </div>
-                <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+                <p className="eyebrow text-muted-foreground/70">
                   {localizeNumbers(t(`${phase.key}.timeline`), locale)}
                 </p>
               </div>
@@ -115,7 +88,7 @@ function PhasesList() {
               </div>
               <div className="space-y-5">
                 <div>
-                  <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-2">
+                  <p className="eyebrow text-muted-foreground/70 mb-2">
                     {t("deliverables")}
                   </p>
                   <p className="text-sm text-primary/60 leading-relaxed">
@@ -123,7 +96,7 @@ function PhasesList() {
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-2">
+                  <p className="eyebrow text-muted-foreground/70 mb-2">
                     {t("yourRole")}
                   </p>
                   <p className="text-sm text-primary/60 leading-relaxed">
@@ -146,7 +119,9 @@ function ClosingSection() {
   const ctaRef = useSectionElement();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
+    <section
+      className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+    >
       <Container>
         <div className="max-w-3xl">
           <div ref={titleRef} className="mb-12">
@@ -168,7 +143,7 @@ function ClosingSection() {
           </p>
           <div ref={ctaRef}>
             <Link href="/schedule">
-              <MagneticButton variant="primary" size="lg" className="group">
+              <MagneticButton variant="accent" size="lg" className="group">
                 <span className="flex items-center gap-2">
                   {t("closing.cta")}
                   <svg

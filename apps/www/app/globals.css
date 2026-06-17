@@ -6,7 +6,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -23,6 +22,7 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-brand: hsl(var(--brand));
   --color-brand-hover: hsl(var(--brand-hover));
+  --color-brand-text: hsl(var(--brand-text));
   --color-brand-soft: var(--brand-soft);
   --color-brand-foreground: hsl(var(--brand-foreground));
   --color-destructive: hsl(var(--destructive));
@@ -51,15 +51,24 @@
   --color-n-6: hsl(var(--n-6));
   --color-n-7: hsl(var(--n-7));
   --color-n-8: hsl(var(--n-8));
+  --color-local-accent: var(--local-accent);
+  --color-local-accent-fg: var(--local-accent-fg);
+  --color-local-accent-soft: var(--local-accent-soft);
   --color-logo-wordmark: hsl(var(--logo-wordmark));
   --color-logo-tagline: hsl(var(--logo-tagline));
   --color-inverted-bg: hsl(var(--inverted-bg));
   --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
   --color-selection-accent: hsl(var(--selection-accent));
+  --color-text-inverse: hsl(var(--text-inverse));
+  --color-focus-ring: hsl(var(--focus-ring));
+  --shadow-card: var(--elevation-card);
+  --shadow-card-lg: var(--elevation-card-lg);
+  --shadow-glow-sm: var(--elevation-glow-sm);
+  --shadow-glow: var(--elevation-glow);
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
-  --font-serif: var(--font-dm-serif), serif;
+  --font-serif: Georgia, "Times New Roman", serif;
   --radius-xs: calc(var(--radius) - 4px);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -75,15 +84,11 @@
   --animate-ripple: ripple 0.6s ease-out forwards;
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
   --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  --animate-menu-panel-in: menu-panel-in 0.25s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 :root {
   --duration-instant: 120ms;
-  --duration-hover: 150ms;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-exit: cubic-bezier(0.55, 0, 1, 0.45);
   --radius: 0.5rem;
   --text-body-base: clamp(17px, 1.05vw, 18px);
   --text-label: 12px;
@@ -95,8 +100,6 @@
   --font-vazirmatn: "Vazirmatn", sans-serif;
   --section-y-top: clamp(5rem, 10vh, 8rem);
   --section-y-bottom: clamp(5rem, 14vh, 10rem);
-
-  /* Neutral scale — true neutral, no hue tint, graduated dark range */
   --n-0: 0 0% 98%;
   --n-1: 0 0% 96%;
   --n-2: 0 0% 91%;
@@ -106,7 +109,6 @@
   --n-6: 0 0% 32%;
   --n-7: 0 0% 18%;
   --n-8: 0 0% 6%;
-
   --background: var(--n-0);
   --foreground: var(--n-8);
   --inverted-bg: 0 0% 9%;
@@ -121,12 +123,20 @@
   --secondary-foreground: 0 0% 25%;
   --muted: 0 0% 91%;
   --muted-foreground: 0 0% 40%;
-  --brand: 243 68% 52%;
-  --brand-hover: 243 66% 45%;
-  --brand-soft: hsl(var(--brand) / 0.08);
+  /* 48% (not 50%) so white-on-brand fills clear WCAG AA normal text (4.66:1).
+     Non-text UI (bars/rings/bullets) stays ≥3:1. Accent TEXT uses --brand-text. */
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
+  /* Accent tuned for TEXT/links (WCAG AA on light bg ≥4.5:1). Mode-aware:
+     darker in light, lighter in dark — see .dark override. (audit Phase 4) */
+  --brand-text: 214 90% 43%;
+  --brand-soft: hsl(var(--brand) / 0.07);
   --brand-foreground: 0 0% 98%;
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
+  --local-accent: hsl(var(--brand));
+  --local-accent-fg: hsl(var(--brand-foreground));
+  --local-accent-soft: var(--brand-soft);
   --success: 162 95% 31%;
   --warning: 38 96% 40%;
   --error: 0 65% 51%;
@@ -154,8 +164,18 @@
   --tech-accent-vps: 215 16% 65%;
   --logo-wordmark: var(--n-8);
   --logo-tagline: 0 0% 40%;
-  --selection-accent: 243 68% 52%;
+  --selection-accent: var(--brand);
   --messaging-whatsapp: 142 70% 49%;
+
+  /* Explicit semantic tokens (audit #2) */
+  --text-inverse: var(--n-0);
+  --focus-ring: var(--brand);
+
+  /* Semantic elevation system (audit #4) */
+  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
+  --elevation-card-lg: 0 2px 4px hsl(0 0% 0% / 0.05), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
+  --elevation-glow-sm: 0 0 8px hsl(var(--brand) / 0.3);
+  --elevation-glow: 0 0 24px hsl(var(--brand) / 0.35);
 }
 
 .dark {
@@ -177,6 +197,7 @@
   --border-mid: 0 0% 100% / 0.14;
   --input: 0 0% 100% / 0.06;
   --ring: var(--brand);
+  --brand-text: 214 95% 64%; /* lighter accent for text on dark (AA ≥4.5:1) */
   --logo-wordmark: 0 0% 94%;
   --logo-tagline: 0 0% 58%;
 
@@ -188,11 +209,31 @@
   --s-border: hsl(0 0% 98% / 0.1);
   --s-border-hover: hsl(0 0% 98% / 0.18);
   --s-high-soft: hsl(0 0% 98% / 0.04);
+
+  /* Deeper elevation on dark-first surfaces */
+  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
+  --elevation-card-lg: 0 2px 6px hsl(0 0% 0% / 0.5), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
 }
 
 [data-scene="inverted"] {
+  background-color: hsl(var(--inverted-bg));
   --foreground: 0 0% 94%;
   --primary: 0 0% 94%;
+  --primary-foreground: 0 0% 7%;
+  --brand-text: 214 95% 64%; /* content appears dark here → lighter accent text */
+  /* Complete the dark-context flip so any token-based surface/text renders
+     correctly on the inverted bg (cards, panels, muted labels, inputs).
+     Surfaces sit a touch above the 9% inverted-bg so elevation still reads. */
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 94%;
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 94%;
+  --surface: 0 0% 13%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 17%;
+  --muted-foreground: 0 0% 60%;
+  --input: 0 0% 100% / 0.06;
   --border: 0 0% 100% / 0.08;
   --border-mid: 0 0% 100% / 0.14;
   --s-high: hsl(0 0% 100% / 0.92);
@@ -208,6 +249,19 @@
 .dark [data-scene="inverted"] {
   --foreground: 0 0% 6%;
   --primary: 0 0% 6%;
+  --primary-foreground: 0 0% 98%;
+  --brand-text: 214 90% 43%; /* content appears light here → darker accent text */
+  /* Mirror: dark page + inverted = a LIGHT island, so restore light surfaces. */
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 6%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 6%;
+  --surface: 0 0% 94%;
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 25%;
+  --muted: 0 0% 91%;
+  --muted-foreground: 0 0% 40%;
+  --input: 0 0% 94%;
   --border: 0 0% 6% / 0.12;
   --border-mid: 0 0% 6% / 0.2;
   --s-high: hsl(0 0% 6% / 0.9);
@@ -220,16 +274,75 @@
   --s-high-soft: hsl(0 0% 6% / 0.03);
 }
 
-/* Paint the solid inverted backdrop on scene containers (e.g. the services
-   wrapper) — but never the fixed header. The header carries
-   data-scene="inverted" only so its foreground tokens flip while it overlaps
-   the inverted scene; its surface stays transparent until the `.liquid-glass`
-   class (scroll state) layers the scene-aware glass material on top.
-   This is split out from the token block above so it can exclude the header
-   without an !important override (which would otherwise be needed because this
-   unlayered rule outranks the layered .liquid-glass utilities). */
-[data-scene="inverted"]:not(header) {
-  background-color: hsl(var(--inverted-bg));
+/* ─── Color world classes ─────────────────────────────────────────────────────
+   Mode-aware replacements for accentWorldStyle() inline styles. Each class sets
+   --local-accent to a value that passes WCAG AA in both roles it plays:
+     • as TEXT on the page background (≥4.5:1)
+     • as a FILL with --local-accent-fg text on top (≥4.5:1)
+   Light mode uses a deeper shade; dark mode uses the vivid original.
+   -------------------------------------------------------------------------- */
+.accent-world-orange {
+  /* deep amber: 4.95:1 as text on white; white fg on fill also 4.95:1 */
+  --local-accent: hsl(27 90% 35%);
+  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-soft: hsl(27 90% 35% / 0.08);
+}
+.dark .accent-world-orange {
+  /* vivid orange on dark bg: 6.3:1 as text; dark fg on fill: 5.4:1 */
+  --local-accent: hsl(27 96% 58%);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(27 96% 58% / 0.10);
+}
+
+.accent-world-green {
+  /* deep teal-green: 4.63:1 as text on white; white fg on fill also 4.63:1 */
+  --local-accent: hsl(158 64% 30%);
+  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-soft: hsl(158 64% 30% / 0.08);
+}
+.dark .accent-world-green {
+  /* vivid green on dark bg: 7.9:1 as text; dark fg on fill: 6.7:1 */
+  --local-accent: hsl(158 64% 46%);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(158 64% 46% / 0.10);
+}
+
+.accent-world-blue {
+  /* matches --brand-text: AA-verified for text on light bg */
+  --local-accent: hsl(214 90% 43%);
+  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-soft: hsl(214 90% 43% / 0.07);
+}
+.dark .accent-world-blue {
+  --local-accent: hsl(214 89% 48%);
+  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-soft: hsl(214 89% 48% / 0.10);
+}
+
+header[data-scene="inverted"] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
+    0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark header[data-scene="inverted"] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
+    0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
 }
 
 @layer base {
@@ -267,18 +380,14 @@
     font-family: var(--font-inter);
     font-size: var(--text-body-base);
     line-height: var(--leading-body);
-    background-image:
-      radial-gradient(circle at top, hsl(var(--brand) / 0.12), transparent 24%),
-      linear-gradient(180deg, hsl(var(--background) / 0.98), hsl(var(--background)));
+    background-image: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   .dark body {
     background-image:
-      radial-gradient(circle at top, hsl(var(--brand) / 0.2), transparent 28%),
-      radial-gradient(circle at bottom right, hsl(var(--brand) / 0.08), transparent 30%),
-      linear-gradient(180deg, hsl(var(--background) / 0.98), hsl(var(--background)));
+      radial-gradient(ellipse 60% 30% at 50% 0%, hsl(var(--brand) / 0.06), transparent);
   }
 
   main {
@@ -371,7 +480,6 @@ html.lenis body {
   pointer-events: none;
 }
 
-
 @keyframes slide-down {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(200%); }
@@ -408,121 +516,97 @@ html.lenis body {
   from {
     opacity: 0;
     transform: translateY(-8px);
-    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    backdrop-filter: blur(20px);
   }
 }
 
 @layer utilities {
-  /*
-   * Liquid glass material.
-   *
-   * Two visual treatments — "light glass" (frosted bright pane, for dark/
-   * vivid backdrops with dark content) and "dark glass" (translucent dark
-   * pane, for light backdrops) — mapped onto four contexts:
-   *
-   *   light mode, normal scene        -> light glass   (.liquid-glass)
-   *   dark mode,  normal scene        -> dark glass
-   *   light mode, inverted scene      -> dark glass   (backdrop is dark)
-   *   dark mode,  inverted scene      -> light glass  (backdrop is light)
-   *
-   * The inverted-scene selectors cover both the scene element itself
-   * (e.g. the header: `.liquid-glass[data-scene="inverted"]`) and any glass
-   * nested inside it (`[data-scene="inverted"] .liquid-glass`).
-   */
   .liquid-glass {
-    --lg-blur: 20px;
-    background:
-      radial-gradient(
-        130% 130% at 0% 0%,
-        rgba(255, 255, 255, 0.55) 0%,
-        rgba(255, 255, 255, 0.1) 45%,
-        transparent 100%
-      ),
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.35) 0%,
-        rgba(255, 255, 255, 0.08) 100%
-      );
-    backdrop-filter: blur(var(--lg-blur)) saturate(180%) brightness(1.06);
-    -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(180%)
-      brightness(1.06);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow:
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.04),
-      inset 0 0 20px 0 rgba(255, 255, 255, 0.12),
-      0 10px 30px -10px rgba(0, 0, 0, 0.18);
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
+      0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    will-change: backdrop-filter;
   }
 
-  .dark .liquid-glass,
-  .liquid-glass[data-scene="inverted"],
-  [data-scene="inverted"] .liquid-glass {
-    background:
-      radial-gradient(
-        130% 130% at 0% 0%,
-        rgba(255, 255, 255, 0.16) 0%,
-        rgba(255, 255, 255, 0.03) 45%,
-        transparent 100%
-      ),
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.1) 0%,
-        rgba(255, 255, 255, 0.02) 100%
-      );
-    border-color: rgba(255, 255, 255, 0.14);
+  .dark .liquid-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.1);
     box-shadow:
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.22),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.25),
-      inset 0 0 24px 0 rgba(255, 255, 255, 0.04),
-      0 12px 36px -8px rgba(0, 0, 0, 0.5);
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
+      0 8px 32px 0 rgba(0, 0, 0, 0.4);
   }
 
-  /* Dark mode over the inverted (now light) scene flips back to light glass. */
-  .dark .liquid-glass[data-scene="inverted"],
-  .dark [data-scene="inverted"] .liquid-glass {
-    background:
-      radial-gradient(
-        130% 130% at 0% 0%,
-        rgba(255, 255, 255, 0.55) 0%,
-        rgba(255, 255, 255, 0.1) 45%,
-        transparent 100%
-      ),
-      linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.35) 0%,
-        rgba(255, 255, 255, 0.08) 100%
-      );
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow:
-      inset 0 1px 1px 0 rgba(255, 255, 255, 0.7),
-      inset 0 -1px 1px 0 rgba(0, 0, 0, 0.04),
-      inset 0 0 20px 0 rgba(255, 255, 255, 0.12),
-      0 10px 30px -10px rgba(0, 0, 0, 0.18);
+  @media (max-width: 768px) {
+    .liquid-glass {
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
   }
 
-  /*
-   * Lighter, token-driven glass for content surfaces (cards, panels, the
-   * mobile menu). Cheaper blur and a higher base opacity than `.liquid-glass`
-   * so text stays legible over flat section backgrounds, and it themes
-   * automatically via the --card / --foreground tokens (no rgba leaks).
-   */
+  .liquid-glass-flat {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05);
+    will-change: backdrop-filter;
+  }
+
+  .dark .liquid-glass-flat {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow:
+      inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    .liquid-glass-flat {
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+    }
+  }
+
   .liquid-glass-panel {
     background: linear-gradient(
       180deg,
       hsl(var(--card) / 0.72) 0%,
       hsl(var(--card) / 0.5) 100%
     );
-    backdrop-filter: blur(12px) saturate(150%);
-    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    backdrop-filter: blur(10px) saturate(130%);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
     border: 1px solid hsl(var(--foreground) / 0.08);
     box-shadow:
       inset 0 1px 0 0 hsl(var(--foreground) / 0.06),
       0 8px 24px -14px hsl(0 0% 0% / 0.2);
+    will-change: backdrop-filter;
   }
 
   .dark .liquid-glass-panel {
@@ -537,22 +621,101 @@ html.lenis body {
       0 12px 32px -14px hsl(0 0% 0% / 0.55);
   }
 
+  @media (max-width: 768px) {
+    .liquid-glass-panel {
+      backdrop-filter: blur(6px) saturate(120%);
+      -webkit-backdrop-filter: blur(6px) saturate(120%);
+    }
+  }
+
   @media (prefers-reduced-transparency: reduce) {
+    .liquid-glass,
+    .liquid-glass-panel {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
     .liquid-glass {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       background: hsl(var(--background) / 0.92);
     }
-    .dark .liquid-glass,
-    .liquid-glass[data-scene="inverted"],
-    [data-scene="inverted"] .liquid-glass {
-      background: hsl(var(--background) / 0.92);
-    }
-    .liquid-glass-panel,
-    .dark .liquid-glass-panel {
-      backdrop-filter: none;
-      -webkit-backdrop-filter: none;
+    .liquid-glass-panel {
       background: hsl(var(--card));
     }
+  }
+}
+
+@layer components {
+  .display {
+    font-family: var(--font-outfit), sans-serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-weight: 700;
+  }
+
+  .eyebrow {
+    font-family: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .label {
+    font-size: var(--text-label);
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .caption {
+    font-size: var(--text-caption);
+    line-height: 1.5;
+    font-weight: 400;
+    color: hsl(var(--muted-foreground));
+  }
+
+  [dir="rtl"] .display,
+  [dir="rtl"] .eyebrow {
+    font-family: var(--font-vazirmatn), sans-serif;
+    letter-spacing: 0;
+  }
+
+  [dir="rtl"] .eyebrow {
+    text-transform: none;
+  }
+
+  .section-title {
+    font-size: clamp(28px, 4.5vw, 52px);
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  .grain-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .grain-overlay {
+      display: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

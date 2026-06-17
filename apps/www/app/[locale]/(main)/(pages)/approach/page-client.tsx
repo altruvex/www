@@ -1,4 +1,5 @@
 "use client";
+import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/container";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -24,27 +25,12 @@ export default function ApproachPage() {
 
 function OpeningSection() {
   const t = useTranslations("approach.hero");
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
 
   return (
-    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="max-w-4xl py-16 md:py-24">
-          <h1
-            ref={titleRef}
-            className="mb-8 font-sans font-normal text-primary"
-          >
-            {t("title")}
-          </h1>
-          <div ref={descRef}>
-            <p className="max-w-2xl text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/85">
-              {t("description")}
-            </p>
-          </div>
-        </div>
-      </Container>
-    </section>
+    <PageHero
+      title={t("title")}
+      description={t("description")}
+    />
   );
 }
 
@@ -64,7 +50,7 @@ function ProblemSection() {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <div className="mb-16">
@@ -123,7 +109,7 @@ function DecisionsSection() {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <div ref={titleRef} className="mb-16">
@@ -158,7 +144,7 @@ function ConstraintsSection() {
   const descRef = useSectionDescription();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="mb-12">
           <h2
@@ -186,14 +172,14 @@ function ConstraintsSection() {
 }
 
 function BilingualSection() {
-  const t = useTranslations("approach.bilingual");
+  const t = useTranslations("approach.multilingual");
   const [isRTL, setIsRTL] = useState(false);
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
   const demoRef = useSectionElement();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="mb-12">
           <h2
@@ -264,7 +250,7 @@ function BoundariesSection() {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <div className="mb-12">
@@ -305,7 +291,9 @@ function ClosingSection() {
   const ctaRef = useSectionElement();
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section
+      className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
       <Container>
         <div className="max-w-3xl">
           <div className="mb-12">
@@ -322,7 +310,7 @@ function ClosingSection() {
             </p>
           </div>
           <div ref={ctaRef} className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <MagneticButton asChild size="lg">
+            <MagneticButton asChild size="lg" variant="accent">
               <Link href={contactCta.href}>
                 <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
               </Link>

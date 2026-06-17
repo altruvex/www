@@ -16,7 +16,6 @@ export {
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
-  useSectionScrollHint,
   useSectionTitle,
 } from "@/lib/motion/hooks/use-section-motion";
 export type { BatchConfig } from "@/lib/motion/hooks/use-batch";

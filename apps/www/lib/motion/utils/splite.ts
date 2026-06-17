@@ -1,11 +1,11 @@
-export function isRTLText(text: string): boolean {
+function isRTLText(text: string): boolean {
   const rtlRange = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF\u0590-\u05FF]/g;
   const stripped = text.replace(/\s/g, "");
   if (!stripped.length) return false;
   return (stripped.match(rtlRange) ?? []).length / stripped.length > 0.3;
 }
 
-export function splitIntoChars(element: HTMLElement): Element[] {
+function splitIntoChars(element: HTMLElement): Element[] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let node: Node | null;
@@ -35,7 +35,7 @@ export function splitIntoChars(element: HTMLElement): Element[] {
   return Array.from(element.querySelectorAll(".m-char"));
 }
 
-export function splitIntoWords(element: HTMLElement, script: "arabic" | "latin" = "latin"): Element[] {
+function splitIntoWords(element: HTMLElement, script: "arabic" | "latin" = "latin"): Element[] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let node: Node | null;
@@ -71,7 +71,7 @@ export function splitIntoWords(element: HTMLElement, script: "arabic" | "latin" 
   return Array.from(element.querySelectorAll(".m-word"));
 }
 
-export function splitIntoLines(element: HTMLElement): Element[] {
+function splitIntoLines(element: HTMLElement): Element[] {
   const text = element.textContent ?? "";
   const script = isRTLText(text) ? "arabic" : "latin";
   splitIntoWords(element, script);

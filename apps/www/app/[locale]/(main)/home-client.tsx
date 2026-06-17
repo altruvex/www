@@ -47,14 +47,6 @@ const PricingSignalSection = dynamic(
     ),
   { loading: () => <SectionSkeleton /> },
 );
-const FaqSection = dynamic(
-  () =>
-    import("@/components/sections/faq-section").then((mod) => mod.FaqSection),
-  { loading: () => <SectionSkeleton /> },
-);
-
-const HOME_FAQ_KEYS = ["07", "06", "11", "04", "08", "02"];
-
 export function HomeClient() {
   return (
     <>
@@ -66,16 +58,13 @@ export function HomeClient() {
         <WorkSection />
       </ErrorBoundary>
       <ErrorBoundary>
-        <PricingSignalSection />
-      </ErrorBoundary>
-      <ErrorBoundary>
         <TrustSection />
       </ErrorBoundary>
       <ErrorBoundary>
         <TransparencySection />
       </ErrorBoundary>
       <ErrorBoundary>
-        <FaqSection namespace="faq" questionKeys={HOME_FAQ_KEYS} />
+        <PricingSignalSection />
       </ErrorBoundary>
       <ErrorBoundary>
         <CtaSection />

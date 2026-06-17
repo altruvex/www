@@ -1,5 +1,6 @@
 "use client";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription, useSectionCardGrid } from "@/lib/motion";
+import { PageHero } from "@/components/sections/page-hero";
+import { useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
@@ -27,42 +28,14 @@ export default function WritingPage({
 
 function OpeningSection() {
   const t = useTranslations("writing");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
 
   return (
-    <section className="relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="sm:max-w-5xl max-w-full">
-          <p
-            ref={eyebrowRef}
-            className="font-mono text-sm leading-normal tracking-wider  uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block"
-          >
-            {t("eyebrow")}
-          </p>
-          <h1
-            ref={titleRef}
-            className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-          >
-            {t("hero.title")}
-            <br />
-            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-              {t("hero.titleItalic")}
-            </span>
-          </h1>
-          <div className="grid md:grid-cols-[80px_1fr] gap-8 items-start">
-            <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />
-            <p
-              ref={descRef}
-              className="text-base text-primary/60 leading-relaxed max-w-[52ch]"
-            >
-              {t("hero.description")}
-            </p>
-          </div>
-        </div>
-      </Container>
-    </section>
+    <PageHero
+      eyebrow={t("eyebrow")}
+      title={t("hero.title")}
+      titleItalic={t("hero.titleItalic")}
+      description={t("hero.description")}
+    />
   );
 }
 
@@ -72,7 +45,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
   return (
     <section
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
         <div className="h-px w-full bg-foreground/8 mb-0" />

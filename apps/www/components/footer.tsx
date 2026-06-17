@@ -6,8 +6,6 @@ import { localizeNumbers } from "@/lib/number";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
-import { MOTION, useSectionDescription, useSectionElement, useSectionScrollHint } from "@/lib/motion";
-import { useReveal, useBatch } from "@/lib/motion";
 import { AltruvexLogo } from "./altruvex-logo";
 import { Container } from "./container";
 
@@ -72,34 +70,26 @@ export const Footer = memo(function Footer() {
 
   const whatsappUrl = getWhatsAppUrl();
 
-  const taglineRef = useSectionDescription<HTMLParagraphElement>();
-  const columnsRef = useBatch<HTMLDivElement>({
-    selector: ".footer-nav-col",
-    direction: "up",
-    stagger: MOTION.stagger.base,
-    distance: MOTION.distance.sm,
-    ease: MOTION.ease.smooth,
-    trigger: MOTION.trigger.late,
-  });
-  const contactRef = useSectionElement();
-  const copyrightRef = useSectionScrollHint<HTMLDivElement>();
-
   return (
     <footer
       data-animate-section
       className="relative w-full overflow-hidden border-t border-foreground/8"
     >
       <Container className="py-10 sm:py-12 md:py-16">
-        <div className="mb-10 flex flex-col gap-8 sm:mb-12 md:mb-16 lg:flex-row lg:items-start lg:justify-between">
+        <div
+          data-reveal
+          data-beat="0"
+          className="mb-10 flex flex-col gap-8 sm:mb-12 md:mb-16 lg:flex-row lg:items-start lg:justify-between"
+        >
           <div className="max-w-xs shrink-0 lg:max-w-sm">
-            <p ref={taglineRef} className="font-sans font-normal leading-[1.5] text-primary/88 ltr:tracking-tight rtl:tracking-normal text-[clamp(15px,2.5vw,20px)]">
+            <p className="font-sans font-normal leading-[1.5] text-primary/88 ltr:tracking-tight rtl:tracking-normal text-[clamp(15px,2.5vw,20px)]">
               {t("tagline")}
             </p>
           </div>
           <nav aria-label="Footer navigation" className="w-full lg:w-auto">
-            <div ref={columnsRef} className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-8 md:gap-x-12">
+            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-8 md:gap-x-12">
               {linkColumns.map(({ title, links }) => (
-                <div key={title} className="footer-nav-col">
+                <div key={title}>
                   <h3 className="mb-3 font-mono text-sm leading-normal text-primary/70 ltr:uppercase ltr:tracking-wider rtl:tracking-normal lg:text-base">
                     {title}
                   </h3>
@@ -121,13 +111,17 @@ export const Footer = memo(function Footer() {
           </nav>
         </div>
 
-        <div>
+        <div data-reveal data-beat="1">
           <div className="relative mb-6 overflow-hidden md:mb-8">
             <h2 className="select-none font-sans font-semibold leading-[0.84] text-primary text-[clamp(56px,17vw,380px)]">
-              Altruvex
+              <span className="block overflow-hidden">
+                <span data-heading-line data-motion-accent className="block">
+                  Altruvex
+                </span>
+              </span>
             </h2>
           </div>
-          <div ref={contactRef} className="mb-10 max-w-xl space-y-8 md:mb-14">
+          <div className="mb-10 max-w-xl space-y-8 md:mb-14">
             <p className="text-[13px] leading-relaxed text-primary/75 sm:text-[14px] md:text-[15px]">
               {t("description")}
             </p>
@@ -151,7 +145,8 @@ export const Footer = memo(function Footer() {
         </div>
 
         <div
-          ref={copyrightRef}
+          data-reveal
+          data-beat="2"
           className="flex flex-col gap-3 border-t border-foreground/8 pt-5 sm:flex-row sm:items-center sm:justify-between sm:pt-6 md:pt-8"
         >
           <div className="order-2 flex items-center gap-2 sm:order-1">

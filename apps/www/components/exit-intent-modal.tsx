@@ -121,7 +121,7 @@ export const ExitIntentModal = () => {
           <div className="p-8 text-center">
             <p
               id="exit-intent-success-title"
-              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground/40 mb-4"
+              className="eyebrow text-foreground/40 mb-4"
             >
               {t("successTitle")}
             </p>
@@ -132,7 +132,7 @@ export const ExitIntentModal = () => {
         ) : (
           <div className="p-8">
             <div className="mb-8">
-              <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground/40 mb-3">
+              <p className="eyebrow text-foreground/40 mb-3">
                 {t("subtitle")}
               </p>
               <h2

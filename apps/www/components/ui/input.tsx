@@ -13,9 +13,10 @@ const normalizeNumbers = (str: string) => {
 };
 
 export const formControlClasses = cn(
-  "w-full min-w-0 bg-transparent px-0 py-2.5 text-base md:text-sm text-foreground",
+  "w-full min-w-0 min-h-11 rounded-none bg-transparent px-0 py-2.5 text-base md:text-sm text-foreground",
   "placeholder:text-muted-foreground selection:bg-accent selection:text-accent-foreground",
   "border-b border-border",
+  "transition-[color,border-color,outline-color] duration-(--duration-instant) ease-(--ease-default)",
   "focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
   "aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:outline-destructive",
@@ -65,11 +66,6 @@ function Input({
         "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
         className,
       )}
-      style={{
-        borderRadius: 0,
-        transitionDuration: "var(--duration-instant)",
-        transitionTimingFunction: "var(--ease-default)",
-      }}
       {...props}
     />
   );
@@ -82,11 +78,6 @@ function Textarea({ className, ...props }: TextareaProps) {
     <textarea
       data-slot="textarea"
       className={cn(formControlClasses, "resize-none", className)}
-      style={{
-        borderRadius: 0,
-        transitionDuration: "var(--duration-instant)",
-        transitionTimingFunction: "var(--ease-default)",
-      }}
       {...props}
     />
   );
@@ -99,11 +90,6 @@ function SelectField({ className, ...props }: SelectFieldProps) {
     <select
       data-slot="select-field"
       className={cn(formControlClasses, className)}
-      style={{
-        borderRadius: 0,
-        transitionDuration: "var(--duration-instant)",
-        transitionTimingFunction: "var(--ease-default)",
-      }}
       {...props}
     />
   );

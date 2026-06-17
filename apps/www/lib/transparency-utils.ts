@@ -8,7 +8,7 @@ export type DeliverableProject =
   | "custom"
   | "performance";
 
-export type TransparencyTranslationValues = Record<string, string | number>;
+type TransparencyTranslationValues = Record<string, string | number>;
 
 export type TransparencyTranslator = {
   (key: string, values?: TransparencyTranslationValues): string;

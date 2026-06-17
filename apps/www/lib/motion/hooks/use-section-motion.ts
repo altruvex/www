@@ -32,12 +32,6 @@ export function useSectionElement<T extends HTMLElement = HTMLDivElement>(
   return useReveal<T>(motion.sectionElement(config));
 }
 
-export function useSectionScrollHint<T extends HTMLElement = HTMLDivElement>(
-  config?: Partial<RevealConfig>,
-) {
-  return useReveal<T>(motion.sectionScrollHint(config));
-}
-
 export function useSectionCardGrid<T extends HTMLElement = HTMLDivElement>(
   config?: Partial<BatchConfig>,
 ) {

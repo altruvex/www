@@ -1,10 +1,12 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta, type CommercialCtaKey } from "@/lib/commercial";
+import { accentWorldClass } from "@/lib/accent-world";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 
@@ -42,12 +44,14 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
   const ctaRef = useSectionElement();
 
   return (
-    <section className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section
+      className={`border-t border-border pt-(--section-y-top) pb-(--section-y-bottom) ${accentWorldClass("orange")}`}
+    >
       <Container>
         <div className="max-w-3xl">
-          <p ref={eyebrowRef} className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4">
+          <Eyebrow ref={eyebrowRef} tone="accent" className="mb-4">
             {t("eyebrow")}
-          </p>
+          </Eyebrow>
           <h2 ref={titleRef} className="text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4">
             {t("title")}
           </h2>
@@ -55,7 +59,7 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
             {t("body")}
           </p>
           <div ref={ctaRef} className="flex flex-col sm:flex-row gap-3">
-            <MagneticButton asChild size="lg" className="w-full sm:w-auto">
+            <MagneticButton asChild size="lg" variant="accent" className="w-full sm:w-auto">
               <Link href={primaryCta.href} className="w-full sm:w-auto">
                 <ArrowLabel>
                   {tCTAs(VARIANT_PRIMARY[variant])}
@@ -75,7 +79,7 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
               </MagneticButton>
             ) : null}
           </div>
-          <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/60 mt-6">
+          <p className="eyebrow text-xs text-muted-foreground/60 mt-6">
             {t("footnote")}
           </p>
         </div>

@@ -1,13 +1,13 @@
 "use client";
-import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
-import { SectionWatermark } from "@/components/section-watermark";
-import { HeroReveal } from "@/components/sections/hero-motion-wrappers";
+import { ServiceHero } from "@/components/sections/service-hero";
 import { Link } from "@/i18n/navigation";
+import { accentWorldClass } from "@/lib/accent-world";
 import { getCommercialCta } from "@/lib/commercial";
 import { monoCaps } from "@/lib/mono-caps";
+import { MOTION, useSectionCardGrid, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
@@ -26,114 +26,19 @@ export default function InterfacePage() {
 function HeroSection() {
   const t = useTranslations("serviceDetails.webDesign");
   const tCTAs = useTranslations("commercial.ctas");
-  const tHero = useTranslations("hero");
   const projectRangeCta = getCommercialCta("projectRange");
   const realBuildCta = getCommercialCta("realBuild");
 
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
-  const ctaRef = useSectionElement();
-
   return (
-    <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
-      <SectionWatermark>01</SectionWatermark>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden block">
-        <div className="absolute top-0 ltr:left-1/4 rtl:right-1/4 h-full w-px bg-foreground/6" />
-        <div className="absolute top-0 ltr:right-1/4 rtl:left-1/4 h-full w-px bg-foreground/6" />
-        <div className="absolute top-1/3 left-0 right-0 h-px bg-foreground/5" />
-      </div>
-
-      <div
-        ref={eyebrowRef}
-        className="absolute top-24 ltr:right-8 rtl:left-8 hidden lg:flex items-center gap-2"
-      >
-        <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-        <span className={cn(monoCaps, "text-foreground/50")}>
-          {t("subtitle")}
-        </span>
-      </div>
-      <Container>
-        <div className="sm:max-w-5xl max-w-full">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-            <span className={cn(monoCaps, "text-foreground/50")}>
-              {t("subtitle")}
-            </span>
-          </div>
-          <h1
-            ref={titleRef}
-            className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-          >
-            {t("title")}
-            <br className="hidden sm:block" />
-            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-              {t("titleItalic")}
-            </span>
-          </h1>
-          <div
-            ref={descRef}
-            className="mb-12 grid md:grid-cols-[80px_1fr] gap-8 items-start"
-          >
-            <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />
-            <p className="text-base text-primary/60 leading-relaxed max-w-[52ch]">
-              {t("description")}
-            </p>
-          </div>
-          <div
-            ref={ctaRef}
-            className="flex flex-col sm:flex-row sm:items-center gap-4"
-          >
-            <MagneticButton asChild
-              size="lg"
-              variant="primary"
-              className="group w-full sm:w-auto"
-            >
-              <Link href={projectRangeCta.href}>
-                <span className="flex items-center justify-center gap-2">
-                  {tCTAs("projectRange")}
-                  <svg
-                    aria-hidden="true"
-                    className="h-4 w-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </span>
-              </Link>
-            </MagneticButton>
-            <MagneticButton asChild
-              size="lg"
-              variant="secondary"
-              className="w-full sm:w-auto text-center"
-            >
-              <Link href={realBuildCta.href}>{tCTAs("realBuild")}</Link>
-            </MagneticButton>
-          </div>
-        </div>
-      </Container>
-      <HeroReveal
-        delay={1.1}
-        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
-      >
-        <p
-          className="font-mono text-xs leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
-          aria-hidden
-        >
-          {tHero("scrollHint")}
-        </p>
-        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
-        </div>
-      </HeroReveal>
-    </section>
+    <ServiceHero
+      watermark="01"
+      subtitle={t("subtitle")}
+      title={t("title")}
+      titleItalic={t("titleItalic")}
+      description={t("description")}
+      primaryCta={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
+      secondaryCta={{ href: realBuildCta.href, label: tCTAs("realBuild") }}
+    />
   );
 }
 
@@ -165,7 +70,7 @@ export function ShowcaseSection() {
     <section
       id="showcase"
       ref={sectionRef}
-      className="pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <div className="mb-16">
@@ -324,7 +229,7 @@ function FeaturesSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative pt-(--section-y-top) pb-(--section-y-bottom) overflow-hidden"
+      className="accent-world-orange relative pt-(--section-y-top) pb-(--section-y-bottom) overflow-hidden"
     >
       <Container>
         <div className="mb-20 md:mb-28">
@@ -370,13 +275,15 @@ function CtaSection() {
   });
 
   return (
-    <section className="border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section
+      className={cn("border-t border-foreground/8 pt-(--section-y-top) pb-(--section-y-bottom)", accentWorldClass("orange"))}
+    >
       <Container>
         <div className="mb-16 flex items-end justify-between gap-8 flex-wrap">
           <div className="max-w-xl">
             <p
               ref={eyebrowRef}
-              className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}
+              className={cn(monoCaps, "mb-4 block text-local-accent")}
             >
               {t("cta.eyebrow")}
             </p>
@@ -395,7 +302,7 @@ function CtaSection() {
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <MagneticButton asChild size="lg" variant="primary" className="group">
+            <MagneticButton asChild size="lg" variant="accent" className="group">
               <Link href={projectRangeCta.href}>
                 <span className="flex items-center gap-2">
                   {tCTAs("projectRange")}

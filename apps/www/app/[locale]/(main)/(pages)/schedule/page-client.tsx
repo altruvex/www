@@ -114,14 +114,14 @@ export default function SchedulePage() {
 
   return (
     <>
-      <section className="flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
+      <section className="accent-world-orange flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="mx-auto max-w-2xl">
             <div className="mb-10 text-center flex flex-col items-center">
               <div ref={backRef} className="w-full flex justify-start mb-8">
                 <button
                   onClick={() => router.back()}
-                  className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal mb-10"
+                  className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow mb-10"
                 >
                   <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 ltr:group-hover:-translate-x-1 rtl:group-hover:translate-x-1 rtl:-rotate-180" />
                   {t("back")}
@@ -130,7 +130,7 @@ export default function SchedulePage() {
               <div className="mb-12">
                 <p
                   ref={eyebrowRef}
-                  className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+                  className="eyebrow text-muted-foreground/70 mb-4 block"
                 >
                   {t("eyebrow")}
                 </p>
@@ -154,11 +154,12 @@ export default function SchedulePage() {
               <div className="h-px w-full bg-foreground/8 mb-10" />
               <form onSubmit={onSubmit} className="space-y-7" noValidate>
                 <div className="form-field">
-                  <Label className="mb-2 block text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+                  <Label htmlFor="schedule-name" className="mb-2 block text-muted-foreground eyebrow">
                     {t("form.name.label")}{" "}
                     <span className="text-destructive">*</span>
                   </Label>
                   <Input
+                    id="schedule-name"
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
@@ -172,7 +173,7 @@ export default function SchedulePage() {
                   {errors.name && <FieldError msg={errors.name} />}
                 </div>
                 <div className="form-field">
-                  <Label className="mb-2 block text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+                  <Label htmlFor="schedule-phone" className="mb-2 block text-muted-foreground eyebrow">
                     {t("form.phone.label")}{" "}
                     <span className="text-destructive">*</span>
                   </Label>
@@ -181,6 +182,7 @@ export default function SchedulePage() {
                       <Phone className="h-4 w-4" />
                     </div>
                     <Input
+                      id="schedule-phone"
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => handleInputChange("phone", e.target.value)}
@@ -196,7 +198,7 @@ export default function SchedulePage() {
                 </div>
                 <div className="grid md:grid-cols-2 gap-7">
                   <div className="form-field">
-                    <Label className="mb-2 text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal flex items-center gap-1.5">
+                    <Label className="mb-2 text-muted-foreground eyebrow flex items-center gap-1.5">
                       <Calendar className="h-3 w-3" />
                       {t("form.date.label")}{" "}
                       <span className="text-destructive">*</span>
@@ -217,7 +219,7 @@ export default function SchedulePage() {
                     {errors.date && <FieldError msg={errors.date} />}
                   </div>
                   <div className="form-field">
-                    <Label className="mb-2 text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal flex items-center gap-1.5">
+                    <Label className="mb-2 text-muted-foreground eyebrow flex items-center gap-1.5">
                       <Clock className="h-3 w-3" />
                       {t("form.time.label")}{" "}
                       <span className="text-destructive">*</span>
@@ -229,7 +231,7 @@ export default function SchedulePage() {
                       className={cn(errors.time && "border-destructive")}
                     />
                     {errors.time && <FieldError msg={errors.time} />}
-                    <p className="mt-1.5 text-muted-foreground/80 font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+                    <p className="mt-1.5 text-muted-foreground/80 eyebrow">
                       {t("form.time.availableHours")}
                     </p>
                   </div>
@@ -244,7 +246,7 @@ export default function SchedulePage() {
                   >
                     {isSubmitting ? t("submit.submitting") : t("submit.button")}
                   </MagneticButton>
-                  <p className="mt-1.5 text-muted-foreground/80 font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-center">
+                  <p className="mt-1.5 text-muted-foreground/80 eyebrow text-center">
                     {t("form.riskReversal")}
                   </p>
                   {submitSuccess && (

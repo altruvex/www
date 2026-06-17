@@ -7,13 +7,13 @@ type CaseStudyMetric = {
   value: string;
 };
 
-export const CASE_STUDY_SLUGS = [
+const CASE_STUDY_SLUGS = [
   "altruvex-site",
   "art-lighting-store",
   "newlight-lighting-store",
 ] as const;
 
-export type CaseStudySlug = (typeof CASE_STUDY_SLUGS)[number];
+type CaseStudySlug = (typeof CASE_STUDY_SLUGS)[number];
 
 export type CaseStudyRecord = {
   client: LocalizedValue;

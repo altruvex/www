@@ -31,35 +31,35 @@ function HighlightBlobs() {
         className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-2xl"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(192,132,252,0.45), transparent 70%)",
+            "radial-gradient(circle at center, hsl(var(--brand) / 0.40), transparent 70%)",
         }}
       />
       <div
         className="absolute top-1/4 left-1/4 w-60 h-60 rounded-full blur-[35px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(167,139,250,0.4), transparent 70%)",
+            "radial-gradient(circle at center, hsl(214 89% 66% / 0.34), transparent 70%)",
         }}
       />
       <div
         className="absolute top-1/3 -right-12 w-72 h-72 rounded-full blur-2xl"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(249,168,212,0.4), transparent 70%)",
+            "radial-gradient(circle at center, hsl(224 70% 58% / 0.32), transparent 70%)",
         }}
       />
       <div
         className="absolute -bottom-10 right-1/4 w-64 h-64 rounded-full blur-[35px]"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(94,234,212,0.4), transparent 70%)",
+            "radial-gradient(circle at center, hsl(var(--brand) / 0.30), transparent 70%)",
         }}
       />
       <div
         className="absolute bottom-1/4 left-1/3 w-72 h-72 rounded-full blur-2xl"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(134,239,172,0.35), transparent 70%)",
+            "radial-gradient(circle at center, hsl(204 85% 60% / 0.28), transparent 70%)",
         }}
       />
     </div>
@@ -182,7 +182,7 @@ export default function PricingPage() {
   return (
     <>
       <section
-        className="relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-12"
+        className="accent-world-orange relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-12"
         aria-label="Pricing section"
       >
         <Container>
@@ -234,7 +234,7 @@ export default function PricingPage() {
                       <div className="absolute inset-0 z-10 liquid-glass rounded-2xl pointer-events-none" />
                       <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
                         <div className="mb-5">
-                          <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border backdrop-blur-md shadow-sm">
+                          <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border shadow-sm">
                             {t("recommended")}
                           </span>
                         </div>
@@ -296,7 +296,7 @@ export default function PricingPage() {
                   ) : (
                     <article
                       key={tier.id}
-                      className="tier-card group relative rounded-2xl p-7 md:p-8 flex flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1 bg-s-surface border border-s-border hover:border-s-border-hover backdrop-blur-md"
+                      className="tier-card group relative rounded-2xl p-7 md:p-8 flex flex-col overflow-hidden transition-all duration-500 hover:-translate-y-1 bg-s-surface border border-s-border hover:border-s-border-hover"
                     >
                       <div className="relative z-20 flex flex-col h-full">
                         <span
@@ -380,7 +380,7 @@ export default function PricingPage() {
               </div>
 
               {/* REDESIGNED ROI SECTION */}
-              <section className="border-t border-border pt-24 pb-12">
+              <section className="accent-world-orange border-t border-border pt-24 pb-12">
                 <div className="mb-16 max-w-3xl">
                   <p ref={roiEyebrowRef} className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
                     {t("roi.eyebrow")}

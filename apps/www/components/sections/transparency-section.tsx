@@ -73,12 +73,12 @@ export const ProposalNarrativeBlock = memo(function ProposalNarrativeBlock({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground whitespace-nowrap">
+        <span className="eyebrow text-xs text-muted-foreground whitespace-nowrap">
           {L({ ar: narrative.headline.ar, en: narrative.headline.en })}
         </span>
         <div className="flex-1 h-px bg-border" />
       </div>
-      <div className="flex gap-3 p-4 rounded-lg bg-surface border border-border">
+      <div className="flex gap-3 p-4 rounded-xl bg-card/40 border border-border/50">
         <div className="w-0.5 self-stretch rounded-full bg-border-mid shrink-0" />
         <p
           className={cn(
@@ -289,10 +289,10 @@ export const TransparencySection = memo(function TransparencySection() {
 
   const optCls = (selected: boolean) =>
     cn(
-      "relative p-5 rounded-lg border text-start transition-[border-color,background-color,box-shadow] duration-300",
+      "relative p-5 rounded-xl border text-start transition-[border-color,background-color,box-shadow] duration-300 cursor-pointer",
       selected
-        ? "border-foreground/40 bg-surface ring-1 ring-foreground/30"
-        : "border-border bg-surface/50 hover:border-foreground/20 hover:bg-surface",
+        ? "border-foreground/30 bg-foreground/5 ring-1 ring-foreground/20"
+        : "border-border bg-card/50 hover:border-foreground/15 hover:bg-card/70",
     );
 
   return (
@@ -300,13 +300,14 @@ export const TransparencySection = memo(function TransparencySection() {
       suppressHydrationWarning
       id="transparency"
       ref={sectionRef}
-      className="flex w-full items-center pt-(--section-y-top) pb-(--section-y-bottom)"
+      // Color world: clean blue. Interactive archetype — the live estimator.
+      className="accent-world-blue flex w-full items-center pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <div className="mb-12 space-y-3 text-center max-w-3xl mx-auto">
           <p
             ref={badgeRef}
-            className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground block"
+            className="eyebrow text-xs text-local-accent block"
           >
             {t("badge")}
           </p>
@@ -328,11 +329,11 @@ export const TransparencySection = memo(function TransparencySection() {
 
         <div
           ref={formRef}
-          className="max-w-3xl mx-auto bg-background rounded-lg border border-border p-6 md:p-10 shadow-sm relative overflow-hidden"
+          className="liquid-glass-panel max-w-3xl mx-auto rounded-2xl p-6 md:p-10 relative overflow-hidden"
         >
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-border">
             <div
-              className="h-full bg-brand transition-[width] duration-500 ease-out"
+              className="h-full bg-local-accent transition-[width] duration-500 ease-out"
               style={{ width: `${(step / 5) * 100}%` }}
             />
           </div>
@@ -341,7 +342,7 @@ export const TransparencySection = memo(function TransparencySection() {
             {step === 1 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
-                  <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                  <span className="mb-2 block eyebrow text-xs text-muted-foreground">
                     {tCommon("stepOf", { current: 1, total: 3 })}
                   </span>
                   {t("step1.question")}
@@ -382,7 +383,7 @@ export const TransparencySection = memo(function TransparencySection() {
             {step === 2 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
-                  <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                  <span className="mb-2 block eyebrow text-xs text-muted-foreground">
                     {tCommon("stepOf", { current: 2, total: 3 })}
                   </span>
                   {t("step2.question")}
@@ -418,7 +419,7 @@ export const TransparencySection = memo(function TransparencySection() {
             {step === 3 && (
               <div className="space-y-6">
                 <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
-                  <span className="mb-2 block font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                  <span className="mb-2 block eyebrow text-xs text-muted-foreground">
                     {tCommon("stepOf", { current: 3, total: 3 })}
                   </span>
                   {t("step3.question")}
@@ -461,7 +462,7 @@ export const TransparencySection = memo(function TransparencySection() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <Label className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-2 block">
+                    <Label htmlFor="transparency-phone" className="eyebrow text-xs text-muted-foreground mb-2 block">
                       {t("phoneCapture.phoneLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </Label>
@@ -470,6 +471,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         <Phone className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <Input
+                        id="transparency-phone"
                         type="tel"
                         dir="ltr"
                         value={sel.phone}
@@ -492,15 +494,16 @@ export const TransparencySection = memo(function TransparencySection() {
                         {phoneError}
                       </p>
                     )}
-                    <p className="mt-2 font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                    <p className="mt-2 eyebrow text-xs text-muted-foreground">
                       {t("phoneCapture.phoneHint")}
                     </p>
                   </div>
                   <div>
-                    <Label className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-2 block">
+                    <Label htmlFor="transparency-name" className="eyebrow text-xs text-muted-foreground mb-2 block">
                       {t("phoneCapture.nameLabel")}
                     </Label>
                     <Input
+                      id="transparency-name"
                       type="text"
                       value={sel.name}
                       onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -533,7 +536,7 @@ export const TransparencySection = memo(function TransparencySection() {
                       className="h-3 w-3 text-muted-foreground"
                       strokeWidth={2.5}
                     />
-                    <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+                    <span className="eyebrow text-xs text-muted-foreground">
                       {t("results.badge")}
                     </span>
                   </div>
@@ -545,7 +548,7 @@ export const TransparencySection = memo(function TransparencySection() {
                   <>
                     <div className="grid gap-3 md:grid-cols-2">
                       <div className="p-6 rounded-lg bg-foreground text-background">
-                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal opacity-40 mb-3">
+                        <p className="eyebrow text-xs opacity-40 mb-3">
                           {t("results.investment")}
                         </p>
                         <p
@@ -561,12 +564,12 @@ export const TransparencySection = memo(function TransparencySection() {
                         <p className="font-mono text-xs opacity-40">
                           {t("results.vatExcluded")}
                         </p>
-                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal opacity-30 mt-3">
+                        <p className="eyebrow text-xs opacity-30 mt-3">
                           {t("results.hostingIncluded")}
                         </p>
                       </div>
-                      <div className="p-6 rounded-lg bg-surface border border-border">
-                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-3">
+                      <div className="p-6 rounded-xl bg-card/40 border border-border/50">
+                        <p className="eyebrow text-xs text-muted-foreground mb-3">
                           {t("results.timeline")}
                         </p>
                         <p
@@ -600,7 +603,7 @@ export const TransparencySection = memo(function TransparencySection() {
                       />
                     )}
                     <div>
-                      <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-3">
+                      <p className="eyebrow text-xs text-muted-foreground mb-3">
                         {t("results.whatYouGet")}
                       </p>
                       <div className="space-y-2.5">
@@ -626,7 +629,7 @@ export const TransparencySection = memo(function TransparencySection() {
                                 </div>
                               ))}
                               {items.length > 5 && (
-                                <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground ps-5 pt-1">
+                                <p className="eyebrow text-xs text-muted-foreground ps-5 pt-1">
                                   {t("results.moreInPdf", {
                                     count: items.length - 5,
                                   })}
@@ -637,7 +640,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         })()}
                       </div>
                     </div>
-                    <div className="flex gap-3 p-4 rounded-lg bg-surface border border-border">
+                    <div className="flex gap-3 p-4 rounded-xl bg-card/40 border border-border/50">
                       <div className="h-1.5 w-1.5 rounded-full bg-border-mid mt-2 shrink-0" />
                       <p className="font-mono text-xs text-muted-foreground leading-relaxed">
                         <span className="text-foreground font-medium">
@@ -655,7 +658,7 @@ export const TransparencySection = memo(function TransparencySection() {
                     <div className="p-6 rounded-lg border border-border bg-surface flex gap-5 items-start">
                       <div className="w-1.5 self-stretch rounded-full bg-border-mid shrink-0" />
                       <div>
-                        <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-2">
+                        <p className="eyebrow text-xs text-muted-foreground mb-2">
                           {t("results.rangeCtaLabel")}
                         </p>
                         <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground leading-relaxed font-sans">
@@ -696,7 +699,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         </Link>
                       </MagneticButton>
                     </div>
-                    <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground text-center">
+                    <p className="eyebrow text-xs text-muted-foreground text-center">
                       {t("results.disclaimer")}
                     </p>
                   </>
@@ -719,7 +722,7 @@ export const TransparencySection = memo(function TransparencySection() {
               ) : (
                 <div />
               )}
-              <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+              <span className="eyebrow text-xs text-muted-foreground">
                 {step} / 5
               </span>
               <button

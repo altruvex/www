@@ -192,7 +192,7 @@ export default function TransparencyPageClient() {
 
   return (
     <div className="relative min-h-screen w-full">
-      <section className="min-h-screen flex items-center pt-(--section-y-top) pb-(--section-y-bottom)">
+      <section className="accent-world-blue min-h-screen flex items-center pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
@@ -369,7 +369,7 @@ function TransparencyFaqSection({ t }: StepProps) {
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-24">
           <div ref={headerRef} className="max-w-md">
-            <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-4 block">
+            <p className="eyebrow text-xs text-muted-foreground mb-4 block">
               {t("faq.title")}
             </p>
             <h2 className="text-[clamp(2.125rem,4vw,3.25rem)] tracking-[-0.02em] font-normal text-foreground leading-[1.1] mb-6">
@@ -468,7 +468,7 @@ function StepPhoneCapture({
       </p>
       <div className="space-y-4 mb-6">
         <div>
-          <Label className="mb-2 block text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+          <Label htmlFor="transparency-page-phone" className="mb-2 block text-muted-foreground eyebrow">
             {t("phoneCapture.phoneLabel")}{" "}
             <span className="text-destructive">*</span>
           </Label>
@@ -477,6 +477,7 @@ function StepPhoneCapture({
               <Phone className="h-4 w-4 text-primary/30" />
             </div>
             <Input
+              id="transparency-page-phone"
               type="tel"
               dir="ltr"
               value={phone}
@@ -499,10 +500,11 @@ function StepPhoneCapture({
           </p>
         </div>
         <div>
-          <Label className="mb-2 block text-muted-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+          <Label htmlFor="transparency-page-name" className="mb-2 block text-muted-foreground eyebrow">
             {t("phoneCapture.nameLabel")}
           </Label>
           <Input
+            id="transparency-page-name"
             type="text"
             value={name}
             onChange={(e) => onNameChange(e.target.value)}

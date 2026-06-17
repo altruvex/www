@@ -257,4 +257,3 @@ export function useTransparency({
   };
 }
 
-export const useTransparencyFlow = useTransparency;

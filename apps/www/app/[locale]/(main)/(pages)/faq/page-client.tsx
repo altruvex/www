@@ -96,14 +96,14 @@ function FAQItem({
           >
             {String(index + 1).padStart(2, "0")}
           </span>
-          <h3
+          <h2
             className={cn(
               "font-medium text-base md:text-lg leading-snug transition-colors duration-300",
               isOpen ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
             )}
           >
             {question}
-          </h3>
+          </h2>
         </div>
         <div
           className={cn(

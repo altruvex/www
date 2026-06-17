@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Input, SelectField, Textarea } from "@/components/ui/input";
@@ -24,10 +25,6 @@ export default function ContactPage() {
     [tValidations],
   );
   const searchParams = useSearchParams();
-
-  const badgeRef = useSectionElement({ delay: 0 });
-  const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const descRef = useSectionDescription();
 
   const infoTitleRef = useSectionTitle<HTMLHeadingElement>();
   const leftRef = useSectionDescription();
@@ -125,31 +122,14 @@ export default function ContactPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <section className="flex min-h-[70vh] w-full items-center justify-center pt-32 md:pt-40">
-        <Container>
-          <div className="max-w-4xl">
-            <div ref={badgeRef} className="mb-8 inline-flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse" />
-              <p className="font-mono text-sm leading-normal tracking-wider text-primary/90 uppercase">
-                {t("badge")}
-              </p>
-            </div>
-            <h1
-              ref={titleRef}
-              className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-            >
-              {t("heroTitle")}
-            </h1>
-            <p
-              ref={descRef}
-              className="mb-10 max-w-2xl text-lg leading-relaxed text-primary/85 md:text-xl lg:text-2xl"
-            >
-              {t("heroDescription")}
-            </p>
-          </div>
-        </Container>
-      </section>
-      <section className="flex w-full items-center py-24 md:py-32">
+      <PageHero
+        eyebrow={t("badge")}
+        title={t("heroTitle")}
+        description={t("heroDescription")}
+        minHeightClass="min-h-[70vh]"
+        showStatusIndicator={true}
+      />
+      <section className="accent-world-orange flex w-full items-center py-24 md:py-32">
         <Container>
           <div className="grid gap-12 md:grid-cols-2 md:gap-20 lg:gap-28">
             <div className="flex flex-col justify-center">
@@ -288,11 +268,12 @@ export default function ContactPage() {
               <div className="p-8 rounded-section liquid-glass">
                 <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
+                    <label htmlFor="contact-name" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.nameLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
                     <Input
+                      id="contact-name"
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -317,11 +298,12 @@ export default function ContactPage() {
                     )}
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
+                    <label htmlFor="contact-phone" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.phoneLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
                     <Input
+                      id="contact-phone"
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -347,10 +329,11 @@ export default function ContactPage() {
                     )}
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
+                    <label htmlFor="contact-service" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.serviceLabel")}
                     </label>
                     <SelectField
+                      id="contact-service"
                       value={service}
                       onChange={(e) => setService(e.target.value)}
                       disabled={isSubmitting}
@@ -371,11 +354,12 @@ export default function ContactPage() {
                     </SelectField>
                   </div>
                   <div>
-                    <label className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
+                    <label htmlFor="contact-message" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
                       {t("form.messageLabel")}{" "}
                       <span className="text-destructive">*</span>
                     </label>
                     <Textarea
+                      id="contact-message"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder={t("form.messagePlaceholder")}

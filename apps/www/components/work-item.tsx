@@ -12,6 +12,15 @@ interface WorkItemProps {
   index: number;
 }
 
+// Utility to extract the domain cleanly (e.g., "example.com")
+const getDomainName = (url: string) => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
 export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
   const tW = useTranslations("work");
   const tCS = useTranslations("caseStudies");
@@ -81,9 +90,9 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="work-card group relative border-b border-foreground/8 py-10"
+      className="work-card group relative border-b border-foreground/8 py-10 transition-colors hover:bg-foreground/[0.01]"
     >
-      {/* Dynamic Cursor-Following Desktop Image Showcase */}
+      {/* 1. Desktop Floating Image Showcase (Z-50) */}
       {screenshot && (
         <div
           ref={imageRef}
@@ -108,11 +117,26 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
           />
         </div>
       )}
+
+      {/* 2. Hover Overlay Background (Z-0) */}
       <div
         aria-hidden
-        className="absolute inset-0 origin-left scale-x-0 bg-foreground/2 transition-transform duration-300 ease-out group-hover:scale-x-100 rtl:origin-right pointer-events-none"
+        className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 bg-foreground/2 transition-transform duration-300 ease-out group-hover:scale-x-100 rtl:origin-right"
       />
-      <div className="relative z-10 px-4">
+
+      {/* ==============================================================
+          3. FULL-CARD CLICKABLE OVERLAY (Z-10)
+          This invisible link safely covers the exact dimensions of the card
+          ============================================================== */}
+      <Link
+        href={`/work/${slug}`}
+        className="absolute inset-0 z-10 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={`${tW("viewCaseStudy")} - ${name}`}
+      />
+
+      {/* 4. CONTENT WRAPPER (Z-20) 
+          Uses pointer-events-none so clicking ANY text falls through to the absolute overlay link above */}
+      <div className="pointer-events-none relative z-20 px-4">
         <div className="mb-4 flex items-start justify-between gap-6">
           <div className="flex items-baseline gap-6 md:gap-10">
             <span
@@ -132,12 +156,8 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   letterSpacing: "-0.015em",
                 }}
               >
-                <Link
-                  href={`/work/${slug}`}
-                  className="rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-8 before:absolute before:inset-0 before:z-0"
-                >
-                  {name}
-                </Link>
+                {/* Text is no longer a nested link, avoiding hydration errors and screen reader duplication */}
+                {name}
               </h2>
               <p className="font-mono text-sm leading-normal tracking-wider text-foreground/35 uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
                 {client} · {industry}
@@ -159,10 +179,13 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
             </svg>
           </div>
         </div>
+
         <div className="ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
           <p className="mb-4 max-w-[52ch] text-base leading-relaxed text-primary/60">
             {summary}
           </p>
+
+          {/* Mobile Image */}
           {screenshot && (
             <div className="pointer-events-none relative mb-5 aspect-16/10 w-full max-w-md overflow-hidden rounded-md border border-foreground/8 bg-foreground/2 md:hidden">
               <Image
@@ -183,8 +206,9 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               />
             </div>
           )}
+
           <div className="flex items-center justify-between gap-4">
-            <div className="pointer-events-none relative z-10 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {metrics.slice(0, 2).map((metric) => (
                 <div
                   key={metric.label}
@@ -199,15 +223,32 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                 </div>
               ))}
             </div>
-            <div className="relative z-10 flex items-center gap-6">
+
+            {/* 5. EXTERNAL LINK OVERLAY (Z-30) 
+                Restores pointer-events-auto so the user can interact directly with this link. */}
+            <div className="pointer-events-auto relative z-30 flex items-center gap-6">
               {externalUrl && (
                 <a
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-sm font-mono text-sm leading-normal tracking-wider text-primary/60 uppercase transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                  className="group/link flex items-center gap-2 rounded-sm font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rtl:font-sans rtl:normal-case rtl:tracking-normal"
                 >
-                  {tW("labels.visitProj")} ↗
+                  <span className="text-primary/60 uppercase transition-colors group-hover/link:text-primary">
+                    {tW("labels.visitProj")}
+                  </span>
+                  <span className="flex items-center gap-1 text-primary/40 lowercase transition-colors group-hover/link:text-primary/80">
+                    ({getDomainName(externalUrl)})
+                    <svg
+                      className="h-3.5 w-3.5 transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                    </svg>
+                  </span>
                 </a>
               )}
               <span className="pointer-events-none hidden items-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary/70 transition-colors duration-300 group-hover:text-primary/100 md:inline-flex">

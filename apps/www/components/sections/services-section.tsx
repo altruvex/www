@@ -5,6 +5,7 @@ import { cn, splitHeadline } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Fragment, memo, useEffect, useRef, useState } from "react";
 import { Container } from "../container";
+import { SectionHeading } from "./section-heading";
 
 interface ServiceData {
   key: "service1" | "service2" | "service3" | "service4";
@@ -204,37 +205,18 @@ function SectionHeader() {
   const { first, second } = splitHeadline(t("title"));
 
   return (
-    <div className="mb-[clamp(40px,5vw,72px)] flex flex-col gap-[clamp(20px,2.5vw,32px)]">
-      <div className="flex items-center justify-between gap-4">
-        <p ref={eyebrowRef} className={cn(monoCaps, "m-0 text-s-muted")}>
-          {t("eyebrow")}
-        </p>
-        <span className={cn(monoCaps, "text-s-muted/60")}>
-          {SERVICES.length.toString().padStart(2, "0")}
-        </span>
-      </div>
-      <div className="h-px bg-s-border" />
-      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end md:gap-[clamp(20px,4vw,56px)]">
-        <h2
-          ref={headRef}
-          className="m-0 min-w-[min(100%,260px)] flex-1 font-serif font-light italic tracking-[-0.035em] text-s-high rtl:not-italic rtl:font-bold rtl:font-sans text-[clamp(28px,4.5vw,60px)] leading-[1.12]"
-        >
-          {first}
-          {second ? (
-            <>
-              <br />
-              <span className="text-s-mid">{second}</span>
-            </>
-          ) : null}
-        </h2>
-        <p
-          ref={subtitleRef}
-          className="m-0 max-w-[340px] shrink-0 font-mono text-[clamp(0.875rem,0.92vw,0.95rem)] leading-[1.8] text-s-low"
-        >
-          {t("subtitle")}
-        </p>
-      </div>
-    </div>
+    <SectionHeading
+      theme="surface"
+      eyebrowRef={eyebrowRef}
+      titleRef={headRef}
+      descriptionRef={subtitleRef}
+      eyebrow={t("eyebrow")}
+      firstTitle={first}
+      secondTitle={second}
+      description={t("subtitle")}
+      className="mb-[clamp(40px,5vw,72px)]"
+      classes={{ eyebrow: monoCaps, container: "md:gap-[clamp(20px,4vw,56px)]" }}
+    />
   );
 }
 
@@ -247,7 +229,7 @@ export const ServicesSection = memo(function ServicesSection() {
   return (
     <section
       id="services"
-      className="relative pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-orange relative pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeader />

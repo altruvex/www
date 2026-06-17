@@ -32,7 +32,7 @@ export default function OfflinePage() {
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-foreground/8 bg-foreground/2 px-3 py-1.5 mb-8">
             <div className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
-            <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+            <span className="eyebrow text-muted-foreground/70">
               {t("status")}
             </span>
           </div>

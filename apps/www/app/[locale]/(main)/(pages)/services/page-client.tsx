@@ -57,7 +57,7 @@ export default memo(function ServicesPage() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-background text-foreground font-sans">
-      <section className="relative overflow-hidden pt-(--section-y-top) pb-16">
+      <section className="accent-world-orange relative overflow-hidden pt-(--section-y-top) pb-16">
         <SectionWatermark>00</SectionWatermark>
         <Container>
           <div className="max-w-4xl relative z-10">
@@ -85,7 +85,7 @@ export default memo(function ServicesPage() {
           </div>
         </Container>
       </section>
-      <section className="pb-24 pt-8">
+      <section className="accent-world-orange pb-24 pt-8">
         <Container>
           <div className="mb-24 grid gap-10 border-t border-border pt-16 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
             <div>

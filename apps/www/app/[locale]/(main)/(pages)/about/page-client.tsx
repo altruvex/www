@@ -46,7 +46,6 @@ export default memo(function AboutPageClient({ routeCards }: PageClientProps) {
 
 function HeroSection() {
   const t = useTranslations("about");
-  const heroT = useTranslations("hero");
   const tCTAs = useTranslations("commercial.ctas");
   const projectRangeCta = getCommercialCta("projectRange");
 
@@ -74,7 +73,7 @@ function HeroSection() {
   ];
 
   return (
-    <section className="relative flex min-h-[90vh] flex-col justify-between overflow-hidden pt-(--section-y-top)">
+    <section className="accent-world-orange relative flex min-h-[90vh] flex-col justify-between overflow-hidden pt-(--section-y-top)">
       <SectionWatermark>06</SectionWatermark>
       <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-50">
         <div className="absolute top-0 inset-s-1/3 h-full w-px bg-foreground/5" />
@@ -133,7 +132,7 @@ function HeroSection() {
       <div className="border-t border-border bg-surface/10 backdrop-blur-xs">
         <Container>
           <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-y-0 md:divide-x rtl:divide-x-reverse">
-            {stats.map((stat, i) => (
+            {stats.map((stat) => (
               <div key={stat.label} className="py-8 px-4 md:px-8">
                 <p className="text-[clamp(2rem,3vw,2.75rem)] font-light leading-none tracking-[-0.03em] text-foreground">
                   {stat.value}
@@ -161,13 +160,13 @@ function PrinciplesSection() {
   const bodyRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-principle-card]" });
 
   const values = [
-    { label: t("values.bilingual.label"), sub: t("values.bilingual.sublabel") },
+    { label: t("values.multilingual.label"), sub: t("values.multilingual.sublabel") },
     { label: t("values.noTemplate.label"), sub: t("values.noTemplate.sublabel") },
     { label: t("values.outcome.label"), sub: t("values.outcome.sublabel") },
   ];
 
   return (
-    <section className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="accent-world-orange border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         {/* Editorial Layout: Sticky Left, Scrolling Right */}
         <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-24">
@@ -243,7 +242,7 @@ function OperatingModelSection() {
   }));
 
   return (
-    <section className="bg-surface/30 border-y border-border pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="accent-world-green bg-surface/30 border-y border-border pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="mb-16 md:mb-24 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
@@ -319,7 +318,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
   const cardsRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-route-card]" });
 
   return (
-    <section className="pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         {/* Centered layout to break the left-aligned monotony */}
         <div className="mx-auto max-w-3xl text-center mb-16">

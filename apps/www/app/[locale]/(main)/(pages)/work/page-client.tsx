@@ -18,13 +18,13 @@ export default memo(function WorkIndexPage() {
 
   return (
     <>
-      <section className="min-h-screen pt-(--section-y-top) pb-(--section-y-bottom)">
+      <section className="accent-world-green min-h-screen pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="py-16 md:py-24">
             <div className="mb-16">
               <p
                 ref={eyebrowRef}
-                className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+                className="eyebrow text-muted-foreground/70 mb-4 block"
               >
                 {t("selectedWork")}
               </p>

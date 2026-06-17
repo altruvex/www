@@ -2,10 +2,11 @@
 import { monoCaps } from "@/lib/mono-caps";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn, splitHeadline } from "@/lib/utils";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useState } from "react";
 import { Container } from "../container";
-import { Plus } from "lucide-react";
+import { SectionHeading } from "./section-heading";
 
 interface ProcessStep {
   index: string;
@@ -134,33 +135,21 @@ export const ProcessSection = memo(function ProcessSection() {
       className="relative pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container className="relative">
-        <div className="mb-14">
-          <p ref={eyebrowRef} className={cn(monoCaps, "mb-4 text-s-low")}>
-            {t("eyebrow")}
-          </p>
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8">
-            <h2
-              ref={titleRef}
-              className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] m-0 font-normal text-s-high"
-            >
-              {firstTitle}
-              {secondTitle ? (
-                <>
-                  <br />
-                  <span className="font-serif italic font-light text-s-mid rtl:font-sans rtl:not-italic rtl:font-bold">
-                    {secondTitle}
-                  </span>
-                </>
-              ) : null}
-            </h2>
-            <p
-              ref={descRef}
-              className="m-0 max-w-sm text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-s-low"
-            >
-              {t("subtitle")}
-            </p>
-          </div>
-        </div>
+        <SectionHeading
+          theme="surface"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={firstTitle}
+          secondTitle={secondTitle}
+          description={t("subtitle")}
+          className="mb-14"
+          classes={{
+            eyebrow: monoCaps,
+            container: "gap-8 md:gap-12",
+          }}
+        />
         <div className="mb-1 h-px bg-s-border" />
         <div className="mb-1 grid grid-cols-2 lg:grid-cols-4 gap-0">
           {steps.map((step, i) => (
@@ -174,7 +163,7 @@ export const ProcessSection = memo(function ProcessSection() {
                 className="mb-2.5 h-0.5 rounded-sm transition-colors duration-300"
                 style={{
                   background:
-                    i <= active ? "hsl(var(--brand))" : "var(--s-border)",
+                    i <= active ? "var(--local-accent)" : "var(--s-border)",
                 }}
               />
               <span

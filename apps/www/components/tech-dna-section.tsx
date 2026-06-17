@@ -269,7 +269,7 @@ export function TechDNASection() {
     >
       <Container>
         <div ref={titleRef} className="mb-16">
-          <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block">
+          <p className="eyebrow text-muted-foreground/70 mb-4 block">
             {t("techStack.eyebrow")}
           </p>
           <div className="flex items-end justify-between gap-8 flex-wrap">
@@ -479,7 +479,7 @@ export function TechDNASection() {
 
           <div className="md:hidden flex items-center justify-center gap-3 mt-4 pointer-events-none transition-opacity group-hover/scroll:opacity-5">
             <div className="h-px flex-1 bg-border" />
-            <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 whitespace-nowrap">
+            <p className="eyebrow text-muted-foreground/70 whitespace-nowrap">
               {t("techStack.dragHint")}
             </p>
             <div className="h-px flex-1 bg-border" />
@@ -509,7 +509,7 @@ export function TechDNASection() {
             >
               {activeNode && (
                 <div
-                  className="h-full rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm backdrop-blur-xl bg-background/80 overflow-hidden relative group"
+                  className="h-full rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm bg-surface overflow-hidden relative group"
                   style={{
                     borderColor: techAccentHsla(activeNode.accentId, 0.15),
                   }}

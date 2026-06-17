@@ -5,7 +5,7 @@
   "about": {
     "ctaPrimary": "Consult with the Founder",
     "ctaSecondary": "Case Studies",
-    "description1": "Altruvex is a precision web engineering firm in Cairo. We build bilingual web systems for businesses that need architecture - not templates with a brand coat.",
+    "description1": "Altruvex is a precision web engineering firm in Cairo. We build multilingual web systems for businesses that need architecture - not templates with a brand coat.",
     "description2": "Every project receives direct founder involvement. No outsourcing. No theme builders. No intermediary between the decision and the engineer.",
     "eyebrow": "16 - About",
     "founder": {
@@ -36,7 +36,7 @@
     "title2": "Accountable for your system",
     "title3": "From architecture to launch.",
     "values": {
-      "bilingual": {
+      "multilingual": {
         "label": "Symmetric Bilingualism",
         "sublabel": "Multilingual share the same technical DNA"
       },
@@ -51,7 +51,7 @@
     }
   },
   "approach": {
-    "bilingual": {
+    "multilingual": {
       "demo": {
         "ar_body": "هذا نص توضيحي يظهر كيف يتكيف التصميم تماماً مع اتجاه الكتابة من اليمين إلى اليسار. كل عنصر يُعاد تصميمه، وليس مجرد انعكاس.",
         "ar_heading": "مثال على العنوان",
@@ -59,7 +59,7 @@
         "en_heading": "Example Heading",
         "title": "Interactive Demo"
       },
-      "eyebrow": "Bilingual by Default",
+      "eyebrow": "Multilingual by Design",
       "paragraphs": "Most sites treat Multilingual RTL as an afterthought - flip the layout and hope it holds. We design systems where direction is a first-class architectural decision from day one.\n\nThis is not about translation. It is cultural adaptation. Right-aligned navigation is not mirrored - it is reconsidered.\n\nEvery component, every layout, every interaction - built to perform in both directions without compromise.",
       "title": "Structure that respects direction."
     },
@@ -135,7 +135,7 @@
   "authority": {
     "cards": {
       "card1": {
-        "body": "This site is built by us. Every animation, every Arabic line, every interaction - that is the production standard we bring to client systems.",
+        "body": "This site is built by us. Every animation, every line, every interaction - that is the production standard we bring to client systems.",
         "title": "We show our work"
       },
       "card2": {
@@ -143,8 +143,8 @@
         "title": "We price transparently"
       },
       "card3": {
-        "body": "RTL is not a CSS override here. Our architecture treats Arabic as a first-class language - structurally equal to English from day one.",
-        "title": "Arabic is not an afterthought"
+        "body": "RTL is not a CSS override here. Our architecture treats every supported language as a first-class citizen - structurally equal from day one.",
+        "title": "No language is an afterthought"
       }
     },
     "eyebrow": "WHY CLIENTS CHOOSE US",
@@ -172,8 +172,8 @@
       "name": "Altruvex.com - The Site Itself Had to Be the Proof",
       "outcome": "Sub-1s mobile TTI, RTL switching in under 16ms with zero layout shift, and leads that arrive pre-qualified - with scope and investment already mapped before the first call begins.",
       "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing enterprise credibility it had not yet earned.",
-      "solution": "We built a bilingual Multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
-      "summary": "A bilingual Multilingual proof build designed to demonstrate technical quality, native RTL design, and lead qualification before the first call.",
+      "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
+      "summary": "A multilingual proof build designed to demonstrate technical quality, native RTL design, and lead qualification before the first call.",
       "techStack": [
         "Next.js 16",
         "TypeScript 6",
@@ -228,7 +228,7 @@
         },
         {
           "label": "Languages",
-          "value": "EN / AR"
+          "value": "Multilingual"
         },
         {
           "label": "Commerce",
@@ -236,10 +236,10 @@
         }
       ],
       "name": "NewLight Lighting Store - Venturing into E-Commerce",
-      "outcome": "NewLight's first online store launched on custom architecture with bilingual journeys, payments, and a catalog the team can manage day to day.",
+      "outcome": "NewLight's first online store launched on custom architecture with multilingual journeys, payments, and a catalog the team can manage day to day.",
       "problem": "As a leading lighting company, NewLight needed to transition their traditional showroom into a digital experience that allows customers to browse and buy easily while maintaining the brand's premium feel.",
-      "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a structured checkout flow, with full bilingual support across all devices.",
-      "summary": "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports bilingual buying on every device.",
+      "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a structured checkout flow, with full multilingual support across all devices.",
+      "summary": "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports multilingual buying on every device.",
       "techStack": [
         "Next.js App Router",
         "next-intl (EN/AR)",
@@ -281,8 +281,8 @@
       },
       "outcome": "Sub-1s mobile TTI, RTL switching under 16ms with zero layout shift, and leads that arrive pre-qualified - reducing discovery-call time by cutting scope mismatches before the first sentence.",
       "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing credibility it had not yet earned.",
-      "solution": "We built a bilingual Multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
-      "summary": "A bilingual proof build designed to qualify leads, demonstrate engineering quality, and show what precision Multilingual delivery looks like in production.",
+      "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
+      "summary": "A multilingual proof build designed to qualify leads, demonstrate engineering quality, and show what precision Multilingual delivery looks like in production.",
       "title": "Altruvex.com - The Site Itself Had to Be the Proof"
     },
     "offers": {
@@ -346,8 +346,8 @@
       },
       "points": [
         {
-          "body": "Both languages are engineered as equal experiences — not mirrored afterthoughts on an LTR base.",
-          "title": "01 - Bilingual by architecture."
+          "body": "All supported languages are engineered as equal experiences — not mirrored afterthoughts on a single-language base.",
+          "title": "01 - Multilingual by architecture."
         },
         {
           "body": "Every scope starts from business requirements - not a recycled theme, a plugin stack, or a purchased UI kit.",
@@ -518,7 +518,7 @@
     "schedule": "Schedule",
     "servicesTitle": "Services",
     "standards": "Standards",
-    "tagline": "Custom web systems, portals, and product infrastructure engineered for teams that need bilingual precision, performance, and zero vendor lock-in.",
+    "tagline": "Custom web systems, portals, and product infrastructure engineered for teams that need multilingual precision, performance, and zero vendor lock-in.",
     "terms": "Terms",
     "webDesign": "Interface Design",
     "work": "Work",
@@ -542,7 +542,7 @@
         "value": "Zero lock-in"
       }
     ],
-    "problem": "Custom bilingual web systems for businesses that demand high-end engineering - not recycled templates.",
+    "problem": "Custom multilingual web systems for businesses that demand high-end engineering - not recycled templates.",
     "productionCallout": "What you are experiencing right now is a live demonstration of our production standard.",
     "scrollHint": "Scroll to explore",
     "title": "Build the system your revenue depends on.",
@@ -666,7 +666,7 @@
     "faq": {
       "questions": {
         "01": {
-          "a": "We price against current custom-development market rates and the engineering complexity of the system. Architecture, workflows, integrations, and bilingual requirements drive the number - not arbitrary metrics like page count.",
+          "a": "We price against current custom-development market rates and the engineering complexity of the system. Architecture, workflows, integrations, and multilingual requirements drive the number - not arbitrary metrics like page count.",
           "q": "How do you determine the investment range?"
         },
         "02": {
@@ -789,7 +789,7 @@
           "One key integration such as CRM, booking, or auth",
           "Technical discovery, architecture, and analytics plan"
         ],
-        "idealFor": "For businesses that need repeatable content operations, bilingual UX, and practical integrations with their tools.",
+        "idealFor": "For businesses that need repeatable content operations, multilingual UX, and practical integrations with their tools.",
         "name": "Business Platform",
         "notIncluded": "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
         "originalPrice": "",
@@ -959,7 +959,7 @@
       },
       "step3": {
         "deliverables": "Production codebase, Staging environment, QA report",
-        "description": "Implement with bilingual precision, performance discipline, and handoff standards that hold under scrutiny.",
+        "description": "Implement with multilingual precision, performance discipline, and handoff standards that hold under scrutiny.",
         "tag": "Build",
         "timeline": "2 – 6 weeks",
         "title": "03 - Build"
@@ -1371,8 +1371,8 @@
             "title": "Payments & checkout"
           },
           {
-            "description": "Arabic and English journeys with mirrored UX, RTL typography, and QA on both locales before go-live.",
-            "title": "Bilingual EN / AR"
+            "description": "Full multilingual journeys with language-appropriate UX, typography, and QA across all locales before go-live.",
+            "title": "Multilingual support"
           },
           {
             "description": "Static generation with targeted revalidation so category and product pages stay fast under real catalog weight.",
@@ -1387,13 +1387,13 @@
       },
       "cta": {
         "back": "View All Services",
-        "description": "Use Transparency to scope catalog complexity, integrations, and bilingual requirements—or book a call if you already have a brief.",
+        "description": "Use Transparency to scope catalog complexity, integrations, and multilingual requirements—or book a call if you already have a brief.",
         "eyebrow": "Ready to scope",
         "title": "Planning a store that has to perform in production?"
       },
-      "description": "Custom Next.js storefronts for lighting, home, and premium retail brands in Cairo and MENA—built for conversion, bilingual buyers, and inventory you can trust.",
+      "description": "Custom Next.js storefronts for lighting, home, and premium retail brands in Cairo and MENA—built for conversion, multilingual buyers, and inventory you can trust.",
       "proof": {
-        "body": "Two live client stores with bilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds.",
+        "body": "Two live client stores with multilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds.",
         "eyebrow": "Live proof",
         "title": "Stores you can inspect today"
       },
@@ -1476,9 +1476,9 @@
       "title": "E-Commerce That Converts"
     },
     "service3": {
-      "description": "Arabic (RTL) and English (LTR) built as structural equals - not a translation layer added to an LTR base. Every component reconsidered for both directions.",
+      "description": "All supported languages built as structural equals - not a translation layer added after the fact. Every component reconsidered for each language and direction.",
       "tag": "Localization",
-      "title": "Bilingual Business Portals"
+      "title": "Multilingual Business Portals"
     },
     "service4": {
       "description": "Your current system is slow, broken, or failing to convert. We audit, diagnose, and rebuild exactly what needs rebuilding - without a full restart.",
@@ -1619,7 +1619,7 @@
       },
       "2": {
         "title": "2. Service Description",
-        "description": "Altruvex builds custom web systems using Next.js, Turborepo, and related modern technologies. Our services include:\n\n• Custom website design and development\n• ERP and business system design\n• E-commerce platforms with payment integration\n• Bilingual (Arabic/English) architecture\n• Integration with local and international payment systems\n• Post-launch maintenance and support (optional)\n\nWe do NOT provide:\n\n• Template-based WordPress or Shopify builds\n• Ongoing hosting/SaaS (we hand off deployable code)\n• 24/7 emergency support (unless specified in retainer)\n• AI training data or personal data sharing with third parties"
+        "description": "Altruvex builds custom web systems using Next.js, Turborepo, and related modern technologies. Our services include:\n\n• Custom website design and development\n• ERP and business system design\n• E-commerce platforms with payment integration\n• Multilingual architecture\n• Integration with local and international payment systems\n• Post-launch maintenance and support (optional)\n\nWe do NOT provide:\n\n• Template-based WordPress or Shopify builds\n• Ongoing hosting/SaaS (we hand off deployable code)\n• 24/7 emergency support (unless specified in retainer)\n• AI training data or personal data sharing with third parties"
       },
       "3": {
         "title": "3. Project Scope & Deliverables",
@@ -2040,7 +2040,7 @@
             "title": "Operational Product"
           },
           "medium": {
-            "range": "70,000 – 140,000 EGP - connected systems with one or two serious integrations or richer bilingual scope.",
+            "range": "70,000 – 140,000 EGP - connected systems with one or two serious integrations or richer multilingual scope.",
             "title": "Connected Platform"
           },
           "small": {
@@ -2242,7 +2242,7 @@
     "backLink": "Back to writing",
     "ctas": {
       "evaluating-developers": "Talk to us about your technical team",
-      "multilingual-architecture": "Build bilingual from day one",
+      "multilingual-architecture": "Build multilingual from day one",
       "technical-debt": "Learn about our maintenance retainer",
       "why-not-wordpress": "See what we build instead"
     },
@@ -2290,8 +2290,8 @@
         "answer": "This is core to what we do. We've built integrations with:\n\n• Fawry (bill payment and e-commerce)\n• Vodafone Cash (mobile payments)\n• Bank transfers (local and SWIFT)\n• Local delivery and logistics APIs\n• Arabic-language content and RTL workflows\n\nWe understand the peculiarities: payment processors that need local IDs, SMS systems that charge per message, hosting that needs local data residency. These aren't afterthoughts — they're part of the architecture from discovery."
       },
       "07": {
-        "question": "Is the website actually bilingual (Arabic + English), or just mirrored?",
-        "answer": "True bilingual, not mirrored.\n\nMost sites build in English, then translate. We design and engineer for both languages simultaneously:\n\n• RTL (right-to-left) is native, not a CSS flip.\n• Arabic content isn't a translated afterthought — it's an equal-priority experience.\n• Forms, dashboards, and workflows handle both languages without breaking layouts.\n• Performance is identical in both languages (no slower Arabic load times).\n\nThis matters if your customers or employees are primarily Arabic-speaking. A bad Arabic UX loses credibility."
+        "question": "Is the website actually multilingual (all supported languages), or just mirrored?",
+        "answer": "True multilingual, not mirrored.\n\nMost sites build in English, then translate. We design and engineer for both languages simultaneously:\n\n• RTL (right-to-left) is native, not a CSS flip.\n• Arabic content isn't a translated afterthought — it's an equal-priority experience.\n• Forms, dashboards, and workflows handle both languages without breaking layouts.\n• Performance is identical in both languages (no slower Arabic load times).\n\nThis matters if your customers or employees are primarily Arabic-speaking. A bad Arabic UX loses credibility."
       },
       "08": {
         "question": "What happens after the 30-day post-launch warranty ends?",

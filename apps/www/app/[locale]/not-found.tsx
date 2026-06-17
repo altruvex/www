@@ -24,7 +24,7 @@ export default function NotFoundPage() {
       </div>
       <Container>
         <main className="relative z-10 max-w-2xl">
-          <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/60 mb-6 block">
+          <p className="eyebrow text-muted-foreground/60 mb-6 block">
             {t("eyebrow")}
           </p>
           <h1

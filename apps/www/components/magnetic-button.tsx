@@ -10,7 +10,7 @@ import React, {
   useSyncExternalStore,
 } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "filled";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "filled" | "accent";
 type ButtonSize = "default" | "lg";
 
 interface Ripple {
@@ -225,13 +225,17 @@ export const MagneticButton = forwardRef<
 
     const variants: Record<ButtonVariant, string> = {
       primary:
-        "bg-foreground/95 text-background hover:bg-foreground backdrop-blur-md",
+        "bg-foreground/95 text-background hover:bg-foreground",
       secondary:
         "bg-transparent text-primary/85 border border-foreground/40 hover:bg-foreground/5 hover:border-foreground/60",
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
       filled:
         "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-[background-color,border-color,color] duration-300 ease-out",
+      // Consumes the section-scoped --local-accent so the same button renders
+      // the active section's color world. Threshold/conversion moments only.
+      accent:
+        "bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
     };
 
     const sizes: Record<ButtonSize, string> = {

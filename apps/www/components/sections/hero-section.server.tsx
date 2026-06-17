@@ -5,7 +5,8 @@ import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/commercial";
 import { getTranslations } from "next-intl/server";
 import { ArrowIcon } from "../directional-link";
-import { HeroBatch, HeroHeadline, HeroMetricValue, HeroReveal } from "./hero-motion-wrappers";
+import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
+import { HeroScrollHint } from "./hero-scroll-hint";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -25,10 +26,11 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
   return (
     <section
       id="home"
-      className="relative z-10 flex lg:min-h-dvh w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-blue relative z-10 flex lg:min-h-dvh w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
       aria-label="Hero section"
     >
       <SectionWatermark>{watermark}</SectionWatermark>
+      <div className="grain-overlay" aria-hidden="true" />
       <h1 className="sr-only">
         {title1} {title2}
       </h1>
@@ -39,7 +41,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             className="mb-6 flex items-center gap-2 md:hidden"
           >
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
-            <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+            <span className="eyebrow text-xs text-muted-foreground/70">
               {t("hero.availability")}
             </span>
           </HeroReveal>
@@ -49,11 +51,11 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
           >
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
-              <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground">
+              <span className="eyebrow text-xs text-muted-foreground">
                 {t("hero.availability")}
               </span>
             </div>
-            <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70">
+            <span className="eyebrow text-xs text-muted-foreground/70">
               {t("hero.badge")}
             </span>
           </HeroReveal>
@@ -82,7 +84,6 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
           >
             <MagneticButton
-              asChild
               size="lg"
               className="w-full sm:w-auto min-w-[180px]"
             >
@@ -95,7 +96,6 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               </Link>
             </MagneticButton>
             <MagneticButton
-              asChild
               size="lg"
               variant="secondary"
               className="w-full sm:w-auto min-w-[180px]"
@@ -129,35 +129,22 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
                 }}
               >
                 <span className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-light tabular-nums text-foreground block">
-                  <HeroMetricValue value={s.value} delay={i * 0.1} />
+                  {s.value}
                 </span>
-                <span className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal mt-2 block text-muted-foreground">
+                <span className="eyebrow text-xs mt-2 block text-muted-foreground">
                   {s.label}
                 </span>
               </div>
             ))}
           </HeroBatch>
           <HeroReveal delay={1.0}>
-            <p className="font-mono text-xs leading-normal tracking-[0.22em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal mt-6 max-w-2xl text-muted-foreground">
+            <p className="eyebrow text-xs mt-6 max-w-2xl text-muted-foreground">
               {t("hero.productionCallout")}
             </p>
           </HeroReveal>
         </div>
       </Container>
-      <HeroReveal
-        delay={1.1}
-        className="pointer-events-none absolute bottom-8 inset-s-1/2 -translate-x-1/2 rtl:translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60 mix-blend-difference"
-      >
-        <p
-          className="font-mono text-xs leading-none tracking-[0.3em] uppercase text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal"
-          aria-hidden
-        >
-          {t("hero.scrollHint")}
-        </p>
-        <div className="relative flex h-12 w-px justify-center overflow-hidden bg-foreground/10" aria-hidden>
-          <div className="absolute top-0 h-1/2 w-full bg-foreground motion-safe:animate-[slide-down_1.5s_cubic-bezier(0.65,0,0.35,1)_infinite] motion-reduce:animate-none" />
-        </div>
-      </HeroReveal>
+      <HeroScrollHint />
     </section>
   );
 }

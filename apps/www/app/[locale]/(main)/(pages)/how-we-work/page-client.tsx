@@ -58,10 +58,10 @@ export default function HowWeWorkPage() {
     <>
       <main className="pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
-          <section className="py-16 md:py-24">
+          <section className="accent-world-green py-16 md:py-24">
             <p
               ref={heroEyebrowRef}
-              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-6 block"
+              className="eyebrow text-muted-foreground/70 mb-6 block"
             >
               {tNav("how-we-work")}
             </p>
@@ -91,10 +91,10 @@ export default function HowWeWorkPage() {
             </div>
           </section>
           <div className="h-px w-full bg-foreground/8" />
-          <section className="py-16 md:py-20">
+          <section className="accent-world-green py-16 md:py-20">
             <p
               ref={archEyebrowRef}
-              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+              className="eyebrow text-muted-foreground/70 mb-4 block"
             >
               {t("architecture.eyebrow")}
             </p>
@@ -121,12 +121,12 @@ export default function HowWeWorkPage() {
             </div>
           </section>
           <div className="h-px w-full bg-foreground/8" />
-          <section className="py-16 md:py-20">
+          <section className="accent-world-green py-16 md:py-20">
             <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
                 <p
                   ref={processEyebrowRef}
-                  className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+                  className="eyebrow text-muted-foreground/70 mb-4 block"
                 >
                   {t("phasedProcess.eyebrow")}
                 </p>
@@ -167,7 +167,7 @@ export default function HowWeWorkPage() {
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 pt-1">
+                    <span className="eyebrow text-muted-foreground/70 pt-1">
                       {tPhases(`${key}.timeline`)}
                     </span>
                   </div>
@@ -194,10 +194,10 @@ export default function HowWeWorkPage() {
             </p>
           </section>
           <div className="h-px w-full bg-foreground/8" />
-          <section className="py-16 md:py-20">
+          <section className="accent-world-green py-16 md:py-20">
             <p
               ref={standardsEyebrowRef}
-              className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+              className="eyebrow text-muted-foreground/70 mb-4 block"
             >
               {t("standards.eyebrow")}
             </p>
@@ -247,7 +247,7 @@ export default function HowWeWorkPage() {
                   key={key}
                   className="standard-card border border-foreground/8 rounded-lg bg-foreground/2 p-5"
                 >
-                  <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-3">
+                  <p className="eyebrow text-muted-foreground/70 mb-3">
                     {label}
                   </p>
                   <p className="text-base text-primary/60 leading-relaxed">
@@ -259,7 +259,7 @@ export default function HowWeWorkPage() {
             <div ref={standardsLinkRef}>
               <Link
                 href="/standards"
-                className="group inline-flex items-center gap-3 text-muted-foreground transition-colors duration-300 hover:text-foreground font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                className="group inline-flex items-center gap-3 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow"
               >
                 <span className="border-b border-transparent group-hover:border-foreground/30 transition-colors duration-300 pb-0.5">
                   {t("standards.link")}
@@ -281,12 +281,14 @@ export default function HowWeWorkPage() {
             </div>
           </section>
           <div className="h-px w-full bg-foreground/8" />
-          <section className="py-16 md:py-24">
+          <section
+            className="accent-world-orange py-16 md:py-24"
+          >
             <div className="grid md:grid-cols-[1fr_360px] gap-12 items-start">
               <div>
                 <p
                   ref={ctaEyebrowRef}
-                  className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/70 mb-4 block"
+                  className="eyebrow text-local-accent mb-4 block"
                 >
                   {t("cta.eyebrow")}
                 </p>
@@ -315,7 +317,7 @@ export default function HowWeWorkPage() {
                 <Link href="/schedule">
                   <MagneticButton
                     size="lg"
-                    variant="primary"
+                    variant="accent"
                     className="w-full justify-center"
                   >
                     {t("cta.schedule")}
