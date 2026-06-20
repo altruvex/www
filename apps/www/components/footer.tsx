@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
+import { motion, useReveal } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/number";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,6 +14,10 @@ export const Footer = memo(function Footer() {
   const t = useTranslations("footer");
   const navT = useTranslations("nav");
   const locale = useLocale();
+
+  const beat0Ref = useReveal<HTMLDivElement>(motion.fadeUp());
+  const beat1Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.08 }));
+  const beat2Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.16 }));
 
   const localizedYear = useMemo(() => {
     const year = new Date().getFullYear();
@@ -71,14 +76,10 @@ export const Footer = memo(function Footer() {
   const whatsappUrl = getWhatsAppUrl();
 
   return (
-    <footer
-      data-animate-section
-      className="relative w-full overflow-hidden border-t border-foreground/8"
-    >
+    <footer className="relative w-full overflow-hidden border-t border-foreground/8">
       <Container className="py-10 sm:py-12 md:py-16">
         <div
-          data-reveal
-          data-beat="0"
+          ref={beat0Ref}
           className="mb-10 flex flex-col gap-8 sm:mb-12 md:mb-16 lg:flex-row lg:items-start lg:justify-between"
         >
           <div className="max-w-xs shrink-0 lg:max-w-sm">
@@ -111,13 +112,11 @@ export const Footer = memo(function Footer() {
           </nav>
         </div>
 
-        <div data-reveal data-beat="1">
+        <div ref={beat1Ref}>
           <div className="relative mb-6 overflow-hidden md:mb-8">
             <h2 className="select-none font-sans font-semibold leading-[0.84] text-primary text-[clamp(56px,17vw,380px)]">
               <span className="block overflow-hidden">
-                <span data-heading-line data-motion-accent className="block">
-                  Altruvex
-                </span>
+                <span className="block">Altruvex</span>
               </span>
             </h2>
           </div>
@@ -145,8 +144,7 @@ export const Footer = memo(function Footer() {
         </div>
 
         <div
-          data-reveal
-          data-beat="2"
+          ref={beat2Ref}
           className="flex flex-col gap-3 border-t border-foreground/8 pt-5 sm:flex-row sm:items-center sm:justify-between sm:pt-6 md:pt-8"
         >
           <div className="order-2 flex items-center gap-2 sm:order-1">
