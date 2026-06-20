@@ -1,10 +1,10 @@
 "use client";
 
 import { Slot, Slottable } from "@radix-ui/react-slot";
+import { motion, usePress, useMagnetic } from "@/lib/motion";
 import React, {
   forwardRef,
   useCallback,
-  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -95,17 +95,10 @@ export const MagneticButton = forwardRef<
     forwardedRef,
   ) => {
     const internalRef = useRef<HTMLButtonElement>(null);
-    const rectRef = useRef<DOMRect | null>(null);
-    const magneticRef = useRef({ x: 0, y: 0 });
-    const isPressedRef = useRef(false);
-    const rafRef = useRef<number | null>(null);
+    const magneticRef = useMagnetic<HTMLButtonElement>(motion.magneticCTA());
+    const pressRef = usePress<HTMLButtonElement>(motion.pressDefault());
 
-    const mergedRef = useMergedRef(internalRef, forwardedRef);
-
-    const updateRect = useCallback(() => {
-      if (!internalRef.current) return;
-      rectRef.current = internalRef.current.getBoundingClientRect();
-    }, []);
+    const mergedRef = useMergedRef(internalRef, magneticRef, pressRef, forwardedRef);
 
     const prefersReducedMotion = useSyncExternalStore(
       subscribeToReducedMotion,
@@ -113,62 +106,7 @@ export const MagneticButton = forwardRef<
       () => false,
     );
 
-    const [isPressed, setIsPressed] = useState(false);
     const [ripples, setRipples] = useState<Ripple[]>([]);
-
-    useEffect(() => {
-      return () => {
-        if (rafRef.current !== null) {
-          cancelAnimationFrame(rafRef.current);
-        }
-      };
-    }, []);
-
-    const flushTransform = useCallback(() => {
-      rafRef.current = null;
-      if (!internalRef.current) return;
-      const { x, y } = magneticRef.current;
-      const scale = isPressedRef.current && !prefersReducedMotion ? 0.95 : 1;
-      internalRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
-    }, [prefersReducedMotion]);
-
-    const scheduleTransform = useCallback(() => {
-      if (rafRef.current !== null) return;
-      rafRef.current = requestAnimationFrame(flushTransform);
-    }, [flushTransform]);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!internalRef.current || prefersReducedMotion) return;
-      const rect =
-        rectRef.current ?? internalRef.current.getBoundingClientRect();
-      rectRef.current = rect;
-      magneticRef.current = {
-        x: (e.clientX - rect.left - rect.width / 2) * 0.15,
-        y: (e.clientY - rect.top - rect.height / 2) * 0.15,
-      };
-      scheduleTransform();
-    };
-
-    const handleMouseLeave = () => {
-      if (prefersReducedMotion) return;
-      magneticRef.current = { x: 0, y: 0 };
-      isPressedRef.current = false;
-      setIsPressed(false);
-      scheduleTransform();
-    };
-
-    const handleMouseDown = () => {
-      if (!prefersReducedMotion) {
-        isPressedRef.current = true;
-        setIsPressed(true);
-        scheduleTransform();
-      }
-    };
-    const handleMouseUp = () => {
-      isPressedRef.current = false;
-      setIsPressed(false);
-      scheduleTransform();
-    };
 
     const playClickSound = () => {
       try {
@@ -256,21 +194,11 @@ export const MagneticButton = forwardRef<
       .join(" ");
 
     const sharedStyle: React.CSSProperties = {
-      transform: `translate3d(0px, 0px, 0) scale(${isPressed && !prefersReducedMotion ? 0.95 : 1})`,
-      transition: `transform 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease-out, border-color 300ms ease-out, color 300ms ease-out, box-shadow 300ms ease-out`,
+      transition: `background-color 300ms ease-out, border-color 300ms ease-out, color 300ms ease-out, box-shadow 300ms ease-out`,
     };
 
     const interactionHandlers = {
       onClick: isLoading ? undefined : handleClick,
-      onMouseMove:
-        prefersReducedMotion || isLoading ? undefined : handleMouseMove,
-      onMouseEnter:
-        prefersReducedMotion || isLoading ? undefined : updateRect,
-      onMouseLeave:
-        prefersReducedMotion || isLoading ? undefined : handleMouseLeave,
-      onMouseDown:
-        prefersReducedMotion || isLoading ? undefined : handleMouseDown,
-      onMouseUp: prefersReducedMotion || isLoading ? undefined : handleMouseUp,
     };
 
     const rippleNodes =
