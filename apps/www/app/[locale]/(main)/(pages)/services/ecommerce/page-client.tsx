@@ -1,6 +1,8 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { ArrowIcon } from "@/components/directional-link";
+import { Accent } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { SurfaceCard } from "@/components/ui/surface-card";
@@ -122,7 +124,7 @@ function ProofSection() {
             letterSpacing: "-0.02em",
           }}
         >
-          {t("title")}
+          {t("title")} <Accent gradient="forest">{t("titleAccent")}</Accent>
         </h2>
         <p
           ref={descRef}
@@ -131,17 +133,30 @@ function ProofSection() {
           {t("body")}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
+          {/*
+            FIX: hardcoded "→" unicode character. Brand names staying
+            untranslated is correct (proper nouns), but the arrow glyph
+            itself was a raw character, not the bidi-aware ArrowIcon used
+            elsewhere in the system — it would sit visually backwards
+            on the Arabic route instead of mirroring like every other
+            directional affordance on the site. Also added a hover-shift
+            on the icon so this matches the micro-interaction language
+            used by every other link-with-arrow pattern across these
+            pages instead of being a static, dead character.
+          */}
           <Link
             href="/work/art-lighting-store"
-            className="eyebrow text-muted-foreground hover:text-foreground transition-colors"
+            className="group eyebrow text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
           >
-            Art Lighting →
+            Art Lighting
+            <ArrowIcon className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
           </Link>
           <Link
             href="/work/newlight-lighting-store"
-            className="eyebrow text-muted-foreground hover:text-foreground transition-colors"
+            className="group eyebrow text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1.5"
           >
-            NewLight →
+            NewLight
+            <ArrowIcon className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
           </Link>
         </div>
       </Container>
@@ -170,7 +185,7 @@ function ClosingCtaSection() {
               letterSpacing: "-0.02em",
             }}
           >
-            {t("title")}
+            {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
           </h2>
           <p className="text-base text-primary/60 leading-relaxed mb-8 max-w-[48ch]">
             {t("description")}

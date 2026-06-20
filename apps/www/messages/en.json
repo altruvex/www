@@ -257,7 +257,8 @@
       "footnote": "Founder-direct. No sales script. No pitch deck.",
       "nextStepEyebrow": "Next step",
       "sectionAriaLabel": "Call to action",
-      "title": "If the scope is real, the next move is a direct technical conversation."
+      "title": "If the scope is real, the next move is",
+      "titleAccent": "a direct technical conversation."
     },
     "ctas": {
       "architecture": "Talk Through the Architecture",
@@ -358,7 +359,8 @@
           "title": "03 - Clear business structure"
         }
       ],
-      "title": "Direct oversight of the engineer shaping your site, built to withstand pressure, no template shortcuts."
+      "title": "Direct oversight of the engineer shaping your site, built to withstand pressure,",
+      "titleAccent": "no template shortcuts."
     }
   },
   "common": {
@@ -366,7 +368,8 @@
       "body": "Share your scope and we will respond within one business day with a clear next step—no pitch deck.",
       "eyebrow": "Next step",
       "footnote": "Replies within 24 hours on business days.",
-      "title": "Ready to scope your build?"
+      "title": "Ready to",
+      "titleAccent": "scope your build?"
     },
     "whatsappFabAria": "Open WhatsApp chat with Altruvex",
     "whatsappFabLabel": "WhatsApp",
@@ -546,6 +549,9 @@
     "productionCallout": "What you are experiencing right now is a live demonstration of our production standard.",
     "scrollHint": "Scroll to explore",
     "title": "Build the system your revenue depends on.",
+    "title_pre": "Build the system your",
+    "title_accent": "revenue",
+    "title_post": "depends on.",
     "title2": "Architecture first. Performance by default.",
     "watermark": "WEB"
   },
@@ -554,14 +560,15 @@
       "eyebrow": "System Architecture",
       "p1": "We start with constraints and data before discussing pages or pixels. This is how we avoid rework and ship systems that outlast the current framework trend.",
       "p2": "Every project begins with a discovery session, a technical audit where needed, and a precise definition of what we will not build. That clarity is what lets us move fast without cutting corners.",
-      "title": "Architecture first. Execution second."
+      "title": "Architecture first.",
+      "titleItalic": "Execution second."
     },
     "cta": {
       "description": "We will walk through how these phases and standards apply to your scope - before you commit to anything.",
       "eyebrow": "Next Step",
       "schedule": "Book a discovery call",
       "title": "See how this maps to your project.",
-      "titleItalic": "let's begin.",
+      "titleAccent": "let's begin.",
       "work": "See case studies"
     },
     "hero": {
@@ -632,7 +639,7 @@
     "description": "Every technical decision is oriented toward long-term stability, performance, and a codebase the next engineer can understand without a walkthrough.",
     "eyebrow": "Service Architecture",
     "title": "How we build",
-    "titleItalic": "systems that last"
+    "titleAccent": "systems that last"
   },
   "pricingSignal": {
     "eyebrow": "Pricing",
@@ -732,7 +739,8 @@
           "value": "4-8 weeks"
         }
       },
-      "title": "The wrong system compounds in cost."
+      "title": "The wrong system",
+      "titleItalic": "compounds in cost."
     },
     "tiers": {
       "ecommerce": {
@@ -889,7 +897,8 @@
     "eyebrow": "03 - Delivery Model",
     "flexibility": {
       "description": "These phases are a framework, not a rigid contract. Some projects need deeper discovery. Others need to ship fast. We adjust the intensity - never the discipline.",
-      "title": "The process serves the project."
+      "title": "The process serves",
+      "titleItalic": "the project."
     },
     "footer": "Clear phases. No vague middle.",
     "hero": {
@@ -1016,7 +1025,8 @@
       "success": "Booked. Check your inbox for the confirmation."
     },
     "subtitle": "The right move when the project is real, the stakes are meaningful, and you need a clearer technical path before committing.",
-    "title": "Use the call to pressure-test the scope live."
+    "title": "Use the call to",
+    "titleAccent": "pressure-test the scope live."
   },
   "serviceDetails": {
     "consulting": {
@@ -1036,7 +1046,8 @@
         "includedLabel": "What is included",
         "price": "15,000 EGP",
         "priceLabel": "Fixed price",
-        "title": "Technical Audit - Fixed Scope, Fixed Price"
+        "title": "Technical Audit —",
+        "titleItalic": "Fixed Scope, Fixed Price."
       },
       "brief": {
         "annotationsLabel": "Annotations",
@@ -1112,7 +1123,8 @@
         "button": "Book a Strategy Session",
         "description": "Spend 30 minutes mapping your constraints. You will leave with a clear technical direction - no commitment required.",
         "eyebrow": "Ready to Decide",
-        "title": "Not sure which direction to build?"
+        "title": "Not sure",
+        "titleAccent": "which direction to build?"
       },
       "description": "A fixed-scope, evidence-based decision layer for teams facing a rebuild, a slow platform, or an unclear technical direction.",
       "hero": {
@@ -1136,7 +1148,8 @@
           "step2": "Timeline estimated",
           "step3": "Build plan confirmed"
         },
-        "title": "Ready to build the internal tool that scales?"
+        "title": "Ready to build",
+      "titleAccent": "the internal tool that scales?"
       },
       "description": "We build custom dashboards, portals, and operational flows that remove human friction from delivery so your team can focus on growth, not administrative overhead.",
       "subtitle": "Build the internal system your team actually needs - not the one easiest to spec.",
@@ -1252,7 +1265,8 @@
         "eyebrow": "05 - Active Support",
         "status": "all systems go",
         "statusTitle": "Status",
-        "title": "Stability should not be a gamble."
+        "title": "Stability should not be",
+        "titleItalic": "a gamble."
       },
       "description": "Dependable, proactive support for live systems that need regular updates, monitoring, and a technical partner who understands the codebase.",
       "features": {
@@ -1338,7 +1352,7 @@
         "recommended": "Recommended",
         "subtitle": "Choose the coverage your system actually needs",
         "title": "Support Plans",
-        "titleItalic": "transparent, predictable."
+        "titleAccent": "transparent, predictable."
       },
       "stats": {
         "body1": "Maintenance is not reactive patching - it is the ongoing discipline that keeps a system performing the way it was built to perform.",
@@ -1347,7 +1361,8 @@
         "monitoring": "Monitoring",
         "response": "Response Time",
         "satisfaction": "Client Satisfaction",
-        "title": "Stability is an engineering decision.",
+        "title": "Stability is",
+      "titleItalic": "an engineering decision.",
         "uptime": "Uptime Target"
       },
       "subtitle": "Focus on the business. We handle the system.",
@@ -1389,13 +1404,15 @@
         "back": "View All Services",
         "description": "Use Transparency to scope catalog complexity, integrations, and multilingual requirements—or book a call if you already have a brief.",
         "eyebrow": "Ready to scope",
-        "title": "Planning a store that has to perform in production?"
+        "title": "Planning a store that has to",
+        "titleAccent": "perform in production?"
       },
       "description": "Custom Next.js storefronts for lighting, home, and premium retail brands in Cairo and MENA—built for conversion, multilingual buyers, and inventory you can trust.",
       "proof": {
         "body": "Two live client stores with multilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds.",
         "eyebrow": "Live proof",
-        "title": "Stores you can inspect today"
+        "title": "Stores",
+      "titleAccent": "you can inspect today"
       },
       "subtitle": "Custom E-Commerce · Cairo",
       "title": "E-Commerce Engineering",
@@ -1406,7 +1423,8 @@
         "back": "View All Services",
         "description": "We will review your current design, identify what is suppressing conversions, and map the right next step - in a free 30-minute call.",
         "eyebrow": "Ready to Start",
-        "title": "Need an interface that actually converts?",
+        "title": "Need an interface",
+      "titleAccent": "that actually converts?",
         "tokens": {
           "colors": "Colors",
           "colorsSub": "Tailored palette for your brand",
@@ -2156,7 +2174,8 @@
       "flagship": "Operational Product",
       "professional": "Connected Platform"
     },
-    "title": "Clear engineering. No hidden scopes."
+    "title": "Clear engineering.",
+    "titleItalic": "No hidden scopes."
   },
   "validations": {
     "contact": {

@@ -3,6 +3,7 @@ import { PageHero } from "@/components/sections/page-hero";
 import { useSectionTitle, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
 
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { useTranslations } from "next-intl";
 
@@ -177,9 +178,7 @@ function ClosingSection() {
             >
               {t("title")}
               <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {t("titleItalic")}
-              </span>
+              <Highlight>{t("titleItalic")}</Highlight>
             </h2>
           </div>
           <p

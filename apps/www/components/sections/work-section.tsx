@@ -51,6 +51,7 @@ export const WorkSection = memo(function WorkSection() {
           eyebrow={tW("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
+          accent="mint"
           description={tW("description")}
           className="mb-16"
         />

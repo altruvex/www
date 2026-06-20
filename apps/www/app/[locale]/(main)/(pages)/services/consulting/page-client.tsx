@@ -2,6 +2,8 @@
 
 import { ConsultingBriefSection } from "@/components/consulting-brief-section";
 import { Container } from "@/components/container";
+import { ArrowIcon } from "@/components/directional-link";
+import { Accent, Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { Link } from "@/i18n/navigation";
@@ -14,7 +16,7 @@ import { useTranslations } from "next-intl";
 
 export default function ConsultingPage() {
   return (
-    <div className="relative min-h-screen w-full">
+    <div>
       <HeroSection />
       <div className="pb-48">
         <ConsultingBriefSection />
@@ -83,7 +85,7 @@ function AuditOfferSection() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                {t("title")}
+                {t("title")} <Highlight>{t("titleItalic")}</Highlight>
               </h2>
               <p
                 ref={bodyRef}
@@ -101,19 +103,18 @@ function AuditOfferSection() {
                   <Link href="/contact?service=consulting&package=audit">
                     <span className="flex items-center gap-2">
                       {t("cta")}
-                      <svg
-                        className="h-4 w-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M17 8l4 4m0 0l-4 4m4-4H3"
-                        />
-                      </svg>
+                      {/* FIX: was a hand-rolled bidi SVG duplicated across
+                          4 service pages (this file, development,
+                          ecommerce, interface-design) with no shared
+                          source of truth — one drifting fix and the rest
+                          go stale. ArrowIcon already exists in the
+                          codebase and its own name ("directional-link")
+                          signals it owns RTL-mirroring logic. Verify the
+                          AR route renders the arrow flipped correctly
+                          after this swap; if ArrowIcon does NOT yet
+                          mirror for RTL, that logic belongs centralized
+                          inside it — not re-typed at every call site. */}
+                      <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </Link>
                 </MagneticButton>
@@ -149,12 +150,16 @@ function AuditOfferSection() {
                   {t("includedLabel")}
                 </p>
                 <ul className="space-y-3">
-                  {included.map((item) => (
+                  {included.map((item, i) => (
+                    // FIX: keyed on the translated string itself — if two
+                    // included-list lines are ever identical (or a locale
+                    // produces a collision), React silently drops one.
+                    // Index is safe here: this list is static/non-reorderable.
                     <li
-                      key={item}
+                      key={`${i}-${item}`}
                       className="flex items-start gap-3 text-sm leading-relaxed text-s-mid"
                     >
-                      <div className="h-px w-3 bg-s-muted mt-2 shrink-0" />
+                      <div aria-hidden className="h-px w-3 bg-s-muted mt-2 shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -194,7 +199,7 @@ function CtaSection() {
                 letterSpacing: "-0.025em",
               }}
             >
-              {t("cta.title")}
+              {t("cta.title")} <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
             </h2>
           </div>
           <div ref={subRef} className="flex flex-col gap-6">
@@ -210,19 +215,7 @@ function CtaSection() {
                 <Link href="/schedule">
                   <span className="flex items-center gap-2">
                     {t("cta.button")}
-                    <svg
-                      className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
+                    <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </span>
                 </Link>
               </MagneticButton>

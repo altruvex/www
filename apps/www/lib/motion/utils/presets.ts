@@ -1,9 +1,12 @@
 import { DEFAULTS, MOTION, SECTION_DELAYS } from "../config";
 import type { BatchConfig } from "../hooks/use-batch";
 import type { CounterConfig } from "../hooks/use-counter";
+import type { MagneticConfig } from "../hooks/use-magnetic";
 import type { ParallaxConfig } from "../hooks/use-parallax";
+import type { PressConfig } from "../hooks/use-press";
 import type { RevealConfig } from "../hooks/use-reveal";
 import type { TextConfig } from "../hooks/use-text";
+import type { TiltConfig } from "../hooks/use-tilt";
 
 const fadeUp = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   direction: "up",
@@ -167,6 +170,60 @@ const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterCon
   ...overrides,
 });
 
+// ── Micro-interaction presets ──────────────────────────────────────────────
+// Same factory pattern as everything above. Keep new presets additive — do
+// not invent a fourth interaction primitive without a real, named UI need.
+
+/** Primary CTAs — confident pull, generous travel. */
+const magneticCTA = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
+  strength: 0.4,
+  max: 28,
+  smoothing: 0.5,
+  ...overrides,
+});
+
+/** Icon buttons / nav glyphs — tighter radius, snappier follow. */
+const magneticIcon = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
+  strength: 0.5,
+  max: 16,
+  smoothing: 0.35,
+  ...overrides,
+});
+
+/** Feature / pricing cards — subtle depth, slight lift toward the viewer. */
+const tiltCard = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
+  max: 5,
+  lift: 8,
+  perspective: 900,
+  smoothing: 0.4,
+  ...overrides,
+});
+
+/** Small tiles / logos — barely-there tilt, no lift. */
+const tiltSubtle = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
+  max: 3,
+  lift: 0,
+  perspective: 700,
+  smoothing: 0.35,
+  ...overrides,
+});
+
+/** Default tactile press for any clickable element. */
+const pressDefault = (overrides: Partial<PressConfig> = {}): PressConfig => ({
+  scale: 0.97,
+  inDuration: 0.12,
+  outDuration: 0.55,
+  ...overrides,
+});
+
+/** Smaller hit targets (icon buttons) — press reads at a smaller scale delta too. */
+const pressIcon = (overrides: Partial<PressConfig> = {}): PressConfig => ({
+  scale: 0.92,
+  inDuration: 0.1,
+  outDuration: 0.5,
+  ...overrides,
+});
+
 export const motion = {
   fadeUp,
   fadeIn,
@@ -190,4 +247,10 @@ export const motion = {
   sectionElement,
   sectionScrollHint,
   sectionCardGrid,
+  magneticCTA,
+  magneticIcon,
+  tiltCard,
+  tiltSubtle,
+  pressDefault,
+  pressIcon,
 } as const;

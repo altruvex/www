@@ -5,6 +5,7 @@ import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
 import { RefObject, useRef } from "react";
 import { MOTION, getConstrainedDevice, resolveEase, resolveTrigger, MotionEase, MotionTrigger } from "../config";
+import { REDUCED_FADE } from "../utils/env";
 import { autoSplit } from "../utils/splite";
 
 export interface TextConfig {
@@ -67,8 +68,18 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
           reduced: "(prefers-reduced-motion: reduce)",
         },
         () => {
+          // ── Reduced-motion tier ──────────────────────────────────────────
+          // Was: gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" })
+          //      — instant, no signal that content settled in.
+          // Now: short opacity-only settle on the whole element (not the
+          // split chars/words — no point splitting text a reduced-motion
+          // user will never see staggered). No transform/blur.
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" });
+            gsap.fromTo(
+              el,
+              { opacity: 0 },
+              { opacity: 1, ...REDUCED_FADE, clearProps: "opacity,filter" },
+            );
             return;
           }
 

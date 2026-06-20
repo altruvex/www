@@ -43,14 +43,14 @@ export const SITE_CONFIG = {
   alternateNames: ["Altruvex Web Engineering", "Altruvex Cairo"],
   defaultLocale: "en" as SupportedLocale,
   description: {
-    ar: "Altruvex هي شركة هندسة ويب مخصصة في القاهرة تبني أنظمة Next.js ثنائية اللغة للفرق التي تحتاج أداءً حقيقياً ووضوحاً تقنياً وتجربة عربية/إنجليزية متكافئة.",
-    en: "Altruvex is a Cairo-based custom web engineering company building bilingual Next.js systems for teams that need technical clarity, production performance, and Arabic/English execution.",
+    ar: "Altruvex هي شركة هندسة ويب مخصصة تبني أنظمة Next.js ثنائية اللغة للفرق التي تحتاج أداءً حقيقياً ووضوحاً تقنياً وتجربة عربية/إنجليزية متكافئة.",
+    en: "Altruvex is a custom web engineering company building bilingual Next.js systems for teams that need technical clarity, production performance, and Multi-Lingual execution.",
   },
   email: "hello@altruvex.com",
   founder: {
     description: {
       ar: "المؤسس والمهندس الرئيسي في Altruvex، ويقود بناء أنظمة الويب المخصصة وواجهات العربية والإنجليزية.",
-      en: "Founder and lead engineer at Altruvex, focused on custom web systems and Arabic/English product delivery.",
+      en: "Founder and lead engineer at Altruvex, focused on custom web systems and Multi-Lingual product delivery.",
     },
     jobTitle: {
       ar: "المؤسس والمهندس الرئيسي",

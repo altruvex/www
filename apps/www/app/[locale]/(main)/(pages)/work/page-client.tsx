@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Accent } from "@/components/ui/emphasis";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { WorkItem } from "@/components/work-item";
 import { CASE_STUDIES } from "@/lib/case-studies";
@@ -34,9 +35,7 @@ export default memo(function WorkIndexPage() {
               >
                 {t("title")}
                 <br />
-                <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                  {t("titleItalic")}
-                </span>
+                <Accent gradient="mint">{t("titleItalic")}</Accent>
               </h1>
               <p
                 ref={descRef}

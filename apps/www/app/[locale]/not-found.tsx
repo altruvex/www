@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -36,9 +37,7 @@ export default function NotFoundPage() {
           >
             {t("titleLine1")}
             <br />
-            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-primary/70">
-              {t("titleLine2")}
-            </span>
+            <Highlight className="text-primary/70">{t("titleLine2")}</Highlight>
           </h1>
           <div className="h-px w-24 bg-foreground/8 mb-8" />
           <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-12 max-w-md">

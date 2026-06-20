@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { FaqSection } from "@/components/sections/faq-section";
@@ -203,9 +204,7 @@ export default function PricingPage() {
                 >
                   {t("title")}
                   <br />
-                  <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/40">
-                    {t("titleItalic")}
-                  </span>
+                  <Highlight className="text-foreground/40">{t("titleItalic")}</Highlight>
                 </h1>
                 <p
                   ref={heroDescRef}
@@ -386,7 +385,7 @@ export default function PricingPage() {
                     {t("roi.eyebrow")}
                   </p>
                   <h2 ref={roiTitleRef} className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground">
-                    {t("roi.title")}
+                    {t("roi.title")} <Highlight>{t("roi.titleItalic")}</Highlight>
                   </h2>
                   <div ref={roiBodyRef} className="grid gap-6 md:grid-cols-2">
                     <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">

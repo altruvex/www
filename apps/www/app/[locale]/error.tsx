@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { monoCaps } from "@/lib/mono-caps";
@@ -105,10 +106,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             >
               {errorInfo.title1}
               <br />
-              {/* ✅ Fixed: Tailwind class instead of inline style */}
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {errorInfo.title2}
-              </span>
+              <Highlight>{errorInfo.title2}</Highlight>
             </h1>
 
             <div className="h-px w-24 bg-foreground/8 mb-8" />

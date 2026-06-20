@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Accent } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -53,7 +54,7 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
             {t("eyebrow")}
           </Eyebrow>
           <h2 ref={titleRef} className="text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4">
-            {t("title")}
+            {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
           </h2>
           <p ref={bodyRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-8 max-w-xl">
             {t("body")}

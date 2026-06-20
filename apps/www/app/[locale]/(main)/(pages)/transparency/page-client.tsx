@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Highlight } from "@/components/ui/emphasis";
 import {
   BrandIdentity,
   Budget,
@@ -201,6 +202,8 @@ export default function TransparencyPageClient() {
                 className="font-sans font-normal text-primary mb-4"
               >
                 {t("title")}
+                <br />
+                <Highlight>{t("titleItalic")}</Highlight>
               </h1>
               <p
                 ref={subtitleRef}

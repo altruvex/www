@@ -4,6 +4,7 @@ import { Container } from "@/components/container";
 import { CtaButtonGroup } from "@/components/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { HeroScrollHint } from "@/components/sections/hero-scroll-hint";
+import { Highlight } from "@/components/ui/emphasis";
 import { monoCaps } from "@/lib/mono-caps";
 import {
   useSectionDescription,
@@ -81,7 +82,7 @@ export function ServiceHero({
   const ctaRef = useSectionElement();
 
   return (
-    <section className="accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section className="relative accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
       <SectionWatermark>{watermark}</SectionWatermark>
       <HeroGridOverlay
         visibility={gridVisibility}
@@ -120,14 +121,11 @@ export function ServiceHero({
           >
             {title}
             <br className="hidden sm:block" />
-            <span
-              className={cn(
-                "font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45",
-                titleSize === "large" && "block mt-2 sm:mt-0",
-              )}
+            <Highlight
+              className={cn(titleSize === "large" && "block mt-2 sm:mt-0")}
             >
               {titleItalic}
-            </span>
+            </Highlight>
           </h1>
           <div
             ref={descRef}

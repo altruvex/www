@@ -5,6 +5,7 @@ import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
 import { RefObject, useRef } from "react";
 import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../config";
+import { REDUCED_FADE } from "../utils/env";
 
 export type RevealDirection = "up" | "down" | "left" | "right" | "fade" | "scale";
 
@@ -74,11 +75,23 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
         (context) => {
           const { reduced } = context.conditions as { reduced: boolean };
 
+          // ── Reduced-motion tier ──────────────────────────────────────────
+          // Was: gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
+          //      — a hard snap that destroys the "new content" signal entirely.
+          // Now: short opacity-only settle. No transform/scale/blur, no scroll
+          // dependency. Opacity is a visual change, not vestibular movement, so
+          // it stays safe under prefers-reduced-motion while keeping the page
+          // from feeling dead. (MDN dissolve guidance; WCAG Media Queries L5.)
           if (reduced) {
-            gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" });
+            gsap.fromTo(
+              el,
+              { opacity: 0 },
+              { opacity: 1, ...REDUCED_FADE, clearProps: "opacity" },
+            );
             return;
           }
 
+          // ── Full-motion tier (unchanged) ─────────────────────────────────
           gsap.set(el, {
             ...getFrom(direction, distance),
             willChange: "transform, opacity",

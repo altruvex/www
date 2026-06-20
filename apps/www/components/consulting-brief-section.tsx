@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
@@ -1081,9 +1082,7 @@ export function ConsultingBriefSection() {
                 >
                   {t("brief.title")}
                   <br />
-                  <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                    {t("brief.titleItalic")}
-                  </span>
+                  <Highlight>{t("brief.titleItalic")}</Highlight>
                 </h2>
 
                 <div className="hidden lg:flex flex-col items-end gap-2">

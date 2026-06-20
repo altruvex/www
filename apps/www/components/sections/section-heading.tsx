@@ -1,5 +1,6 @@
 import { ReactNode, RefObject } from "react";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Accent, Highlight, type AccentGradient, type GradientDirection } from "@/components/ui/emphasis";
 import { cn } from "@/lib/utils";
 
 interface SectionHeadingProps {
@@ -7,13 +8,15 @@ interface SectionHeadingProps {
   firstTitle: ReactNode;
   secondTitle?: ReactNode | null;
   description?: ReactNode;
-  // Refs come from generic GSAP hooks and are forwarded to fixed elements;
-  // narrowing casts at each attachment keep these honestly typed (no `any`).
   eyebrowRef?: RefObject<HTMLElement | null>;
   titleRef?: RefObject<HTMLElement | null>;
   descriptionRef?: RefObject<HTMLElement | null>;
   className?: string;
   theme?: "default" | "surface";
+  accent?: AccentGradient | (string & {});
+  accentDirection?: GradientDirection;
+  accentAnimate?: boolean;
+  
   customEyebrow?: boolean;
   classes?: {
     container?: string;
@@ -35,6 +38,9 @@ export function SectionHeading({
   descriptionRef,
   className,
   theme = "default",
+  accent,
+  accentDirection = "r",
+  accentAnimate = false,
   customEyebrow = false,
   classes,
 }: SectionHeadingProps) {
@@ -62,17 +68,30 @@ export function SectionHeading({
           {secondTitle ? (
             <>
               <br className={isSurface ? "" : "hidden md:block"} />
-              <span
-                className={cn(
-                  "font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold",
-                  isSurface
-                    ? "text-s-mid"
-                    : "block mt-2 md:mt-0 md:inline text-foreground/45",
-                  classes?.secondTitle
-                )}
-              >
-                {secondTitle}
-              </span>
+              {accent ? (
+                <Accent
+                  gradient={accent}
+                  direction={accentDirection}
+                  animate={accentAnimate}
+                  className={cn(
+                    isSurface ? "" : "block mt-2 md:mt-0 md:inline",
+                    classes?.secondTitle
+                  )}
+                >
+                  {secondTitle}
+                </Accent>
+              ) : (
+                <Highlight
+                  className={cn(
+                    isSurface
+                      ? "text-s-mid"
+                      : "block mt-2 md:mt-0 md:inline text-foreground/45",
+                    classes?.secondTitle
+                  )}
+                >
+                  {secondTitle}
+                </Highlight>
+              )}
             </>
           ) : null}
         </h2>

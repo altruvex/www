@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { Link } from "@/i18n/navigation";
@@ -9,6 +10,7 @@ import { monoCaps } from "@/lib/mono-caps";
 import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { SectionHeading } from "@/components/sections/section-heading";
 
 export default function MaintenancePage() {
   return (
@@ -73,7 +75,7 @@ function StatsSection() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {t("stats.title")}
+              {t("stats.title")} <Highlight>{t("stats.titleItalic")}</Highlight>
             </h2>
             <div className="space-y-5">
               <p className="text-base text-primary/60 leading-relaxed">
@@ -114,7 +116,8 @@ function StatsSection() {
 function FeaturesSection() {
   const t = useTranslations("serviceDetails.maintenance");
   const tCommon = useTranslations("serviceDetails");
-  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-feature-card]",
+  const sectionRef = useSectionCardGrid<HTMLElement>({
+    selector: "[data-feature-card]",
     stagger: MOTION.stagger.tight,
     distance: MOTION.distance.sm,
   });
@@ -152,9 +155,7 @@ function FeaturesSection() {
             >
               {tCommon("whatWeOffer")}
               <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {tCommon("whatWeOfferItalic")}
-              </span>
+              <Highlight>{tCommon("whatWeOfferItalic")}</Highlight>
             </h2>
             <p
               className={cn(
@@ -254,36 +255,15 @@ function PricingSection() {
     >
       <Container>
         <div className="mb-16">
-          <p
-            ref={eyebrowRef}
-            className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}
-          >
-            {t("pricing.eyebrow")}
-          </p>
-          <div className="flex items-end justify-between gap-8 flex-wrap">
-            <h2
-              ref={titleRef}
-              className="font-sans font-normal text-primary leading-[1.05]"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("pricing.title")}
-              <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {t("pricing.titleItalic")}
-              </span>
-            </h2>
-            <p
-              className={cn(
-                monoCaps,
-                "text-primary/35 max-w-[36ch] hidden lg:block leading-relaxed",
-              )}
-            >
-              {t("pricing.subtitle")}
-            </p>
-          </div>
+          <SectionHeading
+            eyebrowRef={eyebrowRef}
+            titleRef={titleRef}
+            eyebrow={t("pricing.eyebrow")}
+            firstTitle={t("pricing.title")}
+            secondTitle={t("pricing.titleAccent")}
+            accent="iris"
+            description={t("pricing.subtitle")}
+          />
         </div>
         <div className="grid md:grid-cols-3 gap-4">
           {plans.map(({ key, price, featured, index }) => (
@@ -496,7 +476,7 @@ function CtaSection() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                {t("cta.title")}
+                {t("cta.title")} <Highlight>{t("cta.titleItalic")}</Highlight>
               </h2>
               <p className="text-base text-primary/60 leading-relaxed max-w-[44ch]">
                 {t("cta.description")}

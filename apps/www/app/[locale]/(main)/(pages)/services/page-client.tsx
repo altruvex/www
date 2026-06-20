@@ -1,6 +1,7 @@
 "use client";
 import { Container } from "@/components/container";
 import { ArrowIcon } from "@/components/directional-link";
+import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { CtaSection } from "@/components/sections/cta-section";
@@ -75,6 +76,8 @@ export default memo(function ServicesPage() {
               className="text-[clamp(2.75rem,5vw,4.5rem)] leading-[1.05] tracking-[-0.03em] font-normal text-foreground mb-6"
             >
               {t("title")}
+              <br />
+              <Highlight>{t("titleItalic")}</Highlight>
             </h1>
             <p
               ref={descRef}

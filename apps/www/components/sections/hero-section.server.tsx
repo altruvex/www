@@ -7,6 +7,7 @@ import { getTranslations } from "next-intl/server";
 import { ArrowIcon } from "../directional-link";
 import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
 import { HeroScrollHint } from "./hero-scroll-hint";
+import { Accent, Highlight } from "@/components/ui/emphasis";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -14,6 +15,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
 
   const title1 = t("hero.title");
   const title2 = t("hero.title2");
+  const titlePre = t("hero.title_pre");
+  const titleAccent = t("hero.title_accent");
+  const titlePost = t("hero.title_post");
+  const titlePostNode = /^[.،!?]/.test(titlePost) ? titlePost : ` ${titlePost}`;
   const watermark = t("hero.watermark");
   const metrics = t.raw("hero.metrics") as Array<{
     value: string;
@@ -60,10 +65,13 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             </span>
           </HeroReveal>
           <HeroHeadline className="text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
-            <span className="block">{title1}</span>
-            <span className="block text-foreground/45 font-serif italic font-light tracking-[-0.02em] rtl:tracking-normal rtl:font-sans rtl:not-italic rtl:font-bold">
-              {title2}
+            <span className="block">
+              {titlePre} <Accent gradient="iris">{titleAccent}</Accent>
+              {titlePostNode}
             </span>
+            <Highlight className="block tracking-[-0.02em] rtl:tracking-normal">
+              {title2}
+            </Highlight>
           </HeroHeadline>
           <HeroReveal
             delay={0.5}

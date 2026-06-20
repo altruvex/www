@@ -1,6 +1,7 @@
 "use client";
 import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Accent } from "@/components/ui/emphasis";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,7 +143,7 @@ export default function SchedulePage() {
                     letterSpacing: "-0.025em",
                   }}
                 >
-                  {t("title")}
+                  {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
                 </h1>
                 <p
                   ref={subtitleRef}

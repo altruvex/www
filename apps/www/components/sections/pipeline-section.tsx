@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Accent } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
@@ -299,9 +300,7 @@ export function PipelineSection() {
           >
             {t("title")}
             <br />
-            <span className="font-serif font-light rtl:font-sans rtl:not-italic rtl:font-bold italic text-muted-foreground">
-              {t("titleItalic")}
-            </span>
+            <Accent gradient="mint">{t("titleAccent")}</Accent>
             <p
               ref={descRef}
               className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed mt-4 font-sans tracking-normal"

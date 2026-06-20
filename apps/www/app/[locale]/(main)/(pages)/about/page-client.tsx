@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import {
   ArrowLabel,
   ExternalDirectionalLink,
@@ -96,7 +97,7 @@ function HeroSection() {
           >
             {t("title")}
             <br />
-            {t("title2")} <span className="font-serif font-light italic text-foreground/45 rtl:font-sans rtl:font-bold rtl:not-italic">{t("title3")}</span>
+            {t("title2")} <Highlight>{t("title3")}</Highlight>
           </h1>
           
           <div
@@ -326,7 +327,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
             {t("eyebrow")}
           </p>
           <h2 className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
-            {t("title")}
+            {t("title")} <Highlight>{t("titleAccent")}</Highlight>
           </h2>
           <p className="mt-6 mx-auto max-w-[48ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
             {t("body")}

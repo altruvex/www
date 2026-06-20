@@ -1,6 +1,8 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { ArrowIcon } from "@/components/directional-link";
+import { Accent, Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { Link } from "@/i18n/navigation";
@@ -15,8 +17,6 @@ export default function InterfacePage() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden selection:bg-foreground selection:text-background">
       <HeroSection />
-      {/* <DesignCompareSection /> */}
-      {/* <ShowcaseSection /> */}
       <FeaturesSection />
       <CtaSection />
     </div>
@@ -91,9 +91,7 @@ export function ShowcaseSection() {
             >
               {t("showcaseTitle")}
               <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {t("showcaseTitleItalic")}
-              </span>
+              <Highlight>{t("showcaseTitleItalic")}</Highlight>
             </h2>
             <p className="hidden max-w-[36ch] font-mono text-sm leading-relaxed tracking-wide text-primary/35 lg:block">
               {t("showcaseSubtitle")}
@@ -194,17 +192,6 @@ const FeatureCard = ({
             {feature.description}
           </p>
         </div>
-        {/* <div className="hidden md:flex shrink-0 w-12 h-12 items-center justify-center rounded-full border border-foreground/0 group-hover:border-foreground/10 group-hover:bg-background transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]">
-          <svg
-            className="w-4 h-4 text-foreground/0 group-hover:text-foreground/50 -translate-x-2 group-hover:translate-x-0 transition-all duration-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </div> */}
       </div>
     </div>
   );
@@ -239,12 +226,10 @@ function FeaturesSection() {
               {tCommon("whatWeOfferEyebrow")}
             </p>
           </div>
-          <h2 className="font-sans font-normal text-primary leading-[1.05] text-[clamp(28px,4.5vw,52px)] tracking-[-0.025em]">
+          <h2 className="font-sans font-normal text-primary leading-[1.05] text-[clamp(28px,4.5vw,52px)] tracking-tight">
             {tCommon("whatWeOffer")}
             <br />
-            <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-              {tCommon("whatWeOfferItalic")}
-            </span>
+            <Highlight>{tCommon("whatWeOfferItalic")}</Highlight>
           </h2>
         </div>
 
@@ -295,7 +280,7 @@ function CtaSection() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {t("cta.title")}
+              {t("cta.title")} <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
             </h2>
             <p className="text-base text-primary/60 leading-relaxed max-w-[44ch]">
               {t("cta.description")}
@@ -306,19 +291,7 @@ function CtaSection() {
               <Link href={projectRangeCta.href}>
                 <span className="flex items-center gap-2">
                   {tCTAs("projectRange")}
-                  <svg
-                    className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
+                  <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </span>
               </Link>
             </MagneticButton>

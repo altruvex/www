@@ -49,6 +49,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
+          accent="iris"
           description={t("subtitle")}
           className="mb-16"
         />
@@ -66,7 +67,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
                 key={key}
                 className={cn(
                   "pricing-signal-card relative border-e border-b border-border px-6 py-8 group transition-colors duration-300",
-                  featured ? "bg-brand/[0.03] hover:bg-brand/[0.06]" : "hover:bg-surface",
+                  featured ? "bg-brand/3 hover:bg-brand/6" : "hover:bg-surface",
                 )}
               >
                 {featured ? (

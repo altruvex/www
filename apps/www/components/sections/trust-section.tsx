@@ -4,7 +4,6 @@ import { ExternalDirectionalLink } from "@/components/directional-link";
 import { FOUNDER_LINK } from "@/lib/commercial";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { getAllTestimonials } from "@/lib/testimonials";
-import { splitHeadline } from "@/lib/utils";
 import { SectionHeading } from "./section-heading";
 import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
@@ -22,8 +21,8 @@ export const TrustSection = memo(function TrustSection() {
   const testimonialsRef = useSectionCardGrid<HTMLDivElement>({ selector: ".trust-testimonial", stagger: 0.08 });
   const founderRef = useSectionElement();
 
-  const title = t("title");
-  const { first: firstTitle, second: secondTitle } = splitHeadline(title);
+  const firstTitle = t("title");
+  const secondTitle = t("titleAccent");
 
   const points = t.raw("points") as Array<{ title: string; body: string }>;
 
@@ -37,6 +36,7 @@ export const TrustSection = memo(function TrustSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
+          accent="iris"
           description={t("body")}
           className="mb-16"
         />

@@ -1,4 +1,5 @@
 "use client";
+import { Accent } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
 import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
 import { gsap } from "@/lib/gsap";
@@ -315,7 +316,7 @@ export const TransparencySection = memo(function TransparencySection() {
             ref={titleRef}
             className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground"
           >
-            {t("title")}
+            {t("title")} <Accent gradient="brand">{t("titleItalic")}</Accent>
           </h2>
           <p
             ref={descriptionRef}

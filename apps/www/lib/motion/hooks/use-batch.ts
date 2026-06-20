@@ -6,6 +6,7 @@ import { gsap } from "@/lib/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RefObject, useRef } from "react";
 import { MOTION, MotionEase, MotionTrigger, getConstrainedDevice, resolveEase, resolveTrigger } from "../config";
+import { REDUCED_FADE } from "../utils/env";
 import { RevealDirection } from "./use-reveal";
 
 export interface BatchConfig {
@@ -75,8 +76,19 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
           reduced: "(prefers-reduced-motion: reduce)",
         },
         () => {
+          // ── Reduced-motion tier ──────────────────────────────────────────
+          // Was: gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
+          //      — every card in the grid appears with zero signal at once.
+          // Now: short opacity-only settle, tiny stagger (20ms) kept ONLY
+          // because it costs no vestibular risk (no movement) and preserves
+          // "these belong together, arriving as a group" — the one piece of
+          // grid semantics worth keeping. No transform/scale.
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" });
+            gsap.fromTo(
+              items,
+              { opacity: 0 },
+              { opacity: 1, ...REDUCED_FADE, stagger: 0.02, clearProps: "opacity,willChange" },
+            );
             return;
           }
 

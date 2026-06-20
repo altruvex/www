@@ -86,22 +86,6 @@ const ServiceCard = memo(function ServiceCard({
           {t(`${service.key}.tag`)}
         </span>
         <div className="h-px flex-1 bg-s-border opacity-40" />
-        <svg
-          aria-hidden
-          className="translate-x-[-4px] text-s-mid opacity-0 transition-[transform,opacity] duration-300 group-hover:translate-x-0 group-hover:opacity-100 rtl:scale-x-[-1]"
-          width="16"
-          height="16"
-          viewBox="0 0 14 14"
-          fill="none"
-        >
-          <path
-            d="M2 7H12M8 3L12 7L8 11"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
       </div>
       <div
         className={cn(

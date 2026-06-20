@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Accent } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -39,7 +40,7 @@ export function CtaSection() {
               ref={titleRef}
               className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] max-w-4xl font-normal text-primary"
             >
-              {t("title")}
+              {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
             </h2>
           </div>
           <div ref={contentRef} className="flex min-w-0 flex-col gap-6">

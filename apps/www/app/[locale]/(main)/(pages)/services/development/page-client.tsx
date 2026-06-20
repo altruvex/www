@@ -1,5 +1,7 @@
 "use client";
 import { Container } from "@/components/container";
+import { ArrowIcon } from "@/components/directional-link";
+import { Accent } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { PipelineSection } from "@/components/sections/pipeline-section";
@@ -55,7 +57,13 @@ export function CtaSection() {
       <Container>
         <div
           ref={cardRef}
-          className="overflow-hidden rounded-section border border-border bg-card shadow-sm transition-all duration-300"
+          // FIX: transition-all duration-300 with no hover/focus/state
+          // variant on this element — nothing here was ever animating on
+          // interaction. The only realistic trigger is a light/dark theme
+          // swap re-coloring the CSS variables, in which case you only
+          // need transition-colors (bg/border/shadow-color), not "all"
+          // watching every animatable property for no reason.
+          className="overflow-hidden rounded-section border border-border bg-card shadow-sm transition-colors duration-300"
         >
           <div className="flex items-center gap-3 border-b border-border bg-surface px-5 py-3">
             <div className="flex gap-2">
@@ -99,7 +107,22 @@ export function CtaSection() {
               <div className="flex gap-2 text-foreground/80 font-medium items-center">
                 <span className="text-local-accent opacity-80">→</span>
                 <span>{t("cta.terminal.ready")}</span>
-                <span className="inline-block w-2 h-4 bg-foreground/40 animate-[pulse_1s_step-end_infinite] -mb-0.5" />
+                {/*
+                  FIX: animate-[pulse_1s_step-end_infinite] reuses
+                  Tailwind's built-in "pulse" keyframe, which animates
+                  opacity 1 -> 0.5 -> 1 (an ease-in-out fade), not 1 -> 0.
+                  Pairing it with step-end timing doesn't fix that — the
+                  cursor was visibly dimming, never actually
+                  disappearing, which reads as "broken" rather than as a
+                  blinking terminal caret. Defining a real two-state
+                  keyframe locally so it hard-cuts like an actual cursor.
+                */}
+                <span className="inline-block w-2 h-4 bg-foreground/40 -mb-0.5 animate-[altruvex-caret-blink_1s_steps(1,end)_infinite]" />
+                <style>{`
+                  @keyframes altruvex-caret-blink {
+                    50% { opacity: 0; }
+                  }
+                `}</style>
               </div>
             </div>
             <div className="p-8 md:p-10 flex flex-col justify-between gap-8">
@@ -118,7 +141,7 @@ export function CtaSection() {
                     fontSize: "clamp(22px, 3.5vw, 38px)",
                   }}
                 >
-                  {t("cta.title")}
+                  {t("cta.title")} <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
                 </h2>
                 <p className="text-[15px] sm:text-base text-muted-foreground leading-relaxed max-w-[40ch] font-sans">
                   {t("cta.description")}
@@ -135,19 +158,7 @@ export function CtaSection() {
                     className="flex w-full h-full items-center justify-center gap-2"
                   >
                     <span>{tCTAs("projectRange")}</span>
-                    <svg
-                      className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
+                    <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
                   </Link>
                 </MagneticButton>
                 <MagneticButton asChild

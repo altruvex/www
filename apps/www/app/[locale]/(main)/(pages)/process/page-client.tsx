@@ -2,6 +2,7 @@
 
 import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
@@ -132,7 +133,7 @@ function ClosingSection() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {t("flexibility.title")}
+              {t("flexibility.title")} <Highlight>{t("flexibility.titleItalic")}</Highlight>
             </h2>
           </div>
           <p

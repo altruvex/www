@@ -1,5 +1,6 @@
 "use client";
 import { Container } from "@/components/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { ScrollTrigger, gsap } from "@/lib/gsap";
 import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import {
@@ -283,9 +284,7 @@ export function TechDNASection() {
             >
               {t("techStack.title")}
               <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {t("techStack.titleItalic")}
-              </span>
+              <Highlight>{t("techStack.titleItalic")}</Highlight>
             </h2>
             <p className="font-mono leading-normal tracking-wider text-sm text-primary/35 max-w-[32ch] hidden lg:block">
               {t("techStack.subtitle")}

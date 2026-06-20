@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
+import { Accent, Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
@@ -71,9 +72,7 @@ export default function HowWeWorkPage() {
             >
               {tProcessHero("title")}
               <br />
-              <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                {t("hero.italic")}
-              </span>
+              <Highlight>{t("hero.italic")}</Highlight>
             </h1>
             <div
               ref={heroDescRef}
@@ -106,7 +105,7 @@ export default function HowWeWorkPage() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {t("architecture.title")}
+              {t("architecture.title")} <Highlight>{t("architecture.titleItalic")}</Highlight>
             </h2>
             <div
               ref={archBodyRef}
@@ -302,9 +301,7 @@ export default function HowWeWorkPage() {
                 >
                   {t("cta.title")}
                   <br />
-                  <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                    {t("cta.titleItalic")}
-                  </span>
+                  <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
                 </h2>
                 <p
                   ref={ctaDescRef}

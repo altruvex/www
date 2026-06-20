@@ -2,6 +2,7 @@
 
 import { Container } from "@/components/container";
 import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
+import { Highlight } from "@/components/ui/emphasis";
 import { cn } from "@/lib/utils";
 import React, { ReactNode } from "react";
 
@@ -63,9 +64,7 @@ export function PageHero({
             {titleItalic && (
               <>
                 <br />
-                <span className="font-serif italic font-light rtl:font-sans rtl:not-italic rtl:font-bold text-foreground/45">
-                  {titleItalic}
-                </span>
+                <Highlight>{titleItalic}</Highlight>
               </>
             )}
           </h1>
