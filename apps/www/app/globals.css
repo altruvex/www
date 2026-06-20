@@ -632,6 +632,12 @@ html.lenis body {
 }
 
 @layer utilities {
+  .paused {
+    animation-play-state: paused;
+  }
+  .running {
+    animation-play-state: running;
+  }
   .liquid-glass,
   .liquid-glass-flat {
     background: linear-gradient(
