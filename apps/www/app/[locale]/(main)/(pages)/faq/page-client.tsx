@@ -2,6 +2,7 @@
 
 import { Container } from "@/components/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { ChevronDown, MessageCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,19 +19,32 @@ export default function FAQPageClient() {
 
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+  const eyebrowRef = useSectionEyebrow<HTMLSpanElement>();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription<HTMLParagraphElement>();
+
   return (
     <>
       <section className="relative py-20 sm:py-28 md:py-32 overflow-hidden border-b border-foreground/10 bg-linear-to-b from-background to-foreground/5">
         <Container className="max-w-3xl relative z-10">
           <div className="flex flex-col items-center text-center space-y-6">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-xs font-mono uppercase tracking-widest text-foreground/70 mb-2">
+            <span
+              ref={eyebrowRef}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-xs font-mono uppercase tracking-widest text-foreground/70 mb-2"
+            >
               <MessageCircle className="w-3.5 h-3.5" />
               {t("eyebrow")}
             </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+            <h1
+              ref={titleRef}
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight"
+            >
               {t("title")}
             </h1>
-            <p className="text-lg md:text-xl text-foreground/60 leading-relaxed max-w-2xl">
+            <p
+              ref={descRef}
+              className="text-lg md:text-xl text-foreground/60 leading-relaxed max-w-2xl"
+            >
               {t("subtitle")}
             </p>
           </div>
