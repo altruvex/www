@@ -29,7 +29,7 @@ function ProblemRow({ item }: { item: ProblemItem }) {
     >
       <div className="flex items-start">
         <span
-          className="font-mono text-[clamp(2rem,4vw,3rem)] font-medium leading-none tracking-[-0.02em] text-foreground/25 transition-colors duration-300 group-hover:text-foreground/70"
+          className="font-mono text-[clamp(2rem,4vw,3rem)] font-medium leading-none tracking-[-0.02em] text-foreground/60 transition-colors duration-300 group-hover:text-foreground/90"
           aria-hidden="true"
         >
           {item.number}
