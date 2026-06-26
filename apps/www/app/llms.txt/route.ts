@@ -1,4 +1,9 @@
-import { PAGE_METADATA, SITE_CONFIG, SUPPORTED_LOCALES } from "@/lib/metadata";
+import {
+  getLocalizedUrl,
+  PAGE_METADATA,
+  SITE_CONFIG,
+  SUPPORTED_LOCALES,
+} from "@/lib/metadata";
 
 const CORE_PATHS = [
   "/",
@@ -13,10 +18,6 @@ const CORE_PATHS = [
   "/writing",
   "/contact",
 ] as const;
-
-function localizedUrl(locale: (typeof SUPPORTED_LOCALES)[number], path: string) {
-  return `${SITE_CONFIG.url}/${locale}${path === "/" ? "" : path}`;
-}
 
 export function GET() {
   const lines = [
@@ -57,7 +58,7 @@ export function GET() {
                 locale
               ].title ?? path;
 
-        return `- ${title}: ${localizedUrl(locale, path)}`;
+        return `- ${title}: ${getLocalizedUrl(locale, path)}`;
       }),
     ),
     "",

@@ -766,6 +766,10 @@ function getLocalizedPath(locale: string, pathSuffix: string): string {
   const loc = normalizeLocale(locale);
   const path = normalizePath(pathSuffix);
 
+  if (loc === SITE_CONFIG.defaultLocale) {
+    return path;
+  }
+
   return path === "/" ? `/${loc}` : `/${loc}${path}`;
 }
 

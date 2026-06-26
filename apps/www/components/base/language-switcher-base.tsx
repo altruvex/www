@@ -1,9 +1,10 @@
 "use client";
 
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/utils";
 import { Check, ChevronDown, Globe } from "lucide-react";
 import { useLocale } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
@@ -47,6 +48,7 @@ export function LanguageSwitcherBase({
   className,
 }: LanguageSwitcherBaseProps) {
   const locale = useLocale();
+  const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -74,18 +76,11 @@ export function LanguageSwitcherBase({
     }
 
     startTransition(() => {
-      let newPath = pathname;
-      if (pathname === `/${locale}`) {
-        newPath = `/${newLocale}`;
-      } else if (pathname.startsWith(`/${locale}/`)) {
-        newPath = pathname.replace(`/${locale}/`, `/${newLocale}/`);
-      } else {
-        newPath = `/${newLocale}${
-          pathname.startsWith("/") ? pathname : `/${pathname}`
-        }`;
-      }
-
-      router.push(newPath);
+      router.replace(
+        // @ts-expect-error -- pathname is dynamic at runtime, not a typed route literal
+        { pathname, params },
+        { locale: newLocale },
+      );
       setIsOpen(false);
     });
   };
