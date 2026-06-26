@@ -1,12 +1,12 @@
 "use client";
 
 import { useLoading } from "@/components/providers/loading-provider";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
 import { MOTION, getConstrainedDevice, resolveEase, resolveTrigger, MotionEase, MotionTrigger } from "../config";
 import { REDUCED_FADE } from "../utils/env";
-import { autoSplit } from "../utils/splite";
+import { alignAccentGradients, autoSplit } from "../utils/splite";
 
 export interface TextConfig {
   delay?: number;
@@ -70,9 +70,9 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
         () => {
           // ── Reduced-motion tier ──────────────────────────────────────────
           // Was: gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" })
-          //      — instant, no signal that content settled in.
+          //      - instant, no signal that content settled in.
           // Now: short opacity-only settle on the whole element (not the
-          // split chars/words — no point splitting text a reduced-motion
+          // split chars/words - no point splitting text a reduced-motion
           // user will never see staggered). No transform/blur.
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             gsap.fromTo(
@@ -171,7 +171,21 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
       );
     }, el);
 
-    return () => ctx.revert();
+    // Gradient-accent fragments are aligned to the phrase's measured layout at split
+    // time. Reflow (viewport resize, font swap, RTL/locale change) shifts those
+    // measurements, so re-align on resize to keep the sweep continuous.
+    let resizeFrame = 0;
+    const resizeObserver = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => alignAccentGradients(el));
+    });
+    resizeObserver.observe(el);
+
+    return () => {
+      cancelAnimationFrame(resizeFrame);
+      resizeObserver.disconnect();
+      ctx.revert();
+    };
   }, [isInitialLoadComplete, delay, duration, stagger, distance, ease, trigger, once, splitBy, blur, scrubExit]);
 
   return ref;

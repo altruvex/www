@@ -1,11 +1,11 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
-import { ArrowLabel } from "@/components/directional-link";
+import { Container } from "@/components/shared/container";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { FaqSection } from "@/components/sections/faq-section";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
 import {
   useSectionCardGrid,
@@ -14,6 +14,7 @@ import {
   useSectionTitle,
 } from "@/lib/motion";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 const TIER_DESTINATION = {
   essential: "/transparency?tier=essential",
@@ -176,7 +177,7 @@ export default function PricingPage() {
     {
       key: "paymentTerms",
       label: t("commercial.items.paymentTerms.label"),
-      value: t("commercial.items.paymentTerms.value"),
+      value: t.rich("commercial.items.paymentTerms.value", bodyMarks),
     },
   ];
 
@@ -194,7 +195,7 @@ export default function PricingPage() {
               <div className="mb-20 sm:max-w-5xl max-w-full">
                 <p
                   ref={heroEyebrowRef}
-                  className="font-mono text-xs leading-normal tracking-[0.12em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground/80 mb-5 block"
+                  className="font-mono text-xs leading-normal tracking-[0.12em] uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5 block"
                 >
                   {t("label")}
                 </p>
@@ -353,21 +354,21 @@ export default function PricingPage() {
               {/* REDESIGNED LOGISTICS & COMMERCIAL TERMS */}
               <div className="mb-32 grid grid-cols-1 gap-12 border-t border-border pt-16 md:grid-cols-3">
                 <div className="md:col-span-1">
-                  <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                  <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                     {t("minimumEngagement").includes("٢٢") ? "الحد الأدنى للمشاريع" : "Minimum Engagement"}
                   </p>
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
                     {t("minimumEngagement")}
                   </p>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {t("ownershipNote")}
+                    {t.rich("ownershipNote", bodyMarks)}
                   </p>
                 </div>
                 
                 <div ref={commercialNotesRef} className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2">
                   {commercialNotes.map((note) => (
                     <div key={note.key} className="commercial-note">
-                      <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                      <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         {note.label}
                       </p>
                       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -381,7 +382,7 @@ export default function PricingPage() {
               {/* REDESIGNED ROI SECTION */}
               <section className="accent-world-orange border-t border-border pt-24 pb-12">
                 <div className="mb-16 max-w-3xl">
-                  <p ref={roiEyebrowRef} className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground/70">
+                  <p ref={roiEyebrowRef} className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                     {t("roi.eyebrow")}
                   </p>
                   <h2 ref={roiTitleRef} className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground">
@@ -389,10 +390,10 @@ export default function PricingPage() {
                   </h2>
                   <div ref={roiBodyRef} className="grid gap-6 md:grid-cols-2">
                     <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">
-                      {t("roi.calculation")}
+                      {t.rich("roi.calculation", bodyMarks)}
                     </p>
                     <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">
-                      {t("roi.question")}
+                      {t.rich("roi.question", bodyMarks)}
                     </p>
                   </div>
                 </div>
@@ -400,7 +401,7 @@ export default function PricingPage() {
                 <div ref={roiStatsRef} className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12">
                   {roiStats.map((stat) => (
                     <div key={stat.key}>
-                      <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+                      <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                         {stat.label}
                       </p>
                       <p className="mb-2 text-4xl font-light tracking-tight text-foreground md:text-5xl">

@@ -1,10 +1,10 @@
 "use client";
-import { Accent } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { bodyMarks } from "@/components/ui/rich-text";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { MOTION, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/number";
+import { localizeNumbers } from "@/lib/utils/number";
 import {
   DeliverableProject,
   DeliverableTier,
@@ -17,8 +17,8 @@ import {
   normalisePhone,
   pickLang,
   validatePhone,
-} from "@/lib/transparency-utils";
-import { cn } from "@/lib/utils";
+} from "@/lib/utils/transparency-utils";
+import { cn } from "@/lib/utils/utils";
 import { ArrowLeft, ArrowRight, Check, Download, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -30,7 +30,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Container } from "../container";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "../magnetic-button";
 import {
   Accordion,
@@ -38,8 +38,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "../ui/accordion";
+import { Eyebrow } from "../ui/eyebrow";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { SectionHeading } from "./section-heading";
 
 type SectionTimeline = "urgent" | "soon" | "flexible";
 
@@ -74,9 +76,9 @@ export const ProposalNarrativeBlock = memo(function ProposalNarrativeBlock({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
-        <span className="eyebrow text-xs text-muted-foreground whitespace-nowrap">
+        <Eyebrow className="text-xs whitespace-nowrap">
           {L({ ar: narrative.headline.ar, en: narrative.headline.en })}
-        </span>
+        </Eyebrow>
         <div className="flex-1 h-px bg-border" />
       </div>
       <div className="flex gap-3 p-4 rounded-xl bg-card/40 border border-border/50">
@@ -114,7 +116,7 @@ export const TransparencySection = memo(function TransparencySection() {
 
   useIsomorphicLayoutEffect(() => {
     if (!formContainerRef.current) return;
-    tweenCtxRef.current = gsap.context(() => {}, formContainerRef);
+    tweenCtxRef.current = gsap.context(() => { }, formContainerRef);
     return () => {
       tweenCtxRef.current?.revert();
       tweenCtxRef.current = null;
@@ -188,10 +190,10 @@ export const TransparencySection = memo(function TransparencySection() {
     () =>
       sel.projectType && sel.tier && sel.timeline
         ? {
-            projectType: sel.projectType,
-            tier: sel.tier,
-            timeline: sel.timeline,
-          }
+          projectType: sel.projectType,
+          tier: sel.tier,
+          timeline: sel.timeline,
+        }
         : null,
     [sel.projectType, sel.tier, sel.timeline],
   );
@@ -301,30 +303,28 @@ export const TransparencySection = memo(function TransparencySection() {
       suppressHydrationWarning
       id="transparency"
       ref={sectionRef}
-      // Color world: clean blue. Interactive archetype — the live estimator.
+      // Color world: clean blue. Interactive archetype - the live estimator.
       className="accent-world-blue flex w-full items-center pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="mb-12 space-y-3 text-center max-w-3xl mx-auto">
-          <p
-            ref={badgeRef}
-            className="eyebrow text-xs text-local-accent block"
-          >
-            {t("badge")}
-          </p>
-          <h2
-            ref={titleRef}
-            className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground"
-          >
-            {t("title")} <Accent gradient="brand">{t("titleItalic")}</Accent>
-          </h2>
-          <p
-            ref={descriptionRef}
-            className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground leading-relaxed"
-          >
-            {t("description")}
-          </p>
-        </div>
+        <SectionHeading
+          customEyebrow
+          eyebrowRef={badgeRef}
+          titleRef={titleRef}
+          descriptionRef={descriptionRef}
+          eyebrow={t("badge")}
+          firstTitle={t("title")}
+          secondTitle={t("titleItalic")}
+          accent="brand"
+          secondTitleBreak={false}
+          description={t("description")}
+          className="mb-12 flex-col items-center justify-center text-center max-w-3xl mx-auto gap-3 md:gap-3 lg:flex-col lg:items-center"
+          classes={{
+            eyebrow: "eyebrow text-xs text-local-accent block",
+            title: "text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] font-normal text-foreground",
+            description: "max-w-none text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground",
+          }}
+        />
 
         <div className="h-px w-full bg-border mb-12 max-w-3xl mx-auto" />
 
@@ -537,9 +537,7 @@ export const TransparencySection = memo(function TransparencySection() {
                       className="h-3 w-3 text-muted-foreground"
                       strokeWidth={2.5}
                     />
-                    <span className="eyebrow text-xs text-muted-foreground">
-                      {t("results.badge")}
-                    </span>
+                    <Eyebrow className="text-xs">{t("results.badge")}</Eyebrow>
                   </div>
                   <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground">
                     {t("results.title")}
@@ -570,9 +568,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         </p>
                       </div>
                       <div className="p-6 rounded-xl bg-card/40 border border-border/50">
-                        <p className="eyebrow text-xs text-muted-foreground mb-3">
-                          {t("results.timeline")}
-                        </p>
+                        <Eyebrow className="text-xs mb-3">{t("results.timeline")}</Eyebrow>
                         <p
                           className="font-sans font-light text-foreground leading-none mb-1"
                           style={{
@@ -604,9 +600,7 @@ export const TransparencySection = memo(function TransparencySection() {
                       />
                     )}
                     <div>
-                      <p className="eyebrow text-xs text-muted-foreground mb-3">
-                        {t("results.whatYouGet")}
-                      </p>
+                      <Eyebrow className="text-xs mb-3">{t("results.whatYouGet")}</Eyebrow>
                       <div className="space-y-2.5">
                         {(() => {
                           if (!selection) return [];
@@ -615,9 +609,9 @@ export const TransparencySection = memo(function TransparencySection() {
                           );
                           const items = Array.isArray(rawItems)
                             ? rawItems.filter(
-                                (item): item is string =>
-                                  typeof item === "string",
-                              )
+                              (item): item is string =>
+                                typeof item === "string",
+                            )
                             : [];
                           return (
                             <>
@@ -630,11 +624,11 @@ export const TransparencySection = memo(function TransparencySection() {
                                 </div>
                               ))}
                               {items.length > 5 && (
-                                <p className="eyebrow text-xs text-muted-foreground ps-5 pt-1">
+                                <Eyebrow className="text-xs ps-5 pt-1">
                                   {t("results.moreInPdf", {
                                     count: items.length - 5,
                                   })}
-                                </p>
+                                </Eyebrow>
                               )}
                             </>
                           );
@@ -649,19 +643,17 @@ export const TransparencySection = memo(function TransparencySection() {
                         </span>{" "}
                         {selection
                           ? t("results.infraDescription", {
-                              amount: formatEGP(
-                                HOSTING_RENEWAL[selection.tier],
-                              ),
-                            })
+                            amount: formatEGP(
+                              HOSTING_RENEWAL[selection.tier],
+                            ),
+                          })
                           : null}
                       </p>
                     </div>
                     <div className="p-6 rounded-lg border border-border bg-surface flex gap-5 items-start">
                       <div className="w-1.5 self-stretch rounded-full bg-border-mid shrink-0" />
                       <div>
-                        <p className="eyebrow text-xs text-muted-foreground mb-2">
-                          {t("results.rangeCtaLabel")}
-                        </p>
+                        <Eyebrow className="text-xs mb-2">{t("results.rangeCtaLabel")}</Eyebrow>
                         <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground leading-relaxed font-sans">
                           {t("results.rangeCta")}
                         </p>
@@ -700,9 +692,7 @@ export const TransparencySection = memo(function TransparencySection() {
                         </Link>
                       </MagneticButton>
                     </div>
-                    <p className="eyebrow text-xs text-muted-foreground text-center">
-                      {t("results.disclaimer")}
-                    </p>
+                    <Eyebrow className="text-xs text-center">{t("results.disclaimer")}</Eyebrow>
                   </>
                 )}
               </div>
@@ -723,9 +713,7 @@ export const TransparencySection = memo(function TransparencySection() {
               ) : (
                 <div />
               )}
-              <span className="eyebrow text-xs text-muted-foreground">
-                {step} / 5
-              </span>
+              <Eyebrow className="text-xs">{step} / 5</Eyebrow>
               <button
                 onClick={goNext}
                 disabled={!canProceed || isAnimating}
@@ -767,10 +755,10 @@ export const TransparencySection = memo(function TransparencySection() {
           </div>
           <Accordion type="single" collapsible className="w-full">
             {[
-              { q: t("faq.q1"), a: t("faq.a1") },
-              { q: t("faq.q2"), a: t("faq.a2") },
-              { q: t("faq.q3"), a: t("faq.a3") },
-              { q: t("faq.q4"), a: t("faq.a4") },
+              { q: t("faq.q1"), a: t.rich("faq.a1", bodyMarks) },
+              { q: t("faq.q2"), a: t.rich("faq.a2", bodyMarks) },
+              { q: t("faq.q3"), a: t.rich("faq.a3", bodyMarks) },
+              { q: t("faq.q4"), a: t.rich("faq.a4", bodyMarks) },
             ].map((item, i) => (
               <AccordionItem
                 key={i + 1}

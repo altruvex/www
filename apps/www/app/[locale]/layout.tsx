@@ -1,11 +1,11 @@
 import { LayoutEffects } from "@/components/layout-effects";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/seo/json-ld";
-import { VercelAnalytics } from "@/components/vercel-analytics";
+import { VercelAnalytics } from "@/components/shared/vercel-analytics";
 import { routing } from "@/i18n/routing";
-import "@/lib/env";
+import "@/lib/config/env";
 import { buildGlobalSchemas } from "@/lib/schema";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Geist_Mono, Inter, Outfit, Vazirmatn } from "next/font/google";

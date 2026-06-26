@@ -1,4 +1,4 @@
-import type { CaseStudyRecord } from "@/lib/case-studies";
+import type { CaseStudyRecord } from "@/lib/data/case-studies";
 import {
   PAGE_METADATA,
   SITE_CONFIG,
@@ -11,8 +11,19 @@ import type { Article } from "@/types/mdx";
 
 export type JsonLdSchema = Record<string, unknown>;
 type FaqEntry = { answer: string; question: string };
+type HowToStepEntry = {
+  deliverables?: string;
+  name: string;
+  text: string;
+};
+type PricingOfferEntry = {
+  description: string;
+  features: string[];
+  name: string;
+  price: string;
+};
 
-type BreadcrumbItem = {
+export type BreadcrumbItem = {
   name: string;
   path: string;
 };
@@ -157,8 +168,10 @@ function buildOrganizationSchema(): JsonLdSchema {
     address: {
       "@type": "PostalAddress",
       addressCountry: SITE_CONFIG.location.countryCode,
-      addressLocality: SITE_CONFIG.location.city,
+      addressLocality: SITE_CONFIG.location.locality,
       addressRegion: SITE_CONFIG.location.region,
+      postalCode: SITE_CONFIG.location.postalCode,
+      streetAddress: SITE_CONFIG.location.streetAddress,
     },
     alternateName: SITE_CONFIG.alternateNames,
     areaServed: AREA_SERVED,
@@ -188,10 +201,12 @@ function buildOrganizationSchema(): JsonLdSchema {
       address: {
         "@type": "PostalAddress",
         addressCountry: SITE_CONFIG.location.countryCode,
-        addressLocality: SITE_CONFIG.location.city,
+        addressLocality: SITE_CONFIG.location.locality,
         addressRegion: SITE_CONFIG.location.region,
+        postalCode: SITE_CONFIG.location.postalCode,
+        streetAddress: SITE_CONFIG.location.streetAddress,
       },
-      name: `${SITE_CONFIG.location.city}, ${SITE_CONFIG.location.country}`,
+      name: `${SITE_CONFIG.location.locality}, ${SITE_CONFIG.location.city}, ${SITE_CONFIG.location.country}`,
     },
     identifier: {
       "@type": "PropertyValue",
@@ -220,12 +235,21 @@ function buildLocalBusinessSchema(locale: SupportedLocale): JsonLdSchema {
     address: {
       "@type": "PostalAddress",
       addressCountry: SITE_CONFIG.location.countryCode,
-      addressLocality: SITE_CONFIG.location.city,
+      addressLocality: SITE_CONFIG.location.locality,
       addressRegion: SITE_CONFIG.location.region,
+      postalCode: SITE_CONFIG.location.postalCode,
+      streetAddress: SITE_CONFIG.location.streetAddress,
     },
     alternateName: SITE_CONFIG.alternateNames,
     areaServed: AREA_SERVED,
     description: home.description,
+    email: SITE_CONFIG.email,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: 30.0869,
+      longitude: 31.3301,
+    },
+    hasMap: "https://maps.google.com/?q=Heliopolis,Cairo,Egypt",
     image: getLocalizedUrl(locale, "/opengraph-image"),
     knowsAbout: KNOWS_ABOUT,
     makesOffer: [
@@ -236,6 +260,20 @@ function buildLocalBusinessSchema(locale: SupportedLocale): JsonLdSchema {
       "Website maintenance",
     ],
     name: SITE_CONFIG.name,
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        closes: "18:00",
+        dayOfWeek: [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+        ],
+        opens: "09:00",
+      },
+    ],
     parentOrganization: {
       "@id": ORGANIZATION_ID,
     },
@@ -391,6 +429,112 @@ function buildFaqSchema(entries: FaqEntry[]): JsonLdSchema {
   };
 }
 
+function buildHowToSchema(
+  locale: SupportedLocale,
+  pageKey: Extract<RouteMetaKey, "howWeWork" | "process">,
+  steps: HowToStepEntry[],
+): JsonLdSchema {
+  const entry = PAGE_METADATA[pageKey][locale];
+  const url = getLocalizedUrl(locale, PAGE_METADATA[pageKey].path);
+
+  return {
+    "@context": "https://schema.org",
+    "@id": `${url}#howto`,
+    "@type": "HowTo",
+    description: entry.description,
+    inLanguage: locale,
+    name: entry.title,
+    publisher: {
+      "@id": ORGANIZATION_ID,
+    },
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      itemListElement: step.deliverables
+        ? [
+            {
+              "@type": "HowToDirection",
+              text: step.deliverables,
+            },
+          ]
+        : undefined,
+      name: step.name,
+      position: index + 1,
+      text: step.text,
+    })),
+    url,
+  };
+}
+
+const ARABIC_INDIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+
+function parsePriceRange(value: string): { maxPrice?: number; minPrice?: number } {
+  const asciiDigits = value.replace(
+    /[٠-٩]/g,
+    (digit) => String(ARABIC_INDIC_DIGITS.indexOf(digit)),
+  );
+  const normalized = asciiDigits.replace(/[,٬٫]/g, "");
+  const numbers = normalized.match(/\d+/g)?.map(Number) ?? [];
+
+  if (numbers.length === 0) {
+    return {};
+  }
+  if (numbers.length === 1) {
+    return { minPrice: numbers[0] };
+  }
+  return { maxPrice: Math.max(...numbers), minPrice: Math.min(...numbers) };
+}
+
+function buildPricingOfferCatalogSchema(
+  locale: SupportedLocale,
+  offers: PricingOfferEntry[],
+): JsonLdSchema {
+  const entry = PAGE_METADATA.pricing[locale];
+  const url = getLocalizedUrl(locale, PAGE_METADATA.pricing.path);
+
+  return {
+    "@context": "https://schema.org",
+    "@id": `${url}#offer-catalog`,
+    "@type": "OfferCatalog",
+    inLanguage: locale,
+    itemListElement: offers.map((offer, index) => {
+      const { maxPrice, minPrice } = parsePriceRange(offer.price);
+
+      return {
+        "@type": "Offer",
+        category: "Custom web development",
+        description: offer.description,
+        itemOffered: {
+          "@type": "Service",
+          description: offer.description,
+          name: offer.name,
+          provider: {
+            "@id": ORGANIZATION_ID,
+          },
+          serviceOutput: offer.features,
+        },
+        name: offer.name,
+        position: index + 1,
+        ...(minPrice !== undefined
+          ? {
+              priceSpecification: {
+                "@type": "PriceSpecification",
+                ...(maxPrice !== undefined ? { maxPrice } : {}),
+                minPrice,
+                priceCurrency: "EGP",
+              },
+            }
+          : {}),
+        url,
+      };
+    }),
+    name: entry.title,
+    provider: {
+      "@id": ORGANIZATION_ID,
+    },
+    url,
+  };
+}
+
 function buildCaseStudySchema(
   locale: SupportedLocale,
   caseStudy: CaseStudyRecord,
@@ -431,7 +575,10 @@ function buildArticleSchema(
     "@type": "Article",
     articleSection: "Web Engineering",
     author: {
-      "@id": ORGANIZATION_ID,
+      "@id": FOUNDER_ID,
+      "@type": "Person",
+      name: SITE_CONFIG.founder.name,
+      sameAs: SITE_CONFIG.founder.linkedin,
     },
     creator: {
       "@type": "Person",
@@ -442,6 +589,7 @@ function buildArticleSchema(
     datePublished: article.frontmatter.date,
     description: article.frontmatter.excerpt,
     headline: article.frontmatter.title,
+    image: getLocalizedUrl(locale, "/opengraph-image"),
     inLanguage: locale,
     keywords: article.frontmatter.tags.join(", "),
     mainEntityOfPage: url,
@@ -489,6 +637,56 @@ function buildStaticBreadcrumbs(
   ];
 }
 
+function buildCaseStudyBreadcrumbs(
+  locale: SupportedLocale,
+  caseStudy: CaseStudyRecord,
+): BreadcrumbItem[] {
+  return [
+    { name: PAGE_METADATA.home[locale].breadcrumb, path: "/" },
+    {
+      name: PAGE_METADATA.work[locale].breadcrumb,
+      path: PAGE_METADATA.work.path,
+    },
+    { name: caseStudy.name[locale], path: `/work/${caseStudy.slug}` },
+  ];
+}
+
+function buildArticleBreadcrumbs(
+  locale: SupportedLocale,
+  article: Article,
+): BreadcrumbItem[] {
+  return [
+    { name: PAGE_METADATA.home[locale].breadcrumb, path: "/" },
+    {
+      name: PAGE_METADATA.writing[locale].breadcrumb,
+      path: PAGE_METADATA.writing.path,
+    },
+    { name: article.frontmatter.title, path: `/writing/${article.slug}` },
+  ];
+}
+
+/** Shared by JSON-LD BreadcrumbList builders and the visible <Breadcrumbs> UI component. */
+export function getPageBreadcrumbTrail(
+  locale: string,
+  pageKey: RouteMetaKey,
+): BreadcrumbItem[] {
+  return buildStaticBreadcrumbs(normalizeLocale(locale), pageKey);
+}
+
+export function getCaseStudyBreadcrumbTrail(
+  locale: string,
+  caseStudy: CaseStudyRecord,
+): BreadcrumbItem[] {
+  return buildCaseStudyBreadcrumbs(normalizeLocale(locale), caseStudy);
+}
+
+export function getArticleBreadcrumbTrail(
+  locale: string,
+  article: Article,
+): BreadcrumbItem[] {
+  return buildArticleBreadcrumbs(normalizeLocale(locale), article);
+}
+
 const SCHEMAS = {
   aboutPage: buildAboutPageSchema,
   article: buildArticleSchema,
@@ -496,8 +694,10 @@ const SCHEMAS = {
   caseStudy: buildCaseStudySchema,
   faq: buildFaqSchema,
   founder: buildFounderSchema,
+  howTo: buildHowToSchema,
   localBusiness: buildLocalBusinessSchema,
   organization: buildOrganizationSchema,
+  pricingOfferCatalog: buildPricingOfferCatalogSchema,
   service: buildServiceSchema,
   webPage: buildWebPageSchema,
   website: buildWebsiteSchema,
@@ -566,14 +766,7 @@ export function buildCaseStudyPageSchemas(
   const loc = normalizeLocale(locale);
 
   return [
-    SCHEMAS.breadcrumb(loc, [
-      { name: PAGE_METADATA.home[loc].breadcrumb, path: "/" },
-      {
-        name: PAGE_METADATA.work[loc].breadcrumb,
-        path: PAGE_METADATA.work.path,
-      },
-      { name: caseStudy.name[loc], path: `/work/${caseStudy.slug}` },
-    ]),
+    SCHEMAS.breadcrumb(loc, buildCaseStudyBreadcrumbs(loc, caseStudy)),
     SCHEMAS.caseStudy(loc, caseStudy),
   ];
 }
@@ -585,18 +778,43 @@ export function buildArticlePageSchemas(
   const loc = normalizeLocale(locale);
 
   return [
-    SCHEMAS.breadcrumb(loc, [
-      { name: PAGE_METADATA.home[loc].breadcrumb, path: "/" },
-      {
-        name: PAGE_METADATA.writing[loc].breadcrumb,
-        path: PAGE_METADATA.writing.path,
-      },
-      { name: article.frontmatter.title, path: `/writing/${article.slug}` },
-    ]),
+    SCHEMAS.breadcrumb(loc, buildArticleBreadcrumbs(loc, article)),
     SCHEMAS.article(loc, article),
   ];
 }
 
+function stripFaqMarkup(text: string): string {
+  return text
+    .replace(/<\/(p|li)>/g, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+}
+
 export function buildFaqPageSchemas(entries: FaqEntry[]): JsonLdSchema[] {
-  return entries.length > 0 ? [SCHEMAS.faq(entries)] : [];
+  const plainEntries = entries.map((entry) => ({
+    ...entry,
+    answer: stripFaqMarkup(entry.answer),
+  }));
+
+  return plainEntries.length > 0 ? [SCHEMAS.faq(plainEntries)] : [];
+}
+
+export function buildHowToPageSchemas(
+  locale: string,
+  pageKey: Extract<RouteMetaKey, "howWeWork" | "process">,
+  steps: HowToStepEntry[],
+): JsonLdSchema[] {
+  const loc = normalizeLocale(locale);
+
+  return steps.length > 0 ? [SCHEMAS.howTo(loc, pageKey, steps)] : [];
+}
+
+export function buildPricingOfferSchemas(
+  locale: string,
+  offers: PricingOfferEntry[],
+): JsonLdSchema[] {
+  const loc = normalizeLocale(locale);
+
+  return offers.length > 0 ? [SCHEMAS.pricingOfferCatalog(loc, offers)] : [];
 }

@@ -1,14 +1,15 @@
 "use client";
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
-import { Accent } from "@/components/ui/emphasis";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Accent } from "@/components/ui/emphasis";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TimePicker } from "@/components/ui/time-picker";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,6 +19,7 @@ import {
   Phone,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -129,12 +131,9 @@ export default function SchedulePage() {
                 </button>
               </div>
               <div className="mb-12">
-                <p
-                  ref={eyebrowRef}
-                  className="eyebrow text-muted-foreground/70 mb-4 block"
-                >
+                <Eyebrow ref={eyebrowRef} className="mb-4 block">
                   {t("eyebrow")}
-                </p>
+                </Eyebrow>
                 <h1
                   ref={titleRef}
                   className="font-sans font-normal text-primary leading-[1.03] mb-4"
@@ -149,7 +148,7 @@ export default function SchedulePage() {
                   ref={subtitleRef}
                   className="font-mono text-sm leading-normal tracking-wider text-primary/70"
                 >
-                  {t("subtitle")}
+                  {t.rich("subtitle", bodyMarks)}
                 </p>
               </div>
               <div className="h-px w-full bg-foreground/8 mb-10" />
@@ -166,7 +165,7 @@ export default function SchedulePage() {
                     onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder={t("form.name.placeholder")}
                     className={cn(
-                      "w-full text-primary placeholder:text-muted-foreground/70 bg-transparent",
+                      "w-full text-primary placeholder:text-muted-foreground bg-transparent",
                       errors.name && "border-destructive",
                     )}
                     aria-invalid={!!errors.name}
@@ -189,7 +188,7 @@ export default function SchedulePage() {
                       onChange={(e) => handleInputChange("phone", e.target.value)}
                       placeholder={t("form.phone.placeholder")}
                       className={cn(
-                        "w-full ltr:pl-10 rtl:pr-10 text-primary placeholder:text-muted-foreground/70 bg-transparent",
+                        "w-full ltr:pl-10 rtl:pr-10 text-primary placeholder:text-muted-foreground bg-transparent",
                         errors.phone && "border-destructive",
                       )}
                       aria-invalid={!!errors.phone}
@@ -232,7 +231,7 @@ export default function SchedulePage() {
                       className={cn(errors.time && "border-destructive")}
                     />
                     {errors.time && <FieldError msg={errors.time} />}
-                    <p className="mt-1.5 text-muted-foreground/80 eyebrow">
+                    <p className="mt-1.5 text-muted-foreground eyebrow">
                       {t("form.time.availableHours")}
                     </p>
                   </div>
@@ -247,7 +246,7 @@ export default function SchedulePage() {
                   >
                     {isSubmitting ? t("submit.submitting") : t("submit.button")}
                   </MagneticButton>
-                  <p className="mt-1.5 text-muted-foreground/80 eyebrow text-center">
+                  <p className="mt-1.5 text-muted-foreground eyebrow text-center">
                     {t("form.riskReversal")}
                   </p>
                   {submitSuccess && (

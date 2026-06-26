@@ -1,7 +1,8 @@
 import { prisma } from "@repo/database";
 import { NextRequest, NextResponse } from "next/server";
 import { z, ZodError } from "zod";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/utils/rate-limit";
+import { isTrustedOrigin } from "@/lib/utils/origin-check";
 
 const transparencyLeadSchema = z.object({
   phone: z.string().regex(/^\+?\d{8,15}$/, "Invalid phone number"),
@@ -17,6 +18,13 @@ const transparencyLeadSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
+
     const rl = await enforceRateLimit(request, {
       scope: "public_api",
       route: "transparency",

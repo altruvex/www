@@ -1,15 +1,13 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Accent } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { ArrowLabel } from "@/components/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
-import { Link } from "@/i18n/navigation";
-import { getCommercialCta, type CommercialCtaKey } from "@/lib/commercial";
-import { accentWorldClass } from "@/lib/accent-world";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta, type CommercialCtaKey } from "@/lib/config/commercial";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
+import { SectionHeading } from "./section-heading";
 
 type SectionEndCtaVariant = "contact" | "transparency" | "work";
 
@@ -50,39 +48,37 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
     >
       <Container>
         <div className="max-w-3xl">
-          <Eyebrow ref={eyebrowRef} tone="accent" className="mb-4">
-            {t("eyebrow")}
-          </Eyebrow>
-          <h2 ref={titleRef} className="text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4">
-            {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
-          </h2>
-          <p ref={bodyRef} className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-8 max-w-xl">
-            {t("body")}
-          </p>
-          <div ref={ctaRef} className="flex flex-col sm:flex-row gap-3">
-            <MagneticButton asChild size="lg" variant="accent" className="w-full sm:w-auto">
-              <Link href={primaryCta.href} className="w-full sm:w-auto">
-                <ArrowLabel>
-                  {tCTAs(VARIANT_PRIMARY[variant])}
-                </ArrowLabel>
-              </Link>
-            </MagneticButton>
-            {secondaryCta && secondaryKey ? (
-              <MagneticButton
-                asChild
-                size="lg"
-                variant="secondary"
-                className="w-full sm:w-auto"
-              >
-                <Link href={secondaryCta.href} className="w-full sm:w-auto">
-                  <ArrowLabel>{tCTAs(secondaryKey)}</ArrowLabel>
-                </Link>
-              </MagneticButton>
-            ) : null}
-          </div>
-          <p className="eyebrow text-xs text-muted-foreground/60 mt-6">
-            {t("footnote")}
-          </p>
+          <SectionHeading
+            eyebrowRef={eyebrowRef}
+            titleRef={titleRef}
+            descriptionRef={bodyRef}
+            eyebrow={t("eyebrow")}
+            firstTitle={t("title")}
+            secondTitle={t("titleAccent")}
+            accent="ember"
+            secondTitleBreak={false}
+            description={t("body")}
+            className="block"
+            classes={{
+              titleWrapper: "space-y-0",
+              eyebrow: "text-local-accent mb-4",
+              title: "text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4",
+              description: "max-w-xl mb-8 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground",
+            }}
+          />
+          <CtaButtonGroup
+            ref={ctaRef}
+            primaryVariant="accent"
+            primary={{ href: primaryCta.href, label: tCTAs(VARIANT_PRIMARY[variant]) }}
+            secondary={
+              secondaryCta && secondaryKey
+                ? { href: secondaryCta.href, label: tCTAs(secondaryKey) }
+                : undefined
+            }
+            secondaryArrow
+            className="gap-3"
+          />
+          <Eyebrow className="text-xs mt-6">{t("footnote")}</Eyebrow>
         </div>
       </Container>
     </section>

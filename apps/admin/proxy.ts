@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifySessionToken } from "./lib/admin-auth";
 
 export default async function proxy(request: NextRequest) {
   const session = request.cookies.get("admin-session");
-  const adminSecret = process.env.ADMIN_SECRET;
 
   const publicPaths = ["/login", "/api/auth/login", "/offline"];
   const isPublicPath = publicPaths.some(
@@ -16,25 +16,18 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const adminSecret = process.env.ADMIN_SECRET;
   const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPepper = process.env.ADMIN_SECRET_PEPPER;
 
-  if (!adminSecret || !adminEmail) {
+  if (!adminSecret || !adminEmail || !adminPepper) {
     return NextResponse.json(
       { error: "Admin access not configured" },
       { status: 503 },
     );
   }
 
-  const msgUint8 = new TextEncoder().encode(
-    adminSecret + (process.env.ADMIN_SECRET_PEPPER || "default-pepper"),
-  );
-  const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const expectedToken = hashArray
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (!session || session.value !== expectedToken) {
+  if (!session || !(await verifySessionToken(session.value))) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

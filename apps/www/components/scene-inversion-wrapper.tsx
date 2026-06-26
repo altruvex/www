@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { SectionSkeleton } from "@/components/section-skeleton";
+import { SectionSkeleton } from "@/components/shared/section-skeleton";
 import {
   lazy,
   Suspense,
@@ -27,15 +27,15 @@ const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='h
 
 export function SceneInversionWrapper() {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  
+
   const mounted = useSyncExternalStore(
     () => () => undefined,
     () => true,
     () => false,
   );
-  
+
   const [entered, setEntered] = useState(false);
-  
+
   const isDark = useSyncExternalStore(
     (onStoreChange) => {
       if (typeof document === "undefined") return () => undefined;
@@ -53,9 +53,9 @@ export function SceneInversionWrapper() {
   useEffect(() => {
     if (!wrapperRef.current || !mounted) return;
     let ctx: any;
-    void import("@/lib/gsap").then(({ gsap, ScrollTrigger }) => {
+    void import("@/lib/utils/gsap").then(({ gsap, ScrollTrigger }) => {
       if (!wrapperRef.current) return;
-      
+
       ctx = gsap.context(() => {
         ScrollTrigger.create({
           trigger: wrapperRef.current,

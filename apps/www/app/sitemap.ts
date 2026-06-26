@@ -1,6 +1,6 @@
-import { getAllCaseStudies } from "@/lib/case-studies";
+import { getAllCaseStudies } from "@/lib/data/case-studies";
 import { getLocalizedUrl, SUPPORTED_LOCALES } from "@/lib/metadata";
-import { getAllArticles } from "@/lib/mdx";
+import { getAllArticles } from "@/lib/utils/mdx";
 import { MetadataRoute } from "next";
 
 const STATIC_ROUTES = [

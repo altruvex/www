@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { normalizeNumeralsToEnglish } from "../number";
 
+import { normalizeNumeralsToEnglish } from "../utils/number";
 type ValidationTranslator = (key: string) => string;
 
 export const createTransparencyLeadSchema = (t: ValidationTranslator) =>

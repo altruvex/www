@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   ADMIN_SECRET: z.string().min(1),
-  ADMIN_SECRET_PEPPER: z.string().min(1).optional().default("default-pepper"),
+  ADMIN_SECRET_PEPPER: z.string().min(16),
   DATABASE_URL: z.string().url(),
   ADMIN_EMAIL: z.string().email(),
 });

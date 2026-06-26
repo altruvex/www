@@ -1,10 +1,10 @@
 "use client";
 
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
 import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap, ScrollTrigger } from "@/lib/utils/gsap";
 import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
 import {
@@ -15,7 +15,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { MagneticButton } from "./magnetic-button";
+import { MagneticButton } from "../magnetic-button";
 
 const INK = {
   red: "rgba(210, 68,  68,  0.82)",

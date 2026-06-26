@@ -3,7 +3,7 @@
 import { Container } from "@/components/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { WifiOff, RefreshCw } from "lucide-react";
+import { RefreshCw, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function OfflinePage() {

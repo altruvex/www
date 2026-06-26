@@ -1,18 +1,24 @@
 "use client";
 
+import { AltruvexLogo } from "@/components/shared/altruvex-logo";
+import { Container } from "@/components/shared/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
-import { localizeNumbers } from "@/lib/number";
-import { getWhatsAppUrl } from "@/lib/whatsapp";
+import { motion, useReveal } from "@/lib/motion";
+import { localizeNumbers } from "@/lib/utils/number";
+import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
-import { AltruvexLogo } from "./altruvex-logo";
-import { Container } from "./container";
 
 export const Footer = memo(function Footer() {
   const t = useTranslations("footer");
   const navT = useTranslations("nav");
   const locale = useLocale();
+
+  const beat0Ref = useReveal<HTMLDivElement>(motion.fadeUp());
+  const beat1Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.08 }));
+  const beat2Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.16 }));
 
   const localizedYear = useMemo(() => {
     const year = new Date().getFullYear();
@@ -35,6 +41,7 @@ export const Footer = memo(function Footer() {
   const companyLinks = useMemo(
     () => [
       { href: "/approach", label: t("approach") },
+      { href: "/how-we-work", label: t("how-we-work") },
       { href: "/work", label: t("work") },
       { href: "/process", label: t("process") },
       { href: "/standards", label: t("standards") },
@@ -71,34 +78,30 @@ export const Footer = memo(function Footer() {
   const whatsappUrl = getWhatsAppUrl();
 
   return (
-    <footer
-      data-animate-section
-      className="relative w-full overflow-hidden border-t border-foreground/8"
-    >
-      <Container className="py-10 sm:py-12 md:py-16">
+    <footer className="relative w-full overflow-hidden border-t border-border bg-background">
+      <Container className="py-12 md:py-20">
         <div
-          data-reveal
-          data-beat="0"
-          className="mb-10 flex flex-col gap-8 sm:mb-12 md:mb-16 lg:flex-row lg:items-start lg:justify-between"
+          ref={beat0Ref}
+          className="mb-12 flex flex-col gap-10 lg:mb-20 lg:flex-row lg:items-start lg:justify-between"
         >
-          <div className="max-w-xs shrink-0 lg:max-w-sm">
-            <p className="font-sans font-normal leading-[1.5] text-primary/88 ltr:tracking-tight rtl:tracking-normal text-[clamp(15px,2.5vw,20px)]">
+          <div className="max-w-xs shrink-0 lg:max-w-md">
+            <p className="font-sans font-normal leading-relaxed text-foreground text-[clamp(18px,2vw,24px)] tracking-tight">
               {t("tagline")}
             </p>
           </div>
           <nav aria-label="Footer navigation" className="w-full lg:w-auto">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-8 md:gap-x-12">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 md:gap-x-16">
               {linkColumns.map(({ title, links }) => (
                 <div key={title}>
-                  <h3 className="mb-3 font-mono text-sm leading-normal text-primary/70 ltr:uppercase ltr:tracking-wider rtl:tracking-normal lg:text-base">
+                  <h3 className="eyebrow mb-5 text-foreground">
                     {title}
                   </h3>
-                  <ul className="flex flex-col gap-2.5">
+                  <ul className="flex flex-col gap-3">
                     {links.map(({ href, label }) => (
                       <li key={label}>
                         <Link
                           href={href}
-                          className="text-xs leading-snug text-primary/70 transition-colors duration-200 hover:text-primary hover:underline underline-offset-4 ltr:tracking-wider rtl:tracking-normal lg:text-sm"
+                          className="text-sm font-medium leading-snug text-muted-foreground transition-colors duration-200 hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm inline-block"
                         >
                           {label}
                         </Link>
@@ -110,58 +113,52 @@ export const Footer = memo(function Footer() {
             </div>
           </nav>
         </div>
-
-        <div data-reveal data-beat="1">
-          <div className="relative mb-6 overflow-hidden md:mb-8">
-            <h2 className="select-none font-sans font-semibold leading-[0.84] text-primary text-[clamp(56px,17vw,380px)]">
-              <span className="block overflow-hidden">
-                <span data-heading-line data-motion-accent className="block">
-                  Altruvex
-                </span>
-              </span>
-            </h2>
+        <div ref={beat1Ref}>
+          <div className="relative mb-6 overflow-hidden md:mb-10" aria-hidden="true">
+            <div className="select-none font-sans font-bold leading-[0.8] tracking-tighter text-foreground text-[clamp(60px,18vw,400px)] pointer-events-none">
+              Altruvex
+            </div>
           </div>
-          <div className="mb-10 max-w-xl space-y-8 md:mb-14">
-            <p className="text-[13px] leading-relaxed text-primary/75 sm:text-[14px] md:text-[15px]">
+
+          <div className="mb-10 max-w-xl space-y-8 md:mb-16">
+            <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
               {t("description")}
             </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+            <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-medium">
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="rounded-sm text-primary/70 underline decoration-border underline-offset-4 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
-                {t("emailLabel")}: <bdi>{SITE_CONFIG.email}</bdi>
+                {t("emailLabel")}: <bdi className="text-foreground">{SITE_CONFIG.email}</bdi>
               </a>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-sm text-primary/70 underline decoration-border underline-offset-4 transition-colors duration-200 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
-                {t("whatsappLabel")}: <bdi>{SITE_CONFIG.phone}</bdi>
+                {t("whatsappLabel")}: <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
               </a>
             </div>
           </div>
         </div>
-
         <div
-          data-reveal
-          data-beat="2"
-          className="flex flex-col gap-3 border-t border-foreground/8 pt-5 sm:flex-row sm:items-center sm:justify-between sm:pt-6 md:pt-8"
+          ref={beat2Ref}
+          className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8"
         >
-          <div className="order-2 flex items-center gap-2 sm:order-1">
+          <div className="order-2 flex items-center gap-3 sm:order-1 opacity-70 transition-opacity hover:opacity-100">
             <AltruvexLogo size="sm" variant="icon" />
-            <span className="font-mono text-[13px] leading-normal text-primary/70 ltr:uppercase ltr:tracking-widest rtl:tracking-normal">
+            <Eyebrow className="text-[11px]">
               {t("copyright", { year: localizedYear })}
-            </span>
+            </Eyebrow>
           </div>
           <nav aria-label="Legal links" className="order-1 sm:order-2">
-            <ul className="flex flex-wrap gap-4 sm:gap-8">
+            <ul className="flex flex-wrap gap-6">
               {legalLinks.map(({ href, label }) => (
                 <li key={label}>
                   <Link
                     href={href}
-                    className="font-mono text-sm leading-normal text-primary/70 transition-colors duration-200 hover:text-primary hover:underline underline-offset-4 ltr:uppercase ltr:tracking-widest rtl:tracking-normal"
+                    className="eyebrow text-[11px] text-muted-foreground transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
                   >
                     {label}
                   </Link>

@@ -1,18 +1,17 @@
 "use client";
-import { Container } from "@/components/container";
-import { ArrowIcon } from "@/components/directional-link";
-import { Accent } from "@/components/ui/emphasis";
-import { MagneticButton } from "@/components/magnetic-button";
-import { ServiceHero } from "@/components/sections/service-hero";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { PipelineSection } from "@/components/sections/pipeline-section";
-import { TechDNASection } from "@/components/tech-dna-section";
-import { Link } from "@/i18n/navigation";
-import { accentWorldClass } from "@/lib/accent-world";
-import { getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { ServiceHero } from "@/components/sections/service-hero";
+import { TechDNASection } from "@/components/sections/tech-dna-section";
+import { Container } from "@/components/shared/container";
+import { Accent } from "@/components/ui/emphasis";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { useSectionElement } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { monoCaps } from "@/lib/utils/mono-caps";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function DevelopmentPage() {
   return (
@@ -37,7 +36,7 @@ function HeroSection() {
       subtitle={t("subtitle")}
       title={t("title")}
       titleItalic={t("titleItalic")}
-      description={t("description")}
+      description={t.rich("description", bodyMarks)}
       primaryCta={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
       secondaryCta={{ href: realBuildCta.href, label: tCTAs("realBuild") }}
     />
@@ -58,7 +57,7 @@ export function CtaSection() {
         <div
           ref={cardRef}
           // FIX: transition-all duration-300 with no hover/focus/state
-          // variant on this element — nothing here was ever animating on
+          // variant on this element - nothing here was ever animating on
           // interaction. The only realistic trigger is a light/dark theme
           // swap re-coloring the CSS variables, in which case you only
           // need transition-colors (bg/border/shadow-color), not "all"
@@ -74,10 +73,10 @@ export function CtaSection() {
             <span
               className={cn(
                 monoCaps,
-                "text-muted-foreground/60 mx-auto text-sm tracking-widest font-semibold"
+                "text-muted-foreground mx-auto text-sm tracking-widest font-semibold"
               )}
             >
-              new-project — bash
+              new-project - bash
             </span>
             <div className="w-[42px]" />
           </div>
@@ -88,7 +87,7 @@ export function CtaSection() {
                 <span className="text-local-accent opacity-80">$</span>
                 <span className="text-foreground font-medium">npx start-project</span>
               </div>
-              <div className="pl-6 space-y-2 text-muted-foreground/70">
+              <div className="pl-6 space-y-2 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <span className="text-success">✓</span> {t("cta.terminal.step1")}
                 </div>
@@ -111,7 +110,7 @@ export function CtaSection() {
                   FIX: animate-[pulse_1s_step-end_infinite] reuses
                   Tailwind's built-in "pulse" keyframe, which animates
                   opacity 1 -> 0.5 -> 1 (an ease-in-out fade), not 1 -> 0.
-                  Pairing it with step-end timing doesn't fix that — the
+                  Pairing it with step-end timing doesn't fix that - the
                   cursor was visibly dimming, never actually
                   disappearing, which reads as "broken" rather than as a
                   blinking terminal caret. Defining a real two-state
@@ -144,36 +143,15 @@ export function CtaSection() {
                   {t("cta.title")} <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
                 </h2>
                 <p className="text-[15px] sm:text-base text-muted-foreground leading-relaxed max-w-[40ch] font-sans">
-                  {t("cta.description")}
+                  {t.rich("cta.description", bodyMarks)}
                 </p>
               </div>
-              <div className="flex flex-col gap-3">
-                <MagneticButton asChild
-                  size="lg"
-                  variant="accent"
-                  className="group w-full"
-                >
-                  <Link
-                    href={projectRangeCta.href}
-                    className="flex w-full h-full items-center justify-center gap-2"
-                  >
-                    <span>{tCTAs("projectRange")}</span>
-                    <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </MagneticButton>
-                <MagneticButton asChild
-                  size="lg"
-                  variant="secondary"
-                  className="w-full"
-                >
-                  <Link
-                    href="/services"
-                    className="flex w-full h-full items-center justify-center text-muted-foreground hover:text-foreground transition-colors duration-200"
-                  >
-                    {t("cta.back")}
-                  </Link>
-                </MagneticButton>
-              </div>
+              <CtaButtonGroup
+                primaryVariant="accent"
+                primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
+                secondary={{ href: "/services", label: t("cta.back") }}
+                className="flex-col gap-3 sm:flex-col sm:items-stretch"
+              />
             </div>
           </div>
         </div>

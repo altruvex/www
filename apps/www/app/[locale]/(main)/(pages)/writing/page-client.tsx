@@ -1,10 +1,9 @@
 "use client";
+import { Container } from "@/components/shared/container";
 import { PageHero } from "@/components/sections/page-hero";
-import { useSectionCardGrid } from "@/lib/motion";
-
-import { Container } from "@/components/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Link } from "@/i18n/navigation";
+import { useSectionCardGrid } from "@/lib/motion";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
 
@@ -85,7 +84,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
                     {article.frontmatter.excerpt}
                   </p>
                 </div>
-                <div className="flex items-center gap-3 font-mono text-sm leading-normal tracking-wider uppercase text-muted-foreground/70 shrink-0 pt-1">
+                <div className="flex items-center gap-3 font-mono text-sm leading-normal tracking-wider uppercase text-muted-foreground shrink-0 pt-1">
                   <span>
                     {new Date(article.frontmatter.date).toLocaleDateString(
                       locale,

@@ -1,18 +1,20 @@
 "use client"
 
-import { ConsultingBriefSection } from "@/components/consulting-brief-section";
-import { Container } from "@/components/container";
-import { ArrowIcon } from "@/components/directional-link";
-import { Accent, Highlight } from "@/components/ui/emphasis";
+import { ConsultingBriefSection } from "@/components/sections/consulting-brief-section";
+import { Container } from "@/components/shared/container";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { ServiceHero } from "@/components/sections/service-hero";
+import { Accent, Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
-import { accentWorldClass } from "@/lib/accent-world";
-import { getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function ConsultingPage() {
   return (
@@ -38,7 +40,7 @@ function HeroSection() {
       subtitle={t("subtitle")}
       title={t("title")}
       titleItalic={t("titleItalic")}
-      description={t("description")}
+      description={t.rich("description", bodyMarks)}
       titleSize="large"
       showMobileSubtitle={false}
       primaryCta={{ href: auditCta.href, label: tCTAs("technicalAudit") }}
@@ -73,7 +75,7 @@ function AuditOfferSection() {
             <div>
               <p
                 ref={eyebrowRef}
-                className={cn(monoCaps, "text-s-muted mb-4 block")}
+                className={cn(monoCaps, "text-s-mid mb-4 block")}
               >
                 {t("eyebrow")}
               </p>
@@ -91,7 +93,7 @@ function AuditOfferSection() {
                 ref={bodyRef}
                 className="mt-6 max-w-[48ch] text-base leading-relaxed text-s-mid"
               >
-                {t("description")}
+                {t.rich("description", bodyMarks)}
               </p>
               <div className="mt-8">
                 <MagneticButton
@@ -106,14 +108,14 @@ function AuditOfferSection() {
                       {/* FIX: was a hand-rolled bidi SVG duplicated across
                           4 service pages (this file, development,
                           ecommerce, interface-design) with no shared
-                          source of truth — one drifting fix and the rest
+                          source of truth - one drifting fix and the rest
                           go stale. ArrowIcon already exists in the
                           codebase and its own name ("directional-link")
                           signals it owns RTL-mirroring logic. Verify the
                           AR route renders the arrow flipped correctly
                           after this swap; if ArrowIcon does NOT yet
                           mirror for RTL, that logic belongs centralized
-                          inside it — not re-typed at every call site. */}
+                          inside it - not re-typed at every call site. */}
                       <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                   </Link>
@@ -123,7 +125,7 @@ function AuditOfferSection() {
             <div className="border border-s-border bg-s-surface p-5 md:p-6">
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
                 <div className="border-b border-s-border pb-4">
-                  <p className={cn(monoCaps, "text-s-muted mb-2")}>
+                  <p className={cn(monoCaps, "text-s-mid mb-2")}>
                     {t("priceLabel")}
                   </p>
                   <p
@@ -137,7 +139,7 @@ function AuditOfferSection() {
                   </p>
                 </div>
                 <div className="border-b border-s-border pb-4">
-                  <p className={cn(monoCaps, "text-s-muted mb-2")}>
+                  <p className={cn(monoCaps, "text-s-mid mb-2")}>
                     {t("durationLabel")}
                   </p>
                   <p className="text-base leading-relaxed text-s-high">
@@ -146,12 +148,12 @@ function AuditOfferSection() {
                 </div>
               </div>
               <div className="mt-5">
-                <p className={cn(monoCaps, "text-s-muted mb-4")}>
+                <p className={cn(monoCaps, "text-s-mid mb-4")}>
                   {t("includedLabel")}
                 </p>
                 <ul className="space-y-3">
                   {included.map((item, i) => (
-                    // FIX: keyed on the translated string itself — if two
+                    // FIX: keyed on the translated string itself - if two
                     // included-list lines are ever identical (or a locale
                     // produces a collision), React silently drops one.
                     // Index is safe here: this list is static/non-reorderable.
@@ -204,29 +206,15 @@ function CtaSection() {
           </div>
           <div ref={subRef} className="flex flex-col gap-6">
             <p className="text-base text-primary/60 leading-relaxed">
-              {t("cta.description")}
+              {t.rich("cta.description", bodyMarks)}
             </p>
-            <div ref={ctaRef} className="flex flex-col gap-3">
-              <MagneticButton asChild
-                size="lg"
-                variant="accent"
-                className="group w-full justify-center"
-              >
-                <Link href="/schedule">
-                  <span className="flex items-center gap-2">
-                    {t("cta.button")}
-                    <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </span>
-                </Link>
-              </MagneticButton>
-              <MagneticButton asChild
-                size="lg"
-                variant="secondary"
-                className="w-full justify-center"
-              >
-                <Link href="/services">{t("cta.back")}</Link>
-              </MagneticButton>
-            </div>
+            <CtaButtonGroup
+              ref={ctaRef}
+              primaryVariant="accent"
+              primary={{ href: "/schedule", label: t("cta.button") }}
+              secondary={{ href: "/services", label: t("cta.back") }}
+              className="flex-col gap-3 sm:flex-col sm:items-stretch"
+            />
           </div>
         </div>
       </Container>

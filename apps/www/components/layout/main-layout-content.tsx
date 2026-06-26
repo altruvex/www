@@ -1,10 +1,10 @@
 "use client";
 
-import { Nav } from "@/components/nav";
+import { Nav } from "@/components/layout/nav";
 import { useLoading } from "@/components/providers/loading-provider";
 import { layoutChildren } from "@/types";
 import { useEffect } from "react";
-import { Footer } from "./footer";
+import { Footer } from "../footer";
 
 function AnimationController() {
   const { isInitialLoadComplete } = useLoading();
@@ -15,7 +15,7 @@ function AnimationController() {
     let cancelled = false;
 
     const raf = requestAnimationFrame(async () => {
-      const { ScrollTrigger } = await import("@/lib/gsap");
+      const { ScrollTrigger } = await import("@/lib/utils/gsap");
 
       if (!cancelled) {
         setTimeout(() => {

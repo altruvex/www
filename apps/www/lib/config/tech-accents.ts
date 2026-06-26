@@ -1,4 +1,4 @@
-/** HSL channel values for tech-dna nodes — paired with --tech-accent-* in globals.css */
+/** HSL channel values for tech-dna nodes - paired with --tech-accent-* in globals.css */
 export type TechAccentId =
   | "nextjs"
   | "react"

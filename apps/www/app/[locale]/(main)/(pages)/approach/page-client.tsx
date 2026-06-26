@@ -1,11 +1,12 @@
 "use client";
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { PageHero } from "@/components/sections/page-hero";
-import { Container } from "@/components/container";
-import { ArrowLabel } from "@/components/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
-import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/commercial";
-import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
+import { SectionHeading } from "@/components/sections/section-heading";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { bodyMarks, renderBodyText } from "@/components/ui/rich-text";
+import { splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -28,6 +29,7 @@ function OpeningSection() {
 
   return (
     <PageHero
+      eyebrow={t("eyebrow")}
       title={t("title")}
       description={t("description")}
     />
@@ -39,6 +41,7 @@ function ProblemSection() {
   const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-contrast-item]",
   });
+  const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
 
   const contrasts = [
@@ -53,14 +56,17 @@ function ProblemSection() {
       className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="mb-16">
-          <h2
-            ref={titleRef}
-            className="mb-3 font-sans font-normal text-primary"
-          >
-            {t("label.common")} vs {t("label.altruvex")}
-          </h2>
-        </div>
+        <SectionHeading
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={`${t("label.common")} vs`}
+          secondTitle={t("label.altruvex")}
+          accent="forest"
+          secondTitleBreak={false}
+          className="mb-16 block"
+          classes={{ title: "text-primary" }}
+        />
         <div className="space-y-12">
           {contrasts.map((contrast, i) => (
             <div
@@ -97,7 +103,9 @@ function DecisionsSection() {
   const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-decision-item]",
   });
+  const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
+  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
   const decisions = [
     { title: t("data.title"), desc: t("data.description") },
@@ -112,11 +120,16 @@ function DecisionsSection() {
       className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div ref={titleRef} className="mb-16">
-          <h2 className="mb-3 font-sans font-normal text-primary">
-            {t("title")}
-          </h2>
-        </div>
+        <SectionHeading
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={firstTitle}
+          secondTitle={secondTitle}
+          accent="forest"
+          className="mb-16 block"
+          classes={{ title: "text-primary" }}
+        />
         <div className="grid gap-12">
           {decisions.map((decision, i) => (
             <div
@@ -140,29 +153,33 @@ function DecisionsSection() {
 
 function ConstraintsSection() {
   const t = useTranslations("approach.constraints");
+  const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
+  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
   return (
     <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        <div className="mb-12">
-          <h2
-            ref={titleRef}
-            className="mb-3 font-sans font-normal text-primary"
-          >
-            {t("title")}
-          </h2>
-        </div>
+        <SectionHeading
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={firstTitle}
+          secondTitle={secondTitle}
+          accent="forest"
+          className="mb-12 block"
+          classes={{ title: "text-primary" }}
+        />
         <div ref={descRef} className="max-w-3xl space-y-6">
-          {t("paragraphs")
+          {t.raw("paragraphs")
             .split("\n\n")
             .map((paragraph: string, i: number) => (
               <p
                 key={i}
                 className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/85"
               >
-                {paragraph}
+                {renderBodyText(paragraph)}
               </p>
             ))}
         </div>
@@ -174,30 +191,34 @@ function ConstraintsSection() {
 function BilingualSection() {
   const t = useTranslations("approach.multilingual");
   const [isRTL, setIsRTL] = useState(false);
+  const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
   const demoRef = useSectionElement();
+  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
   return (
     <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        <div className="mb-12">
-          <h2
-            ref={titleRef}
-            className="mb-3 font-sans font-normal text-primary"
-          >
-            {t("title")}
-          </h2>
-        </div>
+        <SectionHeading
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={firstTitle}
+          secondTitle={secondTitle}
+          accent="forest"
+          className="mb-12 block"
+          classes={{ title: "text-primary" }}
+        />
         <div ref={descRef} className="mb-16 max-w-3xl space-y-6">
-          {t("paragraphs")
+          {t.raw("paragraphs")
             .split("\n\n")
             .map((paragraph: string, i: number) => (
               <p
                 key={i}
                 className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/85"
               >
-                {paragraph}
+                {renderBodyText(paragraph)}
               </p>
             ))}
         </div>
@@ -243,7 +264,9 @@ function BoundariesSection() {
   const sectionRef = useSectionCardGrid<HTMLElement>({
     selector: "[data-boundary-item]",
   });
+  const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
+  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
 
   const boundaries = ["1", "2", "3", "4", "5"];
 
@@ -254,12 +277,16 @@ function BoundariesSection() {
     >
       <Container>
         <div className="mb-12">
-          <h2
-            ref={titleRef}
-            className="mb-6 font-sans font-normal text-primary"
-          >
-            {t("title")}
-          </h2>
+          <SectionHeading
+            eyebrowRef={eyebrowRef}
+            titleRef={titleRef}
+            eyebrow={t("eyebrow")}
+            firstTitle={firstTitle}
+            secondTitle={secondTitle}
+            accent="ember"
+            className="mb-6 block"
+            classes={{ title: "text-primary" }}
+          />
           <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/75">
             {t("intro")}
           </p>
@@ -296,30 +323,28 @@ function ClosingSection() {
     >
       <Container>
         <div className="max-w-3xl">
-          <div className="mb-12">
-            <h2
-              ref={titleRef}
-              className="mb-3 font-sans font-normal text-primary"
-            >
-              {t("title")}
-            </h2>
-          </div>
-          <div ref={descRef} className="mb-12 space-y-6">
-            <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/85">
-              {t("description")}
-            </p>
-          </div>
-          <div ref={ctaRef} className="flex flex-col sm:flex-row flex-wrap gap-3">
-            <MagneticButton asChild size="lg" variant="accent">
-              <Link href={contactCta.href}>
-                <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
-            <MagneticButton asChild size="lg" variant="secondary">
-              <Link href={scopeCta.href}>
-                <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
+          <SectionHeading
+            titleRef={titleRef}
+            descriptionRef={descRef}
+            firstTitle={t("title")}
+            secondTitle={t("titleItalic")}
+            accent="ember"
+            description={t.rich("description", bodyMarks)}
+            className="mb-12 block"
+            classes={{
+              titleWrapper: "space-y-0",
+              title: "mb-3 text-primary",
+              description: "max-w-none mb-0 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/85",
+            }}
+          />
+          <div ref={ctaRef} className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3">
+            <CtaButtonGroup
+              primaryVariant="accent"
+              primary={{ href: contactCta.href, label: tCTAs("technicalCall") }}
+              secondary={{ href: scopeCta.href, label: tCTAs("projectRange") }}
+              secondaryArrow
+              className="gap-3"
+            />
             <a
               href="mailto:hello@altruvex.com"
               className="inline-flex items-center self-center gap-2 px-2 font-mono text-sm leading-normal tracking-wider text-muted-foreground transition-colors duration-300 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"

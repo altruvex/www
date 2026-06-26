@@ -37,8 +37,8 @@ const TESTIMONIALS: Testimonial[] = [
     },
     company: "Art Lighting",
     quote: {
-      en: "Product pages stay fast on mobile data and inventory updates without breaking the catalog experience—that was the bar for going live.",
-      ar: "صفحات المنتجات تبقى سريعة على بيانات الجوال وتحديثات المخزون دون أن تكسر تجربة الكتالوج—كان هذا شرط الإطلاق.",
+      en: "Product pages stay fast on mobile data and inventory updates without breaking the catalog experience-that was the bar for going live.",
+      ar: "صفحات المنتجات تبقى سريعة على بيانات الجوال وتحديثات المخزون دون أن تكسر تجربة الكتالوج-كان هذا شرط الإطلاق.",
     },
     caseStudySlug: "art-lighting-store",
   },

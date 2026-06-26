@@ -1,13 +1,12 @@
-import { Container } from "@/components/container";
-import { MagneticButton } from "@/components/magnetic-button";
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
-import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/commercial";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Accent, Highlight } from "@/components/ui/emphasis";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { getTranslations } from "next-intl/server";
-import { ArrowIcon } from "../directional-link";
 import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
 import { HeroScrollHint } from "./hero-scroll-hint";
-import { Accent, Highlight } from "@/components/ui/emphasis";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -46,9 +45,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             className="mb-6 flex items-center gap-2 md:hidden"
           >
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
-            <span className="eyebrow text-xs text-muted-foreground/70">
-              {t("hero.availability")}
-            </span>
+            <Eyebrow className="text-xs">{t("hero.availability")}</Eyebrow>
           </HeroReveal>
           <HeroReveal
             delay={0.1}
@@ -56,13 +53,9 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
           >
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
-              <span className="eyebrow text-xs text-muted-foreground">
-                {t("hero.availability")}
-              </span>
+              <Eyebrow className="text-xs">{t("hero.availability")}</Eyebrow>
             </div>
-            <span className="eyebrow text-xs text-muted-foreground/70">
-              {t("hero.badge")}
-            </span>
+            <Eyebrow className="text-xs">{t("hero.badge")}</Eyebrow>
           </HeroReveal>
           <HeroHeadline className="text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
             <span className="block">
@@ -87,35 +80,12 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               </p>
             </div>
           </HeroReveal>
-          <HeroReveal
-            delay={0.65}
-            className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center"
-          >
-            <MagneticButton
-              size="lg"
-              className="w-full sm:w-auto min-w-[180px]"
-            >
-              <Link
-                href={primaryCta.href}
-                className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full"
-              >
-                <span>{tCTAs("projectRange")}</span>
-                <ArrowIcon />
-              </Link>
-            </MagneticButton>
-            <MagneticButton
-              size="lg"
-              variant="secondary"
-              className="w-full sm:w-auto min-w-[180px]"
-            >
-              <Link
-                href={secondaryCta.href}
-                className="group inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full"
-              >
-                <span>{tCTAs("realBuild")}</span>
-                <ArrowIcon />
-              </Link>
-            </MagneticButton>
+          <HeroReveal delay={0.65}>
+            <CtaButtonGroup
+              primary={{ href: primaryCta.href, label: tCTAs("projectRange") }}
+              secondary={{ href: secondaryCta.href, label: tCTAs("realBuild") }}
+              secondaryArrow
+            />
           </HeroReveal>
           <HeroBatch
             delay={0.8}
@@ -139,16 +109,12 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
                 <span className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-light tabular-nums text-foreground block">
                   {s.value}
                 </span>
-                <span className="eyebrow text-xs mt-2 block text-muted-foreground">
-                  {s.label}
-                </span>
+                <Eyebrow className="text-xs mt-2 block">{s.label}</Eyebrow>
               </div>
             ))}
           </HeroBatch>
           <HeroReveal delay={1.0}>
-            <p className="eyebrow text-xs mt-6 max-w-2xl text-muted-foreground">
-              {t("hero.productionCallout")}
-            </p>
+            <Eyebrow className="text-xs mt-6 max-w-2xl">{t("hero.productionCallout")}</Eyebrow>
           </HeroReveal>
         </div>
       </Container>

@@ -1,16 +1,17 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { useSectionTitle, useSectionEyebrow, useSectionDescription } from "@/lib/motion";
+import { Container } from "@/components/shared/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Highlight } from "@/components/ui/emphasis";
-import { cn } from "@/lib/utils";
-import React, { ReactNode } from "react";
+import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { cn } from "@/lib/utils/utils";
+import { ReactNode } from "react";
 
 interface PageHeroProps {
   eyebrow?: string;
   title: string;
   titleItalic?: string;
-  description: string;
+  description: ReactNode;
   children?: ReactNode;
   className?: string;
   alignCenter?: boolean;
@@ -48,9 +49,7 @@ export function PageHero({
               {showStatusIndicator && (
                 <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse shrink-0" />
               )}
-              <p className="eyebrow text-muted-foreground/70">
-                {eyebrow}
-              </p>
+              <Eyebrow>{eyebrow}</Eyebrow>
             </div>
           )}
           <h1

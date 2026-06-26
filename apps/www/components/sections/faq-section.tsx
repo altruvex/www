@@ -1,15 +1,15 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Container } from "@/components/shared/container";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 

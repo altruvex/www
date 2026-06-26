@@ -1,8 +1,8 @@
 "use client";
 
 import { useLoading } from "@/components/providers/loading-provider";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { RefObject, useRef } from "react";
 import { MOTION, MotionEase, MotionTrigger, getConstrainedDevice, resolveEase, resolveTrigger } from "../config";
@@ -78,10 +78,10 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
         () => {
           // ── Reduced-motion tier ──────────────────────────────────────────
           // Was: gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
-          //      — every card in the grid appears with zero signal at once.
+          //      - every card in the grid appears with zero signal at once.
           // Now: short opacity-only settle, tiny stagger (20ms) kept ONLY
           // because it costs no vestibular risk (no movement) and preserves
-          // "these belong together, arriving as a group" — the one piece of
+          // "these belong together, arriving as a group" - the one piece of
           // grid semantics worth keeping. No transform/scale.
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
             gsap.fromTo(

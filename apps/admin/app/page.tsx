@@ -1,9 +1,8 @@
-import Link from "next/link";
-import { Calendar, Mail, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { monoCaps } from "@/lib/mono-caps";
 import { Container } from "@/components/container";
-import { LoadingIcon } from "@/components/loading-icon";
+import { monoCaps } from "@/lib/mono-caps";
+import { cn } from "@/lib/utils";
+import { Calendar, Mail, Users } from "lucide-react";
+import Link from "next/link";
 
 const cards = [
   {

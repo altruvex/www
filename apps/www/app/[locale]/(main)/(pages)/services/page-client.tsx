@@ -1,16 +1,17 @@
 "use client";
-import { Container } from "@/components/container";
-import { ArrowIcon } from "@/components/directional-link";
-import { Highlight } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { SectionWatermark } from "@/components/section-watermark";
 import { CtaSection } from "@/components/sections/cta-section";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
-import { HOMEPAGE_OFFERS, getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { HOMEPAGE_OFFERS, getCommercialCta } from "@/lib/config/commercial";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { memo, useMemo } from "react";
 
 const designTokens = {
@@ -83,7 +84,7 @@ export default memo(function ServicesPage() {
               ref={descRef}
               className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] max-w-2xl text-muted-foreground"
             >
-              {t("description")}
+              {t.rich("description", bodyMarks)}
             </p>
           </div>
         </Container>

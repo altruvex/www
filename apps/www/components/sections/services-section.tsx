@@ -1,10 +1,11 @@
 "use client";
-import { monoCaps } from "@/lib/mono-caps";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils";
+import { cn, splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { Fragment, memo, useEffect, useRef, useState } from "react";
-import { Container } from "../container";
+import { Container } from "@/components/shared/container";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { SectionHeading } from "./section-heading";
 
 interface ServiceData {
@@ -74,13 +75,13 @@ const ServiceCard = memo(function ServiceCard({
           isLarge && "mb-8",
         )}
       >
-        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-muted transition-[border-color,color,background-color] duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
+        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-mid transition-[border-color,color,background-color] duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
           {service.index}
         </div>
         <span
           className={cn(
             monoCaps,
-            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-muted transition-[color,border-color] duration-200 group-hover:border-current group-hover:text-s-mid",
+            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-mid transition-[color,border-color] duration-200 group-hover:border-current group-hover:text-s-high",
           )}
         >
           {t(`${service.key}.tag`)}
@@ -101,18 +102,18 @@ const ServiceCard = memo(function ServiceCard({
               : "mb-3 text-[clamp(18px,2vw,24px)] leading-snug",
           )}
         >
-          <span className="mb-1.5 block font-mono text-[13px] uppercase tracking-[0.18em] text-s-muted rtl:tracking-normal">
+          <span className="mb-1.5 block font-mono text-[13px] uppercase tracking-[0.18em] text-s-mid rtl:tracking-normal">
             {tCommon("step")} {service.index}
           </span>
           {t(`${service.key}.title`)}
         </h3>
         <p
           className={cn(
-            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-low transition-colors duration-200 group-hover:text-s-mid",
+            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-mid transition-colors duration-200 group-hover:text-s-high",
             isLarge ? "max-w-[460px]" : "max-w-full",
           )}
         >
-          {t(`${service.key}.description`)}
+          {t.rich(`${service.key}.description`, bodyMarks)}
         </p>
       </div>
     </article>
@@ -155,7 +156,7 @@ const ProcessRail = memo(function ProcessRail() {
             >
               <div className="flex items-center gap-1.5">
                 <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-[background-color,transform] duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
-                <span className="font-mono text-xs uppercase tracking-[0.18em] text-s-muted">
+                <span className="font-mono text-xs uppercase tracking-[0.18em] text-s-mid">
                   {service.index}
                 </span>
               </div>
@@ -234,7 +235,7 @@ export const ServicesSection = memo(function ServicesSection() {
           <span
             className={cn(
               monoCaps,
-              "whitespace-nowrap text-sm text-s-muted",
+              "whitespace-nowrap text-sm text-s-mid",
             )}
           >
             {t("footerText")}

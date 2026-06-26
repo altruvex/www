@@ -20,24 +20,20 @@
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
-
   --color-brand: hsl(var(--brand));
   --color-brand-hover: hsl(var(--brand-hover));
   --color-brand-text: hsl(var(--brand-text));
   --color-brand-soft: var(--brand-soft);
   --color-brand-foreground: hsl(var(--brand-foreground));
-
   --color-destructive: hsl(var(--destructive));
   --color-success: hsl(var(--success));
   --color-warning: hsl(var(--warning));
   --color-error: hsl(var(--error));
-
   --color-border: hsl(var(--border));
   --color-border-mid: hsl(var(--border-mid));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   --color-focus-ring: hsl(var(--focus-ring));
-
   --color-surface: hsl(var(--surface));
   --color-s-high: var(--s-high);
   --color-s-mid: var(--s-mid);
@@ -474,6 +470,12 @@ header[data-scene="inverted"] {
 }
 
 @layer base {
+  html[dir="rtl"] body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: normal !important;
+  }
   * {
     @apply border-border outline-ring/50;
     scrollbar-width: thin;
@@ -505,6 +507,7 @@ header[data-scene="inverted"] {
     background-image: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   .dark body {
     background-image: radial-gradient(
@@ -521,7 +524,7 @@ header[data-scene="inverted"] {
     transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   section {
-  } /* Removed contain: layout */
+  }
   [data-watermark]::after {
     content: attr(data-watermark);
   }
@@ -632,6 +635,12 @@ html.lenis body {
 }
 
 @layer utilities {
+  .paused {
+    animation-play-state: paused;
+  }
+  .running {
+    animation-play-state: running;
+  }
   .liquid-glass,
   .liquid-glass-flat {
     background: linear-gradient(
@@ -659,7 +668,7 @@ html.lenis body {
   .dark .liquid-glass-flat {
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.20) 0%,
+      rgba(255, 255, 255, 0.2) 0%,
       rgba(255, 255, 255, 0.04) 100%
     );
     border-color: rgba(255, 255, 255, 0.2);
@@ -686,8 +695,8 @@ html.lenis body {
   .liquid-glass-panel {
     background: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.80) 0%,
-      hsl(var(--card) / 0.60) 100%
+      hsl(var(--card) / 0.8) 0%,
+      hsl(var(--card) / 0.6) 100%
     );
     -webkit-backdrop-filter: blur(10px) saturate(130%);
     backdrop-filter: blur(10px) saturate(130%);
@@ -700,7 +709,7 @@ html.lenis body {
   .dark .liquid-glass-panel {
     background: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.70) 0%,
+      hsl(var(--card) / 0.7) 0%,
       hsl(var(--card) / 0.4) 100%
     );
     border-color: hsl(0 0% 100% / 0.12);

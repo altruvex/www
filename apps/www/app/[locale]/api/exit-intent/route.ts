@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/utils/rate-limit";
+import { isTrustedOrigin } from "@/lib/utils/origin-check";
 
 const exitIntentSchema = z.object({
   phone: z.string(),
@@ -10,6 +11,13 @@ const exitIntentSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
+
     const rl = await enforceRateLimit(request, {
       scope: "public_api",
       route: "exit_intent",
@@ -47,7 +55,9 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (error: unknown) {
-    console.error("Exit intent error:", error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Exit intent error:", error);
+    }
     return NextResponse.json(
       { success: false, message: "Failed to capture email" },
       { status: 500 },

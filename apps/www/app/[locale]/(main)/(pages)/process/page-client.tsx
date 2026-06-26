@@ -1,13 +1,15 @@
 "use client";
 
-import { PageHero } from "@/components/sections/page-hero";
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { PageHero } from "@/components/sections/page-hero";
+import { SectionHeading } from "@/components/sections/section-heading";
 import { Link } from "@/i18n/navigation";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/number";
+import { localizeNumbers } from "@/lib/utils/number";
 import { useLocale, useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function ProcessPage() {
   return (
@@ -69,9 +71,7 @@ function PhasesList() {
                 >
                   {localizeNumbers(phase.number, locale)}
                 </div>
-                <p className="eyebrow text-muted-foreground/70">
-                  {localizeNumbers(t(`${phase.key}.timeline`), locale)}
-                </p>
+                <Eyebrow>{localizeNumbers(t(`${phase.key}.timeline`), locale)}</Eyebrow>
               </div>
               <div>
                 <h3
@@ -89,17 +89,13 @@ function PhasesList() {
               </div>
               <div className="space-y-5">
                 <div>
-                  <p className="eyebrow text-muted-foreground/70 mb-2">
-                    {t("deliverables")}
-                  </p>
+                  <Eyebrow className="mb-2">{t("deliverables")}</Eyebrow>
                   <p className="text-sm text-primary/60 leading-relaxed">
                     {t(`${phase.key}.deliverables`)}
                   </p>
                 </div>
                 <div>
-                  <p className="eyebrow text-muted-foreground/70 mb-2">
-                    {t("yourRole")}
-                  </p>
+                  <Eyebrow className="mb-2">{t("yourRole")}</Eyebrow>
                   <p className="text-sm text-primary/60 leading-relaxed">
                     {t(`${phase.key}.yourRole`)}
                   </p>
@@ -125,23 +121,21 @@ function ClosingSection() {
     >
       <Container>
         <div className="max-w-3xl">
-          <div ref={titleRef} className="mb-12">
-            <h2
-              className="font-sans font-normal text-primary leading-[1.05]"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("flexibility.title")} <Highlight>{t("flexibility.titleItalic")}</Highlight>
-            </h2>
-          </div>
-          <p
-            ref={descRef}
-            className="text-base text-primary/60 leading-relaxed mb-12"
-          >
-            {t("flexibility.description")}
-          </p>
+          <SectionHeading
+            titleRef={titleRef}
+            descriptionRef={descRef}
+            firstTitle={t("flexibility.title")}
+            secondTitle={t("flexibility.titleItalic")}
+            accent="ember"
+            secondTitleBreak={false}
+            description={t.rich("flexibility.description", bodyMarks)}
+            className="mb-12 block"
+            classes={{
+              titleWrapper: "space-y-0",
+              title: "leading-[1.05] text-[clamp(28px,4.5vw,52px)] tracking-[-0.02em] text-primary",
+              description: "max-w-none mb-12 text-base leading-relaxed text-primary/60",
+            }}
+          />
           <div ref={ctaRef}>
             <Link href="/schedule">
               <MagneticButton variant="accent" size="lg" className="group">

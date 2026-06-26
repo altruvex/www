@@ -1,8 +1,10 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Accent, Highlight } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Accent, Highlight } from "@/components/ui/emphasis";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
@@ -60,12 +62,9 @@ export default function HowWeWorkPage() {
       <main className="pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <section className="accent-world-green py-16 md:py-24">
-            <p
-              ref={heroEyebrowRef}
-              className="eyebrow text-muted-foreground/70 mb-6 block"
-            >
+            <Eyebrow ref={heroEyebrowRef} className="mb-6 block">
               {tNav("how-we-work")}
-            </p>
+            </Eyebrow>
             <h1
               ref={heroTitleRef}
               className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
@@ -91,12 +90,9 @@ export default function HowWeWorkPage() {
           </section>
           <div className="h-px w-full bg-foreground/8" />
           <section className="accent-world-green py-16 md:py-20">
-            <p
-              ref={archEyebrowRef}
-              className="eyebrow text-muted-foreground/70 mb-4 block"
-            >
+            <Eyebrow ref={archEyebrowRef} className="mb-4 block">
               {t("architecture.eyebrow")}
-            </p>
+            </Eyebrow>
             <h2
               ref={archTitleRef}
               className="font-sans font-normal text-primary leading-[1.05] mb-10"
@@ -112,10 +108,10 @@ export default function HowWeWorkPage() {
               className="grid md:grid-cols-2 gap-8 max-w-3xl"
             >
               <p className="arch-p text-base text-primary/60 leading-relaxed">
-                {t("architecture.p1")}
+                {t.rich("architecture.p1", bodyMarks)}
               </p>
               <p className="arch-p text-base text-primary/60 leading-relaxed">
-                {t("architecture.p2")}
+                {t.rich("architecture.p2", bodyMarks)}
               </p>
             </div>
           </section>
@@ -123,12 +119,9 @@ export default function HowWeWorkPage() {
           <section className="accent-world-green py-16 md:py-20">
             <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
               <div>
-                <p
-                  ref={processEyebrowRef}
-                  className="eyebrow text-muted-foreground/70 mb-4 block"
-                >
+                <Eyebrow ref={processEyebrowRef} className="mb-4 block">
                   {t("phasedProcess.eyebrow")}
-                </p>
+                </Eyebrow>
                 <h2
                   ref={processTitleRef}
                   className="font-sans font-normal text-primary leading-[1.05] mb-4"
@@ -146,7 +139,7 @@ export default function HowWeWorkPage() {
                   {t("phasedProcess.description")}
                 </p>
               </div>
-              <p className="font-mono text-sm leading-normal tracking-wider text-muted-foreground/70 uppercase shrink-0">
+              <p className="font-mono text-sm leading-normal tracking-wider text-muted-foreground uppercase shrink-0">
                 {tPhases("deliverables")} · {tPhases("timeline")}
               </p>
             </div>
@@ -166,9 +159,9 @@ export default function HowWeWorkPage() {
                     >
                       {String(i + 1).padStart(2, "0")}
                     </span>
-                    <span className="eyebrow text-muted-foreground/70 pt-1">
+                    <Eyebrow className="pt-1">
                       {tPhases(`${key}.timeline`)}
-                    </span>
+                    </Eyebrow>
                   </div>
                   <h3
                     className="font-sans font-medium text-primary mb-2 group-hover:text-primary/80 transition-colors duration-300"
@@ -189,17 +182,14 @@ export default function HowWeWorkPage() {
               ))}
             </div>
             <p className="mt-8 text-base text-primary/60 leading-relaxed max-w-[52ch]">
-              {t("phasedProcess.footer")}
+              {t.rich("phasedProcess.footer", bodyMarks)}
             </p>
           </section>
           <div className="h-px w-full bg-foreground/8" />
           <section className="accent-world-green py-16 md:py-20">
-            <p
-              ref={standardsEyebrowRef}
-              className="eyebrow text-muted-foreground/70 mb-4 block"
-            >
+            <Eyebrow ref={standardsEyebrowRef} className="mb-4 block">
               {t("standards.eyebrow")}
-            </p>
+            </Eyebrow>
             <h2
               ref={standardsTitleRef}
               className="font-sans font-normal text-primary leading-[1.05] mb-8"
@@ -218,7 +208,7 @@ export default function HowWeWorkPage() {
                 {tStandards("description")}
               </p>
               <p className="standards-p text-base text-primary/60 leading-relaxed">
-                {t("standards.description")}
+                {t.rich("standards.description", bodyMarks)}
               </p>
             </div>
             <div
@@ -229,12 +219,12 @@ export default function HowWeWorkPage() {
                 {
                   key: "performance",
                   label: t("standards.performance.label"),
-                  desc: t("standards.performance.description"),
+                  desc: t.rich("standards.performance.description", bodyMarks),
                 },
                 {
                   key: "accessibility",
                   label: t("standards.accessibility.label"),
-                  desc: t("standards.accessibility.description"),
+                  desc: t.rich("standards.accessibility.description", bodyMarks),
                 },
                 {
                   key: "codeQuality",
@@ -246,9 +236,7 @@ export default function HowWeWorkPage() {
                   key={key}
                   className="standard-card border border-foreground/8 rounded-lg bg-foreground/2 p-5"
                 >
-                  <p className="eyebrow text-muted-foreground/70 mb-3">
-                    {label}
-                  </p>
+                  <Eyebrow className="mb-3">{label}</Eyebrow>
                   <p className="text-base text-primary/60 leading-relaxed">
                     {desc}
                   </p>
@@ -285,12 +273,9 @@ export default function HowWeWorkPage() {
           >
             <div className="grid md:grid-cols-[1fr_360px] gap-12 items-start">
               <div>
-                <p
-                  ref={ctaEyebrowRef}
-                  className="eyebrow text-local-accent mb-4 block"
-                >
+                <Eyebrow ref={ctaEyebrowRef} tone="accent" className="mb-4 block">
                   {t("cta.eyebrow")}
-                </p>
+                </Eyebrow>
                 <h2
                   ref={ctaTitleRef}
                   className="font-sans font-normal text-primary leading-[1.05] mb-4"

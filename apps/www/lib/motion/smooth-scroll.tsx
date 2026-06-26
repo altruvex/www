@@ -10,7 +10,7 @@ export function SmoothScrollProvider({
 }) {
   useEffect(() => {
     let cancelled = false;
-    let gsapRef: typeof import("@/lib/gsap") | null = null;
+    let gsapRef: typeof import("@/lib/utils/gsap") | null = null;
     let lenisRef: Lenis | null = null;
     let tickFn: ((time: number) => void) | null = null;
     let resizeObserver: ResizeObserver | null = null;
@@ -19,7 +19,7 @@ export function SmoothScrollProvider({
       try {
         const [{ gsap, ScrollTrigger }, { default: Lenis }, { MOTION }] =
           await Promise.all([
-            import("@/lib/gsap"),
+            import("@/lib/utils/gsap"),
             import("lenis"),
             import("@/lib/motion/config"),
           ]);

@@ -171,10 +171,10 @@ const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterCon
 });
 
 // ── Micro-interaction presets ──────────────────────────────────────────────
-// Same factory pattern as everything above. Keep new presets additive — do
+// Same factory pattern as everything above. Keep new presets additive - do
 // not invent a fourth interaction primitive without a real, named UI need.
 
-/** Primary CTAs — confident pull, generous travel. */
+/** Primary CTAs - confident pull, generous travel. */
 const magneticCTA = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
   strength: 0.4,
   max: 28,
@@ -182,7 +182,7 @@ const magneticCTA = (overrides: Partial<MagneticConfig> = {}): MagneticConfig =>
   ...overrides,
 });
 
-/** Icon buttons / nav glyphs — tighter radius, snappier follow. */
+/** Icon buttons / nav glyphs - tighter radius, snappier follow. */
 const magneticIcon = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
   strength: 0.5,
   max: 16,
@@ -190,7 +190,7 @@ const magneticIcon = (overrides: Partial<MagneticConfig> = {}): MagneticConfig =
   ...overrides,
 });
 
-/** Feature / pricing cards — subtle depth, slight lift toward the viewer. */
+/** Feature / pricing cards - subtle depth, slight lift toward the viewer. */
 const tiltCard = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   max: 5,
   lift: 8,
@@ -199,7 +199,7 @@ const tiltCard = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   ...overrides,
 });
 
-/** Small tiles / logos — barely-there tilt, no lift. */
+/** Small tiles / logos - barely-there tilt, no lift. */
 const tiltSubtle = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   max: 3,
   lift: 0,
@@ -216,7 +216,7 @@ const pressDefault = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   ...overrides,
 });
 
-/** Smaller hit targets (icon buttons) — press reads at a smaller scale delta too. */
+/** Smaller hit targets (icon buttons) - press reads at a smaller scale delta too. */
 const pressIcon = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   scale: 0.92,
   inDuration: 0.1,

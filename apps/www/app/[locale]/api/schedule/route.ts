@@ -1,3 +1,5 @@
+import { isTrustedOrigin } from "@/lib/utils/origin-check";
+import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import {
   createMeetingRequestSchema,
   createStandaloneMeetingSchema,
@@ -6,10 +8,16 @@ import { prisma } from "@repo/database";
 import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { enforceRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
+
     const rl = await enforceRateLimit(request, {
       scope: "public_api",
       route: "schedule",

@@ -1,11 +1,11 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Container } from "@/components/shared/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
-import { monoCaps } from "@/lib/mono-caps";
-import { cn } from "@/lib/utils";
+import { monoCaps } from "@/lib/utils/mono-caps";
+import { cn } from "@/lib/utils/utils";
 import { useEffect, useState } from "react";
 
 interface ErrorPageProps {
@@ -115,11 +115,11 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             </p>
             {error.digest && (
               <div className="mb-12 w-full max-w-md text-left rtl:text-right">
-                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/3">
+                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/2">
                   <summary
                     className={cn(
                       monoCaps,
-                      "cursor-pointer text-muted-foreground/70 group-hover:text-primary/70 transition-colors select-none",
+                      "cursor-pointer text-muted-foreground group-hover:text-primary/70 transition-colors select-none",
                     )}
                   >
                     Error Digest

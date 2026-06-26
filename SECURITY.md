@@ -58,4 +58,4 @@ We treat all reports seriously. If the issue is confirmed, we will:
 
 ## Our Commitment
 
-Altruvex is built on the principle of full ownership and technical accountability — for our clients and for our own systems. We take security disclosures seriously and will respond with the same standard we apply to all production work.
+Altruvex is built on the principle of full ownership and technical accountability - for our clients and for our own systems. We take security disclosures seriously and will respond with the same standard we apply to all production work.

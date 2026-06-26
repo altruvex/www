@@ -1,8 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { HeroReveal } from "./hero-motion-wrappers";
-import { cn } from "@/lib/utils";
 
 interface HeroScrollHintProps {
   label?: string;

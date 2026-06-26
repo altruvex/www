@@ -1,4 +1,4 @@
-import { buildContentSecurityPolicy } from "@/lib/csp";
+import { buildContentSecurityPolicy } from "@/lib/config/csp";
 import { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import withPWAInit from "@ducanh2912/next-pwa";
@@ -66,7 +66,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@repo/database"],
   compress: true,
-  allowedDevOrigins: ['192.168.1.6'],
   poweredByHeader: false,
   env: {
     NEXT_PUBLIC_APP_VERSION: pkg.version,
@@ -95,7 +94,7 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    // Avoid custom Cache-Control on Next internals in dev — Next warns and it can break HMR.
+    // Avoid custom Cache-Control on Next internals in dev - Next warns and it can break HMR.
     const prodOnlyNextAssetCache =
       process.env.NODE_ENV === "production"
         ? [

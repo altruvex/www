@@ -1,16 +1,16 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { ThemeChanger } from "@/components/theme-changer";
+import { Container } from "@/components/shared/container";
+import { ThemeChanger } from "@/components/shared/theme-changer";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { Link, usePathname } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { AltruvexLogo } from "./altruvex-logo";
-import { LanguageSwitcherBase } from "./base/language-switcher-base";
+import { AltruvexLogo } from "../shared/altruvex-logo";
+import { LanguageSwitcherBase } from "../base/language-switcher-base";
 
 const NAV_ITEMS = [
   { key: "work", href: "/work" },

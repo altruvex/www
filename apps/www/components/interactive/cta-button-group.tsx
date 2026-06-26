@@ -1,7 +1,7 @@
-import { ArrowLabel } from "@/components/directional-link";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Link } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import type { Ref } from "react";
 
 type CtaAction = {
@@ -12,6 +12,10 @@ type CtaAction = {
 type CtaButtonGroupProps = {
   primary: CtaAction;
   secondary?: CtaAction;
+  /** Variant for the primary button. Defaults to "primary"; use "accent" for threshold/conversion moments. */
+  primaryVariant?: "primary" | "accent";
+  /** Wraps the secondary label in an arrow too, matching sections where both CTAs carry a directional cue. */
+  secondaryArrow?: boolean;
   className?: string;
   ref?: Ref<HTMLDivElement>;
 };
@@ -19,6 +23,8 @@ type CtaButtonGroupProps = {
 export function CtaButtonGroup({
   primary,
   secondary,
+  primaryVariant = "primary",
+  secondaryArrow = false,
   className,
   ref,
 }: CtaButtonGroupProps) {
@@ -33,7 +39,7 @@ export function CtaButtonGroup({
       <MagneticButton
         asChild
         size="lg"
-        variant="primary"
+        variant={primaryVariant}
         className="group w-full sm:w-auto"
       >
         <Link href={primary.href}>
@@ -45,9 +51,15 @@ export function CtaButtonGroup({
           asChild
           size="lg"
           variant="secondary"
-          className="w-full sm:w-auto text-center"
+          className={cn("w-full sm:w-auto text-center", secondaryArrow && "group")}
         >
-          <Link href={secondary.href}>{secondary.label}</Link>
+          <Link href={secondary.href}>
+            {secondaryArrow ? (
+              <ArrowLabel className="justify-center">{secondary.label}</ArrowLabel>
+            ) : (
+              secondary.label
+            )}
+          </Link>
         </MagneticButton>
       ) : null}
     </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -25,9 +26,7 @@ export default function NotFoundPage() {
       </div>
       <Container>
         <main className="relative z-10 max-w-2xl">
-          <p className="eyebrow text-muted-foreground/60 mb-6 block">
-            {t("eyebrow")}
-          </p>
+          <Eyebrow className="mb-6 block">{t("eyebrow")}</Eyebrow>
           <h1
             className="mb-8 font-sans font-normal text-primary leading-[1.05]"
             style={{

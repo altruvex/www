@@ -1,18 +1,17 @@
 "use client";
 
-import { memo, useRef } from "react";
-import Image from "next/image";
-import { gsap } from "@/lib/gsap";
-import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { getCaseStudyBySlug } from "@/lib/case-studies";
+import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { gsap } from "@/lib/utils/gsap";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { memo, useRef } from "react";
 
 interface WorkItemProps {
   slug: string;
   index: number;
 }
 
-// Utility to extract the domain cleanly (e.g., "example.com")
 const getDomainName = (url: string) => {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -90,9 +89,8 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="work-card group relative border-b border-foreground/8 py-10 transition-colors hover:bg-foreground/[0.01]"
+      className="work-card group relative border-b border-foreground/8 py-10 transition-colors hover:bg-foreground/1"
     >
-      {/* 1. Desktop Floating Image Showcase (Z-50) */}
       {screenshot && (
         <div
           ref={imageRef}
@@ -101,7 +99,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
         >
           <Image
             src={`${screenshot}-light.png`}
-            alt={`${name} — ${client}`}
+            alt={`${name} - ${client}`}
             fill
             loading="lazy"
             sizes="(max-width: 768px) 100vw, 28rem"
@@ -109,7 +107,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
           />
           <Image
             src={`${screenshot}-dark.png`}
-            alt={`${name} — ${client}`}
+            alt={`${name} - ${client}`}
             fill
             loading="lazy"
             sizes="(max-width: 768px) 100vw, 28rem"
@@ -117,25 +115,15 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
           />
         </div>
       )}
-
-      {/* 2. Hover Overlay Background (Z-0) */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 bg-foreground/2 transition-transform duration-300 ease-out group-hover:scale-x-100 rtl:origin-right"
       />
-
-      {/* ==============================================================
-          3. FULL-CARD CLICKABLE OVERLAY (Z-10)
-          This invisible link safely covers the exact dimensions of the card
-          ============================================================== */}
       <Link
         href={`/work/${slug}`}
         className="absolute inset-0 z-10 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={`${tW("viewCaseStudy")} - ${name}`}
       />
-
-      {/* 4. CONTENT WRAPPER (Z-20) 
-          Uses pointer-events-none so clicking ANY text falls through to the absolute overlay link above */}
       <div className="pointer-events-none relative z-20 px-4">
         <div className="mb-4 flex items-start justify-between gap-6">
           <div className="flex items-baseline gap-6 md:gap-10">
@@ -156,7 +144,6 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   letterSpacing: "-0.015em",
                 }}
               >
-                {/* Text is no longer a nested link, avoiding hydration errors and screen reader duplication */}
                 {name}
               </h2>
               <p className="font-mono text-sm leading-normal tracking-wider text-foreground/35 uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
@@ -165,11 +152,11 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden font-mono text-sm leading-normal tracking-wider text-muted-foreground/70 md:block">
+            <span className="hidden font-mono text-sm leading-normal tracking-wider text-muted-foreground md:block">
               {year}
             </span>
             <svg
-              className="h-4 w-4 text-muted-foreground/70 transition-[transform,color] duration-300 group-hover:text-primary/60 ltr:group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
+              className="h-4 w-4 text-muted-foreground transition-[transform,color] duration-300 group-hover:text-primary/60 ltr:group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -179,18 +166,15 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
             </svg>
           </div>
         </div>
-
         <div className="ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
           <p className="mb-4 max-w-[52ch] text-base leading-relaxed text-primary/60">
             {summary}
           </p>
-
-          {/* Mobile Image */}
           {screenshot && (
             <div className="pointer-events-none relative mb-5 aspect-16/10 w-full max-w-md overflow-hidden rounded-md border border-foreground/8 bg-foreground/2 md:hidden">
               <Image
                 src={`${screenshot}-light.png`}
-                alt={`${name} — ${client}`}
+                alt={`${name} - ${client}`}
                 fill
                 loading="lazy"
                 sizes="(max-width: 768px) 100vw, 28rem"
@@ -198,7 +182,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               />
               <Image
                 src={`${screenshot}-dark.png`}
-                alt={`${name} — ${client}`}
+                alt={`${name} - ${client}`}
                 fill
                 loading="lazy"
                 sizes="(max-width: 768px) 100vw, 28rem"
@@ -206,7 +190,6 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               />
             </div>
           )}
-
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-wrap gap-2">
               {metrics.slice(0, 2).map((metric) => (
@@ -223,9 +206,6 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                 </div>
               ))}
             </div>
-
-            {/* 5. EXTERNAL LINK OVERLAY (Z-30) 
-                Restores pointer-events-auto so the user can interact directly with this link. */}
             <div className="pointer-events-auto relative z-30 flex items-center gap-6">
               {externalUrl && (
                 <a

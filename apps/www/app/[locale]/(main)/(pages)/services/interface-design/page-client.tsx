@@ -1,17 +1,18 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { ArrowIcon } from "@/components/directional-link";
-import { Accent, Highlight } from "@/components/ui/emphasis";
-import { MagneticButton } from "@/components/magnetic-button";
+import type { ReactNode } from "react";
+
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { ServiceHero } from "@/components/sections/service-hero";
-import { Link } from "@/i18n/navigation";
-import { accentWorldClass } from "@/lib/accent-world";
-import { getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { Accent, Highlight } from "@/components/ui/emphasis";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import { MOTION, useSectionCardGrid, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function InterfacePage() {
   return (
@@ -35,7 +36,7 @@ function HeroSection() {
       subtitle={t("subtitle")}
       title={t("title")}
       titleItalic={t("titleItalic")}
-      description={t("description")}
+      description={t.rich("description", bodyMarks)}
       primaryCta={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
       secondaryCta={{ href: realBuildCta.href, label: tCTAs("realBuild") }}
     />
@@ -76,7 +77,7 @@ export function ShowcaseSection() {
         <div className="mb-16">
           <p
             ref={eyebrowRef}
-            className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}
+            className={cn(monoCaps, "mb-4 block text-muted-foreground")}
           >
             {t("showcaseEyebrow")}
           </p>
@@ -116,10 +117,10 @@ export function ShowcaseSection() {
                 className="absolute inset-0 bg-foreground/2 pointer-events-none origin-left rtl:origin-right scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"
               />
               <div className="relative z-10 flex items-start justify-between">
-                <span className={cn(monoCaps, "text-muted-foreground/70")}>
+                <span className={cn(monoCaps, "text-muted-foreground")}>
                   {item.number}
                 </span>
-                <span className="font-mono text-sm text-muted-foreground/70 opacity-0 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100">
+                <span className="font-mono text-sm text-muted-foreground opacity-0 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100">
                   ↗
                 </span>
               </div>
@@ -149,7 +150,7 @@ export function ShowcaseSection() {
 const FeatureCard = ({
   feature,
 }: {
-  feature: { num: string; title: string; description: string; featured: boolean };
+  feature: { num: string; title: string; description: ReactNode; featured: boolean };
   index: number;
 }) => {
   const isHero = feature.featured;
@@ -209,7 +210,7 @@ function FeaturesSection() {
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
     title: t(`features.${num}.title`),
-    description: t(`features.${num}.description`),
+    description: t.rich(`features.${num}.description`, bodyMarks),
     featured: i === 0,
   }));
 
@@ -222,7 +223,7 @@ function FeaturesSection() {
         <div className="mb-20 md:mb-28">
           <div className="flex items-center gap-3 mb-8">
             <span className="w-8 h-px bg-foreground/20" />
-            <p className={cn(monoCaps, "mb-4 block text-muted-foreground/70")}>
+            <p className={cn(monoCaps, "mb-4 block text-muted-foreground")}>
               {tCommon("whatWeOfferEyebrow")}
             </p>
           </div>
@@ -283,29 +284,22 @@ function CtaSection() {
               {t("cta.title")} <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
             </h2>
             <p className="text-base text-primary/60 leading-relaxed max-w-[44ch]">
-              {t("cta.description")}
+              {t.rich("cta.description", bodyMarks)}
             </p>
           </div>
-          <div className="flex flex-col gap-3">
-            <MagneticButton asChild size="lg" variant="accent" className="group">
-              <Link href={projectRangeCta.href}>
-                <span className="flex items-center gap-2">
-                  {tCTAs("projectRange")}
-                  <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </span>
-              </Link>
-            </MagneticButton>
-            <MagneticButton asChild size="lg" variant="secondary">
-              <Link href="/services">{t("cta.back")}</Link>
-            </MagneticButton>
-          </div>
+          <CtaButtonGroup
+            primaryVariant="accent"
+            primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
+            secondary={{ href: "/services", label: t("cta.back") }}
+            className="flex-col gap-3 sm:flex-col sm:items-stretch"
+          />
         </div>
         <div ref={cardsRef} className="grid md:grid-cols-3 gap-4">
           <div
             data-token-card
             className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-4"
           >
-            <span className={cn(monoCaps, "block text-muted-foreground/70")}>
+            <span className={cn(monoCaps, "block text-muted-foreground")}>
               {t("cta.tokens.colors")}
             </span>
             <div className="flex gap-2">
@@ -327,7 +321,7 @@ function CtaSection() {
             data-token-card
             className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-3"
           >
-            <span className={cn(monoCaps, "block text-muted-foreground/70")}>
+            <span className={cn(monoCaps, "block text-muted-foreground")}>
               {t("cta.tokens.typography")}
             </span>
             <div className="space-y-1">
@@ -352,7 +346,7 @@ function CtaSection() {
             data-token-card
             className="border border-foreground/8 rounded-lg bg-foreground/2 p-6 space-y-4"
           >
-            <span className={cn(monoCaps, "block text-muted-foreground/70")}>
+            <span className={cn(monoCaps, "block text-muted-foreground")}>
               {t("cta.tokens.layout")}
             </span>
             <div className="grid grid-cols-4 gap-1.5">

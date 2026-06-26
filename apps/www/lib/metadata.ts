@@ -63,7 +63,10 @@ export const SITE_CONFIG = {
     city: "Cairo",
     country: "Egypt",
     countryCode: "EG",
+    locality: "Heliopolis",
+    postalCode: "4461232",
     region: "Cairo Governorate",
+    streetAddress: "4 El-Shaheed Ahmed Fathi Kamel, Almazah, Heliopolis",
   },
   locales: SUPPORTED_LOCALES,
   name: "Altruvex",
@@ -535,7 +538,7 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "التجارة الإلكترونية",
       description:
-        "ابنِ متجراً إلكترونياً مخصصاً على Next.js مع كتالوج عالي الدقة ومخزون متزامن وسداد ثنائي اللغة—مصمم للتجزئة الفاخرة في مصر والمنطقة.",
+        "ابنِ متجراً إلكترونياً مخصصاً على Next.js مع كتالوج عالي الدقة ومخزون متزامن وسداد ثنائي اللغة-مصمم للتجزئة الفاخرة في مصر والمنطقة.",
       keywords: [
         "تطوير متجر إلكتروني مخصص",
         "وكالة تجارة إلكترونية القاهرة",
@@ -857,6 +860,14 @@ export function generateRouteMetadata(
       languages: {
         ...buildAlternates(canonicalPath),
         "x-default": getLocalizedUrl(SITE_CONFIG.defaultLocale, canonicalPath),
+      },
+      types: {
+        "application/rss+xml": [
+          {
+            title: "Altruvex Writing RSS Feed",
+            url: `${SITE_CONFIG.url}/feed.xml`,
+          },
+        ],
       },
     },
     authors: [{ name: SITE_CONFIG.founder.name }],

@@ -1,15 +1,13 @@
 "use client";
-import { Container } from "@/components/container";
-import { Accent } from "@/components/ui/emphasis";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { ArrowLabel } from "@/components/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
-import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/commercial";
-import { accentWorldClass } from "@/lib/accent-world";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
+import { SectionHeading } from "./section-heading";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { Container } from "../shared/container";
 
 export function CtaSection() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -32,39 +30,34 @@ export function CtaSection() {
       <Container>
         <div className="h-px w-full bg-local-accent/40 mb-16" />
         <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
-          <div className="min-w-0">
-            <Eyebrow ref={eyebrowRef} className="text-muted-foreground/70 mb-6 block">
-              {t("eyebrow")}
-            </Eyebrow>
-            <h2
-              ref={titleRef}
-              className="text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] max-w-4xl font-normal text-primary"
-            >
-              {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
-            </h2>
-          </div>
+          <SectionHeading
+            eyebrowRef={eyebrowRef}
+            titleRef={titleRef}
+            eyebrow={t("eyebrow")}
+            firstTitle={t("title")}
+            secondTitle={t("titleAccent")}
+            accent="ember"
+            secondTitleBreak={false}
+            className="block min-w-0"
+            classes={{
+              titleWrapper: "space-y-0",
+              eyebrow: "text-muted-foreground mb-6 block",
+              title: "text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08] tracking-[-0.02em] max-w-4xl font-normal text-primary",
+            }}
+          />
           <div ref={contentRef} className="flex min-w-0 flex-col gap-6">
-            <p className="eyebrow text-xs text-local-accent">
-              {t("nextStepEyebrow")}
-            </p>
+            <Eyebrow tone="accent" className="text-xs">{t("nextStepEyebrow")}</Eyebrow>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
               {t("body")}
             </p>
-            <div className="flex flex-col gap-3">
-              <MagneticButton asChild size="lg" variant="accent">
-                <Link href={callCta.href}>
-                  <ArrowLabel>{tCTAs("technicalCall")}</ArrowLabel>
-                </Link>
-              </MagneticButton>
-              <MagneticButton asChild size="lg" variant="secondary">
-                <Link href={scopeCta.href}>
-                  <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
-                </Link>
-              </MagneticButton>
-            </div>
-            <p className="eyebrow text-xs text-muted-foreground/55 text-center">
-              {t("footnote")}
-            </p>
+            <CtaButtonGroup
+              primaryVariant="accent"
+              primary={{ href: callCta.href, label: tCTAs("technicalCall") }}
+              secondary={{ href: scopeCta.href, label: tCTAs("projectRange") }}
+              secondaryArrow
+              className="flex-col gap-3 sm:flex-col sm:items-stretch"
+            />
+            <Eyebrow className="text-xs text-center">{t("footnote")}</Eyebrow>
           </div>
         </div>
       </Container>

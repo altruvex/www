@@ -1,6 +1,6 @@
 "use client";
 
-import { useMediaQuery } from "@/lib/use-media-query";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useEffect, useRef } from "react";
 
 const CURSOR_SIZE = { outer: 32, inner: 8 };

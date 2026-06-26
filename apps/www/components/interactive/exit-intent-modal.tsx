@@ -1,9 +1,10 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent";
 import { trackEvent } from "@/lib/analytics";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -119,12 +120,12 @@ export const ExitIntentModal = () => {
         </button>
         {isSuccess ? (
           <div className="p-8 text-center">
-            <p
+            <Eyebrow
               id="exit-intent-success-title"
-              className="eyebrow text-foreground/40 mb-4"
+              className="text-foreground/40 mb-4"
             >
               {t("successTitle")}
-            </p>
+            </Eyebrow>
             <p className="text-foreground/70 text-sm leading-relaxed">
               {t("successDescription")}
             </p>
@@ -132,9 +133,7 @@ export const ExitIntentModal = () => {
         ) : (
           <div className="p-8">
             <div className="mb-8">
-              <p className="eyebrow text-foreground/40 mb-3">
-                {t("subtitle")}
-              </p>
+              <Eyebrow className="text-foreground/40 mb-3">{t("subtitle")}</Eyebrow>
               <h2
                 id="exit-intent-heading"
                 className="text-2xl font-medium text-foreground tracking-tight mb-3"

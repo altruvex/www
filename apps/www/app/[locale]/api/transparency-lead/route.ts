@@ -3,13 +3,21 @@ import { prisma } from "@repo/database";
 import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/utils/rate-limit";
+import { isTrustedOrigin } from "@/lib/utils/origin-check";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ locale: string }> },
 ) {
   try {
+    if (!isTrustedOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
+
     const { locale } = await params;
     const t = await getTranslations({ locale, namespace: "validations" });
     const transparencyLeadSchema = createTransparencyLeadSchema(t);

@@ -1,12 +1,14 @@
 "use client";
-import { Container } from "@/components/container";
-import { ExternalDirectionalLink } from "@/components/directional-link";
-import { FOUNDER_LINK } from "@/lib/commercial";
+import { Container } from "@/components/shared/container";
+import { ExternalDirectionalLink } from "@/components/shared/directional-link";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { FOUNDER_LINK } from "@/lib/config/commercial";
 import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { getAllTestimonials } from "@/lib/testimonials";
-import { SectionHeading } from "./section-heading";
+import { getAllTestimonials } from "@/lib/data/testimonials";
 import { useLocale, useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { memo } from "react";
+import { SectionHeading } from "./section-heading";
 
 export const TrustSection = memo(function TrustSection() {
   const t = useTranslations("commercial.trust");
@@ -37,7 +39,7 @@ export const TrustSection = memo(function TrustSection() {
           firstTitle={firstTitle}
           secondTitle={secondTitle}
           accent="iris"
-          description={t("body")}
+          description={t.rich("body", bodyMarks)}
           className="mb-16"
         />
         <div className="h-px bg-border mb-5" />
@@ -78,17 +80,13 @@ export const TrustSection = memo(function TrustSection() {
         ) : null}
         <div ref={founderRef} className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start border-t border-border pt-10">
           <div>
-            <p className="eyebrow text-muted-foreground mb-4">
-              {t("founder.eyebrow")}
-            </p>
+            <Eyebrow className="mb-4">{t("founder.eyebrow")}</Eyebrow>
             <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-medium text-foreground mb-2">
               {t("founder.name")}
             </h3>
-            <p className="eyebrow text-muted-foreground mb-6">
-              {t("founder.role")}
-            </p>
+            <Eyebrow className="mb-6">{t("founder.role")}</Eyebrow>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground max-w-xl">
-              {t("founder.body")}
+              {t.rich("founder.body", bodyMarks)}
             </p>
           </div>
           <div className="flex flex-col justify-start">
@@ -101,9 +99,7 @@ export const TrustSection = memo(function TrustSection() {
           </div>
         </div>
         <div className="flex items-center gap-4 mt-9">
-          <span className="eyebrow text-muted-foreground">
-            {tW("labels.integrity")}
-          </span>
+          <Eyebrow>{tW("labels.integrity")}</Eyebrow>
           <div className="flex-1 h-px bg-border" />
         </div>
       </Container>

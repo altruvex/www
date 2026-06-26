@@ -1,18 +1,18 @@
 "use client";
 
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
-import { ThemeProvider } from "@/components/providers/theme-provider";
 import dynamic from "next/dynamic";
 import { Suspense, type ReactNode } from "react";
 
-const CustomCursorLazy = dynamic(() => import("@/components/custom-cursor"), {
+const CustomCursorLazy = dynamic(() => import("@/components/interactive/custom-cursor"), {
   ssr: false,
 });
 
 const ExitIntentLazy = dynamic(
   () =>
-    import("@/components/exit-intent-modal").then((m) => ({
+    import("@/components/interactive/exit-intent-modal").then((m) => ({
       default: m.ExitIntentModal,
     })),
   { ssr: false },
@@ -20,7 +20,7 @@ const ExitIntentLazy = dynamic(
 
 const InitialLoaderLazy = dynamic(
   () =>
-    import("@/components/initial-loader").then((m) => ({
+    import("@/components/shared/initial-loader").then((m) => ({
       default: m.InitialLoader,
     })),
   { ssr: false },

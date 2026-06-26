@@ -1,8 +1,8 @@
 "use client";
 
 import { useLoading } from "@/components/providers/loading-provider";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
 import {
   MOTION,

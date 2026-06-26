@@ -1,25 +1,27 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { CtaButtonGroup } from "@/components/cta-button-group";
+import type { ReactNode } from "react";
+
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { HeroScrollHint } from "@/components/sections/hero-scroll-hint";
 import { Highlight } from "@/components/ui/emphasis";
-import { monoCaps } from "@/lib/mono-caps";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import {
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 type ServiceHeroProps = {
   watermark: string;
   subtitle: string;
   title: string;
   titleItalic: string;
-  description: string;
+  description: ReactNode;
   primaryCta: { href: string; label: string };
   secondaryCta: { href: string; label: string };
   showScrollHint?: boolean;
@@ -106,16 +108,16 @@ export function ServiceHero({
             className={cn(
               "mb-8 font-sans font-light text-foreground select-none",
               titleSize === "default" &&
-                "text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em]",
+              "text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em]",
               titleSize === "large" &&
-                "mb-10 font-normal text-primary leading-[1.03] rtl:leading-[1.2]",
+              "mb-10 font-normal text-primary leading-[1.03] rtl:leading-[1.2]",
             )}
             style={
               titleSize === "large"
                 ? {
-                    fontSize: "clamp(44px, 7vw, 96px)",
-                    letterSpacing: "-0.025em",
-                  }
+                  fontSize: "clamp(44px, 7vw, 96px)",
+                  letterSpacing: "-0.025em",
+                }
                 : undefined
             }
           >

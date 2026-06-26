@@ -1,12 +1,12 @@
 "use client";
 
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
 import { readMotionEnv } from "../utils/env";
 
 export interface TiltConfig {
-  /** Max rotation (deg) on each axis at the edges. Default 6. Keep small — Apple is subtle. */
+  /** Max rotation (deg) on each axis at the edges. Default 6. Keep small - Apple is subtle. */
   max?: number;
   /** Perspective (px). Lower = stronger 3D. Default 800. */
   perspective?: number;
@@ -17,7 +17,7 @@ export interface TiltConfig {
 }
 
 /**
- * Subtle 3D tilt that follows the pointer — depth for feature cards / tiles.
+ * Subtle 3D tilt that follows the pointer - depth for feature cards / tiles.
  *
  * - Pointer-fine only; no-op on touch, low-power, or reduced motion (rotation
  *   is vestibular motion).

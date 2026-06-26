@@ -1,13 +1,13 @@
 "use client";
 
-import { PageHero } from "@/components/sections/page-hero";
-import { Container } from "@/components/container";
 import { MagneticButton } from "@/components/magnetic-button";
+import { PageHero } from "@/components/sections/page-hero";
+import { Container } from "@/components/shared/container";
 import { Input, SelectField, Textarea } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { createContactFormSchema } from "@/lib/validations/contact";
 import { AlertCircle, CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -82,8 +82,8 @@ export default function ContactPage() {
       const locale =
         typeof window !== "undefined"
           ? window.location.pathname.split("/")[1] ||
-            document.documentElement.lang ||
-            "en"
+          document.documentElement.lang ||
+          "en"
           : "en";
 
       const response = await fetch(`/${locale}/api/contact`, {
@@ -200,7 +200,7 @@ export default function ContactPage() {
                       key={social}
                       href={
                         SITE_CONFIG.social[
-                          social as keyof typeof SITE_CONFIG.social
+                        social as keyof typeof SITE_CONFIG.social
                         ]
                       }
                       className="uppercase border-b border-transparent font-mono text-sm leading-normal tracking-wider text-primary/60 transition-all hover:border-foreground/60 hover:text-primary/85 sm:text-sm"
@@ -265,7 +265,7 @@ export default function ContactPage() {
               </div>
             </div>
             <div ref={rightRef} className="flex flex-col justify-center">
-              <div className="p-8 rounded-section liquid-glass">
+              <div className="p-8 border-border border rounded-2xl">
                 <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <div>
                     <label htmlFor="contact-name" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">

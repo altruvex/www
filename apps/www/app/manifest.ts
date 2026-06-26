@@ -1,7 +1,7 @@
 import {
   MANIFEST_BACKGROUND_COLOR,
   MANIFEST_THEME_COLOR,
-} from "@/lib/brand-manifest";
+} from "@/lib/config/brand-manifest";
 import { SITE_CONFIG } from "@/lib/metadata";
 import type { MetadataRoute } from "next";
 

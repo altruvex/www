@@ -1,13 +1,11 @@
 "use client";
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
 import { Accent } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 
-/* Stage colors as RGB triplets for rgba() interpolation.
-   Values match design tokens: brand indigo, success, warning, info, violet, emerald */
 const STAGE_COLORS = [
   "80,  71, 229",
   "5,  150, 105",
@@ -275,7 +273,7 @@ export function PipelineSection() {
       >
         <Container>
           <Eyebrow
-            className="text-muted-foreground/60 transition-[opacity,transform] mb-3"
+            className="text-muted-foreground transition-[opacity,transform] mb-3"
             ref={eyebrowRef}
             style={{
               opacity: revealed ? 1 : 0,
@@ -286,7 +284,6 @@ export function PipelineSection() {
           >
             {t("eyebrow")}
           </Eyebrow>
-
           <h2
             ref={titleRef}
             className="font-sans font-light leading-[1.06] transition-[opacity,transform] text-[clamp(2.125rem,4vw,3.25rem)] tracking-tight text-foreground mb-8"
@@ -301,15 +298,13 @@ export function PipelineSection() {
             {t("title")}
             <br />
             <Accent gradient="mint">{t("titleAccent")}</Accent>
-            <p
-              ref={descRef}
-              className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed mt-4 font-sans tracking-normal"
-            >
-              {t("description")}
-            </p>
           </h2>
-
-          {/* PIPELINE CARD */}
+          <p
+            ref={descRef}
+            className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed mb-8 font-sans tracking-normal"
+          >
+            {t("description")}
+          </p>
           <div
             dir="ltr"
             className="transition-[opacity,transform] overflow-hidden rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card shadow-card dark:shadow-none"
@@ -350,7 +345,6 @@ export function PipelineSection() {
                 </span>
               </div>
             </div>
-
             {STAGES.map((stage, i) => {
               const status = statuses[i];
               const isExp = expanded === i;
@@ -358,7 +352,6 @@ export function PipelineSection() {
               const isDone = status === "done";
               const isActive = isRunning || isDone;
               const color = STAGE_COLORS[i];
-
               return (
                 <React.Fragment key={stage.id}>
                   <div
@@ -393,14 +386,12 @@ export function PipelineSection() {
                         animation: isActive || isExp ? "pl-bar-in .32s cubic-bezier(.22,1,.36,1) both" : "none",
                       }}
                     />
-                    
                     <span
                       className="pl-col-ts tabular-nums transition-colors duration-300 text-[11.5px] tracking-wider pt-px"
                       style={{ color: isActive ? `rgba(${color},.6)` : "currentColor", opacity: isActive ? 1 : 0.4 }}
                     >
                       {times[i]}
                     </span>
-
                     <span
                       className="pl-col-stage items-center gap-1.5 transition-colors duration-300 self-start text-[11.5px] tracking-widest uppercase font-semibold whitespace-nowrap pt-px"
                       style={{ color: isActive ? `rgb(${color})` : "currentColor", opacity: isActive ? 1 : 0.5 }}
@@ -420,14 +411,12 @@ export function PipelineSection() {
                         </span>
                       )}
                     </span>
-
                     <span
                       className="transition-colors duration-300 text-sm sm:text-[13px] leading-relaxed tracking-wide pt-px"
                       style={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
                     >
                       {stage.desc}
                     </span>
-
                     <span
                       className="flex items-center gap-2 transition-colors duration-300 self-start justify-end text-sm tracking-widest uppercase font-semibold pt-[2px]"
                       style={{
@@ -462,7 +451,6 @@ export function PipelineSection() {
                       <span className="hidden sm:inline">{status}</span>
                     </span>
                   </div>
-
                   <div
                     className="overflow-hidden transition-all ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
@@ -485,7 +473,7 @@ export function PipelineSection() {
                                 : `rgba(${STAGE_COLORS[3]},.8)`,
                           }}
                         >
-                          <span className="text-muted-foreground/40 mr-2 shrink-0">-</span>
+                          <span className="text-muted-foreground mr-2 shrink-0">-</span>
                           <span>{line}</span>
                         </div>
                       ))}
@@ -494,7 +482,6 @@ export function PipelineSection() {
                 </React.Fragment>
               );
             })}
-
             <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 bg-black/1 dark:bg-transparent">
               <div className="flex items-center gap-2">
                 <span
@@ -513,7 +500,6 @@ export function PipelineSection() {
                   }}
                 />
               </div>
-
               <button
                 className="cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed font-mono text-[11.5px] font-semibold leading-normal tracking-[0.18em] uppercase rounded-md px-4 py-2 border hover:shadow-sm"
                 disabled={running}

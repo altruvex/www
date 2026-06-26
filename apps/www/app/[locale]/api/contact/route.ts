@@ -9,7 +9,8 @@ import {
 import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
-import { enforceRateLimit } from "@/lib/rate-limit";
+import { enforceRateLimit } from "@/lib/utils/rate-limit";
+import { isTrustedOrigin } from "@/lib/utils/origin-check";
 
 const SERVICE_TYPE_MAP: Record<
   NonNullable<Prisma.ContactSubmissionCreateInput["serviceInterest"]>,
@@ -44,6 +45,13 @@ const BUDGET_RANGE_MAP: Record<
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isTrustedOrigin(request)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid request origin" },
+        { status: 403 },
+      );
+    }
+
     const rl = await enforceRateLimit(request, {
       scope: "public_api",
       route: "contact",

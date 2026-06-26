@@ -1,16 +1,18 @@
 "use client";
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
-import { ServiceHero } from "@/components/sections/service-hero";
-import { Link } from "@/i18n/navigation";
-import { accentWorldClass } from "@/lib/accent-world";
-import { getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
-import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils";
-import { useTranslations } from "next-intl";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionHeading } from "@/components/sections/section-heading";
+import { ServiceHero } from "@/components/sections/service-hero";
+import { Accent, Highlight } from "@/components/ui/emphasis";
+import { Link } from "@/i18n/navigation";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { monoCaps } from "@/lib/utils/mono-caps";
+import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { cn } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function MaintenancePage() {
   return (
@@ -35,7 +37,7 @@ function HeroSection() {
       subtitle={t("subtitle")}
       title={t("title")}
       titleItalic={t("titleItalic")}
-      description={t("description")}
+      description={t.rich("description", bodyMarks)}
       gridVisibility="md-up"
       primaryCta={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
       secondaryCta={{ href: "#pricing", label: tCTAs("maintenancePlans") }}
@@ -79,7 +81,7 @@ function StatsSection() {
             </h2>
             <div className="space-y-5">
               <p className="text-base text-primary/60 leading-relaxed">
-                {t("stats.body1")}
+                {t.rich("stats.body1", bodyMarks)}
               </p>
               <p className="text-base text-primary/60 leading-relaxed">
                 {t("stats.body2")}
@@ -127,7 +129,7 @@ function FeaturesSection() {
   const features = ["01", "02", "03", "04", "05", "06"].map((num, i) => ({
     num,
     title: t(`features.${num}.title`),
-    description: t(`features.${num}.description`),
+    description: t.rich(`features.${num}.description`, bodyMarks),
     wide: i === 0 || i === 5,
   }));
 
@@ -140,7 +142,7 @@ function FeaturesSection() {
         <div className="mb-16">
           <p
             ref={eyebrowRef}
-            className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}
+            className={cn(monoCaps, "text-muted-foreground mb-4 block")}
           >
             {tCommon("whatWeOfferEyebrow")}
           </p>
@@ -420,7 +422,7 @@ function CtaSection() {
             className="md:col-span-5 border border-foreground/8 rounded-lg bg-foreground/2 p-7 md:p-8"
           >
             <div className="flex items-center justify-between mb-8">
-              <p className={cn(monoCaps, "text-muted-foreground/70")}>
+              <p className={cn(monoCaps, "text-muted-foreground")}>
                 {t("cta.statusTitle")}
               </p>
               <div className="flex items-center gap-2">
@@ -476,47 +478,18 @@ function CtaSection() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                {t("cta.title")} <Highlight>{t("cta.titleItalic")}</Highlight>
+                {t("cta.title")} <Accent gradient="ember">{t("cta.titleItalic")}</Accent>
               </h2>
               <p className="text-base text-primary/60 leading-relaxed max-w-[44ch]">
-                {t("cta.description")}
+                {t.rich("cta.description", bodyMarks)}
               </p>
             </div>
-            <div className="flex flex-col gap-3">
-              <MagneticButton
-                asChild
-                size="lg"
-                variant="accent"
-                className="group w-full justify-center"
-              >
-                <Link href="/contact">
-                  <span className="flex items-center gap-2">
-                    {tCommon("ctaPrimary")}
-                    <svg
-                      className="w-4 h-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </span>
-                </Link>
-              </MagneticButton>
-              <MagneticButton
-                asChild
-                size="lg"
-                variant="secondary"
-                className="w-full justify-center"
-              >
-                <Link href="/services">{t("cta.back")}</Link>
-              </MagneticButton>
-            </div>
+            <CtaButtonGroup
+              primaryVariant="accent"
+              primary={{ href: "/contact", label: tCommon("ctaPrimary") }}
+              secondary={{ href: "/services", label: t("cta.back") }}
+              className="flex-col gap-3 sm:flex-col sm:items-stretch"
+            />
           </div>
         </div>
       </Container>

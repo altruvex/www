@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { forwardRef, type ComponentPropsWithoutRef } from "react";
 
 export const ACCENT_GRADIENTS = [
@@ -44,7 +44,7 @@ export const Highlight = forwardRef<HTMLElement, ComponentPropsWithoutRef<"em">>
       <em
         ref={ref}
         className={cn(
-          "font-serif italic font-light text-muted-foreground/60",
+          "font-serif italic font-light text-muted-foreground",
           "rtl:font-sans rtl:not-italic rtl:font-bold",
           className,
         )}

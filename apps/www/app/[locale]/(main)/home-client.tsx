@@ -1,6 +1,7 @@
+
+import { ErrorBoundary } from "@/components/shared/error-boundary";
+import { SectionSkeleton } from "@/components/shared/section-skeleton";
 import dynamic from "next/dynamic";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { SectionSkeleton } from "@/components/section-skeleton";
 
 const ProblemSection = dynamic(
   () =>

@@ -1,18 +1,13 @@
 "use client";
 
-import { memo } from "react";
-import { useTranslations } from "next-intl";
-import { Container } from "@/components/container";
-import { ArrowLabel } from "@/components/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
-import { Link } from "@/i18n/navigation";
-import { WorkItem } from "@/components/work-item"; 
-import { SectionHeading } from "./section-heading";
-import { splitHeadline } from "@/lib/utils";
+import { Container } from "@/components/shared/container";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { WorkItem } from "@/components/work-item";
 import {
   HOMEPAGE_SUPPORTING_CASE_STUDIES,
   getCommercialCta,
-} from "@/lib/commercial";
+} from "@/lib/config/commercial";
 import {
   useSectionCardGrid,
   useSectionDescription,
@@ -20,6 +15,11 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
+import { bodyMarks } from "@/components/ui/rich-text";
+import { splitHeadline } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+import { memo } from "react";
+import { SectionHeading } from "./section-heading";
 
 export const WorkSection = memo(function WorkSection() {
   const tW = useTranslations("work");
@@ -52,10 +52,9 @@ export const WorkSection = memo(function WorkSection() {
           firstTitle={firstTitle}
           secondTitle={secondTitle}
           accent="mint"
-          description={tW("description")}
+          description={tW.rich("description", bodyMarks)}
           className="mb-16"
         />
-        
         <div ref={gridRef}>
           <div className="h-px w-full bg-foreground/8" />
           {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
@@ -66,41 +65,28 @@ export const WorkSection = memo(function WorkSection() {
             />
           ))}
         </div>
-        
         <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
           <div className="space-y-3">
-            <p className="eyebrow text-muted-foreground">
-              {tW("labels.liveProof")}
-            </p>
+            <Eyebrow>{tW("labels.liveProof")}</Eyebrow>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground max-w-xl">
               {tW("labels.liveProofBody")}
             </p>
           </div>
-          <div className="flex flex-col gap-3">
-            <MagneticButton asChild size="lg" variant="primary" className="group">
-              <Link href={proofCta.href}>
-                <ArrowLabel>{tCTAs("realBuild")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
-            <MagneticButton asChild size="lg" variant="secondary" className="group">
-              <Link href={scopeCta.href}>
-                <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
-          </div>
+          <CtaButtonGroup
+            primary={{ href: proofCta.href, label: tCTAs("realBuild") }}
+            secondary={{ href: scopeCta.href, label: tCTAs("projectRange") }}
+            secondaryArrow
+            className="flex-col gap-3 sm:flex-col sm:items-stretch"
+          />
         </div>
-        
         <FlagshipMetaBlock
           metaRef={metaRef}
           tf={tf}
           stepLabel={stepLabel}
         />
-        
         <div className="flex items-center gap-4 mt-6">
           <div className="flex-1 h-px bg-border" />
-          <span className="eyebrow text-muted-foreground">
-            {tW("labels.footer")}
-          </span>
+          <Eyebrow>{tW("labels.footer")}</Eyebrow>
         </div>
       </Container>
     </section>
@@ -120,9 +106,7 @@ function FlagshipMetaBlock({
 }) {
   return (
     <div ref={metaRef} className="mt-16 border-t border-border pt-12">
-      <p className="eyebrow text-muted-foreground mb-4">
-        {tf("eyebrow")}
-      </p>
+      <Eyebrow className="mb-4">{tf("eyebrow")}</Eyebrow>
       <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-normal text-foreground mb-4 max-w-3xl">
         {tf("title")}
       </h3>
@@ -139,9 +123,7 @@ function FlagshipMetaBlock({
             key={item.label}
             className="border-e border-b border-border px-6 py-8 group hover:bg-surface transition-colors duration-300 md:last:border-e-0"
           >
-            <p className="eyebrow text-muted-foreground mb-4">
-              {stepLabel} · {item.label}
-            </p>
+            <Eyebrow className="mb-4">{stepLabel} · {item.label}</Eyebrow>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
               {item.body}
             </p>

@@ -1,11 +1,11 @@
 "use client";
+import { Container } from "@/components/shared/container";
 import { PageHero } from "@/components/sections/page-hero";
-import { useSectionTitle, useSectionDescription, useSectionElement, useSectionCardGrid } from "@/lib/motion";
-
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { SectionHeading } from "@/components/sections/section-heading";
+import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function StandardsPage() {
   return (
@@ -30,7 +30,7 @@ function OpeningSection() {
     >
       <div
         ref={metricsRef}
-        // Color world: forest green. Proof archetype — quality benchmarks.
+        // Color world: forest green. Proof archetype - quality benchmarks.
         className="accent-world-green grid gap-4 md:grid-cols-3"
       >
             {[
@@ -116,7 +116,7 @@ function CategoriesSection() {
                   {tCat(`${cat}.title`)}
                 </h2>
                 <p className="text-base text-primary/60 leading-relaxed mb-10 max-w-[52ch]">
-                  {tCat(`${cat}.description`)}
+                  {tCat.rich(`${cat}.description`, bodyMarks)}
                 </p>
                 <div className="grid gap-4 md:grid-cols-2">
                   {[
@@ -133,7 +133,7 @@ function CategoriesSection() {
                       key={heading}
                       className="border border-foreground/8 rounded-lg bg-foreground/2 p-6"
                     >
-                      <h3 className="eyebrow text-muted-foreground/70 mb-4">
+                      <h3 className="eyebrow text-muted-foreground mb-4">
                         {heading}
                       </h3>
                       <div className="space-y-3">
@@ -167,26 +167,20 @@ function ClosingSection() {
     <section className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8">
       <Container>
         <div className="max-w-3xl">
-          <div className="mb-10">
-            <h2
-              ref={titleRef}
-              className="font-sans font-normal text-primary leading-[1.05]"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("title")}
-              <br />
-              <Highlight>{t("titleItalic")}</Highlight>
-            </h2>
-          </div>
-          <p
-            ref={descRef}
-            className="text-base text-primary/60 leading-relaxed"
-          >
-            {t("description")}
-          </p>
+          <SectionHeading
+            titleRef={titleRef}
+            descriptionRef={descRef}
+            firstTitle={t("title")}
+            secondTitle={t("titleItalic")}
+            accent="forest"
+            description={t.rich("description", bodyMarks)}
+            className="mb-10 block"
+            classes={{
+              titleWrapper: "space-y-0",
+              title: "leading-[1.05] text-[clamp(28px,4.5vw,52px)] tracking-[-0.02em] text-primary",
+              description: "max-w-none text-base leading-relaxed text-primary/60",
+            }}
+          />
         </div>
       </Container>
     </section>

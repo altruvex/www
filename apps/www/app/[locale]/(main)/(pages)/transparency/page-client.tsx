@@ -1,17 +1,19 @@
 "use client";
-import { Container } from "@/components/container";
-import { ArrowLabel } from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { ProposalNarrativeBlock } from "@/components/sections/transparency-section";
+import { Container } from "@/components/shared/container";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Highlight } from "@/components/ui/emphasis";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Highlight } from "@/components/ui/emphasis";
+import { bodyMarks } from "@/components/ui/rich-text";
 import {
   BrandIdentity,
   Budget,
@@ -31,12 +33,12 @@ import {
   mapProjectType,
   normalisePhone,
   validatePhone,
-} from "@/lib/transparency-utils";
-import { cn } from "@/lib/utils";
+} from "@/lib/utils/transparency-utils";
+import { cn } from "@/lib/utils/utils";
 import { Check, Download, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { JSX, useState } from "react";
+import { JSX, ReactNode, useState } from "react";
 
 export default function TransparencyPageClient() {
   const t = useTranslations("transparency");
@@ -354,7 +356,7 @@ export default function TransparencyPageClient() {
 }
 
 interface StepProps {
-  t: (key: string, values?: Record<string, string | number>) => string;
+  t: ReturnType<typeof useTranslations<"transparency">>;
 }
 
 function TransparencyFaqSection({ t }: StepProps) {
@@ -362,7 +364,7 @@ function TransparencyFaqSection({ t }: StepProps) {
   const contentRef = useSectionDescription<HTMLDivElement>();
 
   const items = ["1", "2", "3", "4"].map((key) => ({
-    answer: t(`faq.a${key}`),
+    answer: t.rich(`faq.a${key}`, bodyMarks),
     question: t(`faq.q${key}`),
     value: key,
   }));
@@ -372,16 +374,14 @@ function TransparencyFaqSection({ t }: StepProps) {
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.5fr] lg:gap-24">
           <div ref={headerRef} className="max-w-md">
-            <p className="eyebrow text-xs text-muted-foreground mb-4 block">
-              {t("faq.title")}
-            </p>
+            <Eyebrow className="text-xs mb-4 block">{t("faq.title")}</Eyebrow>
             <h2 className="text-[clamp(2.125rem,4vw,3.25rem)] tracking-[-0.02em] font-normal text-foreground leading-[1.1] mb-6">
               {t("faq.subtitle")}
             </h2>
           </div>
           <div
             ref={contentRef}
-            className="rounded-2xl border border-border bg-foreground/3 px-5 md:px-8"
+            className="rounded-2xl border border-border bg-foreground/2 px-5 md:px-8"
           >
             <Accordion type="single" collapsible className="w-full">
               {items.map((item) => (
@@ -427,7 +427,7 @@ function SelectionCheck({ visible }: { visible: boolean }) {
   );
 }
 
-function StepHeader({ title, hint }: { title: string; hint?: string }) {
+function StepHeader({ title, hint }: { title: string; hint?: ReactNode }) {
   return (
     <div className="text-center mb-10">
       <h2 className="text-[clamp(1.8rem,2.5vw,2.4rem)] tracking-tight font-normal text-primary mb-4">
@@ -467,7 +467,7 @@ function StepPhoneCapture({
         hint={t("phoneCapture.subtitle")}
       />
       <p className="text-primary/45 text-sm text-center mb-8">
-        {t("phoneCapture.trustNote")}
+        {t.rich("phoneCapture.trustNote", bodyMarks)}
       </p>
       <div className="space-y-4 mb-6">
         <div>
@@ -498,7 +498,7 @@ function StepPhoneCapture({
               {error}
             </p>
           )}
-          <p className="mt-2 font-mono text-sm leading-normal tracking-wider text-[13px] text-muted-foreground/70 uppercase">
+          <p className="mt-2 font-mono text-sm leading-normal tracking-wider text-[13px] text-muted-foreground uppercase">
             {t("phoneCapture.phoneHint")}
           </p>
         </div>
@@ -547,7 +547,7 @@ function PDFDownload({
             {t("pdf.label")}
           </p>
           <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/70">
-            {t("pdf.description")}
+            {t.rich("pdf.description", bodyMarks)}
           </p>
         </div>
         <MagneticButton
@@ -634,7 +634,8 @@ function StepResults({
         {t("results.strategicNote")}
       </p>
       <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-primary/90 mb-8 text-center">
-        {t("results.rangeCopy", {
+        {t.rich("results.rangeCopy", {
+          ...bodyMarks,
           min: formatCurrency(estimate.minPrice),
           max: formatCurrency(estimate.maxPrice),
           weeksMin: estimate.minWeeks,
@@ -681,12 +682,12 @@ function StepResults({
             {t("results.rangeCtaLabel")}
           </p>
           <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-primary/80">
-            {t("results.rangeCta")}
+            {t.rich("results.rangeCta", bodyMarks)}
           </p>
         </div>
       </div>
       <p className="text-[clamp(0.9375rem,0.98vw,1rem)] leading-[1.7] text-primary/70 mb-8 text-center">
-        {t("results.consultationGate")}
+        {t.rich("results.consultationGate", bodyMarks)}
       </p>
       <div className="flex flex-col gap-4 justify-center items-center mb-6">
         <MagneticButton asChild size="lg" variant="primary" className="group">
@@ -709,7 +710,7 @@ function StepBudget({
     <div>
       <StepHeader
         title={t("steps.budget.title")}
-        hint={t("steps.budget.hint")}
+        hint={t.rich("steps.budget.hint", bodyMarks)}
       />
       <div className="grid sm:grid-cols-2 gap-5">
         {options.map((opt) => (
@@ -998,7 +999,7 @@ function StepComplexity({
     <div>
       <StepHeader
         title={t("steps.complexity.title")}
-        hint={t("steps.complexity.hint")}
+        hint={t.rich("steps.complexity.hint", bodyMarks)}
       />
       <div className="space-y-5">
         {options.map((option, i) => (
@@ -1049,7 +1050,7 @@ function StepTimeline({
     <div>
       <StepHeader
         title={t("steps.timeline.title")}
-        hint={t("steps.timeline.hint")}
+        hint={t.rich("steps.timeline.hint", bodyMarks)}
       />
       <div className="grid sm:grid-cols-3 gap-5">
         {options.map((option) => (

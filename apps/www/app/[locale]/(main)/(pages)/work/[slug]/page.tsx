@@ -1,10 +1,15 @@
+import { Container } from "@/components/shared/container";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
-import WorkCaseStudyPageClient from "./page-client";
-import { getCaseStudyBySlug } from "@/lib/case-studies";
+import { getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { generateRouteMetadata } from "@/lib/metadata";
-import { buildCaseStudyPageSchemas } from "@/lib/schema";
-import { getTranslations } from "next-intl/server";
+import {
+  buildCaseStudyPageSchemas,
+  getCaseStudyBreadcrumbTrail,
+} from "@/lib/schema";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import WorkCaseStudyPageClient from "./page-client";
 
 export async function generateMetadata({
   params,
@@ -54,6 +59,11 @@ export default async function WorkCaseStudyPage({
   return (
     <>
       {cs ? <JsonLd schemas={buildCaseStudyPageSchemas(locale, cs)} /> : null}
+      {cs ? (
+        <Container className="pt-24 md:pt-32">
+          <Breadcrumbs items={getCaseStudyBreadcrumbTrail(locale, cs)} className="mb-0" />
+        </Container>
+      ) : null}
       <WorkCaseStudyPageClient locale={locale} slug={slug} />
     </>
   );

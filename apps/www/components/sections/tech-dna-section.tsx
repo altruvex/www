@@ -1,13 +1,14 @@
 "use client";
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Highlight } from "@/components/ui/emphasis";
-import { ScrollTrigger, gsap } from "@/lib/gsap";
+import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import {
   techAccentHsl,
   techAccentHsla,
   type TechAccentId,
-} from "@/lib/tech-accents";
+} from "@/lib/config/tech-accents";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -270,9 +271,7 @@ export function TechDNASection() {
     >
       <Container>
         <div ref={titleRef} className="mb-16">
-          <p className="eyebrow text-muted-foreground/70 mb-4 block">
-            {t("techStack.eyebrow")}
-          </p>
+          <Eyebrow className="mb-4 block">{t("techStack.eyebrow")}</Eyebrow>
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <h2
               ref={headingRef}
@@ -478,9 +477,7 @@ export function TechDNASection() {
 
           <div className="md:hidden flex items-center justify-center gap-3 mt-4 pointer-events-none transition-opacity group-hover/scroll:opacity-5">
             <div className="h-px flex-1 bg-border" />
-            <p className="eyebrow text-muted-foreground/70 whitespace-nowrap">
-              {t("techStack.dragHint")}
-            </p>
+            <Eyebrow className="whitespace-nowrap">{t("techStack.dragHint")}</Eyebrow>
             <div className="h-px flex-1 bg-border" />
           </div>
 
@@ -590,7 +587,7 @@ export function TechDNASection() {
                         return highlights.map((h, i) => (
                           <span
                             key={h}
-                            className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/3 rounded-lg whitespace-nowrap"
+                            className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/2 rounded-lg whitespace-nowrap"
                             style={{
                               fontSize: 9,
                               letterSpacing: "0.13em",

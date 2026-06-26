@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
+import { createSessionToken } from "@/lib/admin-auth";
 
 const attempts = new Map<string, { count: number; resetAt: number }>();
 
@@ -20,8 +21,9 @@ export async function POST(request: NextRequest) {
     const { email, password } = await request.json();
     const adminSecret = process.env.ADMIN_SECRET;
     const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPepper = process.env.ADMIN_SECRET_PEPPER;
 
-    if (!adminSecret || !adminEmail) {
+    if (!adminSecret || !adminEmail || !adminPepper) {
       return NextResponse.json(
         { error: "Admin access not configured" },
         { status: 503 },
@@ -68,14 +70,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    const msgUint8 = new TextEncoder().encode(
-      adminSecret + (process.env.ADMIN_SECRET_PEPPER || "default-pepper"),
-    );
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const sessionToken = hashArray
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    const sessionToken = await createSessionToken();
 
     const response = NextResponse.json({ success: true });
 

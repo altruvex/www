@@ -5,7 +5,7 @@ import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { useLocale } from "next-intl";
 import { createContext, useContext } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 type LocaleType = "ar" | "en" | string;
 

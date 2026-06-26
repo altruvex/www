@@ -1,28 +1,17 @@
 "use client";
 
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
 import { MOTION } from "../config";
 import { readMotionEnv } from "../utils/env";
 
 export interface MagneticConfig {
-  /** 0–1: fraction of cursor offset the element follows. Default 0.35. */
   strength?: number;
-  /** Max travel (px) on each axis — clamps strength on large elements. Default 24. */
   max?: number;
-  /** Follow smoothing (s). Lower = snappier. Default 0.5. */
   smoothing?: number;
 }
 
-/**
- * Magnetic pull toward the pointer. For primary CTAs, icon buttons, logo marks.
- *
- * - Pointer-fine only (mouse/trackpad). No-op on touch, low-power, or reduced motion.
- * - Uses gsap.quickTo: one reusable tween per axis, no per-move allocation.
- * - Never alters the hit area meaningfully at default strength; the element
- *   stays clickable. Focus/keyboard behavior is untouched.
- */
 export function useMagnetic<T extends HTMLElement = HTMLButtonElement>(
   config: MagneticConfig = {},
 ): RefObject<T | null> {
@@ -48,9 +37,11 @@ export function useMagnetic<T extends HTMLElement = HTMLButtonElement>(
       yTo(clamp(relY * strength));
     };
 
+    const resetXTo = gsap.quickTo(el, "x", { duration: 0.7, ease: MOTION.ease.spring });
+    const resetYTo = gsap.quickTo(el, "y", { duration: 0.7, ease: MOTION.ease.spring });
     const reset = () => {
-      // Settle back with a touch of overshoot — the "magnet release" feel.
-      gsap.to(el, { x: 0, y: 0, duration: 0.7, ease: MOTION.ease.spring, overwrite: true });
+      resetXTo(0);
+      resetYTo(0);
     };
 
     el.addEventListener("pointermove", onMove);

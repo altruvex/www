@@ -1,16 +1,14 @@
 "use client";
-import { Container } from "@/components/container";
-import { Highlight } from "@/components/ui/emphasis";
-import {
-  ArrowLabel,
-  ExternalDirectionalLink,
-} from "@/components/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { Container } from "@/components/shared/container";
+import { ExternalDirectionalLink } from "@/components/shared/directional-link";
+import { Highlight } from "@/components/ui/emphasis";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
-import { FOUNDER_LINK, getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { FOUNDER_LINK, getCommercialCta } from "@/lib/config/commercial";
 import {
   useSectionCardGrid,
   useSectionDescription,
@@ -18,7 +16,8 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { monoCaps } from "@/lib/utils/mono-caps";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 
@@ -86,7 +85,7 @@ function HeroSection() {
             ref={eyebrowRef}
             className={cn(
               monoCaps,
-              "mb-8 text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal",
+              "mb-8 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal",
             )}
           >
             {t("eyebrow")}
@@ -99,7 +98,6 @@ function HeroSection() {
             <br />
             {t("title2")} <Highlight>{t("title3")}</Highlight>
           </h1>
-          
           <div
             ref={descRef}
             className="flex flex-col gap-6 md:flex-row md:items-start md:gap-12"
@@ -107,25 +105,17 @@ function HeroSection() {
             <div className="mt-3 hidden h-px w-20 bg-border md:block shrink-0" />
             <div className="space-y-6 max-w-2xl">
               <p className="text-[clamp(1.125rem,1.2vw,1.25rem)] leading-[1.6] text-muted-foreground">
-                {t("description1")}
+                {t.rich("description1", bodyMarks)}
               </p>
               <p className="text-[clamp(1.125rem,1.2vw,1.25rem)] leading-[1.6] text-muted-foreground">
-                {t("description2")}
+                {t.rich("description2", bodyMarks)}
               </p>
-              
-              <div
+              <CtaButtonGroup
                 ref={ctaRef}
-                className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center"
-              >
-                <MagneticButton asChild size="lg" variant="primary" className="group">
-                  <Link href={projectRangeCta.href}>
-                    <ArrowLabel>{tCTAs("projectRange")}</ArrowLabel>
-                  </Link>
-                </MagneticButton>
-                <MagneticButton asChild size="lg" variant="secondary">
-                  <Link href="/work">{t("ctaSecondary")}</Link>
-                </MagneticButton>
-              </div>
+                primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
+                secondary={{ href: "/work", label: t("ctaSecondary") }}
+                className="mt-12"
+              />
             </div>
           </div>
         </div>
@@ -142,7 +132,7 @@ function HeroSection() {
                   <p className="text-sm font-medium text-foreground">
                     {stat.label}
                   </p>
-                  <p className={cn(monoCaps, "text-xs text-muted-foreground/60 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+                  <p className={cn(monoCaps, "text-xs text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
                     {stat.sub}
                   </p>
                 </div>
@@ -171,24 +161,24 @@ function PrinciplesSection() {
       <Container>
         {/* Editorial Layout: Sticky Left, Scrolling Right */}
         <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-24">
-          
+
           {/* Founder Context (Left) */}
           <div className="lg:sticky lg:top-32 lg:h-fit">
-            <p className={cn(monoCaps, "mb-6 text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+            <p className={cn(monoCaps, "mb-6 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
               {t("founder.eyebrow")}
             </p>
             <h2 ref={titleRef} className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
               {t("founder.name")}
             </h2>
-            <p className={cn(monoCaps, "mt-4 text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+            <p className={cn(monoCaps, "mt-4 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
               {t("founder.role")}
             </p>
             <div className="mt-8 max-w-md space-y-5">
               <p className="text-base leading-[1.75] text-muted-foreground">
-                {t("founder.philosophy1")}
+                {t.rich("founder.philosophy1", bodyMarks)}
               </p>
               <p className="text-base leading-[1.75] text-muted-foreground">
-                {t("founder.philosophy2")}
+                {t.rich("founder.philosophy2", bodyMarks)}
               </p>
             </div>
             <div className="mt-10">
@@ -197,8 +187,6 @@ function PrinciplesSection() {
               </ExternalDirectionalLink>
             </div>
           </div>
-
-          {/* Principles List (Right) - Removed boxes, using elegant dividers */}
           <div ref={bodyRef} className="flex flex-col">
             {values.map((value, index) => (
               <article
@@ -220,7 +208,6 @@ function PrinciplesSection() {
               </article>
             ))}
           </div>
-          
         </div>
       </Container>
     </section>
@@ -247,7 +234,7 @@ function OperatingModelSection() {
       <Container>
         <div className="mb-16 md:mb-24 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className={cn(monoCaps, "mb-5 text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+            <p className={cn(monoCaps, "mb-5 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
               {t("eyebrow")}
             </p>
             <h2 ref={titleRef} className="text-[clamp(2.5rem,4vw,3.75rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
@@ -258,8 +245,6 @@ function OperatingModelSection() {
             {t("subtitle")}
           </p>
         </div>
-
-        {/* Timeline Layout instead of separate boxes */}
         <div ref={listRef} className="grid gap-0 md:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, i) => (
             <article
@@ -270,11 +255,9 @@ function OperatingModelSection() {
                 i === 0 && "md:border-s-0 md:ps-0 rtl:md:border-e-0 rtl:md:pe-0"
               )}
             >
-              {/* Massive background number for visual flair */}
-              <div className="absolute top-4 right-4 text-[6rem] font-bold leading-none text-foreground/[0.02] transition-colors duration-500 group-hover:text-foreground/[0.05] rtl:left-4 rtl:right-auto pointer-events-none select-none">
+              <div className="absolute top-4 right-4 text-[6rem] font-bold leading-none text-foreground/2 transition-colors duration-500 group-hover:text-foreground/5 rtl:left-4 rtl:right-auto pointer-events-none select-none">
                 {step.index}
               </div>
-
               <div className="relative z-10">
                 <p className={cn(monoCaps, "inline-block rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
                   {step.tag}
@@ -285,7 +268,6 @@ function OperatingModelSection() {
                 <p className="mt-4 text-[0.98rem] leading-[1.75] text-muted-foreground">
                   {step.description}
                 </p>
-                
                 <div className="mt-8 space-y-4">
                   <div>
                     <p className={cn(monoCaps, "mb-1 text-xs text-foreground/80 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>{t("meta.deliverables")}</p>
@@ -300,7 +282,6 @@ function OperatingModelSection() {
             </article>
           ))}
         </div>
-
         <div className="mt-12 flex flex-wrap gap-4 justify-center lg:justify-start">
           <MagneticButton asChild size="lg" variant="secondary">
             <Link href="/process">{navT("process")}</Link>
@@ -321,9 +302,8 @@ function PathwaysSection({ routeCards }: PageClientProps) {
   return (
     <section className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        {/* Centered layout to break the left-aligned monotony */}
         <div className="mx-auto max-w-3xl text-center mb-16">
-          <p className={cn(monoCaps, "mb-5 text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+          <p className={cn(monoCaps, "mb-5 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
             {t("eyebrow")}
           </p>
           <h2 className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
@@ -333,7 +313,6 @@ function PathwaysSection({ routeCards }: PageClientProps) {
             {t("body")}
           </p>
         </div>
-
         <div ref={cardsRef} className="grid gap-6 md:grid-cols-2 lg:gap-8 max-w-5xl mx-auto">
           {routeCards.map((card) => (
             <Link
@@ -343,7 +322,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
               className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-8 md:p-10 transition-all duration-500 hover:-translate-y-1 hover:border-foreground/30 hover:bg-background hover:shadow-2xl hover:shadow-foreground/5"
             >
               <div>
-                <p className={cn(monoCaps, "text-muted-foreground/70 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
+                <p className={cn(monoCaps, "text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
                   {card.label}
                 </p>
                 <h3 className="mt-5 text-[clamp(1.5rem,2vw,1.85rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground">
@@ -353,7 +332,6 @@ function PathwaysSection({ routeCards }: PageClientProps) {
                   {card.description}
                 </p>
               </div>
-              
               <div className="mt-10 flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-background/60 transition-all duration-300 group-hover:border-foreground group-hover:bg-foreground group-hover:text-background">
                 <svg width="18" height="18" viewBox="0 0 14 14" fill="none" aria-hidden className="text-current transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1">
                   <path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

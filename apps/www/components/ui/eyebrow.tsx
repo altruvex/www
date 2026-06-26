@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import type { ComponentPropsWithoutRef, Ref } from "react";
 
 type EyebrowTone = "muted" | "accent" | "foreground";
@@ -13,7 +13,7 @@ const toneClasses: Record<EyebrowTone, string> = {
 type EyebrowProps = ComponentPropsWithoutRef<"p"> & {
   /** Color treatment. Defaults to the muted section-label tone. */
   tone?: EyebrowTone;
-  /** Forwarded to the underlying <p> — used by useSectionEyebrow() for GSAP reveals. */
+  /** Forwarded to the underlying <p> - used by useSectionEyebrow() for GSAP reveals. */
   ref?: Ref<HTMLParagraphElement>;
 };
 

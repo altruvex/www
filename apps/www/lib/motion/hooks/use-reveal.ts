@@ -1,8 +1,8 @@
 "use client";
 
 import { useLoading } from "@/components/providers/loading-provider";
-import { useIsomorphicLayoutEffect } from "@/lib/dom-utils";
-import { gsap } from "@/lib/gsap";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
 import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../config";
 import { REDUCED_FADE } from "../utils/env";
@@ -77,7 +77,7 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
 
           // ── Reduced-motion tier ──────────────────────────────────────────
           // Was: gsap.set(el, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
-          //      — a hard snap that destroys the "new content" signal entirely.
+          //      - a hard snap that destroys the "new content" signal entirely.
           // Now: short opacity-only settle. No transform/scale/blur, no scroll
           // dependency. Opacity is a visual change, not vestibular movement, so
           // it stays safe under prefers-reduced-motion while keeping the page

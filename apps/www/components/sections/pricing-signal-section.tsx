@@ -1,7 +1,8 @@
 "use client";
-import { Container } from "@/components/container";
-import { ArrowLabel } from "@/components/directional-link";
+import { Container } from "@/components/shared/container";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import {
   useSectionCardGrid,
@@ -9,7 +10,7 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils";
+import { cn, splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
@@ -85,7 +86,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
                   {name}
                 </p>
                 <p className="mb-6">
-                  <span className="block eyebrow text-muted-foreground/70 mb-1">
+                  <span className="block eyebrow text-muted-foreground mb-1">
                     {t("fromLabel")}
                   </span>
                   <span className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-medium tabular-nums text-foreground">
@@ -124,9 +125,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
             </MagneticButton>
           </div>
           <div className="flex flex-col justify-start">
-            <p className="eyebrow text-muted-foreground/70">
-              {t("footnote")}
-            </p>
+            <Eyebrow>{t("footnote")}</Eyebrow>
           </div>
         </div>
       </Container>

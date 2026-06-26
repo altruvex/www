@@ -1,10 +1,12 @@
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
+import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { Link } from "@/i18n/navigation";
 import { generateRouteMetadata } from "@/lib/metadata";
-import { buildArticlePageSchemas } from "@/lib/schema";
-import { getAllArticles, getArticle, getRelatedArticles } from "@/lib/mdx";
+import { buildArticlePageSchemas, getArticleBreadcrumbTrail } from "@/lib/schema";
+import { getAllArticles, getArticle, getRelatedArticles } from "@/lib/utils/mdx";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -73,6 +75,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
       <JsonLd schemas={buildArticlePageSchemas(locale, article)} />
       <div className="min-h-screen pt-24 md:pt-32">
         <Container>
+          <Breadcrumbs items={getArticleBreadcrumbTrail(locale, article)} />
           <Link
             href="/writing"
             className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow mb-12"
@@ -97,7 +100,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <div className="flex items-center gap-4 mb-6">
                 <time
                   dateTime={article.frontmatter.date}
-                  className="eyebrow text-muted-foreground/70"
+                  className="eyebrow text-muted-foreground"
                 >
                   {new Date(article.frontmatter.date).toLocaleDateString(
                     locale,
@@ -109,9 +112,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   )}
                 </time>
                 <span className="text-primary/20">·</span>
-                <span                   className="eyebrow text-muted-foreground/70">
-                  {article.frontmatter.readTime}
-                </span>
+                <Eyebrow>{article.frontmatter.readTime}</Eyebrow>
               </div>
 
               <h1
@@ -152,9 +153,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           </article>
           {ctaConfig && (
             <section className="mt-16 border-t border-foreground/8 pt-10">
-              <p                   className="eyebrow text-muted-foreground/70 mb-4 block">
-                {t("nextStep")}
-              </p>
+              <Eyebrow className="mb-4 block">{t("nextStep")}</Eyebrow>
               <Link
                 href={ctaConfig.href}
                 className="group inline-flex items-center gap-2 text-muted-foreground transition-colors duration-300 hover:text-foreground eyebrow"
@@ -178,9 +177,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           )}
           {related.length > 0 && (
             <section className="mt-20 md:mt-32 border-t border-foreground/8 pt-12 md:pt-16">
-              <p className="eyebrow text-muted-foreground/70 mb-4 block">
-                {t("relatedArticles")}
-              </p>
+              <Eyebrow className="mb-4 block">{t("relatedArticles")}</Eyebrow>
               <h2
                 className="font-sans font-normal text-primary leading-[1.05] mb-10"
                 style={{

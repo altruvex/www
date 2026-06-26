@@ -5,8 +5,46 @@ function isRTLText(text: string): boolean {
   return (stripped.match(rtlRange) ?? []).length / stripped.length > 0.3;
 }
 
+const ACCENT_SELECTOR = "[data-accent-grad]";
+
+// `background-clip:text` is not inherited, so a gradient-clipped phrase split into
+// per-word/char spans would normally tear into one flat-colored fragment per piece.
+// Fixed via CSS instead of skipping the split: globals.css gives every `.m-word`/
+// `.m-char` *inside* `[data-accent-grad]` `background-image: inherit` (pulls the
+// parent's resolved gradient) - then this function repaints each fragment's
+// `background-size`/`background-position` so collectively they show one continuous
+// sweep across the whole phrase, like a single gradient sliced into pieces. Lets the
+// colored phrase animate word-by-word/char-by-char in sync with the rest of the
+// sentence instead of moving as one rigid block.
+function alignAccentGradients(root: HTMLElement): void {
+  const accents = root.querySelectorAll<HTMLElement>(ACCENT_SELECTOR);
+  accents.forEach((accentEl) => {
+    // `animate` mode (bg-size-[200%_auto] + animate-text-gradient) owns its own
+    // background-size for the decorative sweep - don't fight it.
+    if (accentEl.classList.contains("animate-text-gradient")) return;
+
+    const fragments = Array.from(
+      accentEl.querySelectorAll<HTMLElement>(".m-word, .m-char"),
+    );
+    if (!fragments.length) return;
+
+    const accentRect = accentEl.getBoundingClientRect();
+    if (!accentRect.width) return;
+
+    fragments.forEach((fragment) => {
+      const fragmentRect = fragment.getBoundingClientRect();
+      fragment.style.backgroundSize = `${accentRect.width}px 100%`;
+      fragment.style.backgroundPositionX = `${-(fragmentRect.left - accentRect.left)}px`;
+    });
+  });
+}
+
+function createTextWalker(element: HTMLElement): TreeWalker {
+  return document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+}
+
 function splitIntoChars(element: HTMLElement): Element[] {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const walker = createTextWalker(element);
   const textNodes: Text[] = [];
   let node: Node | null;
 
@@ -36,7 +74,7 @@ function splitIntoChars(element: HTMLElement): Element[] {
 }
 
 function splitIntoWords(element: HTMLElement, script: "arabic" | "latin" = "latin"): Element[] {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const walker = createTextWalker(element);
   const textNodes: Text[] = [];
   let node: Node | null;
 
@@ -127,6 +165,7 @@ export function autoSplit(
 
   if (rtl) {
     const targets = splitIntoWords(element, "arabic");
+    alignAccentGradients(element);
     return { targets, isRTL: true, canBlur: false };
   }
 
@@ -142,6 +181,9 @@ export function autoSplit(
       targets = splitIntoLines(element);
       break;
   }
+  alignAccentGradients(element);
 
   return { targets, isRTL: false, canBlur: true };
 }
+
+export { alignAccentGradients };

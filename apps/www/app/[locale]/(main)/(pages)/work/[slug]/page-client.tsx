@@ -1,11 +1,14 @@
 "use client";
 
-import { Container } from "@/components/container";
+import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
-import { getTestimonialsForCaseStudy } from "@/lib/testimonials";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
+import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { getTestimonialsForCaseStudy } from "@/lib/data/testimonials";
 import { useLocale, useTranslations } from "next-intl";
-import { getCaseStudyBySlug } from "@/lib/case-studies";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 type WorkCaseStudyPageClientProps = {
   locale: string;
@@ -20,6 +23,11 @@ export default function WorkCaseStudyPageClient({
   const tCS = useTranslations("caseStudies");
   const testimonials = slug ? getTestimonialsForCaseStudy(slug) : [];
 
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription<HTMLParagraphElement>();
+  const metricsRef = useSectionCardGrid<HTMLDivElement>();
+
   let exists = false;
   try {
     exists = !!tCS(slug + ".name");
@@ -33,10 +41,9 @@ export default function WorkCaseStudyPageClient({
       <section className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="max-w-2xl py-32">
-            <p className="eyebrow text-muted-foreground/70 mb-4 block">
-              {tLabels("caseStudy")}
-            </p>
+            <Eyebrow ref={eyebrowRef} className="mb-4 block">{tLabels("caseStudy")}</Eyebrow>
             <h1
+              ref={titleRef}
               className="font-sans font-normal text-primary leading-[1.05] mb-4"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",
@@ -45,7 +52,7 @@ export default function WorkCaseStudyPageClient({
             >
               {tLabels("notFoundTitle")}
             </h1>
-            <p className="text-base text-primary/60 leading-relaxed mb-8">
+            <p ref={descRef} className="text-base text-primary/60 leading-relaxed mb-8">
               {tLabels("notFoundBody")}
             </p>
             <Link
@@ -88,10 +95,9 @@ export default function WorkCaseStudyPageClient({
       <Container>
         <div className="py-12 md:py-24">
           <div className="mb-16">
-            <p className="eyebrow text-muted-foreground/70 mb-4 block">
-              {tLabels("caseStudy")} · {year}
-            </p>
+            <Eyebrow ref={eyebrowRef} className="mb-4 block">{tLabels("caseStudy")} · {year}</Eyebrow>
             <h1
+              ref={titleRef}
               className="mb-4 font-sans font-normal text-primary leading-[1.03]"
               style={{
                 fontSize: "clamp(36px, 6vw, 72px)",
@@ -103,12 +109,12 @@ export default function WorkCaseStudyPageClient({
             <p className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/35 mb-5">
               {tCS(slug + ".client")} · {tCS(slug + ".industry")}
             </p>
-            <p className="text-base text-primary/60 leading-relaxed max-w-[52ch]">
+            <p ref={descRef} className="text-base text-primary/60 leading-relaxed max-w-[52ch]">
               {tCS(slug + ".summary")}
             </p>
           </div>
           <div
-            // Color world: forest green. Results/proof archetype — case-study outcomes.
+            ref={metricsRef}
             className="accent-world-green grid gap-4 md:grid-cols-3 mb-16"
           >
             {metrics.map((metric) => (
@@ -116,9 +122,7 @@ export default function WorkCaseStudyPageClient({
                 key={metric.label}
                 className="border border-foreground/8 rounded-lg bg-foreground/2 p-5 md:p-6"
               >
-                <p className="eyebrow text-local-accent mb-3">
-                  {metric.label}
-                </p>
+                <Eyebrow tone="accent" className="mb-3">{metric.label}</Eyebrow>
                 <p
                   className="font-sans font-light text-local-accent leading-none mb-1"
                   style={{
@@ -131,7 +135,6 @@ export default function WorkCaseStudyPageClient({
               </div>
             ))}
           </div>
-
           <div className="h-px w-full bg-foreground/8 mb-16" />
           <div className="grid gap-12 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="space-y-12">
@@ -146,7 +149,7 @@ export default function WorkCaseStudyPageClient({
                 },
                 {
                   heading: tLabels("results"),
-                  content: tCS(slug + ".outcome"),
+                  content: tCS.rich(slug + ".outcome", bodyMarks),
                 },
               ].map(({ heading, content }) => (
                 <section key={heading}>
@@ -167,7 +170,7 @@ export default function WorkCaseStudyPageClient({
             </div>
             <aside className="space-y-4">
               <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
-                <h3 className="eyebrow text-muted-foreground/70 mb-4">
+                <h3 className="eyebrow text-muted-foreground mb-4">
                   {tLabels("techStack")}
                 </h3>
                 <ul className="space-y-2">
@@ -184,7 +187,7 @@ export default function WorkCaseStudyPageClient({
               </div>
               {externalUrl && (
                 <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
-                  <h3 className="eyebrow text-muted-foreground/70 mb-4">
+                  <h3 className="eyebrow text-muted-foreground mb-4">
                     {tLabels("liveSite")}
                   </h3>
                   <a
@@ -214,7 +217,7 @@ export default function WorkCaseStudyPageClient({
               )}
               {testimonials.length > 0 && (
                 <div className="border border-foreground/8 rounded-lg bg-foreground/2 p-5">
-                  <h3 className="eyebrow text-muted-foreground/70 mb-4">
+                  <h3 className="eyebrow text-muted-foreground mb-4">
                     {tLabels("clientPersp")}
                   </h3>
                   <blockquote className="text-base text-primary/60 leading-relaxed mb-4">

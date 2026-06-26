@@ -1,11 +1,12 @@
 "use client";
-import { monoCaps } from "@/lib/mono-caps";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils";
+import { cn, splitHeadline } from "@/lib/utils/utils";
 import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { memo, useCallback, useState } from "react";
-import { Container } from "../container";
+import { Container } from "@/components/shared/container";
 import { SectionHeading } from "./section-heading";
 
 interface ProcessStep {
@@ -24,7 +25,7 @@ interface StepItemProps {
   i: number;
   active: number;
   step: ProcessStep;
-  t: (key: string) => string;
+  t: ReturnType<typeof useTranslations<"process">>;
   onToggle: (i: number) => void;
 }
 
@@ -52,7 +53,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
         <span
           className={cn(
             monoCaps,
-            "shrink-0 tabular-nums text-s-low transition-colors duration-200 group-data-[open=true]:text-s-high rtl:text-center rtl:[direction:ltr] rtl:[unicode-bidi:embed]",
+            "shrink-0 tabular-nums text-s-mid transition-colors duration-200 group-data-[open=true]:text-s-high rtl:text-center rtl:[direction:ltr] rtl:[unicode-bidi:embed]",
           )}
         >
           {step.index}
@@ -63,7 +64,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
         </span>
 
         <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-s-border transition-colors duration-200 group-data-[open=true]:border-s-border-hover">
-          <span className="block font-mono text-sm leading-none text-s-low transition-transform duration-300 group-data-[open=true]:rotate-45 group-data-[open=true]:text-s-high rtl:group-data-[open=true]:-rotate-45">
+          <span className="block font-mono text-sm leading-none text-s-mid transition-transform duration-300 group-data-[open=true]:rotate-45 group-data-[open=true]:text-s-high rtl:group-data-[open=true]:-rotate-45">
             <Plus className="pointer-events-none size-4 shrink-0 transition-transform duration-200" />
           </span>
         </span>
@@ -77,8 +78,8 @@ const ProcessStepItem = memo(function ProcessStepItem({
       >
         <div className="overflow-hidden">
           <div className="p-6">
-            <p className="font-mono text-sm leading-relaxed text-s-low">
-              {t(`steps.${step.key}.description`)}
+            <p className="font-mono text-sm leading-relaxed text-s-mid">
+              {t.rich(`steps.${step.key}.description`, bodyMarks)}
             </p>
             <div className="mt-5 grid max-w-full grid-cols-1 gap-3 ps-0 sm:grid-cols-2 md:ps-[62px] lg:max-w-[620px] lg:ps-[72px]">
               {[
@@ -97,12 +98,12 @@ const ProcessStepItem = memo(function ProcessStepItem({
                   key={label}
                   className="rounded-lg border border-s-border bg-s-surface p-5"
                 >
-                  <p className={cn(monoCaps, "mb-2.5 text-s-muted")}>{label}</p>
+                  <p className={cn(monoCaps, "mb-2.5 text-s-mid")}>{label}</p>
                   <p
                     className={
                       large
                         ? "text-[clamp(1.35rem,2.4vw,1.85rem)] leading-[1.15] tracking-[-0.018em] font-medium text-s-high"
-                        : "text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-s-low"
+                        : "text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-s-mid"
                     }
                   >
                     {value}
@@ -143,7 +144,7 @@ export const ProcessSection = memo(function ProcessSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          description={t("subtitle")}
+          description={t.rich("subtitle", bodyMarks)}
           className="mb-14"
           classes={{
             eyebrow: monoCaps,
@@ -190,7 +191,7 @@ export const ProcessSection = memo(function ProcessSection() {
           ))}
         </div>
         <div className="mt-6 flex items-center gap-4">
-          <span className={cn(monoCaps, "text-s-low")}>{t("footer")}</span>
+          <span className={cn(monoCaps, "text-s-mid")}>{t("footer")}</span>
           <div className="flex-1 h-px bg-s-border" />
         </div>
       </Container>

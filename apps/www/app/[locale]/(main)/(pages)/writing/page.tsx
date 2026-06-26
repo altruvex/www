@@ -1,5 +1,5 @@
 import { JsonLd } from "@/components/seo/json-ld";
-import { getAllArticles } from "@/lib/mdx";
+import { getAllArticles } from "@/lib/utils/mdx";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
 import PageClient from "./page-client";

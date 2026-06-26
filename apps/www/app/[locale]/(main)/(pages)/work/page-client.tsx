@@ -1,10 +1,12 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Accent } from "@/components/ui/emphasis";
+import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Accent } from "@/components/ui/emphasis";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { WorkItem } from "@/components/work-item";
-import { CASE_STUDIES } from "@/lib/case-studies";
+import { CASE_STUDIES } from "@/lib/data/case-studies";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
@@ -23,12 +25,9 @@ export default memo(function WorkIndexPage() {
         <Container>
           <div className="py-16 md:py-24">
             <div className="mb-16">
-              <p
-                ref={eyebrowRef}
-                className="eyebrow text-muted-foreground/70 mb-4 block"
-              >
+              <Eyebrow ref={eyebrowRef} className="mb-4 block">
                 {t("selectedWork")}
-              </p>
+              </Eyebrow>
               <h1
                 ref={titleRef}
                 className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
@@ -41,7 +40,7 @@ export default memo(function WorkIndexPage() {
                 ref={descRef}
                 className="text-base text-primary/60 leading-relaxed max-w-[44ch]"
               >
-                {t("description")}
+                {t.rich("description", bodyMarks)}
               </p>
             </div>
             <div className="h-px w-full bg-foreground/8" />

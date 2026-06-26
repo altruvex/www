@@ -1,23 +1,24 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { ArrowIcon } from "@/components/directional-link";
-import { Accent } from "@/components/ui/emphasis";
-import { MagneticButton } from "@/components/magnetic-button";
+import { Container } from "@/components/shared/container";
+import { ArrowIcon } from "@/components/shared/directional-link";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { ServiceHero } from "@/components/sections/service-hero";
+import { Accent } from "@/components/ui/emphasis";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { Link } from "@/i18n/navigation";
-import { accentWorldClass } from "@/lib/accent-world";
-import { getCommercialCta } from "@/lib/commercial";
-import { monoCaps } from "@/lib/mono-caps";
+import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { monoCaps } from "@/lib/utils/mono-caps";
 import {
   useSectionCardGrid,
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle
 } from "@/lib/motion";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
+import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function EcommerceServicePage() {
   return (
@@ -42,7 +43,7 @@ function HeroSection() {
       subtitle={t("subtitle")}
       title={t("title")}
       titleItalic={t("titleItalic")}
-      description={t("description")}
+      description={t.rich("description", bodyMarks)}
       gridVisibility="md-up"
       showHorizontalGridLine={false}
       showScrollHint={false}
@@ -66,7 +67,7 @@ function CapabilitiesSection() {
       <Container>
         <p
           ref={eyebrowRef}
-          className={cn(monoCaps, "text-muted-foreground/70 mb-4 block")}
+          className={cn(monoCaps, "text-muted-foreground mb-4 block")}
         >
           {t("eyebrow")}
         </p>
@@ -130,14 +131,14 @@ function ProofSection() {
           ref={descRef}
           className="text-base text-primary/60 leading-relaxed max-w-xl mb-8"
         >
-          {t("body")}
+          {t.rich("body", bodyMarks)}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           {/*
             FIX: hardcoded "→" unicode character. Brand names staying
             untranslated is correct (proper nouns), but the arrow glyph
             itself was a raw character, not the bidi-aware ArrowIcon used
-            elsewhere in the system — it would sit visually backwards
+            elsewhere in the system - it would sit visually backwards
             on the Arabic route instead of mirroring like every other
             directional affordance on the site. Also added a hover-shift
             on the icon so this matches the micro-interaction language
@@ -190,18 +191,12 @@ function ClosingCtaSection() {
           <p className="text-base text-primary/60 leading-relaxed mb-8 max-w-[48ch]">
             {t("description")}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <MagneticButton asChild size="lg" variant="accent" className="w-full sm:w-auto">
-              <Link href={technicalCallCta.href}>{tCTAs("technicalCall")}</Link>
-            </MagneticButton>
-            <MagneticButton asChild
-              size="lg"
-              variant="secondary"
-              className="w-full sm:w-auto"
-            >
-              <Link href="/services">{t("back")}</Link>
-            </MagneticButton>
-          </div>
+          <CtaButtonGroup
+            primaryVariant="accent"
+            primary={{ href: technicalCallCta.href, label: tCTAs("technicalCall") }}
+            secondary={{ href: "/services", label: t("back") }}
+            className="gap-3"
+          />
         </div>
       </Container>
     </section>

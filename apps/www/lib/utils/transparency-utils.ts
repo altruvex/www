@@ -1,4 +1,4 @@
-import { SITE_CONFIG } from "./metadata";
+import { SITE_CONFIG } from "../metadata";
 import { localizeNumbers, normalizeNumeralsToEnglish } from "./number";
 
 export type DeliverableTier = "small" | "medium" | "large" | "enterprise";
