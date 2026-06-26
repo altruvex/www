@@ -1,21 +1,19 @@
 "use client";
 
 import { useLoading } from "@/components/providers/loading-provider";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { MOTION } from "@/lib/motion";
 import { memo, startTransition, useEffect, useRef, useState } from "react";
-import { Container } from "./container";
 
 const INITIAL_LOAD_KEY = "Altruvex_initial_load_complete";
 
 const BOOT_LINES = [
   { text: "$ altruvex --init", delay: 0, type: "command" },
   { text: "", delay: 300, type: "blank" },
-  { label: "runtime", status: "✓", value: "Next.js 16", delay: 420, type: "check" },
-  { label: "compiler", status: "✓", value: "TypeScript 6", delay: 560, type: "check" },
-  { label: "design system", status: "✓", value: "Tailwind v4", delay: 700, type: "check" },
-  { label: "locale", status: "✓", value: "AR / EN", delay: 840, type: "check" },
+  { label: "runtime", dots: "...........", status: "✓", value: "Next.js 16", delay: 420, type: "check" },
+  { label: "compiler", dots: "..........", status: "✓", value: "TypeScript 6", delay: 560, type: "check" },
+  { label: "design system", dots: ".....", status: "✓", value: "Tailwind v4", delay: 700, type: "check" },
+  { label: "locale", dots: "............", status: "✓", value: "AR / EN", delay: 840, type: "check" },
   { text: "", delay: 980, type: "blank" },
   { text: "ready.", delay: 1050, type: "ready" },
 ] as const;
@@ -76,7 +74,7 @@ export const InitialLoader = memo(function InitialLoader() {
       (BOOT_LINES[BOOT_LINES.length - 1].delay + 500) * (isMobile ? 0.55 : 1);
     const wordmarkMs = MOTION.duration.base * 1000 * (isMobile ? 0.7 : 1);
     const containerFadeMs = MOTION.duration.fast * 1000;
-    const holdAfterWordmark = isMobile ? 450 : 900;
+    const holdAfterWordmark = isMobile ? 350 : 800;
 
     timeouts.push(window.setTimeout(() => setShowWordmark(true), exitDelay));
     timeouts.push(
@@ -115,9 +113,9 @@ export const InitialLoader = memo(function InitialLoader() {
 
   return (
     <div
-      dir="ltr"
+      dir={"ltr"}
       ref={containerRef}
-      className="fixed inset-0 z-9999 flex flex-col justify-center overflow-hidden bg-background selection:bg-brand/20"
+      className="fixed inset-0 z-9999 flex flex-col justify-center overflow-hidden bg-background"
       style={{
         opacity: exiting ? 0 : 1,
         transition: `opacity ${MOTION.duration.fast}s ${MOTION.ease.ui}`,
@@ -125,61 +123,62 @@ export const InitialLoader = memo(function InitialLoader() {
       suppressHydrationWarning
       aria-hidden="true"
     >
-      <div className="grain-overlay" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,hsl(var(--background))_100%)] z-0" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.02] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-size-[100%_4px] z-0 dark:opacity-[0.04]" />
-      <div className="absolute top-0 inset-x-0 h-px bg-border" />
-      <div className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 opacity-60">
-        <Eyebrow>Altruvex / Init</Eyebrow>
-        <span className="font-mono text-xs tracking-wider text-brand-text/80">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,hsl(var(--background))_120%)] z-0" />
+      <div className="pointer-events-none absolute inset-0 opacity-[0.015] bg-[linear-gradient(transparent_50%,rgba(0,0,0,1)_50%)] bg-size-[100%_4px] z-0" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-foreground/10" />
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-8 py-5 opacity-40">
+        <span className="font-mono text-xs leading-normal tracking-[0.28em] uppercase text-foreground">
+          Altruvex / Init
+        </span>
+        <span className="font-mono text-xs leading-normal tracking-wider text-primary">
           v{process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0"}
         </span>
       </div>
-      <Container className="w-full relative z-10 flex flex-col items-start">
+      <div className="px-8 md:px-16 max-w-2xl relative z-10">
         <div
-          className="mb-12 w-full"
-          style={{ minHeight: `${BOOT_LINES.length * 1.8}em` }}
+          className="mb-12"
+          style={{ minHeight: `${BOOT_LINES.length * 1.6}em` }}
         >
           {BOOT_LINES.map((line, i) => (
             <div
               key={i}
-              className="flex items-center tracking-wide font-mono text-sm sm:text-base leading-[1.8] min-h-[1.8em] w-full max-w-md"
+              className="flex items-center tracking-wide font-mono text-[clamp(11px,1vw,13px)] leading-[1.6] min-h-[1.6em]"
               style={{
+                fontFamily: "var(--font-mono, ui-monospace, monospace)",
                 opacity: reduced ? 1 : 0,
-                transform: reduced ? "none" : "translateY(6px)",
+                transform: reduced ? "none" : "translateY(4px)",
                 animation: reduced
                   ? "none"
-                  : `altruvex-boot-line 0.3s ${MOTION.ease.smooth} ${line.delay}ms forwards`,
+                  : `altruvex-boot-line 0.25s ${MOTION.ease.smooth} ${line.delay}ms forwards`,
               }}
             >
               {line.type === "check" && (
-                <div className="flex w-full ml-4 md:ml-6 items-end">
-                  <span className="text-muted-foreground shrink-0">{line.label}</span>
-                  <span className="grow border-b-2 border-dotted border-border-mid mx-3 mb-[0.4em] opacity-40" />
-                  <span className="text-success mx-3 shrink-0 flex items-center justify-center drop-shadow-sm">
+                <div className="flex w-full ml-4">
+                  <span className="text-foreground/40 w-32 shrink-0">{line.label}</span>
+                  <span className="text-foreground/10 tracking-[0.2em] grow overflow-hidden whitespace-nowrap">
+                    {line.dots}
+                  </span>
+                  <span className="text-emerald-500/80 mx-4 w-4 shrink-0 text-center drop-shadow-[0_0_4px_rgba(34,197,94,0.4)]">
                     {line.status}
                   </span>
-                  <span className="text-foreground/80 shrink-0 min-w-[100px] text-right">
-                    {line.value}
-                  </span>
+                  <span className="text-foreground/60 w-28 shrink-0">{line.value}</span>
                 </div>
               )}
-              
               {line.type !== "check" && (
                 <span
                   className={`${
                     line.type === "command"
-                      ? "text-foreground"
+                      ? "text-foreground font-medium"
                       : line.type === "ready"
-                      ? "text-brand-text ml-4 md:ml-6"
+                      ? "text-primary ml-4"
                       : "text-transparent"
                   }`}
                 >
-                  {line.type === "ready" && <span className="mr-3 opacity-50">{">"}</span>}
+                  {line.type === "ready" && <span className="mr-2 opacity-50">{">"}</span>}
                   {line.text}
                   {i === BOOT_LINES.length - 1 && (
                     <span
-                      className="inline-block w-[6px] h-[1em] bg-brand-text ml-2 align-middle"
+                      className="inline-block w-[2px] h-[0.9em] bg-primary ml-2 align-middle"
                       style={{
                         animation: hideCursor ? "none" : "altruvex-blink 1s step-end infinite",
                         opacity: hideCursor ? 0 : 1,
@@ -193,37 +192,30 @@ export const InitialLoader = memo(function InitialLoader() {
           ))}
         </div>
         <div
-          className="will-change-transform"
           style={{
             opacity: showWordmark ? 1 : 0,
-            transform: showWordmark ? "translateY(0) scale(1)" : "translateY(16px) scale(0.97)",
-            filter: showWordmark ? "blur(0px)" : "blur(8px)",
-            transition: `all ${MOTION.duration.slow || 0.8}s cubic-bezier(0.2, 0.8, 0.2, 1)`,
+            transform: showWordmark ? "translateY(0) scale(1)" : "translateY(12px) scale(0.98)",
+            filter: showWordmark ? "blur(0px)" : "blur(4px)",
+            transition: `all ${MOTION.duration.slow || 0.8}s ${MOTION.ease.smooth}`,
           }}
         >
-          <h1 className="font-sans text-foreground text-[clamp(2.5rem,8vw,5.5rem)] tracking-tight leading-none">
+          <div className="font-sans font-light text-foreground text-[clamp(36px,6vw,72px)] tracking-tight leading-none">
             Altruvex
-          </h1>
-          <Eyebrow className="mt-4 ml-1">Engineering Beyond Standard.</Eyebrow>
+          </div>
+          <div className="font-mono text-[13px] leading-normal tracking-[0.3em] text-foreground/30 mt-3 uppercase">
+            Engineering Beyond Standard.
+          </div>
         </div>
-      </Container>
-      <div className="absolute bottom-0 inset-x-0 h-px bg-border" />
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-foreground/10" />
       <style>{`
         @keyframes altruvex-boot-line {
-          from { 
-            opacity: 0; 
-            transform: translateY(8px); 
-            filter: blur(4px); 
-          }
-          to { 
-            opacity: 1; 
-            transform: translateY(0); 
-            filter: blur(0); 
-          }
+          from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+          to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
         @keyframes altruvex-blink {
           0%, 100% { opacity: 1; }
-          50%      { opacity: 0; }
+          50%       { opacity: 0; }
         }
       `}</style>
     </div>
