@@ -125,8 +125,8 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
         aria-label={`${tW("viewCaseStudy")} - ${name}`}
       />
       <div className="pointer-events-none relative z-20 px-4">
-        <div className="mb-4 flex items-start justify-between gap-6">
-          <div className="flex items-baseline gap-6 md:gap-10">
+        <div className="mb-4 flex items-start justify-between gap-4 sm:gap-6">
+          <div className="flex min-w-0 items-baseline gap-3 sm:gap-6 md:gap-10">
             <span
               className="font-mono text-sm font-light leading-normal tracking-wider text-primary/20 transition-colors duration-300 group-hover:text-primary/55"
               style={{
@@ -136,7 +136,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
             >
               {String(index + 1).padStart(2, "0")}
             </span>
-            <div>
+            <div className="min-w-0">
               <h2
                 className="mb-1 font-sans font-medium text-primary transition-transform duration-300 ltr:group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
                 style={{
@@ -166,7 +166,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
             </svg>
           </div>
         </div>
-        <div className="ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
+        <div className="ps-[calc(clamp(20px,2.5vw,28px)+12px)] sm:ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
           <p className="mb-4 max-w-[52ch] text-base leading-relaxed text-foreground/70">
             {summary}
           </p>
@@ -190,7 +190,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               />
             </div>
           )}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="flex flex-wrap gap-2">
               {metrics.slice(0, 2).map((metric) => (
                 <div
@@ -206,7 +206,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                 </div>
               ))}
             </div>
-            <div className="pointer-events-auto relative z-30 flex items-center gap-6">
+            <div className="pointer-events-auto relative z-30 flex flex-wrap items-center gap-4 sm:gap-6">
               {externalUrl && (
                 <a
                   href={externalUrl}

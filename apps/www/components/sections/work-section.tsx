@@ -121,7 +121,7 @@ function FlagshipMetaBlock({
         ].map((item) => (
           <div
             key={item.label}
-            className="border-e border-b border-border px-6 py-8 group hover:bg-surface transition-colors duration-300 md:last:border-e-0"
+            className="border-b border-border px-6 py-8 group hover:bg-surface transition-colors duration-300 md:border-e md:last:border-e-0"
           >
             <Eyebrow className="mb-4">{stepLabel} · {item.label}</Eyebrow>
             <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">

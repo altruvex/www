@@ -25,7 +25,7 @@ function ProblemRow({ item }: { item: ProblemItem }) {
     <div
       data-problem-row
       role="listitem"
-      className="group grid grid-cols-1 gap-6 border-t border-border py-10 md:grid-cols-[120px_1fr] md:gap-12 lg:grid-cols-[160px_1fr] lg:gap-16"
+      className="group grid grid-cols-1 gap-4 border-t border-border py-8 sm:gap-6 sm:py-10 md:grid-cols-[120px_1fr] md:gap-12 lg:grid-cols-[160px_1fr] lg:gap-16"
     >
       <div className="flex items-start">
         <span
@@ -95,16 +95,16 @@ export const ProblemSection = memo(function ProblemSection() {
           <div className={cn("h-px w-full bg-border")} aria-hidden="true" />
         </div>
 
-        <div className="mt-14 flex items-center gap-4 lg:mt-16">
+        <div className="mt-14 flex flex-col items-center gap-4 text-center sm:flex-row lg:mt-16">
           <span
-            className="h-px flex-1 bg-linear-to-r from-border to-transparent"
+            className="hidden h-px flex-1 bg-linear-to-r from-border to-transparent sm:block"
             aria-hidden="true"
           />
-          <p className="shrink-0 text-sm leading-relaxed text-muted-foreground">
+          <p className="max-w-[36ch] shrink-0 text-sm leading-relaxed text-muted-foreground sm:max-w-none">
             {t("closingPre")} <Highlight>{t("closingHighlight")}</Highlight>
           </p>
           <span
-            className="h-px flex-1 bg-linear-to-l from-border to-transparent"
+            className="hidden h-px flex-1 bg-linear-to-l from-border to-transparent sm:block"
             aria-hidden="true"
           />
         </div>
