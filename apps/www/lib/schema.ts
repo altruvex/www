@@ -8,6 +8,7 @@ import {
 } from "@/lib/metadata";
 import type { RouteMetaKey, SupportedLocale } from "@/lib/metadata";
 import type { Article } from "@/types/mdx";
+import type { Testimonial } from "@/lib/data/testimonials";
 
 export type JsonLdSchema = Record<string, unknown>;
 type FaqEntry = { answer: string; question: string };
@@ -564,15 +565,51 @@ function buildCaseStudySchema(
   };
 }
 
+/** Strips MDX/markdown syntax down to plain prose for articleBody/wordCount. */
+function plainTextFromMdx(mdx: string): string {
+  return mdx
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/^---[\s\S]*?---/, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#>*_`~-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildArticleImageSchema(
+  locale: SupportedLocale,
+  article: Article,
+): JsonLdSchema {
+  const url = article.frontmatter.coverImage
+    ? `${SITE_CONFIG.url}${article.frontmatter.coverImage}`
+    : getLocalizedUrl(locale, "/opengraph-image");
+
+  return {
+    "@type": "ImageObject",
+    contentUrl: url,
+    url,
+    ...(article.frontmatter.coverImage
+      ? {}
+      : { height: 630, width: 1200 }),
+  };
+}
+
 function buildArticleSchema(
   locale: SupportedLocale,
   article: Article,
 ): JsonLdSchema {
   const url = getLocalizedUrl(locale, `/writing/${article.slug}`);
+  const articleBody = plainTextFromMdx(article.content);
+  const wordCount = articleBody.length > 0
+    ? articleBody.split(/\s+/).filter(Boolean).length
+    : undefined;
 
   return {
     "@context": "https://schema.org",
     "@type": "Article",
+    articleBody,
     articleSection: "Web Engineering",
     author: {
       "@id": FOUNDER_ID,
@@ -589,7 +626,7 @@ function buildArticleSchema(
     datePublished: article.frontmatter.date,
     description: article.frontmatter.excerpt,
     headline: article.frontmatter.title,
-    image: getLocalizedUrl(locale, "/opengraph-image"),
+    image: buildArticleImageSchema(locale, article),
     inLanguage: locale,
     keywords: article.frontmatter.tags.join(", "),
     mainEntityOfPage: url,
@@ -597,7 +634,40 @@ function buildArticleSchema(
       "@id": ORGANIZATION_ID,
     },
     url,
+    ...(wordCount !== undefined ? { wordCount } : {}),
   };
+}
+
+/**
+ * No numeric star ratings exist for these testimonials, so reviewRating /
+ * AggregateRating are intentionally omitted rather than fabricated —
+ * unsupported rating schema risks a Google manual action.
+ */
+function buildReviewSchema(
+  locale: SupportedLocale,
+  testimonial: Testimonial,
+): JsonLdSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    author: {
+      "@type": "Organization",
+      name: testimonial.author,
+    },
+    itemReviewed: {
+      "@id": ORGANIZATION_ID,
+    },
+    reviewBody: testimonial.quote[locale],
+  };
+}
+
+export function buildTestimonialReviewSchemas(
+  locale: string,
+  testimonials: Testimonial[],
+): JsonLdSchema[] {
+  const loc = normalizeLocale(locale);
+
+  return testimonials.map((testimonial) => buildReviewSchema(loc, testimonial));
 }
 
 function buildStaticBreadcrumbs(

@@ -1,3 +1,4 @@
+import { Accent, Highlight, Strong, type AccentGradient } from "@/components/ui/emphasis";
 import { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,11 +17,31 @@ function fallbackAltText(src: string) {
   return humanized || "Article illustration";
 }
 
+/**
+ * The single color accent an article earns for its one defining claim -
+ * not a highlighter. Used at most once or twice per article; everything
+ * else stays in Strong/Highlight so the color keeps its signal.
+ */
+function Mark({
+  gradient = "brand",
+  children,
+}: {
+  gradient?: AccentGradient;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Accent gradient={gradient} className="font-medium">
+      {children}
+    </Accent>
+  );
+}
+
 export const mdxComponents: MDXComponents = {
   h1: ({ children, id }) => (
     <h1
       id={id}
-      className="mb-6 mt-12 font-sans text-4xl font-bold tracking-tight"
+      className="mb-6 mt-12 font-sans font-normal text-foreground leading-[1.1] tracking-[-0.025em]"
+      style={{ fontSize: "clamp(2.25rem, 4.2vw, 3.5rem)" }}
     >
       {children}
     </h1>
@@ -28,19 +49,27 @@ export const mdxComponents: MDXComponents = {
   h2: ({ children, id }) => (
     <h2
       id={id}
-      className="mb-4 mt-10 font-sans text-3xl font-semibold tracking-tight"
+      className="mb-5 mt-14 font-sans font-normal text-foreground leading-[1.12] tracking-[-0.02em]"
+      style={{ fontSize: "clamp(1.625rem, 3.2vw, 2.5rem)" }}
     >
       {children}
     </h2>
   ),
   h3: ({ children, id }) => (
-    <h3 id={id} className="mb-3 mt-8 font-sans text-2xl font-semibold">
+    <h3
+      id={id}
+      className="mb-4 mt-10 font-sans font-normal text-foreground leading-[1.18] tracking-[-0.015em]"
+      style={{ fontSize: "clamp(1.25rem, 2.2vw, 1.625rem)" }}
+    >
       {children}
     </h3>
   ),
   p: ({ children }) => (
     <p className="mb-6 text-lg leading-relaxed text-primary/85">{children}</p>
   ),
+  strong: ({ children }) => <Strong>{children}</Strong>,
+  em: ({ children }) => <Highlight>{children}</Highlight>,
+  Mark,
   ul: ({ children }) => (
     <ul className="my-6 ml-6 list-disc space-y-2">{children}</ul>
   ),

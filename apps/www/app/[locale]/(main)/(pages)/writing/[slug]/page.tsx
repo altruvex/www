@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { mdxComponents } from "@/components/mdx/mdx-components";
+import { AuditLeadCapture } from "@/components/sections/audit-lead-capture";
 import { Link } from "@/i18n/navigation";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { buildArticlePageSchemas, getArticleBreadcrumbTrail } from "@/lib/schema";
@@ -150,6 +151,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             >
               <MDXRemote source={article.content} components={mdxComponents} />
             </div>
+            <AuditLeadCapture
+              source={`article_audit_cta:${slug}`}
+              className="mt-12 md:mt-16 max-w-3xl"
+            />
           </article>
           {ctaConfig && (
             <section className="mt-16 border-t border-foreground/8 pt-10">

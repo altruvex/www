@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "knip": "knip --no-config-hints",
-    "sync:transparency-i18n": "bun scripts/update-transparency-json.js"
+    "sync:transparency-i18n": "bun scripts/update-transparency-json.js",
+    "indexnow:submit": "bun scripts/indexnow-submit.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

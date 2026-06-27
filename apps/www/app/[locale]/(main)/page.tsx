@@ -1,7 +1,8 @@
 import { HeroSectionServer } from "@/components/sections/hero-section.server";
 import { JsonLd } from "@/components/seo/json-ld";
+import { getAllTestimonials } from "@/lib/data/testimonials";
 import { generateRouteMetadata } from "@/lib/metadata";
-import { buildPageSchemas } from "@/lib/schema";
+import { buildPageSchemas, buildTestimonialReviewSchemas } from "@/lib/schema";
 import { setRequestLocale } from "next-intl/server";
 import { HomeClient } from "./home-client";
 
@@ -25,7 +26,12 @@ export default async function Home({
 
   return (
     <>
-      <JsonLd schemas={buildPageSchemas(locale, "home")} />
+      <JsonLd
+        schemas={[
+          ...buildPageSchemas(locale, "home"),
+          ...buildTestimonialReviewSchemas(locale, getAllTestimonials()),
+        ]}
+      />
       <HeroSectionServer locale={locale} />
       <HomeClient />
     </>

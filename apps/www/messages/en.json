@@ -472,6 +472,24 @@
     "successTitle": "Talk soon.",
     "title": "Let's pressure-test your scope."
   },
+  "auditLead": {
+    "eyebrow": "Free Technical Audit",
+    "title": "Get a free technical read on your current site.",
+    "description": "Send your number and we will review your site's architecture, performance, and scaling risks - and call you with what we find. No pitch.",
+    "phoneLabel": "Phone (WhatsApp)",
+    "phonePlaceholder": "+201... or +971...",
+    "phoneHint": "Used only to share the audit and follow up.",
+    "phoneError": "Please enter a valid phone number",
+    "buttonText": "Request My Audit",
+    "submitting": "Sending...",
+    "successTitle": "Audit requested.",
+    "successDescription": "We will review your site and reach out within 2 business hours with what we found.",
+    "stats": {
+      "noPitch": "No Pitch",
+      "noCommitment": "No Commitment",
+      "founderAccess": "Founder Reviewed"
+    }
+  },
   "footer": {
     "approach": "Approach",
     "companyTitle": "Company",
