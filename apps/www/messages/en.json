@@ -1546,18 +1546,19 @@
             "title": "Operator-ready handoff"
           }
         ],
+        "process": "<strong>Most off-the-shelf storefronts trade speed for flexibility, or flexibility for speed.</strong> We build the catalog and checkout as one custom system instead-product data, inventory state, and payment logic all owned by code we write and you keep, not a plugin stack with three vendors to blame when something breaks. That means variant logic, bilingual product copy, and regional payment gateways are designed in from the schema up, <dim>not patched onto a theme that was never built for them.</dim>",
         "title": "What a custom store includes"
       },
       "cta": {
         "back": "View All Services",
-        "description": "Use Transparency to scope catalog complexity, integrations, and multilingual requirements-or book a call if you already have a brief.",
+        "description": "Use Transparency to scope catalog complexity, integrations, and multilingual requirements-or book a call if you already have a brief. <strong>We will tell you upfront if a custom build is overkill for your catalog size</strong>-not every store needs one, and we would rather say so than oversell scope you do not need.",
         "eyebrow": "Ready to scope",
         "title": "Planning a store that has to",
         "titleAccent": "perform in production?"
       },
       "description": "Custom Next.js storefronts for lighting, home, and premium retail brands in Cairo and MENA-<strong>built for conversion</strong>, multilingual buyers, and inventory you can trust.",
       "proof": {
-        "body": "<strong>Two live client stores</strong> with multilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds.",
+        "body": "<strong>Two live client stores</strong> with multilingual checkout, synced inventory, and Lighthouse scores in the 95+ range on production builds. Both replaced a slower, template-based setup that was losing sales to load time and broken bilingual checkout flows-<dim>the rebuild is the proof, not the pitch deck.</dim>",
         "eyebrow": "Live proof",
         "title": "Stores",
         "titleAccent": "you can inspect today"
@@ -1569,7 +1570,7 @@
     "webDesign": {
       "cta": {
         "back": "View All Services",
-        "description": "We will review your current design, identify what is suppressing conversions, and map the right next step - in a <strong>free 30-minute call.</strong>",
+        "description": "We will review your current design, identify what is suppressing conversions, and map the right next step - in a <strong>free 30-minute call.</strong> No generic redesign deck - you leave the call knowing exactly which screens are costing you leads and why.",
         "eyebrow": "Ready to Start",
         "title": "Need an interface",
         "titleAccent": "that actually converts?",
@@ -1585,6 +1586,7 @@
         }
       },
       "description": "We translate your offer into sharper hierarchy, clearer messaging, and a direct conversion path so the site <strong>qualifies buyers before your team picks up the phone.</strong>",
+      "process": "<strong>Design here is not a visual layer applied after the build plan is set</strong> - it is the build plan. We start from the user flow a real buyer takes, from first scroll to the action you actually want, and only then decide what each screen needs to say. That is why these systems hold up after launch: every spacing and contrast decision was made to support one job, not to look good in an isolated mockup. <dim>Identity, typography, and component states ship as a system your team can extend</dim>, not a one-off Figma file that drifts the first time someone edits it without us.",
       "features": {
         "01": {
           "description": "Every page structure is designed to guide the visitor toward a specific action - <dim>not just present information and hope they decide.</dim>",
@@ -1725,31 +1727,31 @@
     "categories": {
       "accessibility": {
         "benchmarks": "Lighthouse Accessibility > 95 | No ARIA errors | Contrast ratio > 4.5:1",
-        "description": "<strong>If it is not accessible, it is not finished.</strong> WCAG compliance is a build requirement - not a post-launch checklist item.",
+        "description": "<strong>If it is not accessible, it is not finished.</strong> WCAG compliance is a build requirement - not a post-launch checklist item. We audit keyboard navigation, screen reader output, and color contrast on every screen before it is marked done, the same way we check that a layout renders correctly. Treating accessibility as a late-stage patch is how teams end up retrofitting ARIA labels onto a component library that was never structured to carry them - <dim>we structure for it from the first commit instead.</dim>",
         "requirements": "Semantic HTML | WCAG 2.1 AA compliance | Keyboard accessibility | Screen reader support",
         "title": "Accessible by Default"
       },
       "code": {
         "benchmarks": "Zero lint errors | > 80% test coverage | Documented API endpoints",
-        "description": "Code is read far more often than it is written. We optimize for clarity, consistency, and maintainability - <dim>not clever shortcuts that create future debt.</dim>",
+        "description": "Code is read far more often than it is written. We optimize for clarity, consistency, and maintainability - <dim>not clever shortcuts that create future debt.</dim> Strict typing catches the class of bugs that QA cycles miss, and a component-based architecture means a new developer can trace a feature from route to render without a walkthrough call. This matters commercially: the codebase you inherit at handoff is the one your next hire has to extend, and unreadable code is a recurring tax on every future change.",
         "requirements": "Strict TypeScript | Component-based architecture | Automated testing | Continuous integration",
         "title": "Clean, Maintainable Code"
       },
       "performance": {
         "benchmarks": "Lighthouse Performance 95+ | LCP < 2.5s | CLS < 0.1",
-        "description": "<strong>Every 100ms of latency is a conversion leak.</strong> Performance is a design constraint from day one - not an optimization pass squeezed in post-launch.",
+        "description": "<strong>Every 100ms of latency is a conversion leak.</strong> Performance is a design constraint from day one - not an optimization pass squeezed in post-launch. We choose edge-first delivery, modern image formats, and minimal client-side JavaScript before a single screen is built, because retrofitting speed into a slow architecture means rebuilding it. <dim>A 95+ Lighthouse score is not a vanity number</dim> - it correlates directly with bounce rate and search ranking, especially on mobile connections in the markets we build for.",
         "requirements": "Edge-first delivery | Modern image formats | Minimal JS execution | Font optimization",
         "title": "Speed as a Revenue Driver"
       },
       "security": {
         "benchmarks": "Grade A security headers | No high-risk CVEs | Regular patch cycles",
-        "description": "Trust is earned through security <strong>built in</strong> - <dim>not bolted on.</dim> CSP headers, dependency audits, and input sanitization before anything ships.",
+        "description": "Trust is earned through security <strong>built in</strong> - <dim>not bolted on.</dim> CSP headers, dependency audits, and input sanitization before anything ships. We run dependency audits as part of the build pipeline, not as an annual fire drill, and authentication flows are reviewed against current OWASP guidance before launch. For e-commerce and ERP clients handling customer payment data, this is not optional hardening - it is the baseline that keeps a breach from becoming the headline.",
         "requirements": "CSP headers | Secure authentication | Sanitized inputs | Dependency audits",
         "title": "Security from Day One"
       }
     },
     "enforcement": {
-      "description": "CI/CD pipelines block deployments if these standards are not met. Quality does not degrade over time - it is <strong>enforced on every deploy.</strong>",
+      "description": "CI/CD pipelines block deployments if these standards are not met. Quality does not degrade over time - it is <strong>enforced on every deploy.</strong> There is no manual checklist someone forgets to run under deadline pressure - the pipeline either passes or the deploy does not happen. That is the only way these four standards stay true six months after launch instead of slowly drifting the way most agency-built sites do once the original team moves on.",
       "title": "Accountability built in.",
       "titleItalic": "automatically."
     },
@@ -2396,6 +2398,10 @@
   "work": {
     "description": "<strong>Production builds you can inspect today</strong> - <dim>plus how we engineered this site as a live reference</dim>.",
     "eyebrow": "04 - Selected Work",
+    "intro": {
+      "paragraph1": "<strong>Real builds in production</strong> means exactly that - sites with live traffic, real checkout flows, and real customers, not staging environments dressed up for a portfolio. Every project below shipped to a paying client and is still running today, which means the architecture had to survive contact with actual usage, not just a design review.",
+      "paragraph2": "Each case study breaks down the same way: the challenge we were actually solving, the approach and tech stack we chose and why, and the measurable results after launch. <dim>Open the live site alongside the write-up</dim> - inspect the network tab, check the Lighthouse score yourself - then read why we built it that way."
+    },
     "labels": {
       "approach": "Our approach",
       "backLink": "Back to all work",
@@ -2455,6 +2461,10 @@
       "description": "Selected writing on architecture, performance, and the business of high-end software.",
       "title": "Thoughts on",
       "titleItalic": "engineering & design"
+    },
+    "intro": {
+      "paragraph1": "<strong>Every article here comes from a project we actually shipped</strong> - a decision we had to defend on a real client codebase, not a hypothetical. We write about multilingual architecture because we have built it for stores serving Egyptian and regional buyers in two directions at once. We write about technical debt because we have inherited it from previous agencies and had to explain, line by line, why a rebuild was cheaper than another patch.",
+      "paragraph2": "This is not a marketing blog padded out for search engines. <dim>If a post does not teach you something you can apply to your own stack or your own hiring decisions, we do not publish it.</dim> Expect specifics - framework choices, performance numbers, the actual trade-offs - because that is what we would want to read before hiring an engineering partner ourselves."
     },
     "keepReading": "Keep reading",
     "nextStep": "Next step",

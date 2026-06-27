@@ -20,9 +20,9 @@ export default function LoadingPage() {
             <div className="h-full w-1/2 animate-[loading_1.2s_ease-in-out_infinite] bg-foreground/80" />
           </div>
         </div>
-        <h1 className="text-xl font-medium tracking-tight text-foreground">
+        <p className="text-xl font-medium tracking-tight text-foreground">
           Loading
-        </h1>
+        </p>
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>
       </main>
     </div>

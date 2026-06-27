@@ -232,6 +232,9 @@ function FeaturesSection() {
             <br />
             <Highlight>{tCommon("whatWeOfferItalic")}</Highlight>
           </h2>
+          <p className="mt-6 text-base text-primary/60 leading-relaxed max-w-[64ch]">
+            {t.rich("process", bodyMarks)}
+          </p>
         </div>
 
         <div className="flex flex-col relative before:absolute before:-left-4 before:top-0 before:bottom-0 before:w-px before:bg-foreground/5">

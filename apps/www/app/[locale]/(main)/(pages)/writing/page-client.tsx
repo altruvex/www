@@ -2,8 +2,9 @@
 import { Container } from "@/components/shared/container";
 import { PageHero } from "@/components/sections/page-hero";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
-import { useSectionCardGrid } from "@/lib/motion";
+import { useSectionCardGrid, useSectionDescription } from "@/lib/motion";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
 
@@ -19,6 +20,7 @@ export default function WritingPage({
   return (
     <div className="relative min-h-screen w-full">
       <OpeningSection />
+      <IntroSection />
       <ListSection articles={articles} locale={locale} />
       <SectionEndCta variant="transparency" />
     </div>
@@ -35,6 +37,25 @@ function OpeningSection() {
       titleItalic={t("hero.titleItalic")}
       description={t("hero.description")}
     />
+  );
+}
+
+function IntroSection() {
+  const t = useTranslations("writing.intro");
+  const descRef = useSectionDescription<HTMLDivElement>();
+
+  return (
+    <section className="accent-world-blue pt-(--section-y-top) pb-0">
+      <Container>
+        <div
+          ref={descRef}
+          className="max-w-3xl space-y-5 text-base text-primary/60 leading-relaxed"
+        >
+          <p>{t.rich("paragraph1", bodyMarks)}</p>
+          <p>{t.rich("paragraph2", bodyMarks)}</p>
+        </div>
+      </Container>
+    </section>
   );
 }
 

@@ -101,6 +101,9 @@ function CapabilitiesSection() {
             </SurfaceCard>
           ))}
         </div>
+        <p className="text-base text-primary/60 leading-relaxed max-w-[64ch] mt-10">
+          {t.rich("process", bodyMarks)}
+        </p>
       </Container>
     </section>
   );

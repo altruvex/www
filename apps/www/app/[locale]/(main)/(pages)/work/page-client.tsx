@@ -43,6 +43,10 @@ export default memo(function WorkIndexPage() {
                 {t.rich("description", bodyMarks)}
               </p>
             </div>
+            <div className="max-w-3xl space-y-5 text-base text-primary/60 leading-relaxed mb-16">
+              <p>{t.rich("intro.paragraph1", bodyMarks)}</p>
+              <p>{t.rich("intro.paragraph2", bodyMarks)}</p>
+            </div>
             <div className="h-px w-full bg-foreground/8" />
             <div>
               {projects.map((cs, index) => (
