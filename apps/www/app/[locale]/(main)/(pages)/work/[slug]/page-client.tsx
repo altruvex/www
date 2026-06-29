@@ -1,14 +1,14 @@
 "use client";
 
-import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
-import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { getTestimonialsForCaseStudy } from "@/lib/data/testimonials";
+import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
-import { bodyMarks } from "@/components/ui/rich-text";
 
 type WorkCaseStudyPageClientProps = {
   locale: string;
@@ -196,11 +196,11 @@ export default function WorkCaseStudyPageClient({
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider uppercase text-primary/60 hover:text-primary transition-colors duration-300"
                   >
-                    <span className="border-b border-foreground/8 group-hover:border-foreground/40 transition-colors duration-300 pb-0.5">
+                    <span className="font-bold group-hover:text-brand border-b border-foreground/8 group-hover:border-foreground/40 transition-colors duration-300 pb-0.5">
                       {tLabels("visitProj")}
                     </span>
                     <svg
-                      className="h-3.5 w-3.5 rtl:-rotate-180"
+                      className="h-5 w-5 rtl:-rotate-180 group-hover:text-brand"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

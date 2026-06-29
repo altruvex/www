@@ -3,7 +3,6 @@
     "skipToContent": "Skip to main content"
   },
   "about": {
-    "ctaPrimary": "Consult with the Founder",
     "ctaSecondary": "Case Studies",
     "description1": "Altruvex is a precision web engineering firm in Cairo. We build multilingual web systems for businesses that need <strong>architecture</strong> - <dim>not templates with a brand coat.</dim>",
     "description2": "Every project receives <strong>direct founder involvement.</strong> No outsourcing. No theme builders. No intermediary between the decision and the engineer.",
@@ -262,7 +261,6 @@
     },
     "ctas": {
       "architecture": "Talk Through the Architecture",
-      "flagshipBuild": "Plan a Build Like This",
       "maintenancePlans": "See Maintenance Plans",
       "pricingEcommerce": "Get Commerce Estimate",
       "pricingEssential": "Get Launch Estimate",
@@ -330,11 +328,6 @@
         "nextStep": "Next step: open Transparency and map the workflows and integrations."
       }
     },
-    "transparency": {
-      "body": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing.",
-      "eyebrow": "Transparency",
-      "title": "Get a realistic project investment range before the first call."
-    },
     "trust": {
       "body": "You work <strong>directly with the engineer shaping the system.</strong> Strategy, scope, implementation quality, and communication stay in one line of ownership from brief to launch.",
       "eyebrow": "05 - Why leaders choose Altruvex",
@@ -371,9 +364,6 @@
       "title": "Ready to",
       "titleAccent": "scope your build ?"
     },
-    "whatsappFabAria": "Open WhatsApp chat with Altruvex",
-    "whatsappFabLabel": "WhatsApp",
-    "scroll": "Scroll",
     "step": "Step",
     "stepOf": "Step {current} of {total}"
   },
@@ -495,43 +485,13 @@
     "companyTitle": "Company",
     "consulting": "Consulting",
     "contact": "Contact",
-    "contactLabel": "Contact",
     "copyright": "© {year} Altruvex. All rights reserved.",
     "description": "Every line of code is engineered for your specific needs. We reject off-the-shelf shortcuts to ensure a standard of uniqueness that admits no compromise.",
     "emailLabel": "Email",
     "whatsappLabel": "WhatsApp",
     "development": "Development",
     "ecommerce": "E-Commerce",
-    "groups": {
-      "company": {
-        "links": {
-          "approach": "Approach",
-          "process": "Process",
-          "services": "Services",
-          "work": "Work",
-          "how-we-work": "How We Work"
-        },
-        "title": "Company"
-      },
-      "explore": {
-        "links": {
-          "contact": "Contact",
-          "pricing": "Pricing",
-          "transparency": "Transparency",
-          "writing": "Writing"
-        },
-        "title": "Explore"
-      },
-      "legal": {
-        "links": {
-          "privacy": "Privacy",
-          "terms": "Terms"
-        },
-        "title": "Legal"
-      }
-    },
     "how-we-work": "How We Work",
-    "locationLabel": "Base",
     "maintenance": "Maintenance",
     "pricing": "Pricing",
     "privacy": "Privacy",
@@ -624,7 +584,6 @@
     "closeMenu": "Close menu",
     "contact": "Contact",
     "getStarted": "Get an Estimate",
-    "home": "Home",
     "how-we-work": "How We Work",
     "language": "Language",
     "openMenu": "Open menu",
@@ -632,11 +591,9 @@
     "process": "Process",
     "schedule": "Schedule",
     "services": "Services",
-    "standards": "Standards",
     "theme": "Theme",
     "transparency": "Transparency",
-    "work": "Work",
-    "writing": "Writing"
+    "work": "Work"
   },
   "notFound": {
     "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",
@@ -1276,7 +1233,6 @@
       },
       "description": "A <strong>fixed-scope, evidence-based decision layer</strong> for teams facing a rebuild, a slow platform, or an unclear technical direction.",
       "hero": {
-        "ctaPrimary": "Book a Strategy Session",
         "ctaSecondary": "See Our Approach"
       },
       "subtitle": "Evidence-based technical direction for engineering teams.",
@@ -1284,7 +1240,6 @@
       "titleItalic": "& Web Audits."
     },
     "ctaPrimary": "Scope Your Project",
-    "ctaSecondary": "See a Real Build",
     "development": {
       "cta": {
         "back": "View All Services",
@@ -1577,7 +1532,6 @@
         "tokens": {
           "colors": "Colors",
           "colorsSub": "Tailored palette for your brand",
-          "featured": "Featured",
           "layout": "Layout",
           "layoutSub": "Responsive grid system",
           "monoLabel": "Mono Label",
@@ -1695,30 +1649,10 @@
       "description": "Explore the detail pages to understand our technical approach in each domain.",
       "title": "Capability Detail"
     },
-    "ctaPrimary": "Scope Your Project",
-    "ctaSecondary": "See a Real Build",
     "description": "Each service is structured around <strong>a single business outcome</strong> - so scope, investment, and next steps all point in the same direction.",
     "detailLabel": "Capability detail",
     "expectedOutcome": "Expected Outcome",
     "eyebrow": "Services",
-    "services": {
-      "consulting": {
-        "description": "A fixed-scope, evidence-based decision layer for teams facing a rebuild, a slow platform, or unclear technical direction.",
-        "title": "03 - Technical Audits"
-      },
-      "development": {
-        "description": "Dashboards, workflows, portals, and operational logic built around how the business actually runs.",
-        "title": "02 - Portals & Product Builds"
-      },
-      "maintenance": {
-        "description": "Structured maintenance for live systems that need reliable releases, monitoring, and a technical partner who understands the codebase.",
-        "title": "04 - Ongoing Support"
-      },
-      "webDesign": {
-        "description": "Sharper positioning, faster pages, and a direct conversion path for serious service or product businesses.",
-        "title": "01 - Website Systems"
-      }
-    },
     "title": "Five focused disciplines.",
     "titleItalic": "One uncompromising standard."
   },
