@@ -190,6 +190,14 @@ const magneticIcon = (overrides: Partial<MagneticConfig> = {}): MagneticConfig =
   ...overrides,
 });
 
+/** MagneticButton's own pull - locked spec (Ali 2026-07-05): strength 0.15. */
+const magneticButton = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
+  strength: 0.15,
+  max: 24,
+  smoothing: 0.5,
+  ...overrides,
+});
+
 /** Feature / pricing cards - subtle depth, slight lift toward the viewer. */
 const tiltCard = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   max: 5,
@@ -224,6 +232,14 @@ const pressIcon = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   ...overrides,
 });
 
+/** MagneticButton's press - locked spec (Ali 2026-07-05): scale 0.95. */
+const pressButton = (overrides: Partial<PressConfig> = {}): PressConfig => ({
+  scale: 0.95,
+  inDuration: 0.12,
+  outDuration: 0.55,
+  ...overrides,
+});
+
 export const motion = {
   fadeUp,
   fadeIn,
@@ -249,8 +265,10 @@ export const motion = {
   sectionCardGrid,
   magneticCTA,
   magneticIcon,
+  magneticButton,
   tiltCard,
   tiltSubtle,
   pressDefault,
   pressIcon,
+  pressButton,
 } as const;

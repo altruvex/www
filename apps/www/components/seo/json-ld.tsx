@@ -21,7 +21,9 @@ export function JsonLd({ schemas }: JsonLdProps) {
     <>
       {entries.map((schema, index) => (
         <script
-          key={String(schema["@id"] ?? schema["@type"] ?? index)}
+          // @type alone is not unique (e.g. one Review schema per testimonial,
+          // all typed "Review") — duplicate keys let React drop JSON-LD nodes.
+          key={schema["@id"] != null ? String(schema["@id"]) : `${String(schema["@type"] ?? "schema")}-${index}`}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
           type="application/ld+json"
         />

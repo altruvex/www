@@ -113,17 +113,17 @@ const ScrollBar = React.forwardRef<
         orientation={orientation}
         data-auto-hide={autoHide ? "true" : "false"}
         className={cn(
-          "flex touch-none select-none transition-all duration-150 ease-out",
+          "flex touch-none select-none transition-[opacity,width,height] duration-150 ease-out",
           autoHide &&
-            "opacity-0 hover:opacity-100 data-[state=visible]:opacity-100",
+            "transition-all opacity-0 hover:opacity-100 data-[state=visible]:opacity-100",
           isVertical
             ? [
-                "h-full w-2.5 p-[1px] hover:w-3",
+                "transition-all h-full w-2.5 p-[1px] hover:w-3",
                 isRTL
                   ? "border-r border-r-transparent"
                   : "border-l border-l-transparent",
               ]
-            : "w-full h-2.5 border-t border-t-transparent p-[1px] hover:h-3",
+            : "transition-all w-full h-2.5 border-t border-t-transparent p-[1px] hover:h-3",
           className,
         )}
         style={isVertical ? { width: size } : { height: size }}
@@ -132,7 +132,7 @@ const ScrollBar = React.forwardRef<
         <ScrollAreaPrimitive.ScrollAreaThumb
           className={cn(
             "relative flex-1 transition-colors duration-150 ease-out rounded-full",
-            "bg-border hover:bg-border/80",
+            "transition-all bg-border hover:bg-border/80",
           )}
           style={{
             backgroundColor: thumbColor,

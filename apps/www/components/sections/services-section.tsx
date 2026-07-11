@@ -47,24 +47,26 @@ const ServiceCard = memo(function ServiceCard({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-linear-to-r from-transparent via-(--card-accent) to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-linear-to-r from-transparent via-(--card-accent) to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-all duration-500 group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-[transform,opacity] duration-300 group-hover:scale-y-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
       />
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute top-[-0.05em] inset-e-0 z-0 select-none pe-[clamp(12px,2vw,28px)] font-mono font-extrabold leading-[0.85] tracking-[-0.06em] text-transparent opacity-0 transition-[opacity,transform] duration-500 [-webkit-text-stroke-color:var(--s-border)] [-webkit-text-stroke-width:1px]",
-          "translate-x-4 group-hover:translate-x-0 group-hover:opacity-40 rtl:-translate-x-4 rtl:group-hover:translate-x-0",
+          "pointer-events-none absolute end-8 top-1/2 -translate-y-1/2 z-0 select-none",
+          "font-sans font-black leading-none text-transparent",
           isLarge
-            ? "text-[clamp(90px,14vw,160px)]"
-            : "text-[clamp(64px,10vw,110px)]",
+            ? "text-[clamp(120px,18vw,220px)]"
+            : "text-[clamp(80px,12vw,140px)]",
+          "opacity-40 [-webkit-text-stroke-width:1px] [-webkit-text-stroke-color:var(--s-border)]",
+          "transition-all duration-500 ease-out group-hover:scale-110 group-hover:[-webkit-text-stroke-color:var(--s-high)] group-hover:opacity-10",
         )}
       >
         {service.index}
@@ -75,13 +77,13 @@ const ServiceCard = memo(function ServiceCard({
           isLarge && "mb-8",
         )}
       >
-        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-mid transition-[border-color,color,background-color] duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
+        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-mid transition-all duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
           {service.index}
         </div>
         <span
           className={cn(
             monoCaps,
-            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-mid transition-[color,border-color] duration-200 group-hover:border-current group-hover:text-s-high",
+            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-mid transition-all duration-200 group-hover:border-current group-hover:text-s-high",
           )}
         >
           {t(`${service.key}.tag`)}
@@ -109,7 +111,7 @@ const ServiceCard = memo(function ServiceCard({
         </h3>
         <p
           className={cn(
-            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-mid transition-colors duration-200 group-hover:text-s-high",
+            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-mid transition-all duration-200 group-hover:text-s-high",
             isLarge ? "max-w-[460px]" : "max-w-full",
           )}
         >

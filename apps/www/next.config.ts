@@ -119,32 +119,29 @@ const nextConfig: NextConfig = {
           ]
         : [];
 
+    // Order matters: when several sources match a path, the LAST matching
+    // entry wins per header key. The catch-all default must come first so the
+    // specific asset rules below can override it — previously it came last and
+    // silently forced max-age=0 onto every hashed /_next/static asset in prod.
     return [
-      ...prodOnlyNextAssetCache,
-      {
-        source: "/:path*\\.(svg|jpg|jpeg|png|gif|ico|webp|avif|woff2)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-      {
-        source: "/:path*\\.(js|css)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
       {
         source: "/:path*",
         headers: [
           {
             key: "Cache-Control",
             value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
+      ...prodOnlyNextAssetCache,
+      // No blanket .js/.css immutable rule: hashed bundles already live under
+      // /_next/static, and public scripts like sw.js must stay revalidatable.
+      {
+        source: "/:path*\\.(svg|jpg|jpeg|png|gif|ico|webp|avif|woff2)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
           },
         ],
       },

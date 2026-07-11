@@ -151,6 +151,40 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
 
           gsap.to(targets, animProps);
 
+          // ── Accent sweep ─────────────────────────────────────────────────
+          // `<Accent animate="sweep">` gradients wipe across the phrase once,
+          // in lockstep with the word/char reveal. Fragments position their
+          // inherited gradient via calc(<offset> + var(--sweep-x)) (splite.ts),
+          // so panning one inherited custom property on the accent moves every
+          // fragment's gradient as a single continuous sheet. no-repeat means
+          // glyphs the sheet hasn't reached yet render transparent - the wipe.
+          if (!constrained) {
+            const sweepAccents = Array.from(
+              el.querySelectorAll<HTMLElement>('[data-accent-anim="sweep"]'),
+            );
+            sweepAccents.forEach((accentEl) => {
+              const accentWidth = accentEl.getBoundingClientRect().width;
+              if (!accentWidth) return;
+              gsap.fromTo(
+                accentEl,
+                { "--sweep-x": `${isRTL ? accentWidth : -accentWidth}px` },
+                {
+                  "--sweep-x": "0px",
+                  duration: duration * MOTION.accent.sweepRatio,
+                  delay: delay + MOTION.accent.sweepDelay,
+                  ease: resolvedEasing,
+                  scrollTrigger: {
+                    trigger: el,
+                    start: resolvedTriggering,
+                    once,
+                    fastScrollEnd: true,
+                    toggleActions: once ? "play none none none" : "play none none reverse",
+                  },
+                },
+              );
+            });
+          }
+
           if (scrubExit && !constrained) {
             const section = el.closest("section") ?? el;
             gsap.to(targets, {

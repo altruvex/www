@@ -25,23 +25,30 @@ export function useMagnetic<T extends HTMLElement = HTMLButtonElement>(
     const env = readMotionEnv();
     if (env.reduce || env.constrained || !env.fine) return;
 
-    const xTo = gsap.quickTo(el, "x", { duration: smoothing, ease: "power3" });
-    const yTo = gsap.quickTo(el, "y", { duration: smoothing, ease: "power3" });
     const clamp = gsap.utils.clamp(-max, max);
 
+    // Plain gsap.to() for both follow and reset — NOT gsap.quickTo(). GSAP
+    // does not support two independent quickTo() instances driving the same
+    // property on the same target: the follow tween and a separate reset
+    // tween corrupt each other's internal state after the first
+    // pointerleave, so the button follows the cursor once and then goes
+    // dead. Keeping both directions on the same plain-tween system lets
+    // overwrite: "auto" actually manage the handoff.
     const onMove = (e: PointerEvent) => {
       const r = el.getBoundingClientRect();
       const relX = e.clientX - (r.left + r.width / 2);
       const relY = e.clientY - (r.top + r.height / 2);
-      xTo(clamp(relX * strength));
-      yTo(clamp(relY * strength));
+      gsap.to(el, {
+        x: clamp(relX * strength),
+        y: clamp(relY * strength),
+        duration: smoothing,
+        ease: "power3",
+        overwrite: "auto",
+      });
     };
 
-    const resetXTo = gsap.quickTo(el, "x", { duration: 0.7, ease: MOTION.ease.spring });
-    const resetYTo = gsap.quickTo(el, "y", { duration: 0.7, ease: MOTION.ease.spring });
     const reset = () => {
-      resetXTo(0);
-      resetYTo(0);
+      gsap.to(el, { x: 0, y: 0, duration: 0.7, ease: MOTION.ease.spring, overwrite: "auto" });
     };
 
     el.addEventListener("pointermove", onMove);

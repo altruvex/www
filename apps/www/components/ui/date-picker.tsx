@@ -36,7 +36,7 @@ export function DatePicker({
         <Button
           variant={"outline"}
           className={cn(
-            "w-full justify-start text-left font-normal rounded-md border-b border-foreground/30 bg-transparent hover:bg-transparent px-0 py-2 text-sm text-primary placeholder:text-primary/60 focus:outline-none sm:text-base md:py-2.5",
+            "transition-all w-full justify-start text-left font-normal rounded-md border-b border-foreground/30 bg-transparent hover:bg-transparent px-0 py-2 text-sm text-primary placeholder:text-primary/60 focus:outline-none sm:text-base md:py-2.5",
             !date && "text-muted-foreground",
             className,
           )}

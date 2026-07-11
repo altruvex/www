@@ -22,10 +22,10 @@ const CtaSection = dynamic(
     import("@/components/sections/cta-section").then((mod) => mod.CtaSection),
   { loading: () => <SectionSkeleton /> },
 );
-const TransparencySection = dynamic(
+const TransparencyEstimator = dynamic(
   () =>
-    import("@/components/sections/transparency-section").then(
-      (mod) => mod.TransparencySection,
+    import("@/components/sections/transparency-estimator").then(
+      (mod) => mod.TransparencyEstimator,
     ),
   { loading: () => <SectionSkeleton /> },
 );
@@ -62,7 +62,7 @@ export function HomeClient() {
         <TrustSection />
       </ErrorBoundary>
       <ErrorBoundary>
-        <TransparencySection />
+        <TransparencyEstimator />
       </ErrorBoundary>
       <ErrorBoundary>
         <PricingSignalSection />

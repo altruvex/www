@@ -89,12 +89,12 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="work-card group relative border-b border-foreground/8 py-10 transition-colors hover:bg-foreground/1"
+      className="work-card group relative border-b border-s-border transition-all duration-300 hover:border-s-border-hover"
     >
       {screenshot && (
         <div
           ref={imageRef}
-          className="pointer-events-none absolute left-0 top-0 z-50 hidden aspect-16/10 w-md max-w-[80vw] scale-75 overflow-hidden rounded-lg border border-foreground/8 bg-foreground/2 opacity-0 shadow-2xl md:block"
+          className="pointer-events-none absolute left-0 top-0 z-50 hidden aspect-16/10 w-md max-w-[80vw] scale-75 overflow-hidden rounded-lg border border-s-border bg-surface opacity-0 shadow-card-lg md:block"
           style={{ willChange: "transform, opacity" }}
         >
           <Image
@@ -117,61 +117,51 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
       )}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 bg-foreground/2 transition-transform duration-300 ease-out group-hover:scale-x-100 rtl:origin-right"
+        className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 bg-foreground/2 transition-all duration-300 ease-out group-hover:scale-x-100 group-focus-within:scale-x-100 rtl:origin-right"
       />
       <Link
         href={`/work/${slug}`}
-        className="absolute inset-0 z-10 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="absolute inset-0 z-10 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         aria-label={`${tW("viewCaseStudy")} - ${name}`}
       />
-      <div className="pointer-events-none relative z-20 px-4">
+      <div className="pointer-events-none relative z-20 px-4 py-10">
         <div className="mb-4 flex items-start justify-between gap-4 sm:gap-6">
           <div className="flex min-w-0 items-baseline gap-3 sm:gap-6 md:gap-10">
-            <span
-              className="font-mono text-sm font-light leading-normal tracking-wider text-primary/20 transition-colors duration-300 group-hover:text-primary/55"
-              style={{
-                fontSize: "clamp(20px, 2.5vw, 28px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
+            <span className="text-[clamp(20px,2.5vw,28px)] font-light leading-none text-s-ghost tabular-nums transition-all duration-300 group-hover:text-brand-text group-focus-within:text-brand-text">
               {String(index + 1).padStart(2, "0")}
             </span>
             <div className="min-w-0">
-              <h2
-                className="mb-1 font-sans font-medium text-primary transition-transform duration-300 ltr:group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
-                style={{
-                  fontSize: "clamp(18px, 2.5vw, 26px)",
-                  letterSpacing: "-0.015em",
-                }}
-              >
+              <h2 className="mb-1 font-sans text-[clamp(18px,2.5vw,26px)] font-medium tracking-[-0.015em] text-primary transition-all duration-300 ltr:group-hover:translate-x-1.5 ltr:group-focus-within:translate-x-1.5 rtl:group-hover:-translate-x-1.5 rtl:group-focus-within:-translate-x-1.5">
                 {name}
               </h2>
-              <p className="font-mono text-sm leading-normal tracking-wider text-foreground/35 uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+              <p className="font-mono text-sm leading-normal tracking-wider text-s-low uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
                 {client} · {industry}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden font-mono text-sm leading-normal tracking-wider text-muted-foreground md:block">
+            <span className="hidden font-mono text-sm leading-normal tracking-wider text-s-low tabular-nums md:block">
               {year}
             </span>
-            <svg
-              className="h-4 w-4 text-muted-foreground transition-[transform,color] duration-300 group-hover:text-primary/60 ltr:group-hover:translate-x-1 rtl:rotate-180 rtl:group-hover:-translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-s-border bg-s-surface text-s-mid transition-all duration-300 group-hover:border-brand/40 group-hover:bg-brand-soft group-hover:text-brand-text group-focus-within:border-brand/40 group-focus-within:bg-brand-soft group-focus-within:text-brand-text">
+              <svg
+                className="h-4 w-4 transition-all duration-300 ltr:group-hover:translate-x-0.5 ltr:group-focus-within:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 rtl:group-focus-within:-translate-x-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
           </div>
         </div>
         <div className="ps-[calc(clamp(20px,2.5vw,28px)+12px)] sm:ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
-          <p className="mb-4 max-w-[52ch] text-base leading-relaxed text-foreground/70">
+          <p className="mb-4 text-base leading-relaxed text-s-mid">
             {summary}
           </p>
           {screenshot && (
-            <div className="pointer-events-none relative mb-5 aspect-16/10 w-full max-w-md overflow-hidden rounded-md border border-foreground/8 bg-foreground/2 md:hidden">
+            <div className="pointer-events-none relative mb-5 aspect-16/10 w-full max-w-md overflow-hidden rounded-md border border-s-border bg-surface md:hidden">
               <Image
                 src={`${screenshot}-light.png`}
                 alt={`${name} - ${client}`}
@@ -195,29 +185,34 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               {metrics.slice(0, 2).map((metric) => (
                 <div
                   key={metric.label}
-                  className="inline-flex items-center gap-2 rounded-full border border-foreground/8 bg-foreground/2 px-3 py-1"
+                  className="inline-flex items-center gap-2 rounded-full border border-s-border bg-s-surface px-3 py-1 transition-all duration-300 group-hover:border-s-border-hover"
                 >
-                  <span className="font-mono text-sm leading-normal tracking-wider text-foreground/35 uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+                  <span className="font-mono text-sm leading-normal tracking-wider text-s-low uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
                     {metric.label}
                   </span>
-                  <span className="font-mono text-sm leading-normal tracking-wider text-primary/60">
+                  <span className="font-mono text-sm font-medium leading-normal tracking-wider text-brand-text tabular-nums">
                     {metric.value}
                   </span>
                 </div>
               ))}
             </div>
-            <div className="pointer-events-auto relative z-30 flex flex-wrap items-center gap-4 sm:gap-6">
+            <div
+              onMouseEnter={handleMouseLeave}
+              onMouseMove={(e) => e.stopPropagation()}
+              onMouseLeave={handleMouseEnter}
+              className="pointer-events-auto relative z-30 flex flex-wrap items-center gap-4 sm:gap-6"
+            >
               {externalUrl && (
                 <a
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group/link flex items-center gap-2 rounded-sm font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                  className="group/link flex items-center gap-2 rounded-sm font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rtl:font-sans rtl:normal-case rtl:tracking-normal"
                 >
-                  <span className="text-primary/60 uppercase transition-colors group-hover/link:text-primary">
+                  <span className="text-s-mid uppercase transition-colors group-hover/link:text-primary">
                     {tW("labels.visitProj")}
                   </span>
-                  <span className="flex items-center gap-1 text-primary/40 lowercase transition-colors group-hover/link:text-primary/80">
+                  <span className="flex items-center gap-1 text-s-low lowercase transition-colors group-hover/link:text-brand-text">
                     ({getDomainName(externalUrl)})
                     <svg
                       className="h-3.5 w-3.5 transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
@@ -231,9 +226,6 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   </span>
                 </a>
               )}
-              <span className="pointer-events-none hidden items-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary/70 transition-colors duration-300 group-hover:text-primary/100 md:inline-flex">
-                {tW("viewCaseStudy")}
-              </span>
             </div>
           </div>
         </div>

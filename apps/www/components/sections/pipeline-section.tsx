@@ -452,7 +452,7 @@ export function PipelineSection() {
                     </span>
                   </div>
                   <div
-                    className="overflow-hidden transition-all ease-[cubic-bezier(0.22,1,0.36,1)]"
+                    className="overflow-hidden transition-[max-height,opacity] ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
                       maxHeight: isExp ? "300px" : "0px",
                       opacity: isExp ? 1 : 0,

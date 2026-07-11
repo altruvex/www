@@ -44,14 +44,16 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
 
     let active = false;
 
+    // overwrite:"auto" kills only conflicting `scale` tweens — never the
+    // magnetic x/y quickTo tweens that may share this element (MagneticButton).
     const press = () => {
       active = true;
-      gsap.to(el, { scale, duration: inDuration, ease: "power2.out", overwrite: true });
+      gsap.to(el, { scale, duration: inDuration, ease: "power2.out", overwrite: "auto" });
     };
     const release = () => {
       if (!active) return;
       active = false;
-      gsap.to(el, { scale: 1, duration: outDuration, ease: "elastic.out(1, 0.6)", overwrite: true });
+      gsap.to(el, { scale: 1, duration: outDuration, ease: "elastic.out(1, 0.6)", overwrite: "auto" });
     };
 
     const onKeyDown = (e: KeyboardEvent) => {

@@ -1,11 +1,12 @@
 "use client";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { motion, usePress } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { Check, ChevronDown, Globe } from "lucide-react";
 import { useLocale } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 
 type LanguageSwitcherVariant = "default" | "compact" | "toggle";
@@ -64,6 +65,14 @@ export function LanguageSwitcherBase({
 
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const pressRef = usePress<HTMLButtonElement>(motion.pressIcon());
+  const triggerRef = useCallback(
+    (node: HTMLButtonElement | null) => {
+      buttonRef.current = node;
+      pressRef.current = node;
+    },
+    [pressRef],
+  );
 
   const currentLang =
     LANGUAGES.find((lang) => lang.code === locale) || LANGUAGES[0];
@@ -177,7 +186,7 @@ export function LanguageSwitcherBase({
       <div
         dir={isRTL ? "rtl" : "ltr"}
         className={cn(
-          "flex items-center gap-1 liquid-glass rounded-xl p-1 outline-none",
+          "flex items-center gap-1 liquid-glass rounded-lg p-1 outline-none",
           isPending && "opacity-70 pointer-events-none",
           className,
         )}
@@ -191,11 +200,11 @@ export function LanguageSwitcherBase({
               type="button"
               onClick={() => switchLocale(lang.code)}
               className={cn(
-                "relative z-10 px-3 py-1.5 font-mono text-sm rounded-lg font-medium leading-normal tracking-wider uppercase transition-all duration-300",
+                "relative z-10 px-3 py-1.5 font-mono text-sm rounded-lg font-medium leading-normal tracking-wider uppercase transition-[background-color,color,box-shadow] duration-200",
                 focusRingClasses,
                 isActive
                   ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                  : "text-primary/60 hover:bg-foreground/10 hover:text-primary",
+                  : "transition-all text-primary/60 hover:bg-foreground/10 hover:text-primary",
               )}
               aria-label={`Switch to ${lang.name}`}
               aria-pressed={isActive}
@@ -215,12 +224,12 @@ export function LanguageSwitcherBase({
         dir={isRTL ? "rtl" : "ltr"}
       >
         <button
-          ref={buttonRef}
+          ref={triggerRef}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "group flex items-center gap-2 rounded-lg liquid-glass-flat transition-all duration-300",
-            "hover:bg-foreground/5",
+            "group flex items-center gap-2 rounded-lg liquid-glass-flat transition-[background-color,opacity] duration-200",
+            "transition-all hover:bg-foreground/5",
             focusRingClasses,
             isPending && "opacity-70 cursor-not-allowed",
             variant === "compact"
@@ -279,7 +288,7 @@ export function LanguageSwitcherBase({
               zIndex: 50,
             }}
             className={cn(
-              "rounded-xl liquid-glass p-1 shadow-lg outline-none",
+              "rounded-lg liquid-glass p-1 shadow-lg outline-none",
               "animate-in fade-in zoom-in-95 duration-200 ease-out origin-top",
               variant === "compact" ? "w-40" : "w-48",
             )}
@@ -304,7 +313,7 @@ export function LanguageSwitcherBase({
                       : "gap-3 px-4 py-2.5",
                     isActive
                       ? "bg-foreground/15 text-primary font-medium"
-                      : "text-primary/80 hover:bg-foreground/10 hover:text-primary",
+                      : "transition-all text-primary/80 hover:bg-foreground/10 hover:text-primary",
                     langIsRTL ? "text-right" : "text-left",
                   )}
                   role="menuitem"

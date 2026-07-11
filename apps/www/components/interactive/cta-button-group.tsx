@@ -12,9 +12,7 @@ type CtaAction = {
 type CtaButtonGroupProps = {
   primary: CtaAction;
   secondary?: CtaAction;
-  /** Variant for the primary button. Defaults to "primary"; use "accent" for threshold/conversion moments. */
   primaryVariant?: "primary" | "accent";
-  /** Wraps the secondary label in an arrow too, matching sections where both CTAs carry a directional cue. */
   secondaryArrow?: boolean;
   className?: string;
   ref?: Ref<HTMLDivElement>;

@@ -34,7 +34,10 @@ function alignAccentGradients(root: HTMLElement): void {
     fragments.forEach((fragment) => {
       const fragmentRect = fragment.getBoundingClientRect();
       fragment.style.backgroundSize = `${accentRect.width}px 100%`;
-      fragment.style.backgroundPositionX = `${-(fragmentRect.left - accentRect.left)}px`;
+      // --sweep-x (inherited from the accent, default 0px) lets useText pan
+      // every fragment's gradient as one sheet for the `animate="sweep"` wipe
+      // without touching the per-fragment alignment offsets.
+      fragment.style.backgroundPositionX = `calc(${-(fragmentRect.left - accentRect.left)}px + var(--sweep-x, 0px))`;
     });
   });
 }

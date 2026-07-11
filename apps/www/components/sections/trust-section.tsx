@@ -50,7 +50,7 @@ export const TrustSection = memo(function TrustSection() {
           {points.map((point) => (
             <div
               key={point.title}
-              className="trust-card border-r border-b border-border px-6 py-8 group hover:bg-surface transition-colors duration-300"
+              className="trust-card border-r border-b border-border px-6 py-8 group hover:bg-surface transition-all duration-300"
             >
               <h3 className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] font-medium text-foreground mb-3 tracking-tight">
                 {point.title}
@@ -66,7 +66,7 @@ export const TrustSection = memo(function TrustSection() {
             {testimonials.map((item) => (
               <figure
                 key={item.id}
-                className="trust-testimonial border-b border-e border-border px-6 py-8 group hover:bg-surface transition-colors duration-300"
+                className="trust-testimonial border-b border-e border-border px-6 py-8 group hover:bg-surface transition-all duration-300"
               >
                 <blockquote className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-foreground/80">
                   {item.quote[locale]}
@@ -92,7 +92,7 @@ export const TrustSection = memo(function TrustSection() {
           <div className="flex flex-col justify-start">
             <ExternalDirectionalLink
               href={FOUNDER_LINK}
-              className="eyebrow inline-flex text-foreground transition-colors hover:text-muted-foreground"
+              className="eyebrow inline-flex text-foreground transition-all hover:text-muted-foreground"
             >
               {t("founder.linkLabel")}
             </ExternalDirectionalLink>

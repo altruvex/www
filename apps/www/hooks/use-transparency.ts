@@ -97,6 +97,23 @@ const TIMELINE_WEEK_MULTIPLIERS = {
   flexible: 1.15,
 };
 
+// Brand readiness adds design/identity scope. "complete" is the neutral
+// baseline; building from scratch grows both budget and timeline.
+const BRAND_MULTIPLIERS = {
+  complete: { price: 1, weeks: 1 },
+  partial: { price: 1.05, weeks: 1.05 },
+  scratch: { price: 1.12, weeks: 1.15 },
+};
+
+// Content readiness adds strategy/copywriting scope. "provide" is neutral.
+const CONTENT_MULTIPLIERS = {
+  provide: { price: 1, weeks: 1 },
+  "need-help": { price: 1.08, weeks: 1.1 },
+  unsure: { price: 1.04, weeks: 1.05 },
+};
+
+const NEUTRAL_FACTOR = { price: 1, weeks: 1 };
+
 interface UseTransparencyOptions {
   initialTier?: string | null;
   initialProjectType?: ProjectType;
@@ -225,11 +242,23 @@ export function useTransparency({
     const multiplier = TIMELINE_MULTIPLIERS[state.timeline];
     const weekMultiplier = TIMELINE_WEEK_MULTIPLIERS[state.timeline];
 
+    // Optional refiners: absent answers stay neutral so the estimate still
+    // works with only the three core inputs (e.g. deep-link preselection).
+    const brand = state.brandIdentity
+      ? BRAND_MULTIPLIERS[state.brandIdentity]
+      : NEUTRAL_FACTOR;
+    const content = state.contentReadiness
+      ? CONTENT_MULTIPLIERS[state.contentReadiness]
+      : NEUTRAL_FACTOR;
+
+    const priceFactor = multiplier * brand.price * content.price;
+    const weekFactor = weekMultiplier * brand.weeks * content.weeks;
+
     return {
-      minWeeks: Math.max(Math.round(timelineRange[0] * weekMultiplier), 1),
-      maxWeeks: Math.max(Math.round(timelineRange[1] * weekMultiplier), 1),
-      minPrice: roundEstimate(priceRange[0] * multiplier),
-      maxPrice: roundEstimate(priceRange[1] * multiplier),
+      minWeeks: Math.max(Math.round(timelineRange[0] * weekFactor), 1),
+      maxWeeks: Math.max(Math.round(timelineRange[1] * weekFactor), 1),
+      minPrice: roundEstimate(priceRange[0] * priceFactor),
+      maxPrice: roundEstimate(priceRange[1] * priceFactor),
     };
   }, [state]);
 

@@ -89,6 +89,19 @@ export const MOTION = {
     late: "top 85%",
     latest: "top 75%",
   },
+  accent: {
+    // Gradient shimmer loop (CSS keyframe pan) - seconds per cycle.
+    shimmer: {
+      slow: 9,
+      base: 6,
+      fast: 3.5,
+    },
+    // One-shot gradient sweep, orchestrated by useText against the phrase
+    // reveal: duration = text duration * sweepRatio, offset by sweepDelay so
+    // the ink arrives just after the words do.
+    sweepRatio: 1.25,
+    sweepDelay: 0.12,
+  },
   lenis: {
     duration: 0.9,
     smoothWheel: true,
@@ -101,11 +114,11 @@ export function isConstrainedDevice(): boolean {
 
   const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
   const lowCPU = (navigator.hardwareConcurrency ?? 8) <= 4;
-  
+
   const lowRAM = "deviceMemory" in navigator
     ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory! <= 4
     : false;
-    
+
   const saveData = "connection" in navigator
     ? (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
     : false;
@@ -125,8 +138,8 @@ export type MotionDistance = keyof typeof MOTION.distance;
 export type MotionStagger = keyof typeof MOTION.stagger;
 export type MotionTrigger = keyof typeof MOTION.trigger;
 
-export const resolveEase = (ease: string | MotionEase): string => 
+export const resolveEase = (ease: string | MotionEase): string =>
   ease in MOTION.ease ? MOTION.ease[ease as MotionEase] : ease;
 
-export const resolveTrigger = (trigger: string | MotionTrigger): string => 
+export const resolveTrigger = (trigger: string | MotionTrigger): string =>
   trigger in MOTION.trigger ? MOTION.trigger[trigger as MotionTrigger] : trigger;

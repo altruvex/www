@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandImage } from "@/components/shared/brand-image";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -11,7 +12,24 @@ export default function NotFoundPage() {
   const t = useTranslations("notFound");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        style={{
+          maskImage:
+            "radial-gradient(110% 110% at 80% 30%, black 0%, transparent 60%)",
+          WebkitMaskImage:
+            "radial-gradient(110% 110% at 80% 30%, black 0%, transparent 60%)",
+        }}
+      >
+        <BrandImage
+          slot="notFound"
+          fill
+          sizes="100vw"
+          className="opacity-30 dark:opacity-40"
+        />
+      </div>
       <div
         aria-hidden
         className="pointer-events-none select-none absolute bottom-0 ltr:right-0 rtl:left-0 font-sans font-semibold leading-none"
@@ -39,7 +57,7 @@ export default function NotFoundPage() {
             <Highlight className="text-primary/70">{t("titleLine2")}</Highlight>
           </h1>
           <div className="h-px w-24 bg-foreground/8 mb-8" />
-          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground mb-12 max-w-md">
+          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground mb-12 max-w-md">
             {t("body")}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">

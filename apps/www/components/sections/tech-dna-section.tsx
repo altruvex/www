@@ -512,7 +512,7 @@ export function TechDNASection() {
                 >
                   <button
                     onClick={clearSelection}
-                    className="absolute top-3 right-3 rtl:right-auto rtl:left-3 p-2 rounded-full text-primary/40 hover:text-primary hover:bg-foreground/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-20"
+                    className="absolute top-3 right-3 rtl:right-auto rtl:left-3 p-2 rounded-full text-primary/40 hover:text-primary hover:bg-foreground/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-20"
                     aria-label="Close"
                   >
                     <svg

@@ -4,7 +4,7 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface AuditLeadCaptureProps {
@@ -17,7 +17,6 @@ export function AuditLeadCapture({
   className,
 }: AuditLeadCaptureProps) {
   const t = useTranslations("auditLead");
-  const locale = useLocale();
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -40,7 +39,7 @@ export function AuditLeadCapture({
     setError("");
 
     try {
-      const response = await fetch(`/${locale}/api/exit-intent`, {
+      const response = await fetch("/api/exit-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, source }),

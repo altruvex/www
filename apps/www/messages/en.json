@@ -4,8 +4,8 @@
   },
   "about": {
     "ctaSecondary": "Case Studies",
-    "description1": "Altruvex is a precision web engineering firm in Cairo. We build multilingual web systems for businesses that need <strong>architecture</strong> - <dim>not templates with a brand coat.</dim>",
-    "description2": "Every project receives <strong>direct founder involvement.</strong> No outsourcing. No theme builders. No intermediary between the decision and the engineer.",
+    "description1": "Altruvex is a precision web engineering firm in Cairo. We build multilingual web systems for businesses that need <strong>architecture</strong> - not templates with a brand coat.",
+    "description2": "Every project receives direct founder involvement. No outsourcing. No theme builders. No intermediary between the decision and the engineer.",
     "eyebrow": "16 - About",
     "founder": {
       "eyebrow": "Founder",
@@ -13,7 +13,7 @@
       "linkedInUrl": "https://www.linkedin.com/in/ali-abdelhadi-65094b283/",
       "name": "Ali Abdelhadi",
       "philosophy1": "Altruvex is being built to become <strong>the reference standard in its category</strong> - a company recognized for engineering precision, structural clarity, and execution that holds under scrutiny.",
-      "philosophy2": "The goal is not to appear premium. It is to build work with sufficient quality and positioning that others can <dim>copy the surface</dim> - but <strong>not the standard behind it.</strong>",
+      "philosophy2": "The goal is not to appear premium. It is to build work with sufficient quality and positioning that others can copy the surface - but not the standard behind it.",
       "role": "Founder & Lead Engineer"
     },
     "stat1": {
@@ -28,7 +28,7 @@
     },
     "stat3": {
       "label": "Architecture-Driven Localization",
-      "sublabel": "Multilingual engineered as a first-class citizen",
+      "sublabel": "Every locale engineered as a first-class citizen",
       "value": "Native"
     },
     "title": "One team.",
@@ -37,7 +37,7 @@
     "values": {
       "multilingual": {
         "label": "Symmetric Bilingualism",
-        "sublabel": "Multilingual share the same technical DNA"
+        "sublabel": "Every language shares the same technical DNA"
       },
       "noTemplate": {
         "label": "The Anti-Template Policy",
@@ -59,7 +59,7 @@
         "title": "Interactive Demo"
       },
       "eyebrow": "Multilingual by Design",
-      "paragraphs": "Most sites treat Multilingual RTL as an afterthought - flip the layout and hope it holds. <strong>We design systems where direction is a first-class architectural decision from day one.</strong>\n\n<dim>This is not about translation.</dim> <strong>It is cultural adaptation.</strong> Right-aligned navigation is not mirrored - it is reconsidered.\n\nEvery component, every layout, every interaction - <strong>built to perform in both directions without compromise.</strong>",
+      "paragraphs": "Most sites treat RTL as an afterthought - flip the layout and hope it holds. <strong>We design systems where direction is a first-class architectural decision from day one.</strong>\n\n<dim>This is not about translation.</dim> <strong>It is cultural adaptation.</strong> Right-aligned navigation is not mirrored - it is reconsidered.\n\nEvery component, every layout, every interaction - <strong>built to perform in both directions without compromise.</strong>",
       "title": "Structure that respects direction."
     },
     "boundaries": {
@@ -281,7 +281,7 @@
       "outcome": "Sub-1s mobile TTI, RTL switching under 16ms with zero layout shift, and leads that arrive pre-qualified - reducing discovery-call time by cutting scope mismatches before the first sentence.",
       "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing credibility it had not yet earned.",
       "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
-      "summary": "A multilingual proof build designed to qualify leads, demonstrate engineering quality, and show what precision Multilingual delivery looks like in production.",
+      "summary": "A multilingual proof build designed to qualify leads, demonstrate engineering quality, and show what precision multilingual delivery looks like in production.",
       "title": "Altruvex.com - The Site Itself Had to Be the Proof"
     },
     "offers": {
@@ -302,7 +302,7 @@
       },
       "website": {
         "audience": "Sharper positioning, faster pages, and a direct conversion path for serious service or product businesses.",
-        "outcome": "A custom Multilingual website with strong performance, clear messaging, and a conversion-ready structure.",
+        "outcome": "A custom multilingual website with strong performance, clear messaging, and a conversion-ready structure.",
         "title": "Website Systems"
       }
     },
@@ -352,17 +352,17 @@
           "title": "03 - Clear business structure"
         }
       ],
-      "title": "Direct oversight of the engineer shaping your site, built to withstand pressure,",
+      "title": "Direct access to the engineer building your system,",
       "titleAccent": "no template shortcuts."
     }
   },
   "common": {
     "endCta": {
-      "body": "Share your scope and we will respond within one business day with a clear next step-no pitch deck.",
+      "body": "Share your scope and we will respond within one business day with a clear next step - no pitch deck.",
       "eyebrow": "Next step",
       "footnote": "Replies within 24 hours on business days.",
       "title": "Ready to",
-      "titleAccent": "scope your build ?"
+      "titleAccent": "scope your build?"
     },
     "step": "Step",
     "stepOf": "Step {current} of {total}"
@@ -436,7 +436,7 @@
     }
   },
   "cta": {
-    "availability": "Taking 2 new projects - Q2 2026",
+    "availability": "Taking 2 new projects - Q3 2026",
     "description": "We help founders and technical teams clarify direction, reduce build risk, and design systems that scale - before the first line of code.",
     "eyebrow": "07 - Let's Build",
     "footnote": "Direct founder conversation. No sales script. No pitch deck.",
@@ -486,7 +486,7 @@
     "consulting": "Consulting",
     "contact": "Contact",
     "copyright": "© {year} Altruvex. All rights reserved.",
-    "description": "Every line of code is engineered for your specific needs. We reject off-the-shelf shortcuts to ensure a standard of uniqueness that admits no compromise.",
+    "description": "Every line of code is engineered for your specific system. No themes, no plugin stacks, no vendor lock-in - architecture you own outright.",
     "emailLabel": "Email",
     "whatsappLabel": "WhatsApp",
     "development": "Development",
@@ -516,7 +516,7 @@
         "value": "< 1s TTI"
       },
       {
-        "label": "Engineered Multilingual architecture - not a mirrored LTR template",
+        "label": "Engineered multilingual architecture - not a mirrored LTR template",
         "value": "Native RTL"
       },
       {
@@ -593,11 +593,12 @@
     "services": "Services",
     "theme": "Theme",
     "transparency": "Transparency",
-    "work": "Work"
+    "work": "Work",
+    "commandPalette": "Search & commands"
   },
   "notFound": {
     "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",
-    "contactUs": "Start a Project",
+    "contactUs": "Contact Us",
     "eyebrow": "404 - Page not found",
     "goHome": "Go home",
     "titleLine1": "This page",
@@ -786,48 +787,52 @@
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated:",
+    "hero": {
+      "eyebrow": "Legal",
+      "description": "How we collect, use, store, and protect your data across our SaaS products and custom project engagements."
+    },
     "sections": {
       "1": {
         "title": "1. Information We Collect",
-        "description": "When you contact us, request an estimate, or schedule a meeting, we collect minimal information:",
-        "contactLabel": "Contact Information:",
-        "contactValue": "Name, email address, phone number",
-        "projectLabel": "Project Details:",
-        "projectValue": "Service interest, project timeline, project type, complexity level",
-        "techLabel": "Technical Data:",
-        "techValue": "IP address (for security and rate limiting), browser type, device information"
+        "description": "Altruvex operates both SaaS products and custom project engagements. Depending on how you use our services, we may collect:",
+        "contactLabel": "Account & Contact:",
+        "contactValue": "Name, email address, phone number, company name, and account credentials for SaaS products",
+        "projectLabel": "Project & Service Details:",
+        "projectValue": "Service interest, subscription plan, project scope, timeline, and complexity level",
+        "techLabel": "Technical & Usage Data:",
+        "techValue": "IP address (security and rate limiting), browser type, device information, and product usage logs for SaaS features"
       },
       "2": {
         "title": "2. How We Use Your Information",
         "description": "We use the information we collect for these specific purposes only:",
-        "item1": "Respond to your inquiries and provide project investment estimates",
-        "item2": "Schedule and conduct discovery meetings",
-        "item3": "Improve our website performance and user experience",
-        "item4": "Protect against spam and abuse (rate limiting, honeypot validation)"
+        "item1": "Provide, operate, and improve our SaaS products (accounts, billing, support, and core features)",
+        "item2": "Respond to inquiries, provide estimates, and deliver custom project engagements",
+        "item3": "Improve our website, products, and user experience",
+        "item4": "Protect against spam, abuse, and unauthorized access (rate limiting, authentication, validation)"
       },
       "3": {
         "title": "3. Data Storage & Security",
-        "description": "Your data is stored securely and we're explicit about how:\n\n• **Database**: PostgreSQL with SSL encryption for all data in transit and at rest\n• **Hosting**: Vercel for application layer, with DDoS protection and automatic backups\n• **Backups**: Daily automated backups, retained for 30 days\n• **Access Control**: Encrypted environment variables; only essential team members have database access\n• **Data Retention**: Contact information kept for 2 years after last contact; you can request deletion anytime\n\nWe do not sell, trade, or transfer your personal information to third parties. We also do not use your data to train AI models or for marketing beyond direct project communication."
+        "description": "Your data is stored securely and we're explicit about how:\n\n• **Database**: PostgreSQL with SSL encryption for all data in transit and at rest\n• **Hosting**: Vercel for application layer, with DDoS protection and automatic backups\n• **Backups**: Daily automated backups, retained for 30 days\n• **Access Control**: Encrypted environment variables; only essential team members have database access\n• **SaaS Data**: Account and product data is retained while your subscription is active, plus a reasonable period after cancellation for billing and legal compliance\n• **Project Data**: Contact and project information kept for 2 years after last contact unless a longer retention period is required by contract\n\nWe do not sell, trade, or transfer your personal information to third parties. We also do not use your data to train AI models or for marketing beyond direct service communication."
       },
       "4": {
         "title": "4. Your Rights",
         "description": "You have explicit control over your data:",
         "item1": "Request access to your personal data (we'll provide a data export within 5 business days)",
         "item2": "Request correction or deletion of your data (with exceptions for legal/compliance records)",
-        "item3": "Withdraw consent at any time (you can opt out of all communications)",
+        "item3": "Withdraw consent at any time (you can opt out of non-essential communications)",
         "item4": "Lodge a complaint with the Egyptian Data Protection Authority or relevant data protection authority in your jurisdiction"
       },
       "5": {
         "title": "5. Cookies & Tracking",
-        "description": "We use minimal tracking:\n\n• **Essential Cookies**: Site functionality only (language preference, session ID)\n• **No Third-Party Tracking**: We don't use Google Analytics, Facebook Pixel, or similar platforms\n• **No User Profiling**: We don't build behavioral profiles or sell data to advertisers\n\nIf we ever implement analytics in the future, we will use privacy-first tools (like Fathom or Plausible) and provide explicit opt-in consent."
+        "description": "We use minimal tracking:\n\n• **Essential Cookies**: Site and product functionality (language preference, authentication sessions, security tokens)\n• **No Third-Party Advertising Trackers**: We don't use Google Analytics, Facebook Pixel, or similar ad platforms by default\n• **No User Profiling for Ads**: We don't build behavioral profiles or sell data to advertisers\n\nIf we implement optional analytics in the future, we will use privacy-first tools (like Fathom or Plausible) and provide explicit opt-in consent where required."
       },
       "6": {
-        "title": "6. Project Data & Client Ownership",
-        "description": "When you hire Altruvex to build your system:\n\n• **Code Ownership**: You own 100% of the source code. We deliver it in a Git repository under your control.\n• **Database Ownership**: Your databases and all data within them are yours. We provide export formats and migration documentation.\n• **Compliance**: We handle GDPR/CCPA on your behalf during the build, but the compliance responsibility transfers to you after handoff.\n• **Third-Party Services**: Any services we integrate (Fawry, Vodafone Cash, Stripe, email providers) have their own privacy policies. We choose services that meet Egyptian/EU standards.\n• **No Lock-In**: If you switch providers mid-project or after launch, we provide complete documentation so another developer can take over immediately."
+        "title": "6. SaaS Accounts & Custom Project Data",
+        "description": "**For SaaS products:**\n\n• You retain ownership of the content and business data you upload or generate in the product\n• Altruvex owns the platform, software, and underlying infrastructure\n• When you cancel, you can export your data within the period stated in your plan or agreement\n• We delete or anonymize account data after the applicable retention period, unless law requires otherwise\n\n**For custom projects:**\n\n• **Code Ownership**: You own 100% of the custom source code delivered under your project agreement\n• **Database Ownership**: Your databases and data within them are yours; we provide export formats and migration documentation\n• **Compliance**: We support GDPR/CCPA requirements during the build; ongoing compliance transfers to you after handoff\n• **No Lock-In**: If you switch providers, we provide documentation so another team can take over"
       },
       "7": {
         "title": "7. Payment & Security",
-        "description": "For project payments:\n\n• We use Stripe or Egyptian bank transfers (never storing your card details directly)\n• Payment information is processed securely through PCI-DSS compliant systems\n• We send payment receipts to your email; we don't retain payment card details\n• For local Egyptian payments, we work with authorized payment processors that comply with CBE regulations"
+        "description": "For SaaS subscriptions and custom project payments:\n\n• We use Stripe or Egyptian bank transfers (we never store full card details directly)\n• Payment information is processed securely through PCI-DSS compliant systems\n• We send invoices and receipts to your email; we don't retain full payment card details\n• Subscription billing may renew automatically according to your selected plan unless cancelled\n• For local Egyptian payments, we work with authorized payment processors that comply with CBE regulations"
       },
       "8": {
         "title": "8. Data Processing & Subprocessors",
@@ -1111,7 +1116,7 @@
             },
             {
               "a": "Yes. The audit is designed to produce a roadmap that can be implemented by Altruvex, your internal team, or another developer. You keep the findings and recommendations.",
-              "q": "Can we use the audit without hiring Altruvex for the build ?"
+              "q": "Can we use the audit without hiring Altruvex for the build?"
             },
             {
               "a": "Most focused audits take five business days after access and context are provided. Larger systems may need a longer discovery window if there are multiple codebases, integrations, or stakeholders.",
@@ -1229,7 +1234,7 @@
         "description": "Spend 30 minutes mapping your constraints. You will leave with a clear technical direction - <strong>no commitment required.</strong>",
         "eyebrow": "Ready to Decide",
         "title": "Not sure",
-        "titleAccent": "which direction to build ?"
+        "titleAccent": "which direction to build?"
       },
       "description": "A <strong>fixed-scope, evidence-based decision layer</strong> for teams facing a rebuild, a slow platform, or an unclear technical direction.",
       "hero": {
@@ -1714,30 +1719,34 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last updated:",
+    "hero": {
+      "eyebrow": "Legal",
+      "description": "The terms that govern SaaS subscriptions, custom project engagements, payments, ownership, and how we work together."
+    },
     "sections": {
       "1": {
         "title": "1. Acceptance of Terms",
-        "description": "By engaging Altruvex for custom web development, ERP systems, or related services, you accept these terms. These terms govern the relationship between you ('Client') and Altruvex ('we' or 'us'). If you don't agree with any term, do not proceed with a project engagement.\n\nThese terms apply to all project engagements unless a written contract supersedes them. In the case of conflict, the signed project agreement takes precedence."
+        "description": "By using Altruvex SaaS products, subscribing to our software, or engaging us for a custom project, you accept these terms. These terms govern the relationship between you ('Client' or 'User') and Altruvex ('we' or 'us'). If you don't agree with any term, do not use our products or proceed with a project engagement.\n\nThese terms apply to all SaaS subscriptions and custom project engagements unless a written contract or product-specific agreement supersedes them. In the case of conflict, the signed agreement or active plan terms take precedence."
       },
       "2": {
         "title": "2. Service Description",
-        "description": "Altruvex builds custom web systems using Next.js, Turborepo, and related modern technologies. Our services include:\n\n• Custom website design and development\n• ERP and business system design\n• E-commerce platforms with payment integration\n• Multilingual architecture\n• Integration with local and international payment systems\n• Post-launch maintenance and support (optional)\n\nWe do NOT provide:\n\n• Template-based WordPress or Shopify builds\n• Ongoing hosting/SaaS (we hand off deployable code)\n• 24/7 emergency support (unless specified in retainer)\n• AI training data or personal data sharing with third parties"
+        "description": "Altruvex provides two types of services:\n\n**SaaS Products**\n\n• Software products operated and hosted by Altruvex\n• Subscription-based access with features defined by the selected plan\n• Account management, updates, hosting, and ongoing product support\n• Data export options as described in your plan or agreement\n\n**Custom Projects**\n\n• Custom website design and development\n• ERP and business system design\n• E-commerce platforms with payment integration\n• Multilingual architecture\n• Integration with local and international payment systems\n• Post-launch maintenance and support (optional)\n\nWe do NOT provide:\n\n• Template-based WordPress or Shopify builds unless explicitly scoped\n• Reselling third-party software as our own product\n• 24/7 emergency support (unless specified in a retainer or enterprise plan)\n• Sale of personal data or use of your data to train third-party AI models"
       },
       "3": {
-        "title": "3. Project Scope & Deliverables",
-        "description": "Project scope is defined in writing during discovery and confirmed in a statement of work (SOW). Scope includes:\n\n• Specific features, integrations, and deliverables\n• Number of revisions or rounds of feedback\n• Timeline and key milestones\n• Acceptance criteria\n\nChanges to scope are handled as follows:\n\n• Minor changes (within 5% effort) are included in the project\n• Moderate changes (5-25% effort) require a change order and timeline adjustment\n• Major changes (>25% effort) are quoted as new work or Phase 2\n\nAny scope change must be documented and agreed in writing before work begins. Verbal requests are not binding."
+        "title": "3. Scope & Deliverables",
+        "description": "**For SaaS products**, scope is defined by the product description, pricing page, and selected subscription plan. This includes available features, usage limits, support level, and billing cycle.\n\n**For custom projects**, scope is defined in writing during discovery and confirmed in a statement of work (SOW). Scope includes:\n\n• Specific features, integrations, and deliverables\n• Number of revisions or rounds of feedback\n• Timeline and key milestones\n• Acceptance criteria\n\nChanges to custom project scope are handled as follows:\n\n• Minor changes (within 5% effort) are included in the project\n• Moderate changes (5-25% effort) require a change order and timeline adjustment\n• Major changes (>25% effort) are quoted as new work or Phase 2\n\nAny custom scope change must be documented and agreed in writing before work begins. Verbal requests are not binding."
       },
       "4": {
         "title": "4. Payment & Pricing",
-        "description": "Payment follows a milestone-based structure:\n\n• **Deposit (30-40%)**: Secures your build window and begins discovery\n• **Mid-Project (30%)**: Due upon completion of design approval and architecture sign-off\n• **Final (30%)**: Due upon delivery to production\n\nPayment Terms:\n\n• Invoices are due within 7 days unless otherwise agreed\n• Late payments accrue 1.5% monthly interest\n• Currency: EGP for local clients, USD for international clients\n• All prices exclude third-party service fees (Stripe, Fawry, hosting, SMS, etc.), which are only billed if used\n• Deposits are non-refundable if you cancel after work begins\n\nWe reserve the right to pause work on outstanding invoices."
+        "description": "**For SaaS subscriptions:**\n\n• Fees are billed according to the selected plan (monthly, annual, or as stated at checkout)\n• Subscriptions renew automatically unless cancelled before the renewal date\n• Failed payments may result in suspension or downgrade after reasonable notice\n• Refunds follow the policy stated on the pricing page or in your agreement\n\n**For custom projects**, payment follows a milestone-based structure:\n\n• **Deposit (30-40%)**: Secures your build window and begins discovery\n• **Mid-Project (30%)**: Due upon completion of design approval and architecture sign-off\n• **Final (30%)**: Due upon delivery to production\n\nGeneral payment terms:\n\n• Invoices are due within 7 days unless otherwise agreed\n• Late payments accrue 1.5% monthly interest\n• Currency: EGP for local clients, USD for international clients\n• Third-party service fees (Stripe, Fawry, hosting, SMS, etc.) are billed separately when used\n• Project deposits are non-refundable if you cancel after work begins\n\nWe reserve the right to pause services or work on outstanding invoices."
       },
       "5": {
-        "title": "5. Intellectual Property & Code Ownership",
-        "description": "This is core to how Altruvex operates:\n\n• **You own 100% of the source code** generated during the project\n• **You own 100% of your data** in databases and storage\n• **You own all custom logic and architecture** we design for your business\n• We retain ownership of our methodology, frameworks, and reusable components (which are available under open-source licenses like MIT)\n\nDeliverables include:\n\n• Complete source code in a Git repository under your control\n• Full deployment documentation\n• Environment variables and secrets management\n• Database schema and migration history\n• Architecture decision log\n\nYou may:\n\n• Modify, extend, or hire others to maintain the code\n• Deploy to your own infrastructure or any hosting provider\n• Use the code for any lawful purpose\n• Fork or modify the code without permission\n\nYou may NOT:\n\n• Claim we built it (though you can credit us)\n• Use it to provide the same service to competitors without permission"
+        "title": "5. Intellectual Property & Ownership",
+        "description": "**For SaaS products:**\n\n• Altruvex owns the platform, software, branding, and underlying infrastructure\n• You receive a limited, non-exclusive license to use the product while your subscription is active and paid\n• You retain ownership of the content and business data you upload or create in the product\n• You may not copy, reverse engineer, resell, or white-label the SaaS platform unless explicitly permitted in writing\n\n**For custom projects:**\n\n• **You own 100% of the custom source code** generated under your project agreement\n• **You own 100% of your data** in databases and storage delivered to you\n• **You own all custom logic and architecture** we design for your business\n• We retain ownership of our methodology, internal tools, and reusable components not built exclusively for your project\n\nCustom project deliverables include:\n\n• Complete source code in a Git repository under your control\n• Full deployment documentation\n• Environment variables and secrets management\n• Database schema and migration history\n• Architecture decision log\n\nYou may modify, deploy, and maintain custom project code as you see fit, subject to third-party license terms."
       },
       "6": {
         "title": "6. Warranties & Disclaimers",
-        "description": "What we guarantee:\n\n• Code will follow industry best practices and modern standards\n• Performance will meet targets stated in the SOW (e.g., <1s load time)\n• Systems will be deployed and tested before handoff\n• We'll provide 30 days of post-launch support for critical fixes\n• Code will be documented and maintainable by a competent developer\n\nWhat we don't guarantee:\n\n• Traffic, conversions, or sales from the system\n• Compatibility with future versions of third-party libraries (we control the build; you control the deployment)\n• Protection from your own security negligence (lost credentials, weak passwords, unpatched vulnerabilities on your side)\n• Compatibility with custom code you or others add after handoff\n• Third-party service uptime (e.g., Stripe outages, Fawry downtime)\n\nPost-handoff maintenance is YOUR responsibility unless you sign a maintenance retainer agreement."
+        "description": "What we guarantee:\n\n• Our SaaS products are provided with commercially reasonable uptime and support for the selected plan\n• Custom project code will follow industry best practices and modern standards\n• Custom systems will meet performance targets stated in the SOW where applicable\n• Custom projects will be deployed and tested before handoff\n• We provide 30 days of post-launch support for critical fixes on custom projects unless otherwise agreed\n\nWhat we don't guarantee:\n\n• Uninterrupted access in cases of force majeure, third-party outages, or maintenance windows\n• Traffic, conversions, or sales from any website, product, or system\n• Compatibility with unsupported modifications you or others make after delivery\n• Protection from your own security negligence (lost credentials, weak passwords, unpatched vulnerabilities)\n• Third-party service uptime (e.g., Stripe outages, Fawry downtime)\n\nOngoing maintenance beyond included support is your responsibility unless covered by a subscription, retainer, or maintenance agreement."
       },
       "7": {
         "title": "7. Limitation of Liability",
@@ -1745,7 +1754,7 @@
       },
       "8": {
         "title": "8. Termination & Cancellation",
-        "description": "Either party may terminate with written notice if:\n\n• The other party materially breaches these terms and fails to cure within 14 days of written notice\n• The other party becomes insolvent or files for bankruptcy\n\nCancellation by Client:\n\n• Before work starts: Deposit is refunded, minus any costs incurred\n• After work starts: Deposit is non-refundable; remaining fees are due for work completed\n• If you cancel mid-project, we deliver code and documentation in its current state\n• We have no obligation to complete unstarted phases\n\nCancellation by Altruvex:\n\n• We may pause work for non-payment (after 14 days overdue)\n• We may terminate for repeated scope creep beyond agreed change order limits\n• Upon termination, we deliver all work-to-date and transition in good faith"
+        "description": "Either party may terminate with written notice if:\n\n• The other party materially breaches these terms and fails to cure within 14 days of written notice\n• The other party becomes insolvent or files for bankruptcy\n\n**SaaS cancellation:**\n\n• You may cancel your subscription according to the plan terms\n• Access may continue until the end of the current billing period unless otherwise stated\n• We may suspend or terminate accounts for non-payment, abuse, or violation of these terms\n• Data export options remain available for the period stated in your plan or agreement\n\n**Custom project cancellation:**\n\n• Before work starts: Deposit is refunded, minus any costs incurred\n• After work starts: Deposit is non-refundable; remaining fees are due for work completed\n• If you cancel mid-project, we deliver code and documentation in its current state\n• We have no obligation to complete unstarted phases\n\nCancellation by Altruvex:\n\n• We may pause work or access for non-payment (after 14 days overdue where applicable)\n• We may terminate for repeated scope creep beyond agreed change order limits on custom projects\n• Upon termination, we deliver all work-to-date and transition in good faith where applicable"
       },
       "9": {
         "title": "9. Confidentiality",
@@ -2090,7 +2099,7 @@
       "investment": "Investment Range",
       "moreInPdf": "+ {count} more deliverables in the PDF",
       "or": "Or",
-      "rangeCopy": "<strong>Projects like yours typically fall between {min} – {max}</strong>, with a delivery window of {weeksMin}–{weeksMax} weeks. <dim>This is just an estimated timeframe; we will build your system in the time you require, rather than strictly adhering to this estimate.</dim>",
+      "rangeCopy": "<strong>Projects like yours typically fall between {min} – {max}</strong>, with a delivery window of {weeksMin}–{weeksMax} weeks. <dim>The exact window is confirmed in discovery, once scope and content readiness are known.</dim>",
       "rangeCta": "This is an initial estimate to help you plan. <strong>For a precise proposal tailored to your specific goals</strong>, <dim>Schedule a Briefing</dim>.",
       "rangeCtaLabel": "Engineering Note",
       "strategicNote": "This is a strategic estimate based on your inputs - not a generic price range.",
@@ -2296,7 +2305,20 @@
       "professional": "Connected Platform"
     },
     "title": "Clear engineering.",
-    "titleItalic": "No hidden scopes."
+    "titleItalic": "No hidden scopes.",
+    "ledger": {
+      "eyebrow": "The ledger",
+      "forming": "Estimate forming",
+      "resolved": "Estimate resolved",
+      "pending": "Awaiting input",
+      "labels": {
+        "projectType": "Type",
+        "complexity": "Depth",
+        "brandIdentity": "Brand",
+        "contentReadiness": "Content",
+        "timeline": "Timeline"
+      }
+    }
   },
   "validations": {
     "contact": {
@@ -2469,6 +2491,68 @@
         "question": "What's your actual experience? Can you show me projects?",
         "answer": "<p>We've built:</p><ul><li><strong>Altruvex.com</strong> - Our own website (Web Engineering, 2025). Built with Next.js, Turborepo, deployed to Vercel.</li><li><strong>NewLight Lighting Store</strong> - E-commerce with Fawry integration, inventory management, multi-tier workflows (2024)</li><li><strong>Art Lighting Store</strong> - E-commerce platform with advanced filtering and performance optimization (2024)</li></ul><p>You can examine these live to understand our engineering standards. <strong>We don't use stock imagery or templates</strong> - <span class=\"text-foreground/60\">what you see is what we build</span>.</p><p>For more detailed case studies and technical breakdowns, check the Work section on our site.</p>"
       }
+    }
+  },
+  "commandPalette": {
+    "title": "Command palette",
+    "placeholder": "Search pages, services, actions…",
+    "empty": "No results. Try a different term.",
+    "hint": "Navigate the whole site from here",
+    "groups": {
+      "actions": "Quick actions",
+      "pages": "Pages",
+      "services": "Services"
+    },
+    "actions": {
+      "themeDark": "Switch to dark mode",
+      "themeLight": "Switch to light mode",
+      "schedule": "Schedule a technical call",
+      "copyEmail": "Copy email address",
+      "copied": "Copied to clipboard"
+    },
+    "pages": {
+      "home": "Home"
+    }
+  },
+  "playground": {
+    "eyebrow": "Live System",
+    "title": "Not a mockup.",
+    "titleItalic": "The system itself, running.",
+    "description": "These are the exact components we ship — same tokens, same motion, same accessibility. Change a prop and watch the system respond.",
+    "controlsLabel": "Props",
+    "copy": "Copy",
+    "copied": "Copied",
+    "footnote": "Every control here maps to a real prop in the production component library. Reduced-motion and RTL behavior come built in — switch your OS setting or the site language and re-test.",
+    "tabs": {
+      "button": "Button",
+      "card": "Card",
+      "field": "Field",
+      "accent": "Emphasis"
+    },
+    "controls": {
+      "variant": "Variant",
+      "size": "Size",
+      "loading": "Loading state",
+      "lift": "Hover lift",
+      "glass": "Liquid glass",
+      "tilt": "3D tilt",
+      "tiltNote": "Tilt self-disables on touch devices and under reduced motion.",
+      "state": "State",
+      "stateDefault": "Default",
+      "stateError": "Error",
+      "stateDisabled": "Disabled",
+      "gradient": "Gradient",
+      "shimmer": "Shimmer"
+    },
+    "demo": {
+      "buttonLabel": "Start the conversation",
+      "cardEyebrow": "Uptime — last 12 months",
+      "cardBody": "Every surface in the system carries its own elevation, border, and motion rules.",
+      "fieldLabel": "Work email",
+      "fieldPlaceholder": "you@company.com",
+      "fieldError": "Enter a valid email address.",
+      "accentPre": "Interfaces engineered for",
+      "accentPhrase": "measurable outcomes."
     }
   }
 }

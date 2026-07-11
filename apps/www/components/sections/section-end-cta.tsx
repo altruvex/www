@@ -63,7 +63,7 @@ export function SectionEndCta({ variant = "contact" }: SectionEndCtaProps) {
               titleWrapper: "space-y-0",
               eyebrow: "text-local-accent mb-4",
               title: "text-[clamp(1.75rem,3vw,2.25rem)] leading-[1.12] font-normal text-foreground mb-4",
-              description: "max-w-xl mb-8 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground",
+              description: "max-w-xl mb-8 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground",
             }}
           />
           <CtaButtonGroup

@@ -19,7 +19,7 @@ export function SurfaceCard({
         "rounded-lg",
         glass ? "liquid-glass-panel" : "border border-border bg-surface",
         interactive &&
-          "transition-colors duration-300 hover:bg-background/80",
+          "transition-all duration-300 ease-out hover:bg-background/80 hover:border-border-mid motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-card-lg",
         className,
       )}
       {...props}

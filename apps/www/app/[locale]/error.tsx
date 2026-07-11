@@ -87,7 +87,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           aria-label="Error page"
         >
           <div
-            className={`flex flex-col items-center transition-all duration-700 ease-out ${
+            className={`flex flex-col items-center transition-[transform,opacity] duration-700 ease-out ${
               mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
           >
@@ -115,11 +115,11 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             </p>
             {error.digest && (
               <div className="mb-12 w-full max-w-md text-left rtl:text-right">
-                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-colors hover:border-foreground/20 hover:bg-foreground/2">
+                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-all hover:border-foreground/20 hover:bg-foreground/2">
                   <summary
                     className={cn(
                       monoCaps,
-                      "cursor-pointer text-muted-foreground group-hover:text-primary/70 transition-colors select-none",
+                      "cursor-pointer text-muted-foreground group-hover:text-primary/70 transition-all select-none",
                     )}
                   >
                     Error Digest
@@ -140,7 +140,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 <span className="flex items-center gap-2">
                   Try Again
                   <svg
-                    className="h-4 w-4 transition-transform duration-300 group-hover:rotate-180"
+                    className="h-4 w-4 transition-all duration-300 group-hover:rotate-180"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -164,7 +164,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   <span className="flex items-center gap-2">
                     Go Home
                     <svg
-                      className="h-4 w-4 transition-transform duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
+                      className="h-4 w-4 transition-all duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

@@ -55,13 +55,30 @@ export function SmoothScrollProvider({
           tickFn = (time: number) => lenis.raf(time * 1000);
           gsap.ticker.add(tickFn);
           gsap.ticker.lagSmoothing(0);
-
-          // Handle page geometry changes automatically
-          resizeObserver = new ResizeObserver(() => {
-            lenis.resize();
-          });
-          resizeObserver.observe(document.body);
         }
+
+        // Handle page geometry changes automatically. ScrollTrigger needs its
+        // start/end pixels recomputed on any body-height change — otherwise
+        // reveals near the bottom of the page (e.g. the footer) keep stale
+        // trigger positions when layout settles AFTER the triggers were created
+        // (fonts loading, the giant footer wordmark reflowing, client-side route
+        // changes) and can get stuck at opacity 0. When Lenis is active it also
+        // needs its scroll bounds resized. This runs on touch too (where Lenis
+        // is off but ScrollTrigger reveals still fire), since body-height shifts
+        // don't emit a window resize event. Debounced to a single rAF so a burst
+        // of resizes only triggers one refresh.
+        let refreshPending = false;
+        resizeObserver = new ResizeObserver(() => {
+          lenisRef?.resize();
+          if (!refreshPending) {
+            refreshPending = true;
+            requestAnimationFrame(() => {
+              ScrollTrigger.refresh();
+              refreshPending = false;
+            });
+          }
+        });
+        resizeObserver.observe(document.body);
 
         requestAnimationFrame(() => {
           if (!cancelled) ScrollTrigger.refresh();

@@ -89,7 +89,7 @@ export function Nav() {
                         "after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-brand after:origin-center after:transition-transform after:duration-300 motion-reduce:after:transition-none",
                         isActive
                           ? "text-brand-text after:scale-x-100"
-                          : "text-primary/65 hover:text-foreground after:bg-foreground/25 after:scale-x-0 hover:after:scale-x-100",
+                          : "transition-all text-primary/65 hover:text-foreground after:bg-foreground/25 after:scale-x-0 hover:after:scale-x-100",
                       )}
                     >
                       {t(item.key)}
@@ -107,8 +107,8 @@ export function Nav() {
                   className={cn(
                     "inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     isNavInverted
-                      ? "bg-foreground text-inverted-bg hover:bg-foreground/90"
-                      : "bg-foreground text-background hover:bg-foreground/90",
+                      ? "transition-all bg-foreground text-inverted-bg hover:bg-foreground/90"
+                      : "transition-all bg-foreground text-background hover:bg-foreground/90",
                   )}
                 >
                   {t("getStarted")}
@@ -173,7 +173,7 @@ export function Nav() {
                           "flex w-full items-center rounded-md border-s-2 border-transparent px-4 py-4 transition-colors duration-200",
                           isActive
                             ? "bg-brand/8 text-brand-text border-brand"
-                            : "text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+                            : "transition-all text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
                         )}
                       >
                         <span className="font-sans text-2xl font-semibold tracking-tight">

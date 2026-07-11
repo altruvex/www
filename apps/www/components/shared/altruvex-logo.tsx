@@ -27,7 +27,7 @@ if (variant === "icon") {
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-lg liquid-glass transition-[border-color,background-color] duration-200 hover:border-foreground/20 hover:bg-foreground/5",
+        "flex items-center justify-center rounded-lg liquid-glass transition-all duration-200 hover:border-foreground/20 hover:bg-foreground/5",
         iconSizeClasses[size],
       )}
     >
@@ -45,7 +45,7 @@ return (
   <div className={cn("flex items-center", className)}>
     <span
       className={cn(
-        "font-sans font-semibold uppercase tracking-[-0.05em] transition-opacity duration-300 group-hover:opacity-75",
+        "font-sans font-semibold uppercase tracking-[-0.05em] transition-all duration-300 group-hover:opacity-75",
         sizeClasses[size],
         "text-primary",
       )}

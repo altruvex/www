@@ -519,7 +519,7 @@ function StageNav({
         <div className="flex justify-end mt-1.5">
           <button
             onClick={onSkip}
-            className="font-mono text-foreground/30 hover:text-foreground/55 transition-colors bg-transparent border-none cursor-pointer py-0.5 px-0"
+            className="font-mono text-foreground/30 hover:text-foreground/55 transition-all bg-transparent border-none cursor-pointer py-0.5 px-0"
             style={{
               fontSize: "clamp(8px, 0.7vw, 10px)",
               letterSpacing: "0.16em",

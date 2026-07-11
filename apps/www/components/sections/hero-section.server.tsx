@@ -1,4 +1,5 @@
 import { Container } from "@/components/shared/container";
+import { BrandImage } from "@/components/shared/brand-image";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -33,8 +34,25 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       className="accent-world-blue relative z-10 flex lg:min-h-dvh w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
       aria-label="Hero section"
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+        style={{
+          maskImage:
+            "radial-gradient(120% 120% at 85% 15%, black 0%, transparent 65%)",
+          WebkitMaskImage:
+            "radial-gradient(120% 120% at 85% 15%, black 0%, transparent 65%)",
+        }}
+      >
+        <BrandImage
+          slot="hero"
+          fill
+          kenBurns
+          sizes="100vw"
+          className="opacity-40 dark:opacity-50"
+        />
+      </div>
       <SectionWatermark>{watermark}</SectionWatermark>
-      <div className="grain-overlay" aria-hidden="true" />
       <h1 className="sr-only">
         {title1} {title2}
       </h1>

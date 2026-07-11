@@ -1,4 +1,4 @@
-import { Accent, Highlight, type AccentGradient, type GradientDirection } from "@/components/ui/emphasis";
+import { Accent, Highlight, type AccentAnimation, type AccentGradient, type GradientDirection } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils/utils";
 import { ReactNode, RefObject } from "react";
@@ -15,7 +15,7 @@ interface SectionHeadingProps {
   theme?: "default" | "surface";
   accent?: AccentGradient | (string & {});
   accentDirection?: GradientDirection;
-  accentAnimate?: boolean;
+  accentAnimate?: boolean | AccentAnimation;
   secondTitleBreak?: boolean;
   titleId?: string;
 

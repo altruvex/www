@@ -1,11 +1,10 @@
 "use client";
 
+import { motion, useMagnetic, usePress } from "@/lib/motion";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import React, {
   forwardRef,
   useCallback,
-  useEffect,
-  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -24,8 +23,6 @@ interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
   className?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
-  soundEnabled?: boolean;
-  hapticEnabled?: boolean;
   asChild?: boolean;
   isLoading?: boolean;
 }
@@ -74,6 +71,14 @@ function ensureRippleKeyframes() {
   document.head.appendChild(style);
 }
 
+/**
+ * The site's primary CTA. Communicated state: "this is the action that matters
+ * here — it responds to you before you commit." Magnetic pull + tactile press +
+ * click ripple, all owned by GSAP via useMagnetic/usePress (single motion
+ * runtime — no parallel rAF/CSS transform path). Both hooks self-disable under
+ * reduced motion / coarse pointers, and usePress mirrors Enter/Space so
+ * keyboard users get the same tactile feedback.
+ */
 export const MagneticButton = forwardRef<
   HTMLButtonElement,
   MagneticButtonProps
@@ -84,8 +89,6 @@ export const MagneticButton = forwardRef<
       className = "",
       variant = "primary",
       size = "default",
-      soundEnabled = false,
-      hapticEnabled = true,
       asChild = false,
       isLoading = false,
       onClick,
@@ -94,18 +97,9 @@ export const MagneticButton = forwardRef<
     },
     forwardedRef,
   ) => {
-    const internalRef = useRef<HTMLButtonElement>(null);
-    const rectRef = useRef<DOMRect | null>(null);
-    const magneticRef = useRef({ x: 0, y: 0 });
-    const isPressedRef = useRef(false);
-    const rafRef = useRef<number | null>(null);
-
-    const mergedRef = useMergedRef(internalRef, forwardedRef);
-
-    const updateRect = useCallback(() => {
-      if (!internalRef.current) return;
-      rectRef.current = internalRef.current.getBoundingClientRect();
-    }, []);
+    const magneticRef = useMagnetic<HTMLButtonElement>(motion.magneticButton());
+    const pressRef = usePress<HTMLButtonElement>(motion.pressButton());
+    const mergedRef = useMergedRef(magneticRef, pressRef, forwardedRef);
 
     const prefersReducedMotion = useSyncExternalStore(
       subscribeToReducedMotion,
@@ -113,113 +107,22 @@ export const MagneticButton = forwardRef<
       () => false,
     );
 
-    const [isPressed, setIsPressed] = useState(false);
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
-    useEffect(() => {
-      return () => {
-        if (rafRef.current !== null) {
-          cancelAnimationFrame(rafRef.current);
-        }
-      };
-    }, []);
-
-    const flushTransform = useCallback(() => {
-      rafRef.current = null;
-      if (!internalRef.current) return;
-      const { x, y } = magneticRef.current;
-      const scale = isPressedRef.current && !prefersReducedMotion ? 0.95 : 1;
-      internalRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scale})`;
-    }, [prefersReducedMotion]);
-
-    const scheduleTransform = useCallback(() => {
-      if (rafRef.current !== null) return;
-      rafRef.current = requestAnimationFrame(flushTransform);
-    }, [flushTransform]);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!internalRef.current || prefersReducedMotion) return;
-      const rect =
-        rectRef.current ?? internalRef.current.getBoundingClientRect();
-      rectRef.current = rect;
-      magneticRef.current = {
-        x: (e.clientX - rect.left - rect.width / 2) * 0.15,
-        y: (e.clientY - rect.top - rect.height / 2) * 0.15,
-      };
-      scheduleTransform();
-    };
-
-    const handleMouseLeave = () => {
-      if (prefersReducedMotion) return;
-      magneticRef.current = { x: 0, y: 0 };
-      isPressedRef.current = false;
-      setIsPressed(false);
-      scheduleTransform();
-    };
-
-    const handleMouseDown = () => {
-      if (!prefersReducedMotion) {
-        isPressedRef.current = true;
-        setIsPressed(true);
-        scheduleTransform();
-      }
-    };
-    const handleMouseUp = () => {
-      isPressedRef.current = false;
-      setIsPressed(false);
-      scheduleTransform();
-    };
-
-    const playClickSound = () => {
-      try {
-        const audioContext = new (
-          window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext
-        )();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.frequency.value = 800;
-        oscillator.type = "sine";
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(
-          0.01,
-          audioContext.currentTime + 0.1,
-        );
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.1);
-      } catch (error) {
-        console.warn("Audio playback failed:", error);
-      }
-    };
-
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      if (!internalRef.current) return;
-
-      ensureRippleKeyframes();
-
-      const rect = internalRef.current.getBoundingClientRect();
-      const rippleId = Date.now();
-
-      setRipples((prev) => [
-        ...prev,
-        { x: e.clientX - rect.left, y: e.clientY - rect.top, id: rippleId },
-      ]);
-      setTimeout(
-        () => setRipples((prev) => prev.filter((r) => r.id !== rippleId)),
-        420,
-      );
-
-      if (hapticEnabled && "vibrate" in navigator) {
-        try {
-          navigator.vibrate(10);
-        } catch (err) {
-          console.warn("Haptic failed:", err);
-        }
+      if (!prefersReducedMotion) {
+        ensureRippleKeyframes();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const rippleId = Date.now();
+        setRipples((prev) => [
+          ...prev,
+          { x: e.clientX - rect.left, y: e.clientY - rect.top, id: rippleId },
+        ]);
+        setTimeout(
+          () => setRipples((prev) => prev.filter((r) => r.id !== rippleId)),
+          420,
+        );
       }
-      if (soundEnabled) playClickSound();
       onClick?.(e);
     };
 
@@ -231,11 +134,11 @@ export const MagneticButton = forwardRef<
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
       filled:
-        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-[background-color,border-color,color] duration-300 ease-out",
+        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-all duration-300 ease-out",
       // Consumes the section-scoped --local-accent so the same button renders
       // the active section's color world. Threshold/conversion moments only.
       accent:
-        "bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
+        "transition-all bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
     };
 
     const sizes: Record<ButtonSize, string> = {
@@ -243,6 +146,8 @@ export const MagneticButton = forwardRef<
       lg: "min-h-12 min-w-12 px-8 py-3.5 text-base",
     };
 
+    // Transform is GSAP-owned (useMagnetic/usePress) — it must NOT appear in
+    // the CSS transition list or the two systems fight over the same property.
     const sharedClassName = [
       "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
       "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
@@ -254,24 +159,6 @@ export const MagneticButton = forwardRef<
     ]
       .filter(Boolean)
       .join(" ");
-
-    const sharedStyle: React.CSSProperties = {
-      transform: `translate3d(0px, 0px, 0) scale(${isPressed && !prefersReducedMotion ? 0.95 : 1})`,
-      transition: `transform 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 300ms ease-out, border-color 300ms ease-out, color 300ms ease-out, box-shadow 300ms ease-out`,
-    };
-
-    const interactionHandlers = {
-      onClick: isLoading ? undefined : handleClick,
-      onMouseMove:
-        prefersReducedMotion || isLoading ? undefined : handleMouseMove,
-      onMouseEnter:
-        prefersReducedMotion || isLoading ? undefined : updateRect,
-      onMouseLeave:
-        prefersReducedMotion || isLoading ? undefined : handleMouseLeave,
-      onMouseDown:
-        prefersReducedMotion || isLoading ? undefined : handleMouseDown,
-      onMouseUp: prefersReducedMotion || isLoading ? undefined : handleMouseUp,
-    };
 
     const rippleNodes =
       !prefersReducedMotion &&
@@ -289,17 +176,17 @@ export const MagneticButton = forwardRef<
       ));
 
     // asChild: render the consumer's element (e.g. <Link>) as the interactive
-    // root so we never produce invalid <button><a> nesting. The magnetic
-    // handlers, styles and ripples are merged/composed onto that element.
+    // root so we never produce invalid <button><a> nesting. The magnetic/press
+    // refs, styles and ripples are merged/composed onto that element.
     if (asChild) {
       return (
         <Slot
           ref={mergedRef as React.Ref<HTMLElement>}
-          {...interactionHandlers}
+          onClick={isLoading ? undefined : (handleClick as React.MouseEventHandler)}
           aria-busy={isLoading || undefined}
           className={sharedClassName}
-          style={sharedStyle}
           data-cursor-pointer
+          data-magnetic
           {...props}
         >
           <Slottable>{children}</Slottable>
@@ -311,12 +198,12 @@ export const MagneticButton = forwardRef<
     return (
       <button
         ref={mergedRef}
-        {...interactionHandlers}
+        onClick={isLoading ? undefined : handleClick}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
         className={sharedClassName}
-        style={sharedStyle}
         data-cursor-pointer
+        data-magnetic
         {...props}
       >
         <span className="relative z-10 flex items-center justify-center gap-2">

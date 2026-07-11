@@ -6,7 +6,7 @@ import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils/utils";
 import { X } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export const ExitIntentModal = () => {
@@ -16,7 +16,6 @@ export const ExitIntentModal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
-  const locale = useLocale();
   const handleExit = () => {
     setIsVisible(true);
     trackEvent("exit_intent_shown");
@@ -45,7 +44,7 @@ export const ExitIntentModal = () => {
     setError("");
 
     try {
-      const response = await fetch(`/${locale}/api/exit-intent`, {
+      const response = await fetch("/api/exit-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, source: "exit_intent_modal" }),
@@ -113,7 +112,7 @@ export const ExitIntentModal = () => {
         <button
           type="button"
           onClick={handleClose}
-          className="absolute top-4 inset-e-4 p-1 text-foreground/30 hover:text-foreground transition-colors"
+          className="absolute top-4 inset-e-4 p-1 text-foreground/30 hover:text-foreground transition-all"
           aria-label={t("closeLabel")}
         >
           <X className="w-4 h-4" />
@@ -209,7 +208,7 @@ export const ExitIntentModal = () => {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="text-xs text-foreground/30 hover:text-foreground/60 transition-colors whitespace-nowrap"
+                  className="text-xs text-foreground/30 hover:text-foreground/60 transition-all whitespace-nowrap"
                 >
                   {t("secondaryButtonText")}
                 </button>

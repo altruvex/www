@@ -68,7 +68,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
                 key={key}
                 className={cn(
                   "pricing-signal-card relative border-e border-b border-border px-6 py-8 group transition-colors duration-300",
-                  featured ? "bg-brand/3 hover:bg-brand/6" : "hover:bg-surface",
+                  featured ? "transition-all bg-brand/3 hover:bg-brand/6" : "transition-all hover:bg-surface",
                 )}
               >
                 {featured ? (
@@ -105,7 +105,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
                           "mt-2.5 h-1 w-1 shrink-0 rounded-full transition-colors",
                           featured
                             ? "bg-brand"
-                            : "bg-foreground/40 group-hover:bg-foreground",
+                            : "transition-all bg-foreground/40 group-hover:bg-foreground",
                         )}
                       />
                       <span>{feature}</span>

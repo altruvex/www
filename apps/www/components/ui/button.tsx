@@ -11,18 +11,18 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
+          "transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
         brand:
-          "bg-brand text-brand-foreground hover:bg-brand-hover active:bg-brand-hover/90 focus-visible:ring-brand/50",
+          "transition-all bg-brand text-brand-foreground hover:bg-brand-hover active:bg-brand-hover/90 focus-visible:ring-brand/50",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:bg-input/30 dark:border-input dark:hover:bg-input/50 dark:active:bg-input/70",
+          "transition-all border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:bg-input/30 dark:border-input dark:hover:bg-input/50 dark:active:bg-input/70",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70",
+          "transition-all bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
-        link: "text-primary underline-offset-4 hover:underline active:text-primary/80",
+          "transition-all hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
+        link: "transition-all text-primary underline-offset-4 hover:underline active:text-primary/80",
       },
       size: {
         default: "h-10 px-4 py-2 has-[>svg]:px-3",
@@ -69,10 +69,18 @@ function Button({
       aria-busy={loading || undefined}
       {...props}
     >
-      {showSpinner ? (
-        <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-      ) : null}
-      {children}
+      {/* Slot (asChild) requires a single element child — never emit the
+          spinner sibling in that mode. */}
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {showSpinner ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : null}
+          {children}
+        </>
+      )}
     </Comp>
   );
 }

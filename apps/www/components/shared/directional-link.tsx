@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 
 const ARROW_CLASS =
-  "h-4 w-4 shrink-0 transition-transform duration-150 ease-out ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180";
+  "h-4 w-4 shrink-0 transition-all duration-150 ease-out ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180";
 
 export function ArrowIcon({ className }: { className?: string }) {
   return (

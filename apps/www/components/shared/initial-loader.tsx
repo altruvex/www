@@ -196,7 +196,9 @@ export const InitialLoader = memo(function InitialLoader() {
             opacity: showWordmark ? 1 : 0,
             transform: showWordmark ? "translateY(0) scale(1)" : "translateY(12px) scale(0.98)",
             filter: showWordmark ? "blur(0px)" : "blur(4px)",
-            transition: `all ${MOTION.duration.slow || 0.8}s ${MOTION.ease.smooth}`,
+            transition: ["opacity", "transform", "filter"]
+              .map((p) => `${p} ${MOTION.duration.slow || 0.8}s ${MOTION.ease.smooth}`)
+              .join(", "),
           }}
         >
           <div className="font-sans font-light text-foreground text-[clamp(36px,6vw,72px)] tracking-tight leading-none">

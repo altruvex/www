@@ -1,5 +1,6 @@
 "use client";
 
+import { CommandPaletteHost } from "@/components/interactive/command-palette-host";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
@@ -51,6 +52,7 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
           {shouldMountNonCritical ? <CustomCursorLazy /> : null}
         </Suspense>
         {children}
+        <CommandPaletteHost />
         {shouldMountNonCritical ? <ExitIntentLazy /> : null}
       </ThemeProvider>
     </>

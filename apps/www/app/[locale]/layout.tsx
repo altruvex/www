@@ -13,9 +13,12 @@ import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
 
+// No `weight` array: these are all variable fonts, so next/font serves one
+// variable file per family (full wght axis) instead of a static file per
+// weight — fewer requests, and intermediate weights (500 in Inter) render
+// for real instead of being browser-synthesized.
 const vazirmatn = Vazirmatn({
   subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-vazirmatn",
   display: "swap",
   preload: true,
@@ -23,7 +26,6 @@ const vazirmatn = Vazirmatn({
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "600"],
   variable: "--font-inter",
   display: "swap",
   preload: true,
@@ -31,7 +33,6 @@ const inter = Inter({
 
 const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-outfit",
   display: "swap",
   preload: true,
@@ -39,10 +40,13 @@ const outfit = Outfit({
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
   variable: "--font-geist-mono",
   display: "swap",
-  preload: true,
+  // Mono is only rendered on the contact/error pages (mono labels), never in
+  // the initial viewport of the primary routes — but it's applied to <body> on
+  // every page. Preloading it would put it on the critical path site-wide and
+  // compete with the real LCP fonts (Outfit/Inter/Vazirmatn). Load on demand.
+  preload: false,
 });
 
 type Props = {
