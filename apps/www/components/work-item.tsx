@@ -209,13 +209,13 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   rel="noopener noreferrer"
                   className="group/link flex items-center gap-2 rounded-sm font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rtl:font-sans rtl:normal-case rtl:tracking-normal"
                 >
-                  <span className="text-s-mid uppercase transition-colors group-hover/link:text-primary">
+                  <span className="text-s-mid uppercase transition-all group-hover/link:text-primary">
                     {tW("labels.visitProj")}
                   </span>
-                  <span className="flex items-center gap-1 text-s-low lowercase transition-colors group-hover/link:text-brand-text">
+                  <span className="flex items-center gap-1 text-s-low lowercase transition-all group-hover/link:text-brand-text">
                     ({getDomainName(externalUrl)})
                     <svg
-                      className="h-3.5 w-3.5 transition-transform duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
+                      className="h-3.5 w-3.5 transition-all duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

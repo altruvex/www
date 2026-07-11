@@ -117,7 +117,7 @@ export default function WorkCaseStudyPageClient({
               >
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-colors duration-300 group-hover/metric:bg-local-accent"
+                  className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-all duration-300 group-hover/metric:bg-local-accent"
                 />
                 <p className="font-sans font-light text-local-accent leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
                   {metric.value}

@@ -475,7 +475,7 @@ export function TechDNASection() {
             </div>
           </div>
 
-          <div className="md:hidden flex items-center justify-center gap-3 mt-4 pointer-events-none transition-opacity group-hover/scroll:opacity-5">
+          <div className="md:hidden flex items-center justify-center gap-3 mt-4 pointer-events-none transition-all group-hover/scroll:opacity-5">
             <div className="h-px flex-1 bg-border" />
             <Eyebrow className="whitespace-nowrap">{t("techStack.dragHint")}</Eyebrow>
             <div className="h-px flex-1 bg-border" />

@@ -229,7 +229,7 @@ export function LanguageSwitcherBase({
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "group flex items-center gap-2 rounded-lg liquid-glass-flat transition-[background-color,opacity] duration-200",
-            "transition-all hover:bg-foreground/5",
+            "hover:bg-foreground/5",
             focusRingClasses,
             isPending && "opacity-70 cursor-not-allowed",
             variant === "compact"

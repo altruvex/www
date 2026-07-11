@@ -284,7 +284,7 @@ const OfferCard = memo(function OfferCard({
               <MagneticButton asChild
                 size="lg"
                 variant="primary"
-                className="transition-all rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold"
+                className="rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold"
               >
                 <Link href={cta.href}>{cta.label}</Link>
               </MagneticButton>

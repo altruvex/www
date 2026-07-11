@@ -242,7 +242,7 @@ export default function ContactPage() {
                     >
                       <MagneticButton
                         size="lg"
-                        className="transition-all w-full group relative bg-messaging-whatsapp text-white hover:bg-messaging-whatsapp/90 border-transparent"
+                        className="w-full group relative bg-messaging-whatsapp text-white hover:bg-messaging-whatsapp/90 border-transparent"
                       >
                         <span className="flex items-center gap-2">
                           <svg

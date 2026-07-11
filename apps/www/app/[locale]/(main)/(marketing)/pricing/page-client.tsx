@@ -336,7 +336,7 @@ export default function PricingPage() {
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3 relative z-20">
                           <MagneticButton asChild
                             variant="secondary"
-                            className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface transition-all"
+                            className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface"
                           >
                             <Link
                               href={TIER_DESTINATION[tier.id]}

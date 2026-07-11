@@ -157,7 +157,7 @@ const ProcessRail = memo(function ProcessRail() {
               )}
             >
               <div className="flex items-center gap-1.5">
-                <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-[background-color,transform] duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
+                <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-all duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
                 <span className="font-mono text-xs uppercase tracking-[0.18em] text-s-mid">
                   {service.index}
                 </span>

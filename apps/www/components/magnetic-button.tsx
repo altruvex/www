@@ -134,11 +134,11 @@ export const MagneticButton = forwardRef<
       ghost:
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
       filled:
-        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground transition-all duration-300 ease-out",
+        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground",
       // Consumes the section-scoped --local-accent so the same button renders
       // the active section's color world. Threshold/conversion moments only.
       accent:
-        "transition-all bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
+        "bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
     };
 
     const sizes: Record<ButtonSize, string> = {
@@ -150,7 +150,7 @@ export const MagneticButton = forwardRef<
     // the CSS transition list or the two systems fight over the same property.
     const sharedClassName = [
       "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
-      "transition-[background-color,border-color,color,box-shadow] duration-300 ease-out will-change-transform",
+      "transition-[background-color,border-color,color,box-shadow,opacity] duration-300 ease-out will-change-transform",
       "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       variants[variant],
