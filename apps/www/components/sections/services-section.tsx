@@ -60,7 +60,7 @@ const ServiceCard = memo(function ServiceCard({
       <span
         aria-hidden
         className={cn(
-          "pointer-events-none absolute end-8 top-1/2 -translate-y-1/2 z-0 select-none",
+          "pointer-events-none absolute inset-e-8 top-1/2 -translate-y-1/2 z-0 select-none",
           "font-sans font-black leading-none text-transparent",
           isLarge
             ? "text-[clamp(120px,18vw,220px)]"

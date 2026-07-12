@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils/utils";
 import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { AltruvexLogo } from "../shared/altruvex-logo";
 import { LanguageSwitcherBase } from "../base/language-switcher-base";
+import { AltruvexLogo } from "../shared/altruvex-logo";
 
 const NAV_ITEMS = [
   { key: "work", href: "/work" },
@@ -64,7 +64,7 @@ export function Nav() {
         )}
       >
         <Container>
-          <div className="flex h-16 items-center">
+          <div className="flex md:h-16 h-14 items-center">
             <div
               className="hidden lg:grid w-full items-center gap-8"
               style={{ gridTemplateColumns: "1fr 2fr 1fr" }}

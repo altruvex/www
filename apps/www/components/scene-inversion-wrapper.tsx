@@ -90,7 +90,7 @@ export function SceneInversionWrapper() {
         className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-800"
         style={{
           backgroundImage:
-            "radial-gradient(circle, var(--color-s-border) 1px, transparent 1px)",
+            "radial-gradient(circle, var(--scene-dot) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }}
       />

@@ -170,6 +170,7 @@
   --s-border: hsl(0 0% 6% / 0.1);
   --s-border-hover: hsl(0 0% 6% / 0.18);
   --s-high-soft: hsl(0 0% 6% / 0.03);
+  --scene-dot: hsl(0 0% 6% / 0.14);
   --tech-accent-nextjs: 239 84% 74%;
   --tech-accent-react: 187 85% 53%;
   --tech-accent-typescript: 217 91% 60%;
@@ -222,6 +223,7 @@
   --s-border: hsl(0 0% 98% / 0.1);
   --s-border-hover: hsl(0 0% 98% / 0.18);
   --s-high-soft: hsl(0 0% 98% / 0.04);
+  --scene-dot: hsl(0 0% 98% / 0.14);
   --elevation-card:
     0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
   --elevation-card-lg:
@@ -254,6 +256,7 @@
   --s-border: hsl(0 0% 100% / 0.08);
   --s-border-hover: hsl(0 0% 100% / 0.16);
   --s-high-soft: hsl(0 0% 100% / 0.025);
+  --scene-dot: hsl(0 0% 100% / 0.22);
 }
 
 .dark [data-scene="inverted"] {
@@ -281,6 +284,7 @@
   --s-border: hsl(0 0% 6% / 0.1);
   --s-border-hover: hsl(0 0% 6% / 0.18);
   --s-high-soft: hsl(0 0% 6% / 0.03);
+  --scene-dot: hsl(0 0% 6% / 0.2);
 }
 
 .accent-world-orange {
