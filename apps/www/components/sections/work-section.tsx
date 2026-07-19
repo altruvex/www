@@ -42,9 +42,14 @@ export const WorkSection = memo(function WorkSection() {
   );
 
   return (
-    <section id="work" className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section
+      id="work"
+      aria-labelledby="work-heading"
+      className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
       <Container>
         <SectionHeading
+          titleId="work-heading"
           eyebrowRef={eyebrowRef}
           titleRef={titleRef}
           descriptionRef={bodyRef}

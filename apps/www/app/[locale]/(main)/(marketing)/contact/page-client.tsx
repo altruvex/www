@@ -407,7 +407,10 @@ export default function ContactPage() {
                       {t("form.riskReversal")}
                     </p>
                     {submitSuccess && (
-                      <div className="mt-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-center">
+                      <div
+                        role="status"
+                        className="mt-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-center"
+                      >
                         <p className="flex items-center justify-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary">
                           <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                           {t("form.success")}
@@ -415,7 +418,10 @@ export default function ContactPage() {
                       </div>
                     )}
                     {submitError && (
-                      <div className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-center">
+                      <div
+                        role="alert"
+                        className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-center"
+                      >
                         <p className="flex items-center justify-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary">
                           <AlertCircle className="h-3.5 w-3.5 text-destructive" />
                           {submitError}

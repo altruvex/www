@@ -267,6 +267,7 @@ export function TechDNASection() {
     <section
       ref={sectionRef}
       id="tech-dna"
+      aria-labelledby="tech-dna-heading"
       className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
     >
       <Container>
@@ -275,6 +276,7 @@ export function TechDNASection() {
           <div className="flex items-end justify-between gap-8 flex-wrap">
             <h2
               ref={headingRef}
+              id="tech-dna-heading"
               className="font-sans font-normal text-foreground leading-[1.05]"
               style={{
                 fontSize: "clamp(28px, 4.5vw, 52px)",

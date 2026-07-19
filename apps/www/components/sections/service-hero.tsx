@@ -84,7 +84,10 @@ export function ServiceHero({
   const ctaRef = useSectionElement();
 
   return (
-    <section className="relative accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
+    <section
+      aria-labelledby="service-hero-heading"
+      className="relative accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
       <SectionWatermark>{watermark}</SectionWatermark>
       <HeroGridOverlay
         visibility={gridVisibility}
@@ -105,6 +108,7 @@ export function ServiceHero({
           ) : null}
           <h1
             ref={titleRef}
+            id="service-hero-heading"
             className={cn(
               "mb-8 font-sans font-light text-foreground select-none",
               titleSize === "default" &&

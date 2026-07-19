@@ -269,6 +269,7 @@ export function PipelineSection() {
       <section
         ref={sectionRef}
         id="pipeline"
+        aria-labelledby="pipeline-heading"
         className="accent-world-green font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-surface dark:bg-background transition-colors duration-300"
       >
         <Container>
@@ -286,6 +287,7 @@ export function PipelineSection() {
           </Eyebrow>
           <h2
             ref={titleRef}
+            id="pipeline-heading"
             className="font-sans font-light leading-[1.06] transition-[opacity,transform] text-[clamp(2.125rem,4vw,3.25rem)] tracking-tight text-foreground mb-8"
             style={{
               opacity: revealed ? 1 : 0,

@@ -40,10 +40,12 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
   return (
     <section
       id="pricing-signal"
+      aria-labelledby="pricing-signal-heading"
       className="accent-world-orange border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
+          titleId="pricing-signal-heading"
           eyebrowRef={eyebrowRef}
           titleRef={titleRef}
           descriptionRef={bodyRef}

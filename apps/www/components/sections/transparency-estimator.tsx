@@ -288,6 +288,8 @@ export function TransparencyEstimator({
   return (
     <section
       id="transparency-estimator"
+      aria-labelledby={pageHeading ? "transparency-estimator-heading" : undefined}
+      aria-label={pageHeading ? undefined : t("badge")}
       className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
@@ -298,6 +300,7 @@ export function TransparencyEstimator({
             </Eyebrow>
             <h1
               ref={titleRef}
+              id="transparency-estimator-heading"
               className="mt-4 section-title font-normal text-foreground"
             >
               {t("title")} <Highlight>{t("titleItalic")}</Highlight>
@@ -556,9 +559,9 @@ function QuizStep({
         {t("step")} {num(index + 1)}{" "}
         <span className="text-muted-foreground/50">/ {num(TOTAL)}</span>
       </p>
-      <h3 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500">
+      <h2 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500">
         {t(`${base}.title`)}
-      </h3>
+      </h2>
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
         {t.rich(`${base}.hint`, bodyMarks)}
       </p>
@@ -651,9 +654,9 @@ function Capture({
       <p className="text-xs text-local-accent-text">
         {t("ledger.resolved")}
       </p>
-      <h3 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground">
+      <h2 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground">
         {t("phoneCapture.title")}
-      </h3>
+      </h2>
       <p className="mt-4 text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground">
         {t("phoneCapture.subtitle")}
       </p>
@@ -768,9 +771,9 @@ function ResultReceipt({
   return (
     <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
       <Eyebrow tone="accent">{t("results.badge")}</Eyebrow>
-      <h3 className="mt-4 section-title text-[clamp(1.75rem,3.4vw,2.6rem)] font-normal leading-[1.05] text-foreground">
+      <h2 className="mt-4 section-title text-[clamp(1.75rem,3.4vw,2.6rem)] font-normal leading-[1.05] text-foreground">
         {t("results.title")}
-      </h3>
+      </h2>
       <div className="mt-8 border-t border-border pt-6">
         <Eyebrow tone="muted">{t("results.investment")}</Eyebrow>
         <p className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">

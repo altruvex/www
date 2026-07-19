@@ -29,9 +29,13 @@ export const TrustSection = memo(function TrustSection() {
   const points = t.raw("points") as Array<{ title: string; body: string }>;
 
   return (
-    <section className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-border">
+    <section
+      aria-labelledby="trust-heading"
+      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-border"
+    >
       <Container>
         <SectionHeading
+          titleId="trust-heading"
           eyebrowRef={eyebrowRef}
           titleRef={titleRef}
           descriptionRef={bodyRef}

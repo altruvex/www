@@ -193,6 +193,7 @@ function SectionHeader() {
 
   return (
     <SectionHeading
+      titleId="services-heading"
       theme="surface"
       eyebrowRef={eyebrowRef}
       titleRef={headRef}
@@ -216,6 +217,7 @@ export const ServicesSection = memo(function ServicesSection() {
   return (
     <section
       id="services"
+      aria-labelledby="services-heading"
       className="accent-world-orange relative pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
