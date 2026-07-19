@@ -74,7 +74,7 @@ export function SceneInversionWrapper() {
     <div
       id="services-wrapper"
       ref={wrapperRef}
-      className="ps-section relative overflow-hidden transition-colors duration-800 ease-[cubic-bezier(0.16,1,0.3,1)] bg-transparent data-[scene=inverted]:bg-inverted-bg rtl:text-right"
+      className="ps-section relative overflow-hidden rtl:text-right"
       data-scene={entered ? "inverted" : undefined}
     >
       <div

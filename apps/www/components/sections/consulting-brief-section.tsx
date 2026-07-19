@@ -603,7 +603,7 @@ function StageCTA({
       aria-hidden={!visible}
     >
       <p
-        className="leading-normal max-w-[48ch] text-foreground/70"
+        className="leading-normal text-foreground/70"
         style={{ fontSize: "clamp(12px, 1vw, 14px)" }}
       >
         {ctaBody}

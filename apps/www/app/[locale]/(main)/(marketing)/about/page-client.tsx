@@ -202,7 +202,7 @@ function PrinciplesSection() {
                 <h3 className="text-[clamp(1.5rem,2.5vw,2rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground transition-all group-hover:text-foreground/80">
                   {value.label}
                 </h3>
-                <p className="mt-4 max-w-[48ch] text-[1.0625rem] leading-[1.8] text-muted-foreground">
+                <p className="mt-4 text-[1.0625rem] leading-[1.8] text-muted-foreground">
                   {value.sub}
                 </p>
               </article>
@@ -309,7 +309,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
           <h2 className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
             {t("title")} <Highlight>{t("titleAccent")}</Highlight>
           </h2>
-          <p className="mt-6 mx-auto max-w-[48ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+          <p className="mt-6 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
             {t("body")}
           </p>
         </div>

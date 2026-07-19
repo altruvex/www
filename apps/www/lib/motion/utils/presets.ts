@@ -69,6 +69,9 @@ const sectionDescription = (
 const sectionElement = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   ...DEFAULTS.element,
   delay: SECTION_DELAYS.element,
+  // Meaningful reveals (CTAs, featured blocks) get the anticipation
+  // micro-beat (principles M2); pass `anticipate: false` to opt out.
+  anticipate: true,
   ...overrides,
 });
 

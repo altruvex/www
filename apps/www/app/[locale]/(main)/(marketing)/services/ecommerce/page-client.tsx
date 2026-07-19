@@ -282,7 +282,7 @@ function ClosingCtaSection() {
             >
               {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
             </h2>
-            <p className="text-base text-primary/60 leading-relaxed max-w-[48ch]">
+            <p className="text-base text-primary/60 leading-relaxed">
               {t.rich("description", bodyMarks)}
             </p>
           </div>

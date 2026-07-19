@@ -92,7 +92,7 @@ function AuditOfferSection() {
               </h2>
               <p
                 ref={bodyRef}
-                className="mt-6 max-w-[48ch] text-base leading-relaxed text-s-mid"
+                className="mt-6 text-base leading-relaxed text-s-mid"
               >
                 {t.rich("description", bodyMarks)}
               </p>

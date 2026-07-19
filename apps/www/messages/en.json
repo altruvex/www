@@ -884,6 +884,67 @@
     "closingPre": "Altruvex is built to be the answer to",
     "closingHighlight": "every problem above."
   },
+  "ownershipStack": {
+    "eyebrow": "03 — Full-Stack Ownership",
+    "title": "Anyone can skin the surface.",
+    "titleAccent": "We engineer every layer beneath it.",
+    "subtitle": "Interface to infrastructure. One accountable engineer. Full source ownership.",
+    "axis": {
+      "surface": "Surface",
+      "foundation": "Foundation"
+    },
+    "templateStops": "A template stops here",
+    "ownershipLabel": "What you own",
+    "legend": {
+      "template": "Template — surface only",
+      "altruvex": "Altruvex — all five layers"
+    },
+    "intro": {
+      "eyebrow": "The Difference",
+      "dismissed": "Most agencies deliver the top layer — a template with a brand coat, rented and opaque beneath.",
+      "answerLead": "We engineer and hand you",
+      "answerStrong": "all five.",
+      "hint": "Hover a layer to inspect it"
+    },
+    "closing": "You own the domain — and everything under it.",
+    "layers": {
+      "interface": {
+        "name": "Interface",
+        "spec": "What your customer sees",
+        "tag": "≤1s LCP",
+        "detail": "Designed from the buyer's actual flow — first scroll to final action — not from a theme's demo content. Pixel-precise, WCAG AA, RTL-native, sub-second on mobile.",
+        "ownership": "A real interface built for your business — not a shell with your logo dropped in."
+      },
+      "components": {
+        "name": "Components",
+        "spec": "The system behind the screens",
+        "tag": "Design system",
+        "detail": "A composable, state-driven UI system on design tokens. Every element is reused, not rebuilt — so the site holds its standard as it grows.",
+        "ownership": "A design system your team can extend — not a one-off Figma file that drifts on the first edit."
+      },
+      "application": {
+        "name": "Application",
+        "spec": "The logic that runs the business",
+        "tag": "TypeScript",
+        "detail": "Server components, business rules, authentication, and APIs — type-safe end to end. Your workflows, engineered to your logic.",
+        "ownership": "Custom logic shaped to how you operate — not a plugin's assumptions bent to fit."
+      },
+      "data": {
+        "name": "Data",
+        "spec": "The single source of truth",
+        "tag": "PostgreSQL",
+        "detail": "A modeled PostgreSQL schema built for integrity and growth. Structured, queryable, and documented — the foundation the rest of the system stands on.",
+        "ownership": "A database you fully own and can migrate — not a black-box CMS table you rent."
+      },
+      "infrastructure": {
+        "name": "Infrastructure",
+        "spec": "Where it runs, always",
+        "tag": "99.9% uptime",
+        "detail": "Edge deployment, monitoring, and automated backups on infrastructure you control. Fast everywhere, observable, and recoverable.",
+        "ownership": "Deployment you hold the keys to — no vendor lock-in, no subscription holding your site hostage."
+      }
+    }
+  },
   "process": {
     "closing": {
       "cta": "Ready to begin? Book a Discovery Call"

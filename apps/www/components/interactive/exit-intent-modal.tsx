@@ -105,7 +105,7 @@ export const ExitIntentModal = () => {
           isSuccess ? "exit-intent-success-title" : "exit-intent-heading"
         }
         className={cn(
-          "relative w-full max-w-md rounded-xl liquid-glass outline-none",
+          "relative w-full max-w-md rounded-overlay liquid-glass outline-none",
           "animate-in fade-in zoom-in-95 duration-200",
         )}
       >

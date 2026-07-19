@@ -288,7 +288,7 @@ export function LanguageSwitcherBase({
               zIndex: 50,
             }}
             className={cn(
-              "rounded-lg liquid-glass p-1 shadow-lg outline-none",
+              "rounded-overlay liquid-glass p-1 shadow-lg outline-none",
               "animate-in fade-in zoom-in-95 duration-200 ease-out origin-top",
               variant === "compact" ? "w-40" : "w-48",
             )}

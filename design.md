@@ -4,6 +4,11 @@
 > Use this when creating social posts, ads, decks, proposals, or any asset that carries the brand.
 > Every value here is pulled from the live codebase (`apps/www`) — not invented. The canonical
 > source is `apps/www/app/globals.css` (colors/type) and `apps/www/messages/{en,ar}.json` (voice).
+>
+> **Law layer:** the perception/typography/color rules these tokens must satisfy live in
+> `docs/design-principles.md` (rules cited here as T1, C8, CI1, M2, …). This file stays the
+> token layer; when a token and a principle conflict, the conflict is adjudicated in
+> `docs/design-reconciliation-2026-07.md` — never silently.
 
 ---
 
@@ -105,6 +110,10 @@ Colors are authored as **HSL channel tokens** (e.g. `214 89% 48%`) and consumed 
 This is the canonical format — paste these straight into Figma/Canva HSL fields, or use the hex
 approximations for quick work.
 
+> **Working space rule (C2/C8):** new or changed color values are *decided and verified in
+> OKLCH* (perceptual lightness/chroma + measured WCAG contrast), then authored here as HSL.
+> HSL channel numbers are storage, not evidence — never justify a color decision by S/L math.
+
 ### 3.1 Brand Blue (the one true accent)
 | Token | HSL | Hex (approx) | Use |
 |---|---|---|---|
@@ -142,8 +151,13 @@ site stays mostly-mono but gives each section a quiet identity. All three are AA
 | World | Light HSL | Dark HSL | Meaning / where used |
 |---|---|---|---|
 | **Blue** | `214 90% 43%` | `214 89% 48%` | Default. Hero, trust, transparency. The brand world. |
-| **Orange** | `27 90% 35%` | `27 96% 58%` (`~#F8842B`) | Action / conversion. Services, pricing, all closing CTAs. |
-| **Green** | `158 64% 30%` | `158 64% 46%` (`~#2BC089`) | Proof / "in production." Work, pipeline, e-commerce proof. |
+| **Orange** | `27 90% 35%` | `27 78% 61%` (`~#E9944E`) | Action / conversion. Services, pricing, all closing CTAs. |
+| **Green** | `158 64% 30%` | `158 36% 49%` (`~#50AA89`) | Proof / "in production." Work, pipeline, e-commerce proof. |
+
+> **Dark-variant rule (C8):** dark-mode accents keep the hue, lift the tone, and cap OKLCH
+> chroma at the light variant's chroma — dark backgrounds amplify perceived saturation, so the
+> old dark values read louder than their light siblings. Blue is the one deliberate exception
+> (the brand constant). All values re-verified ≥6.6:1 on `#121212`.
 
 **Social rule:** match the world to the message — **blue = the brand/architecture**, **orange = the
 call to action / pricing**, **green = proof & shipped work.** Don't mix more than one world per asset.
@@ -166,6 +180,14 @@ light and a dark/inverted variant. Stops are `from → via → to`:
 | `lavender` | `268 70% 56%` → `290 68% 56%` → `320 70% 54%` | Violet→pink. |
 | `neon` | `316 78% 50%` → `286 76% 54%` → `244 82% 56%` | Magenta→indigo. |
 | `candy` | `338 78% 54%` → `8 82% 54%` → `36 90% 42%` | Pink→red→amber. |
+
+**Gradient tiers (Phase 2 classification):**
+- **Core** — `iris` (blue world), `ember` (orange world), `forest`/`mint` (green world): the only
+  keys sections may use.
+- **Reserve** — `brand`, `ocean` (blue-range), `sunset` (warm-range): world-aligned spares; unused
+  today, allowed if a section's world matches.
+- **Editorial** — `aurora`, `lavender`, `neon`, `candy`: **MDX `<Mark>` and the UI playground
+  only** — never on section headings; their hues have no section job.
 
 **The gradient-matching rule (important):** the gradient must **match the section's color world**, not
 contrast it. Orange-world section → `ember`. Green-world → `mint`/`forest`. Blue-world → `iris`. The
@@ -292,7 +314,7 @@ Four typefaces, each with a strict job. All loaded via `next/font/google`.
 | `h1` | Outfit | `clamp(3rem, 5vw, 4.5rem)` | 700 | -0.03em | 1.02 |
 | `h2` / `.section-title` | Outfit | `clamp(2.125rem, 4vw, 3.25rem)` | 600 | -0.02em | 1.08 |
 | `h3` | Outfit | `clamp(1.5rem, 2.4vw, 2rem)` | 600 | -0.018em | 1.15 |
-| `h4` | Outfit | `clamp(1.125rem, 2vw, 1.75rem)` | 500 | -0.015em | 1.2 |
+| `h4` | Outfit | `clamp(1.25rem, 1.8vw, 1.5rem)` | 500 | -0.015em | 1.2 |
 | Body | Inter | `clamp(17px, 1.05vw, 18px)` | 400 | normal | **1.75** |
 | `.eyebrow` | Geist Mono | `0.875rem` | 400 | **0.22em**, UPPERCASE | 1.5 |
 | `.label` | Inter | `12px` | 500 | 0.01em | 1.4 |
@@ -300,6 +322,16 @@ Four typefaces, each with a strict job. All loaded via `next/font/google`.
 
 **Headline character:** large, tight (negative tracking), heavy weight. Big type is the brand's
 default voice — confident and spacious. Body is generously leaded (1.75) for calm readability.
+
+**Measure (line length, T6):** prose is capped by the measure tokens — `--measure-prose` (66ch,
+the default reading column), `--measure-narrow` (45ch, captions/asides), `--measure-wide` (75ch,
+the hard ceiling). Use `max-w-(--measure-prose)` instead of ad-hoc `max-w-[52ch]`-style values.
+
+**Two documented deviations from the law layer (adjudicated, deliberate):**
+- Body leading is **1.75** EN / **1.9** AR — above T5's 1.5–1.6 band. Kept: short marketing
+  paragraphs + generous whitespace are the premium voice; not a long-form reading surface.
+- Display leading runs **1.0–1.08** — below T5's 1.1 floor. Kept: Latin display convention at
+  48–88px; Arabic headings stay at 1.28 (never inherit the Latin display leading).
 
 ### 4.2 The Eyebrow (signature element)
 The **monospace, uppercase, wide-tracked kicker** above section titles is a core brand signal — it
@@ -346,7 +378,13 @@ rejected alternative. Never put color or serif-italic in body — those are head
 ### 6.1 Radius (base `--radius: 0.5rem` = 8px)
 Scales from `xs` (4px) → `3xl` (24px). Semantic aliases: `--radius-surface` (cards, 12px),
 `--radius-overlay` (popovers, 16px), `--radius-section` (large blocks, 20px), `--radius-nested` (6px).
-Buttons use a small radius (`rounded-sm`) — corners are **restrained, not pill-shaped.**
+
+**The radius decision (CI8, stated deliberately):** buttons use `rounded-lg` (**12px**) — the
+mid-radius voice adopted in the Apple design pass. Not pill (consumer-friendly softness would
+undercut the precision positioning) and not sharp-corner brutalism (fights the refined Apple-
+adjacent surface language). 12px on a 40px control reads *machined*, not *bouncy*. Nested
+elements follow `inner = outer − padding` (the `--radius-nested` alias approximates this at
+common paddings — prefer the formula when nesting new surfaces).
 
 ### 6.2 Section rhythm
 Vertical section padding: `--section-y-top: clamp(5rem, 10vh, 8rem)` and
@@ -354,14 +392,18 @@ Vertical section padding: `--section-y-top: clamp(5rem, 10vh, 8rem)` and
 sections breathe; don't crowd social layouts either.
 
 ### 6.3 Elevation (shadows)
-| Token | Use |
-|---|---|
-| `--shadow-card` | Default card lift (very subtle) |
-| `--shadow-card-lg` | Hover / featured card |
-| `--shadow-glow-sm` / `--shadow-glow` | Brand-blue glow (8–24px) for focal accents |
+| Token | Level | Use |
+|---|---|---|
+| — | 0 | Flat: `border-border` edge only (edges define depth first — CI9) |
+| `--shadow-card` | 1 | Default card lift (very subtle) |
+| `--shadow-card-lg` | 2 | Hover / featured card |
+| `--shadow-overlay` | 3 | Popovers, menus, floating panels |
+| `--shadow-glow-sm` / `--shadow-glow` | accent | Brand-blue glow (8–24px), single focal element only |
 
-Shadows are **soft and low** in light mode, deeper in dark. The aesthetic is flat-with-a-whisper,
-not heavy material drop-shadows.
+Every level is a **two-layer shadow**: a tight contact layer whose opacity *decays* as elevation
+rises (0.04 → 0.03 → 0.02 light) + a soft key layer that *grows* with height. Four levels
+suffice — don't invent a fifth. Shadows are **soft and low** in light mode, deeper in dark; the
+aesthetic is flat-with-a-whisper, not heavy material drop-shadows.
 
 ### 6.4 Texture & glass
 - **Film grain** (`.grain-overlay`): a 3%-opacity fractal-noise overlay that keeps large flat areas
@@ -383,8 +425,10 @@ not heavy material drop-shadows.
 | `ghost` | No border, hover tint |
 | `link` | Underline on hover |
 
-Sizes: `sm` 32px · `default` 40px · `lg` 44px · `xl` 48px. Small radius, `font-medium`, micro press
-animation (`active:scale-[0.98]`), 200ms transitions, built-in `loading` spinner state.
+Sizes: `sm` 32px · `default` 40px · `lg` 44px · `xl` 48px · icons 32–40px. On **coarse pointers
+(touch)** every size grows to the 44px minimum via `pointer-coarse:` variants (CI1) — the compact
+sizes are a fine-pointer-only spec. Radius `rounded-lg` (12px — see §6.1), `font-medium`, micro
+press animation (`active:scale-[0.98]`), 200ms transitions, built-in `loading` spinner state.
 **Note:** the nav CTA is intentionally **neutral ink, not blue** — a blue nav button reads as "generic
 SaaS." Keep primary CTAs confident and restrained.
 
@@ -509,6 +553,10 @@ matching prose rhythm rather than hero/section-heading weight.
   accents animate per-word but share one continuous gradient sweep across the phrase.
 - **Easing:** UI transitions `cubic-bezier(0.4, 0, 0.2, 1)` (`ease.ui`); text reveals / entrances `cubic-bezier(0.2, 0, 0, 1)` (`ease.text`). Also available: `smooth` `(0.25, 0.46, 0.45, 0.94)`, `gentle` `(0.65, 0, 0.35, 1)`, `strong` `(0.23, 1, 0.32, 1)`, `exit` `(0.55, 0, 1, 0.45)`.
 - **Durations:** `--duration-instant: 120ms`; UI transitions ~200ms; reveals ~350ms.
+- **Anticipation (M2):** meaningful reveals (`useSectionElement` — CTAs, featured blocks) lead
+  with a micro-beat: ~8% counter-drift away from rest at partial opacity for ~18% of the
+  duration, then the main ease-out settle. Opt out per-element with `anticipate: false`;
+  word-split headline reveals deliberately skip it (per-word wind-up reads as jitter).
 - **Character:** motion is *purposeful and quick* — reveals, not decoration. Everything respects
   reduced-motion (collapses to near-instant).
 
@@ -591,10 +639,13 @@ Tailwind font utilities.
 
 ```tsx
 // app/[locale]/layout.tsx
-const inter     = Inter({     subsets:["latin"],  weight:["400","600"],            variable:"--font-inter" });
-const outfit    = Outfit({    subsets:["latin"],  weight:["400","500","600","700"], variable:"--font-outfit" });
-const geistMono = Geist_Mono({subsets:["latin"],  weight:["400","500"],            variable:"--font-geist-mono" });
-const vazirmatn = Vazirmatn({ subsets:["arabic"], weight:["400","500","600","700"], variable:"--font-vazirmatn" });
+// No `weight` arrays: all four are VARIABLE fonts, so next/font serves one
+// file per family and every intermediate weight (300 font-light, 500
+// font-medium) renders true — not synthesized, not silently substituted.
+const inter     = Inter({     subsets:["latin"],  variable:"--font-inter" });
+const outfit    = Outfit({    subsets:["latin"],  variable:"--font-outfit" });
+const geistMono = Geist_Mono({subsets:["latin"],  variable:"--font-geist-mono" });
+const vazirmatn = Vazirmatn({ subsets:["arabic"], variable:"--font-vazirmatn" });
 
 // The body font swaps by locale; Outfit + Geist Mono are always present:
 const primaryFontVariable = locale === "ar" ? vazirmatn.variable : inter.variable;
@@ -870,13 +921,19 @@ root default (`--local-accent` = brand blue) unless an ancestor overrides.
 | Pipeline | `pipeline-section.tsx` | **green** (explicit) | "In production" / shipped flow. |
 | Work | `work-section.tsx` (+ `work-item.tsx`) | **green** (explicit) | Proof — shipped projects. |
 | Tech DNA | `tech-dna-section.tsx` | inherit (blue) | Stack visualization (uses `--tech-accent-*`). |
-| Transparency | `transparency-section.tsx` | **blue** (explicit) | Published pricing / named exclusions. |
+| Ownership Stack | `ownership-stack-section.tsx` | inherit (blue), `iris` accent | Layered ownership diagram (homepage). |
+| Transparency estimator | `transparency-estimator.tsx` | **blue** (explicit), `iris` accent | Published pricing / scope estimator (replaced the old `transparency-section.tsx`). |
 | Trust | `trust-section.tsx` | **blue** (explicit) | "What you can verify right now." |
 | Pricing signal | `pricing-signal-section.tsx` | **orange** (explicit) | Pricing / conversion. |
 | Consulting brief | `consulting-brief-section.tsx` | inherit (blue) | Scoping offer. |
 | FAQ | `faq-section.tsx` | inherit (blue) | Accordion. |
 | Audit lead capture | `audit-lead-capture.tsx` | inherit (blue) | Inline mid-article lead form (not a full bordered section) — bordered card (`border-foreground/8 bg-foreground/2 rounded-xl p-8`), eyebrow + title + 3 trust-stat mini-cards + underline phone field + `MagneticButton`. Drops below every `/writing/[slug]` article body. Same underline-input idiom as §7.4. |
 | CTA / Section-end CTA | `cta-section.tsx`, `section-end-cta.tsx` | **orange** (explicit) | Closing call to action. |
+
+**Home-page order (verified):** Hero → Problem → Ownership Stack →
+`SceneInversionWrapper` (Services + Process as a dark inverted island) → Work → Trust →
+Transparency Estimator → Pricing Signal → CTA. Services/Process don't appear on the home page
+directly — only inside the inversion wrapper.
 
 **Pattern:** the explicit worlds line up with §3.3 — **orange** is set on the conversion sections
 (services, pricing, CTA), **green** on the proof sections (work, pipeline), **blue** on the

@@ -67,6 +67,7 @@
 
   --shadow-card: var(--elevation-card);
   --shadow-card-lg: var(--elevation-card-lg);
+  --shadow-overlay: var(--elevation-overlay);
   --shadow-glow-sm: var(--elevation-glow-sm);
   --shadow-glow: var(--elevation-glow);
 
@@ -108,6 +109,11 @@
 :root {
   --duration-instant: 120ms;
   --radius: 0.5rem;
+  /* Reading-measure tokens (principles T6): cap prose line length.
+     Latin target 50–75 CPL (sweet ~66); Arabic verified by words-per-line. */
+  --measure-prose: 66ch;
+  --measure-narrow: 45ch;
+  --measure-wide: 75ch;
   --text-body-base: clamp(17px, 1.05vw, 18px);
   --text-label: 12px;
   --text-caption: 11px;
@@ -185,10 +191,15 @@
   --selection-accent: var(--brand);
   --messaging-whatsapp: 142 70% 49%;
   --text-inverse: var(--n-0);
+  /* Two-layer elevation (principles CI9): tight contact/ambient layer whose
+     opacity DECAYS as elevation rises (0.04 → 0.03 → 0.02) + soft key layer
+     that grows with height. Ladder: 0 flat · 1 card · 2 card-lg · 3 overlay. */
   --elevation-card:
     0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
   --elevation-card-lg:
-    0 2px 4px hsl(0 0% 0% / 0.05), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
+    0 2px 4px hsl(0 0% 0% / 0.03), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
+  --elevation-overlay:
+    0 2px 4px hsl(0 0% 0% / 0.02), 0 32px 64px -28px hsl(0 0% 0% / 0.22);
   --elevation-glow-sm: 0 0 8px hsl(var(--brand) / 0.3);
   --elevation-glow: 0 0 24px hsl(var(--brand) / 0.35);
 }
@@ -227,7 +238,9 @@
   --elevation-card:
     0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
   --elevation-card-lg:
-    0 2px 6px hsl(0 0% 0% / 0.5), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
+    0 2px 6px hsl(0 0% 0% / 0.35), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
+  --elevation-overlay:
+    0 2px 6px hsl(0 0% 0% / 0.3), 0 36px 72px -28px hsl(0 0% 0% / 0.75);
 }
 
 [data-scene="inverted"] {
@@ -287,15 +300,27 @@
   --scene-dot: hsl(0 0% 6% / 0.2);
 }
 
+/* Scoped to #services-wrapper (not the generic [data-scene="inverted"] rule) so this
+   brand-gradient fill doesn't leak into the header or the consulting-page card, which
+   also use data-scene="inverted" but keep their own flat/glass backgrounds. */
+#services-wrapper[data-scene="inverted"] {
+  background: linear-gradient(135deg, hsl(var(--brand) / 0.14), hsl(var(--inverted-bg)) 60%);
+}
+.dark #services-wrapper[data-scene="inverted"] {
+  background: linear-gradient(135deg, hsl(var(--brand) / 0.08), hsl(var(--inverted-bg)) 60%);
+}
+
 .accent-world-orange {
   --local-accent: hsl(27 90% 35%);
   --local-accent-fg: hsl(0 0% 98%);
   --local-accent-soft: hsl(27 90% 35% / 0.08);
 }
 .dark .accent-world-orange {
-  --local-accent: hsl(27 96% 58%);
+  /* Chroma capped at the light variant's OKLCH chroma (C 0.134 ≤ 0.137) so
+     dark mode doesn't amplify saturation (principles C8). 7.86:1 on #121212. */
+  --local-accent: hsl(27 78% 61%);
   --local-accent-fg: hsl(0 0% 12%);
-  --local-accent-soft: hsl(27 96% 58% / 0.1);
+  --local-accent-soft: hsl(27 78% 61% / 0.1);
 }
 .accent-world-green {
   --local-accent: hsl(158 64% 30%);
@@ -303,9 +328,10 @@
   --local-accent-soft: hsl(158 64% 30% / 0.08);
 }
 .dark .accent-world-green {
-  --local-accent: hsl(158 64% 46%);
+  /* Chroma capped at the light variant (C 0.100 ≤ 0.104) — see C8. 6.65:1. */
+  --local-accent: hsl(158 36% 49%);
   --local-accent-fg: hsl(0 0% 12%);
-  --local-accent-soft: hsl(158 64% 46% / 0.1);
+  --local-accent-soft: hsl(158 36% 49% / 0.1);
 }
 .accent-world-blue {
   --local-accent: hsl(214 90% 43%);
@@ -380,9 +406,10 @@
 }
 .dark .accent-forest,
 [data-scene="inverted"] .accent-forest {
-  --grad-from: hsl(156 70% 50%);
-  --grad-via: hsl(148 64% 52%);
-  --grad-to: hsl(170 74% 48%);
+  /* Dark stops chroma-capped at their light counterparts (principles C8). */
+  --grad-from: hsl(156 54% 52%);
+  --grad-via: hsl(148 46% 54%);
+  --grad-to: hsl(170 58% 50%);
 }
 .accent-mint {
   --grad-from: hsl(150 64% 38%);
@@ -391,9 +418,10 @@
 }
 .dark .accent-mint,
 [data-scene="inverted"] .accent-mint {
-  --grad-from: hsl(150 66% 52%);
-  --grad-via: hsl(170 74% 50%);
-  --grad-to: hsl(186 82% 50%);
+  /* Dark stops chroma-capped at their light counterparts (principles C8). */
+  --grad-from: hsl(150 52% 54%);
+  --grad-via: hsl(170 50% 52%);
+  --grad-to: hsl(186 58% 52%);
 }
 .accent-aurora {
   --grad-from: hsl(158 64% 38%);
@@ -562,7 +590,9 @@ header[data-scene="inverted"] {
   }
   h4 {
     font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(1.125rem, 2vw, 1.75rem);
+    /* 20→24px: keeps a real step below h3 (24→32) and above body (17→18);
+       the old 18–28px range collided with both neighbors (principles T3). */
+    font-size: clamp(1.25rem, 1.8vw, 1.5rem);
     line-height: 1.2;
     letter-spacing: -0.015em;
     font-weight: 500;
@@ -829,5 +859,11 @@ html.lenis body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@supports (corner-shape: squircle) {
+  [class*="rounded"] {
+    corner-shape: squircle;
   }
 }

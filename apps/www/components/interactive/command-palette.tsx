@@ -347,7 +347,7 @@ export function CommandPalette({
         role="dialog"
         aria-modal="true"
         aria-label={t("title")}
-        className="relative w-full max-w-xl overflow-hidden rounded-2xl liquid-glass shadow-2xl shadow-foreground/10 will-change-transform"
+        className="relative w-full max-w-xl overflow-hidden rounded-overlay liquid-glass shadow-2xl shadow-foreground/10 will-change-transform"
       >
         <div className="flex items-center gap-3 border-b border-border px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />

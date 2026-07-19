@@ -10,6 +10,13 @@ const ProblemSection = dynamic(
     ),
   { loading: () => <SectionSkeleton /> },
 );
+const OwnershipStackSection = dynamic(
+  () =>
+    import("@/components/sections/ownership-stack-section").then(
+      (mod) => mod.OwnershipStackSection,
+    ),
+  { loading: () => <SectionSkeleton /> },
+);
 const SceneInversionWrapper = dynamic(
   () =>
     import("@/components/scene-inversion-wrapper").then(
@@ -53,6 +60,9 @@ export function HomeClient() {
     <>
       <ErrorBoundary>
         <ProblemSection />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <OwnershipStackSection />
       </ErrorBoundary>
       <SceneInversionWrapper />
       <ErrorBoundary>
