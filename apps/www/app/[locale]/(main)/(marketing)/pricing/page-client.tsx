@@ -362,7 +362,7 @@ export default function PricingPage() {
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
                     {t("minimumEngagement")}
                   </p>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="mx-auto max-w-(--measure-wide) text-sm leading-relaxed text-muted-foreground">
                     {t.rich("ownershipNote", bodyMarks)}
                   </p>
                 </div>

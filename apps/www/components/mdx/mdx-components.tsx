@@ -82,7 +82,7 @@ export const mdxComponents: MDXComponents = {
   a: ({ href, children }) => (
     <Link
       href={href as string}
-      className="transition-all text-primary underline-offset-4 hover:underline"
+      className="transition-all text-primary underline underline-offset-4 decoration-foreground/30 hover:decoration-current"
     >
       {children}
     </Link>

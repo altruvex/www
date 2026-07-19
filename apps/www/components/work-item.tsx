@@ -157,7 +157,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
           </div>
         </div>
         <div className="ps-[calc(clamp(20px,2.5vw,28px)+12px)] sm:ps-[calc(clamp(20px,2.5vw,28px)+24px)] md:ps-[calc(clamp(20px,2.5vw,28px)+40px)]">
-          <p className="mb-4 text-base leading-relaxed text-s-mid">
+          <p className="mb-4 max-w-(--measure-prose) text-base leading-relaxed text-s-mid">
             {summary}
           </p>
           {screenshot && (
