@@ -202,7 +202,7 @@ On social, that translates to **one gradient phrase per graphic, max** — it's 
 | `--success` | `162 95% 31%` | Confirmation, "in production" dots |
 | `--warning` | `38 96% 40%` | Caution |
 | `--error` / `--destructive` | `0 65% 51%` | Errors, destructive actions |
-| `--messaging-whatsapp` | `142 70% 49%` | WhatsApp brand green (contact) |
+| `--messaging-whatsapp` | `142 70% 28%` light / `142 70% 49%` dark | WhatsApp green (contact) — pairs with `--messaging-whatsapp-fg` (white light / ink dark), AA-verified |
 
 ### 3.6 Tech-stack accent colors (for the "Tech DNA" section)
 Brand-matched colors per technology, used in the stack visualization:

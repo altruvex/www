@@ -62,6 +62,7 @@
   --color-logo-tagline: hsl(var(--logo-tagline));
   --color-inverted-bg: hsl(var(--inverted-bg));
   --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
+  --color-messaging-whatsapp-fg: hsl(var(--messaging-whatsapp-fg));
   --color-selection-accent: hsl(var(--selection-accent));
   --color-text-inverse: hsl(var(--text-inverse));
 
@@ -189,7 +190,10 @@
   --logo-wordmark: var(--n-8);
   --logo-tagline: 0 0% 40%;
   --selection-accent: var(--brand);
-  --messaging-whatsapp: 142 70% 49%;
+  /* WhatsApp green darkened for white-on-green AA (5.22:1); the vivid
+     brand green moves to the dark theme where it pairs with ink text. */
+  --messaging-whatsapp: 142 70% 28%;
+  --messaging-whatsapp-fg: 0 0% 98%;
   --text-inverse: var(--n-0);
   /* Two-layer elevation (principles CI9): tight contact/ambient layer whose
      opacity DECAYS as elevation rises (0.04 → 0.03 → 0.02) + soft key layer
@@ -235,6 +239,8 @@
   --s-border-hover: hsl(0 0% 98% / 0.18);
   --s-high-soft: hsl(0 0% 98% / 0.04);
   --scene-dot: hsl(0 0% 98% / 0.14);
+  --messaging-whatsapp: 142 70% 49%;
+  --messaging-whatsapp-fg: 0 0% 12%;
   --elevation-card:
     0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
   --elevation-card-lg:
