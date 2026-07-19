@@ -193,8 +193,12 @@ light and a dark/inverted variant. Stops are `from → via → to`:
 contrast it. Orange-world section → `ember`. Green-world → `mint`/`forest`. Blue-world → `iris`. The
 colored text should feel cohesive with that section's button + eyebrow, never a clashing rainbow.
 
-**Rarity budget:** at most ~2 gradient accents per page; never two of the same world back-to-back.
-On social, that translates to **one gradient phrase per graphic, max** — it's a spotlight, not a theme.
+**Rarity budget (amended after the 2026 audit):** the old "~2 per page" was never the built
+reality (the homepage shipped 7). The enforceable rule: **≤1 gradient accent per section ·
+every accent world-matched · never the same gradient on two adjacent sections · the hero and
+the closing CTA are the anchor accents — a section between them earns color only if it is a
+value/conversion claim (otherwise `<Highlight>`).** On social, that still means **one gradient
+phrase per graphic, max** — it's a spotlight, not a theme.
 
 ### 3.5 Semantic colors
 | Token | HSL | Use |

@@ -72,7 +72,7 @@ export const ProblemSection = memo(function ProblemSection() {
   return (
     <section
       aria-labelledby="problem-section-heading"
-      className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-orange border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading

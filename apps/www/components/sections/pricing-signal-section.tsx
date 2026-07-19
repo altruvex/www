@@ -50,7 +50,7 @@ export const PricingSignalSection = memo(function PricingSignalSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          accent="iris"
+          accent="sunset"
           description={t("subtitle")}
           className="mb-16"
         />

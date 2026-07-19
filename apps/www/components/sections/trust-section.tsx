@@ -38,7 +38,6 @@ export const TrustSection = memo(function TrustSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          accent="iris"
           description={t.rich("body", bodyMarks)}
           className="mb-16"
         />
