@@ -101,7 +101,7 @@ export const Footer = memo(function Footer() {
                       <li key={label}>
                         <Link
                           href={href}
-                          className="text-sm font-medium leading-snug text-muted-foreground transition-all duration-200 hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm inline-block"
+                          className="text-sm font-medium leading-snug text-muted-foreground transition-all duration-200 hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
                         >
                           {label}
                         </Link>
@@ -127,7 +127,7 @@ export const Footer = memo(function Footer() {
             <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-medium">
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
               >
                 {t("emailLabel")}: <bdi className="text-foreground">{SITE_CONFIG.email}</bdi>
               </a>
@@ -135,7 +135,7 @@ export const Footer = memo(function Footer() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
               >
                 {t("whatsappLabel")}: <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
               </a>

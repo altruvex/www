@@ -91,7 +91,7 @@ export const TrustSection = memo(function TrustSection() {
           <div className="flex flex-col justify-start">
             <ExternalDirectionalLink
               href={FOUNDER_LINK}
-              className="eyebrow inline-flex text-foreground transition-all hover:text-muted-foreground"
+              className="eyebrow -my-1.5 inline-flex min-h-6 items-center py-1.5 text-foreground transition-all hover:text-muted-foreground pointer-coarse:min-h-11"
             >
               {t("founder.linkLabel")}
             </ExternalDirectionalLink>

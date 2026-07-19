@@ -207,7 +207,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   href={externalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group/link flex items-center gap-2 rounded-sm font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rtl:font-sans rtl:normal-case rtl:tracking-normal"
+                  className="group/link -my-1.5 flex min-h-6 items-center gap-2 rounded-sm py-1.5 font-mono text-sm leading-normal tracking-wider transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11 rtl:font-sans rtl:normal-case rtl:tracking-normal"
                 >
                   <span className="text-s-mid uppercase transition-all group-hover/link:text-primary">
                     {tW("labels.visitProj")}

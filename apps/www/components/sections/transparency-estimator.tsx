@@ -393,7 +393,7 @@ export function TransparencyEstimator({
                   type="button"
                   onClick={goBack}
                   disabled={phase === "quiz" && stepIndex === 0}
-                  className="eyebrow text-muted-foreground transition-all hover:text-foreground disabled:pointer-events-none disabled:opacity-0"
+                  className="eyebrow -mx-2 -my-2.5 px-2 py-2.5 text-muted-foreground transition-all hover:text-foreground disabled:pointer-events-none disabled:opacity-0 pointer-coarse:min-h-11"
                 >
                   {t("back")}
                 </button>
