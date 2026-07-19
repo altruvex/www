@@ -99,7 +99,11 @@
 
 :root {
   --duration-instant: 120ms;
-  --radius: 0.5rem;
+  /* Apple-system radius (Ali, 2026-07 — reverses the CI8 "12px machined"
+     decision): base 14px cascades the scale up so cards/surface = 18px,
+     overlay = 22px, section = 26px, inputs (rounded-md) = 14px. Buttons are
+     pill (rounded-full) directly. Pairs with the squircle corner-shape. */
+  --radius: 0.875rem;
   --measure-prose: 66ch;
   --measure-narrow: 45ch;
   --measure-wide: 75ch;
@@ -295,10 +299,54 @@
 }
 
 #services-wrapper[data-scene="inverted"] {
-  background: linear-gradient(135deg, hsl(var(--brand) / 0.14), hsl(var(--inverted-bg)) 60%);
+  background: linear-gradient(135deg, hsl(214 46% 13%), hsl(214 22% 7%));
+  --foreground: 214 20% 95%;
+  --card: 214 24% 15%;
+  --card-foreground: 214 20% 95%;
+  --popover: 214 24% 15%;
+  --popover-foreground: 214 20% 95%;
+  --surface: 214 22% 16%;
+  --secondary: 214 20% 19%;
+  --secondary-foreground: 214 20% 92%;
+  --muted: 214 18% 21%;
+  --muted-foreground: 214 18% 65%;
+  --input: 214 60% 92% / 0.08;
+  --border: 214 45% 90% / 0.1;
+  --border-mid: 214 45% 90% / 0.16;
+  --s-high: hsl(214 45% 94% / 0.92);
+  --s-mid: hsl(214 35% 88% / 0.55);
+  --s-low: hsl(214 30% 82% / 0.35);
+  --s-muted: hsl(214 25% 78% / 0.22);
+  --s-surface: hsl(214 50% 90% / 0.05);
+  --s-border: hsl(214 45% 90% / 0.09);
+  --s-border-hover: hsl(214 45% 90% / 0.17);
+  --s-high-soft: hsl(214 45% 92% / 0.03);
+  --scene-dot: hsl(214 45% 90% / 0.22);
 }
 .dark #services-wrapper[data-scene="inverted"] {
-  background: linear-gradient(135deg, hsl(var(--brand) / 0.08), hsl(var(--inverted-bg)) 60%);
+  background: linear-gradient(135deg, hsl(214 46% 95%), hsl(214 18% 99%));
+  --foreground: 214 30% 10%;
+  --card: 214 40% 97%;
+  --card-foreground: 214 30% 10%;
+  --popover: 214 40% 97%;
+  --popover-foreground: 214 30% 10%;
+  --surface: 214 35% 95%;
+  --secondary: 214 30% 93%;
+  --secondary-foreground: 214 25% 22%;
+  --muted: 214 25% 90%;
+  --muted-foreground: 214 20% 38%;
+  --input: 214 30% 92%;
+  --border: 214 40% 20% / 0.12;
+  --border-mid: 214 40% 20% / 0.2;
+  --s-high: hsl(214 40% 15% / 0.9);
+  --s-mid: hsl(214 35% 20% / 0.72);
+  --s-low: hsl(214 30% 25% / 0.52);
+  --s-muted: hsl(214 25% 30% / 0.4);
+  --s-surface: hsl(214 40% 15% / 0.04);
+  --s-border: hsl(214 40% 15% / 0.1);
+  --s-border-hover: hsl(214 40% 15% / 0.18);
+  --s-high-soft: hsl(214 40% 15% / 0.03);
+  --scene-dot: hsl(214 40% 15% / 0.2);
 }
 
 .accent-world-orange {

@@ -379,16 +379,22 @@ rejected alternative. Never put color or serif-italic in body — those are head
 
 ## 6. Spacing, Radius, Elevation, Texture
 
-### 6.1 Radius (base `--radius: 0.5rem` = 8px)
-Scales from `xs` (4px) → `3xl` (24px). Semantic aliases: `--radius-surface` (cards, 12px),
-`--radius-overlay` (popovers, 16px), `--radius-section` (large blocks, 20px), `--radius-nested` (6px).
+### 6.1 Radius (base `--radius: 0.875rem` = 14px)
+Scales from `xs` (10px) → `3xl` (30px). Semantic aliases: `--radius-surface` (cards, **18px**),
+`--radius-overlay` (popovers, **22px**), `--radius-section` (large blocks, **26px**),
+`--radius-nested` (12px). Squircle continuous corners via `@supports (corner-shape: squircle)`.
 
-**The radius decision (CI8, stated deliberately):** buttons use `rounded-lg` (**12px**) — the
-mid-radius voice adopted in the Apple design pass. Not pill (consumer-friendly softness would
-undercut the precision positioning) and not sharp-corner brutalism (fights the refined Apple-
-adjacent surface language). 12px on a 40px control reads *machined*, not *bouncy*. Nested
-elements follow `inner = outer − padding` (the `--radius-nested` alias approximates this at
-common paddings — prefer the formula when nesting new surfaces).
+**The radius decision (CI8 — reversed by Ali, 2026-07, full Apple system):** the earlier "12px
+machined" call is **retired**. The system is now Apple-native:
+- **Buttons + pill tags → fully rounded** (`rounded-full`, both `Button` and `MagneticButton`) —
+  the apple.com CTA shape.
+- **Cards → 18px**, **overlays → 22px**, **large sections/tiles → 26px**, **inputs/badges → 14px**,
+  all via the base bump so the whole scale cascades cohesively; the squircle corner-shape makes
+  them read as Apple continuous corners.
+
+This is a deliberate brand-voice change (CI8 is a `judgment`-class rule): the precision signal now
+comes from typography, spacing, and motion rather than from sharp corners. Nested elements still
+follow `inner = outer − padding`.
 
 ### 6.2 Section rhythm
 Vertical section padding: `--section-y-top: clamp(5rem, 10vh, 8rem)` and
@@ -431,7 +437,7 @@ aesthetic is flat-with-a-whisper, not heavy material drop-shadows.
 
 Sizes: `sm` 32px · `default` 40px · `lg` 44px · `xl` 48px · icons 32–40px. On **coarse pointers
 (touch)** every size grows to the 44px minimum via `pointer-coarse:` variants (CI1) — the compact
-sizes are a fine-pointer-only spec. Radius `rounded-lg` (12px — see §6.1), `font-medium`, micro
+sizes are a fine-pointer-only spec. Radius **pill** (`rounded-full` — see §6.1), `font-medium`, micro
 press animation (`active:scale-[0.98]`), 200ms transitions, built-in `loading` spinner state.
 **Note:** the nav CTA is intentionally **neutral ink, not blue** — a blue nav button reads as "generic
 SaaS." Keep primary CTAs confident and restrained.

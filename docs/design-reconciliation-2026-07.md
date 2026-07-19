@@ -19,7 +19,7 @@
 | `--elevation-overlay` (+ `--shadow-overlay`) | missing (popovers used ad-hoc/Tailwind shadows) | new level-3 token, both modes | CI9: complete the 4-level ladder (flat/card/card-lg/overlay). Component adoption (popover, select, command palette) in Phase 5. | None (additive). |
 | Button sizes (touch) | `default` 40px, `sm` 32px, icons 32–40px on all pointers | + `pointer-coarse:min-h-11` / `pointer-coarse:size-11` | CI1 adapted: 44px enforced where tap errors happen (coarse pointers); compact fine-pointer spec kept — mouse precision doesn't need 44px and the compact sizes are part of the visual language. | **Low** — desktop unchanged; touch buttons grow ≤4–12px. Verify via device emulation. |
 | `RevealConfig.anticipate` + `sectionElement` preset | no anticipation pattern in library | opt-in anticipation micro-beat (~8% counter-travel, 18% of duration, 35% opacity), enabled on `sectionElement` | M2. Skipped for `fade` (no travel to counter), scrub (progress is scroll-owned), reduced-motion (existing tier), and word-split headlines (per-word wind-up reads as jitter). | **Medium** — motion feel change on CTAs/featured blocks; Phase 4 checklist item 8 verifies; `anticipate: false` opts out per element. |
-| `design.md` §7.1/§6.1 radius claim | "`rounded-sm` … restrained, not pill-shaped" (stale — code ships `rounded-lg`) | doc corrected + decision stated: **12px buttons, deliberate** | CI8 requires the radius voice be chosen deliberately. Decision: keep the Apple-pass 12px (machined mid-radius), reject both pill (consumer softness) and sharp-corner (fights the refined surface language). Code untouched; doc now matches code. | None (doc). |
+| ~~`design.md` §7.1/§6.1 radius claim~~ **SUPERSEDED** | "`rounded-sm` … restrained, not pill-shaped" (stale — code shipped `rounded-lg`) | ~~12px buttons, deliberate~~ → **reversed 2026-07 by Ali: full Apple system** (see §6 below) | CI8 is a `judgment`-class rule, so the brand-voice call is the owner's. The 12px "machined" reading was my recommendation; Ali chose the Apple-native system instead. | Superseded. |
 | `design.md` §10.1 font snippet | showed `weight:` arrays | corrected: variable fonts, no weight arrays | Doc drift — the arrays version would make `font-light`/`font-medium` silent fallbacks; live code comment explicitly loads variable axes. | None (doc). |
 | `design.md` §10.11 + §3.3/§3.4/§4.1/§6.3/§8 | stale home map (`transparency-section.tsx`), missing Ownership Stack, no tier/measure/elevation/anticipation notes | updated | Keep the token layer truthful to the tree. | None (doc). |
 
@@ -105,3 +105,30 @@ dynamic imports, capability-gated motion).
 - `.label` / `.caption` utility classes are defined but have **zero** usages — either adopt or
   remove at Phase 5 cleanup.
 - 2026 trend adoption (Phase 3) appends to the change table above.
+
+---
+
+## 6. Post-audit reversal — full Apple radius system (2026-07, Ali)
+
+Ali rejected the shipped radius feel and directed "exactly like Apple". Because CI8 is a
+`judgment`-class rule (brand voice, not a verifiable constraint), the owner's call governs and
+the Phase 2 "12px machined" recommendation is retired.
+
+Chosen option: **full Apple system** (pill buttons + rounder surfaces), not just pill buttons.
+
+| token / component | before | after | mechanism |
+|---|---|---|---|
+| `--radius` base | `0.5rem` (8px) | **`0.875rem` (14px)** | one base bump cascades the whole scale |
+| cards (`rounded-lg` / `--radius-surface`) | 12px | **18px** | derived |
+| overlays (`--radius-overlay`) | 16px | **22px** | derived |
+| large tiles/sections (`rounded-2xl` / `--radius-section`) | 20px | **26px** | derived |
+| inputs/badges (`rounded-md`) | 8px | **14px** | derived — satisfies "حقول أنعم" without boxing the underline inputs |
+| `Button` (all sizes) | `rounded-lg` (12px) | **`rounded-full` (pill)** | explicit in `button.tsx` |
+| `MagneticButton` | already `rounded-full` | unchanged | — |
+
+Notes: underline inputs stay `rounded-none` (the form idiom is deliberate and Ali didn't ask to
+box them). Ad-hoc `<button class="rounded-lg">` toggles/tabs render at 18px rounded-rect rather
+than pill — correct, since Apple uses rounded-rect for segmented/toggle controls and reserves
+the pill for CTAs. The existing `@supports (corner-shape: squircle)` now matters more: at these
+larger radii the continuous-corner rendering is what makes it read as Apple rather than merely
+"round". Verified live: hero/nav CTAs pill, cards 18px, tiles 26px, typecheck clean.
