@@ -274,7 +274,7 @@ function CtaSection() {
           <div className="max-w-xl">
             <p
               ref={eyebrowRef}
-              className={cn(monoCaps, "mb-4 block text-local-accent")}
+              className={cn(monoCaps, "mb-4 block text-local-accent-text")}
             >
               {t("cta.eyebrow")}
             </p>

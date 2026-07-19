@@ -123,7 +123,7 @@ export const Accent = forwardRef<HTMLSpanElement, AccentProps>(
         className={cn(
           "inline-block",
           solid
-            ? "text-local-accent"
+            ? "text-local-accent-text"
             : cn(
                 "bg-clip-text text-transparent",
                 DIRECTION_CLASSES[direction],

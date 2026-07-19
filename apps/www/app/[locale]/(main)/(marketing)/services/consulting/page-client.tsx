@@ -178,7 +178,7 @@ function CtaSection() {
       <Container>
         <div className="grid md:grid-cols-[1fr_360px] gap-12 items-start">
           <div>
-            <p className={cn(monoCaps, "text-local-accent mb-6 block")}>
+            <p className={cn(monoCaps, "text-local-accent-text mb-6 block")}>
               {t("cta.eyebrow")}
             </p>
             <h2

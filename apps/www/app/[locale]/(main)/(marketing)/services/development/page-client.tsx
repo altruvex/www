@@ -80,7 +80,7 @@ export function CtaSection() {
             <div className="space-y-5 border-b border-border bg-surface/50 p-8 font-mono text-[13px] leading-relaxed tracking-wide md:border-b-0 md:border-e md:p-10">
               <div className="flex gap-3 text-muted-foreground">
                 <span className="select-none opacity-50">~</span>
-                <span className="text-local-accent opacity-80">$</span>
+                <span className="text-local-accent-text opacity-80">$</span>
                 <span className="text-foreground font-medium">npx start-project</span>
               </div>
               <div className="pl-6 space-y-2 text-muted-foreground">
@@ -96,11 +96,11 @@ export function CtaSection() {
               </div>
               <div className="flex gap-3 text-muted-foreground">
                 <span className="select-none opacity-50">~</span>
-                <span className="text-local-accent opacity-80">$</span>
+                <span className="text-local-accent-text opacity-80">$</span>
                 <span className="text-foreground font-medium">contact --team</span>
               </div>
               <div className="flex gap-2 text-foreground/80 font-medium items-center">
-                <span className="text-local-accent opacity-80">→</span>
+                <span className="text-local-accent-text opacity-80">→</span>
                 <span>{t("cta.terminal.ready")}</span>
                 {/*
                   FIX: animate-[pulse_1s_step-end_infinite] reuses
@@ -125,7 +125,7 @@ export function CtaSection() {
                 <p
                   className={cn(
                     monoCaps,
-                    "text-local-accent mb-4 block text-xs tracking-[0.2em]"
+                    "text-local-accent-text mb-4 block text-xs tracking-[0.2em]"
                   )}
                 >
                   {t("cta.eyebrow")}

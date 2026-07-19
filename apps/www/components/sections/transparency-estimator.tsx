@@ -481,7 +481,7 @@ function Ledger({
                 className={cn(
                   "w-5 shrink-0 text-[11px] tabular-nums transition-colors",
                   done
-                    ? "text-local-accent"
+                    ? "text-local-accent-text"
                     : active
                       ? "text-foreground"
                       : "text-muted-foreground/50",
@@ -552,7 +552,7 @@ function QuizStep({
   const base = `steps.${question.msg}`;
   return (
     <div>
-      <p className="text-xs text-local-accent motion-safe:animate-in motion-safe:fade-in">
+      <p className="text-xs text-local-accent-text motion-safe:animate-in motion-safe:fade-in">
         {t("step")} {num(index + 1)}{" "}
         <span className="text-muted-foreground/50">/ {num(TOTAL)}</span>
       </p>
@@ -594,8 +594,8 @@ function QuizStep({
                 className={cn(
                   "w-7 shrink-0 pt-0.5 text-xs tabular-nums transition-colors duration-300",
                   active
-                    ? "text-local-accent"
-                    : "transition-all text-muted-foreground/60 group-hover:text-local-accent",
+                    ? "text-local-accent-text"
+                    : "transition-all text-muted-foreground/60 group-hover:text-local-accent-text",
                 )}
               >
                 {String(i + 1).padStart(2, "0")}
@@ -648,7 +648,7 @@ function Capture({
 }) {
   return (
     <div className="max-w-xl motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
-      <p className="text-xs text-local-accent">
+      <p className="text-xs text-local-accent-text">
         {t("ledger.resolved")}
       </p>
       <h3 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground">
@@ -821,7 +821,7 @@ function ResultReceipt({
             {preview.map((item) => (
               <li key={item} className="flex items-start gap-3">
                 <Check
-                  className="mt-1 size-4 shrink-0 text-local-accent"
+                  className="mt-1 size-4 shrink-0 text-local-accent-text"
                   strokeWidth={2.5}
                 />
                 <span className="text-sm leading-relaxed text-muted-foreground">

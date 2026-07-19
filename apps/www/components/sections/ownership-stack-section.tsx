@@ -227,7 +227,7 @@ export function OwnershipStackSection() {
                           <span
                             className={cn(
                               "w-7 shrink-0 font-mono text-sm tabular-nums transition-colors duration-200",
-                              isActive ? "text-local-accent" : "text-foreground/40",
+                              isActive ? "text-local-accent-text" : "text-foreground/40",
                             )}
                           >
                             {String(i + 1).padStart(2, "0")}
@@ -257,7 +257,7 @@ export function OwnershipStackSection() {
                                 {t(`layers.${id}.detail`)}
                               </p>
                               <p className="mt-3 text-sm leading-relaxed text-foreground">
-                                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-local-accent">
+                                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-local-accent-text">
                                   {t("ownershipLabel")}
                                 </span>
                                 <br />
@@ -341,13 +341,13 @@ export function OwnershipStackSection() {
                 style={{ animation: "ownDetailIn 0.24s ease forwards" }}
               >
                 <div className="mb-4 flex items-center gap-3">
-                  <span className="font-mono text-sm tabular-nums text-local-accent">
+                  <span className="font-mono text-sm tabular-nums text-local-accent-text">
                     {String(LAYER_IDS.indexOf(activeId) + 1).padStart(2, "0")}
                   </span>
                   <h3 className="font-sans text-xl font-medium leading-tight text-foreground">
                     {t(`layers.${activeId}.name`)}
                   </h3>
-                  <span className="ms-auto rounded-md border border-local-accent/25 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-local-accent">
+                  <span className="ms-auto rounded-md border border-local-accent/25 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-local-accent-text">
                     {t(`layers.${activeId}.tag`)}
                   </span>
                 </div>
@@ -355,7 +355,7 @@ export function OwnershipStackSection() {
                   {t(`layers.${activeId}.detail`)}
                 </p>
                 <p className="mt-auto pt-6 text-sm leading-relaxed text-foreground">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-local-accent">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-local-accent-text">
                     {t("ownershipLabel")}
                   </span>
                   <br />

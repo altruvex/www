@@ -210,7 +210,7 @@ function ProofSection() {
       )}
     >
       <Container>
-        <p className={cn(monoCaps, "text-local-accent mb-4 block")}>
+        <p className={cn(monoCaps, "text-local-accent-text mb-4 block")}>
           {t("eyebrow")}
         </p>
         <h2
@@ -268,7 +268,7 @@ function ClosingCtaSection() {
           <div className="max-w-xl">
             <p
               ref={eyebrowRef}
-              className={cn(monoCaps, "text-local-accent mb-4 block")}
+              className={cn(monoCaps, "text-local-accent-text mb-4 block")}
             >
               {t("eyebrow")}
             </p>

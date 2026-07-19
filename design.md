@@ -233,7 +233,7 @@ parentheses are how often each appears in the live `components/` + `app/` (a sig
 | The dismissed half of an "X — not Y" line | `text-foreground/60` (the `<Dim>` primitive) | **Only** for the rejected alternative. Never for normal de-emphasis. |
 | A section heading's craft/restraint clause | `text-foreground/45` (via `<Highlight>`) | Set automatically by `SectionHeading` when no `accent`. |
 | Brand blue **as literal text** | `text-brand-text` (4×) | Rare. Use **only** when you need the brand blue on text *outside* a color-world context (e.g. an inline link in prose, a standalone brand mention). AA-safe both modes. |
-| A section's accent text (eyebrow tone, accent mark, active state) | `text-local-accent` (18× — the workhorse) | The **default way to put color on text.** It follows the section's world (blue/orange/green), so it's always world-correct. Prefer this over `text-brand-text`. |
+| A section's accent text (eyebrow tone, accent mark, active state) | `text-local-accent-text` (the workhorse) | The **default way to put color on text.** Tracks the section's world (blue/orange/green) via `--local-accent-text` — a text-safe channel that equals the fill except where the fill isn't AA-readable (root + blue-world dark). Never use bare `text-local-accent` for text — that's the fill token. |
 | Layered text on an unknown/tinted surface | `text-s-high / -mid / -low / -muted` (90/72/52/40% ink) | When you don't know the underlying bg (cards, glass, inverted islands) and need contrast to hold. |
 
 **Backgrounds, surfaces, borders:**

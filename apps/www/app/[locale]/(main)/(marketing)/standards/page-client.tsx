@@ -54,12 +54,12 @@ function OpeningSection() {
                 key={i}
                 className="border border-foreground/8 rounded-lg bg-foreground/2 p-5"
               >
-                <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-local-accent mb-3">
+                <p className="font-mono text-sm leading-normal tracking-wider uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-local-accent-text mb-3">
                   {label}
                 </p>
                 {value ? (
                   <p
-                    className="font-sans font-light text-local-accent leading-none"
+                    className="font-sans font-light text-local-accent-text leading-none"
                     style={{
                       fontSize: "clamp(28px, 4vw, 40px)",
                       letterSpacing: "-0.03em",

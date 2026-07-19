@@ -67,7 +67,7 @@ function StatsSection() {
             ref={leftRef}
             className="md:col-span-7 border border-foreground/8 rounded-lg bg-foreground/2 p-8 md:p-12"
           >
-            <p className={cn(monoCaps, "text-local-accent mb-4 block")}>
+            <p className={cn(monoCaps, "text-local-accent-text mb-4 block")}>
               {t("stats.eyebrow")}
             </p>
             <h2
@@ -98,7 +98,7 @@ function StatsSection() {
                   {t(stat.labelKey)}
                 </p>
                 <span
-                  className="font-sans font-light text-local-accent leading-none"
+                  className="font-sans font-light text-local-accent-text leading-none"
                   style={{
                     fontSize: "clamp(26px, 3.5vw, 36px)",
                     letterSpacing: "-0.03em",
@@ -467,7 +467,7 @@ function CtaSection() {
           >
             <div>
               <p
-                className={cn(monoCaps, "text-local-accent mb-6 block")}
+                className={cn(monoCaps, "text-local-accent-text mb-6 block")}
               >
                 {t("cta.eyebrow")}
               </p>

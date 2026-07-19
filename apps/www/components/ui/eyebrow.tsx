@@ -6,7 +6,7 @@ type EyebrowTone = "muted" | "accent" | "foreground";
 const toneClasses: Record<EyebrowTone, string> = {
   muted: "text-muted-foreground",
   // Follows the section-scoped --local-accent (color world), e.g. accentWorldClass().
-  accent: "text-local-accent",
+  accent: "text-local-accent-text",
   foreground: "text-foreground",
 };
 

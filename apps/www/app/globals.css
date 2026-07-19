@@ -55,6 +55,7 @@
   --color-local-accent: var(--local-accent);
   --color-local-accent-fg: var(--local-accent-fg);
   --color-local-accent-soft: var(--local-accent-soft);
+  --color-local-accent-text: var(--local-accent-text);
   --color-logo-wordmark: hsl(var(--logo-wordmark));
   --color-logo-tagline: hsl(var(--logo-tagline));
   --color-inverted-bg: hsl(var(--inverted-bg));
@@ -147,6 +148,11 @@
   --local-accent: hsl(var(--brand));
   --local-accent-fg: hsl(var(--brand-foreground));
   --local-accent-soft: var(--brand-soft);
+  /* Text-safe accent channel (audit SYS-3): --local-accent is a FILL token;
+     at the root and in blue-dark it fails AA as small text. Text consumers
+     use --local-accent-text, which tracks the fill except where the fill is
+     not AA-readable. */
+  --local-accent-text: hsl(var(--brand-text));
   --success: 162 95% 31%;
   --warning: 38 96% 40%;
   --error: 0 65% 51%;
@@ -296,6 +302,7 @@
 }
 
 .accent-world-orange {
+  --local-accent-text: var(--local-accent);
   --local-accent: hsl(27 90% 35%);
   --local-accent-fg: hsl(0 0% 98%);
   --local-accent-soft: hsl(27 90% 35% / 0.08);
@@ -306,6 +313,7 @@
   --local-accent-soft: hsl(27 78% 61% / 0.1);
 }
 .accent-world-green {
+  --local-accent-text: var(--local-accent);
   --local-accent: hsl(158 64% 30%);
   --local-accent-fg: hsl(0 0% 98%);
   --local-accent-soft: hsl(158 64% 30% / 0.08);
@@ -316,11 +324,13 @@
   --local-accent-soft: hsl(158 36% 49% / 0.1);
 }
 .accent-world-blue {
+  --local-accent-text: var(--local-accent);
   --local-accent: hsl(214 90% 43%);
   --local-accent-fg: hsl(0 0% 98%);
   --local-accent-soft: hsl(214 90% 43% / 0.07);
 }
 .dark .accent-world-blue {
+  --local-accent-text: hsl(214 95% 64%);
   --local-accent: hsl(214 89% 48%);
   --local-accent-fg: hsl(0 0% 98%);
   --local-accent-soft: hsl(214 89% 48% / 0.1);

@@ -119,7 +119,7 @@ export default function WorkCaseStudyPageClient({
                   aria-hidden
                   className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-all duration-300 group-hover/metric:bg-local-accent"
                 />
-                <p className="font-sans font-light text-local-accent leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
+                <p className="font-sans font-light text-local-accent-text leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
                   {metric.value}
                 </p>
                 <Eyebrow tone="accent">{metric.label}</Eyebrow>
@@ -182,11 +182,11 @@ export default function WorkCaseStudyPageClient({
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider uppercase text-s-mid hover:text-primary transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <span className="font-bold border-b border-s-border-hover group-hover:border-local-accent group-hover:text-local-accent transition-all duration-300 pb-0.5">
+                    <span className="font-bold border-b border-s-border-hover group-hover:border-local-accent group-hover:text-local-accent-text transition-all duration-300 pb-0.5">
                       {tLabels("visitProj")}
                     </span>
                     <svg
-                      className="h-5 w-5 rtl:-rotate-180 transition-all duration-300 group-hover:text-local-accent ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
+                      className="h-5 w-5 rtl:-rotate-180 transition-all duration-300 group-hover:text-local-accent-text ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
