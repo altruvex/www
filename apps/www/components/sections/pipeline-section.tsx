@@ -459,7 +459,13 @@ export function PipelineSection() {
                       transitionDuration: dur(MOTION.duration.fast),
                     }}
                   >
-                    <div className="space-y-1 px-4 py-3 bg-black/2 dark:bg-black/20 border-b border-black/5 dark:border-white/5 shadow-inner">
+                    {/* Simulated log flavor text: aria-hidden (decorative),
+                        info lines on the theme-aware s-mid so they hold ≥3:1
+                        visually (the old rgba .8 measured 2.02:1). */}
+                    <div
+                      aria-hidden="true"
+                      className="space-y-1 px-4 py-3 bg-black/2 dark:bg-black/20 border-b border-black/5 dark:border-white/5 shadow-inner"
+                    >
                       {stage.logs.map((line, li) => (
                         <div
                           key={li}
@@ -470,7 +476,7 @@ export function PipelineSection() {
                               ? `rgb(${STAGE_COLORS[1]})`
                               : line.startsWith("[warn]")
                                 ? `rgb(${STAGE_COLORS[2]})`
-                                : `rgba(${STAGE_COLORS[3]},.8)`,
+                                : "var(--s-mid)",
                           }}
                         >
                           <span className="text-muted-foreground mr-2 shrink-0">-</span>

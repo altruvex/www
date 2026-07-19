@@ -43,7 +43,6 @@
   --color-s-border: var(--s-border);
   --color-s-border-hover: var(--s-border-hover);
   --color-s-high-soft: var(--s-high-soft);
-
   --color-n-0: hsl(var(--n-0));
   --color-n-1: hsl(var(--n-1));
   --color-n-2: hsl(var(--n-2));
@@ -53,11 +52,9 @@
   --color-n-6: hsl(var(--n-6));
   --color-n-7: hsl(var(--n-7));
   --color-n-8: hsl(var(--n-8));
-
   --color-local-accent: var(--local-accent);
   --color-local-accent-fg: var(--local-accent-fg);
   --color-local-accent-soft: var(--local-accent-soft);
-
   --color-logo-wordmark: hsl(var(--logo-wordmark));
   --color-logo-tagline: hsl(var(--logo-tagline));
   --color-inverted-bg: hsl(var(--inverted-bg));
@@ -65,19 +62,16 @@
   --color-messaging-whatsapp-fg: hsl(var(--messaging-whatsapp-fg));
   --color-selection-accent: hsl(var(--selection-accent));
   --color-text-inverse: hsl(var(--text-inverse));
-
   --shadow-card: var(--elevation-card);
   --shadow-card-lg: var(--elevation-card-lg);
   --shadow-overlay: var(--elevation-overlay);
   --shadow-glow-sm: var(--elevation-glow-sm);
   --shadow-glow: var(--elevation-glow);
-
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono:
     var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif: Georgia, "Times New Roman", serif;
-
   --radius-xs: calc(var(--radius) - 4px);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
@@ -89,7 +83,6 @@
   --radius-overlay: var(--radius-xl);
   --radius-section: var(--radius-2xl);
   --radius-nested: var(--radius-sm);
-
   --animate-slide-down: slide-down 1.8s ease-in-out infinite;
   --animate-ripple: ripple 0.6s ease-out forwards;
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
@@ -97,10 +90,6 @@
   --animate-menu-panel-in: menu-panel-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)
     both;
   --animate-text-gradient: text-gradient 6s linear infinite;
-
-  /* Mirrors MOTION.ease in lib/motion/config.ts so CSS transitions and GSAP
-     tweens share the same curves. `spring` approximates elastic.out(1, 0.75)
-     with a CSS overshoot cubic-bezier — CSS has no native elastic easing. */
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
@@ -110,8 +99,6 @@
 :root {
   --duration-instant: 120ms;
   --radius: 0.5rem;
-  /* Reading-measure tokens (principles T6): cap prose line length.
-     Latin target 50–75 CPL (sweet ~66); Arabic verified by words-per-line. */
   --measure-prose: 66ch;
   --measure-narrow: 45ch;
   --measure-wide: 75ch;
@@ -190,14 +177,9 @@
   --logo-wordmark: var(--n-8);
   --logo-tagline: 0 0% 40%;
   --selection-accent: var(--brand);
-  /* WhatsApp green darkened for white-on-green AA (5.22:1); the vivid
-     brand green moves to the dark theme where it pairs with ink text. */
   --messaging-whatsapp: 142 70% 28%;
   --messaging-whatsapp-fg: 0 0% 98%;
   --text-inverse: var(--n-0);
-  /* Two-layer elevation (principles CI9): tight contact/ambient layer whose
-     opacity DECAYS as elevation rises (0.04 → 0.03 → 0.02) + soft key layer
-     that grows with height. Ladder: 0 flat · 1 card · 2 card-lg · 3 overlay. */
   --elevation-card:
     0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
   --elevation-card-lg:
@@ -306,9 +288,6 @@
   --scene-dot: hsl(0 0% 6% / 0.2);
 }
 
-/* Scoped to #services-wrapper (not the generic [data-scene="inverted"] rule) so this
-   brand-gradient fill doesn't leak into the header or the consulting-page card, which
-   also use data-scene="inverted" but keep their own flat/glass backgrounds. */
 #services-wrapper[data-scene="inverted"] {
   background: linear-gradient(135deg, hsl(var(--brand) / 0.14), hsl(var(--inverted-bg)) 60%);
 }
@@ -322,8 +301,6 @@
   --local-accent-soft: hsl(27 90% 35% / 0.08);
 }
 .dark .accent-world-orange {
-  /* Chroma capped at the light variant's OKLCH chroma (C 0.134 ≤ 0.137) so
-     dark mode doesn't amplify saturation (principles C8). 7.86:1 on #121212. */
   --local-accent: hsl(27 78% 61%);
   --local-accent-fg: hsl(0 0% 12%);
   --local-accent-soft: hsl(27 78% 61% / 0.1);
@@ -334,7 +311,6 @@
   --local-accent-soft: hsl(158 64% 30% / 0.08);
 }
 .dark .accent-world-green {
-  /* Chroma capped at the light variant (C 0.100 ≤ 0.104) — see C8. 6.65:1. */
   --local-accent: hsl(158 36% 49%);
   --local-accent-fg: hsl(0 0% 12%);
   --local-accent-soft: hsl(158 36% 49% / 0.1);
@@ -412,7 +388,6 @@
 }
 .dark .accent-forest,
 [data-scene="inverted"] .accent-forest {
-  /* Dark stops chroma-capped at their light counterparts (principles C8). */
   --grad-from: hsl(156 54% 52%);
   --grad-via: hsl(148 46% 54%);
   --grad-to: hsl(170 58% 50%);
@@ -424,7 +399,6 @@
 }
 .dark .accent-mint,
 [data-scene="inverted"] .accent-mint {
-  /* Dark stops chroma-capped at their light counterparts (principles C8). */
   --grad-from: hsl(150 52% 54%);
   --grad-via: hsl(170 50% 52%);
   --grad-to: hsl(186 58% 52%);

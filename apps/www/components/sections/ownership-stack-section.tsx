@@ -174,7 +174,7 @@ export function OwnershipStackSection() {
             />
             <div
               aria-hidden
-              className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-primary/35"
+              className="mb-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-primary/60"
             >
               <span>{t("axis.surface")}</span>
               <span className="h-px flex-1 mx-3 bg-foreground/8" />
@@ -241,7 +241,7 @@ export function OwnershipStackSection() {
                             </span>
                           </span>
                           <span
-                            className="hidden shrink-0 rounded-md border border-foreground/10 bg-foreground/2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.13em] text-primary/45 sm:inline-block"
+                            className="hidden shrink-0 rounded-md border border-foreground/10 bg-foreground/2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.13em] text-primary/60 sm:inline-block"
                           >
                             {t(`layers.${id}.tag`)}
                           </span>
@@ -274,7 +274,7 @@ export function OwnershipStackSection() {
                           className="flex items-center gap-3 pt-2"
                         >
                           <span className="flex-1 border-t border-dashed border-foreground/20" />
-                          <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.18em] text-primary/45">
+                          <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.18em] text-primary/60">
                             {t("templateStops")}
                           </span>
                           <span className="w-8 border-t border-dashed border-foreground/20" />
@@ -285,7 +285,7 @@ export function OwnershipStackSection() {
                 })}
               </ol>
             </div>
-            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-primary/40">
+            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-primary/60">
               <span className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full border border-foreground/25" />
                 {t("legend.template")}
@@ -330,7 +330,7 @@ export function OwnershipStackSection() {
                 <Dim>{t("intro.dismissed")}</Dim> {t("intro.answerLead")}{" "}
                 <Strong>{t("intro.answerStrong")}</Strong>
               </p>
-              <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-primary/35">
+              <p className="mt-6 font-mono text-xs uppercase tracking-[0.14em] text-primary/60">
                 {t("intro.hint")}
               </p>
             </div>

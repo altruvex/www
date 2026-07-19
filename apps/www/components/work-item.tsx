@@ -134,13 +134,13 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               <h2 className="mb-1 font-sans text-[clamp(18px,2.5vw,26px)] font-medium tracking-[-0.015em] text-primary transition-all duration-300 ltr:group-hover:translate-x-1.5 ltr:group-focus-within:translate-x-1.5 rtl:group-hover:-translate-x-1.5 rtl:group-focus-within:-translate-x-1.5">
                 {name}
               </h2>
-              <p className="font-mono text-sm leading-normal tracking-wider text-s-low uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+              <p className="font-mono text-sm leading-normal tracking-wider text-s-mid uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
                 {client} · {industry}
               </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <span className="hidden font-mono text-sm leading-normal tracking-wider text-s-low tabular-nums md:block">
+            <span className="hidden font-mono text-sm leading-normal tracking-wider text-s-mid tabular-nums md:block">
               {year}
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full border border-s-border bg-s-surface text-s-mid transition-all duration-300 group-hover:border-brand/40 group-hover:bg-brand-soft group-hover:text-brand-text group-focus-within:border-brand/40 group-focus-within:bg-brand-soft group-focus-within:text-brand-text">
@@ -187,7 +187,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   key={metric.label}
                   className="inline-flex items-center gap-2 rounded-full border border-s-border bg-s-surface px-3 py-1 transition-all duration-300 group-hover:border-s-border-hover"
                 >
-                  <span className="font-mono text-sm leading-normal tracking-wider text-s-low uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
+                  <span className="font-mono text-sm leading-normal tracking-wider text-s-mid uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal">
                     {metric.label}
                   </span>
                   <span className="font-mono text-sm font-medium leading-normal tracking-wider text-brand-text tabular-nums">
@@ -212,7 +212,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   <span className="text-s-mid uppercase transition-all group-hover/link:text-primary">
                     {tW("labels.visitProj")}
                   </span>
-                  <span className="flex items-center gap-1 text-s-low lowercase transition-all group-hover/link:text-brand-text">
+                  <span className="flex items-center gap-1 text-s-mid lowercase transition-all group-hover/link:text-brand-text">
                     ({getDomainName(externalUrl)})
                     <svg
                       className="h-3.5 w-3.5 transition-all duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"

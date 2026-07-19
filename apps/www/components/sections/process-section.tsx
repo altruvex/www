@@ -170,7 +170,9 @@ export const ProcessSection = memo(function ProcessSection() {
               <span
                 className={cn(monoCaps, "block transition-colors duration-200")}
                 style={{
-                  color: i === active ? "var(--s-high)" : "var(--s-low)",
+                  // s-mid keeps inactive tabs AA-readable (s-low measured
+                  // 3.2:1); active/inactive rank carries via s-high + the bar.
+                  color: i === active ? "var(--s-high)" : "var(--s-mid)",
                 }}
               >
                 {step.index} · {t(`steps.${step.key}.tag`)}
