@@ -74,7 +74,7 @@ const ProcessStepItem = memo(function ProcessStepItem({
         id={`step-panel-${i}`}
         role="region"
         data-open={isOpen}
-        className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-320 ease-in-out data-[open=true]:grid-rows-[1fr]"
+        className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-320 ease-(--ease-strong) data-[open=true]:grid-rows-[1fr]"
       >
         <div className="overflow-hidden">
           <div className="p-6">

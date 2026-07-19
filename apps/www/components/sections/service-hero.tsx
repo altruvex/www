@@ -86,7 +86,7 @@ export function ServiceHero({
   return (
     <section
       aria-labelledby="service-hero-heading"
-      className="relative accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="relative accent-world-blue flex min-h-screen items-center pt-(--section-y-top) pb-[calc(var(--section-y-bottom)+3vh)]"
     >
       <SectionWatermark>{watermark}</SectionWatermark>
       <HeroGridOverlay

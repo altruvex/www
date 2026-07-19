@@ -237,6 +237,22 @@ Class: hard-rule
 
 ---
 
+### C14 — Surface-opacity tones split into reading and non-reading *(added during Phase 5)*
+Rule: Treat `s-low` (52%) and anything dimmer as non-reading tones — decorative marks, dividers, ghost numerals only; informative text starts at `s-mid` (72%) / opacity `/60`.
+Values: Reading floor ≈ 60% ink-equivalent (≥4.5:1 on both base themes).
+Applies to: `--s-*` scale consumers; `text-primary/NN` opacities.
+Script scope: both.
+Verify by: Contrast scan; grep `text-s-low|text-s-muted|text-primary\/[1-5]` on elements with real copy.
+Class: hard-rule
+
+### C15 — Fill tokens are not text tokens *(added during Phase 5)*
+Rule: Any accent channel that serves as a fill (`--local-accent`, brand fills, third-party brand colors) needs a paired, AA-verified text/foreground channel — never put a fill token on small text and assume it reads.
+Values: Site pairs: `--local-accent` / `--local-accent-text` · `--messaging-whatsapp` / `-fg` · `--brand` / `--brand-text`.
+Applies to: All accent/world tokens; any future brand-color addition.
+Script scope: both.
+Verify by: Grep `text-local-accent[^-]` (must be zero); contrast scan on accent text.
+Class: hard-rule
+
 ## 3. Spacing & Layout
 
 ### S1 — Dual-layer spacing scale
@@ -404,6 +420,14 @@ Verify by: Audit every default value: who benefits?
 Class: hard-rule
 
 ---
+
+### CI12 — Scroll-derived UI state recomputes on layout shifts *(added during Phase 5)*
+Rule: Any UI state derived from scroll geometry (header scenes, spy navs, progress bars) must recompute on layout changes — lazy mounts and scroll restoration move elements without firing scroll events.
+Values: Listen to scroll + resize + a `ResizeObserver` on the layout root; add absolute guards where a state is position-impossible (e.g. never inverted at scrollY < 100).
+Applies to: `nav.tsx` scene state; any future ScrollTrigger-adjacent React state.
+Script scope: both.
+Verify by: Load mid-page via scroll restoration; jump programmatically; state must match live geometry.
+Class: hard-rule
 
 ## 5. Motion
 

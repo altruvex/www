@@ -35,7 +35,15 @@ export function PageHero({
   const descRef = useSectionDescription<HTMLParagraphElement & HTMLDivElement>();
 
   return (
-    <section className={cn("accent-world-blue flex items-center pt-(--section-y-top) pb-(--section-y-bottom)", minHeightClass, className)}>
+    <section
+      className={cn(
+        // pb +3vh lifts centered content to the optical center (S7) —
+        // geometric center reads low.
+        "accent-world-blue flex items-center pt-(--section-y-top) pb-[calc(var(--section-y-bottom)+3vh)]",
+        minHeightClass,
+        className,
+      )}
+    >
       <Container>
         <div className={cn("w-full", alignCenter ? "mx-auto max-w-2xl text-center flex flex-col items-center" : "sm:max-w-5xl max-w-full")}>
           {eyebrow && (

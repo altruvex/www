@@ -252,20 +252,28 @@ every one is a latent RTL bug. **Fix:** convert to logical utilities (`ms-/me-/p
 
 ---
 
-## 3. Phase 5 fix order (by severity, one commit per item-group)
+## 3. Resolution log (Phase 5 — July 2026)
 
-1. **SYS-1** header scene reset (blocker, brand mark).
-2. **Contact WhatsApp contrast** (blocker, conversion surface).
-3. **SYS-2 + Ownership + Process + Pipeline contrast cluster** (one "reading-tones" commit:
-   s-low→s-mid for metadata, /35–/45→/60 annotations, inactive steps, terminal).
-4. **SYS-3** `--local-accent-text` token + Eyebrow accent consumers.
-5. **SYS-5** gradient budget: rule amendment in design.md + trust→Highlight,
-   pricing-signal→ember, problem re-world decision.
-6. **SYS-4** link target floors (24px min + pointer-coarse 44px).
-7. **SYS-6** aria-labelledby; **/transparency** H1→H3 skip; contact `aria-live`.
-8. **SYS-7** MDX underlines; work-item CPL caps (measure tokens).
-9. Polish batch: SYS-8 twins, SYS-9 logical properties, process expander ease, hero optical
-   nudge, hero-CTA doctrine amendment in design.md, `.label`/`.caption` adopt-or-remove.
+| Finding | Status | Commit | Re-check result |
+|---|---|---|---|
+| SYS-1 header stale scene (blocker) | **RESOLVED** | `a002dd5` | Top-of-page light: scene absent, wordmark ink `rgb(15,15,15)` across initial/jump/return states. Island *engagement* re-check pending a session where the lazy sections mount (see note below). |
+| WhatsApp CTA 1.96:1 (blocker) | **RESOLVED** | `ce033b1` | Computed 5.22:1 light (white on `142 70% 28%`), 8.46:1 dark (ink on `142 70% 49%`). |
+| SYS-2 reading-tones cluster | **RESOLVED** | `782bee0` | Live: work metadata 7.63:1, ownership annotations 4.96:1 light (/60), process inactive tabs s-mid, pipeline `[info]` → s-mid + logs `aria-hidden`. |
+| SYS-3 blue-dark accent text 3.85:1 | **RESOLVED** | `5a0fa26` | New `--local-accent-text` channel; estimator labels live at 6.4:1 dark; 30 consumers swapped; zero bare `text-local-accent` text usages remain. |
+| SYS-5 gradient budget + mismatches | **RESOLVED** | `dd61a45` (+`sunset` swap in polish commit) | Live: 5 visible accents — ember/orange (problem, re-worlded), iris/blue (ownership), mint/green (work), sunset/orange (pricing-signal), ember/orange (CTA). All world-matched, no same-gradient adjacency; §3.4 amended to the enforceable rule. |
+| SYS-4 link target floors | **RESOLVED** | `87e70db` | Footer/service links, work visit links, LinkedIn link, estimator Back: 24px min via padding + `pointer-coarse:min-h-11`. (Coarse-pointer behavior verified at compiled-CSS level — the pane can't emulate touch.) |
+| SYS-6 landmarks + heading skip + live regions | **RESOLVED** | `84b7622` | Home `sectionsNoLabel` scan: empty (was 5). Estimator steps h3→h2 (kills the /transparency H1→H3 skip). Contact feedback: `role=status`/`role=alert`. |
+| SYS-7 link underlines · T6 measures | **RESOLVED** | `2f6adb7` | MDX links underlined at rest; work-item description capped at `--measure-prose` (was est. 126 CPL); pricing note at `--measure-wide`. |
+| Polish: process expander ease, PageHero/ServiceHero optical +3vh (S7), hero `aria-label` i18n leak → `aria-labelledby`, hero-CTA doctrine amendment (§3.9), M2 anticipation shipped on `sectionElement` | **RESOLVED** | polish commit | Home hero is `justify-end` (bottom-anchored by design) — S7 nudge applied only to the centered heroes. |
+| SYS-8 responsive-twin DOM duplication | **DEFERRED** | — | Structural refactor per page; no user-visible defect. Tracked for a perf pass. |
+| SYS-9 21 unguarded physical-direction utilities | **DEFERRED** | — | Each needs a per-case RTL check (some are symmetric); AR currently renders correctly. Convert to logical utilities opportunistically. |
+| Consulting-brief `width 0.08s linear` | **ACCEPTED** | — | 80ms micro-progress transition; imperceptible, M1 micro/loop exemption. |
+| `.label`/`.caption` utilities unused | **ACCEPTED** | — | Kept as documented scale members for future use. |
 
-Each fix re-runs the relevant scanner checks (the audit script lives in this doc's methodology;
-re-runnable in any tab) and the affected mode matrix before its commit.
+**Open observation (downgraded from retracted):** the lazy Services/Process sections
+intermittently fail to mount (seen twice across two dev servers; also fine on many loads).
+Cause unconfirmed — suspect a race between `lazy()` chunk load, Suspense, and scroll state.
+Worth a dedicated investigation; if it reproduces in production builds it is a blocker.
+
+**New rules appended to `design-principles.md`:** C14 (reading vs non-reading tones),
+C15 (fill tokens are not text tokens), CI12 (scroll-derived state recomputes on layout shifts).

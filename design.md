@@ -253,7 +253,7 @@ parentheses are how often each appears in the live `components/` + `app/` (a sig
 | Case | Use | Condition |
 |---|---|---|
 | Focus ring on any control | `ring-brand` / the focus-visible outline | Always. Non-negotiable accessibility default. |
-| A literal "brand-blue" button | `bg-brand` (16×) + `bg-brand-hover` on hover | Use sparingly — **not** the primary CTA (that's ink). For brand-flagged actions only. |
+| A literal "brand-blue" button | `bg-brand` (16×) + `bg-brand-hover` on hover | Use sparingly. **One sanctioned primary-CTA exception: the homepage hero** ("Request a Scope") — the single brand-fill moment of the page. Every other primary CTA is ink; the nav CTA is always ink. |
 | Selection highlight, top-of-page glow | `--selection-accent`, dark-mode radial glow | Automatic; don't override. |
 | ⚠️ Don't | brand blue on a nav CTA, or as body text | A blue nav button reads "generic SaaS"; nav CTA stays **ink**. Brand blue is a fill/focus color, not a text color (use `text-brand-text` for that). |
 

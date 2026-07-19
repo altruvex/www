@@ -32,7 +32,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
     <section
       id="home"
       className="accent-world-blue relative z-10 flex lg:min-h-dvh w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)"
-      aria-label="Hero section"
+      aria-labelledby="home-heading"
     >
       <div
         aria-hidden
@@ -53,7 +53,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
         />
       </div>
       <SectionWatermark>{watermark}</SectionWatermark>
-      <h1 className="sr-only">
+      <h1 id="home-heading" className="sr-only">
         {title1} {title2}
       </h1>
       <Container>
