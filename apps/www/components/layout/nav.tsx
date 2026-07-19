@@ -34,10 +34,14 @@ export function Nav() {
   useLockBodyScroll(isMobileMenuOpen);
 
   useEffect(() => {
-    const handleScroll = () => {
+    // Scene state must track the wrapper's *live* geometry. Scroll events
+    // alone go stale: lazy sections mounting (and scroll restoration) shift
+    // the wrapper's position without firing any scroll event, which left the
+    // header stuck on data-scene="inverted" over the light hero (audit SYS-1).
+    const check = () => {
       setIsScrolled(window.scrollY > 20);
       const servicesWrapper = document.getElementById("services-wrapper");
-      if (servicesWrapper) {
+      if (servicesWrapper && window.scrollY > 100) {
         const rect = servicesWrapper.getBoundingClientRect();
         const overlaps = rect.top <= 64 && rect.bottom >= 0;
         setIsNavInverted(overlaps && !isMobileMenuOpen);
@@ -45,9 +49,18 @@ export function Nav() {
         setIsNavInverted(false);
       }
     };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    // Catches layout shifts (lazy section mounts) that move the wrapper
+    // while the scroll position stays put.
+    const ro = new ResizeObserver(check);
+    ro.observe(document.body);
+    check();
+    return () => {
+      window.removeEventListener("scroll", check);
+      window.removeEventListener("resize", check);
+      ro.disconnect();
+    };
   }, [isMobileMenuOpen]);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
