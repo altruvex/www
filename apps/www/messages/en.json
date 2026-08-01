@@ -16,6 +16,38 @@
       "philosophy2": "The goal is not to appear premium. It is to build work with sufficient quality and positioning that others can copy the surface - but not the standard behind it.",
       "role": "Founder & Lead Engineer"
     },
+    "principle": {
+      "closing": "None of this is generosity. It is the only version of the work that survives being checked.",
+      "commitmentLabel": "The commitment",
+      "costLabel": "What it costs us",
+      "eyebrow": "The name",
+      "items": {
+        "handover": {
+          "body": "Documented architecture, conventional patterns, no clever code that only its author can maintain. The handover assumes we will not be here.",
+          "cost": "A system anyone can read is a system anyone can be hired to continue.",
+          "label": "We build for the engineer after us."
+        },
+        "ownership": {
+          "body": "Repositories, domains, accounts, deployment pipelines - issued in your name, not ours. Nothing in the system is engineered to make leaving difficult.",
+          "cost": "We keep no leverage over a client who decides to walk.",
+          "label": "You own it from day one."
+        },
+        "pricing": {
+          "body": "Estimates are broken down before the contract, not defended after it. If scope changes, the change order arrives before the work starts - not with the final invoice.",
+          "cost": "A number fixed in advance is a bet against our own estimate, and we pay when it is wrong.",
+          "label": "The number does not move quietly."
+        },
+        "scope": {
+          "body": "If a page, a feature, or an entire phase will not earn back what it costs to build, we say so before it is quoted - not after it ships.",
+          "cost": "The recommendation that removes a feature removes a line from our own invoice.",
+          "label": "We argue you out of scope."
+        }
+      },
+      "lead1": "They were chosen before there was a company to attach them to, and they commit us to one rule: <strong>when your interest and ours disagree, the decision follows yours.</strong>",
+      "lead2": "Writing that on a page costs nothing. Here is what it costs in practice - item by item.",
+      "title": "The first four letters",
+      "titleAccent": "are not decoration."
+    },
     "stat1": {
       "label": "Performance Baseline",
       "sublabel": "Minimum Lighthouse score for production",

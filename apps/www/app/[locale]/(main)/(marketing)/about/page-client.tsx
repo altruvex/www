@@ -37,6 +37,7 @@ export default memo(function AboutPageClient({ routeCards }: PageClientProps) {
     <div className="relative min-h-screen w-full overflow-x-hidden bg-background">
       <HeroSection />
       <PrinciplesSection />
+      <NamePrincipleSection />
       <OperatingModelSection />
       <PathwaysSection routeCards={routeCards} />
       <SectionEndCta variant="contact" />
@@ -207,6 +208,134 @@ function PrinciplesSection() {
                 </p>
               </article>
             ))}
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+const PRINCIPLE_ITEMS = ["scope", "ownership", "handover", "pricing"] as const;
+
+/**
+ * The operating principle behind the first half of the name - stated as a
+ * ledger of commitments with the price each one carries for us, never as a
+ * claim about our character.
+ */
+function NamePrincipleSection() {
+  const t = useTranslations("about.principle");
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const leadRef = useSectionDescription();
+  const ledgerRef = useSectionCardGrid<HTMLOListElement>({
+    selector: "[data-ledger-row]",
+  });
+
+  const ledgerColumns =
+    "lg:grid-cols-[3rem_minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-x-12";
+  const rtlLabel = "rtl:font-sans rtl:normal-case rtl:tracking-normal";
+
+  return (
+    <section
+      id="operating-principle"
+      aria-labelledby="operating-principle-heading"
+      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-24">
+          <div>
+            <p
+              ref={eyebrowRef}
+              className={cn(monoCaps, "mb-6 text-muted-foreground", rtlLabel)}
+            >
+              {t("eyebrow")}
+            </p>
+            <h2
+              id="operating-principle-heading"
+              ref={titleRef}
+              className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground"
+            >
+              {t("title")}{" "}
+              <Highlight className="block mt-2 md:mt-0 md:inline">
+                {t("titleAccent")}
+              </Highlight>
+            </h2>
+          </div>
+          <div ref={leadRef} className="max-w-[62ch] space-y-6 lg:pt-3">
+            <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+              {t.rich("lead1", bodyMarks)}
+            </p>
+            <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+              {t.rich("lead2", bodyMarks)}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-16 lg:mt-24">
+          <div
+            aria-hidden
+            className={cn(
+              "hidden border-b border-border pb-4 lg:grid",
+              ledgerColumns,
+            )}
+          >
+            <span />
+            <p className={cn(monoCaps, "text-muted-foreground", rtlLabel)}>
+              {t("commitmentLabel")}
+            </p>
+            <p className={cn(monoCaps, "text-local-accent-text", rtlLabel)}>
+              {t("costLabel")}
+            </p>
+          </div>
+          <ol ref={ledgerRef} className="flex flex-col">
+            {PRINCIPLE_ITEMS.map((key, index) => (
+              <li
+                key={key}
+                data-ledger-row
+                className={cn(
+                  "grid gap-6 border-b border-border py-10 lg:gap-y-0 lg:py-12",
+                  ledgerColumns,
+                )}
+              >
+                <p
+                  className={cn(
+                    monoCaps,
+                    "text-muted-foreground lg:pt-2",
+                    rtlLabel,
+                  )}
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </p>
+                <div>
+                  <h3 className="text-[clamp(1.25rem,1.8vw,1.5rem)] font-medium leading-[1.25] tracking-[-0.015em] text-foreground">
+                    {t(`items.${key}.label`)}
+                  </h3>
+                  <p className="mt-4 max-w-[62ch] text-[1.0625rem] leading-[1.8] text-muted-foreground">
+                    {t(`items.${key}.body`)}
+                  </p>
+                </div>
+                <div className="border-s-2 border-local-accent/40 ps-5">
+                  <p
+                    className={cn(
+                      monoCaps,
+                      "mb-2 text-local-accent-text lg:hidden",
+                      rtlLabel,
+                    )}
+                  >
+                    {t("costLabel")}
+                  </p>
+                  <p className="max-w-[46ch] text-[0.9375rem] leading-[1.8] text-foreground">
+                    {t(`items.${key}.cost`)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-12 flex items-center gap-5">
+            <p className="max-w-[48ch] text-[clamp(1.125rem,1.6vw,1.375rem)] leading-snug">
+              <Highlight tone="contrast">{t("closing")}</Highlight>
+            </p>
+            <span aria-hidden className="hidden h-px flex-1 bg-foreground/8 sm:block" />
           </div>
         </div>
       </Container>
