@@ -353,7 +353,7 @@ function OperatingModelSection() {
     index: String(index + 1).padStart(2, "0"),
     tag: t(`steps.${key}.tag`),
     title: t(`steps.${key}.title`),
-    description: t(`steps.${key}.description`),
+    description: t.rich(`steps.${key}.description`, bodyMarks),
     deliverables: t(`steps.${key}.deliverables`),
     timeline: t(`steps.${key}.timeline`),
   }));
@@ -371,7 +371,7 @@ function OperatingModelSection() {
             </h2>
           </div>
           <p className="max-w-[34ch] text-base leading-[1.75] text-muted-foreground">
-            {t("subtitle")}
+            {t.rich("subtitle", bodyMarks)}
           </p>
         </div>
         <div ref={listRef} className="grid gap-0 md:grid-cols-2 lg:grid-cols-4">
