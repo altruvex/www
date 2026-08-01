@@ -33,7 +33,7 @@ export function ThemeToggle() {
       onClick={ready ? toggleTheme : undefined}
       disabled={!ready}
       className={cn(
-        "group flex h-11 w-11 items-center justify-center rounded-lg text-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "group flex h-11 w-11 items-center justify-center rounded-ctl-lg text-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         ready && "hover:text-foreground/80",
       )}
       aria-label={

@@ -116,7 +116,7 @@ export function ShowcaseSection() {
             >
               <div
                 aria-hidden
-                className="absolute inset-0 bg-foreground/2 pointer-events-none origin-left rtl:origin-right scale-x-0 group-hover:scale-x-100 transition-all duration-300 ease-out"
+                className="absolute inset-0 rounded-lg bg-foreground/2 pointer-events-none origin-left rtl:origin-right scale-x-0 group-hover:scale-x-100 transition-all duration-300 ease-out"
               />
               <div className="relative z-10 flex items-start justify-between">
                 <span className={cn(monoCaps, "text-muted-foreground")}>
@@ -315,7 +315,7 @@ function CtaSection() {
                 "bg-foreground/10",
                 "bg-foreground/4",
               ].map((c, i) => (
-                <div key={i} className={`flex-1 h-10 rounded-lg ${c}`} />
+                <div key={i} className={`flex-1 h-10 rounded-md ${c}`} />
               ))}
             </div>
             <p className="font-mono text-xs uppercase tracking-widest text-foreground/20 rtl:font-sans rtl:normal-case">
@@ -358,7 +358,7 @@ function CtaSection() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-7 rounded-lg ${i % 3 === 0 ? "col-span-2 bg-foreground/12" : "bg-foreground/6"}`}
+                  className={`h-7 rounded-md ${i % 3 === 0 ? "col-span-2 bg-foreground/12" : "bg-foreground/6"}`}
                 />
               ))}
             </div>

@@ -79,7 +79,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
             >
               <div
                 aria-hidden
-                className="absolute inset-0 bg-foreground/2 pointer-events-none origin-left scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100 transition-all duration-300 ease-out rtl:origin-right"
+                className="absolute inset-0 rounded-lg bg-foreground/2 pointer-events-none origin-left scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100 transition-all duration-300 ease-out rtl:origin-right"
               />
               <div className="relative z-10 grid gap-6 md:grid-cols-[56px_1fr_auto] items-start">
                 <span

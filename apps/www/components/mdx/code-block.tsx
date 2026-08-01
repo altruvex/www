@@ -39,7 +39,7 @@ export function CodeBlock({ children, className }: CodeBlockProps) {
       <button
         onClick={handleCopy}
         className={cn(
-          "absolute right-4 top-4 rounded-lg border bg-background p-2",
+          "absolute right-4 top-4 rounded-md border bg-background p-2",
           "opacity-0 transition-all group-hover:opacity-100",
         )}
         aria-label="Copy code"

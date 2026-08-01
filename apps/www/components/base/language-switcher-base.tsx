@@ -186,7 +186,7 @@ export function LanguageSwitcherBase({
       <div
         dir={isRTL ? "rtl" : "ltr"}
         className={cn(
-          "flex items-center gap-1 liquid-glass rounded-lg p-1 outline-none",
+          "flex items-center gap-1 liquid-glass rounded-md p-1 outline-none",
           isPending && "opacity-70 pointer-events-none",
           className,
         )}

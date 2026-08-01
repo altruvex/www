@@ -10,11 +10,6 @@ const CommandPaletteLazy = dynamic(
   { ssr: false },
 );
 
-/**
- * Always-mounted, nearly-free host: one keydown listener + one custom-event
- * listener. The palette bundle itself only loads the first time it is opened
- * (⌘K / Ctrl+K, or the nav trigger dispatching COMMAND_PALETTE_EVENT).
- */
 export function CommandPaletteHost() {
   const [open, setOpen] = useState(false);
   const [everOpened, setEverOpened] = useState(false);

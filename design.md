@@ -379,22 +379,46 @@ rejected alternative. Never put color or serif-italic in body — those are head
 
 ## 6. Spacing, Radius, Elevation, Texture
 
-### 6.1 Radius (base `--radius: 0.875rem` = 14px)
-Scales from `xs` (10px) → `3xl` (30px). Semantic aliases: `--radius-surface` (cards, **18px**),
-`--radius-overlay` (popovers, **22px**), `--radius-section` (large blocks, **26px**),
-`--radius-nested` (12px). Squircle continuous corners via `@supports (corner-shape: squircle)`.
+### 6.1 Radius (base `--radius: 1rem` = 16px)
+Scales `xs` 8 → `sm` 12 → `md` **16** → `lg` **22** → `xl` **28** → `2xl` **34** → `3xl` 40.
 
-**The radius decision (CI8 — reversed by Ali, 2026-07, full Apple system):** the earlier "12px
-machined" call is **retired**. The system is now Apple-native:
-- **Buttons + pill tags → fully rounded** (`rounded-full`, both `Button` and `MagneticButton`) —
-  the apple.com CTA shape.
-- **Cards → 18px**, **overlays → 22px**, **large sections/tiles → 26px**, **inputs/badges → 14px**,
-  all via the base bump so the whole scale cascades cohesively; the squircle corner-shape makes
-  them read as Apple continuous corners.
+**Apple has two radius families, not one ramp — and the `md`→`lg` gap is the boundary:**
 
-This is a deliberate brand-voice change (CI8 is a `judgment`-class rule): the precision signal now
-comes from typography, spacing, and motion rather than from sharp corners. Nested elements still
-follow `inner = outer − padding`.
+| tier | steps | value | what belongs here |
+|---|---|---|---|
+| **control** | `ctl-sm` `ctl` `ctl-lg` `ctl-xl` | 12 / 16 / 18 / 20 | buttons, inputs, chips, badges, icon buttons, segmented controls |
+| **panel** | `lg` `xl` `2xl` | 22 / 28 / 34 | cards, modals/sheets, large sections and tiles |
+
+Never put a control on the panel tier: a 22px radius on a 40px-tall button **is** a pill.
+
+**Control radius tracks control HEIGHT, not importance.** One flat value makes a 48px full-width
+CTA read square while making a 32px button read pill, so pick the token by height:
+`rounded-ctl-sm` (32px tall) · `rounded-ctl` (36–40px) · `rounded-ctl-lg` (44px) ·
+`rounded-ctl-xl` (48px and up). 20px is the ceiling — half of a 48px control is 24px, so anything
+above ~20 starts reading as a capsule. `Button` wires each `size` variant to its matching token;
+`MagneticButton` is `ctl-xl` because both its sizes are `min-h-12`.
+
+Semantic aliases: `--radius-surface` (cards, **22px**), `--radius-overlay` (modals/popovers,
+**28px**), `--radius-section` (large blocks, **34px**), `--radius-nested` (12px). Squircle
+continuous corners
+via `@supports (corner-shape: squircle)` — **applied to rounded-rects only**. `.rounded-full` is
+explicitly reset to `corner-shape: round`: a squircle at capsule radius renders a rounded *square*,
+not a circle, which silently boxed every dot, badge, avatar and the custom cursor. Never widen
+that rule to an attribute selector — `[class*="rounded-full"]` would catch `after:rounded-full`
+and friends.
+
+**The radius decision (CI8 — Ali, 2026-07-27, reference: macOS/iOS widgets):** both the "12px
+machined" call and the 14px/**pill** pass are retired. The reference Ali set is the *widget*
+corner, so panels are generous and controls stay controls:
+- **Panels → 22 / 28 / 34px** — cards 22, modals and sheets 28, large sections and tiles 34.
+- **Buttons → rounded-rect 12–20px, scaled to height** via the `ctl-*` tokens. **Pill is not a
+  button shape** here, but a big CTA still gets a big corner (48px tall → 20px).
+- **Pill (`rounded-full`) is reserved** for badges, mono tags, status chips, dots, toggles, and
+  circular icon buttons — never for a CTA. And pill means a *true* capsule: see the
+  `corner-shape: round` reset above.
+
+CI8 is a `judgment`-class rule, so the owner's call governs. Nested elements still follow
+`inner = outer − padding`.
 
 ### 6.2 Section rhythm
 Vertical section padding: `--section-y-top: clamp(5rem, 10vh, 8rem)` and
@@ -437,13 +461,16 @@ aesthetic is flat-with-a-whisper, not heavy material drop-shadows.
 
 Sizes: `sm` 32px · `default` 40px · `lg` 44px · `xl` 48px · icons 32–40px. On **coarse pointers
 (touch)** every size grows to the 44px minimum via `pointer-coarse:` variants (CI1) — the compact
-sizes are a fine-pointer-only spec. Radius **pill** (`rounded-full` — see §6.1), `font-medium`, micro
+sizes are a fine-pointer-only spec. Radius is **per-size**, tracking height via the `ctl-*` tokens
+— `sm`/`icon`/`icon-sm` → `rounded-ctl-sm` (12px), `default`/`icon-lg` → `rounded-ctl` (16px),
+`lg` → `rounded-ctl-lg` (18px), `xl` → `rounded-ctl-xl` (20px). See §6.1; never use `rounded-lg`,
+that's the panel tier and would render a pill. `font-medium`, micro
 press animation (`active:scale-[0.98]`), 200ms transitions, built-in `loading` spinner state.
 **Note:** the nav CTA is intentionally **neutral ink, not blue** — a blue nav button reads as "generic
 SaaS." Keep primary CTAs confident and restrained.
 
 ### 7.2 Cards
-White (`#FFFFFF`) on light / `#171717` on dark, `--radius-surface` (12px), `--shadow-card`. Connected
+White (`#FFFFFF`) on light / `#171717` on dark, `--radius-surface` (22px), `--shadow-card`. Connected
 grid sections use 1px-gap borders rather than floating cards (alignment over decoration).
 
 ### 7.3 Focus & accessibility (non-negotiable, it's a brand value)

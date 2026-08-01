@@ -151,7 +151,7 @@ export default memo(function ServicesPage() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-full border border-border px-6 py-2.5 text-sm font-bold uppercase tracking-wider bg-background text-muted-foreground hover:border-foreground hover:text-foreground transition-all duration-200 ease-out",
+                    "rounded-md border border-border px-6 py-2.5 text-sm font-bold uppercase tracking-wider bg-background text-muted-foreground hover:border-foreground hover:text-foreground transition-all duration-200 ease-out",
                     monoCaps,
                   )}
                 >
@@ -284,7 +284,7 @@ const OfferCard = memo(function OfferCard({
               <MagneticButton asChild
                 size="lg"
                 variant="primary"
-                className="rounded-full bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold"
+                className="rounded-ctl-xl bg-foreground text-background hover:opacity-90 px-8 py-3 text-sm font-semibold"
               >
                 <Link href={cta.href}>{cta.label}</Link>
               </MagneticButton>

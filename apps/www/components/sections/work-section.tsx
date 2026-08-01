@@ -118,7 +118,7 @@ function FlagshipMetaBlock({
       <p className="text-[clamp(0.9375rem,0.98vw,1rem)] text-muted-foreground max-w-2xl leading-relaxed mb-8">
         {tf("summary")}
       </p>
-      <div className="grid gap-0 border border-border md:grid-cols-3">
+      <div className="grid gap-0 overflow-hidden rounded-xl border border-border md:grid-cols-3">
         {[
           { label: tf("labels.problem"), body: tf("problem") },
           { label: tf("labels.solution"), body: tf("solution") },

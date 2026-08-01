@@ -149,7 +149,8 @@ export const MagneticButton = forwardRef<
     // Transform is GSAP-owned (useMagnetic/usePress) — it must NOT appear in
     // the CSS transition list or the two systems fight over the same property.
     const sharedClassName = [
-      "relative inline-flex items-center justify-center overflow-hidden rounded-full font-medium",
+      // Both sizes are min-h-12 (48px), so both take the 48px control token.
+      "relative inline-flex items-center justify-center overflow-hidden rounded-ctl-xl font-medium",
       "transition-[background-color,border-color,color,box-shadow,opacity] duration-300 ease-out will-change-transform",
       "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed",
