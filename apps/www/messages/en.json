@@ -626,7 +626,9 @@
     "theme": "Theme",
     "transparency": "Transparency",
     "work": "Work",
-    "commandPalette": "Search & commands"
+    "commandPalette": "Search & commands",
+    "menuTitle": "Menu",
+    "menuDescription": "Site navigation, language and theme settings."
   },
   "notFound": {
     "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",

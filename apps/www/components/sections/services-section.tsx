@@ -35,11 +35,18 @@ const ServiceCard = memo(function ServiceCard({
     <article
       data-service={service.index}
       className={cn(
-        "group relative isolate cursor-pointer overflow-hidden bg-inverted-bg/80 transition-colors duration-300",
-        "data-[service=01]:[--card-accent:hsl(var(--tech-accent-nextjs)/0.08)]",
-        "data-[service=02]:[--card-accent:hsl(var(--tech-accent-react)/0.08)]",
-        "data-[service=03]:[--card-accent:hsl(var(--warning)/0.08)]",
-        "data-[service=04]:[--card-accent:hsl(var(--tech-accent-nodejs)/0.08)]",
+        // One hover beat for the whole card: every layer below runs
+        // `duration-260 ease-(--ease-strong)`. The old card mixed 200/300/500ms,
+        // so a single pointer-enter resolved in three visible stages.
+        "group relative isolate overflow-hidden bg-inverted-bg/80",
+        // Fill and hairline need very different alphas — sharing one 0.08 token
+        // made the 2px top line invisible. Hues are tuned for the deep-blue
+        // scene rather than reusing the page tech tokens (--warning is a dark
+        // amber that reads as mud on this field).
+        "data-[service=01]:[--card-accent:hsl(230_95%_78%/0.1)] data-[service=01]:[--card-accent-line:hsl(230_95%_78%/0.85)]",
+        "data-[service=02]:[--card-accent:hsl(187_90%_65%/0.1)] data-[service=02]:[--card-accent-line:hsl(187_90%_65%/0.85)]",
+        "data-[service=03]:[--card-accent:hsl(38_95%_65%/0.1)] data-[service=03]:[--card-accent-line:hsl(38_95%_65%/0.85)]",
+        "data-[service=04]:[--card-accent:hsl(142_70%_65%/0.1)] data-[service=04]:[--card-accent-line:hsl(142_70%_65%/0.85)]",
         isLarge
           ? "min-h-[clamp(240px,28vw,380px)] p-[clamp(32px,4vw,56px)]"
           : "p-[clamp(24px,3vw,36px)]",
@@ -47,15 +54,15 @@ const ServiceCard = memo(function ServiceCard({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-linear-to-r from-transparent via-(--card-accent) to-transparent opacity-0 transition-all duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[2px] bg-linear-to-r from-transparent via-(--card-accent-line) to-transparent opacity-0 transition-opacity duration-260 ease-(--ease-strong) group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-all duration-500 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 z-0 bg-(--card-accent) opacity-0 transition-opacity duration-260 ease-(--ease-strong) group-hover:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-s-mid opacity-0 transition-all duration-300 group-hover:scale-y-100 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-y-0 inset-s-0 z-10 w-[2px] origin-top scale-y-0 bg-(--card-accent-line) transition-transform duration-260 ease-(--ease-strong) group-hover:scale-y-100 motion-reduce:transition-none"
       />
       <span
         aria-hidden
@@ -65,8 +72,17 @@ const ServiceCard = memo(function ServiceCard({
           isLarge
             ? "text-[clamp(120px,18vw,220px)]"
             : "text-[clamp(80px,12vw,140px)]",
-          "opacity-40 [-webkit-text-stroke-width:1px] [-webkit-text-stroke-color:var(--s-border)]",
-          "transition-all duration-500 ease-out group-hover:scale-110 group-hover:[-webkit-text-stroke-color:var(--s-high)] group-hover:opacity-10",
+          // Stroke colour is fixed and only opacity moves. `-webkit-text-stroke-color`
+          // does not interpolate, so the old colour transition snapped mid-hover —
+          // that hard jump was the most visible part of the "not smooth" feel.
+          "opacity-18 [-webkit-text-stroke-width:1px] [-webkit-text-stroke-color:var(--s-mid)]",
+          // Scaling a 220px stroked glyph re-rasterises the whole card every
+          // frame. A GPU-promoted translate gives the same parallax read for free.
+          // v4 emits translate/scale as standalone properties, so the list must
+          // name `translate` — `transform` alone would never fire.
+          "transform-gpu will-change-transform transition-[opacity,translate] duration-260 ease-(--ease-strong)",
+          "group-hover:opacity-34 group-hover:-translate-x-2 rtl:group-hover:translate-x-2",
+          "motion-reduce:transition-none motion-reduce:group-hover:translate-x-0",
         )}
       >
         {service.index}
@@ -77,13 +93,15 @@ const ServiceCard = memo(function ServiceCard({
           isLarge && "mb-8",
         )}
       >
-        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-mid transition-all duration-300 group-hover:border-s-mid group-hover:bg-s-border group-hover:text-s-high">
+        <div className="inline-flex size-[24px] items-center justify-center rounded-full border border-s-border font-mono text-[13px] tabular-nums text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:border-s-border-hover group-hover:bg-s-border group-hover:text-s-high">
           {service.index}
         </div>
         <span
           className={cn(
             monoCaps,
-            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-mid transition-all duration-200 group-hover:border-current group-hover:text-s-high",
+            // `border-current` resolved to the text colour *while that colour was
+            // itself transitioning*, so the border chased the text a frame behind.
+            "rounded-sm border border-s-border px-2.5 py-1 text-sm text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:border-s-border-hover group-hover:text-s-high",
           )}
         >
           {t(`${service.key}.tag`)}
@@ -111,7 +129,7 @@ const ServiceCard = memo(function ServiceCard({
         </h3>
         <p
           className={cn(
-            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-mid transition-all duration-200 group-hover:text-s-high",
+            "font-mono text-[clamp(0.875rem,0.95vw,1rem)] leading-[1.8] text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:text-s-high",
             isLarge ? "max-w-[460px]" : "max-w-full",
           )}
         >
@@ -157,12 +175,14 @@ const ProcessRail = memo(function ProcessRail() {
               )}
             >
               <div className="flex items-center gap-1.5">
-                <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-all duration-300 group-hover/rail:scale-[1.4] group-hover/rail:bg-s-mid" />
-                <span className="font-mono text-xs uppercase tracking-[0.18em] text-s-mid">
+                <div className="size-1.5 shrink-0 rounded-full bg-s-border transition-[scale,background-color] duration-260 ease-(--ease-strong) group-hover/rail:scale-[1.4] group-hover/rail:bg-local-accent motion-reduce:transition-none" />
+                <span className="font-mono text-xs uppercase tracking-[0.18em] text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover/rail:text-s-high">
                   {service.index}
                 </span>
               </div>
-              <span className="font-mono text-[13px] uppercase tracking-[0.14em] text-s-mid md:ps-3 whitespace-nowrap">
+              {/* The dot alone moved on hover, so the label it belongs to read as
+                  unrelated — the pair now lifts together. */}
+              <span className="font-mono text-[13px] uppercase tracking-[0.14em] text-s-mid md:ps-3 whitespace-nowrap transition-colors duration-260 ease-(--ease-strong) group-hover/rail:text-s-high">
                 {t(`${service.key}.tag`)}
               </span>
             </div>

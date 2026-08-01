@@ -388,7 +388,7 @@ function StageNav({
   return (
     <div className="shrink-0 mb-[clamp(4px,0.8vh,12px)]">
       <div
-        className="flex border border-foreground/12 overflow-hidden"
+        className="flex rounded-md border border-foreground/12 overflow-hidden"
         style={{
           opacity: mounted ? 1 : 0,
           transition: `opacity ${D(MOTION.duration.base)}`,
@@ -1121,7 +1121,7 @@ export function ConsultingBriefSection() {
             {mounted && (
               <div className="w-full">
                 <div
-                  className="cb-doc-grid border border-foreground/12"
+                  className="cb-doc-grid overflow-hidden rounded-xl border border-foreground/12"
                   role="tabpanel"
                   id={`cb-panel-${STAGES[Math.max(0, activeStage)]?.key ?? STAGES[0].key}`}
                   aria-labelledby={`cb-tab-${STAGES[Math.max(0, activeStage)]?.key ?? STAGES[0].key}`}

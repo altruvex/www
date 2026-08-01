@@ -19,7 +19,7 @@
 | `--elevation-overlay` (+ `--shadow-overlay`) | missing (popovers used ad-hoc/Tailwind shadows) | new level-3 token, both modes | CI9: complete the 4-level ladder (flat/card/card-lg/overlay). Component adoption (popover, select, command palette) in Phase 5. | None (additive). |
 | Button sizes (touch) | `default` 40px, `sm` 32px, icons 32–40px on all pointers | + `pointer-coarse:min-h-11` / `pointer-coarse:size-11` | CI1 adapted: 44px enforced where tap errors happen (coarse pointers); compact fine-pointer spec kept — mouse precision doesn't need 44px and the compact sizes are part of the visual language. | **Low** — desktop unchanged; touch buttons grow ≤4–12px. Verify via device emulation. |
 | `RevealConfig.anticipate` + `sectionElement` preset | no anticipation pattern in library | opt-in anticipation micro-beat (~8% counter-travel, 18% of duration, 35% opacity), enabled on `sectionElement` | M2. Skipped for `fade` (no travel to counter), scrub (progress is scroll-owned), reduced-motion (existing tier), and word-split headlines (per-word wind-up reads as jitter). | **Medium** — motion feel change on CTAs/featured blocks; Phase 4 checklist item 8 verifies; `anticipate: false` opts out per element. |
-| ~~`design.md` §7.1/§6.1 radius claim~~ **SUPERSEDED** | "`rounded-sm` … restrained, not pill-shaped" (stale — code shipped `rounded-lg`) | ~~12px buttons, deliberate~~ → **reversed 2026-07 by Ali: full Apple system** (see §6 below) | CI8 is a `judgment`-class rule, so the brand-voice call is the owner's. The 12px "machined" reading was my recommendation; Ali chose the Apple-native system instead. | Superseded. |
+| ~~`design.md` §7.1/§6.1 radius claim~~ **SUPERSEDED** | "`rounded-sm` … restrained, not pill-shaped" (stale — code shipped `rounded-lg`) | ~~12px buttons, deliberate~~ → **reversed 2026-07 by Ali: full Apple system** (§6), then **retuned 2026-07-27 to the Apple *system* scale, buttons rounded-rect** (§7 — current) | CI8 is a `judgment`-class rule, so the brand-voice call is the owner's. The 12px "machined" reading was my recommendation; Ali chose the Apple-native system instead. | Superseded. |
 | `design.md` §10.1 font snippet | showed `weight:` arrays | corrected: variable fonts, no weight arrays | Doc drift — the arrays version would make `font-light`/`font-medium` silent fallbacks; live code comment explicitly loads variable axes. | None (doc). |
 | `design.md` §10.11 + §3.3/§3.4/§4.1/§6.3/§8 | stale home map (`transparency-section.tsx`), missing Ownership Stack, no tier/measure/elevation/anticipation notes | updated | Keep the token layer truthful to the tree. | None (doc). |
 
@@ -132,3 +132,147 @@ than pill — correct, since Apple uses rounded-rect for segmented/toggle contro
 the pill for CTAs. The existing `@supports (corner-shape: squircle)` now matters more: at these
 larger radii the continuous-corner rendering is what makes it read as Apple rather than merely
 "round". Verified live: hero/nav CTAs pill, cards 18px, tiles 26px, typecheck clean.
+
+**Superseded 2026-07-27 — see §7.**
+
+---
+
+## 7. Radius, second pass — Apple *system* scale, pill retired from buttons (2026-07-27, Ali)
+
+Ali rejected the §6 result too: the 14px base + full-pill buttons read soft/blobby rather than
+Apple-precise. The correction is not a return to "12px machined" — it's Apple's actual **system**
+radii, where controls sit around 10–12px and the pill is a badge shape, not a button shape.
+
+Chosen option (of three offered): **Apple system 12px, buttons rounded-rect.**
+
+| token / component | §6 value | now | mechanism |
+|---|---|---|---|
+| `--radius` base | `0.875rem` (14px) | **`0.625rem` (10px)** | base + retuned step offsets |
+| scale steps | −4 / −2 / 0 / +4 / +8 / +12 / +16 | **−4 / −2 / 0 / +2 / +6 / +10 / +14** | compresses the control end, keeps surfaces distinct |
+| inputs/badges (`rounded-md`) | 14px | **10px** | derived |
+| cards (`rounded-lg` / `--radius-surface`) | 18px | **12px** | derived |
+| overlays (`--radius-overlay`) | 22px | **16px** | derived |
+| large tiles/sections (`rounded-2xl` / `--radius-section`) | 26px | **20px** | derived |
+| `Button` | `rounded-full` | **`rounded-lg` (12px)**; `sm`/`icon-sm` → `rounded-md` (10px) | explicit in `button.tsx` |
+| `MagneticButton` | `rounded-full` | **`rounded-lg`** | explicit in `magnetic-button.tsx` |
+| nav CTA, services capability chips + featured CTA | `rounded-full` | **`rounded-lg`** | ad-hoc overrides that would have beaten the component default |
+
+Deliberately unchanged: badges, mono tags, status chips, dots, toggles, circular icon buttons and
+the scrollbar thumb stay `rounded-full` — pill is now *reserved* for those, which is what makes
+the rounded-rect CTAs read as intentional. Underline inputs stay `rounded-none`. Squircle
+`corner-shape` still applies to every `rounded-*` element.
+
+### 7.1 Square-corner elimination sweep (same day)
+
+Ali's follow-up — "I don't want to see squares on the site again" — required proving it rather
+than asserting it. Method: a live DOM scan on every route, flagging any element ≥40×40 that has a
+visible box (4-side border, own background, or a shadow) and a computed radius of 0, while
+excluding full-bleed bands and anything already clipped by a rounded `overflow-hidden` ancestor.
+Grep alone was not sufficient — two of the seven hits were hover overlays whose class strings
+never mentioned `border`.
+
+Fixed:
+
+| file | element | fix |
+|---|---|---|
+| `work-section.tsx` | flagship problem/solution/outcome 3-col bordered grid | `rounded-xl` + `overflow-hidden` |
+| `consulting-brief-section.tsx` | stage tablist (segmented control) | `rounded-lg` |
+| `consulting-brief-section.tsx` | `cb-doc-grid` brief panel | `rounded-xl` + `overflow-hidden` |
+| `services/consulting/page-client.tsx` | featured offer `TiltCard` | `rounded-lg` |
+| `services/ecommerce/page-client.tsx` | linked `TiltCard` | `rounded-lg` |
+| `work-item.tsx` | hover wipe (`inset-0` fill) — was square while its own focus ring was 12px | `rounded-lg` |
+| `writing/page-client.tsx`, `services/interface-design/page-client.tsx` | same hover-wipe pattern | `rounded-lg` |
+
+Note `TiltCard` carries no radius of its own — callers must supply one. That is the trap that
+produced two of the seven; check it on every new `TiltCard`.
+
+Result: 0 square-cornered boxes across all 16 routes. Still square **by design**, and correctly
+so: full-bleed section bands (edge-to-edge is the point), the mobile menu panel (`fixed inset-0`
+sheet), underline inputs (`rounded-none` form idiom), 1px divider rules (a line has no corners),
+and the inner cells of connected grids whose outer container is rounded and clipping.
+
+### 7.2 The actual culprit — `corner-shape: squircle` was squaring every circle
+
+Ali pushed back that the site still looked uniform after all of the above, pointing at the custom
+cursor rendering as a rounded square instead of a dot. He was right, and the cause was not the
+radius scale at all.
+
+`@supports (corner-shape: squircle) { [class*="rounded"] { corner-shape: squircle } }` applied to
+**everything**, including `rounded-full`. A squircle is a superellipse: feed it a capsule-sized
+radius and it does not produce a circle, it produces a **rounded square**. So every circle and
+capsule on the site — the custom cursor and its dot, status dots, avatars, badges, mono tags,
+circular icon buttons, the drawer drag handle, toggles — was silently rendered as the same boxy
+shape. That is what flattened the whole design into one silhouette, and it made every radius pass
+(including the 14px/pill one in §6) look like it had barely changed.
+
+Fix in `globals.css`: keep squircle for rounded-rects, reset capsules to true round.
+
+```css
+@supports (corner-shape: squircle) {
+  [class*="rounded"] { corner-shape: squircle; }
+  .rounded-full     { corner-shape: round; }   /* class selector is deliberate */
+}
+```
+
+The `.rounded-full` **class** selector matters: an attribute selector like
+`[class*="rounded-full"]` would also match elements carrying variant classes such as
+`after:rounded-full`, and would wrongly strip squircle from the element itself. Verified in
+Chrome 148 (which does support `corner-shape`): `rounded-full` → `round`, `rounded-lg`/`md`/`2xl`
+→ `squircle`; both custom-cursor layers now compute `round`.
+
+Lesson: a global `[class*="…"]` rule over a Tailwind codebase catches variant classes and
+utility families you did not intend. Scope shape rules to the literal class.
+
+### 7.3 Final scale — two tiers, widget-sized panels (2026-07-27)
+
+With circles rendering correctly again, Ali's remaining objection was that the panels were still
+too square, with macOS/iOS **widgets** as the explicit reference. Correct: §7 had sized the whole
+system to Apple's *control* radii and left panels there too.
+
+The structural fix is that Apple runs **two radius families**, and the `md`→`lg` gap is now the
+boundary between them. This also removes the trap that blocked the earlier passes — cards and
+buttons used to share `rounded-lg`, so panels could not be raised without turning every button
+into a pill.
+
+| step | before (§7) | now | tier |
+|---|---|---|---|
+| `--radius` base / `md` | 10px | **14px** | control |
+| `sm` | 8px | **12px** | control |
+| `lg` / `--radius-surface` (cards) | 12px | **20px** | panel |
+| `xl` / `--radius-overlay` (modals, popovers, drawer) | 16px | **26px** | panel |
+| `2xl` / `--radius-section` (large blocks, tiles) | 20px | **32px** | panel |
+
+Controls migrated off `lg` onto `md` so they stay controls: `Button` (`sm`/`icon-sm` → `rounded-sm`),
+`MagneticButton`, nav CTA, theme toggle, language switcher, code-block copy button, the
+consulting-brief tablist, ui-playground segmented control and tabs, and the services capability
+chips + featured CTA.
+
+### 7.4 Control radius has to track control HEIGHT (2026-07-27)
+
+Ali's last objection: the buttons still looked square. Measured, the CTA he pointed at is
+**571×48** — and a flat 14px corner on an element that wide and tall genuinely reads square, even
+though the same 14px looks correct on a 32px button. A single control radius cannot serve both.
+
+Apple scales the corner with the control, so the control tier became four height-keyed tokens
+rather than one value:
+
+| token | value | control height |
+|---|---|---|
+| `--radius-ctl-sm` | 12px | 32px |
+| `--radius-ctl` | 16px | 36–40px |
+| `--radius-ctl-lg` | 18px | 44px |
+| `--radius-ctl-xl` | 20px | 48px and up |
+
+20px is the deliberate ceiling: half of a 48px control is 24px, so past ~20 it stops reading as a
+rounded rect and starts reading as a capsule — which Ali ruled out for buttons.
+
+Base moved 14px → **16px**, which also lifts panels to cards **22** / modals **28** / sections
+**34**. `Button` wires every `size` variant to its matching `ctl-*` token; `MagneticButton` takes
+`ctl-xl` (both its sizes are `min-h-12`); nav CTA and theme toggle take `ctl-lg` (h-11); the
+services featured CTA takes `ctl-xl`.
+
+Verified in-browser: panel scale computes 12 / 16 / 22 / 28 / 34 and control scale 12 / 16 / 18 /
+20; the 571×48 CTA now measures 20px (83% of pill, so clearly not a capsule); zero accidental
+pills (no visible control 24–60px tall with radius ≥ half its height); zero square-cornered boxes;
+`rounded-t-section` on the drawer resolves via `var(--radius-2xl)`; all `@theme` radius vars
+present in the emitted stylesheet; typecheck clean.

@@ -48,12 +48,14 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
+        <div vaul-drawer-wrapper="">
         <Suspense fallback={null}>
           {shouldMountNonCritical ? <CustomCursorLazy /> : null}
         </Suspense>
         {children}
         <CommandPaletteHost />
         {shouldMountNonCritical ? <ExitIntentLazy /> : null}
+        </div>
       </ThemeProvider>
     </>
   );

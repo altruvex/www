@@ -84,7 +84,7 @@ function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={onKeyDown}
-      className="flex flex-wrap gap-1 rounded-lg border border-border bg-surface/60 p-1"
+      className="flex flex-wrap gap-1 rounded-md border border-border bg-surface/60 p-1"
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -426,7 +426,7 @@ export function UIPlaygroundSection() {
                   }}
                   className={cn(
                     monoCaps,
-                    "min-h-10 rounded-lg px-4 text-[11px] transition-[background-color,color,box-shadow] duration-200 ease-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                    "min-h-10 rounded-md px-4 text-[11px] transition-[background-color,color,box-shadow] duration-200 ease-smooth focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                     active
                       ? "bg-background text-foreground shadow-sm"
                       : "transition-all text-muted-foreground hover:bg-foreground/5 hover:text-foreground",

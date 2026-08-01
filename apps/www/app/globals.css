@@ -73,13 +73,30 @@
   --font-mono:
     var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif: Georgia, "Times New Roman", serif;
-  --radius-xs: calc(var(--radius) - 4px);
-  --radius-sm: calc(var(--radius) - 2px);
+  /* Apple has TWO radius families, not one continuous ramp:
+       controls (buttons, fields, chips)  ~8-14px
+       panels  (widgets, cards, sheets)   ~20-32px
+     The gap between md and lg is that boundary. Keep controls on xs/sm/md and
+     panels on lg/xl/2xl — never put a 40px-tall button on `lg`, because a 20px
+     radius on a 40px control is a pill. */
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
-  --radius-2xl: calc(var(--radius) + 12px);
-  --radius-3xl: calc(var(--radius) + 16px);
+  --radius-lg: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 12px);
+  --radius-2xl: calc(var(--radius) + 18px);
+  --radius-3xl: calc(var(--radius) + 24px);
+  /* Control radius TRACKS CONTROL HEIGHT, the way Apple's does — one flat
+     value makes a 48px full-width CTA read square while a 32px button reads
+     pill. Pick the token by the control's height, not by its importance:
+       ctl-sm 12px → 32px tall · ctl 16px → 36-40px
+       ctl-lg 18px → 44px      · ctl-xl 20px → 48px and up
+     Ceiling is 20px: half of a 48px control is 24px, so anything above ~20
+     starts reading as a pill. */
+  --radius-ctl-sm: calc(var(--radius) - 4px);
+  --radius-ctl: var(--radius);
+  --radius-ctl-lg: calc(var(--radius) + 2px);
+  --radius-ctl-xl: calc(var(--radius) + 4px);
   --radius-surface: var(--radius-lg);
   --radius-overlay: var(--radius-xl);
   --radius-section: var(--radius-2xl);
@@ -88,8 +105,6 @@
   --animate-ripple: ripple 0.6s ease-out forwards;
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
   --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  --animate-menu-panel-in: menu-panel-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)
-    both;
   --animate-text-gradient: text-gradient 6s linear infinite;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -99,11 +114,15 @@
 
 :root {
   --duration-instant: 120ms;
-  /* Apple-system radius (Ali, 2026-07 — reverses the CI8 "12px machined"
-     decision): base 14px cascades the scale up so cards/surface = 18px,
-     overlay = 22px, section = 26px, inputs (rounded-md) = 14px. Buttons are
-     pill (rounded-full) directly. Pairs with the squircle corner-shape. */
-  --radius: 0.875rem;
+  /* Apple-widget radius (Ali, 2026-07-27, reference: macOS/iOS widgets).
+     Base 14px is the CONTROL size — buttons, fields, chips, badges. Panels
+     ride the +6/+12/+18 steps: cards/surface = 20px, overlays+modals = 26px,
+     large sections/tiles = 32px, matching the widget corner Ali pointed at.
+     Buttons are rounded-rect on the control tier, NOT pill — pill stays
+     reserved for badges, dots and toggles. Pairs with squircle (rects only;
+     `.rounded-full` is reset to `round` further down — a squircle at capsule
+     radius renders a rounded square, not a circle). */
+  --radius: 1rem;
   --measure-prose: 66ch;
   --measure-narrow: 45ch;
   --measure-wide: 75ch;
@@ -174,7 +193,6 @@
   --s-border: hsl(0 0% 6% / 0.1);
   --s-border-hover: hsl(0 0% 6% / 0.18);
   --s-high-soft: hsl(0 0% 6% / 0.03);
-  --scene-dot: hsl(0 0% 6% / 0.14);
   --tech-accent-nextjs: 239 84% 74%;
   --tech-accent-react: 187 85% 53%;
   --tech-accent-typescript: 217 91% 60%;
@@ -230,7 +248,6 @@
   --s-border: hsl(0 0% 98% / 0.1);
   --s-border-hover: hsl(0 0% 98% / 0.18);
   --s-high-soft: hsl(0 0% 98% / 0.04);
-  --scene-dot: hsl(0 0% 98% / 0.14);
   --messaging-whatsapp: 142 70% 49%;
   --messaging-whatsapp-fg: 0 0% 12%;
   --elevation-card:
@@ -267,10 +284,13 @@
   --s-border: hsl(0 0% 100% / 0.08);
   --s-border-hover: hsl(0 0% 100% / 0.16);
   --s-high-soft: hsl(0 0% 100% / 0.025);
-  --scene-dot: hsl(0 0% 100% / 0.22);
 }
 
-.dark [data-scene="inverted"] {
+/* The services scene is now a fixed dark blue in both themes, and the header's
+   inverted state is driven solely by overlapping it (nav.tsx), so neither may
+   flip to light-on-dark's inverse in dark mode. Other consumers (the consulting
+   page card) still invert as before. */
+.dark [data-scene="inverted"]:not(header):not(#services-wrapper) {
   --foreground: 0 0% 6%;
   --primary: 0 0% 6%;
   --primary-foreground: 0 0% 98%;
@@ -295,58 +315,67 @@
   --s-border: hsl(0 0% 6% / 0.1);
   --s-border-hover: hsl(0 0% 6% / 0.18);
   --s-high-soft: hsl(0 0% 6% / 0.03);
-  --scene-dot: hsl(0 0% 6% / 0.2);
 }
 
+/* Deep brand-blue scene — one flat colour, identical in light and dark theme.
+   The ID selector (1,1,0) outranks `.dark [data-scene="inverted"]` (0,2,0), so
+   this single rule holds in both themes with no `.dark` counterpart; the dark
+   flip is additionally excluded above via `:not(#services-wrapper)`.
+   `--inverted-bg` is overridden because the service cards paint with
+   `bg-inverted-bg/80` (services-section.tsx) — without it they stay pure black
+   on top of the blue field. */
 #services-wrapper[data-scene="inverted"] {
-  background: linear-gradient(135deg, hsl(214 46% 13%), hsl(214 22% 7%));
-  --foreground: 214 20% 95%;
-  --card: 214 24% 15%;
-  --card-foreground: 214 20% 95%;
-  --popover: 214 24% 15%;
-  --popover-foreground: 214 20% 95%;
-  --surface: 214 22% 16%;
-  --secondary: 214 20% 19%;
-  --secondary-foreground: 214 20% 92%;
-  --muted: 214 18% 21%;
-  --muted-foreground: 214 18% 65%;
-  --input: 214 60% 92% / 0.08;
-  --border: 214 45% 90% / 0.1;
-  --border-mid: 214 45% 90% / 0.16;
-  --s-high: hsl(214 45% 94% / 0.92);
-  --s-mid: hsl(214 35% 88% / 0.55);
-  --s-low: hsl(214 30% 82% / 0.35);
-  --s-muted: hsl(214 25% 78% / 0.22);
-  --s-surface: hsl(214 50% 90% / 0.05);
-  --s-border: hsl(214 45% 90% / 0.09);
-  --s-border-hover: hsl(214 45% 90% / 0.17);
-  --s-high-soft: hsl(214 45% 92% / 0.03);
-  --scene-dot: hsl(214 45% 90% / 0.22);
+  background-color: hsl(214 88% 26%);
+  --inverted-bg: 215 84% 20%;
+  --foreground: 210 40% 97%;
+  --primary: 210 40% 97%;
+  --primary-foreground: 214 88% 20%;
+  --brand-text: 205 95% 78%;
+  --card: 215 84% 20%;
+  --card-foreground: 210 40% 97%;
+  --popover: 215 84% 20%;
+  --popover-foreground: 210 40% 97%;
+  --surface: 214 78% 23%;
+  --secondary: 214 74% 27%;
+  --secondary-foreground: 210 38% 94%;
+  --muted: 214 66% 31%;
+  --muted-foreground: 208 55% 82%;
+  --input: 210 80% 92% / 0.1;
+  --border: 205 90% 88% / 0.18;
+  --border-mid: 205 90% 88% / 0.28;
+  --s-high: hsl(200 95% 98% / 0.96);
+  --s-mid: hsl(204 80% 94% / 0.72);
+  --s-low: hsl(206 70% 90% / 0.5);
+  --s-muted: hsl(207 60% 88% / 0.34);
+  --s-surface: hsl(202 95% 92% / 0.09);
+  --s-border: hsl(205 90% 88% / 0.17);
+  --s-border-hover: hsl(202 95% 92% / 0.34);
+  --s-high-soft: hsl(202 95% 94% / 0.06);
+
+  /* The accent family must be rebound too, or it stays on the *page* ramp and
+     lands blue-on-blue inside the scene: root --local-accent (214 89% 48%)
+     measured 2.2:1 against this field, and .accent-world-orange on #services
+     resolves to its light-theme value (#aa5109, ~1.9:1) because the wrapper is
+     dark in BOTH themes while `.dark .accent-world-*` only fires under
+     html.dark. Light end of the brand ramp: 5.9:1 on the field. */
+  --local-accent: hsl(203 100% 72%);
+  --local-accent-text: hsl(203 100% 78%);
+  --local-accent-fg: hsl(214 88% 16%);
+  --local-accent-soft: hsl(203 100% 72% / 0.14);
+  /* Same problem for focus: the global *:focus-visible outline uses --ring,
+     which is brand blue and invisible here. */
+  --ring: 203 100% 72%;
 }
-.dark #services-wrapper[data-scene="inverted"] {
-  background: linear-gradient(135deg, hsl(214 46% 95%), hsl(214 18% 99%));
-  --foreground: 214 30% 10%;
-  --card: 214 40% 97%;
-  --card-foreground: 214 30% 10%;
-  --popover: 214 40% 97%;
-  --popover-foreground: 214 30% 10%;
-  --surface: 214 35% 95%;
-  --secondary: 214 30% 93%;
-  --secondary-foreground: 214 25% 22%;
-  --muted: 214 25% 90%;
-  --muted-foreground: 214 20% 38%;
-  --input: 214 30% 92%;
-  --border: 214 40% 20% / 0.12;
-  --border-mid: 214 40% 20% / 0.2;
-  --s-high: hsl(214 40% 15% / 0.9);
-  --s-mid: hsl(214 35% 20% / 0.72);
-  --s-low: hsl(214 30% 25% / 0.52);
-  --s-muted: hsl(214 25% 30% / 0.4);
-  --s-surface: hsl(214 40% 15% / 0.04);
-  --s-border: hsl(214 40% 15% / 0.1);
-  --s-border-hover: hsl(214 40% 15% / 0.18);
-  --s-high-soft: hsl(214 40% 15% / 0.03);
-  --scene-dot: hsl(214 40% 15% / 0.2);
+
+/* A colour world set ON a descendant of the scene (e.g. #services carries
+   .accent-world-orange) re-shadows the scene's inherited accent, so the scene
+   block above cannot reach it. Re-lighten the worlds here — (1,2,0) beats the
+   plain .accent-world-* rules (0,1,0) and their .dark variants (0,2,0). */
+#services-wrapper[data-scene="inverted"] .accent-world-orange {
+  --local-accent: hsl(30 95% 65%);
+  --local-accent-text: hsl(30 95% 72%);
+  --local-accent-fg: hsl(24 90% 12%);
+  --local-accent-soft: hsl(30 95% 65% / 0.14);
 }
 
 .accent-world-orange {
@@ -533,18 +562,9 @@ header[data-scene="inverted"] {
     inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
     0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
 }
-.dark header[data-scene="inverted"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.05) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.05),
-    0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
-}
+/* No `.dark` counterpart: the header only carries data-scene="inverted" while it
+   overlaps #services-wrapper, which is now the same dark blue in both themes —
+   so the light-glass treatment above is correct in dark mode too. */
 
 @layer base {
   html[dir="rtl"] body {
@@ -870,16 +890,6 @@ html.lenis body {
     transform: translateY(0);
   }
 }
-@keyframes menu-panel-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 @keyframes text-gradient {
   0% {
     background-position: 0% center;
@@ -903,5 +913,14 @@ html.lenis body {
 @supports (corner-shape: squircle) {
   [class*="rounded"] {
     corner-shape: squircle;
+  }
+  /* Squircle is a rounded-RECT treatment. On a capsule or circle the huge
+     radius turns the superellipse into a rounded SQUARE — which silently made
+     every dot, badge, avatar, icon button and the custom cursor the same
+     boxy shape. Apple never squircles a circle. Note the class selector is
+     deliberate: `.rounded-full` matches only the literal class, so variant
+     classes like `after:rounded-full` don't drag their parent along. */
+  .rounded-full {
+    corner-shape: round;
   }
 }

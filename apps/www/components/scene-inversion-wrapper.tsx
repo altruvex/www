@@ -23,8 +23,6 @@ const ProcessSection = lazy(() =>
   })),
 );
 
-const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`;
-
 export function SceneInversionWrapper() {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -35,20 +33,6 @@ export function SceneInversionWrapper() {
   );
 
   const [entered, setEntered] = useState(false);
-
-  const isDark = useSyncExternalStore(
-    (onStoreChange) => {
-      if (typeof document === "undefined") return () => undefined;
-      const observer = new MutationObserver(() => onStoreChange());
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-      return () => observer.disconnect();
-    },
-    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
-    () => false,
-  );
 
   useEffect(() => {
     if (!wrapperRef.current || !mounted) return;
@@ -77,23 +61,6 @@ export function SceneInversionWrapper() {
       className="ps-section relative overflow-hidden rtl:text-right"
       data-scene={entered ? "inverted" : undefined}
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none z-0 mix-blend-overlay transition-opacity duration-800"
-        style={{
-          backgroundImage: NOISE_SVG,
-          opacity: isDark ? 0.025 : 0.015,
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-800"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, var(--scene-dot) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
       <div className="relative z-1">
         <Suspense fallback={<SectionSkeleton />}>
           <ServicesSection />

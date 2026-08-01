@@ -117,7 +117,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
       )}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 bg-foreground/2 transition-all duration-300 ease-out group-hover:scale-x-100 group-focus-within:scale-x-100 rtl:origin-right"
+        className="pointer-events-none absolute inset-0 z-0 origin-left scale-x-0 rounded-lg bg-foreground/2 transition-all duration-300 ease-out group-hover:scale-x-100 group-focus-within:scale-x-100 rtl:origin-right"
       />
       <Link
         href={`/work/${slug}`}

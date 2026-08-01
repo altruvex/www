@@ -114,7 +114,7 @@ function AuditOfferSection() {
             </div>
             {/* Featured offer panel: the page's single fixed-scope product.
                 Subtle tilt = "this card is the offer - it has physical presence." */}
-            <TiltCard subtle className="border border-s-border bg-s-surface p-5 md:p-6">
+            <TiltCard subtle className="rounded-lg border border-s-border bg-s-surface p-5 md:p-6">
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
                 <div className="border-b border-s-border pb-4">
                   <p className={cn(monoCaps, "text-s-mid mb-2")}>

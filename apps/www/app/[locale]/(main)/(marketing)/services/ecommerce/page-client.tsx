@@ -175,7 +175,7 @@ function ProofLinkCard({
   title: string;
 }) {
   return (
-    <TiltCard subtle className="border border-border bg-surface/40">
+    <TiltCard subtle className="rounded-lg border border-border bg-surface/40">
       <Link href={href} className="group block p-6 md:p-8">
         <div className="flex items-start justify-between gap-4">
           <span className={cn(monoCaps, "text-muted-foreground")}>
