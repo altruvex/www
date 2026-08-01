@@ -1,16 +1,18 @@
 "use client";
 
-import { NavDrawer, type NavDrawerItem } from "@/components/layout/nav-drawer";
 import { Container } from "@/components/shared/container";
 import { ThemeChanger } from "@/components/shared/theme-changer";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { Link, usePathname } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/utils";
+import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { LanguageSwitcherBase } from "../base/language-switcher-base";
 import { AltruvexLogo } from "../shared/altruvex-logo";
 
-const NAV_ITEMS: readonly NavDrawerItem[] = [
+const NAV_ITEMS = [
   { key: "work", href: "/work" },
   { key: "services", href: "/services" },
   { key: "pricing", href: "/pricing" },
@@ -24,15 +26,12 @@ export function Nav() {
   const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
-  // The drawer stores the route it was opened on rather than a bare boolean, so
-  // any navigation (in-drawer link, browser back) closes it by derivation —
-  // no effect that re-renders the header on every route change.
-  const [menuOpenedAt, setMenuOpenedAt] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavInverted, setIsNavInverted] = useState(false);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const dir = locale === "ar" ? "rtl" : "ltr";
-  const isMobileMenuOpen = menuOpenedAt !== null && menuOpenedAt === pathname;
+
+  useLockBodyScroll(isMobileMenuOpen);
 
   useEffect(() => {
     // Scene state must track the wrapper's *live* geometry. Scroll events
@@ -64,9 +63,8 @@ export function Nav() {
     };
   }, [isMobileMenuOpen]);
 
-  const closeMobileMenu = useCallback(() => setMenuOpenedAt(null), []);
-  const toggleMobileMenu = () =>
-    setMenuOpenedAt((openedAt) => (openedAt === pathname ? null : pathname));
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const toggleMobileMenu = () => setIsMobileMenuOpen((open) => !open);
 
   return (
     <>
@@ -74,9 +72,8 @@ export function Nav() {
         dir={dir}
         data-scene={isNavInverted ? "inverted" : undefined}
         className={cn(
-          // Above the drawer (z-40) so the close button stays reachable.
-          "fixed top-0 z-50 w-full transition-colors duration-300",
-          isScrolled && !isMobileMenuOpen ? "liquid-glass" : "bg-transparent",
+          "fixed top-0 z-40 w-full transition-colors duration-300",
+          isScrolled ? "liquid-glass" : "bg-transparent",
         )}
       >
         <Container>
@@ -136,7 +133,6 @@ export function Nav() {
                 <AltruvexLogo size="md" variant="full" />
               </Link>
               <button
-                ref={menuButtonRef}
                 type="button"
                 onClick={toggleMobileMenu}
                 className="relative z-50 flex h-11 w-11 items-center justify-center"
@@ -166,12 +162,80 @@ export function Nav() {
           </div>
         </Container>
       </header>
-      <NavDrawer
-        open={isMobileMenuOpen}
-        onClose={closeMobileMenu}
-        items={NAV_ITEMS}
-        triggerRef={menuButtonRef}
-      />
+      {isMobileMenuOpen && (
+        <div
+          dir={dir}
+          className="liquid-glass-panel fixed inset-0 z-40 border-t border-foreground/10 lg:hidden motion-safe:animate-[menu-panel-in_0.25s_cubic-bezier(0.23,1,0.32,1)_both]"
+          style={{ top: "64px" }}
+        >
+          <Container className="h-full">
+            <ScrollArea className="h-[calc(100vh-128px)] w-full" dir={dir}>
+              <div className="flex flex-col h-full py-8">
+                <nav className="flex-1 space-y-2 mb-12">
+                  {NAV_ITEMS.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      pathname.startsWith(`${item.href}/`);
+                    return (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        onClick={closeMobileMenu}
+                        aria-current={isActive ? "page" : undefined}
+                        className={cn(
+                          "flex w-full items-center rounded-md border-s-2 border-transparent px-4 py-4 transition-colors duration-200",
+                          isActive
+                            ? "bg-brand/8 text-brand-text border-brand"
+                            : "transition-all text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+                        )}
+                      >
+                        <span className="font-sans text-2xl font-semibold tracking-tight">
+                          {t(item.key)}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+                <div className="space-y-6 mt-auto">
+                  <div className="h-px w-full bg-foreground/10" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Link
+                      href="/transparency"
+                      className="inline-flex h-11 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
+                      onClick={closeMobileMenu}
+                    >
+                      {t("getStarted")}
+                    </Link>
+                    <Link
+                      href="/schedule"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-foreground/10 px-4 text-sm font-medium text-foreground"
+                      onClick={closeMobileMenu}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      {t("schedule")}
+                    </Link>
+                  </div>
+                  <div className="h-px w-full bg-foreground/10" />
+                  <div className="space-y-4 pb-8">
+                    <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
+                      <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+                        {t("language")}
+                      </span>
+                      <LanguageSwitcherBase variant="toggle" />
+                    </div>
+                    <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
+                      <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+                        {t("theme")}
+                      </span>
+                      <ThemeChanger />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+          </Container>
+        </div>
+      )}
     </>
   );
 }

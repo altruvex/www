@@ -39,16 +39,8 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
   const idleMounted = useIdleMount({ timeout: 1200 });
   const hasInteracted = useFirstInteraction();
   const shouldMountNonCritical = idleMounted || hasInteracted;
-
-  // SmoothScroll mounts as a SIBLING, never as a wrapper. Swapping the tree
-  // between `content` and `<SmoothScrollLazy>{content}</SmoothScrollLazy>`
-  // changed the element type at this position, so React tore down and rebuilt
-  // the entire app the moment `shouldMountNonCritical` flipped — wiping every
-  // piece of client state below it, including an open mobile nav drawer.
-  // The provider holds no context; it only runs an effect.
-  return (
+  const content = (
     <>
-      {shouldMountNonCritical ? <SmoothScrollLazy /> : null}
       {shouldMountNonCritical ? <InitialLoaderLazy /> : null}
       <ThemeProvider
         attribute="class"
@@ -64,5 +56,11 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
         {shouldMountNonCritical ? <ExitIntentLazy /> : null}
       </ThemeProvider>
     </>
+  );
+
+  return shouldMountNonCritical ? (
+    <SmoothScrollLazy>{content}</SmoothScrollLazy>
+  ) : (
+    content
   );
 }

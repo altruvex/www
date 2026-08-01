@@ -90,13 +90,6 @@
   --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   --animate-menu-panel-in: menu-panel-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1)
     both;
-  --animate-drawer-scrim-in: drawer-scrim-in 0.32s cubic-bezier(0.2, 0, 0, 1)
-    both;
-  --animate-drawer-scrim-out: drawer-scrim-in 0.22s cubic-bezier(0.55, 0, 1, 0.45)
-    reverse both;
-  --animate-drawer-row-in: drawer-row-in 0.5s cubic-bezier(0.2, 0, 0, 1) both;
-  --animate-drawer-rail-in: drawer-rail-in 0.6s cubic-bezier(0.23, 1, 0.32, 1)
-    both;
   --animate-text-gradient: text-gradient 6s linear infinite;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -839,38 +832,6 @@ html.lenis body {
       display: none;
     }
   }
-
-  /* Full-screen nav drawer surface. `liquid-glass-panel` is tuned for small
-     floating panels — at full-bleed its 0.6-0.8 alpha lets the page bleed
-     through and the index becomes unreadable. A menu that covers the viewport
-     is a destination, not an overlay, so this one is opaque: the depth comes
-     from a background→card gradient and the inner top light, not from
-     transparency. */
-  .nav-drawer-surface {
-    background: linear-gradient(
-      180deg,
-      hsl(var(--background)) 0%,
-      hsl(var(--card)) 100%
-    );
-    box-shadow: inset 0 1px 0 0 hsl(var(--foreground) / 0.06);
-  }
-  .dark .nav-drawer-surface {
-    box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.06);
-  }
-
-  /* Nav drawer index rows. `--row` (set per row in TSX) drives the stagger, so
-     one utility covers the whole list instead of N delay classes. Reduced
-     motion collapses the delay AND the travel to a plain fade. */
-  .drawer-row {
-    animation: var(--animate-drawer-row-in);
-    animation-delay: calc(var(--row, 0) * 45ms + 60ms);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .drawer-row {
-      animation: drawer-scrim-in 0.2s linear both;
-      animation-delay: 0ms;
-    }
-  }
 }
 
 @keyframes slide-down {
@@ -917,34 +878,6 @@ html.lenis body {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-@keyframes drawer-scrim-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-/* Index rows arrive one after another. `--row` carries the row's ordinal so a
-   single utility can stagger the whole list without per-row classes. */
-@keyframes drawer-row-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes drawer-rail-in {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
   }
 }
 @keyframes text-gradient {
