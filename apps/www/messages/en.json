@@ -594,7 +594,18 @@
     "theme": "Theme",
     "transparency": "Transparency",
     "work": "Work",
-    "commandPalette": "Search & commands"
+    "commandPalette": "Search & commands",
+    "index": "Index",
+    "drawerTitle": "Site index",
+    "status": "Taking select projects",
+    "base": "Cairo",
+    "indexDescriptions": {
+      "work": "Systems in production.",
+      "services": "What we build, and how.",
+      "pricing": "What a build actually costs.",
+      "contact": "Start a scope conversation.",
+      "transparency": "How we operate, in the open."
+    }
   },
   "notFound": {
     "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",
