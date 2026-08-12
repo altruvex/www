@@ -52,7 +52,6 @@ function getReducedMotionPreference() {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-// Ripple keyframes injected once into the document head
 const RIPPLE_STYLE_ID = "magnetic-button-ripple-keyframes";
 function ensureRippleKeyframes() {
   if (typeof document === "undefined") return;
@@ -71,14 +70,6 @@ function ensureRippleKeyframes() {
   document.head.appendChild(style);
 }
 
-/**
- * The site's primary CTA. Communicated state: "this is the action that matters
- * here — it responds to you before you commit." Magnetic pull + tactile press +
- * click ripple, all owned by GSAP via useMagnetic/usePress (single motion
- * runtime — no parallel rAF/CSS transform path). Both hooks self-disable under
- * reduced motion / coarse pointers, and usePress mirrors Enter/Space so
- * keyboard users get the same tactile feedback.
- */
 export const MagneticButton = forwardRef<
   HTMLButtonElement,
   MagneticButtonProps
@@ -146,11 +137,8 @@ export const MagneticButton = forwardRef<
       lg: "min-h-12 min-w-12 px-8 py-3.5 text-base",
     };
 
-    // Transform is GSAP-owned (useMagnetic/usePress) — it must NOT appear in
-    // the CSS transition list or the two systems fight over the same property.
     const sharedClassName = [
-      // Both sizes are min-h-12 (48px), so both take the 48px control token.
-      "relative inline-flex items-center justify-center overflow-hidden rounded-ctl-xl font-medium",
+      "relative inline-flex items-center justify-center overflow-hidden rounded-xl font-medium",
       "transition-[background-color,border-color,color,box-shadow,opacity] duration-300 ease-out will-change-transform",
       "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed",

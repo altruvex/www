@@ -1,12 +1,20 @@
 "use client";
 
+import { setLenis } from "@/lib/motion/lenis-instance";
 import type Lenis from "lenis";
 import { useEffect } from "react";
 
+/**
+ * Boots Lenis + the ScrollTrigger refresh observer. It provides no context and
+ * renders `children` only as a convenience, so it is mounted as a SIBLING of
+ * the app tree rather than a wrapper — wrapping it conditionally changed the
+ * element type at that position and made React unmount/remount the whole app
+ * (which silently wiped open UI state, e.g. the mobile nav drawer).
+ */
 export function SmoothScrollProvider({
   children,
 }: {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }) {
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +48,7 @@ export function SmoothScrollProvider({
           });
 
           lenisRef = lenis;
+          setLenis(lenis);
           let stPending = false;
 
           lenis.on("scroll", () => {
@@ -96,6 +105,7 @@ export function SmoothScrollProvider({
         gsapRef.gsap.ticker.remove(tickFn);
       }
       lenisRef?.destroy();
+      setLenis(null);
       resizeObserver?.disconnect();
     };
   }, []);

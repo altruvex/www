@@ -64,7 +64,7 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "ts", "tsx"],
   reactStrictMode: true,
-  transpilePackages: ["@repo/database"],
+  transpilePackages: ["@repo/database", "@repo/pricing"],
   compress: true,
   poweredByHeader: false,
   env: {

@@ -11,8 +11,8 @@ import {
 } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
-import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
 import { SectionHeading } from "./section-heading";
 
 const LAYER_IDS = [
@@ -23,61 +23,69 @@ const LAYER_IDS = [
   "infrastructure",
 ] as const;
 
-type LayerId = (typeof LAYER_IDS)[number];
-
 /**
- * The stack stands on its base: the surface layer is the narrowest slab, each
- * layer beneath it wider, infrastructure full-width. End-margins, so the
- * staircase mirrors in RTL on its own.
+ * Depth is encoded exactly once: by material density. The surface stratum is
+ * the faintest, infrastructure the most solid — so "deeper" is something you
+ * see rather than something a caption claims. The previous build encoded it
+ * three times (staircase insets, a spine, and pips) and the three disagreed.
+ *
+ * The ramp is capped at 7%: at 12% the deepest stratum pushed muted body text
+ * to 4.19:1, under the AA floor. Measured in both themes, not assumed — if the
+ * ramp is ever widened for punch, re-measure the bottom stratum first.
  */
-const LAYER_INSETS: readonly string[] = [
-  "lg:me-24",
-  "lg:me-18",
-  "lg:me-12",
-  "lg:me-6",
-  "lg:me-0",
+const LAYER_TINTS: readonly string[] = [
+  "bg-local-accent/[0.015]",
+  "bg-local-accent/[0.03]",
+  "bg-local-accent/[0.045]",
+  "bg-local-accent/[0.06]",
+  "bg-local-accent/[0.07]",
 ];
 
-/** One detail region, driven by five buttons (aria-controls / aria-expanded). */
-const PANEL_ID = "ownership-layer-detail";
-const PANEL_HEADING_ID = "ownership-layer-detail-name";
+/**
+ * The depth ruler is not a separate element — it is the leading edge of each
+ * stratum, so it aligns to the strata without measuring anything, mirrors in
+ * RTL on its own, and cannot drift out of sync with the layout.
+ */
+const LAYER_EDGES: readonly string[] = [
+  "bg-local-accent/25",
+  "bg-local-accent/40",
+  "bg-local-accent/55",
+  "bg-local-accent/70",
+  "bg-local-accent/90",
+];
 
+/**
+ * Ownership Stack — cut-away specimen.
+ *
+ * Claim: a template delivers the surface; Altruvex engineers and hands over all
+ * five layers beneath it.
+ * Proof shape: anatomy — one object, five named parts, one cut line.
+ * Device: a solid specimen with a measured depth ruler. Not a card grid, not a
+ * master/detail menu, and not the annotated document used by
+ * quote-artifact-section — the strata share edges and form one body, and the
+ * comparison is a mark ON the object, not the structure of the section.
+ *
+ * Everything is readable with no JavaScript and no pointer: there is no hidden
+ * state, no hover-to-reveal, and no panel to swap. The one motion idea is the
+ * bottom-up assembly — the foundation lands before the surface.
+ */
 export function OwnershipStackSection() {
   const t = useTranslations("ownershipStack");
-  const locale = useLocale();
-  const isRtl = locale === "ar";
 
   const sectionRef = useRef<HTMLElement>(null);
-  const stackRef = useRef<HTMLDivElement>(null);
+  const specimenRef = useRef<HTMLDivElement>(null);
   const animated = useRef(false);
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const descRef = useSectionDescription();
 
-  // A layer is always selected: the panel is the single source of layer detail
-  // at every breakpoint (beside the stack on lg, beneath it below that), so
-  // there is no idle empty state and no second copy of the text in the DOM.
-  const [activeId, setActiveId] = useState<LayerId>(LAYER_IDS[0]);
-  const [detailKey, setDetailKey] = useState(0);
-
-  const select = useCallback((id: LayerId) => {
-    setActiveId((prev) => {
-      if (prev !== id) setDetailKey((k) => k + 1);
-      return id;
-    });
-  }, []);
-
-  const activeIndex = LAYER_IDS.indexOf(activeId);
-
   useEffect(() => {
-    const root = stackRef.current;
+    const root = specimenRef.current;
     const section = sectionRef.current;
     if (!root || !section || animated.current) return;
 
-    const rows = root.querySelectorAll<HTMLElement>("[data-layer]");
-    const spine = root.querySelector<HTMLElement>("[data-spine]");
-    const seam = root.querySelector<HTMLElement>("[data-seam]");
+    const strata = root.querySelectorAll<HTMLElement>("[data-stratum]");
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
@@ -91,13 +99,11 @@ export function OwnershipStackSection() {
           const { reduced } = context.conditions as { reduced: boolean };
 
           if (reduced) {
-            gsap.set([...rows, spine, seam].filter(Boolean), { opacity: 1 });
+            gsap.set(strata, { opacity: 1, y: 0 });
             return;
           }
 
-          gsap.set(rows, { opacity: 0, y: 14 });
-          if (spine) gsap.set(spine, { scaleY: 0, transformOrigin: "top center", opacity: 1 });
-          if (seam) gsap.set(seam, { opacity: 0 });
+          gsap.set(strata, { opacity: 0, y: 14 });
 
           ScrollTrigger.create({
             trigger: section,
@@ -109,22 +115,12 @@ export function OwnershipStackSection() {
                 defaults: { ease: MOTION.ease.smooth },
               });
               // Bottom-up: the foundation lands first, the surface last.
-              tl.to(rows, {
+              tl.to(strata, {
                 opacity: 1,
                 y: 0,
                 duration: 0.6,
                 stagger: { each: 0.09, from: "end" },
               });
-              if (spine) {
-                tl.to(
-                  spine,
-                  { scaleY: 1, duration: 0.7, ease: MOTION.ease.strong },
-                  0.1,
-                );
-              }
-              if (seam) {
-                tl.to(seam, { opacity: 1, duration: 0.4 }, "-=0.2");
-              }
             },
           });
         },
@@ -155,9 +151,8 @@ export function OwnershipStackSection() {
           className="mb-12 lg:mb-16"
         />
 
-        {/* The argument, once - it used to be duplicated between a mobile
-            paragraph and the desktop panel's idle state. */}
-        <div className="mb-12 max-w-[62ch] lg:mb-16">
+        {/* The argument, stated once. */}
+        <div className="mb-12 max-w-[62ch] lg:mb-14">
           <Eyebrow className="mb-3">{t("intro.eyebrow")}</Eyebrow>
           <p className="text-[clamp(1.125rem,1.5vw,1.375rem)] leading-[1.5] text-foreground">
             <Dim>{t("intro.dismissed")}</Dim> {t("intro.answerLead")}{" "}
@@ -165,194 +160,97 @@ export function OwnershipStackSection() {
           </p>
         </div>
 
-        <div className="grid items-start gap-10 lg:grid-cols-[1.12fr_0.88fr] lg:gap-14">
-          <div ref={stackRef} className="relative">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -inset-4 rounded-2xl"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
-                backgroundSize: "26px 26px",
-                opacity: 0.04,
-              }}
-            />
-            {/* Depth axis runs with the stack, not across it: surface on top,
-                foundation at the bottom, the spine connecting them. */}
-            <p className="eyebrow mb-3 text-[11px] text-muted-foreground">
-              {t("axis.surface")}
-            </p>
-            <div className="relative">
-              <div
-                aria-hidden
-                data-spine
-                className="pointer-events-none absolute inset-y-0 w-px bg-local-accent/45"
-                style={isRtl ? { right: "-14px" } : { left: "-14px" }}
-              >
-                <span className="absolute -top-1 inset-s-[-3px] h-[7px] w-[7px] rounded-full bg-local-accent" />
-                <span className="absolute -bottom-1 inset-s-[-3px] h-[7px] w-[7px] rounded-full bg-local-accent" />
-              </div>
-              <ol className="flex list-none flex-col gap-2">
-                {LAYER_IDS.map((id, i) => {
-                  const isActive = id === activeId;
-                  return (
-                    <li key={id} data-layer className={cn("relative", LAYER_INSETS[i])}>
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute top-7 inset-s-[-14px] hidden h-px w-[14px] bg-local-accent transition-opacity duration-200 ease-smooth lg:block"
-                        style={{ opacity: isActive ? 1 : 0 }}
-                      />
-                      <div
-                        className={cn(
-                          "rounded-lg border transition-[border-color,background-color,opacity] duration-200 ease-smooth",
-                          isActive
-                            ? "border-local-accent bg-local-accent-soft"
-                            : "border-border bg-card hover:border-border-mid",
-                        )}
-                      >
-                        <button
-                          type="button"
-                          aria-expanded={isActive}
-                          aria-controls={PANEL_ID}
-                          onMouseEnter={() => select(id)}
-                          onFocus={() => select(id)}
-                          onClick={() => select(id)}
-                          className="group flex w-full items-center gap-4 rounded-lg px-4 py-4 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:gap-5 sm:px-5"
-                        >
-                          <span
-                            aria-hidden
-                            className="h-9 w-[3px] shrink-0 rounded-full bg-local-accent transition-opacity duration-200"
-                            style={{ opacity: isActive ? 0.85 : 0 }}
-                          />
-                          <span
-                            aria-hidden
-                            className={cn(
-                              "w-7 shrink-0 text-sm tabular-nums transition-colors duration-200 ltr:font-mono",
-                              isActive ? "text-local-accent-text" : "text-muted-foreground",
-                            )}
-                          >
-                            {String(i + 1).padStart(2, "0")}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-sans text-lg font-medium leading-tight text-foreground">
-                              {t(`layers.${id}.name`)}
-                            </span>
-                            <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
-                              {t(`layers.${id}.spec`)}
-                            </span>
-                          </span>
-                          {/* Spec values, not labels: mono for the engineering
-                              signal, but never case-transformed - "≤1s LCP" is
-                              a unit, and caps would rewrite it. */}
-                          <span
-                            dir="auto"
-                            className="hidden shrink-0 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] leading-normal tracking-[0.06em] text-muted-foreground ltr:font-mono sm:inline-block"
-                          >
-                            {t(`layers.${id}.tag`)}
-                          </span>
-                        </button>
-                      </div>
-                      {i === 0 && (
-                        <div
-                          data-seam
-                          className="flex items-center gap-3 pt-3 pb-1"
-                        >
-                          <span
-                            aria-hidden
-                            className="h-0 flex-1 border-t border-dashed border-border-mid"
-                          />
-                          {/* The section's argument, so it carries weight:
-                              accent chip, not a 10px grey caption. */}
-                          <span className="eyebrow shrink-0 rounded-full border border-local-accent/30 bg-local-accent-soft px-3 py-1 text-[11px] text-local-accent-text">
-                            {t("templateStops")}
-                          </span>
-                          <span
-                            aria-hidden
-                            className="hidden h-0 w-8 border-t border-dashed border-border-mid sm:block"
-                          />
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            </div>
-            <p className="eyebrow mt-3 text-[11px] text-muted-foreground">
-              {t("axis.foundation")}
-            </p>
-            <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-muted-foreground">
-              <span className="eyebrow flex items-center gap-2 text-[11px]">
-                <span aria-hidden className="h-2 w-2 rounded-full border border-border-mid" />
-                {t("legend.template")}
-              </span>
-              <span className="eyebrow flex items-center gap-2 text-[11px]">
-                <span aria-hidden className="h-2 w-2 rounded-full bg-local-accent" />
-                {t("legend.altruvex")}
-              </span>
-            </div>
+        <div ref={specimenRef}>
+          {/* Axis top — surface. The ruler it labels is the strata's leading
+              edge, so the two can never fall out of alignment. */}
+          <div className="mb-2 flex items-center gap-3">
+            <Eyebrow className="text-[11px]">{t("axis.surface")}</Eyebrow>
+            <span aria-hidden className="h-px flex-1 bg-border" />
+            <Eyebrow className="text-[11px]">{t("legend.template")}</Eyebrow>
           </div>
 
-          <div
-            id={PANEL_ID}
-            role="region"
-            aria-labelledby={PANEL_HEADING_ID}
-            className="relative min-h-64 rounded-2xl border border-local-accent/25 bg-surface p-6 sm:p-8 lg:sticky lg:top-28"
-          >
-            {/* Depth pips: which layer the panel is showing, without color as
-                the only cue - the pip's position is the signal. */}
-            <div
-              aria-hidden
-              className="absolute inset-e-6 top-1/2 hidden -translate-y-1/2 flex-col gap-1.5 sm:flex"
-            >
-              {LAYER_IDS.map((id) => (
+          <ol className="list-none overflow-hidden rounded-lg border border-border">
+            {LAYER_IDS.map((id, i) => (
+              <li
+                key={id}
+                data-stratum
+                className={cn(
+                  "relative border-b border-border ps-8 pe-5 py-6 last:border-b-0 sm:pe-7 sm:py-7",
+                  LAYER_TINTS[i],
+                )}
+              >
+                {/* Ruler segment: this stratum's leading edge. Together the
+                      five segments are the depth scale, densest at the base. */}
                 <span
-                  key={id}
+                  aria-hidden
                   className={cn(
-                    "h-4 w-1 rounded-full transition-colors duration-200",
-                    id === activeId ? "bg-local-accent" : "bg-border-mid",
+                    "pointer-events-none absolute inset-y-0 inset-s-0 w-[3px]",
+                    LAYER_EDGES[i],
                   )}
                 />
-              ))}
-            </div>
-            <div key={detailKey} className="flex h-full flex-col sm:pe-8">
-              <div className="mb-4 flex items-center gap-3">
-                <span aria-hidden className="text-sm tabular-nums text-local-accent-text ltr:font-mono">
-                  {String(activeIndex + 1).padStart(2, "0")}
-                </span>
-                <h3
-                  id={PANEL_HEADING_ID}
-                  className="font-sans text-xl font-medium leading-tight text-foreground"
-                >
-                  {t(`layers.${activeId}.name`)}
-                </h3>
-                {/* dir="auto": a spec value like "≤1s LCP" is Latin even in an
-                    Arabic page - without it the bidi algorithm moves the ≤. */}
-                <span
-                  dir="auto"
-                  className="ms-auto shrink-0 rounded-full border border-local-accent/25 px-2.5 py-1 text-[11px] leading-normal tracking-[0.06em] text-local-accent-text ltr:font-mono"
-                >
-                  {t(`layers.${activeId}.tag`)}
-                </span>
-              </div>
-              <p
-                data-detail-body
-                className="text-base leading-relaxed text-muted-foreground"
-              >
-                {t(`layers.${activeId}.detail`)}
-              </p>
-              <p
-                data-detail-body
-                className="mt-auto pt-6 text-sm leading-relaxed text-foreground"
-              >
-                <span className="eyebrow text-[11px] text-local-accent-text">
-                  {t("ownershipLabel")}
-                </span>
-                <br />
-                {t(`layers.${activeId}.ownership`)}
-              </p>
-            </div>
-            <p className="eyebrow mt-6 text-[11px] text-muted-foreground pointer-coarse:hidden">
-              {t("intro.hint")}
+
+                {/* The cut line: a mark on the object, not a second layout.
+                      Everything below it is what a template never delivers. */}
+                {i === 1 ? (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 top-0 border-t-2 border-dashed border-local-accent/45"
+                  />
+                ) : null}
+
+                <div className="grid gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                  <div>
+                    <div className="flex items-baseline gap-3">
+                      <span
+                        aria-hidden
+                        className="shrink-0 text-sm tabular-nums text-local-accent-text ltr:font-mono"
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="font-sans text-[clamp(1.125rem,1.6vw,1.375rem)] font-medium leading-tight text-foreground">
+                        {t(`layers.${id}.name`)}
+                      </h3>
+                      {/* dir="auto": a spec value like "≤1s LCP" is Latin even
+                            on an Arabic page - without it the bidi algorithm
+                            moves the ≤. */}
+                      <span
+                        dir="auto"
+                        className="ms-auto shrink-0 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] leading-normal tracking-[0.06em] text-muted-foreground ltr:font-mono"
+                      >
+                        {t(`layers.${id}.tag`)}
+                      </span>
+                    </div>
+                    <p className="mt-2 ps-8 text-sm leading-snug text-muted-foreground">
+                      {t(`layers.${id}.spec`)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">
+                      {t(`layers.${id}.detail`)}
+                    </p>
+                    <p className="mt-4 border-s-2 border-local-accent/40 ps-4 text-sm leading-relaxed text-foreground">
+                      <span className="eyebrow block text-[11px] text-local-accent-text">
+                        {t("ownershipLabel")}
+                      </span>
+                      {t(`layers.${id}.ownership`)}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          {/* Axis bottom — foundation, and the cut line's caption, stated once. */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <Eyebrow className="text-[11px]">{t("axis.foundation")}</Eyebrow>
+            <span aria-hidden className="h-px min-w-8 flex-1 bg-border" />
+            <span
+              aria-hidden
+              className="h-0 w-8 shrink-0 border-t-2 border-dashed border-local-accent/45"
+            />
+            <p className="text-sm leading-snug text-muted-foreground">
+              {t("templateStops")} — <Strong>{t("legend.altruvex")}</Strong>
             </p>
           </div>
         </div>
@@ -364,28 +262,6 @@ export function OwnershipStackSection() {
           <span aria-hidden className="hidden h-px flex-1 bg-border sm:block" />
         </div>
       </Container>
-      <style>{`
-        [data-detail-body] {
-          animation: ownDetailIn 0.24s cubic-bezier(0.2, 0, 0, 1) both;
-        }
-        [data-detail-body]:last-of-type {
-          animation-delay: 0.04s;
-        }
-        @keyframes ownDetailIn {
-          from { opacity: 0; transform: translateY(6px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          #ownership-stack [data-layer],
-          #ownership-stack [data-spine],
-          #ownership-stack [data-seam],
-          #ownership-stack [data-detail-body] {
-            opacity: 1 !important;
-            transform: none !important;
-            animation: none !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }

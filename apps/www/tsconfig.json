@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@repo/database": ["../../packages/database"]
+      "@repo/database": ["../../packages/database"],
+      "@repo/pricing": ["../../packages/pricing"]
     }
   },
   "include": [

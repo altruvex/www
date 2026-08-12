@@ -48,10 +48,10 @@ const WorkSection = dynamic(
     import("@/components/sections/work-section").then((mod) => mod.WorkSection),
   { loading: () => <SectionSkeleton /> },
 );
-const PricingSignalSection = dynamic(
+const QuoteArtifactSection = dynamic(
   () =>
-    import("@/components/sections/pricing-signal-section").then(
-      (mod) => mod.PricingSignalSection,
+    import("@/components/sections/quote-artifact-section").then(
+      (mod) => mod.QuoteArtifactSection,
     ),
   { loading: () => <SectionSkeleton /> },
 );
@@ -75,7 +75,7 @@ export function HomeClient() {
         <TransparencyEstimator />
       </ErrorBoundary>
       <ErrorBoundary>
-        <PricingSignalSection />
+        <QuoteArtifactSection />
       </ErrorBoundary>
       <ErrorBoundary>
         <CtaSection />

@@ -220,9 +220,11 @@ const OfferCard = memo(function OfferCard({
           "pointer-events-none absolute end-8 top-1/2 -translate-y-1/2 select-none",
           "font-sans font-black leading-none text-transparent",
           "text-[clamp(120px,18vw,220px)]",
+          // Stroke colour is fixed — `-webkit-text-stroke-color` does not
+          // interpolate, so animating it snapped instead of transitioning.
           "opacity-40 [-webkit-text-stroke-width:1px] [-webkit-text-stroke-color:var(--color-border)]",
-          "transition-[transform,opacity,-webkit-text-stroke-color] duration-500 ease-out",
-          "transition-all group-hover:scale-110 group-hover:[-webkit-text-stroke-color:var(--color-foreground)] group-hover:opacity-10",
+          "transition-[transform,opacity] duration-500 ease-out",
+          "group-hover:scale-110 group-hover:opacity-10",
         )}
       >
         {String(index + 1).padStart(2, "0")}

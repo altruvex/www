@@ -1,33 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifySessionToken } from "./lib/admin-auth";
+import { auth } from "./lib/auth";
+
+const ADMIN_ROLES = new Set(["ADMIN", "SUPERADMIN"]);
 
 export default async function proxy(request: NextRequest) {
-  const session = request.cookies.get("admin-session");
-
-  const publicPaths = ["/login", "/api/auth/login", "/offline"];
-  const isPublicPath = publicPaths.some(
-    (path) =>
-      request.nextUrl.pathname === path ||
-      request.nextUrl.pathname.startsWith("/api/auth/"),
-  );
+  const publicPaths = ["/login", "/offline"];
+  const isPublicPath =
+    publicPaths.some((path) => request.nextUrl.pathname === path) ||
+    request.nextUrl.pathname.startsWith("/api/auth/");
 
   if (isPublicPath) {
     return NextResponse.next();
   }
 
-  const adminSecret = process.env.ADMIN_SECRET;
-  const adminEmail = process.env.ADMIN_EMAIL;
-  const adminPepper = process.env.ADMIN_SECRET_PEPPER;
+  const session = await auth.api.getSession({ headers: request.headers });
 
-  if (!adminSecret || !adminEmail || !adminPepper) {
-    return NextResponse.json(
-      { error: "Admin access not configured" },
-      { status: 503 },
-    );
-  }
-
-  if (!session || !(await verifySessionToken(session.value))) {
+  if (!session || !ADMIN_ROLES.has((session.user as { role?: string }).role ?? "")) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(loginUrl);

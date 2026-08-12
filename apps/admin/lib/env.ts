@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 const envSchema = z.object({
-  ADMIN_SECRET: z.string().min(1),
-  ADMIN_SECRET_PEPPER: z.string().min(16),
   DATABASE_URL: z.string().url(),
-  ADMIN_EMAIL: z.string().email(),
+  BETTER_AUTH_SECRET: z.string().min(1),
+  BETTER_AUTH_URL: z.string().url().optional(),
+  ADMIN_SECRET: z.string().optional(),
+  ADMIN_SECRET_PEPPER: z.string().optional(),
+  ADMIN_EMAIL: z.string().email().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma, Prisma, SubmissionStatus, Priority } from "@repo/database";
-import { isAdminAuthed } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(request: NextRequest) {
   try {
-    if (!(await isAdminAuthed(request))) {
+    if (!(await requireAdminSession(request))) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -105,7 +105,7 @@ const updateContactSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
-    if (!(await isAdminAuthed(request))) {
+    if (!(await requireAdminSession(request))) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -199,7 +199,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    if (!(await isAdminAuthed(request))) {
+    if (!(await requireAdminSession(request))) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },

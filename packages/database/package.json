@@ -15,7 +15,8 @@
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "studio": "prisma studio"
+    "studio": "prisma studio",
+    "backfill:clients": "tsx scripts/backfill-clients.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.0",

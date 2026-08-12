@@ -1,10 +1,19 @@
 import { useCallback, useState } from "react";
+import {
+  calculateEstimate,
+  type BrandIdentity as PricingBrandIdentity,
+  type Complexity as PricingComplexity,
+  type ContentReadiness as PricingContentReadiness,
+  type EstimateResult,
+  type ProjectType as PricingProjectType,
+  type Timeline as PricingTimeline,
+} from "@repo/pricing";
 
-export type ProjectType = "website" | "webapp" | "ecommerce" | "pwa" | null;
-export type Complexity = "basic" | "standard" | "premium" | null;
-export type Timeline = "urgent" | "standard" | "flexible" | null;
-export type BrandIdentity = "complete" | "partial" | "scratch" | null;
-export type ContentReadiness = "provide" | "need-help" | "unsure" | null;
+export type ProjectType = PricingProjectType | null;
+export type Complexity = PricingComplexity | null;
+export type Timeline = PricingTimeline | null;
+export type BrandIdentity = PricingBrandIdentity | null;
+export type ContentReadiness = PricingContentReadiness | null;
 export type DeadlineUrgency =
   | "flexible"
   | "2months"
@@ -24,95 +33,7 @@ interface TransparencyState {
   timeline: Timeline;
 }
 
-interface EstimateResult {
-  minWeeks: number;
-  maxWeeks: number;
-  minPrice: number;
-  maxPrice: number;
-}
-
 const TOTAL_STEPS = 8;
-
-const ESTIMATE_ROUNDING = 5_000;
-
-function roundEstimate(value: number): number {
-  return Math.round(value / ESTIMATE_ROUNDING) * ESTIMATE_ROUNDING;
-}
-
-const PRICING_TABLE = {
-  website: {
-    basic: [35_000, 70_000],
-    standard: [70_000, 140_000],
-    premium: [140_000, 220_000],
-  },
-  webapp: {
-    basic: [80_000, 150_000],
-    standard: [150_000, 280_000],
-    premium: [280_000, 450_000],
-  },
-  ecommerce: {
-    basic: [55_000, 95_000],
-    standard: [95_000, 180_000],
-    premium: [180_000, 320_000],
-  },
-  pwa: {
-    basic: [95_000, 175_000],
-    standard: [175_000, 310_000],
-    premium: [310_000, 495_000],
-  },
-};
-
-const TIMELINE_TABLE = {
-  website: {
-    basic: [2, 4],
-    standard: [4, 7],
-    premium: [7, 11],
-  },
-  webapp: {
-    basic: [5, 8],
-    standard: [8, 14],
-    premium: [14, 22],
-  },
-  ecommerce: {
-    basic: [4, 6],
-    standard: [6, 10],
-    premium: [10, 16],
-  },
-  pwa: {
-    basic: [6, 10],
-    standard: [10, 16],
-    premium: [16, 26],
-  },
-};
-
-const TIMELINE_MULTIPLIERS = {
-  urgent: 1.15,
-  standard: 1,
-  flexible: 0.95,
-};
-
-const TIMELINE_WEEK_MULTIPLIERS = {
-  urgent: 0.85,
-  standard: 1,
-  flexible: 1.15,
-};
-
-// Brand readiness adds design/identity scope. "complete" is the neutral
-// baseline; building from scratch grows both budget and timeline.
-const BRAND_MULTIPLIERS = {
-  complete: { price: 1, weeks: 1 },
-  partial: { price: 1.05, weeks: 1.05 },
-  scratch: { price: 1.12, weeks: 1.15 },
-};
-
-// Content readiness adds strategy/copywriting scope. "provide" is neutral.
-const CONTENT_MULTIPLIERS = {
-  provide: { price: 1, weeks: 1 },
-  "need-help": { price: 1.08, weeks: 1.1 },
-  unsure: { price: 1.04, weeks: 1.05 },
-};
-
-const NEUTRAL_FACTOR = { price: 1, weeks: 1 };
 
 interface UseTransparencyOptions {
   initialTier?: string | null;
@@ -237,29 +158,13 @@ export function useTransparency({
   const getEstimate = useCallback((): EstimateResult | null => {
     if (!state.projectType || !state.complexity || !state.timeline) return null;
 
-    const priceRange = PRICING_TABLE[state.projectType][state.complexity];
-    const timelineRange = TIMELINE_TABLE[state.projectType][state.complexity];
-    const multiplier = TIMELINE_MULTIPLIERS[state.timeline];
-    const weekMultiplier = TIMELINE_WEEK_MULTIPLIERS[state.timeline];
-
-    // Optional refiners: absent answers stay neutral so the estimate still
-    // works with only the three core inputs (e.g. deep-link preselection).
-    const brand = state.brandIdentity
-      ? BRAND_MULTIPLIERS[state.brandIdentity]
-      : NEUTRAL_FACTOR;
-    const content = state.contentReadiness
-      ? CONTENT_MULTIPLIERS[state.contentReadiness]
-      : NEUTRAL_FACTOR;
-
-    const priceFactor = multiplier * brand.price * content.price;
-    const weekFactor = weekMultiplier * brand.weeks * content.weeks;
-
-    return {
-      minWeeks: Math.max(Math.round(timelineRange[0] * weekFactor), 1),
-      maxWeeks: Math.max(Math.round(timelineRange[1] * weekFactor), 1),
-      minPrice: roundEstimate(priceRange[0] * priceFactor),
-      maxPrice: roundEstimate(priceRange[1] * priceFactor),
-    };
+    return calculateEstimate({
+      projectType: state.projectType,
+      complexity: state.complexity,
+      timeline: state.timeline,
+      brandIdentity: state.brandIdentity,
+      contentReadiness: state.contentReadiness,
+    });
   }, [state]);
 
   return {

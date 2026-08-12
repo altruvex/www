@@ -1,274 +1,593 @@
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-
 enum UserRole {
-    USER
-    ADMIN
-    SUPERADMIN
+  USER
+  ADMIN
+  SUPERADMIN
 }
 
 model User {
-    id           String   @id @default(uuid())
-    email        String   @unique
-    name         String?
-    passwordHash String
-    role         UserRole @default(USER)
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  passwordHash String
+  role         UserRole @default(USER)
 
-    emailVerified Boolean   @default(false)
-    verifiedAt    DateTime?
+  emailVerified Boolean   @default(false)
+  verifiedAt    DateTime?
 
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-    lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
 
-    contactSubmissions ContactSubmission[]
-    assignedContacts   ContactSubmission[] @relation("AssignedTo")
-    meetings           Meeting[]
-    meetingRequests    Meeting[]           @relation("RequestedBy")
-    notes              ContactNote[]
+  contactSubmissions ContactSubmission[]
+  assignedContacts   ContactSubmission[] @relation("AssignedTo")
+  meetings           Meeting[]
+  meetingRequests    Meeting[]           @relation("RequestedBy")
+  notes              ContactNote[]
+  sessions           Session[]
+  accounts           Account[]
 
-    @@index([email])
-    @@index([role])
-    @@map("users")
+  @@index([email])
+  @@index([role])
+  @@map("users")
 }
 
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id         String @id @default(uuid())
+  accountId  String
+  providerId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verifications")
+}
 
 enum SubmissionStatus {
-    NEW
-    VIEWED 
-    CONTACTED 
-    QUALIFIED 
-    PROPOSAL_SENT
-    WON
-    LOST
-    SPAM
+  NEW
+  VIEWED
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  WON
+  LOST
+  SPAM
 }
 
 enum Priority {
-    LOW
-    MEDIUM
-    HIGH
-    URGENT
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 enum ServiceType {
-    WEB_DEVELOPMENT
-    ECOMMERCE
-    MULTILINGUAL
-    UI_UX
-    OTHER
+  WEB_DEVELOPMENT
+  ECOMMERCE
+  MULTILINGUAL
+  UI_UX
+  OTHER
 }
 
 enum ProjectTimeline {
-    IMMEDIATE 
-    SOON 
-    PLANNING 
-    EXPLORING
+  IMMEDIATE
+  SOON
+  PLANNING
+  EXPLORING
 }
 
 enum BudgetRange {
-    UNDER_10K
-    B_10K_25K
-    B_25K_50K
-    OVER_50K
+  UNDER_10K
+  B_10K_25K
+  B_25K_50K
+  OVER_50K
 }
 
 model ContactSubmission {
-    id String @id @default(uuid())
-    name            String
-    phone           String
-    message         String
-    serviceInterest ServiceType?
-    projectTimeline ProjectTimeline?
-    budget          BudgetRange?
+  id              String           @id @default(uuid())
+  name            String
+  phone           String
+  message         String
+  serviceInterest ServiceType?
+  projectTimeline ProjectTimeline?
+  budget          BudgetRange?
 
-    status   SubmissionStatus @default(NEW)
-    priority Priority         @default(MEDIUM)
+  status   SubmissionStatus @default(NEW)
+  priority Priority         @default(MEDIUM)
 
-    assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
-    assignedToId String?
+  assignedTo   User?   @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedToId String?
 
-    locale      String  @default("en")
-    userAgent   String?
-    ipAddress   String?
-    referrer    String?
-    utmSource   String?
-    utmMedium   String?
-    utmCampaign String?
+  locale      String  @default("en")
+  userAgent   String?
+  ipAddress   String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
 
-    user   User?   @relation(fields: [userId], references: [id])
-    userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String?
 
-    notes    ContactNote[]
-    tags     ContactTag[]
-    meetings Meeting[]
+  notes    ContactNote[]
+  tags     ContactTag[]
+  meetings Meeting[]
 
-    submittedAt      DateTime  @default(now())
-    lastUpdatedAt    DateTime  @updatedAt
-    firstViewedAt    DateTime?
-    firstContactedAt DateTime?
+  client Client?
 
-    @@index([phone])
-    @@index([status])
-    @@index([priority])
-    @@index([submittedAt])
-    @@index([assignedToId])
-    @@map("contact_submissions")
+  submittedAt      DateTime  @default(now())
+  lastUpdatedAt    DateTime  @updatedAt
+  firstViewedAt    DateTime?
+  firstContactedAt DateTime?
+
+  @@index([phone])
+  @@index([status])
+  @@index([priority])
+  @@index([submittedAt])
+  @@index([assignedToId])
+  @@map("contact_submissions")
 }
 
 model ContactNote {
-    id      String @id @default(uuid())
-    content String
-    type    String @default("internal")
+  id      String @id @default(uuid())
+  content String
+  type    String @default("internal")
 
-    submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-    submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    @@index([submissionId])
-    @@map("contact_notes")
+  @@index([submissionId])
+  @@map("contact_notes")
 }
 
 model ContactTag {
-    id   String @id @default(uuid())
-    name String
+  id   String @id @default(uuid())
+  name String
 
-    submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-    submissionId String
+  submission   ContactSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
 
-    createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-    @@unique([submissionId, name])
-    @@index([name])
-    @@map("contact_tags")
+  @@unique([submissionId, name])
+  @@index([name])
+  @@map("contact_tags")
 }
 
 enum MeetingStatus {
-    PENDING
-    APPROVED
-    REJECTED
-    COMPLETED
-    CANCELLED
-    RESCHEDULED
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
 }
 
 enum MeetingType {
-    DISCOVERY
-    CONSULTATION
-    PROPOSAL
-    FOLLOWUP
+  DISCOVERY
+  CONSULTATION
+  PROPOSAL
+  FOLLOWUP
 }
 
 model Meeting {
-    id String @id @default(uuid())
+  id String @id @default(uuid())
 
-    title       String
-    description String?
-    type        MeetingType   @default(DISCOVERY)
-    status      MeetingStatus @default(PENDING)
+  title       String
+  description String?
+  type        MeetingType   @default(DISCOVERY)
+  status      MeetingStatus @default(PENDING)
 
-    scheduledDate   DateTime
-    scheduledTime   String 
-    durationMinutes Int      @default(30)
+  scheduledDate   DateTime
+  scheduledTime   String
+  durationMinutes Int      @default(30)
 
-    requestedBy   User?   @relation("RequestedBy", fields: [requestedById], references: [id])
-    requestedById String?
+  requestedBy   User?   @relation("RequestedBy", fields: [requestedById], references: [id])
+  requestedById String?
 
-    assignedTo   User?   @relation(fields: [assignedToId], references: [id])
-    assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+  assignedToId String?
 
-    contactSubmission ContactSubmission? @relation(fields: [submissionId], references: [id])
-    submissionId      String?
+  contactSubmission ContactSubmission? @relation(fields: [submissionId], references: [id])
+  submissionId      String?
 
-    guestName  String?
-    guestEmail String?
+  guestName  String?
+  guestEmail String?
 
-    meetingUrl String?
+  meetingUrl String?
 
-    notes      String?
-    adminNotes String?
+  notes      String?
+  adminNotes String?
 
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-    approvedAt  DateTime?
-    completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  approvedAt  DateTime?
+  completedAt DateTime?
 
-    @@index([scheduledDate])
-    @@index([status])
-    @@index([assignedToId])
-    @@index([submissionId])
-    @@map("meetings")
+  @@index([scheduledDate])
+  @@index([status])
+  @@index([assignedToId])
+  @@index([submissionId])
+  @@map("meetings")
 }
 
 enum NotificationType {
-    NEW_CONTACT
-    NEW_MEETING
-    STATUS_CHANGE
-    ASSIGNMENT
+  NEW_CONTACT
+  NEW_MEETING
+  STATUS_CHANGE
+  ASSIGNMENT
 }
 
 model Notification {
-    id      String           @id @default(uuid())
-    type    NotificationType
-    title   String
-    message String
+  id      String           @id @default(uuid())
+  type    NotificationType
+  title   String
+  message String
 
-    userId String
+  userId String
 
-    entityType String
-    entityId   String
+  entityType String
+  entityId   String
 
-    read   Boolean   @default(false)
-    readAt DateTime?
+  read   Boolean   @default(false)
+  readAt DateTime?
 
-    createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-    @@index([userId, read])
-    @@index([createdAt])
-    @@map("notifications")
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 model TransparencyLead {
-    id          String    @id @default(uuid())
-    phone       String
-    name        String?
-    projectType String
-    complexity  String
-    timeline    String
-    priceMin    Int
-    priceMax    Int
-    weeksMin    Int
-    weeksMax    Int
-    convertedAt DateTime?
-    createdAt   DateTime  @default(now())
+  id          String    @id @default(uuid())
+  phone       String
+  name        String?
+  projectType String
+  complexity  String
+  timeline    String
+  priceMin    Int
+  priceMax    Int
+  weeksMin    Int
+  weeksMax    Int
+  convertedAt DateTime?
+  createdAt   DateTime  @default(now())
 
-    @@index([phone])
-    @@index([createdAt])
-    @@map("transparency_leads")
+  client Client?
+
+  @@index([phone])
+  @@index([createdAt])
+  @@map("transparency_leads")
+}
+
+enum ClientSource {
+  WEBSITE_CONTACT_FORM
+  TRANSPARENCY_ESTIMATOR
+  MANUAL
+  WHATSAPP_INBOUND
+  REFERRAL
+}
+
+model Client {
+  id       String  @id @default(uuid())
+  name     String?
+  phone    String
+  email    String?
+  company  String?
+  industry String?
+
+  source  ClientSource @default(MANUAL)
+  addedBy String?
+
+  contactSubmission   ContactSubmission? @relation(fields: [contactSubmissionId], references: [id])
+  contactSubmissionId String?            @unique
+
+  transparencyLead   TransparencyLead? @relation(fields: [transparencyLeadId], references: [id])
+  transparencyLeadId String?           @unique
+
+  proposals Proposal[]
+  contracts Contract[]
+  projects  Project[]
+  messages  WhatsAppMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+  @@map("clients")
+}
+
+enum ProposalStatus {
+  DRAFT
+  SENT
+  DELIVERED
+  READ
+  VIEWED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum ColorWorld {
+  BLUE
+  ORANGE
+  GREEN
+  NONE
+}
+
+model Proposal {
+  id       String @id @default(uuid())
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String
+
+  projectType   String
+  complexity    String
+  currency      String @default("EGP")
+  totalPrice    Int
+  lineItems     Json
+  timelineWeeks Int
+  paymentSplit  Json   @default("{\"first\":50,\"second\":30,\"final\":20}")
+
+  colorWorld ColorWorld @default(BLUE)
+  accentName String
+
+  fileUrl String?
+  pdfUrl  String?
+
+  status            ProposalStatus @default(DRAFT)
+  sentAt            DateTime?
+  whatsappMessageId String?
+  deliveredAt       DateTime?
+  readAt            DateTime?
+  respondedAt       DateTime?
+
+  validUntil DateTime
+
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contract Contract?
+
+  @@index([clientId])
+  @@index([status])
+  @@map("proposals")
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  DECLINED
+  EXPIRED
+}
+
+enum SignatureMethod {
+  CLICK_TO_SIGN
+  UPLOADED_PDF
+  ESIGN_API
+}
+
+model Contract {
+  id         String   @id @default(uuid())
+  proposal   Proposal @relation(fields: [proposalId], references: [id])
+  proposalId String   @unique
+  client     Client   @relation(fields: [clientId], references: [id])
+  clientId   String
+
+  signToken String? @unique
+
+  fileUrl       String?
+  signedFileUrl String?
+
+  status          ContractStatus   @default(DRAFT)
+  signatureMethod SignatureMethod?
+  signedAt        DateTime?
+  signedByName    String?
+  signedIp        String?
+
+  onboardingMessageSentAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project?
+
+  @@index([clientId])
+  @@index([status])
+  @@map("contracts")
+}
+
+enum ProjectPhase {
+  DISCOVERY
+  DESIGN
+  DEVELOPMENT
+  QA
+  STAGING_REVIEW
+  LAUNCHED
+  POST_LAUNCH_SUPPORT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+model Project {
+  id         String   @id @default(uuid())
+  contract   Contract @relation(fields: [contractId], references: [id])
+  contractId String   @unique
+  client     Client   @relation(fields: [clientId], references: [id])
+  clientId   String
+
+  portalToken String @unique @default(uuid())
+
+  name   String
+  phase  ProjectPhase  @default(DISCOVERY)
+  status ProjectStatus @default(ACTIVE)
+
+  stagingUrl String?
+  liveUrl    String?
+
+  targetLaunchDate DateTime?
+  actualLaunchDate DateTime?
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@map("projects")
+}
+
+enum PaymentMilestone {
+  DEPOSIT_50
+  MILESTONE_30
+  FINAL_20
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+model Payment {
+  id        String  @id @default(uuid())
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  milestone PaymentMilestone
+  amount    Int
+  status    PaymentStatus    @default(PENDING)
+
+  dueDate   DateTime?
+  paidAt    DateTime?
+  method    String?
+  reference String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum WhatsAppDirection {
+  OUTBOUND
+  INBOUND
+}
+
+enum WhatsAppMessageStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+model WhatsAppMessage {
+  id       String @id @default(uuid())
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String
+
+  direction WhatsAppDirection
+  status    WhatsAppMessageStatus @default(QUEUED)
+
+  waMessageId  String? @unique
+  templateName String?
+  body         String
+  mediaUrl     String?
+
+  relatedProposalId String?
+  relatedContractId String?
+
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([waMessageId])
+  @@map("whatsapp_messages")
 }
 
 model RateLimitBucket {
-    id String @id @default(uuid())
-    key String @unique
-    windowStart   DateTime
-    windowSeconds Int
-    count         Int      @default(0)
+  id            String   @id @default(uuid())
+  key           String   @unique
+  windowStart   DateTime
+  windowSeconds Int
+  count         Int      @default(0)
 
-    updatedAt DateTime @updatedAt
-    createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 
-    @@index([windowStart])
-    @@map("rate_limit_buckets")
+  @@index([windowStart])
+  @@map("rate_limit_buckets")
 }

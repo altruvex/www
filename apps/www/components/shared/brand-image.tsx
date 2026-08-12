@@ -11,7 +11,6 @@ import { useState } from "react";
  * decorative by default (empty alt + aria-hidden) and carries no semantic weight.
  */
 export type BrandSlot =
-  | "hero"
   | "about"
   | "process"
   | "proof"
@@ -21,7 +20,6 @@ export type BrandSlot =
 
 const SLOTS: Record<BrandSlot, { src: string; width: number; height: number }> =
   {
-    hero: { src: "/brand/hero-abstract.png", width: 2560, height: 1440 },
     about: { src: "/brand/about-identity.png", width: 1600, height: 2000 },
     process: { src: "/brand/process-diagram.png", width: 1800, height: 1200 },
     proof: { src: "/brand/proof-abstract.png", width: 2560, height: 1440 },

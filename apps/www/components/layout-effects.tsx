@@ -7,9 +7,12 @@ import { useIdleMount } from "@/hooks/use-idle-mount";
 import dynamic from "next/dynamic";
 import { Suspense, type ReactNode } from "react";
 
-const CustomCursorLazy = dynamic(() => import("@/components/interactive/custom-cursor"), {
-  ssr: false,
-});
+const CustomCursorLazy = dynamic(
+  () => import("@/components/interactive/custom-cursor"),
+  {
+    ssr: false,
+  },
+);
 
 const ExitIntentLazy = dynamic(
   () =>
@@ -39,8 +42,17 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
   const idleMounted = useIdleMount({ timeout: 1200 });
   const hasInteracted = useFirstInteraction();
   const shouldMountNonCritical = idleMounted || hasInteracted;
-  const content = (
+
+  // SmoothScroll mounts as a SIBLING, never as a wrapper. Swapping the tree
+  // between `content` and `<SmoothScrollLazy>{content}</SmoothScrollLazy>`
+  // changed the element type at this position, so React tore down and rebuilt
+  // the entire app the moment `shouldMountNonCritical` flipped — on the first
+  // pointerdown / touchstart / wheel / keydown. Every piece of client state
+  // below it was wiped, including an open drawer. The provider holds no
+  // context; it only runs an effect, so a sibling works identically.
+  return (
     <>
+      {shouldMountNonCritical ? <SmoothScrollLazy /> : null}
       {shouldMountNonCritical ? <InitialLoaderLazy /> : null}
       <ThemeProvider
         attribute="class"
@@ -49,20 +61,14 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
         disableTransitionOnChange
       >
         <div vaul-drawer-wrapper="">
-        <Suspense fallback={null}>
-          {shouldMountNonCritical ? <CustomCursorLazy /> : null}
-        </Suspense>
-        {children}
-        <CommandPaletteHost />
-        {shouldMountNonCritical ? <ExitIntentLazy /> : null}
+          <Suspense fallback={null}>
+            {shouldMountNonCritical ? <CustomCursorLazy /> : null}
+          </Suspense>
+          {children}
+          <CommandPaletteHost />
+          {shouldMountNonCritical ? <ExitIntentLazy /> : null}
         </div>
       </ThemeProvider>
     </>
-  );
-
-  return shouldMountNonCritical ? (
-    <SmoothScrollLazy>{content}</SmoothScrollLazy>
-  ) : (
-    content
   );
 }

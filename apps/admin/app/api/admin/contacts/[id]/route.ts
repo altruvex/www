@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@repo/database";
-import { isAdminAuthed } from "@/lib/admin-auth";
+import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!(await isAdminAuthed(request))) {
+    if (!(await requireAdminSession(request))) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },

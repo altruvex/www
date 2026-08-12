@@ -1,13 +1,40 @@
 import { Container } from "@/components/shared/container";
-import { BrandImage } from "@/components/shared/brand-image";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Accent, Highlight } from "@/components/ui/emphasis";
 import { getCommercialCta } from "@/lib/config/commercial";
+import { cn } from "@/lib/utils/utils";
 import { getTranslations } from "next-intl/server";
+import Image from "next/image";
 import { HeroBatch, HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
 import { HeroScrollHint } from "./hero-scroll-hint";
+
+const HERO_TRIANGLE = {
+  desktopLight: {
+    src: "/brand/hero-triangle-desktop-light.png",
+    width: 1536,
+    height: 1024,
+  },
+  desktopDark: {
+    src: "/brand/hero-triangle-desktop-dark.png",
+    width: 1536,
+    height: 1024,
+  },
+  mobileLight: {
+    src: "/brand/hero-triangle-mobile-light.png",
+    width: 853,
+    height: 1844,
+  },
+  mobileDark: {
+    src: "/brand/hero-triangle-mobile-dark.png",
+    width: 864,
+    height: 1821,
+  },
+} as const;
+
+const HERO_IMAGE_CLASS =
+  "select-none object-cover motion-safe:animate-brand-kenburns";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -44,13 +71,46 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             "radial-gradient(120% 120% at 85% 15%, black 0%, transparent 65%)",
         }}
       >
-        <BrandImage
-          slot="hero"
-          fill
-          kenBurns
-          sizes="100vw"
-          className="opacity-40 dark:opacity-50"
-        />
+        <div className="absolute inset-0 hidden md:block">
+          <Image
+            src={HERO_TRIANGLE.desktopLight.src}
+            alt=""
+            aria-hidden
+            draggable={false}
+            fill
+            sizes="100vw"
+            className={cn(HERO_IMAGE_CLASS, "opacity-40 dark:hidden")}
+          />
+          <Image
+            src={HERO_TRIANGLE.desktopDark.src}
+            alt=""
+            aria-hidden
+            draggable={false}
+            fill
+            sizes="100vw"
+            className={cn(HERO_IMAGE_CLASS, "hidden opacity-50 dark:block")}
+          />
+        </div>
+        <div className="absolute inset-0 md:hidden">
+          <Image
+            src={HERO_TRIANGLE.mobileLight.src}
+            alt=""
+            aria-hidden
+            draggable={false}
+            fill
+            sizes="100vw"
+            className={cn(HERO_IMAGE_CLASS, "opacity-40 dark:hidden")}
+          />
+          <Image
+            src={HERO_TRIANGLE.mobileDark.src}
+            alt=""
+            aria-hidden
+            draggable={false}
+            fill
+            sizes="100vw"
+            className={cn(HERO_IMAGE_CLASS, "hidden opacity-50 dark:block")}
+          />
+        </div>
       </div>
       <SectionWatermark>{watermark}</SectionWatermark>
       <h1 id="home-heading" className="sr-only">

@@ -11,6 +11,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Link, usePathname } from "@/i18n/navigation";
+import { getLenis } from "@/lib/motion/lenis-instance";
 import { cn } from "@/lib/utils/utils";
 import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -64,6 +65,14 @@ export function Nav() {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    getLenis()?.stop();
+    return () => {
+      getLenis()?.start();
+    };
+  }, [isMobileMenuOpen]);
+
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
@@ -73,22 +82,21 @@ export function Nav() {
       className={cn(
         "fixed top-0 w-full transition-all duration-300",
         isMobileMenuOpen
-          ? "z-[60] bg-transparent"
+          ? "z-60 bg-transparent"
           : cn("z-40", isScrolled ? "liquid-glass" : "bg-transparent"),
       )}
     >
       <Container>
         <div className="flex md:h-16 h-14 items-center">
-          <div
-            className="hidden lg:grid w-full items-center gap-8"
-            style={{ gridTemplateColumns: "1fr 2fr 1fr" }}
-          >
-            <div className="flex order-1 justify-start">
+          {/* تم تعديل هذا الجزء فقط لحل مشكلة المحاذاة */}
+          <div className="hidden lg:flex w-full items-center justify-between gap-8">
+            <div className="flex flex-1 justify-start">
               <Link href="/" className="flex items-baseline gap-1 group">
                 <AltruvexLogo size="md" variant="full" />
               </Link>
             </div>
-            <nav className="flex items-center justify-center gap-1 order-2">
+            
+            <nav className="flex items-center justify-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -111,7 +119,8 @@ export function Nav() {
                 );
               })}
             </nav>
-            <div className="flex items-center gap-2 order-3 justify-end text-nowrap">
+
+            <div className="flex flex-1 items-center gap-2 justify-end text-nowrap">
               <LanguageSwitcherBase variant="default" />
               <NavDivider />
               <ThemeChanger />
@@ -129,6 +138,8 @@ export function Nav() {
               </Link>
             </div>
           </div>
+          {/* نهاية الجزء المعدل */}
+
           <div className="flex lg:hidden w-full items-center justify-between">
             <Link href="/" className="flex items-baseline gap-1 group z-50">
               <AltruvexLogo size="md" variant="full" />
@@ -175,72 +186,68 @@ export function Nav() {
                       {t("menuDescription")}
                     </DrawerDescription>
                   </DrawerHeader>
-                  <div className="h-full w-full" style={{ height: "calc(85svh - 1.5rem)" }}>
-                    <div
-                      dir={dir}
-                      className="h-full w-full overflow-y-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                    >
-                      <div className="h-full w-full" style={{ height: "calc(85svh - 1.5rem)" }}>
-                        <div className="flex min-h-full flex-col">
-                          <nav className="flex flex-col space-y-2 mb-12">
-                            {NAV_ITEMS.map((item) => {
-                              const isActive =
-                                pathname === item.href ||
-                                pathname.startsWith(`${item.href}/`);
-                              return (
-                                <Link
-                                  key={item.key}
-                                  href={item.href}
-                                  onClick={closeMobileMenu}
-                                  aria-current={isActive ? "page" : undefined}
-                                  className={cn(
-                                    "flex w-full items-center rounded-md border-s-2 px-4 py-4 transition-colors duration-200",
-                                    isActive
-                                      ? "bg-brand/10 text-brand-text border-brand"
-                                      : "border-transparent text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
-                                  )}
-                                >
-                                  <span className="font-sans text-2xl font-semibold tracking-tight text-start">
-                                    {t(item.key)}
-                                  </span>
-                                </Link>
-                              );
-                            })}
-                          </nav>
-                          <div className="space-y-6 mt-auto pb-6">
-                            <div className="h-px w-full bg-foreground/10" />
-                            <div className="grid grid-cols-2 gap-4">
-                              <Link
-                                href="/transparency"
-                                className="inline-flex h-11 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
-                                onClick={closeMobileMenu}
-                              >
-                                {t("getStarted")}
-                              </Link>
-                              <Link
-                                href="/schedule"
-                                className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-foreground/10 px-4 text-sm font-medium text-foreground"
-                                onClick={closeMobileMenu}
-                              >
-                                <Calendar className="h-4 w-4" />
-                                {t("schedule")}
-                              </Link>
-                            </div>
-                            <div className="h-px w-full bg-foreground/10" />
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
-                                <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                                  {t("language")}
-                                </span>
-                                <LanguageSwitcherBase variant="toggle" />
-                              </div>
-                              <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
-                                <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                                  {t("theme")}
-                                </span>
-                                <ThemeChanger />
-                              </div>
-                            </div>
+                  <div
+                    dir={dir}
+                    className="min-h-0 flex-1 overflow-y-auto py-2 scrollbar-none [&::-webkit-scrollbar]:hidden"
+                  >
+                    <div className="flex min-h-full flex-col">
+                      <nav className="flex flex-col space-y-2 mb-12">
+                        {NAV_ITEMS.map((item) => {
+                          const isActive =
+                            pathname === item.href ||
+                            pathname.startsWith(`${item.href}/`);
+                          return (
+                            <Link
+                              key={item.key}
+                              href={item.href}
+                              onClick={closeMobileMenu}
+                              aria-current={isActive ? "page" : undefined}
+                              className={cn(
+                                "flex w-full items-center rounded-md border-s-2 px-4 py-4 transition-colors duration-200",
+                                isActive
+                                  ? "bg-brand/10 text-brand-text border-brand"
+                                  : "border-transparent text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+                              )}
+                            >
+                              <span className="font-sans text-xl font-medium tracking-tight text-start">
+                                {t(item.key)}
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </nav>
+                      <div className="space-y-6 mt-auto pb-6">
+                        <div className="h-px w-full bg-foreground/10" />
+                        <div className="grid grid-cols-2 gap-4">
+                          <Link
+                            href="/transparency"
+                            className="inline-flex h-11 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
+                            onClick={closeMobileMenu}
+                          >
+                            {t("getStarted")}
+                          </Link>
+                          <Link
+                            href="/schedule"
+                            className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-foreground/10 px-4 text-sm font-medium text-foreground"
+                            onClick={closeMobileMenu}
+                          >
+                            <Calendar className="h-4 w-4" />
+                            {t("schedule")}
+                          </Link>
+                        </div>
+                        <div className="h-px w-full bg-foreground/10" />
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
+                            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+                              {t("language")}
+                            </span>
+                            <LanguageSwitcherBase variant="toggle" />
+                          </div>
+                          <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
+                            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
+                              {t("theme")}
+                            </span>
+                            <ThemeChanger />
                           </div>
                         </div>
                       </div>

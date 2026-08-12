@@ -73,12 +73,6 @@
   --font-mono:
     var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif: Georgia, "Times New Roman", serif;
-  /* Apple has TWO radius families, not one continuous ramp:
-       controls (buttons, fields, chips)  ~8-14px
-       panels  (widgets, cards, sheets)   ~20-32px
-     The gap between md and lg is that boundary. Keep controls on xs/sm/md and
-     panels on lg/xl/2xl — never put a 40px-tall button on `lg`, because a 20px
-     radius on a 40px control is a pill. */
   --radius-xs: calc(var(--radius) - 8px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
@@ -86,13 +80,6 @@
   --radius-xl: calc(var(--radius) + 12px);
   --radius-2xl: calc(var(--radius) + 18px);
   --radius-3xl: calc(var(--radius) + 24px);
-  /* Control radius TRACKS CONTROL HEIGHT, the way Apple's does — one flat
-     value makes a 48px full-width CTA read square while a 32px button reads
-     pill. Pick the token by the control's height, not by its importance:
-       ctl-sm 12px → 32px tall · ctl 16px → 36-40px
-       ctl-lg 18px → 44px      · ctl-xl 20px → 48px and up
-     Ceiling is 20px: half of a 48px control is 24px, so anything above ~20
-     starts reading as a pill. */
   --radius-ctl-sm: calc(var(--radius) - 4px);
   --radius-ctl: var(--radius);
   --radius-ctl-lg: calc(var(--radius) + 2px);
@@ -114,14 +101,6 @@
 
 :root {
   --duration-instant: 120ms;
-  /* Apple-widget radius (Ali, 2026-07-27, reference: macOS/iOS widgets).
-     Base 14px is the CONTROL size — buttons, fields, chips, badges. Panels
-     ride the +6/+12/+18 steps: cards/surface = 20px, overlays+modals = 26px,
-     large sections/tiles = 32px, matching the widget corner Ali pointed at.
-     Buttons are rounded-rect on the control tier, NOT pill — pill stays
-     reserved for badges, dots and toggles. Pairs with squircle (rects only;
-     `.rounded-full` is reset to `round` further down — a squircle at capsule
-     radius renders a rounded square, not a circle). */
   --radius: 1rem;
   --measure-prose: 66ch;
   --measure-narrow: 45ch;
@@ -171,10 +150,6 @@
   --local-accent: hsl(var(--brand));
   --local-accent-fg: hsl(var(--brand-foreground));
   --local-accent-soft: var(--brand-soft);
-  /* Text-safe accent channel (audit SYS-3): --local-accent is a FILL token;
-     at the root and in blue-dark it fails AA as small text. Text consumers
-     use --local-accent-text, which tracks the fill except where the fill is
-     not AA-readable. */
   --local-accent-text: hsl(var(--brand-text));
   --success: 162 95% 31%;
   --warning: 38 96% 40%;
@@ -286,10 +261,6 @@
   --s-high-soft: hsl(0 0% 100% / 0.025);
 }
 
-/* The services scene is now a fixed dark blue in both themes, and the header's
-   inverted state is driven solely by overlapping it (nav.tsx), so neither may
-   flip to light-on-dark's inverse in dark mode. Other consumers (the consulting
-   page card) still invert as before. */
 .dark [data-scene="inverted"]:not(header):not(#services-wrapper) {
   --foreground: 0 0% 6%;
   --primary: 0 0% 6%;
@@ -317,13 +288,6 @@
   --s-high-soft: hsl(0 0% 6% / 0.03);
 }
 
-/* Deep brand-blue scene — one flat colour, identical in light and dark theme.
-   The ID selector (1,1,0) outranks `.dark [data-scene="inverted"]` (0,2,0), so
-   this single rule holds in both themes with no `.dark` counterpart; the dark
-   flip is additionally excluded above via `:not(#services-wrapper)`.
-   `--inverted-bg` is overridden because the service cards paint with
-   `bg-inverted-bg/80` (services-section.tsx) — without it they stay pure black
-   on top of the blue field. */
 #services-wrapper[data-scene="inverted"] {
   background-color: hsl(214 88% 26%);
   --inverted-bg: 215 84% 20%;
@@ -351,26 +315,13 @@
   --s-border: hsl(205 90% 88% / 0.17);
   --s-border-hover: hsl(202 95% 92% / 0.34);
   --s-high-soft: hsl(202 95% 94% / 0.06);
-
-  /* The accent family must be rebound too, or it stays on the *page* ramp and
-     lands blue-on-blue inside the scene: root --local-accent (214 89% 48%)
-     measured 2.2:1 against this field, and .accent-world-orange on #services
-     resolves to its light-theme value (#aa5109, ~1.9:1) because the wrapper is
-     dark in BOTH themes while `.dark .accent-world-*` only fires under
-     html.dark. Light end of the brand ramp: 5.9:1 on the field. */
   --local-accent: hsl(203 100% 72%);
   --local-accent-text: hsl(203 100% 78%);
   --local-accent-fg: hsl(214 88% 16%);
   --local-accent-soft: hsl(203 100% 72% / 0.14);
-  /* Same problem for focus: the global *:focus-visible outline uses --ring,
-     which is brand blue and invisible here. */
   --ring: 203 100% 72%;
 }
 
-/* A colour world set ON a descendant of the scene (e.g. #services carries
-   .accent-world-orange) re-shadows the scene's inherited accent, so the scene
-   block above cannot reach it. Re-lighten the worlds here — (1,2,0) beats the
-   plain .accent-world-* rules (0,1,0) and their .dark variants (0,2,0). */
 #services-wrapper[data-scene="inverted"] .accent-world-orange {
   --local-accent: hsl(30 95% 65%);
   --local-accent-text: hsl(30 95% 72%);
@@ -907,20 +858,5 @@ html.lenis body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-}
-
-@supports (corner-shape: squircle) {
-  [class*="rounded"] {
-    corner-shape: squircle;
-  }
-  /* Squircle is a rounded-RECT treatment. On a capsule or circle the huge
-     radius turns the superellipse into a rounded SQUARE — which silently made
-     every dot, badge, avatar, icon button and the custom cursor the same
-     boxy shape. Apple never squircles a circle. Note the class selector is
-     deliberate: `.rounded-full` matches only the literal class, so variant
-     classes like `after:rounded-full` don't drag their parent along. */
-  .rounded-full {
-    corner-shape: round;
   }
 }

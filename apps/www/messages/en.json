@@ -660,6 +660,74 @@
     "ctaLabel": "See full pricing",
     "footnote": "Final quote depends on scope, confirmed in discovery."
   },
+  "quoteArtifact": {
+    "eyebrow": "The quote",
+    "title": "Every number you will be charged",
+    "titleAccent": "is already on this page.",
+    "subtitle": "Not a summary of a quote — the structure of the real one, including the parts most agencies leave for later.",
+    "document": {
+      "label": "Sample quote · structure",
+      "status": "Illustrative figures. Your numbers are confirmed in discovery — this structure is not."
+    },
+    "clauses": {
+      "scope": {
+        "index": "01",
+        "title": "Scope and range",
+        "body": "One tier, one fixed scope, one range. The range narrows to a single number after discovery, and it does not move upward without a signed change order.",
+        "figure": "22,000 – 45,000 EGP · Marketing System",
+        "note": "The range is the honest part. A single number quoted before discovery is a guess wearing the clothes of a commitment."
+      },
+      "schedule": {
+        "index": "02",
+        "title": "Payment schedule",
+        "body": "Milestone-based, never time-and-materials. You pay against delivered stages, and the bar below is drawn to the real proportions.",
+        "note": "No deposit, no project start. That protects your build window as much as ours."
+      },
+      "included": {
+        "index": "03",
+        "title": "Included in year one",
+        "body": "Domain, SSL, deployment, CI/CD, and base hosting for the first year — plus thirty days of post-launch monitoring.",
+        "note": "These are the line items that arrive later elsewhere as setup fees. They are already inside the figure above."
+      },
+      "passthrough": {
+        "index": "04",
+        "title": "Billed by others, not by us",
+        "body": "Stripe, Fawry, SMS gateways, and analytics tools are billed at their own standard rates, and only if your build actually uses them.",
+        "note": "Never marked up. We take nothing on top of a third party's price."
+      },
+      "separate": {
+        "index": "05",
+        "title": "Quoted separately",
+        "body": "Branding from scratch, copywriting, paid stock, email and SMS credits, and premium SaaS subscriptions sit outside the scope unless the scope lists them.",
+        "note": "Named here on purpose. A cost you can read in advance is not a surprise."
+      },
+      "ownership": {
+        "index": "06",
+        "title": "What you own at the end",
+        "body": "Full source code ownership from the moment the final payment clears, permanently. No subscription, no plugin stack, no dependency on us to keep it running.",
+        "note": "The last line matters most: nothing here rents you your own website."
+      }
+    },
+    "schedule": {
+      "start": {
+        "share": "50%",
+        "label": "To start — secures the build window"
+      },
+      "milestone": {
+        "share": "30%",
+        "label": "At milestone — design and architecture signed off"
+      },
+      "launch": {
+        "share": "20%",
+        "label": "Before launch — due before the site goes live"
+      }
+    },
+    "footer": {
+      "minimum": "Projects start at 22,000 EGP.",
+      "ctaLabel": "See full pricing",
+      "footnote": "Sample document. Your quote is issued after discovery."
+    }
+  },
   "pricing": {
     "commercial": {
       "items": {
@@ -882,41 +950,43 @@
     "eyebrow": "The Industry Problem",
     "title": "Most businesses aren't getting engineering.",
     "titleAccent": "They're getting templates.",
-    "subtitle": "The Egyptian and Arab web market is saturated with agencies that charge custom rates for commodity output. The problems below are not edge cases - they are the standard.",
+    "subtitle": "The Egyptian and Arab web market is saturated with agencies that charge custom rates for commodity output. Read each line across: on one side is what was promised, on the other is what was delivered.",
     "items": [
       {
         "number": "01",
-        "title": "Templates sold as custom work.",
-        "body": "Most agencies deliver a $60 WordPress theme with your logo swapped in - billed as bespoke development. The result: a generic shell that communicates nothing about your business and nothing about your standards.",
-        "signal": "Indistinguishable from competitors"
+        "pitch": "“A custom website, designed around your brand.”",
+        "delivery": "A $60 theme with the logo swapped in.",
+        "evidence": "Indistinguishable from competitors running the same theme"
       },
       {
         "number": "02",
-        "title": "Performance never measured.",
-        "body": "Sites that look polished in the demo load in 7+ seconds in production. Bloated scripts, unoptimized images, no Core Web Vitals strategy. Google penalizes it. Visitors leave. Revenue leaks silently.",
-        "signal": "Average agency site: 6.8s load time"
+        "pitch": "“Fast, modern, fully optimised.”",
+        "delivery": "Seven seconds to first paint in production.",
+        "evidence": "Average agency site: 6.8s load time"
       },
       {
         "number": "03",
-        "title": "Zero ownership after delivery.",
-        "body": "Go-live is the exit event. No documentation. No source code handoff. No architecture explanation. When something breaks - and it will - you're back to square one with a new vendor who inherits a codebase nobody can explain.",
-        "signal": "You own the domain. They own the knowledge."
+        "pitch": "“Full handover on launch day.”",
+        "delivery": "A login and a zip file. No docs, no architecture, no history.",
+        "evidence": "You own the domain. They own the knowledge."
       },
       {
         "number": "04",
-        "title": "Built for demos, not for scale.",
-        "body": "Freelancers and small agencies optimize for the approval moment, not the growth phase. Every feature added post-launch becomes a patch on a patch. The architecture was never designed to evolve - because that was never part of the contract.",
-        "signal": "Every new feature costs more than the last"
+        "pitch": "“Built to grow with you.”",
+        "delivery": "Built to survive the approval meeting.",
+        "evidence": "Every new feature costs more than the last"
       },
       {
         "number": "05",
-        "title": "No technical accountability.",
-        "body": "The person managing your project has never written production code. They relay messages between you and an offshore team, add two weeks to every timeline, and cannot answer a single technical question about how your system actually works.",
-        "signal": "You're paying for a middleman, not an engineer"
+        "pitch": "“A dedicated technical lead on your account.”",
+        "delivery": "A coordinator relaying messages to an offshore team.",
+        "evidence": "Two weeks added to every timeline, no answer to any technical question"
       }
     ],
     "closingPre": "Altruvex is built to be the answer to",
-    "closingHighlight": "every problem above."
+    "closingHighlight": "every problem above.",
+    "trackPitch": "What you were sold",
+    "trackDelivery": "What you actually own"
   },
   "ownershipStack": {
     "eyebrow": "03 — Full-Stack Ownership",
@@ -937,8 +1007,7 @@
       "eyebrow": "The Difference",
       "dismissed": "Most agencies deliver the top layer — a template with a brand coat, rented and opaque beneath.",
       "answerLead": "We engineer and hand you",
-      "answerStrong": "all five.",
-      "hint": "Hover a layer to inspect it"
+      "answerStrong": "all five."
     },
     "closing": "You own the domain — and everything under it.",
     "layers": {
@@ -1833,11 +1902,11 @@
       },
       "4": {
         "title": "4. Payment & Pricing",
-        "description": "**For SaaS subscriptions:**\n\n• Fees are billed according to the selected plan (monthly, annual, or as stated at checkout)\n• Subscriptions renew automatically unless cancelled before the renewal date\n• Failed payments may result in suspension or downgrade after reasonable notice\n• Refunds follow the policy stated on the pricing page or in your agreement\n\n**For custom projects**, payment follows a milestone-based structure:\n\n• **Deposit (30-40%)**: Secures your build window and begins discovery\n• **Mid-Project (30%)**: Due upon completion of design approval and architecture sign-off\n• **Final (30%)**: Due upon delivery to production\n\nGeneral payment terms:\n\n• Invoices are due within 7 days unless otherwise agreed\n• Late payments accrue 1.5% monthly interest\n• Currency: EGP for local clients, USD for international clients\n• Third-party service fees (Stripe, Fawry, hosting, SMS, etc.) are billed separately when used\n• Project deposits are non-refundable if you cancel after work begins\n\nWe reserve the right to pause services or work on outstanding invoices."
+        "description": "**For SaaS subscriptions:**\n\n• Fees are billed according to the selected plan (monthly, annual, or as stated at checkout)\n• Subscriptions renew automatically unless cancelled before the renewal date\n• Failed payments may result in suspension or downgrade after reasonable notice\n• Refunds follow the policy stated on the pricing page or in your agreement\n\n**For custom projects**, payment follows a milestone-based structure:\n\n• **Deposit (50%)**: Secures your build window and begins discovery\n• **Mid-Project (30%)**: Due upon completion of design approval and architecture sign-off\n• **Final (20%)**: Due before launch, prior to deployment to production\n\n**Staging and launch control (custom projects):**\n\n• The completed build is delivered for your review on Altruvex staging infrastructure, with the same functionality it will have in production\n• Deployment to your production domain takes place once the final payment clears\n• This is stated here so it is never a surprise at launch: the final payment is what moves a finished build from staging to live\n\nGeneral payment terms:\n\n• Invoices are due within 7 days unless otherwise agreed\n• Late payments accrue 1.5% monthly interest\n• Currency: EGP for local clients, USD for international clients\n• Third-party service fees (Stripe, Fawry, hosting, SMS, etc.) are billed separately when used\n• Project deposits are non-refundable if you cancel after work begins\n\nWe reserve the right to pause services or work on outstanding invoices."
       },
       "5": {
         "title": "5. Intellectual Property & Ownership",
-        "description": "**For SaaS products:**\n\n• Altruvex owns the platform, software, branding, and underlying infrastructure\n• You receive a limited, non-exclusive license to use the product while your subscription is active and paid\n• You retain ownership of the content and business data you upload or create in the product\n• You may not copy, reverse engineer, resell, or white-label the SaaS platform unless explicitly permitted in writing\n\n**For custom projects:**\n\n• **You own 100% of the custom source code** generated under your project agreement\n• **You own 100% of your data** in databases and storage delivered to you\n• **You own all custom logic and architecture** we design for your business\n• We retain ownership of our methodology, internal tools, and reusable components not built exclusively for your project\n\nCustom project deliverables include:\n\n• Complete source code in a Git repository under your control\n• Full deployment documentation\n• Environment variables and secrets management\n• Database schema and migration history\n• Architecture decision log\n\nYou may modify, deploy, and maintain custom project code as you see fit, subject to third-party license terms."
+        "description": "**For SaaS products:**\n\n• Altruvex owns the platform, software, branding, and underlying infrastructure\n• You receive a limited, non-exclusive license to use the product while your subscription is active and paid\n• You retain ownership of the content and business data you upload or create in the product\n• You may not copy, reverse engineer, resell, or white-label the SaaS platform unless explicitly permitted in writing\n\n**For custom projects:**\n\n• **You own 100% of the custom source code** generated under your project agreement\n• **You own 100% of your data** in databases and storage delivered to you\n• **You own all custom logic and architecture** we design for your business\n• We retain ownership of our methodology, internal tools, and reusable components not built exclusively for your project\n\n**When ownership transfers:** ownership of the custom project deliverables passes to you once the final payment clears. Until then the build is licensed to you for review only, on Altruvex staging infrastructure (see Section 4). Once it transfers, your ownership is permanent and unconditional — no subscription, licence renewal, or continuing payment can revoke it.\n\nCustom project deliverables include:\n\n• Complete source code in a Git repository under your control\n• Full deployment documentation\n• Environment variables and secrets management\n• Database schema and migration history\n• Architecture decision log\n\nYou may modify, deploy, and maintain custom project code as you see fit, subject to third-party license terms."
       },
       "6": {
         "title": "6. Warranties & Disclaimers",
@@ -2572,7 +2641,7 @@
       },
       "11": {
         "question": "How do you charge for projects? What's the payment schedule?",
-        "answer": "<p>Milestone-based, not time-and-materials:</p><ul><li><strong>Deposit</strong> (typically 30-40% of total): Secures your build window</li><li><strong>Mid-project</strong> (typically 30%): Upon completion of discovery and design approval</li><li><strong>Final</strong> (typically 30%): Upon delivery to production</li></ul><p>No hidden fees. Your quote includes:</p><ul><li>Domain and SSL setup</li><li>Base hosting (Vercel or your infrastructure)</li><li>Deployment and CI/CD</li><li>Post-launch monitoring for 30 days</li></ul><p>Third-party tools (Stripe, Fawry, SMS services, analytics) are only billed if your project actually uses them - <span class=\"text-foreground/60\">at their standard rates, not marked up</span>.</p>"
+        "answer": "<p>Milestone-based, not time-and-materials:</p><ul><li><strong>Deposit</strong> (50% of total): Secures your build window</li><li><strong>Mid-project</strong> (30%): Upon completion of discovery and design approval</li><li><strong>Final</strong> (20%): Before launch, prior to deployment to production</li></ul><p>No hidden fees. Your quote includes:</p><ul><li>Domain and SSL setup</li><li>Base hosting (Vercel or your infrastructure)</li><li>Deployment and CI/CD</li><li>Post-launch monitoring for 30 days</li></ul><p>Third-party tools (Stripe, Fawry, SMS services, analytics) are only billed if your project actually uses them - <span class=\"text-foreground/60\">at their standard rates, not marked up</span>.</p>"
       },
       "12": {
         "question": "Can we start small and expand later?",

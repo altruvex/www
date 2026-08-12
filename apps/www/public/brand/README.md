@@ -13,7 +13,6 @@ so all renders read as one system.
 
 | File | Slot | Aspect | Wired at |
 |------|------|--------|----------|
-| `hero-abstract.png` | `hero` | 16:9 ultra-wide | homepage hero (full-bleed, masked, Ken-Burns) |
 | `about-identity.png` | `about` | 4:5 portrait | about/company page — not yet placed |
 | `process-diagram.png` | `process` | 3:2 | services / how-we-work — not yet placed |
 | `proof-abstract.png` | `proof` | 16:9 | case studies / results — not yet placed |
@@ -27,3 +26,19 @@ over a static `og-image.png`. Do not add one.
 
 "Not yet placed" slots: the `BrandImage` component is ready; the Sonnet rollout
 pass wires them into their sections. Drop the files in first, then place.
+
+## Homepage hero (art-directed, not a `BrandImage` slot)
+
+The hero background needs a different crop per breakpoint (not just a rescale),
+so it's wired directly in `components/sections/hero-section.server.tsx` instead
+of through the single-file `BrandImage` slot system:
+
+| File | Aspect | Shown when |
+|------|--------|------------|
+| `hero-triangle-desktop-light.png` | 3:2 landscape | `md:` and up, light mode |
+| `hero-triangle-desktop-dark.png` | 3:2 landscape | `md:` and up, dark mode |
+| `hero-triangle-mobile-light.png` | ~7:15 portrait | below `md:`, light mode |
+| `hero-triangle-mobile-dark.png` | ~7:15 portrait | below `md:`, dark mode |
+
+Replace all four together (same seed/subject) or the crop and lighting will
+drift between breakpoints and themes.

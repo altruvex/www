@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Calendar, LayoutDashboard, LogOut, Mail, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { monoCaps } from "@/lib/mono-caps";
+import { signOut } from "@/lib/auth-client";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -60,7 +61,7 @@ export function Navbar() {
             <button
               type="button"
               onClick={async () => {
-                await fetch("/api/auth/logout", { method: "POST" });
+                await signOut();
                 window.location.href = "/login";
               }}
               className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"

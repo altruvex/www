@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LoadingIcon } from "@/components/loading-icon";
+import { signIn } from "@/lib/auth-client";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -20,18 +21,13 @@ function LoginForm() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const { error: signInError } = await signIn.email({ email, password });
 
-      if (res.ok) {
+      if (!signInError) {
         router.push(redirect);
         router.refresh();
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || "Invalid credentials");
+        setError(signInError.message || "Invalid credentials");
       }
     } catch {
       setError("Something went wrong");
