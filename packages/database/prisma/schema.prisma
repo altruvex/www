@@ -337,6 +337,13 @@ model Client {
   source  ClientSource @default(MANUAL)
   addedBy String?
 
+  // Canonical pipeline stage for this client, pre-proposal. Proposal/Contract
+  // status (once those exist) take over as the stage for later funnel steps;
+  // this is the only stage field for MANUAL/TRANSPARENCY_ESTIMATOR clients,
+  // which have no ContactSubmission to source a status from.
+  status   SubmissionStatus @default(NEW)
+  priority Priority         @default(MEDIUM)
+
   contactSubmission   ContactSubmission? @relation(fields: [contactSubmissionId], references: [id])
   contactSubmissionId String?            @unique
 
@@ -352,6 +359,8 @@ model Client {
   updatedAt DateTime @updatedAt
 
   @@index([phone])
+  @@index([status])
+  @@index([priority])
   @@map("clients")
 }
 

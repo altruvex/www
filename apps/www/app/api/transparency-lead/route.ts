@@ -1,7 +1,7 @@
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { createTransparencyLeadSchema } from "@/lib/validations/transparency-lead";
-import { prisma } from "@repo/database";
+import { linkClientToLead, prisma } from "@repo/database";
 import { getTranslations } from "next-intl/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const validatedData = transparencyLeadSchema.parse(body);
 
-    await prisma.transparencyLead.create({
+    const lead = await prisma.transparencyLead.create({
       data: {
         phone: validatedData.phone,
         name: validatedData.name,
@@ -57,6 +57,13 @@ export async function POST(request: NextRequest) {
         weeksMin: validatedData.weeksMin,
         weeksMax: validatedData.weeksMax,
       },
+    });
+
+    await linkClientToLead({
+      phone: validatedData.phone,
+      name: validatedData.name,
+      source: "TRANSPARENCY_ESTIMATOR",
+      transparencyLeadId: lead.id,
     });
 
     return NextResponse.json(

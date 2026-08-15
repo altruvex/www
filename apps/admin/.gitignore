@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# locally-generated files (proposals/contracts) — real deployments use R2
+/public/generated
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,215 +1,166 @@
 "use client";
-import { monoCaps } from "@/lib/utils/mono-caps";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils/utils";
-import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { bodyMarks } from "@/components/ui/rich-text";
-import { memo, useCallback, useState } from "react";
+
 import { Container } from "@/components/shared/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { bodyMarks } from "@/components/ui/rich-text";
+import {
+  useBatch,
+  useSectionDescription,
+  useSectionElement,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
+import { cn, splitHeadline } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 
-interface ProcessStep {
-  index: string;
-  key: string;
-}
+/**
+ * `share` is each phase's slice of the calendar, taken from the upper bound of
+ * the timeline strings in `process.steps.*.timeline`
+ * (5d · 7d · 42d · 5d = 59 days). The strings stay the display value — they are
+ * localized prose ("2 – 6 weeks" / "٢ – ٦ أسابيع") and parsing them at runtime
+ * would break the moment a translation phrases a range differently.
+ *
+ * Keep the two in sync: if a timeline string changes, change the share here.
+ */
+const STEPS = [
+  { key: "step1", share: "w-[8.5%]" },
+  { key: "step2", share: "w-[11.9%]" },
+  { key: "step3", share: "w-[71.1%]" },
+  { key: "step4", share: "w-[8.5%]" },
+] as const;
 
-const steps: ProcessStep[] = [
-  { index: "01", key: "step1" },
-  { index: "02", key: "step2" },
-  { index: "03", key: "step3" },
-  { index: "04", key: "step4" },
-];
-
-interface StepItemProps {
-  i: number;
-  active: number;
-  step: ProcessStep;
-  t: ReturnType<typeof useTranslations<"process">>;
-  onToggle: (i: number) => void;
-}
-
-const ProcessStepItem = memo(function ProcessStepItem({
-  i,
-  active,
-  step,
-  t,
-  onToggle,
-}: StepItemProps) {
-  const isOpen = active === i;
-
-  return (
-    <div
-      data-open={isOpen}
-      className="group border-b border-s-border transition-colors duration-300 last:border-b-0 data-[open=true]:bg-s-surface"
-    >
-      {/* A 72px-tall clickable row with no hover state at all read as inert —
-          `group` only carried data-[open] variants before. */}
-      <button
-        type="button"
-        id={`step-trigger-${i}`}
-        onClick={() => onToggle(i)}
-        className="grid w-full cursor-pointer grid-cols-[40px_1fr_auto] items-center gap-3 border-0 bg-transparent p-4 text-start transition-colors duration-260 ease-(--ease-strong) hover:bg-s-high-soft sm:grid-cols-[48px_1fr_auto] sm:gap-3.5 sm:p-5 lg:grid-cols-[72px_1fr_auto] lg:gap-6 lg:px-8 lg:py-6"
-        aria-expanded={isOpen}
-        aria-controls={`step-panel-${i}`}
-      >
-        <span
-          className={cn(
-            monoCaps,
-            "shrink-0 tabular-nums text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:text-s-high group-data-[open=true]:text-s-high rtl:text-center rtl:[direction:ltr] rtl:[unicode-bidi:embed]",
-          )}
-        >
-          {step.index}
-        </span>
-
-        <span className="flex-1 text-start font-serif text-[clamp(22px,2.6vw,28px)] font-light italic leading-none tracking-[-0.02em] text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:text-s-high group-data-[open=true]:text-s-high rtl:font-sans rtl:not-italic rtl:font-bold">
-          {t(`steps.${step.key}.title`)}
-        </span>
-
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-s-border text-s-mid transition-colors duration-260 ease-(--ease-strong) group-hover:border-s-border-hover group-hover:text-s-high group-data-[open=true]:border-s-border-hover group-data-[open=true]:text-s-high">
-          {/* The wrapper rotates; the icon had its own competing 200ms
-              transition-transform that animated nothing. */}
-          <Plus className="pointer-events-none size-4 shrink-0 transition-transform duration-260 ease-(--ease-strong) group-data-[open=true]:rotate-45 rtl:group-data-[open=true]:-rotate-45 motion-reduce:transition-none" />
-        </span>
-      </button>
-
-      <div
-        id={`step-panel-${i}`}
-        role="region"
-        aria-labelledby={`step-trigger-${i}`}
-        // Collapsed panels stayed in the a11y tree and in tab order — the rows
-        // are clipped by overflow, not hidden.
-        inert={!isOpen}
-        data-open={isOpen}
-        className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-320 ease-(--ease-strong) data-[open=true]:grid-rows-[1fr] motion-reduce:transition-none"
-      >
-        <div className="overflow-hidden">
-          {/* Padding now matches the trigger's, and the content indents to the
-              trigger's title column. Previously the description sat at 24px and
-              the meta cards at 96px while the title was at 128px — three edges. */}
-          <div className="px-4 pb-5 sm:px-5 sm:pb-6 lg:px-8 lg:pb-7">
-            <div className="ps-0 sm:ps-[62px] lg:ps-[96px]">
-              <p className="font-mono text-sm leading-relaxed text-s-mid">
-                {t.rich(`steps.${step.key}.description`, bodyMarks)}
-              </p>
-              <div className="mt-5 grid max-w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:max-w-[620px]">
-                {[
-                  {
-                    label: t("meta.deliverables"),
-                    value: t(`steps.${step.key}.deliverables`),
-                    large: false,
-                  },
-                  {
-                    label: t("meta.timeline"),
-                    value: t(`steps.${step.key}.timeline`),
-                    large: true,
-                  },
-                ].map(({ label, value, large }) => (
-                  <div
-                    key={label}
-                    className="rounded-lg border border-s-border bg-s-surface p-5"
-                  >
-                    <p className={cn(monoCaps, "mb-2.5 text-s-mid")}>{label}</p>
-                    <p
-                      className={
-                        large
-                          ? "text-[clamp(1.35rem,2.4vw,1.85rem)] leading-[1.15] tracking-[-0.018em] font-medium text-s-high"
-                          : "text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-s-mid"
-                      }
-                    >
-                      {value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
+/**
+ * Delivery Model — the calendar, to scale.
+ *
+ * Claim: clear phases, no vague middle.
+ * Proof shape: consequence over time — the argument is *how long each phase
+ * actually takes*, so time owns an axis.
+ * Device: a horizontal time axis whose segments are sized to their real
+ * durations. It makes one thing undeniable at a glance: the build is roughly
+ * seven tenths of the calendar and the client-facing phases are days, not
+ * weeks. Four equal cards flattened that into "four steps of equal weight",
+ * which is the opposite of what the timelines say.
+ *
+ * The proportions are CSS widths, so the claim survives with motion disabled.
+ * Runs inside the inverted scene — every colour is a scene token.
+ */
 export const ProcessSection = memo(function ProcessSection() {
   const t = useTranslations("process");
-  const [active, setActive] = useState(0);
 
-  const { first: firstTitle, second: secondTitle } = splitHeadline(t("title"));
-
-  const eyebrowRef = useSectionEyebrow();
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const descRef = useSectionDescription();
+  const subtitleRef = useSectionDescription<HTMLParagraphElement>();
+  const axisRef = useSectionElement();
+  const footerRef = useSectionElement();
+  const listRef = useBatch<HTMLOListElement>({
+    selector: "[data-phase]",
+    distance: 24,
+    stagger: 0.08,
+  });
 
-  const handleToggle = useCallback((index: number) => setActive(index), []);
+  const { first, second } = splitHeadline(t("title"));
 
   return (
-    <div
+    <section
       id="process"
-      className="relative pt-(--section-y-top) pb-(--section-y-bottom)"
+      aria-labelledby="process-heading"
+      className="pt-(--section-y-top) pb-(--section-y-bottom)"
     >
-      <Container className="relative">
+      <Container>
         <SectionHeading
+          titleId="process-heading"
           theme="surface"
           eyebrowRef={eyebrowRef}
           titleRef={titleRef}
-          descriptionRef={descRef}
+          descriptionRef={subtitleRef}
           eyebrow={t("eyebrow")}
-          firstTitle={firstTitle}
-          secondTitle={secondTitle}
+          firstTitle={first}
+          secondTitle={second}
           description={t.rich("subtitle", bodyMarks)}
-          className="mb-14"
-          classes={{
-            eyebrow: monoCaps,
-            container: "gap-8 md:gap-12",
-          }}
+          className="mb-14 lg:mb-18"
         />
-        <div className="mb-1 h-px bg-s-border" />
-        <div className="mb-1 grid grid-cols-2 lg:grid-cols-4 gap-0">
-          {steps.map((step, i) => (
-            // State was painted with inline `style`, which outranks every class —
-            // so these tabs could never have a hover or focus state. Moved onto
-            // data-attributes so the variants below actually apply.
-            <button
-              key={i}
-              type="button"
-              onClick={() => handleToggle(i)}
-              aria-pressed={i === active}
-              data-active={i === active}
-              data-reached={i <= active}
-              className="group/tab cursor-pointer border-none bg-transparent px-1 py-2.5 text-center"
-            >
-              <div className="mb-2.5 h-0.5 rounded-sm bg-s-border transition-colors duration-260 ease-(--ease-strong) group-hover/tab:bg-s-border-hover group-data-[reached=true]/tab:bg-local-accent" />
+
+        {/* The axis. Segment widths are the durations — this is the section's
+            one signature moment, and it is structural, not animated. */}
+        <div ref={axisRef}>
+          <div aria-hidden className="flex h-2 w-full gap-1">
+            {STEPS.map((step, index) => (
               <span
+                key={step.key}
                 className={cn(
-                  monoCaps,
-                  // s-mid keeps inactive tabs AA-readable (s-low measured
-                  // 3.2:1); active/inactive rank carries via s-high + the bar.
-                  "block text-s-mid transition-colors duration-260 ease-(--ease-strong)",
-                  "group-hover/tab:text-s-high group-data-[active=true]/tab:text-s-high",
+                  "shrink-0 rounded-[2px]",
+                  step.share,
+                  index === 2 ? "bg-local-accent" : "bg-local-accent/35",
+                )}
+              />
+            ))}
+          </div>
+          <div className="mt-3 flex w-full gap-1">
+            {STEPS.map((step) => (
+              <span
+                key={step.key}
+                className={cn(
+                  "shrink-0 truncate text-[11px] leading-normal text-s-mid ltr:font-mono",
+                  step.share,
                 )}
               >
-                {step.index} · {t(`steps.${step.key}.tag`)}
+                {t(`steps.${step.key}.timeline`)}
               </span>
-            </button>
-          ))}
+            ))}
+          </div>
         </div>
-        <div className="overflow-hidden rounded-lg border border-s-border">
-          {steps.map((step, i) => (
-            <ProcessStepItem
-              key={i}
-              i={i}
-              active={active}
-              step={step}
-              t={t}
-              onToggle={handleToggle}
-            />
+
+        <ol ref={listRef} className="mt-12 list-none border-b border-s-border">
+          {STEPS.map((step, index) => (
+            <li
+              key={step.key}
+              data-phase
+              className="grid gap-x-10 gap-y-4 border-t border-s-border py-8 md:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] md:py-10"
+            >
+              <div>
+                <div className="flex items-baseline gap-4">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      index === 2 ? "bg-local-accent" : "bg-local-accent/35",
+                    )}
+                  />
+                  <Eyebrow className="text-s-mid">
+                    {t(`steps.${step.key}.tag`)}
+                  </Eyebrow>
+                </div>
+                <h3 className="mt-3 text-[clamp(1.25rem,2vw,1.625rem)] font-medium leading-[1.2] tracking-[-0.02em] text-s-high">
+                  {t(`steps.${step.key}.title`)}
+                </h3>
+                <p className="mt-2 text-sm text-s-mid ltr:font-mono">
+                  <span className="sr-only">{t("meta.timeline")}: </span>
+                  {t(`steps.${step.key}.timeline`)}
+                </p>
+              </div>
+
+              <div>
+                <p className="max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-[1.7] text-s-mid">
+                  {t.rich(`steps.${step.key}.description`, bodyMarks)}
+                </p>
+                <p className="mt-4 border-s border-s-border ps-4 text-sm leading-relaxed text-s-mid">
+                  <span className="eyebrow block text-[11px] text-s-mid">
+                    {t("meta.deliverables")}
+                  </span>
+                  {t(`steps.${step.key}.deliverables`)}
+                </p>
+              </div>
+            </li>
           ))}
-        </div>
-        <div className="mt-6 flex items-center gap-4">
-          <span className={cn(monoCaps, "text-s-mid")}>{t("footer")}</span>
-          <div className="flex-1 h-px bg-s-border" />
+        </ol>
+
+        <div ref={footerRef} className="mt-12 flex items-center gap-4">
+          <Eyebrow className="text-s-mid">{t("footer")}</Eyebrow>
+          <span aria-hidden className="hidden h-px flex-1 bg-s-border sm:block" />
         </div>
       </Container>
-    </div>
+    </section>
   );
 });

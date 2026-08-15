@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, LayoutDashboard, LogOut, Mail, Users } from "lucide-react";
+import { Calendar, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { monoCaps } from "@/lib/mono-caps";
 import { signOut } from "@/lib/auth-client";
@@ -11,9 +11,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/contacts", label: "Contacts", icon: Mail },
+  { href: "/clients", label: "Clients", icon: Users },
   { href: "/meetings", label: "Meetings", icon: Calendar },
-  { href: "/leads", label: "Leads", icon: Users },
 ];
 
 export function Navbar() {

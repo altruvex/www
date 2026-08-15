@@ -2,11 +2,9 @@
 
 import { Container } from "@/components/shared/container";
 import { Button } from "@/components/ui/button";
-import { Accent, Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { bodyMarks } from "@/components/ui/rich-text";
 import {
   useTransparency,
   type BrandIdentity,
@@ -15,7 +13,6 @@ import {
   type ProjectType,
   type Timeline,
 } from "@/hooks/use-transparency";
-import { Link } from "@/i18n/navigation";
 import {
   useReveal,
   useSectionDescription,
@@ -32,9 +29,10 @@ import {
   type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
 import { cn } from "@/lib/utils/utils";
-import { ArrowRight, Check, Download, Loader2 } from "lucide-react";
+import { type EstimateResult } from "@repo/pricing";
+import { Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SectionHeading } from "./section-heading";
 
 type QuestionKey =
@@ -44,19 +42,29 @@ type QuestionKey =
   | "contentReadiness"
   | "timeline";
 
-interface QuestionDef {
+type AnswerMap = Record<QuestionKey, string | null>;
+type Translator = ReturnType<typeof useTranslations<"transparency">>;
+
+type QuestionDef = {
   key: QuestionKey;
   msg: string;
   options: readonly string[];
-}
+};
 
-const QUESTIONS: readonly QuestionDef[] = [
+const PRIMARY_QUESTIONS: readonly QuestionDef[] = [
   {
     key: "projectType",
     msg: "projectType",
     options: ["website", "webapp", "ecommerce", "pwa"],
   },
-  { key: "complexity", msg: "complexity", options: ["basic", "standard", "premium"] },
+  {
+    key: "complexity",
+    msg: "complexity",
+    options: ["basic", "standard", "premium"],
+  },
+] as const;
+
+const READINESS_QUESTIONS: readonly QuestionDef[] = [
   {
     key: "brandIdentity",
     msg: "brand",
@@ -67,11 +75,15 @@ const QUESTIONS: readonly QuestionDef[] = [
     msg: "content",
     options: ["provide", "need-help", "unsure"],
   },
-  { key: "timeline", msg: "timeline", options: ["urgent", "standard", "flexible"] },
+  {
+    key: "timeline",
+    msg: "timeline",
+    options: ["urgent", "standard", "flexible"],
+  },
 ] as const;
 
+const QUESTIONS = [...PRIMARY_QUESTIONS, ...READINESS_QUESTIONS] as const;
 const TOTAL = QUESTIONS.length;
-
 const KNOWN_TIERS = new Set([
   "essential",
   "professional",
@@ -87,17 +99,6 @@ const COMPLEXITY_TIER: Record<
   standard: "medium",
   premium: "large",
 };
-
-const TIMELINE_SCALE_MAX = 32;
-
-const ROW_DELAY = [
-  "",
-  "[animation-delay:70ms]",
-  "[animation-delay:140ms]",
-  "[animation-delay:210ms]",
-] as const;
-
-type Phase = "quiz" | "capture" | "result";
 
 export interface TransparencyEstimatorProps {
   pageHeading?: boolean;
@@ -129,56 +130,30 @@ export function TransparencyEstimator({
     reset,
   } = useTransparency({ initialTier, initialProjectType });
 
-  const [phase, setPhase] = useState<Phase>("quiz");
-
-  const [stepIndex, setStepIndex] = useState(() => {
-    const first = [
-      projectType,
-      complexity,
-      brandIdentity,
-      contentReadiness,
-      timeline,
-    ].findIndex((v) => v === null);
-    return first === -1 ? 0 : first;
-  });
-
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const descRef = useSectionDescription<HTMLParagraphElement>();
-  const stageRef = useReveal<HTMLDivElement>();
+  const estimatorRef = useReveal<HTMLDivElement>();
 
-  const answers: Record<QuestionKey, string | null> = {
+  const answers: AnswerMap = {
     projectType,
     complexity,
     brandIdentity,
     contentReadiness,
     timeline,
   };
-  const answeredCount = Object.values(answers).filter(Boolean).length;
 
-  const select = useCallback(
-    (key: QuestionKey, value: string) => {
-      if (key === "projectType") setProjectType(value as ProjectType);
-      if (key === "complexity") setComplexity(value as Complexity);
-      if (key === "brandIdentity") setBrandIdentity(value as BrandIdentity);
-      if (key === "contentReadiness")
-        setContentReadiness(value as ContentReadiness);
-      if (key === "timeline") setTimeline(value as Timeline);
-    },
-    [
-      setProjectType,
-      setComplexity,
-      setBrandIdentity,
-      setContentReadiness,
-      setTimeline,
-    ],
-  );
+  const answeredCount = Object.values(answers).filter(Boolean).length;
+  const complete = answeredCount === TOTAL;
+  const hasEnoughContext = Boolean(projectType && complexity);
+  const estimate = getEstimate();
 
   const currency = useMemo(
     () =>
@@ -189,38 +164,30 @@ export function TransparencyEstimator({
       }),
     [isAr],
   );
+
   const money = useCallback((n: number) => currency.format(n), [currency]);
   const num = useCallback(
     (n: number) => localizeNumbers(String(n), locale),
     [locale],
   );
 
-  const estimate = getEstimate();
-
-  const question = QUESTIONS[stepIndex];
-  const answered = answers[question.key] !== null;
-  const isLast = stepIndex === TOTAL - 1;
-
-  const goNext = useCallback(() => {
-    if (isLast) setPhase("capture");
-    else setStepIndex((i) => Math.min(i + 1, TOTAL - 1));
-  }, [isLast]);
-
-  const goBack = useCallback(() => {
-    if (phase === "capture") {
-      setPhase("quiz");
-      return;
-    }
-    setStepIndex((i) => Math.max(i - 1, 0));
-  }, [phase]);
+  const select = useCallback(
+    (key: QuestionKey, value: string) => {
+      if (key === "projectType") setProjectType(value as ProjectType);
+      if (key === "complexity") setComplexity(value as Complexity);
+      if (key === "brandIdentity") setBrandIdentity(value as BrandIdentity);
+      if (key === "contentReadiness") setContentReadiness(value as ContentReadiness);
+      if (key === "timeline") setTimeline(value as Timeline);
+    },
+    [setBrandIdentity, setComplexity, setContentReadiness, setProjectType, setTimeline],
+  );
 
   const startOver = useCallback(() => {
     reset();
-    setPhase("quiz");
-    setStepIndex(0);
-    setPhone("");
     setName("");
+    setPhone("");
     setPhoneError(null);
+    setSubmitted(false);
   }, [reset]);
 
   const submit = useCallback(async () => {
@@ -228,10 +195,12 @@ export function TransparencyEstimator({
       setPhoneError(t("phoneCapture.phoneError"));
       return;
     }
-    if (!estimate || !projectType || !complexity || !timeline) return;
+
+    if (!estimate || !projectType || !complexity) return;
 
     setSubmitting(true);
     setPhoneError(null);
+
     try {
       const res = await fetch("/api/transparency-lead", {
         method: "POST",
@@ -242,7 +211,7 @@ export function TransparencyEstimator({
           name: name || undefined,
           projectType,
           complexity,
-          timeline,
+          timeline: timeline ?? "standard",
           priceMin: estimate.minPrice,
           priceMax: estimate.maxPrice,
           weeksMin: estimate.minWeeks,
@@ -250,20 +219,23 @@ export function TransparencyEstimator({
         }),
       });
       const data = await res.json().catch(() => null);
+
       if (!res.ok) {
         setPhoneError(data?.errors?.phone ?? t("phoneCapture.phoneError"));
         return;
       }
-      setPhase("result");
+
+      setSubmitted(true);
     } catch {
       setPhoneError(t("phoneCapture.phoneError"));
     } finally {
       setSubmitting(false);
     }
-  }, [phone, name, estimate, projectType, complexity, timeline, isAr, t]);
+  }, [complexity, estimate, isAr, name, phone, projectType, t, timeline]);
 
   const downloadPdf = useCallback(async () => {
-    if (!estimate || !projectType || !complexity || !timeline) return;
+    if (!estimate || !projectType || !complexity) return;
+
     setDownloading(true);
     try {
       const html = buildPDFHtml({
@@ -271,7 +243,7 @@ export function TransparencyEstimator({
         t: t as unknown as TransparencyTranslator,
         projectType: mapProjectType(projectType),
         tier: COMPLEXITY_TIER[complexity],
-        timelineKey: timeline,
+        timelineKey: timeline ?? "standard",
         priceMin: estimate.minPrice,
         priceMax: estimate.maxPrice,
         weeksMin: estimate.minWeeks,
@@ -279,154 +251,211 @@ export function TransparencyEstimator({
         phone,
         name,
       });
+
       await generateEstimatePdf(html, `altruvex-estimate-${locale}.pdf`);
     } finally {
       setDownloading(false);
     }
-  }, [estimate, projectType, complexity, timeline, isAr, locale, t, phone, name]);
+  }, [complexity, estimate, isAr, locale, name, phone, projectType, t, timeline]);
+
+  const deliverables =
+    projectType && complexity
+      ? ((t.raw(`pdfContent.deliverables.${mapProjectType(projectType)}.${COMPLEXITY_TIER[complexity]}`) as string[]) ?? [])
+      : (t.raw("results.fallbackDeliverables") as string[]);
 
   return (
     <section
       id="transparency-estimator"
-      aria-labelledby={pageHeading ? "transparency-estimator-heading" : undefined}
-      aria-label={pageHeading ? undefined : t("badge")}
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      aria-labelledby="transparency-estimator-heading"
+      className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        {pageHeading ? (
-          <div className="mb-10 text-center md:mb-14">
-            <Eyebrow ref={eyebrowRef} tone="accent" className="justify-center">
-              {t("badge")}
-            </Eyebrow>
-            <h1
-              ref={titleRef}
-              id="transparency-estimator-heading"
-              className="mt-4 section-title font-normal text-foreground"
-            >
-              {t("title")} <Highlight>{t("titleItalic")}</Highlight>
-            </h1>
-            <p
-              ref={descRef}
-              className="mx-auto mt-5 max-w-2xl text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground"
-            >
-              {t("subtitle")}
-            </p>
-            {initialTier && KNOWN_TIERS.has(initialTier) && (
-              <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1.5">
-                <span className="size-1.5 rounded-full bg-local-accent" />
-                <span className="eyebrow text-muted-foreground">
-                  {t("preselected")} · {t(`tierNames.${initialTier}`)}
-                </span>
-              </span>
-            )}
-          </div>
-        ) : (
-          <SectionHeading
-            eyebrow={t("badge")}
-            firstTitle={t("title")}
-            secondTitle={t("titleItalic")}
-            description={t("subtitle")}
-            className="mb-10 md:mb-14"
-          />
-        )}
-        <div
-          ref={stageRef}
-          className="grid gap-10 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-16 xl:gap-20"
-        >
-          <Ledger
-            answers={answers}
-            answeredCount={answeredCount}
-            activeIndex={stepIndex}
-            phase={phase}
-            t={t}
-            num={num}
-          />
-          <div className="min-w-0">
-            {phase === "quiz" && (
-              <QuizStep
-                key={question.key}
-                question={question}
-                selected={answers[question.key]}
-                onSelect={(v) => select(question.key, v)}
+        <div>
+          <header className="mb-20">
+            <SectionHeading
+              titleId="transparency-estimator-heading"
+              titleAs={pageHeading ? "h1" : "h2"}
+              eyebrowRef={eyebrowRef}
+              titleRef={titleRef}
+              descriptionRef={descRef}
+              eyebrow={t("badge")}
+              firstTitle={t("title")}
+              secondTitle={t("titleItalic")}
+              description={t("subtitle")}
+            />
+            {initialTier && KNOWN_TIERS.has(initialTier) ? (
+              <PreselectedTier label={t(`tierNames.${initialTier}`)} t={t} />
+            ) : null}
+          </header>
+          <div ref={estimatorRef} className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem] lg:gap-20 lg:items-start">
+            <div className="space-y-16">
+              <QuestionBlock
+                index={1}
+                question={QUESTIONS[0]}
+                selected={answers.projectType}
+                onSelect={(val) => select(QUESTIONS[0].key, val)}
                 t={t}
                 num={num}
-                index={stepIndex}
               />
-            )}
-            {phase === "capture" && (
-              <Capture
+              <QuestionBlock
+                index={2}
+                question={QUESTIONS[1]}
+                selected={answers.complexity}
+                onSelect={(val) => select(QUESTIONS[1].key, val)}
                 t={t}
-                phone={phone}
-                name={name}
-                phoneError={phoneError}
-                onPhone={setPhone}
-                onName={setName}
-              />
-            )}
-            {phase === "result" && estimate && (
-              <ResultReceipt
-                t={t}
-                money={money}
                 num={num}
-                estimate={estimate}
-                deliverables={
-                  projectType && complexity
-                    ? ((t.raw(
-                      `pdfContent.deliverables.${mapProjectType(
-                        projectType,
-                      )}.${COMPLEXITY_TIER[complexity]}`,
-                    ) as string[]) ?? [])
-                    : []
-                }
-                onDownload={downloadPdf}
-                downloading={downloading}
               />
-            )}
-            <div className="mt-8 flex items-center justify-between gap-4 border-t border-border pt-6">
-              {phase === "result" ? (
-                <button
-                  type="button"
-                  onClick={startOver}
-                  className="eyebrow text-muted-foreground transition-all hover:text-foreground"
-                >
-                  {t("startOver")}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={goBack}
-                  disabled={phase === "quiz" && stepIndex === 0}
-                  className="eyebrow -mx-2 -my-2.5 px-2 py-2.5 text-muted-foreground transition-all hover:text-foreground disabled:pointer-events-none disabled:opacity-0 pointer-coarse:min-h-11"
-                >
-                  {t("back")}
-                </button>
-              )}
-              {phase === "quiz" && (
-                <Button
-                  variant="brand"
-                  size="lg"
-                  onClick={goNext}
-                  disabled={!answered}
-                  className="group"
-                >
-                  {isLast ? t("getEstimate") : t("next")}
-                  <ArrowRight className="transition-all duration-200 group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5" />
-                </Button>
-              )}
-              {phase === "capture" && (
-                <Button
-                  variant="brand"
-                  size="lg"
-                  onClick={submit}
-                  loading={submitting}
-                >
-                  {submitting
-                    ? t("phoneCapture.submitting")
-                    : t("phoneCapture.button")}
-                  {!submitting && <ArrowRight className="rtl:rotate-180" />}
-                </Button>
+              <div className="block lg:hidden">
+                <LiveReadout
+                  hasEnoughContext={hasEnoughContext}
+                  estimate={estimate}
+                  answers={answers}
+                  money={money}
+                  num={num}
+                  t={t}
+                />
+              </div>
+              <QuestionBlock
+                index={3}
+                question={QUESTIONS[2]}
+                selected={answers.brandIdentity}
+                onSelect={(val) => select(QUESTIONS[2].key, val)}
+                t={t}
+                num={num}
+              />
+              <QuestionBlock
+                index={4}
+                question={QUESTIONS[3]}
+                selected={answers.contentReadiness}
+                onSelect={(val) => select(QUESTIONS[3].key, val)}
+                t={t}
+                num={num}
+              />
+              <QuestionBlock
+                index={5}
+                question={QUESTIONS[4]}
+                selected={answers.timeline}
+                onSelect={(val) => select(QUESTIONS[4].key, val)}
+                t={t}
+                num={num}
+              />
+              {complete && estimate && (
+                <div className="mt-24 border-t border-border pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-smooth">
+                  <div className="mb-14">
+                    <Eyebrow tone="muted" className="mb-6">Estimate</Eyebrow>
+                    <p className="text-[clamp(2.25rem,4vw,3.25rem)] font-medium leading-[1.1] tabular-nums text-foreground mb-4">
+                      {money(estimate.minPrice)} – {money(estimate.maxPrice)}
+                    </p>
+                    <p className="text-lg text-muted-foreground">
+                      {num(estimate.minWeeks)}–{num(estimate.maxWeeks)} {t("results.weeks")}
+                    </p>
+                  </div>
+                  <div className="h-px w-full bg-border mb-14" />
+                  <div className="mb-14">
+                    <Eyebrow tone="foreground" className="mb-6">What this includes</Eyebrow>
+                    <ul className="space-y-4 max-w-2xl">
+                      {deliverables.slice(0, 5).map((item) => (
+                        <li key={item} className="flex items-start gap-4 text-base leading-relaxed text-foreground">
+                          <Check aria-hidden className="mt-1 size-4 shrink-0 text-local-accent" strokeWidth={2} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="h-px w-full bg-border mb-14" />
+                  <div className="mb-16">
+                    <Eyebrow tone="foreground" className="mb-6">{t("results.whyTitle")}</Eyebrow>
+                    <p className="text-base leading-relaxed text-muted-foreground max-w-2xl">
+                      {t("results.whyCopy")}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border bg-surface/40 p-8 md:p-10">
+                    <header className="mb-8">
+                      <h4 className="text-[clamp(1.25rem,2vw,1.5rem)] font-medium leading-[1.2] tracking-[-0.01em] text-foreground mb-2">Get the detailed estimate</h4>
+                      <p className="text-sm text-muted-foreground max-w-md">{t("phoneCapture.subtitle")}</p>
+                    </header>
+                    {!submitted ? (
+                      <div className="space-y-6 max-w-xl">
+                        <div className="grid gap-6 sm:grid-cols-2">
+                          <div>
+                            <Label htmlFor="estimate-name" className="normal-case tracking-normal font-sans text-xs font-medium text-muted-foreground block mb-2">
+                              {t("phoneCapture.nameLabel")}
+                            </Label>
+                            <Input
+                              id="estimate-name"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              placeholder={t("phoneCapture.namePlaceholder")}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="estimate-phone" className="normal-case tracking-normal font-sans text-xs font-medium text-muted-foreground block mb-2">
+                              {t("phoneCapture.phoneLabel")}
+                            </Label>
+                            <Input
+                              id="estimate-phone"
+                              type="tel"
+                              inputMode="tel"
+                              dir="ltr"
+                              value={phone}
+                              onChange={(e) => setPhone(e.target.value)}
+                              placeholder={t("phoneCapture.phonePlaceholder")}
+                              aria-invalid={phoneError !== null}
+                              aria-describedby="estimate-phone-hint"
+                            />
+                            {phoneError && (
+                              <p id="estimate-phone-hint" className="mt-2 text-xs text-destructive" role="alert">
+                                {phoneError}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center gap-5 pt-2">
+                          <Button variant="brand" size="lg" onClick={submit} loading={submitting} className="w-full sm:w-auto">
+                            {submitting ? t("phoneCapture.submitting") : t("pdf.button")}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={startOver}
+                            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ease-smooth"
+                          >
+                            <RotateCcw className="size-3.5" />
+                            <span>{t("startOver")}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="animate-in fade-in duration-500 max-w-xl">
+                        <p className="text-foreground font-medium mb-6">{t("results.badge")}</p>
+                        <div className="flex flex-col sm:flex-row items-center gap-5">
+                          <Button variant="brand" size="lg" onClick={downloadPdf} disabled={downloading} className="w-full sm:w-auto">
+                            {downloading ? <><Loader2 className="animate-spin mr-2 size-4" />{t("pdf.generating")}</> : <><Download className="mr-2 size-4" />{t("pdf.button")}</>}
+                          </Button>
+                          <button
+                            type="button"
+                            onClick={startOver}
+                            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ease-smooth"
+                          >
+                            <RotateCcw className="size-3.5" />
+                            <span>{t("startOver")}</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
+            <aside className="hidden lg:block sticky top-32">
+              <LiveReadout
+                hasEnoughContext={hasEnoughContext}
+                estimate={estimate}
+                answers={answers}
+                money={money}
+                num={num}
+                t={t}
+              />
+            </aside>
           </div>
         </div>
       </Container>
@@ -434,432 +463,164 @@ export function TransparencyEstimator({
   );
 }
 
-type Translator = ReturnType<typeof useTranslations<"transparency">>;
 
-function Ledger({
-  answers,
-  answeredCount,
-  activeIndex,
-  phase,
-  t,
-  num,
-}: {
-  answers: Record<QuestionKey, string | null>;
-  answeredCount: number;
-  activeIndex: number;
-  phase: Phase;
-  t: Translator;
-  num: (n: number) => string;
-}) {
-  const resolved = phase === "result";
+
+function PreselectedTier({ label, t }: { label: string; t: Translator }) {
   return (
-    <aside className="lg:sticky lg:top-28 lg:self-start">
-      <Eyebrow tone="accent">{t("ledger.eyebrow")}</Eyebrow>
-      <p className="mt-3 text-xs text-muted-foreground">
-        {resolved ? t("ledger.resolved") : t("ledger.forming")}
-        <span className="mx-2 text-muted-foreground/40">·</span>
-        <span className="tabular-nums text-foreground">
-          {num(answeredCount)}/{num(TOTAL)}
-        </span>
-      </p>
-
-      <ol className="mt-6">
-        {QUESTIONS.map((q, i) => {
-          const value = answers[q.key];
-          const done = value != null;
-          const active = phase === "quiz" && i === activeIndex;
-          return (
-            <li
-              key={q.key}
-              className="relative flex items-baseline gap-4 border-t border-border p-3.5 first:border-t-0"
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute inset-y-1 inset-s-0 w-0.5 origin-top rounded-full bg-local-accent transition-transform duration-500 ease-smooth",
-                  active ? "scale-y-100" : "scale-y-0",
-                )}
-              />
-              <span
-                className={cn(
-                  "w-5 shrink-0 text-[11px] tabular-nums transition-colors",
-                  done
-                    ? "text-local-accent-text"
-                    : active
-                      ? "text-foreground"
-                      : "text-muted-foreground/50",
-                )}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    "block text-[10px] transition-colors",
-                    done || active
-                      ? "text-muted-foreground"
-                      : "text-muted-foreground/45",
-                  )}
-                >
-                  {t(`ledger.labels.${q.key}`)}
-                </span>
-                <span
-                  className={cn(
-                    "mt-1 block truncate text-sm transition-colors",
-                    done ? "text-foreground" : "text-muted-foreground/40",
-                  )}
-                >
-                  {done ? (
-                    <Highlight>{t(`steps.${q.msg}.options.${value}.title`)}</Highlight>
-                  ) : active ? (
-                    t("ledger.pending")
-                  ) : (
-                    "—"
-                  )}
-                </span>
-              </span>
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 shrink-0 self-center rounded-full transition-colors",
-                  done
-                    ? "bg-local-accent"
-                    : active
-                      ? "bg-local-accent/40 motion-safe:animate-pulse"
-                      : "bg-border",
-                )}
-              />
-            </li>
-          );
-        })}
-      </ol>
-    </aside>
+    <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-border bg-surface px-4 py-2">
+      <span className="size-2 rounded-full bg-local-accent" aria-hidden />
+      <span className="eyebrow text-muted-foreground">
+        {t("preselected")} / {label}
+      </span>
+    </div>
   );
 }
 
-function QuizStep({
+function QuestionBlock({
+  index,
   question,
   selected,
   onSelect,
   t,
   num,
-  index,
 }: {
+  index: number;
   question: QuestionDef;
   selected: string | null;
-  onSelect: (value: string) => void;
+  onSelect: (val: string) => void;
   t: Translator;
   num: (n: number) => string;
-  index: number;
 }) {
   const base = `steps.${question.msg}`;
-  return (
-    <div>
-      <p className="text-xs text-local-accent-text motion-safe:animate-in motion-safe:fade-in">
-        {t("step")} {num(index + 1)}{" "}
-        <span className="text-muted-foreground/50">/ {num(TOTAL)}</span>
-      </p>
-      <h2 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500">
-        {t(`${base}.title`)}
-      </h2>
-      <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
-        {t.rich(`${base}.hint`, bodyMarks)}
-      </p>
 
-      <div
-        role="radiogroup"
-        aria-label={t(`${base}.title`)}
-        className="mt-8"
-      >
-        {question.options.map((opt, i) => {
-          const active = selected === opt;
+  return (
+    <section aria-labelledby={`question-${question.key}`} className="scroll-mt-32">
+      <header className="mb-8">
+        <p className="text-sm tabular-nums text-muted-foreground mb-3 font-mono">
+          {num(index).padStart(2, "0")} / {num(TOTAL).padStart(2, "0")}
+        </p>
+        <h3 id={`question-${question.key}`} className="text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-foreground">
+          {t(`${base}.title`)}
+        </h3>
+      </header>
+
+      <div role="radiogroup" aria-label={t(`${base}.title`)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {question.options.map((option) => {
+          const isSelected = selected === option;
+
           return (
             <button
-              key={opt}
+              key={option}
               type="button"
               role="radio"
-              aria-checked={active}
-              onClick={() => onSelect(opt)}
+              aria-checked={isSelected}
+              onClick={() => onSelect(option)}
               className={cn(
-                "group relative flex w-full items-start gap-4 border-t border-border p-5 text-start transition-all duration-300 ease-smooth first:border-t-0 hover:bg-surface/60 focus-visible:outline-none focus-visible:bg-surface/60 md:gap-6",
-                "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500",
-                ROW_DELAY[i] ?? "",
+                "group relative text-left p-6 rounded-lg border transition-all duration-200 ease-smooth outline-none",
+                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isSelected
+                  ? "border-local-accent bg-local-accent/5"
+                  : "border-border bg-transparent hover:border-border-mid hover:bg-surface/50"
               )}
             >
-              <span
-                aria-hidden
-                className={cn(
-                  "absolute inset-y-2 inset-s-0 w-[3px] origin-top rounded-full bg-local-accent transition-transform duration-300 ease-smooth",
-                  active ? "scale-y-100" : "scale-y-0",
-                )}
-              />
-              <span
-                className={cn(
-                  "w-7 shrink-0 pt-0.5 text-xs tabular-nums transition-colors duration-300",
-                  active
-                    ? "text-local-accent-text"
-                    : "transition-all text-muted-foreground/60 group-hover:text-local-accent-text",
-                )}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-lg font-medium text-foreground md:text-xl">
-                  {active ? (
-                    <Highlight>{t(`${base}.options.${opt}.title`)}</Highlight>
-                  ) : (
-                    t(`${base}.options.${opt}.title`)
+              <div className="flex items-start gap-4">
+                <div
+                  className={cn(
+                    "mt-1 shrink-0 flex items-center justify-center size-4 rounded-full border transition-colors",
+                    isSelected ? "border-local-accent" : "border-border-mid group-hover:border-foreground/30"
                   )}
-                </span>
-                <span className="mt-1.5 block text-sm leading-relaxed text-muted-foreground">
-                  {t(`${base}.options.${opt}.description`)}
-                </span>
-              </span>
-              <span
-                aria-hidden
-                className={cn(
-                  "mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border transition-[color,background-color,border-color] duration-300",
-                  active
-                    ? "border-local-accent bg-local-accent text-local-accent-fg"
-                    : "transition-all border-border text-transparent group-hover:border-border-mid",
-                )}
-              >
-                <Check className="size-3" strokeWidth={3} />
-              </span>
+                >
+                  {isSelected && <div className="size-2 rounded-full bg-local-accent" />}
+                </div>
+                <div>
+                  <span className={cn(
+                    "block text-base font-medium mb-1.5 transition-colors",
+                    isSelected ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
+                  )}>
+                    {t(`${base}.options.${option}.title`)}
+                  </span>
+                  <span className="block text-sm text-muted-foreground leading-relaxed">
+                    {t(`${base}.options.${option}.description`)}
+                  </span>
+                </div>
+              </div>
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
-function Capture({
-  t,
-  phone,
-  name,
-  phoneError,
-  onPhone,
-  onName,
-}: {
-  t: Translator;
-  phone: string;
-  name: string;
-  phoneError: string | null;
-  onPhone: (v: string) => void;
-  onName: (v: string) => void;
-}) {
-  return (
-    <div className="max-w-xl motion-safe:animate-in motion-safe:fade-in motion-safe:duration-500">
-      <p className="text-xs text-local-accent-text">
-        {t("ledger.resolved")}
-      </p>
-      <h2 className="mt-4 section-title text-[clamp(1.6rem,3.4vw,2.6rem)] font-normal leading-[1.1] text-foreground">
-        {t("phoneCapture.title")}
-      </h2>
-      <p className="mt-4 text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground">
-        {t("phoneCapture.subtitle")}
-      </p>
-      <div className="mt-8 space-y-6">
-        <div>
-          <Label htmlFor="tx-phone">{t("phoneCapture.phoneLabel")}</Label>
-          <Input
-            id="tx-phone"
-            type="tel"
-            inputMode="tel"
-            normalize
-            dir="ltr"
-            className="mt-2 text-start"
-            placeholder={t("phoneCapture.phonePlaceholder")}
-            value={phone}
-            onChange={(e) => onPhone(e.target.value)}
-            aria-invalid={phoneError ? true : undefined}
-          />
-          <p
-            className={cn(
-              "mt-2 text-xs",
-              phoneError ? "text-error" : "text-muted-foreground",
-            )}
-          >
-            {phoneError ?? t("phoneCapture.phoneHint")}
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="tx-name">{t("phoneCapture.nameLabel")}</Label>
-          <Input
-            id="tx-name"
-            className="mt-2"
-            placeholder={t("phoneCapture.namePlaceholder")}
-            value={name}
-            onChange={(e) => onName(e.target.value)}
-          />
-        </div>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          {t.rich("phoneCapture.trustNote", bodyMarks)}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function useCountUp(target: number): number {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    const reduce =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const duration = reduce ? 0 : 900;
-    let raf = 0;
-    let startTs = 0;
-    const step = (ts: number) => {
-      if (!startTs) startTs = ts;
-      const p = duration === 0 ? 1 : Math.min((ts - startTs) / duration, 1);
-      if (p < 1) {
-        const eased = 1 - Math.pow(1 - p, 3);
-        setValue(Math.round((target * eased) / 1000) * 1000);
-        raf = requestAnimationFrame(step);
-      } else {
-        setValue(target);
-      }
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-  return value;
-}
-
-function ResultReceipt({
-  t,
+function LiveReadout({
+  hasEnoughContext,
+  estimate,
+  answers,
   money,
   num,
-  estimate,
-  deliverables,
-  onDownload,
-  downloading,
+  t,
 }: {
-  t: Translator;
+  hasEnoughContext: boolean;
+  estimate: EstimateResult | null;
+  answers: AnswerMap;
   money: (n: number) => string;
   num: (n: number) => string;
-  estimate: {
-    minPrice: number;
-    maxPrice: number;
-    minWeeks: number;
-    maxWeeks: number;
-  };
-  deliverables: string[];
-  onDownload: () => void;
-  downloading: boolean;
+  t: Translator;
 }) {
-  const minLive = useCountUp(estimate.minPrice);
-  const maxLive = useCountUp(estimate.maxPrice);
-
-  const preview = deliverables.slice(0, 6);
-  const remaining = Math.max(deliverables.length - preview.length, 0);
-
-  const left = Math.max(
-    0,
-    Math.min((estimate.minWeeks / TIMELINE_SCALE_MAX) * 100, 100),
-  );
-  const width = Math.max(
-    6,
-    Math.min(
-      ((estimate.maxWeeks - estimate.minWeeks) / TIMELINE_SCALE_MAX) * 100,
-      100 - left,
-    ),
-  );
-
   return (
-    <div className="motion-safe:animate-in motion-safe:fade-in motion-safe:duration-700">
-      <Eyebrow tone="accent">{t("results.badge")}</Eyebrow>
-      <h2 className="mt-4 section-title text-[clamp(1.75rem,3.4vw,2.6rem)] font-normal leading-[1.05] text-foreground">
-        {t("results.title")}
-      </h2>
-      <div className="mt-8 border-t border-border pt-6">
-        <Eyebrow tone="muted">{t("results.investment")}</Eyebrow>
-        <p className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <span className="text-[clamp(2.25rem,5.5vw,3.75rem)] font-medium leading-[0.95] tracking-[-0.03em] tabular-nums text-foreground">
-            {money(minLive)}
-          </span>
-          <span className="text-[clamp(1.25rem,2.4vw,1.75rem)] font-light text-muted-foreground tabular-nums">
-            – {money(maxLive)}
-          </span>
-        </p>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          {t("results.hostingIncluded")}
-        </p>
-      </div>
-      <div className="mt-8 border-t border-border pt-6">
-        <div className="flex items-baseline justify-between gap-4">
-          <Eyebrow tone="muted">{t("results.timeline")}</Eyebrow>
-          <p className="text-lg font-medium tabular-nums text-foreground">
-            {num(estimate.minWeeks)}–{num(estimate.maxWeeks)}{" "}
-            <span className="text-sm font-normal text-muted-foreground">
-              {t("results.weeks")}
-            </span>
+    <div className="rounded-xl border border-border bg-surface p-7 md:p-8" aria-live="polite">
+      {!hasEnoughContext ? (
+        <div className="animate-in fade-in duration-500">
+          <Eyebrow tone="muted" className="mb-5">
+            Project Estimate
+          </Eyebrow>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+            {t("live.pickTypeFirst")} {t("live.updatesAsYouShape")}
+          </p>
+          <div className="space-y-3.5">
+            {QUESTIONS.map((q, i) => (
+              <div key={q.key} className="flex items-center gap-3 text-sm">
+                <span className="font-mono text-xs text-muted-foreground/50">{num(i + 1).padStart(2, "0")}</span>
+                <span className="text-muted-foreground">{t(`readiness.labels.${q.key}`)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="animate-in fade-in duration-500">
+          <Eyebrow tone="muted" className="mb-5">
+            Estimate
+          </Eyebrow>
+          <div className="mb-7">
+            <p className="text-2xl xl:text-[1.75rem] font-medium leading-tight tabular-nums text-foreground mb-1.5">
+              {money(estimate!.minPrice)} – {money(estimate!.maxPrice)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {num(estimate!.minWeeks)}–{num(estimate!.maxWeeks)} {t("results.weeks")}
+            </p>
+          </div>
+          <div className="h-px w-full bg-border mb-7" />
+          <div className="space-y-3.5">
+            {QUESTIONS.map((q, i) => {
+              const answerKey = answers[q.key];
+              return (
+                <div key={q.key} className="flex items-start justify-between gap-4 text-sm">
+                  <span className="text-muted-foreground flex items-center gap-2.5">
+                    <span className="font-mono text-xs opacity-50">{num(i + 1).padStart(2, "0")}</span>
+                    {t(`readiness.labels.${q.key}`)}
+                  </span>
+                  <span className={cn("text-right", answerKey ? "text-foreground font-medium" : "text-muted-foreground/40")}>
+                    {answerKey ? t(`steps.${q.msg}.options.${answerKey}.title`) : "—"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-8 text-xs text-muted-foreground italic leading-relaxed">
+            {Object.values(answers).every(Boolean) ? t("live.settled") : t("live.updatesAsYouShape")}
           </p>
         </div>
-        <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-border">
-          <span
-            className="absolute inset-y-0 rounded-full bg-local-accent"
-            style={{ insetInlineStart: `${left}%`, width: `${width}%` }}
-          />
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          {t("results.disclaimer")}
-        </p>
-      </div>
-      <p className="mt-8 text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground">
-        {t.rich("results.rangeCopy", {
-          ...bodyMarks,
-          min: money(estimate.minPrice),
-          max: money(estimate.maxPrice),
-          weeksMin: num(estimate.minWeeks),
-          weeksMax: num(estimate.maxWeeks),
-        })}
-      </p>
-      {preview.length > 0 && (
-        <div className="mt-8 border-t border-border pt-6">
-          <Eyebrow tone="muted">{t("results.whatYouGet")}</Eyebrow>
-          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {preview.map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <Check
-                  className="mt-1 size-4 shrink-0 text-local-accent-text"
-                  strokeWidth={2.5}
-                />
-                <span className="text-sm leading-relaxed text-muted-foreground">
-                  {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {remaining > 0 && (
-            <p className="mt-4 text-xs text-muted-foreground">
-              {t("results.moreInPdf", { count: num(remaining) })}
-            </p>
-          )}
-        </div>
       )}
-      <p className="mt-8 border-s-2 border-local-accent/40 ps-5 text-sm leading-relaxed text-muted-foreground">
-        <Accent gradient="iris" className="font-medium">
-          {t("results.rangeCtaLabel")}
-        </Accent>
-        {" — "}
-        {t.rich("results.rangeCta", bodyMarks)}
-      </p>
-      <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-border pt-6">
-        <Button variant="brand" size="lg" asChild>
-          <Link href="/schedule">{t("results.ctaPrimary")}</Link>
-        </Button>
-        <Button variant="outline" size="lg" onClick={onDownload} loading={downloading}>
-          {downloading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Download className="size-4" />
-          )}
-          {downloading ? t("pdf.generating") : t("pdf.button")}
-        </Button>
-      </div>
     </div>
   );
 }

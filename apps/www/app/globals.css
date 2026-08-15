@@ -93,6 +93,7 @@
   --animate-services-rail: services-rail-slide 0.8s ease forwards;
   --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   --animate-text-gradient: text-gradient 6s linear infinite;
+  --animate-brand-kenburns: brand-kenburns 24s var(--ease-smooth) forwards;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
@@ -847,6 +848,14 @@ html.lenis body {
   }
   100% {
     background-position: -200% center;
+  }
+}
+@keyframes brand-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.045);
   }
 }
 

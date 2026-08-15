@@ -23,16 +23,6 @@ const LAYER_IDS = [
   "infrastructure",
 ] as const;
 
-/**
- * Depth is encoded exactly once: by material density. The surface stratum is
- * the faintest, infrastructure the most solid — so "deeper" is something you
- * see rather than something a caption claims. The previous build encoded it
- * three times (staircase insets, a spine, and pips) and the three disagreed.
- *
- * The ramp is capped at 7%: at 12% the deepest stratum pushed muted body text
- * to 4.19:1, under the AA floor. Measured in both themes, not assumed — if the
- * ramp is ever widened for punch, re-measure the bottom stratum first.
- */
 const LAYER_TINTS: readonly string[] = [
   "bg-local-accent/[0.015]",
   "bg-local-accent/[0.03]",
@@ -41,11 +31,6 @@ const LAYER_TINTS: readonly string[] = [
   "bg-local-accent/[0.07]",
 ];
 
-/**
- * The depth ruler is not a separate element — it is the leading edge of each
- * stratum, so it aligns to the strata without measuring anything, mirrors in
- * RTL on its own, and cannot drift out of sync with the layout.
- */
 const LAYER_EDGES: readonly string[] = [
   "bg-local-accent/25",
   "bg-local-accent/40",
@@ -54,21 +39,6 @@ const LAYER_EDGES: readonly string[] = [
   "bg-local-accent/90",
 ];
 
-/**
- * Ownership Stack — cut-away specimen.
- *
- * Claim: a template delivers the surface; Altruvex engineers and hands over all
- * five layers beneath it.
- * Proof shape: anatomy — one object, five named parts, one cut line.
- * Device: a solid specimen with a measured depth ruler. Not a card grid, not a
- * master/detail menu, and not the annotated document used by
- * quote-artifact-section — the strata share edges and form one body, and the
- * comparison is a mark ON the object, not the structure of the section.
- *
- * Everything is readable with no JavaScript and no pointer: there is no hidden
- * state, no hover-to-reveal, and no panel to swap. The one motion idea is the
- * bottom-up assembly — the foundation lands before the surface.
- */
 export function OwnershipStackSection() {
   const t = useTranslations("ownershipStack");
 
@@ -114,7 +84,6 @@ export function OwnershipStackSection() {
               const tl = gsap.timeline({
                 defaults: { ease: MOTION.ease.smooth },
               });
-              // Bottom-up: the foundation lands first, the surface last.
               tl.to(strata, {
                 opacity: 1,
                 y: 0,

@@ -1,11 +1,5 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Container } from "@/components/shared/container";
@@ -58,24 +52,27 @@ function TransparencyFaqSection() {
               {t("faq.subtitle")}
             </h2>
           </div>
-          <div className="rounded-2xl border border-border bg-foreground/2 px-5 md:px-8">
-            <Accordion type="single" collapsible className="w-full">
-              {items.map((item) => (
-                <AccordionItem
-                  key={item.value}
-                  value={item.value}
-                  className="border-border"
-                >
-                  <AccordionTrigger className="py-6 text-start font-sans text-[clamp(1.0625rem,1.05vw,1.125rem)] font-light leading-[1.75] transition-all hover:text-foreground">
-                    {item.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-8 text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-muted-foreground">
-                    {item.answer}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
+          {/* Four questions, all answered in the open.
+              An accordion is for compressing a long list; with four items it
+              only buys a click and costs the answer. On the page whose whole
+              claim is that nothing is withheld, collapsing the answers was the
+              wrong affordance — and `faq-section` on the homepage already owns
+              the accordion device. */}
+          <dl className="list-none border-b border-border">
+            {items.map((item) => (
+              <div
+                key={item.value}
+                className="grid gap-x-10 gap-y-3 border-t border-border py-7 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:py-8"
+              >
+                <dt className="text-[clamp(1.0625rem,1.15vw,1.1875rem)] font-medium leading-snug text-foreground">
+                  {item.question}
+                </dt>
+                <dd className="max-w-[58ch] text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-muted-foreground">
+                  {item.answer}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </Container>
     </section>

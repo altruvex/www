@@ -28,9 +28,6 @@ export function SceneInversionWrapper() {
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
 
-    // `cancelled` matters: the import resolves asynchronously, so without it an
-    // unmount before resolution leaves a ScrollTrigger that cleanup already
-    // missed (ctx was still undefined when the cleanup ran).
     let cancelled = false;
     let ctx: GsapContext | undefined;
 
@@ -38,9 +35,6 @@ export function SceneInversionWrapper() {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
-        // gsap.matchMedia is how every other surface on this site branches on
-        // reduced motion. The inversion is a design state, not motion: reduced
-        // motion drops the scroll gate and the transition, never the scene.
         const mm = gsap.matchMedia();
 
         mm.add(
@@ -77,8 +71,6 @@ export function SceneInversionWrapper() {
     <div
       id="services-wrapper"
       ref={wrapperRef}
-      // duration-300/ease-smooth matches the transition the children already
-      // run, so the scene settles as one surface instead of snapping.
       className="relative overflow-hidden transition-colors duration-300 ease-smooth motion-reduce:transition-none"
       data-scene={entered ? "inverted" : undefined}
     >

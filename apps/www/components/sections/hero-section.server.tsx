@@ -34,7 +34,7 @@ const HERO_TRIANGLE = {
 } as const;
 
 const HERO_IMAGE_CLASS =
-  "select-none object-cover motion-safe:animate-brand-kenburns";
+  "select-none object-cover motion-safe:animate-brand-kenburns rtl:-scale-x-100";
 
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
@@ -55,6 +55,9 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
   const primaryCta = getCommercialCta("projectRange");
   const secondaryCta = getCommercialCta("realBuild");
 
+  const isRtl = locale === "ar";
+  const heroMaskImage = `radial-gradient(120% 120% at ${isRtl ? 15 : 85}% 15%, black 0%, transparent 65%)`;
+
   return (
     <section
       id="home"
@@ -65,10 +68,8 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
         style={{
-          maskImage:
-            "radial-gradient(120% 120% at 85% 15%, black 0%, transparent 65%)",
-          WebkitMaskImage:
-            "radial-gradient(120% 120% at 85% 15%, black 0%, transparent 65%)",
+          maskImage: heroMaskImage,
+          WebkitMaskImage: heroMaskImage,
         }}
       >
         <div className="absolute inset-0 hidden md:block">
@@ -77,6 +78,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             alt=""
             aria-hidden
             draggable={false}
+            priority
             fill
             sizes="100vw"
             className={cn(HERO_IMAGE_CLASS, "opacity-40 dark:hidden")}
@@ -97,6 +99,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             alt=""
             aria-hidden
             draggable={false}
+            priority
             fill
             sizes="100vw"
             className={cn(HERO_IMAGE_CLASS, "opacity-40 dark:hidden")}
@@ -118,24 +121,14 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       </h1>
       <Container>
         <div className="max-w-full sm:max-w-5xl lg:py-0 py-12">
-          <HeroReveal
-            delay={0.1}
-            className="mb-6 flex items-center gap-2 md:hidden"
-          >
+          <HeroReveal delay={0.1} className="mb-4 flex items-center gap-2">
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
             <Eyebrow className="text-xs">{t("hero.availability")}</Eyebrow>
           </HeroReveal>
-          <HeroReveal
-            delay={0.1}
-            className="absolute top-(--section-y-top) inset-e-8 hidden md:flex flex-col items-end rtl:items-start gap-2"
-          >
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
-              <Eyebrow className="text-xs">{t("hero.availability")}</Eyebrow>
-            </div>
-            <Eyebrow className="text-xs">{t("hero.badge")}</Eyebrow>
+          <HeroReveal delay={0.2} className="mb-6 md:mb-7">
+            <Eyebrow>{t("hero.badge")}</Eyebrow>
           </HeroReveal>
-          <HeroHeadline className="text-[clamp(2.5rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
+          <HeroHeadline className="max-w-[44rem] text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
             <span className="block">
               {titlePre} <Accent gradient="iris">{titleAccent}</Accent>
               {titlePostNode}
@@ -152,7 +145,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               className="h-px w-full bg-border mt-3 hidden md:block"
               aria-hidden
             />
-            <div className="space-y-3 max-w-xl">
+            <div className="space-y-3 max-w-[520px]">
               <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                 {t("hero.problem")}
               </p>

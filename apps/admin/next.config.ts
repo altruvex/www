@@ -83,7 +83,7 @@ const nextConfig: NextConfig = {
     ];
   },
   reactStrictMode: true,
-  transpilePackages: ["@repo/database"],
+  transpilePackages: ["@repo/database", "@repo/pricing"],
   compress: true,
   poweredByHeader: false,
 };

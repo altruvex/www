@@ -3,6 +3,7 @@
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { memo } from "react";
@@ -10,8 +11,8 @@ import { memo } from "react";
 interface WorkRecordProps {
   slug: string;
   index: number;
+  reverse?: boolean;
 }
-
 function getDomainName(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -20,23 +21,10 @@ function getDomainName(url: string): string {
   }
 }
 
-/**
- * One verification record.
- *
- * The measured figures lead at display size and the project name is
- * subordinate, because the section's claim is not "look at our work" — it is
- * "these numbers are real and the URL beside them lets you check." Every metric
- * ships (the previous card truncated to `metrics.slice(0, 2)`, dropping a third
- * of the evidence), and the screenshot is an inline plate rather than a
- * cursor-following overlay, so keyboard and touch see the same proof a mouse does.
- *
- * Motion is CSS-only and property-scoped. The card this replaces on the
- * homepage ran `transition-all` alongside raw `gsap.to()` with GSAP-native
- * eases — two motion systems on one element, against the site's one-system rule.
- */
 export const WorkRecord = memo(function WorkRecord({
   slug,
   index,
+  reverse = false,
 }: WorkRecordProps) {
   const tW = useTranslations("work");
   const tCS = useTranslations("caseStudies");
@@ -58,9 +46,14 @@ export const WorkRecord = memo(function WorkRecord({
   return (
     <li
       data-work-record
-      className="group grid gap-x-12 gap-y-8 border-t border-border py-10 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] md:py-12"
+      className={cn(
+        "group grid gap-x-12 gap-y-8 border-t border-border py-10 md:py-12",
+        reverse
+          ? "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
+          : "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]",
+      )}
     >
-      <div>
+      <div className={cn(reverse && "md:order-2")}>
         <div className="flex items-baseline gap-4">
           <span
             aria-hidden
@@ -72,7 +65,6 @@ export const WorkRecord = memo(function WorkRecord({
             {client} · {industry} · {year}
           </Eyebrow>
         </div>
-
         <h3 className="mt-4 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.2] tracking-[-0.02em] text-foreground">
           <Link
             href={`/work/${slug}`}
@@ -81,12 +73,9 @@ export const WorkRecord = memo(function WorkRecord({
             {name}
           </Link>
         </h3>
-
         <p className="mt-4 max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
           {summary}
         </p>
-
-        {/* The evidence, at the size of a claim. Every metric ships. */}
         <dl className="mt-8 grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3">
           {metrics.map((metric) => (
             <div key={metric.label}>
@@ -102,24 +91,22 @@ export const WorkRecord = memo(function WorkRecord({
             </div>
           ))}
         </dl>
-
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
           <Link
             href={`/work/${slug}`}
-            className="inline-flex min-h-6 items-center gap-2 rounded-sm text-sm text-foreground outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+            className="inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-foreground outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
           >
             {tW("labels.viewCaseStudy")}
             <span aria-hidden className="rtl:rotate-180">
               →
             </span>
           </Link>
-
           {externalUrl && (
             <a
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-6 items-center gap-2 rounded-sm text-sm text-muted-foreground outline-none transition-colors duration-300 ease-smooth hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+              className="inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-muted-foreground outline-none transition-colors duration-300 ease-smooth hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
             >
               {tW("labels.visitProj")}
               <span dir="ltr" className="ltr:font-mono">
@@ -130,9 +117,8 @@ export const WorkRecord = memo(function WorkRecord({
           )}
         </div>
       </div>
-
       {screenshot && (
-        <div className="relative aspect-16/10 w-full overflow-hidden rounded-lg border border-border bg-surface">
+        <div className={cn("relative aspect-16/10 w-full overflow-hidden rounded-lg border border-border bg-surface", reverse && "md:order-1")}>
           <Image
             src={`${screenshot}-light.png`}
             alt={`${name} — ${client}`}

@@ -8,7 +8,11 @@ export default async function proxy(request: NextRequest) {
   const publicPaths = ["/login", "/offline"];
   const isPublicPath =
     publicPaths.some((path) => request.nextUrl.pathname === path) ||
-    request.nextUrl.pathname.startsWith("/api/auth/");
+    request.nextUrl.pathname.startsWith("/api/auth/") ||
+    // Meta calls this directly (verification handshake + delivery/inbound
+    // events) with no session cookie — authenticity is the webhook's own
+    // X-Hub-Signature-256 check, not this proxy.
+    request.nextUrl.pathname === "/api/whatsapp/webhook";
 
   if (isPublicPath) {
     return NextResponse.next();

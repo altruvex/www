@@ -60,7 +60,12 @@ interface Meeting {
   notes?: string | null;
   adminNotes?: string | null;
   assignedTo?: { name: string | null; email: string } | null;
-  contactSubmission?: { id: string; name: string; phone: string } | null;
+  contactSubmission?: {
+    id: string;
+    name: string;
+    phone: string;
+    client?: { id: string } | null;
+  } | null;
   createdAt: string;
   approvedAt?: string | null;
   completedAt?: string | null;
@@ -414,13 +419,13 @@ export default function MeetingsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        {meeting.contactSubmission && (
+                        {meeting.contactSubmission?.client && (
                           <Link
-                            href={`/contacts/${meeting.contactSubmission.id}`}
+                            href={`/clients/${meeting.contactSubmission.client.id}`}
                             className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
                           >
                             <User className="h-4 w-4" />
-                            View Contact
+                            View Client
                           </Link>
                         )}
                         <Button

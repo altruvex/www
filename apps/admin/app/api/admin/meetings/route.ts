@@ -65,6 +65,7 @@ export async function GET(request: NextRequest) {
               name: true,
               phone: true,
               status: true,
+              client: { select: { id: true } },
             },
           },
         },

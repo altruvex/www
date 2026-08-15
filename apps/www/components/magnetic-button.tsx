@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMagnetic, usePress } from "@/lib/motion";
-import { Slot, Slottable } from "@radix-ui/react-slot";
+import { Slot } from "@radix-ui/react-slot";
 import React, {
   forwardRef,
   useCallback,
@@ -166,21 +166,24 @@ export const MagneticButton = forwardRef<
 
     // asChild: render the consumer's element (e.g. <Link>) as the interactive
     // root so we never produce invalid <button><a> nesting. The magnetic/press
-    // refs, styles and ripples are merged/composed onto that element.
+    // refs and styles are merged onto that element. Ripples live in a wrapper
+    // sibling so Slot still receives exactly one slottable child.
     if (asChild) {
       return (
-        <Slot
-          ref={mergedRef as React.Ref<HTMLElement>}
-          onClick={isLoading ? undefined : (handleClick as React.MouseEventHandler)}
-          aria-busy={isLoading || undefined}
-          className={sharedClassName}
-          data-cursor-pointer
-          data-magnetic
-          {...props}
-        >
-          <Slottable>{children}</Slottable>
+        <span className="relative inline-flex">
+          <Slot
+            ref={mergedRef as React.Ref<HTMLElement>}
+            onClick={isLoading ? undefined : (handleClick as React.MouseEventHandler)}
+            aria-busy={isLoading || undefined}
+            className={sharedClassName}
+            data-cursor-pointer
+            data-magnetic
+            {...props}
+          >
+            {children}
+          </Slot>
           {rippleNodes}
-        </Slot>
+        </span>
       );
     }
 

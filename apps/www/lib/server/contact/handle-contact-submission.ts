@@ -3,6 +3,7 @@ import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { createContactFormSchema } from "@/lib/validations/contact";
 import {
   BudgetRange,
+  linkClientToLead,
   prisma,
   ProjectTimeline,
   ServiceType,
@@ -141,6 +142,13 @@ export async function handleContactSubmission(request: NextRequest) {
 
     const submission = await prisma.contactSubmission.create({
       data: submissionData,
+    });
+
+    await linkClientToLead({
+      phone: validatedData.phone,
+      name: validatedData.name,
+      source: "WEBSITE_CONTACT_FORM",
+      contactSubmissionId: submission.id,
     });
 
     const admins = await prisma.user.findMany({

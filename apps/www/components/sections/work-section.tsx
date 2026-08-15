@@ -21,19 +21,7 @@ import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 import { WorkRecord } from "./work-record";
 
-/**
- * Selected Work — verification record.
- *
- * Claim: these builds are in production and you can check them yourself.
- * Proof shape: measurement — each project ships figures, and a live URL beside
- * them is the invitation to verify.
- * Device: a record of measured entries, figures leading at display size.
- * Deliberately NOT a card grid — that device is over-subscribed on this site,
- * and the flagship block below used to add a third 3-up grid to the same page.
- *
- * The homepage uses `WorkRecord`; `/work` still renders the older `WorkItem`,
- * which remains untouched so this rebuild does not silently redesign that page.
- */
+
 export const WorkSection = memo(function WorkSection() {
   const tW = useTranslations("work");
   const tf = useTranslations("commercial.flagship");
@@ -75,14 +63,17 @@ export const WorkSection = memo(function WorkSection() {
           description={tW.rich("description", bodyMarks)}
           className="mb-16"
         />
-
         <ol ref={recordsRef} className="list-none border-b border-border">
           {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
-            <WorkRecord key={slug} slug={slug} index={index} />
+            <WorkRecord
+              key={slug}
+              slug={slug}
+              index={index}
+              reverse={index % 2 === 1}
+            />
           ))}
         </ol>
-
-        <div className="mt-10 grid gap-10 md:grid-cols-[minmax(0,1fr)_320px] md:items-start">
+        <div className="mt-10 flex items-center justify-between gap-10">
           <div className="space-y-3">
             <Eyebrow>{tW("labels.liveProof")}</Eyebrow>
             <p className="max-w-xl text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
@@ -96,9 +87,7 @@ export const WorkSection = memo(function WorkSection() {
             className="flex-col gap-3 sm:flex-col sm:items-stretch"
           />
         </div>
-
         <FlagshipBlock metaRef={metaRef} tf={tf} stepLabel={stepLabel} />
-
         <div className="mt-6 flex items-center gap-4">
           <div className="h-px flex-1 bg-border" />
           <Eyebrow>{tW("labels.footer")}</Eyebrow>
@@ -108,14 +97,7 @@ export const WorkSection = memo(function WorkSection() {
   );
 });
 
-/**
- * The flagship engagement, told as one entry rather than three cards.
- *
- * It previously rendered problem / solution / outcome as a 3-up bordered grid —
- * a second card row inside a section that had just shown a list, and the third
- * on the page. As labelled lines in a single block it reads as one narrative,
- * which is what problem → solution → outcome actually is.
- */
+
 function FlagshipBlock({
   metaRef,
   tf,
@@ -132,25 +114,40 @@ function FlagshipBlock({
   ];
 
   return (
-    <div ref={metaRef} className="mt-16 border-t border-border pt-12">
-      <Eyebrow className="mb-4">{tf("eyebrow")}</Eyebrow>
-      <h3 className="mb-4 max-w-3xl text-[clamp(1.5rem,2.4vw,2rem)] font-normal leading-[1.15] tracking-[-0.018em] text-foreground">
-        {tf("title")}
-      </h3>
-      <p className="mb-10 max-w-2xl text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-muted-foreground">
-        {tf("summary")}
-      </p>
-
-      <ol className="list-none">
-        {movements.map((movement) => (
+    <div
+      ref={metaRef}
+      className="mt-20 border-t border-border pt-12 md:mt-24 md:pt-16"
+    >
+      <SectionHeading
+        titleAs="h3"
+        eyebrow={tf("eyebrow")}
+        firstTitle={tf("title")}
+        description={tf("summary")}
+        className="gap-8"
+        classes={{
+          title: "max-w-3xl text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.08] tracking-tight",
+          description:
+            "max-w-sm text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75]",
+        }}
+      />
+      <ol className="mt-14 list-none border-t border-border md:mt-16">
+        {movements.map((movement, index) => (
           <li
             key={movement.label}
-            className="grid gap-x-10 gap-y-3 border-t border-border py-7 md:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]"
+            className="flex items-center justify-between gap-4 border-b border-border py-7 md:gap-x-10 md:py-8"
           >
-            <Eyebrow tone="accent" className="md:pt-1">
-              {stepLabel} · {movement.label}
-            </Eyebrow>
-            <p className="max-w-[62ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+            <div className="flex items-baseline gap-4 md:pt-1">
+              <span
+                aria-hidden
+                className="shrink-0 text-sm tabular-nums text-muted-foreground ltr:font-mono"
+              >
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <Eyebrow tone="accent">
+                {stepLabel} · {movement.label}
+              </Eyebrow>
+            </div>
+            <p className="max-w-[78ch] text-[clamp(1rem,1.02vw,1.125rem)] leading-[1.7] text-foreground/85">
               {movement.body}
             </p>
           </li>

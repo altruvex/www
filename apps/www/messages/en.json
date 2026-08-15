@@ -384,6 +384,9 @@
           "title": "03 - Clear business structure"
         }
       ],
+      "testimonials": {
+        "eyebrow": "Testimonials"
+      },
       "title": "Direct access to the engineer building your system,",
       "titleAccent": "no template shortcuts."
     }
@@ -1940,7 +1943,7 @@
   },
   "transparency": {
     "back": "Back",
-    "badge": "06 - Radical Transparency",
+    "badge": "Estimate your project",
     "description": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing.",
     "seo": {
       "body": "Transparency is designed to make early project planning less vague. The estimator gives a realistic starting range for custom web development by looking at the kind of system you need, the maturity of your brand and content, the complexity of the workflows, and the pressure around launch timing.",
@@ -2251,12 +2254,30 @@
       "trustNote": "<strong>We'll send your estimate + next steps.</strong> <dim>No spam. No pressure.</dim>"
     },
     "preselected": "Preselected Tier",
+    "readiness": {
+      "title": "Project readiness",
+      "labels": {
+        "projectType": "Project",
+        "complexity": "Scope",
+        "brandIdentity": "Brand",
+        "contentReadiness": "Content",
+        "timeline": "Timeline"
+      }
+    },
     "results": {
+      "basedOnProject": "Based on your project",
       "badge": "Estimate Ready",
       "consultationGate": "Need an exact number? <strong>Book a technical call and pressure-test the scope directly.</strong>",
       "cta": "Schedule a Briefing",
       "ctaPrimary": "Book a Technical Call",
+      "detailCta": "Get detailed estimate",
       "disclaimer": "This is a preliminary estimate. Final investment is confirmed after a detailed requirements session.",
+      "fallbackDeliverables": [
+        "Custom design",
+        "Responsive development",
+        "Production deployment",
+        "Performance and launch QA"
+      ],
       "hostingIncluded": "Domain + base hosting included where scoped",
       "infraDescription": "Year 1 includes domain, SSL, and base hosting where this scope requires them. Renewal from Year 2 starts at {amount}/year. Paid third-party tools are quoted separately.",
       "infraLabel": "Infrastructure",
@@ -2270,7 +2291,9 @@
       "timeline": "Estimated Timeline",
       "title": "Your Project Investment Estimate",
       "weeks": "weeks",
-      "whatYouGet": "What you get"
+      "whatYouGet": "What you get",
+      "whyCopy": "The range is shaped by the system type, scope depth, brand readiness, content support, and delivery pace. It is a planning range, not a locked quote.",
+      "whyTitle": "Why this range?"
     },
     "startOver": "Start Over",
     "step": "Step",
@@ -2327,7 +2350,7 @@
         "options": {
           "complete": {
             "description": "Full identity system ready: logo, colors, typography, and usage rules. We integrate it - no additional design scope needed.",
-            "title": "Complete"
+            "title": "Ready"
           },
           "partial": {
             "description": "You have a logo or basic visuals but no full system. We refine and extend what exists without starting from scratch.",
@@ -2335,7 +2358,7 @@
           },
           "scratch": {
             "description": "No brand identity yet. We build the full system - logo, colors, typography - as part of the project scope.",
-            "title": "Starting Fresh"
+            "title": "Starting fresh"
           }
         },
         "title": "What is your brand identity status?"
@@ -2367,33 +2390,33 @@
         "options": {
           "basic": {
             "description": "Core features only. Straightforward flows, minimal custom logic. The right choice for a disciplined first release.",
-            "title": "Focused"
+            "title": "Essential"
           },
           "premium": {
             "description": "Advanced logic, multiple roles, bespoke interactions. For flagship products and operationally complex systems.",
-            "title": "Full Depth"
+            "title": "Premium"
           },
           "standard": {
             "description": "Additional workflows, integrations, and richer UI. Everything in Focused, plus more depth where the business needs it.",
             "title": "Standard"
           }
         },
-        "title": "What scope level fits your needs?"
+        "title": "How ambitious should it be?"
       },
       "content": {
         "hint": "Content readiness directly affects both timeline and cost.",
         "options": {
           "need-help": {
             "description": "We co-create messaging and structure with you, which adds time to the early phases.",
-            "title": "Need Content Help"
+            "title": "Need support"
           },
           "provide": {
             "description": "Copy and assets are structured and ready. We focus entirely on architecture, design, and engineering.",
-            "title": "Ready to Hand Over"
+            "title": "Ready"
           },
           "unsure": {
             "description": "Content is not yet structured. We clarify key messages and hierarchy before locking timelines and scope.",
-            "title": "Not Defined Yet"
+            "title": "Not sure"
           }
         },
         "title": "How ready is your content?"
@@ -2425,51 +2448,51 @@
         "options": {
           "ecommerce": {
             "description": "An online store with products, checkout, payments, and the inventory infrastructure to sell reliably at scale.",
-            "title": "E-Commerce System"
+            "title": "E-commerce"
           },
           "pwa": {
             "description": "App-like mobile experience built on the web stack - offline support, installable, push notifications.",
-            "title": "Progressive Web App"
+            "title": "PWA"
           },
           "webapp": {
             "description": "A product or internal tool with accounts, workflows, and custom business logic - SaaS, dashboards, portals.",
-            "title": "Custom Web Application"
+            "title": "Web App"
           },
           "website": {
             "description": "A high-performance marketing site built for clarity, trust, and lead generation - no application logic.",
-            "title": "Corporate Website"
+            "title": "Website"
           }
         },
-        "title": "What are we building?"
+        "title": "What are you building?"
       },
       "timeline": {
         "hint": "<strong>Faster delivery requires more resources</strong>; <dim>flexible timelines reduce cost</dim>.",
         "options": {
           "flexible": {
             "description": "Extra time for iteration, testing, and refinement. Best for systems where durability matters more than speed.",
-            "title": "Extended"
+            "title": "Flexible"
           },
           "standard": {
             "description": "Structured cadence with enough time for discovery, design, build, and QA - no artificial pressure.",
-            "title": "Balanced"
+            "title": "Standard"
           },
           "urgent": {
             "description": "Compressed, high-intensity build. Scope controlled tightly to maintain quality at speed.",
-            "title": "Sprint"
+            "title": "Urgent"
           }
         },
         "title": "What delivery pace do you need?"
       }
     },
-    "subtitle": "Most agencies hide their pricing. We believe in building trust before we write a single line of code. Answer 3 questions to get a realistic investment range calibrated to custom-development standards.",
+    "subtitle": "Your range updates as you shape the project.",
     "tierNames": {
       "commerce": "Commerce Platform",
       "essential": "Focused Website",
       "flagship": "Operational Product",
       "professional": "Connected Platform"
     },
-    "title": "Clear engineering.",
-    "titleItalic": "No hidden scopes.",
+    "title": "Get a realistic range",
+    "titleItalic": "before we talk.",
     "ledger": {
       "eyebrow": "The ledger",
       "forming": "Estimate forming",
@@ -2482,6 +2505,21 @@
         "contentReadiness": "Content",
         "timeline": "Timeline"
       }
+    },
+    "live": {
+      "eyebrow": "Live estimate",
+      "widest": "Widest honest range. Every answer narrows it.",
+      "narrowing": "Narrowing — {answered} of {total} answered",
+      "settled": "Settled on your answers.",
+      "applied": "applied",
+      "neutral": "no effect on price",
+      "pickTypeFirst": "Pick a project type to start the range.",
+      "updatesAsYouShape": "Updates live as you shape requirements."
+    },
+    "optIn": {
+      "title": "Want it as a document?",
+      "subtitle": "The estimate above is yours either way. Leave a number only if you want the PDF and a follow-up call.",
+      "skip": "No thanks — I have what I need"
     }
   },
   "validations": {

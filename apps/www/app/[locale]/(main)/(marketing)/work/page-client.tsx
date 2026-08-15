@@ -5,9 +5,14 @@ import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Accent } from "@/components/ui/emphasis";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { WorkItem } from "@/components/work-item";
+import { WorkRecord } from "@/components/sections/work-record";
 import { CASE_STUDIES } from "@/lib/data/case-studies";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import {
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
 import { useTranslations } from "next-intl";
 import { memo, useMemo } from "react";
 
@@ -16,6 +21,9 @@ export default memo(function WorkIndexPage() {
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
+  const recordsRef = useSectionCardGrid<HTMLOListElement>({
+    selector: "[data-work-record]",
+  });
 
   const projects = useMemo(() => CASE_STUDIES, []);
 
@@ -53,11 +61,11 @@ export default memo(function WorkIndexPage() {
               </span>
               <div className="flex-1 h-px bg-s-border" />
             </div>
-            <div className="border-t border-s-border">
+            <ol ref={recordsRef} className="list-none border-b border-border">
               {projects.map((cs, index) => (
-                <WorkItem key={cs.slug} slug={cs.slug} index={index} />
+                <WorkRecord key={cs.slug} slug={cs.slug} index={index} />
               ))}
-            </div>
+            </ol>
           </div>
         </Container>
       </section>

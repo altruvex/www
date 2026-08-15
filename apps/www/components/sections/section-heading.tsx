@@ -18,7 +18,7 @@ interface SectionHeadingProps {
   accentAnimate?: boolean | AccentAnimation;
   secondTitleBreak?: boolean;
   titleId?: string;
-
+  titleAs?: "h1" | "h2" | "h3";
   customEyebrow?: boolean;
   classes?: {
     container?: string;
@@ -45,30 +45,57 @@ export function SectionHeading({
   accentAnimate = false,
   secondTitleBreak = true,
   titleId,
+  titleAs = "h2",
   customEyebrow = false,
   classes,
 }: SectionHeadingProps) {
   const isSurface = theme === "surface";
 
+  const Heading = titleAs;
+
   return (
-    <div className={cn("flex flex-col lg:flex-row items-start lg:items-end justify-between gap-8 md:gap-12", className, classes?.container)}>
-      <div className={cn("space-y-3", isSurface && "w-full lg:w-auto flex-1", classes?.titleWrapper)}>
+    <div
+      className={cn(
+        "flex flex-col items-start justify-between gap-8 lg:flex-row lg:items-end md:gap-12",
+        className,
+        classes?.container,
+      )}
+    >
+      <div
+        className={cn(
+          "space-y-3",
+          isSurface && "flex-1",
+          classes?.titleWrapper,
+        )}
+      >
         {eyebrow ? (
           !customEyebrow ? (
-            <Eyebrow ref={eyebrowRef as RefObject<HTMLParagraphElement | null>} className={cn("m-0", isSurface && "text-s-mid", classes?.eyebrow)}>
+            <Eyebrow
+              ref={eyebrowRef as RefObject<HTMLParagraphElement | null>}
+              className={cn(
+                "m-0",
+                isSurface && "text-s-mid",
+                classes?.eyebrow,
+              )}
+            >
               {eyebrow}
             </Eyebrow>
           ) : (
-            <div ref={eyebrowRef as RefObject<HTMLDivElement | null>} className={classes?.eyebrow}>{eyebrow}</div>
+            <div
+              ref={eyebrowRef as RefObject<HTMLDivElement | null>}
+              className={classes?.eyebrow}
+            >
+              {eyebrow}
+            </div>
           )
         ) : null}
-        <h2
+        <Heading
           id={titleId}
           ref={titleRef as RefObject<HTMLHeadingElement | null>}
           className={cn(
-            "section-title font-normal m-0",
+            "section-title m-0 font-normal",
             isSurface ? "text-s-high" : "text-foreground",
-            classes?.title
+            classes?.title,
           )}
         >
           {firstTitle}
@@ -85,8 +112,11 @@ export function SectionHeading({
                   direction={accentDirection}
                   animate={accentAnimate}
                   className={cn(
-                    secondTitleBreak && (isSurface ? "" : "block mt-2 md:mt-0 md:inline"),
-                    classes?.secondTitle
+                    secondTitleBreak &&
+                    (isSurface
+                      ? ""
+                      : "mt-2 block md:mt-0 md:inline"),
+                    classes?.secondTitle,
                   )}
                 >
                   {secondTitle}
@@ -94,9 +124,12 @@ export function SectionHeading({
               ) : (
                 <Highlight
                   className={cn(
-                    isSurface ? "text-s-mid" : "text-foreground/45",
-                    secondTitleBreak && "block mt-2 md:mt-0 md:inline",
-                    classes?.secondTitle
+                    isSurface
+                      ? "text-s-mid"
+                      : "text-foreground/45",
+                    secondTitleBreak &&
+                    "mt-2 block md:mt-0 md:inline",
+                    classes?.secondTitle,
                   )}
                 >
                   {secondTitle}
@@ -104,7 +137,7 @@ export function SectionHeading({
               )}
             </>
           ) : null}
-        </h2>
+        </Heading>
       </div>
       {description && (
         <p
@@ -112,7 +145,7 @@ export function SectionHeading({
           className={cn(
             "m-0 max-w-sm text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed md:max-w-xs lg:max-w-[20rem]",
             isSurface ? "text-s-mid" : "text-muted-foreground",
-            classes?.description
+            classes?.description,
           )}
         >
           {description}

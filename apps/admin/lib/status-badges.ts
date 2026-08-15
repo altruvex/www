@@ -33,3 +33,11 @@ export const meetingTypeBadge: Record<string, string> = {
   PROPOSAL: "bg-accent/10 text-accent",
   FOLLOWUP: "bg-warning/10 text-warning",
 };
+
+export const clientSourceBadge: Record<string, string> = {
+  WEBSITE_CONTACT_FORM: "bg-brand/10 text-brand border-brand/25",
+  TRANSPARENCY_ESTIMATOR: "bg-accent/10 text-accent border-accent/25",
+  MANUAL: "bg-muted text-muted-foreground border-border",
+  WHATSAPP_INBOUND: "bg-success/10 text-success border-success/25",
+  REFERRAL: "bg-warning/10 text-warning border-warning/25",
+};

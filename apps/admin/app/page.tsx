@@ -1,16 +1,16 @@
 import { Container } from "@/components/container";
 import { monoCaps } from "@/lib/mono-caps";
 import { cn } from "@/lib/utils";
-import { Calendar, Mail, Users } from "lucide-react";
+import { Calendar, Users } from "lucide-react";
 import Link from "next/link";
 
 const cards = [
   {
-    href: "/contacts",
-    title: "Contacts",
-    description: "View and manage incoming contact requests and inquiries",
-    cta: "View all messages",
-    icon: Mail,
+    href: "/clients",
+    title: "Clients",
+    description: "Every lead and client, from first contact to signed deal",
+    cta: "View all clients",
+    icon: Users,
     iconClass: "bg-brand/10 text-brand",
     linkClass: "text-brand",
   },
@@ -23,15 +23,6 @@ const cards = [
     iconClass: "bg-success/10 text-success",
     linkClass: "text-success",
   },
-  {
-    href: "/leads",
-    title: "Leads",
-    description: "Track leads from the transparency estimator flow",
-    cta: "View all leads",
-    icon: Users,
-    iconClass: "bg-warning/10 text-warning",
-    linkClass: "text-warning",
-  },
 ] as const;
 
 export default function Home() {
@@ -43,11 +34,10 @@ export default function Home() {
             <p className={cn(monoCaps, "text-muted-foreground mb-3")}>Overview</p>
             <h1 className="text-foreground mb-2">Admin dashboard</h1>
             <p className="max-w-xl text-muted-foreground">
-              Choose a section to manage inbound requests, meetings, and estimator
-              leads.
+              Choose a section to manage the client pipeline and meetings.
             </p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2">
             {cards.map((card) => {
               const Icon = card.icon;
               return (

@@ -95,7 +95,7 @@ export function Nav() {
                 <AltruvexLogo size="md" variant="full" />
               </Link>
             </div>
-            
+
             <nav className="flex items-center justify-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const isActive =
