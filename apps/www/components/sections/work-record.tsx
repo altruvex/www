@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
@@ -59,7 +60,7 @@ export const WorkRecord = memo(function WorkRecord({
             aria-hidden
             className="shrink-0 text-sm tabular-nums text-muted-foreground ltr:font-mono"
           >
-            {String(index + 1).padStart(2, "0")}
+            <Num value={index + 1} pad={2} />
           </span>
           <Eyebrow>
             {client} · {industry} · {year}
@@ -118,7 +119,7 @@ export const WorkRecord = memo(function WorkRecord({
         </div>
       </div>
       {screenshot && (
-        <div className={cn("relative aspect-16/10 w-full overflow-hidden rounded-lg border border-border bg-surface", reverse && "md:order-1")}>
+        <div className={cn("relative aspect-16/10 w-full overflow-hidden rounded-md border border-border bg-surface", reverse && "md:order-1")}>
           <Image
             src={`${screenshot}-light.png`}
             alt={`${name} — ${client}`}

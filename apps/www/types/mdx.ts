@@ -4,7 +4,9 @@ export interface ArticleFrontmatter {
   title: string;
   excerpt: string;
   date: string;
-  readTime: string;
+  /** Estimated reading time in whole minutes. Formatted at render so the
+   *  phrase and the numerals follow the reading locale. */
+  readTimeMinutes: number;
   author: string;
   tags: string[];
   coverImage?: string;

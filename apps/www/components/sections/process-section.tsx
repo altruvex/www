@@ -1,66 +1,125 @@
 "use client";
 
+import { useLoading } from "@/components/providers/loading-provider";
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import {
-  useBatch,
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils/utils";
+import { getConstrainedDevice } from "@/lib/motion/config";
+import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
+import { gsap, ScrollTrigger } from "@/lib/utils/gsap";
+import { splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { memo, useRef } from "react";
 import { SectionHeading } from "./section-heading";
 
-/**
- * `share` is each phase's slice of the calendar, taken from the upper bound of
- * the timeline strings in `process.steps.*.timeline`
- * (5d · 7d · 42d · 5d = 59 days). The strings stay the display value — they are
- * localized prose ("2 – 6 weeks" / "٢ – ٦ أسابيع") and parsing them at runtime
- * would break the moment a translation phrases a range differently.
- *
- * Keep the two in sync: if a timeline string changes, change the share here.
- */
 const STEPS = [
-  { key: "step1", share: "w-[8.5%]" },
-  { key: "step2", share: "w-[11.9%]" },
-  { key: "step3", share: "w-[71.1%]" },
-  { key: "step4", share: "w-[8.5%]" },
+  { key: "step1", pct: "8.5%" },
+  { key: "step2", pct: "11.9%" },
+  { key: "step3", pct: "71.1%" },
+  { key: "step4", pct: "8.5%" },
 ] as const;
 
-/**
- * Delivery Model — the calendar, to scale.
- *
- * Claim: clear phases, no vague middle.
- * Proof shape: consequence over time — the argument is *how long each phase
- * actually takes*, so time owns an axis.
- * Device: a horizontal time axis whose segments are sized to their real
- * durations. It makes one thing undeniable at a glance: the build is roughly
- * seven tenths of the calendar and the client-facing phases are days, not
- * weeks. Four equal cards flattened that into "four steps of equal weight",
- * which is the opposite of what the timelines say.
- *
- * The proportions are CSS widths, so the claim survives with motion disabled.
- * Runs inside the inverted scene — every colour is a scene token.
- */
+const BUILD_SEQUENCE = [
+  "buildSequence.implementation",
+  "buildSequence.integration",
+  "buildSequence.validation",
+  "buildSequence.refinement",
+] as const;
+
+// Each stuck card rests a little lower than the one before it, so a sliver of
+// every prior card stays visible above the next - the "peek" that reads as a
+// physical stack instead of a hard cut.
+const STACK_TOP_BASE = 96;
+const STACK_TOP_STEP = 24;
+
 export const ProcessSection = memo(function ProcessSection() {
   const t = useTranslations("process");
+  const { isInitialLoadComplete } = useLoading();
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const subtitleRef = useSectionDescription<HTMLParagraphElement>();
-  const axisRef = useSectionElement();
   const footerRef = useSectionElement();
-  const listRef = useBatch<HTMLOListElement>({
-    selector: "[data-phase]",
-    distance: 24,
-    stagger: 0.08,
-  });
+  const stackRef = useRef<HTMLOListElement>(null);
 
-  const { first, second } = splitHeadline(t("title"));
+  useIsomorphicLayoutEffect(() => {
+    const stack = stackRef.current;
+    if (!stack || !isInitialLoadComplete) return;
+
+    const cards = Array.from(
+      stack.querySelectorAll<HTMLElement>("[data-stack-card]"),
+    );
+    if (cards.length < 2) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        "(prefers-reduced-motion: no-preference) and (min-width: 1024px)",
+        () => {
+          if (getConstrainedDevice()) return;
+
+          // Depth-proportional rest scale: the card at the bottom of the stack
+          // ends smallest, each one above it slightly larger. A single shared
+          // scale makes four cards read as four identical shrinks rather than
+          // as one deck receding.
+          const scaleFor = gsap.utils.mapRange(
+            0,
+            Math.max(cards.length - 2, 1),
+            0.94,
+            0.985,
+          );
+
+          cards.forEach((card, index) => {
+            if (index === cards.length - 1) return;
+            const nextCard = cards[index + 1];
+            const surface = card.querySelector<HTMLElement>(
+              "[data-stack-surface]",
+            );
+            const veil = card.querySelector<HTMLElement>("[data-stack-veil]");
+            if (!surface) return;
+
+            // Shrink toward the stuck top edge, so the exposed sliver stays put
+            // and the card reads as sliding UNDER the next one. With the
+            // default centre origin it reads as an unrelated zoom-out instead.
+            gsap.set(surface, {
+              transformOrigin: "center top",
+              transformPerspective: 1200,
+              willChange: "transform",
+            });
+
+            const line = `top top+=${STACK_TOP_BASE + index * STACK_TOP_STEP}`;
+            const tl = gsap.timeline({ paused: true });
+            tl.to(
+              surface,
+              { scale: scaleFor(index), rotationX: -4, ease: "none" },
+              0,
+            );
+            if (veil) tl.to(veil, { opacity: 1, ease: "none" }, 0);
+
+            ScrollTrigger.create({
+              trigger: card,
+              start: line,
+              endTrigger: nextCard,
+              end: line,
+              scrub: 0.3,
+              invalidateOnRefresh: true,
+              animation: tl,
+            });
+          });
+        },
+      );
+    }, stack);
+
+    return () => ctx.revert();
+  }, [isInitialLoadComplete]);
 
   return (
     <section
@@ -76,91 +135,124 @@ export const ProcessSection = memo(function ProcessSection() {
           titleRef={titleRef}
           descriptionRef={subtitleRef}
           eyebrow={t("eyebrow")}
-          firstTitle={first}
-          secondTitle={second}
+          firstTitle={splitHeadline(t("title")).first}
+          secondTitle={splitHeadline(t("title")).second}
           description={t.rich("subtitle", bodyMarks)}
-          className="mb-14 lg:mb-18"
+          className="mb-14 lg:mb-24"
         />
-
-        {/* The axis. Segment widths are the durations — this is the section's
-            one signature moment, and it is structural, not animated. */}
-        <div ref={axisRef}>
-          <div aria-hidden className="flex h-2 w-full gap-1">
-            {STEPS.map((step, index) => (
-              <span
-                key={step.key}
-                className={cn(
-                  "shrink-0 rounded-[2px]",
-                  step.share,
-                  index === 2 ? "bg-local-accent" : "bg-local-accent/35",
-                )}
-              />
-            ))}
-          </div>
-          <div className="mt-3 flex w-full gap-1">
-            {STEPS.map((step) => (
-              <span
-                key={step.key}
-                className={cn(
-                  "shrink-0 truncate text-[11px] leading-normal text-s-mid ltr:font-mono",
-                  step.share,
-                )}
-              >
-                {t(`steps.${step.key}.timeline`)}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <ol ref={listRef} className="mt-12 list-none border-b border-s-border">
+        <ol ref={stackRef} className="flex list-none flex-col gap-4 lg:gap-6">
           {STEPS.map((step, index) => (
             <li
               key={step.key}
-              data-phase
-              className="grid gap-x-10 gap-y-4 border-t border-s-border py-8 md:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] md:py-10"
+              data-stack-card
+              className="group lg:sticky"
+              style={{
+                top: STACK_TOP_BASE + index * STACK_TOP_STEP,
+                zIndex: index + 1,
+              }}
             >
-              <div>
-                <div className="flex items-baseline gap-4">
-                  <span
+              <div data-stack-surface>
+                <SurfaceCard className="relative overflow-hidden rounded-4xl border border-border/70 bg-card p-0 shadow-card-lg transition-colors duration-500 hover:border-local-accent/30 lg:shadow-2xl">
+                  <div
+                    data-stack-veil
                     aria-hidden
-                    className={cn(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      index === 2 ? "bg-local-accent" : "bg-local-accent/35",
-                    )}
+                    className="pointer-events-none absolute inset-0 z-10 rounded-4xl bg-background/50 opacity-0"
                   />
-                  <Eyebrow className="text-s-mid">
-                    {t(`steps.${step.key}.tag`)}
-                  </Eyebrow>
-                </div>
-                <h3 className="mt-3 text-[clamp(1.25rem,2vw,1.625rem)] font-medium leading-[1.2] tracking-[-0.02em] text-s-high">
-                  {t(`steps.${step.key}.title`)}
-                </h3>
-                <p className="mt-2 text-sm text-s-mid ltr:font-mono">
-                  <span className="sr-only">{t("meta.timeline")}: </span>
-                  {t(`steps.${step.key}.timeline`)}
-                </p>
-              </div>
-
-              <div>
-                <p className="max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-[1.7] text-s-mid">
-                  {t.rich(`steps.${step.key}.description`, bodyMarks)}
-                </p>
-                <p className="mt-4 border-s border-s-border ps-4 text-sm leading-relaxed text-s-mid">
-                  <span className="eyebrow block text-[11px] text-s-mid">
-                    {t("meta.deliverables")}
-                  </span>
-                  {t(`steps.${step.key}.deliverables`)}
-                </p>
+                  <div className="grid min-h-112 lg:grid-cols-12">
+                    <div className="relative flex flex-col justify-between gap-10 border-b border-border/70 p-7 md:p-8 lg:col-span-3 lg:border-b-0 lg:border-e lg:p-10">
+                      <div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="font-mono text-xs font-medium tracking-wide text-local-accent-text uppercase">
+                            {t(`steps.${step.key}.tag`)}
+                          </span>
+                          <span className="font-mono text-xs font-medium tabular-nums text-s-mid">
+                            <Num value={step.pct} />
+                          </span>
+                        </div>
+                        <div className="mt-8 flex items-end gap-2">
+                          <span className="font-outfit text-6xl font-medium leading-none tracking-[-0.06em] text-s-high md:text-7xl">
+                            <Num value={index + 1} pad={2} />
+                          </span>
+                          <span
+                            aria-hidden
+                            className="mb-1.5 text-sm text-s-muted/40"
+                          >
+                            /
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          aria-hidden
+                          className="mb-3 h-px w-10 bg-local-accent/50"
+                        />
+                        <span className="block font-mono text-[10px] font-medium tracking-[0.16em] text-s-mid uppercase">
+                          {t("meta.timeline")}
+                        </span>
+                        <p className="mt-2 text-sm leading-relaxed text-s-high">
+                          {t(`steps.${step.key}.timeline`)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative flex flex-col p-7 md:p-10 lg:col-span-9 lg:p-12 xl:p-14">
+                      <div className="max-w-3xl">
+                        <h3 className="max-w-[15ch] text-[clamp(2rem,3.5vw,3.5rem)] font-medium leading-[1.02] tracking-[-0.045em] text-s-high">
+                          {t(`steps.${step.key}.title`)}
+                        </h3>
+                        <p className="mt-7 max-w-[62ch] text-[clamp(1.0625rem,1.2vw,1.1875rem)] leading-[1.75] text-s-mid">
+                          {t.rich(`steps.${step.key}.description`, bodyMarks)}
+                        </p>
+                      </div>
+                      {index === 2 ? (
+                        <div className="mt-10 lg:mt-12">
+                          <BuildSequence />
+                        </div>
+                      ) : null}
+                      <div className="mt-auto pt-12">
+                        <div className="flex flex-col gap-5 border-t border-border/70 pt-6 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <span className="block font-mono text-[10px] font-medium tracking-[0.16em] text-s-mid uppercase">
+                              {t("meta.deliverables") || "Output"}
+                            </span>
+                          </div>
+                          <span className="max-w-[48ch] text-sm leading-relaxed text-s-high sm:text-end">
+                            {t(`steps.${step.key}.deliverables`)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SurfaceCard>
               </div>
             </li>
           ))}
         </ol>
-
-        <div ref={footerRef} className="mt-12 flex items-center gap-4">
-          <Eyebrow className="text-s-mid">{t("footer")}</Eyebrow>
-          <span aria-hidden className="hidden h-px flex-1 bg-s-border sm:block" />
+        <div ref={footerRef} className="mt-16 lg:mt-20">
+          <p className="max-w-[52ch] text-[clamp(1.0625rem,1.5vw,1.25rem)] text-s-high">
+            {t("footer")}
+          </p>
         </div>
       </Container>
     </section>
   );
 });
+
+function BuildSequence() {
+  const t = useTranslations("process");
+
+  return (
+    <div className="flex flex-col gap-3 lg:gap-4">
+      {BUILD_SEQUENCE.map((key, i) => (
+        <div
+          key={key}
+          className="flex items-baseline gap-4 text-[11px] font-medium tracking-[0.12em] uppercase ltr:font-mono"
+        >
+          <span className="text-s-muted/50 tabular-nums">
+            <Num value={i + 1} pad={2} />
+          </span>
+          <span className="text-s-high/90">{t(key)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}

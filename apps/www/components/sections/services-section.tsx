@@ -1,50 +1,155 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import {
-  useBatch,
+  useSectionCardGrid,
   useSectionDescription,
-  useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { splitHeadline } from "@/lib/utils/utils";
+import { cn, splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
+import { Fragment, memo, useEffect, useRef, useState } from "react";
 import { SectionHeading } from "./section-heading";
 
-const SERVICE_KEYS = ["service1", "service2", "service3", "service4"] as const;
+interface ServiceData {
+  key: "service1" | "service2" | "service3" | "service4";
+  index: string;
+}
 
-/**
- * What We Build — one spine, four branches.
- *
- * Claim: four disciplines, one delivery standard (the section's own headline).
- * Proof shape: anatomy of a standard — four applications of a single thing.
- * Device: a continuous spine with four branches coming off it. The structure
- * states the claim before the copy does: the spine is the standard, unbroken
- * through all four, and each discipline hangs off it rather than sitting in its
- * own box. Four equal cards said the opposite — four separate things.
- *
- * This runs inside the inverted scene (`#services-wrapper[data-scene]`), so
- * every colour is a scene token. The build this replaces injected eight
- * hardcoded values as per-card CSS variables
- * (`--card-accent: hsl(230 95% 78% / 0.1)` and friends) — raw HSL tuned by eye
- * for one scene, which is exactly what the token system exists to prevent.
- */
+const SERVICES: ServiceData[] = [
+  { key: "service1", index: "01" },
+  { key: "service2", index: "02" },
+  { key: "service3", index: "03" },
+  { key: "service4", index: "04" },
+];
+
+const ServiceCard = memo(function ServiceCard({
+  service,
+  variant,
+}: {
+  service: ServiceData;
+  variant: "primary" | "supporting" | "anchor";
+}) {
+  const t = useTranslations("services");
+  const isPrimary = variant === "primary";
+  const isAnchor = variant === "anchor";
+
+  return (
+    <article
+      data-card
+      className={cn(
+        "group relative isolate flex flex-col justify-between overflow-hidden bg-muted/10 transition-colors duration-500 hover:bg-local-accent/2",
+        isPrimary && "min-h-[clamp(280px,30vw,400px)] p-[clamp(32px,4vw,56px)]",
+        isAnchor && "min-h-[clamp(220px,24vw,300px)] p-[clamp(28px,4vw,48px)]",
+        variant === "supporting" && "min-h-[clamp(200px,20vw,280px)] p-[clamp(24px,3vw,40px)]"
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -top-4 inset-e-0 z-0 select-none pe-[clamp(16px,2vw,32px)] font-mono leading-none font-bold tracking-[-0.04em] transition-all duration-500",
+          "text-s-muted/3 group-hover:-translate-x-2 group-hover:translate-y-2 group-hover:text-local-accent/6 rtl:group-hover:translate-x-2",
+          isPrimary ? "text-[clamp(120px,16vw,220px)]" : "text-[clamp(80px,12vw,140px)]"
+        )}
+      >
+        <Num value={service.index} />
+      </span>
+      <div className="relative z-10 mb-10 flex items-baseline gap-3">
+        <span className="text-[11px] font-mono font-medium tracking-widest text-s-muted transition-colors duration-300 group-hover:text-local-accent">
+          <Num value={service.index} />
+        </span>
+        <span aria-hidden className="text-xs font-mono text-s-muted/40">/</span>
+        <span className="text-xs font-medium uppercase tracking-[0.15em] text-s-mid transition-colors duration-300 group-hover:text-s-high">
+          {t(`${service.key}.tag`)}
+        </span>
+      </div>
+      <div className={cn("relative z-10", isPrimary ? "max-w-[46ch]" : "max-w-[38ch]")}>
+        <h3
+          className={cn(
+            "font-medium tracking-[-0.02em] text-s-high transition-colors duration-300 group-hover:text-local-accent-text",
+            isPrimary
+              ? "mb-4 text-[clamp(1.5rem,2.5vw,2.25rem)] leading-[1.1]"
+              : isAnchor
+                ? "mb-4 text-[clamp(1.25rem,2vw,1.75rem)] leading-[1.15]"
+                : "mb-3 text-[clamp(1.15rem,1.5vw,1.35rem)] leading-[1.2]"
+          )}
+        >
+          {t(`${service.key}.title`)}
+        </h3>
+        <p
+          className={cn(
+            "text-s-mid leading-[1.65]",
+            isPrimary ? "text-[clamp(0.9375rem,1.1vw,1.0625rem)]" : "text-[0.9375rem]"
+          )}
+        >
+          {t.rich(`${service.key}.description`, bodyMarks)}
+        </p>
+      </div>
+    </article>
+  );
+});
+
+const ProcessRail = memo(function ProcessRail() {
+  const t = useTranslations("services");
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold: 0.1 },
+    );
+
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className="mt-[clamp(56px,8vw,96px)] w-full">
+      <div className="flex flex-col md:flex-row md:items-start">
+        {SERVICES.map((service, i) => (
+          <Fragment key={service.key}>
+            <div className="group/rail flex shrink-0 flex-row items-center gap-4 md:flex-col md:items-start md:gap-3">
+              <span className="text-[11px] font-mono tracking-[0.2em] text-s-muted transition-colors duration-300 group-hover/rail:text-local-accent">
+                <Num value={service.index} />
+              </span>
+              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-s-mid md:mt-0">
+                {t(`${service.key}.tag`)}
+              </span>
+            </div>
+            {i < SERVICES.length - 1 ? (
+              <div
+                style={{ animationDelay: `${i * 0.2}s` }}
+                className={cn(
+                  "paused my-3 ms-1.5 h-6 w-px origin-top bg-s-border/50 motion-reduce:animate-none!",
+                  "md:mx-6 md:mt-1.75 md:h-px md:flex-1 md:origin-left md:self-start rtl:md:origin-right",
+                  visible && "running animate-services-rail",
+                )}
+              />
+            ) : null}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 export const ServicesSection = memo(function ServicesSection() {
   const t = useTranslations("services");
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const subtitleRef = useSectionDescription<HTMLParagraphElement>();
-  const footerRef = useSectionElement();
-  const spineRef = useBatch<HTMLOListElement>({
-    selector: "[data-branch]",
-    distance: 24,
-    stagger: 0.08,
-  });
+  const gridRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-card]" });
 
   const { first, second } = splitHeadline(t("title"));
 
@@ -67,53 +172,20 @@ export const ServicesSection = memo(function ServicesSection() {
           description={t("subtitle")}
           className="mb-14 lg:mb-20"
         />
-
-        {/* The spine is the standard. It runs the full height of the list and
-            never breaks; the branches are what changes. */}
-        <ol
-          ref={spineRef}
-          className="list-none border-s border-s-border ps-6 sm:ps-10 lg:ps-14"
-        >
-          {SERVICE_KEYS.map((key, index) => (
-            <li
-              key={key}
-              data-branch
-              className="group relative grid gap-x-10 gap-y-4 py-9 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:py-11"
-            >
-              {/* Branch stub — the connector back to the spine. */}
-              <span
-                aria-hidden
-                className="pointer-events-none absolute top-[3.25rem] h-px w-4 bg-s-border transition-[width,background-color] duration-300 ease-smooth group-hover:w-6 sm:w-7 sm:group-hover:w-10 ltr:-left-6 sm:ltr:-left-10 lg:ltr:-left-14 rtl:-right-6 sm:rtl:-right-10 lg:rtl:-right-14 motion-reduce:transition-none"
-              />
-
-              <div>
-                <div className="flex items-baseline gap-4">
-                  <span
-                    aria-hidden
-                    className="shrink-0 text-sm tabular-nums text-s-mid ltr:font-mono"
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <Eyebrow className="text-s-mid">{t(`${key}.tag`)}</Eyebrow>
-                </div>
-                <h3 className="mt-4 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.2] tracking-[-0.02em] text-s-high">
-                  {t(`${key}.title`)}
-                </h3>
-              </div>
-
-              <p className="max-w-[58ch] text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.7] text-s-mid md:pt-1">
-                {t.rich(`${key}.description`, bodyMarks)}
-              </p>
-            </li>
-          ))}
-        </ol>
-
         <div
-          ref={footerRef}
-          className="mt-12 flex items-center gap-4 border-t border-s-border pt-8"
+          ref={gridRef}
+          className="grid grid-cols-1 gap-px overflow-hidden rounded-xl bg-s-border/60"
         >
-          <Eyebrow className="text-s-mid">{t("footerText")}</Eyebrow>
-          <span aria-hidden className="hidden h-px flex-1 bg-s-border sm:block" />
+          <ServiceCard service={SERVICES[0]} variant="primary" />
+          <div className="grid grid-cols-1 gap-px bg-s-border/60 md:grid-cols-2">
+            <ServiceCard service={SERVICES[1]} variant="supporting" />
+            <ServiceCard service={SERVICES[2]} variant="supporting" />
+          </div>
+          <ServiceCard service={SERVICES[3]} variant="anchor" />
+        </div>
+        <ProcessRail />
+        <div className="mt-[clamp(32px,5vw,56px)]">
+          <Eyebrow className="text-s-muted">{t("footerText")}</Eyebrow>
         </div>
       </Container>
     </section>

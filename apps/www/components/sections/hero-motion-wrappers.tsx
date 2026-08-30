@@ -6,20 +6,22 @@ import { useCounter } from "@/lib/motion/hooks/use-counter";
 import { useReveal } from "@/lib/motion/hooks/use-reveal";
 import { useText } from "@/lib/motion/hooks/use-text";
 import { motion } from "@/lib/motion/utils/presets";
-import { type ReactNode } from "react";
+import { type ElementType, type ReactNode } from "react";
 
 interface HeroHeadlineProps {
   children: ReactNode;
   className?: string;
+  as?: ElementType;
+  id?: string;
 }
 
-export function HeroHeadline({ children, className }: HeroHeadlineProps) {
-  const ref = useText<HTMLDivElement>(motion.heroHeadline());
+export function HeroHeadline({ children, className, as: Tag = "div", id }: HeroHeadlineProps) {
+  const ref = useText(motion.heroHeadline());
 
   return (
-    <div ref={ref} className={className} aria-hidden>
+    <Tag ref={ref} className={className} id={id}>
       {children}
-    </div>
+    </Tag>
   );
 }
 

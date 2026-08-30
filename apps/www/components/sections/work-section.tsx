@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -20,7 +21,6 @@ import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 import { WorkRecord } from "./work-record";
-
 
 export const WorkSection = memo(function WorkSection() {
   const tW = useTranslations("work");
@@ -61,7 +61,7 @@ export const WorkSection = memo(function WorkSection() {
           secondTitle={secondTitle}
           accent="mint"
           description={tW.rich("description", bodyMarks)}
-          className="mb-16"
+          className="mb-12 md:mb-16"
         />
         <ol ref={recordsRef} className="list-none border-b border-border">
           {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
@@ -73,7 +73,9 @@ export const WorkSection = memo(function WorkSection() {
             />
           ))}
         </ol>
-        <div className="mt-10 flex items-center justify-between gap-10">
+        
+        {/* REFINED: Stacked on mobile, side-by-side on desktop */}
+        <div className="mt-10 flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
           <div className="space-y-3">
             <Eyebrow>{tW("labels.liveProof")}</Eyebrow>
             <p className="max-w-xl text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
@@ -84,11 +86,13 @@ export const WorkSection = memo(function WorkSection() {
             primary={{ href: proofCta.href, label: tCTAs("realBuild") }}
             secondary={{ href: scopeCta.href, label: tCTAs("projectRange") }}
             secondaryArrow
-            className="flex-col gap-3 sm:flex-col sm:items-stretch"
+            className="w-full flex-col gap-3 sm:w-auto sm:flex-row lg:flex-col lg:items-stretch"
           />
         </div>
+        
         <FlagshipBlock metaRef={metaRef} tf={tf} stepLabel={stepLabel} />
-        <div className="mt-6 flex items-center gap-4">
+        
+        <div className="mt-8 flex items-center gap-4 md:mt-6">
           <div className="h-px flex-1 bg-border" />
           <Eyebrow>{tW("labels.footer")}</Eyebrow>
         </div>
@@ -96,7 +100,6 @@ export const WorkSection = memo(function WorkSection() {
     </section>
   );
 });
-
 
 function FlagshipBlock({
   metaRef,
@@ -116,38 +119,41 @@ function FlagshipBlock({
   return (
     <div
       ref={metaRef}
-      className="mt-20 border-t border-border pt-12 md:mt-24 md:pt-16"
+      className="mt-16 border-t border-border pt-10 md:mt-24 md:pt-16"
     >
       <SectionHeading
         titleAs="h3"
         eyebrow={tf("eyebrow")}
         firstTitle={tf("title")}
         description={tf("summary")}
-        className="gap-8"
+        className="gap-6 md:gap-8"
         classes={{
-          title: "max-w-3xl text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.08] tracking-tight",
+          title:
+            "max-w-3xl text-[clamp(1.5rem,3vw,2.5rem)] font-medium leading-[1.1] tracking-tight",
           description:
             "max-w-sm text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75]",
         }}
       />
-      <ol className="mt-14 list-none border-t border-border md:mt-16">
+      <ol className="mt-10 list-none border-t border-border md:mt-16">
         {movements.map((movement, index) => (
+          /* REFINED: flex-col on mobile, flex-row aligned to start on md+ */
           <li
             key={movement.label}
-            className="flex items-center justify-between gap-4 border-b border-border py-7 md:gap-x-10 md:py-8"
+            className="flex flex-col gap-3 border-b border-border py-6 md:flex-row md:items-start md:justify-between md:gap-x-10 md:py-8"
           >
-            <div className="flex items-baseline gap-4 md:pt-1">
+            {/* REFINED: Added explicit width to the label column on desktop for a clean editorial grid */}
+            <div className="flex shrink-0 items-baseline gap-4 md:w-[280px] md:pt-1">
               <span
                 aria-hidden
                 className="shrink-0 text-sm tabular-nums text-muted-foreground ltr:font-mono"
               >
-                {String(index + 1).padStart(2, "0")}
+                <Num value={index + 1} pad={2} />
               </span>
               <Eyebrow tone="accent">
                 {stepLabel} · {movement.label}
               </Eyebrow>
             </div>
-            <p className="max-w-[78ch] text-[clamp(1rem,1.02vw,1.125rem)] leading-[1.7] text-foreground/85">
+            <p className="max-w-[78ch] flex-1 text-[clamp(1rem,1.02vw,1.125rem)] leading-[1.7] text-foreground/85">
               {movement.body}
             </p>
           </li>

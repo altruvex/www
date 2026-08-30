@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { ServiceHero } from "@/components/sections/service-hero";
 import { Container } from "@/components/shared/container";
@@ -78,7 +79,7 @@ function CapabilityRow({
         <div className="flex items-center gap-4 shrink-0 w-32">
           <div className="w-1.5 h-1.5 rounded-full bg-foreground/20 group-hover:bg-foreground/60 transition-all duration-500" />
           <span className="text-[13px] text-foreground/40 group-hover:text-foreground/70 transition-all duration-500">
-            STORE // {item.num}
+            STORE // <Num value={item.num} />
           </span>
         </div>
         <div className="flex-1 max-w-4xl">

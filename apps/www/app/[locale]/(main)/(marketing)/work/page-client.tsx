@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -57,7 +58,7 @@ export default memo(function WorkIndexPage() {
             </div>
             <div className="flex items-center gap-4 mb-2">
               <span className="text-sm leading-normal text-s-low tabular-nums">
-                {String(projects.length).padStart(2, "0")} {t("projectsLabel")}
+                <Num value={projects.length} pad={2} /> {t("projectsLabel")}
               </span>
               <div className="flex-1 h-px bg-s-border" />
             </div>

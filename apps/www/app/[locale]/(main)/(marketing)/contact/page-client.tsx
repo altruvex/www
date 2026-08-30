@@ -265,7 +265,7 @@ export default function ContactPage() {
               </div>
             </div>
             <div ref={rightRef} className="flex flex-col justify-center">
-              <div className="p-8 border-border border rounded-2xl">
+              <div className="p-8 border-border border rounded-xl">
                 <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                   <div>
                     <label htmlFor="contact-name" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">

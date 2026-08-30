@@ -1,4 +1,5 @@
 "use client";
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { PageHero } from "@/components/sections/page-hero";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
@@ -103,7 +104,7 @@ function CategoriesSection() {
               className="border-b border-foreground/8 py-12 md:py-16 grid gap-8 md:grid-cols-[56px_1fr] items-start"
             >
               <span className="font-mono text-sm leading-normal tracking-wider uppercase text-foreground/20 rtl:font-sans rtl:normal-case rtl:tracking-normal pt-2">
-                {String(i + 1).padStart(2, "0")}
+                <Num value={i + 1} pad={2} />
               </span>
               <div className="max-w-4xl">
                 <h2

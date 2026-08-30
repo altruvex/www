@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { ArrowLabel } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -243,7 +244,7 @@ export default function PricingPage() {
                           className="absolute top-5 inset-e-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
                           style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
                         >
-                          {String(i + 1).padStart(2, "0")}
+                          <Num value={i + 1} pad={2} />
                         </span>
                         <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
                           {tier.internalLabel}
@@ -305,7 +306,7 @@ export default function PricingPage() {
                           className="absolute bottom-4 inset-e-1 font-mono font-bold select-none pointer-events-none leading-none text-foreground/3"
                           style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
                         >
-                          {String(i + 1).padStart(2, "0")}
+                          <Num value={i + 1} pad={2} />
                         </span>
                         <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
                           {tier.internalLabel}

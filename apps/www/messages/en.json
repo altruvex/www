@@ -1061,7 +1061,13 @@
       "title": "The process serves",
       "titleItalic": "the project."
     },
-    "footer": "Clear phases. No vague middle.",
+    "buildSequence": {
+      "implementation": "Implementation",
+      "integration": "Integration",
+      "refinement": "Refinement",
+      "validation": "Validation"
+    },
+    "footer": "A clear system before implementation. A working product after delivery.",
     "hero": {
       "description": "A framework, not a formula. Every engagement follows the same backbone - calibrated to what the scope actually demands.",
       "eyebrow": "10 - Our Process",
@@ -1114,35 +1120,35 @@
     },
     "steps": {
       "step1": {
-        "deliverables": "Technical audit report, Architecture brief, Priority matrix",
-        "description": "Audit the offer, the audience, technical constraints, and existing friction <strong>before opening the editor.</strong>",
-        "tag": "Research",
+        "deliverables": "Product scope · Technical direction · Delivery plan",
+        "description": "We define the problem, the users, the constraints and the outcome before implementation begins. <strong>The goal is to remove ambiguity before it becomes expensive.</strong>",
+        "tag": "Define",
         "timeline": "3 – 5 days",
-        "title": "01 - Diagnose"
+        "title": "Define the system before the interface."
       },
       "step2": {
-        "deliverables": "System design doc, Component spec, Tech stack decision",
-        "description": "Lock hierarchy, scope boundaries, and delivery logic. <strong>Nothing gets built before the architecture is agreed.</strong>",
-        "tag": "Design",
+        "deliverables": "Architecture · Data model · System structure",
+        "description": "We translate the agreed direction into an architecture that can support the experience: application structure, data flow, integrations, and <strong>the technical decisions that shape the build.</strong>",
+        "tag": "Architect",
         "timeline": "5 – 7 days",
-        "title": "02 - Define"
+        "title": "Architecture turns strategy into something the product can run on."
       },
       "step3": {
-        "deliverables": "Production codebase, Staging environment, QA report",
-        "description": "Implement with multilingual precision, performance discipline, and handoff standards that <strong>hold under scrutiny.</strong>",
+        "deliverables": "Product · Integrations · Validation · Refinement",
+        "description": "This is where the majority of the delivery happens. We implement the product, connect its systems, validate behavior, and <strong>refine the experience until the pieces operate as one coherent system.</strong>",
         "tag": "Build",
         "timeline": "2 – 6 weeks",
-        "title": "03 - Build"
+        "title": "Build the system behind the idea."
       },
       "step4": {
-        "deliverables": "Live deployment, Documentation, Knowledge transfer",
-        "description": "Ship with full documentation, <strong>complete ownership transfer</strong>, and the next operating step already mapped.",
-        "tag": "Deploy",
+        "deliverables": "Deployment · Handoff · Operational readiness",
+        "description": "We move the finished system into its operating environment, verify the final details, and <strong>leave it in a state that can be maintained, extended, and used.</strong>",
+        "tag": "Deliver",
         "timeline": "3 – 5 days",
-        "title": "04 - Launch"
+        "title": "Turn the system into something ready to operate."
       }
     },
-    "subtitle": "Every project moves through diagnosis, definition, build, and launch - <strong>with one owner responsible from start to delivery.</strong>",
+    "subtitle": "Every project moves through definition, architecture, build, and delivery - <strong>with one owner responsible from start to delivery.</strong>",
     "title": "Clear phases. Accountable outcomes."
   },
   "schedule": {
@@ -2630,7 +2636,8 @@
       "body": "The article you are looking for is not available.",
       "title": "Article not found"
     },
-    "relatedArticles": "Related Articles"
+    "relatedArticles": "Related Articles",
+    "readTime": "{minutes} min read"
   },
   "faq": {
     "eyebrow": "Trust Through Clarity",

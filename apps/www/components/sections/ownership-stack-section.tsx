@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { Dim, Highlight, Strong } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -174,7 +175,7 @@ export function OwnershipStackSection() {
                         aria-hidden
                         className="shrink-0 text-sm tabular-nums text-local-accent-text ltr:font-mono"
                       >
-                        {String(i + 1).padStart(2, "0")}
+                        <Num value={i + 1} pad={2} />
                       </span>
                       <h3 className="font-sans text-[clamp(1.125rem,1.6vw,1.375rem)] font-medium leading-tight text-foreground">
                         {t(`layers.${id}.name`)}
@@ -209,8 +210,6 @@ export function OwnershipStackSection() {
               </li>
             ))}
           </ol>
-
-          {/* Axis bottom — foundation, and the cut line's caption, stated once. */}
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
             <Eyebrow className="text-[11px]">{t("axis.foundation")}</Eyebrow>
             <span aria-hidden className="h-px min-w-8 flex-1 bg-border" />

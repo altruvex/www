@@ -507,7 +507,7 @@ export function TechDNASection() {
             >
               {activeNode && (
                 <div
-                  className="h-full rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm bg-surface overflow-hidden relative group"
+                  className="h-full rounded-xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm bg-surface overflow-hidden relative group"
                   style={{
                     borderColor: techAccentHsla(activeNode.accentId, 0.15),
                   }}

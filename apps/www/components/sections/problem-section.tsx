@@ -25,7 +25,7 @@ function ProblemRow({ item }: { item: ProblemItem }) {
   const t = useTranslations("problem");
 
   return (
-    <li className="group grid grid-cols-1 gap-y-8 border-t border-border py-8 md:grid-cols-[3rem_minmax(0,0.8fr)_minmax(0,1.2fr)] md:items-start md:gap-x-8 md:gap-y-0 md:py-10 lg:gap-x-12">
+    <li className="group grid grid-cols-1 gap-y-8 not-first:border-t border-border py-8 md:grid-cols-[3rem_minmax(0,0.8fr)_minmax(0,1.2fr)] md:items-start md:gap-x-8 md:gap-y-0 md:py-10 lg:gap-x-12">
       <div
         aria-hidden="true"
         className="pt-1 text-sm text-foreground/40 ltr:font-mono tabular-nums"
@@ -34,7 +34,7 @@ function ProblemRow({ item }: { item: ProblemItem }) {
       </div>
       <div data-problem-reveal>
         <Eyebrow className="mb-3 md:hidden">{t("trackPitch")}</Eyebrow>
-        <p className="text-[clamp(1.05rem,1.25vw,1.2rem)] leading-[1.6] text-foreground/55 transition-colors duration-300 ease-smooth">
+        <p className="text-[clamp(1.05rem,1.25vw,1.2rem)] leading-[1.6] text-foreground/55">
           <Highlight>{item.pitch}</Highlight>
         </p>
       </div>
@@ -42,10 +42,10 @@ function ProblemRow({ item }: { item: ProblemItem }) {
         <Eyebrow tone="accent" className="mb-3 md:hidden">
           {t("trackDelivery")}
         </Eyebrow>
-        <h3 className="text-[clamp(1.3rem,2vw,1.7rem)] font-medium leading-[1.2] tracking-[-0.02em] text-foreground transition-opacity duration-300 ease-smooth group-hover:opacity-90">
+        <h3 className="text-[clamp(1.3rem,2vw,1.7rem)] font-medium leading-[1.2] tracking-[-0.02em] text-foreground">
           {item.delivery}
         </h3>
-        <p className="mt-4 border-s border-local-accent/50 ps-3 text-[0.8125rem] leading-[1.6] text-muted-foreground transition-colors duration-300 ease-smooth tabular-nums group-hover:border-local-accent/80 ltr:font-mono md:text-[0.875rem] rtl:text-sm">
+        <p className="mt-4 border-s border-local-accent/50 ps-3 text-[0.8125rem] leading-[1.6] text-muted-foreground tabular-nums ltr:font-mono md:text-[0.875rem] rtl:text-sm transition-colors duration-300 group-hover:border-local-accent/80">
           {item.evidence}
         </p>
       </div>
@@ -98,7 +98,7 @@ export const ProblemSection = memo(function ProblemSection() {
           <ol
             ref={listRef}
             aria-label={t("eyebrow")}
-            className="list-none border-b border-border"
+            className="list-none border border-border p-4 rounded-xl"
           >
             {items.map((item) => (
               <ProblemRow key={item.number} item={item} />

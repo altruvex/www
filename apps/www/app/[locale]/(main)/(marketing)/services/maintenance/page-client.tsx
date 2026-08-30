@@ -1,4 +1,5 @@
 "use client";
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
@@ -181,7 +182,7 @@ function FeaturesSection() {
             >
               <div className="flex items-start justify-between mb-6">
                 <span className={cn(monoCaps, "text-foreground/20")}>
-                  {String(i + 1).padStart(2, "0")}
+                  <Num value={i + 1} pad={2} />
                 </span>
                 <svg
                   className="w-4 h-4 text-primary/0 group-hover:text-primary/35 transition-all duration-300 ease-out ltr:-translate-x-2 rtl:translate-x-2 group-hover:translate-x-0 rtl:-rotate-180"

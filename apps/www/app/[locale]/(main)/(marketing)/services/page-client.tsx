@@ -1,4 +1,5 @@
 "use client";
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { ArrowIcon } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
@@ -16,7 +17,7 @@ import { memo, useMemo } from "react";
 
 const designTokens = {
   cardBase:
-    "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface/40 transition-[border-color,box-shadow,transform] duration-300 ease-strong",
+    "group relative flex flex-col justify-between overflow-hidden rounded-xl border border-border bg-surface/40 transition-[border-color,box-shadow,transform] duration-300 ease-strong",
   cardHover: "transition-all hover:border-border-mid hover:shadow-xl motion-safe:hover:-translate-y-1.5",
   capsLabel:
     "text-xs font-semibold tracking-[0.12em] uppercase text-muted-foreground",
@@ -114,7 +115,7 @@ export default memo(function ServicesPage() {
                   <div className="relative z-10 h-full flex flex-col justify-between">
                     <div>
                       <p className={designTokens.capsLabel}>
-                        {String(index + 1).padStart(2, "0")}
+                        <Num value={index + 1} pad={2} />
                       </p>
                       <h3 className="mt-6 text-2xl font-medium tracking-tight text-foreground">
                         {item.title}
@@ -227,12 +228,12 @@ const OfferCard = memo(function OfferCard({
           "group-hover:scale-110 group-hover:opacity-10",
         )}
       >
-        {String(index + 1).padStart(2, "0")}
+        <Num value={index + 1} pad={2} />
       </span>
       <div className="relative z-2 flex flex-col gap-8 h-full pointer-events-none">
         <div className="flex items-center justify-between border-b border-border pb-6">
           <span className={designTokens.capsLabel}>
-            STEP {String(index + 1).padStart(2, "0")}
+            STEP <Num value={index + 1} pad={2} />
           </span>
           <span
             className={cn(
@@ -261,7 +262,7 @@ const OfferCard = memo(function OfferCard({
                 <span
                   key={tag}
                   className={cn(
-                    "rounded-2xl border border-border bg-surface px-4 py-1.5 text-[13px] text-muted-foreground",
+                    "rounded-full border border-border bg-surface px-4 py-1.5 text-[13px] text-muted-foreground",
                     "group-hover:border-border-mid group-hover:text-foreground transition-all",
                     monoCaps,
                   )}
@@ -303,7 +304,7 @@ const OfferCard = memo(function OfferCard({
       <Link
         href={offer.detailHref}
         aria-label={detailLabel}
-        className="absolute inset-0 z-1 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background after:absolute after:inset-0"
+        className="absolute inset-0 z-1 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background after:absolute after:inset-0"
       />
     </div>
   );

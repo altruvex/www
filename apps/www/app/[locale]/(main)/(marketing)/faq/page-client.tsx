@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
@@ -108,7 +109,7 @@ function FAQItem({
               isOpen ? "text-primary" : "transition-all text-foreground/30 group-hover:text-foreground/50"
             )}
           >
-            {String(index + 1).padStart(2, "0")}
+            <Num value={index + 1} pad={2} />
           </span>
           <h2
             className={cn(

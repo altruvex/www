@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -157,7 +158,7 @@ export default function HowWeWorkPage() {
                         letterSpacing: "-0.03em",
                       }}
                     >
-                      {String(i + 1).padStart(2, "0")}
+                      <Num value={i + 1} pad={2} />
                     </span>
                     <Eyebrow className="pt-1">
                       {tPhases(`${key}.timeline`)}

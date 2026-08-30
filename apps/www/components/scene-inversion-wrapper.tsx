@@ -3,7 +3,6 @@
 import { SectionSkeleton } from "@/components/shared/section-skeleton";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
-/** Derived from the module so the context stays typed without an `any` escape. */
 type GsapContext = ReturnType<
   (typeof import("@/lib/utils/gsap"))["gsap"]["context"]
 >;
@@ -67,11 +66,15 @@ export function SceneInversionWrapper() {
     };
   }, []);
 
+  // NOTE: this wrapper clips with `overflow-clip`, never `overflow-hidden`.
+  // `hidden` turns the element into a scroll container, which silently breaks
+  // `position: sticky` for every descendant — including the process-section
+  // card stack. `clip` clips the same box but creates no scroll container.
   return (
     <div
       id="services-wrapper"
       ref={wrapperRef}
-      className="relative overflow-hidden transition-colors duration-300 ease-smooth motion-reduce:transition-none"
+      className="relative overflow-clip transition-colors duration-300 ease-smooth motion-reduce:transition-none"
       data-scene={entered ? "inverted" : undefined}
     >
       <div className="relative z-1">

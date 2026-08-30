@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
@@ -457,7 +458,7 @@ function StageNav({
               }}
             />
             <span className="inline md:hidden">
-              {String(i + 1).padStart(2, "0")}
+              <Num value={i + 1} pad={2} />
             </span>
             <span className="hidden md:inline">{s.label}</span>
           </button>

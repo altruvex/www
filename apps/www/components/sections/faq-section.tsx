@@ -64,7 +64,7 @@ export const FaqSection = memo(function FaqSection({
 
           <div
             ref={contentRef}
-            className="liquid-glass-panel rounded-2xl px-5 md:px-8"
+            className="liquid-glass-panel rounded-xl px-5 md:px-8"
           >
             <Accordion type="single" collapsible className="w-full">
               {questionKeys.map((key) => {

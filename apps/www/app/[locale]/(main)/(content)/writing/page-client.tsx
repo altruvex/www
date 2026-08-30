@@ -1,4 +1,6 @@
 "use client";
+import { localizeNumbers } from "@/lib/utils/number";
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { PageHero } from "@/components/sections/page-hero";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
@@ -60,6 +62,7 @@ function IntroSection() {
 }
 
 function ListSection({ articles, locale }: WritingPageClientProps) {
+  const t = useTranslations("writing");
   const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-article]" });
 
   return (
@@ -89,7 +92,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
                     letterSpacing: "-0.02em",
                   }}
                 >
-                  {String(i + 1).padStart(2, "0")}
+                  <Num value={i + 1} pad={2} />
                 </span>
                 <div>
                   <h2
@@ -108,7 +111,9 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
                 <div className="flex items-center gap-3 font-mono text-sm leading-normal tracking-wider uppercase text-muted-foreground shrink-0 pt-1">
                   <span>
                     {new Date(article.frontmatter.date).toLocaleDateString(
-                      locale,
+                      // Bare "ar" resolves to Latin digits in current ICU; only
+                      // a region-qualified tag keeps Arabic-Indic numbering.
+                      locale === "ar" ? "ar-EG" : "en-US",
                       {
                         year: "numeric",
                         month: "long",
@@ -116,7 +121,15 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
                     )}
                   </span>
                   <span>·</span>
-                  <span>{article.frontmatter.readTime}</span>
+                  <span>
+                    {t("readTime", {
+                      count: article.frontmatter.readTimeMinutes,
+                      minutes: localizeNumbers(
+                        String(article.frontmatter.readTimeMinutes),
+                        locale,
+                      ),
+                    })}
+                  </span>
                 </div>
               </div>
             </Link>

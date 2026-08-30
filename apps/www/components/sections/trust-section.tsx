@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { ExternalDirectionalLink } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -90,7 +91,7 @@ export const TrustSection = memo(function TrustSection() {
             <div className="flex items-end justify-between gap-8 border-b border-border py-6">
               <Eyebrow>{t("testimonials.eyebrow")}</Eyebrow>
               <span className="hidden text-sm text-muted-foreground md:block">
-                {String(testimonials.length).padStart(2, "0")}
+                <Num value={testimonials.length} pad={2} />
               </span>
             </div>
             <div className="grid md:grid-cols-2">

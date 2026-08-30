@@ -1,3 +1,4 @@
+import { localizeNumbers } from "@/lib/utils/number";
 import { Container } from "@/components/shared/container";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -104,7 +105,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   className="eyebrow text-muted-foreground"
                 >
                   {new Date(article.frontmatter.date).toLocaleDateString(
-                    locale,
+                    // Bare "ar" resolves to Latin digits in current ICU; only a
+                    // region-qualified tag keeps the Arabic-Indic numbering.
+                    locale === "ar" ? "ar-EG" : "en-US",
                     {
                       year: "numeric",
                       month: "long",
@@ -113,7 +116,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   )}
                 </time>
                 <span className="text-primary/20">·</span>
-                <Eyebrow>{article.frontmatter.readTime}</Eyebrow>
+                <Eyebrow>
+                  {t("readTime", {
+                    count: article.frontmatter.readTimeMinutes,
+                    minutes: localizeNumbers(
+                      String(article.frontmatter.readTimeMinutes),
+                      locale,
+                    ),
+                  })}
+                </Eyebrow>
               </div>
 
               <h1

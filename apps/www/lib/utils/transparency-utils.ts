@@ -582,7 +582,9 @@ export function buildPDFHtml(p: PDFParams): string {
       maximumFractionDigits: 0,
     }).format(n);
 
-  const today = new Intl.DateTimeFormat(p.locale, {
+  // Region-qualified: bare "ar" resolves to Latin digits in current ICU, which
+  // would print a Latin date next to the Arabic-Indic figures below it.
+  const today = new Intl.DateTimeFormat(isRtl ? "ar-EG" : "en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",

@@ -34,7 +34,7 @@ export const getArticle = cache(
         slug,
         frontmatter: {
           ...data,
-          readTime: `${readTime} min read`,
+          readTimeMinutes: readTime,
           locale,
         } as ArticleFrontmatter,
         content,

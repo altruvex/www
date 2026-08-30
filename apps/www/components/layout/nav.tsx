@@ -130,7 +130,7 @@ export function Nav() {
                 className={cn(
                   "inline-flex h-11 items-center justify-center rounded-lg px-5 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   isNavInverted
-                    ? "transition-all bg-foreground text-inverted-bg hover:bg-foreground/90"
+                    ? "transition-all bg-foreground text-primary-foreground hover:bg-foreground/90"
                     : "transition-all bg-foreground text-background hover:bg-foreground/90",
                 )}
               >

@@ -1,4 +1,5 @@
 "use client";
+import { Num } from "@/components/ui/num";
 import { MagneticButton } from "@/components/magnetic-button";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
@@ -197,7 +198,7 @@ function PrinciplesSection() {
               >
                 <div className="mb-6 flex items-center gap-4">
                   <span className="flex size-12 items-center justify-center rounded-full border border-border bg-surface text-sm text-muted-foreground">
-                    {String(index + 1).padStart(2, "0")}
+                    <Num value={index + 1} pad={2} />
                   </span>
                 </div>
                 <h3 className="text-[clamp(1.5rem,2.5vw,2rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground transition-all group-hover:text-foreground/80">
@@ -304,7 +305,7 @@ function NamePrincipleSection() {
                     rtlLabel,
                   )}
                 >
-                  {String(index + 1).padStart(2, "0")}
+                  <Num value={index + 1} pad={2} />
                 </p>
                 <div>
                   <h3 className="text-[clamp(1.25rem,1.8vw,1.5rem)] font-medium leading-[1.25] tracking-[-0.015em] text-foreground">
@@ -385,7 +386,7 @@ function OperatingModelSection() {
               )}
             >
               <div className="absolute top-4 right-4 text-[6rem] font-bold leading-none text-foreground/2 transition-all duration-500 group-hover:text-foreground/5 rtl:left-4 rtl:right-auto pointer-events-none select-none">
-                {step.index}
+                <Num value={step.index} />
               </div>
               <div className="relative z-10">
                 <p className={cn(monoCaps, "inline-block rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
@@ -448,7 +449,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
               key={card.href}
               href={card.href}
               data-route-card
-              className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-8 md:p-10 transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:border-foreground/30 hover:bg-background hover:shadow-2xl hover:shadow-foreground/5"
+              className="group flex flex-col justify-between rounded-xl border border-border bg-surface p-8 md:p-10 transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:border-foreground/30 hover:bg-background hover:shadow-2xl hover:shadow-foreground/5"
             >
               <div>
                 <p className={cn(monoCaps, "text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>

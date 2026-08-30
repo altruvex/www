@@ -167,7 +167,7 @@ export function TransparencyEstimator({
 
   const money = useCallback((n: number) => currency.format(n), [currency]);
   const num = useCallback(
-    (n: number) => localizeNumbers(String(n), locale),
+    (n: string | number) => localizeNumbers(String(n), locale),
     [locale],
   );
 
@@ -489,7 +489,7 @@ function QuestionBlock({
   selected: string | null;
   onSelect: (val: string) => void;
   t: Translator;
-  num: (n: number) => string;
+  num: (n: string | number) => string;
 }) {
   const base = `steps.${question.msg}`;
 
@@ -497,7 +497,8 @@ function QuestionBlock({
     <section aria-labelledby={`question-${question.key}`} className="scroll-mt-32">
       <header className="mb-8">
         <p className="text-sm tabular-nums text-muted-foreground mb-3 font-mono">
-          {num(index).padStart(2, "0")} / {num(TOTAL).padStart(2, "0")}
+          {num(String(index).padStart(2, "0"))} /{" "}
+          {num(String(TOTAL).padStart(2, "0"))}
         </p>
         <h3 id={`question-${question.key}`} className="text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-foreground">
           {t(`${base}.title`)}
@@ -564,7 +565,7 @@ function LiveReadout({
   estimate: EstimateResult | null;
   answers: AnswerMap;
   money: (n: number) => string;
-  num: (n: number) => string;
+  num: (n: string | number) => string;
   t: Translator;
 }) {
   return (
@@ -580,7 +581,7 @@ function LiveReadout({
           <div className="space-y-3.5">
             {QUESTIONS.map((q, i) => (
               <div key={q.key} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs text-muted-foreground/50">{num(i + 1).padStart(2, "0")}</span>
+                <span className="font-mono text-xs text-muted-foreground/50">{num(String(i + 1).padStart(2, "0"))}</span>
                 <span className="text-muted-foreground">{t(`readiness.labels.${q.key}`)}</span>
               </div>
             ))}
@@ -606,7 +607,7 @@ function LiveReadout({
               return (
                 <div key={q.key} className="flex items-start justify-between gap-4 text-sm">
                   <span className="text-muted-foreground flex items-center gap-2.5">
-                    <span className="font-mono text-xs opacity-50">{num(i + 1).padStart(2, "0")}</span>
+                    <span className="font-mono text-xs opacity-50">{num(String(i + 1).padStart(2, "0"))}</span>
                     {t(`readiness.labels.${q.key}`)}
                   </span>
                   <span className={cn("text-right", answerKey ? "text-foreground font-medium" : "text-muted-foreground/40")}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Num } from "@/components/ui/num";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { gsap } from "@/lib/utils/gsap";
@@ -128,7 +129,7 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
         <div className="mb-4 flex items-start justify-between gap-4 sm:gap-6">
           <div className="flex min-w-0 items-baseline gap-3 sm:gap-6 md:gap-10">
             <span className="text-[clamp(20px,2.5vw,28px)] font-light leading-none text-s-ghost tabular-nums transition-all duration-300 group-hover:text-brand-text group-focus-within:text-brand-text">
-              {String(index + 1).padStart(2, "0")}
+              <Num value={index + 1} pad={2} />
             </span>
             <div className="min-w-0">
               <h2 className="mb-1 font-sans text-[clamp(18px,2.5vw,26px)] font-medium tracking-[-0.015em] text-primary transition-all duration-300 ltr:group-hover:translate-x-1.5 ltr:group-focus-within:translate-x-1.5 rtl:group-hover:-translate-x-1.5 rtl:group-focus-within:-translate-x-1.5">

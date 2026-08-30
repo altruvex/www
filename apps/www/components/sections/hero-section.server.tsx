@@ -1,8 +1,8 @@
-import { Container } from "@/components/shared/container";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Container } from "@/components/shared/container";
 import { Accent, Highlight } from "@/components/ui/emphasis";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCommercialCta } from "@/lib/config/commercial";
 import { cn } from "@/lib/utils/utils";
 import { getTranslations } from "next-intl/server";
@@ -40,11 +40,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale });
   const tCTAs = await getTranslations({ locale, namespace: "commercial.ctas" });
 
-  const title1 = t("hero.title");
-  const title2 = t("hero.title2");
   const titlePre = t("hero.title_pre");
   const titleAccent = t("hero.title_accent");
   const titlePost = t("hero.title_post");
+  const title2 = t("hero.title2");
   const titlePostNode = /^[.،!?]/.test(titlePost) ? titlePost : ` ${titlePost}`;
   const watermark = t("hero.watermark");
   const metrics = t.raw("hero.metrics") as Array<{
@@ -115,20 +114,26 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
           />
         </div>
       </div>
+
       <SectionWatermark>{watermark}</SectionWatermark>
-      <h1 id="home-heading" className="sr-only">
-        {title1} {title2}
-      </h1>
-      <Container>
-        <div className="max-w-full sm:max-w-5xl lg:py-0 py-12">
+
+      <Container className="flex w-full flex-col justify-end lg:py-0 py-12">
+        <div className="w-full max-w-full sm:max-w-5xl">
+
           <HeroReveal delay={0.1} className="mb-4 flex items-center gap-2">
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
             <Eyebrow className="text-xs">{t("hero.availability")}</Eyebrow>
           </HeroReveal>
-          <HeroReveal delay={0.2} className="mb-6 md:mb-7">
+
+          <HeroReveal delay={0.2} className="mb-6">
             <Eyebrow>{t("hero.badge")}</Eyebrow>
           </HeroReveal>
-          <HeroHeadline className="max-w-[44rem] text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal mb-7 md:mb-8 font-sans font-light text-foreground select-none">
+
+          <HeroHeadline
+            as="h1"
+            id="home-heading"
+            className="mb-7 md:mb-8 max-w-[44rem] text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal font-sans font-light text-foreground select-none"
+          >
             <span className="block">
               {titlePre} <Accent gradient="iris">{titleAccent}</Accent>
               {titlePostNode}
@@ -137,59 +142,62 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               {title2}
             </Highlight>
           </HeroHeadline>
+
           <HeroReveal
             delay={0.5}
-            className="mb-8 md:mb-12 grid gap-6 md:grid-cols-[96px_1fr] md:gap-8 items-start"
+            className="mb-7 md:mb-8 grid w-full gap-6 md:grid-cols-[96px_1fr] md:gap-8 items-start"
           >
             <div
-              className="h-px w-full bg-border mt-3 hidden md:block"
+              className="mt-3 hidden h-px w-full bg-border md:block"
               aria-hidden
             />
-            <div className="space-y-3 max-w-[520px]">
+            <div className="max-w-[42rem] space-y-3">
               <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                 {t("hero.problem")}
               </p>
             </div>
           </HeroReveal>
-          <HeroReveal delay={0.65}>
+
+          <HeroReveal delay={0.65} className="flex flex-col items-start gap-4">
             <CtaButtonGroup
               primary={{ href: primaryCta.href, label: tCTAs("projectRange") }}
               secondary={{ href: secondaryCta.href, label: tCTAs("realBuild") }}
               secondaryArrow
             />
+            <Eyebrow className="text-xs text-muted-foreground/70 max-w-2xl">
+              {t("hero.productionCallout")}
+            </Eyebrow>
           </HeroReveal>
+
           <HeroBatch
             delay={0.8}
-            className="mt-10 sm:mt-16 grid gap-0 border-t border-border pt-8 sm:pt-10 sm:grid-cols-3"
+            className="mt-10 grid w-full gap-0 border-t border-border sm:grid-cols-3"
           >
             {metrics.map((s, i, arr) => (
               <div
                 key={s.value}
-                className={[
-                  "sm:border-e sm:border-border sm:last:border-e-0",
-                  "max-sm:border-b max-sm:border-border max-sm:last:border-b-0",
-                  "max-sm:py-6 max-sm:first:pt-0 max-sm:last:pb-0",
-                ].join(" ")}
+                className={cn(
+                  "flex flex-col justify-center",
+                  "border-b border-border sm:border-b-0",
+                  "sm:border-e sm:border-border",
+                  "last:border-b-0 sm:last:border-e-0",
+                  "py-6 sm:py-8"
+                )}
                 style={{
-                  paddingInlineStart:
-                    i > 0 ? "clamp(16px, 3vw, 36px)" : undefined,
-                  paddingInlineEnd:
-                    i < arr.length - 1 ? "clamp(16px, 3vw, 36px)" : undefined,
+                  paddingInlineStart: i > 0 ? "clamp(16px, 3vw, 36px)" : undefined,
+                  paddingInlineEnd: i < arr.length - 1 ? "clamp(16px, 3vw, 36px)" : undefined,
                 }}
               >
-                <span className="text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-light tabular-nums text-foreground block">
+                <span className="block text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.15] tracking-[-0.018em] font-light tabular-nums text-foreground">
                   {s.value}
                 </span>
-                <Eyebrow className="text-xs mt-2 block">{s.label}</Eyebrow>
+                <Eyebrow className="mt-2 block text-xs">{s.label}</Eyebrow>
               </div>
             ))}
           </HeroBatch>
-          <HeroReveal delay={1.0}>
-            <Eyebrow className="text-xs mt-6 max-w-2xl">{t("hero.productionCallout")}</Eyebrow>
-          </HeroReveal>
         </div>
-      </Container>
       <HeroScrollHint />
+      </Container>
     </section>
   );
 }
