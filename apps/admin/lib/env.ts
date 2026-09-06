@@ -18,6 +18,11 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),
   R2_PUBLIC_URL: z.string().optional(),
+  // Wiring the admin app to the public site's cache. Both optional: without
+  // them a price change still saves and still reaches the site, just on the
+  // public cache's own timer rather than immediately.
+  PUBLIC_SITE_URL: z.string().url().optional(),
+  PRICING_REVALIDATE_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

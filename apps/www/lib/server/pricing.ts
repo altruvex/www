@@ -38,9 +38,14 @@ import { unstable_cache } from "next/cache";
  *    component a build error rather than a runtime surprise.
  */
 
-/** Pricing is edited by hand, so a short window costs nothing and saves reads. */
+/**
+ * Upper bound only. An admin price change pushes a revalidation immediately
+ * (see `app/api/revalidate-pricing`), so this is the floor for the case where
+ * that call does not land — not the normal latency of a price change.
+ */
 const REVALIDATE_SECONDS = 300;
-const CACHE_TAG = "pricing";
+/** Exported so the revalidation endpoint drops exactly this cache. */
+export const PRICING_CACHE_TAG = "pricing";
 
 function toStatus(value: string): EntityStatus {
   return value === "planned" || value === "retired" ? value : "active";
@@ -156,7 +161,7 @@ async function readOverrides(): Promise<PricingOverrides> {
 
 const cachedOverrides = unstable_cache(readOverrides, ["pricing-overrides"], {
   revalidate: REVALIDATE_SECONDS,
-  tags: [CACHE_TAG],
+  tags: [PRICING_CACHE_TAG],
 });
 
 /**

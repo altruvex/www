@@ -16,6 +16,7 @@ import {
   recordChanges,
 } from "@/lib/pricing-store";
 import { requireAdminSession } from "@/lib/require-admin";
+import { revalidatePublicPricing } from "@/lib/revalidate-pricing";
 
 /**
  * The only write path for pricing.
@@ -133,7 +134,22 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const changes = await applyChange(body, actor);
-    return NextResponse.json({ success: true, changes });
+
+    // The write is already committed. This only shortens how long the public
+    // site keeps serving the previous number, so its outcome is reported but
+    // never turned into a failure.
+    const revalidated = await revalidatePublicPricing();
+    if (!revalidated.ok) {
+      console.warn(
+        `Pricing saved, but the public site was not revalidated: ${revalidated.reason}. It will pick the change up when its cache expires.`,
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      changes,
+      publicSiteRevalidated: revalidated.ok,
+    });
   } catch (error) {
     console.error("Pricing update failed", error);
     return NextResponse.json(

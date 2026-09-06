@@ -70,9 +70,18 @@ function useSave() {
           toast.error(data.message ?? "The change could not be saved.");
           return false;
         }
-        toast.success(
-          data.changes === 0 ? "No change to save." : `Saved — ${data.changes} field(s) updated.`,
-        );
+        if (data.changes === 0) {
+          toast.success("No change to save.");
+        } else if (data.publicSiteRevalidated) {
+          toast.success(`Saved — ${data.changes} field(s) updated and live.`);
+        } else {
+          // Saved is saved. Say so plainly, and be specific about the delay
+          // rather than letting it read as a failure.
+          toast.success(`Saved — ${data.changes} field(s) updated.`, {
+            description:
+              "The public site will pick this up within 5 minutes; it could not be refreshed immediately.",
+          });
+        }
         return true;
       } catch {
         toast.error("The change could not be saved.");
