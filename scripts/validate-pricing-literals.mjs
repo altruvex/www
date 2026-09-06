@@ -174,6 +174,24 @@ const INTERNAL_FIELD_ALLOWED = new Set([
   "apps/admin/app/(dashboard)/pricing/pricing-client.tsx",
 ]);
 
+/**
+ * True when a file actually reads the field, ignoring comments.
+ *
+ * Documentation saying "this is deliberately not read here" is exactly the
+ * comment you want next to a client-facing read path. Flagging it would push
+ * people to delete the explanation to get a green build — the same reasoning
+ * that keeps comments out of the price-literal scan.
+ */
+function referencesInternalField(source) {
+  return source.split("\n").some((raw) => {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
+      return false;
+    }
+    return raw.replace(/\/\/.*$/, "").includes("internalHourEquivalent");
+  });
+}
+
 /** `internalHourEquivalent` is margin planning and must never reach a client. */
 function checkInternalLeak() {
   const leaked = [];
@@ -186,7 +204,7 @@ function checkInternalLeak() {
         const rel = relative(ROOT, full).split(sep).join("/");
         if (rel.startsWith(SCHEMA_DIR)) continue;
         if (INTERNAL_FIELD_ALLOWED.has(rel)) continue;
-        if (readFileSync(full, "utf8").includes("internalHourEquivalent")) leaked.push(rel);
+        if (referencesInternalField(readFileSync(full, "utf8"))) leaked.push(rel);
       }
     }
   };

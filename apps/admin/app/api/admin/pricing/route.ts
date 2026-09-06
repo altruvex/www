@@ -163,7 +163,15 @@ type Payload = z.infer<typeof payloadSchema>;
 
 async function applyChange(body: Payload, actor: string | null): Promise<number> {
   if (body.kind === "cell") {
-    const { kind: _kind, serviceId, complexityId, ...fields } = body;
+    const { serviceId, complexityId } = body;
+    // Columns are named rather than spread: on the one path that changes a
+    // published price, what gets written should be explicit.
+    const fields = {
+      priceMin: body.priceMin,
+      priceMax: body.priceMax,
+      weeksMin: body.weeksMin,
+      weeksMax: body.weeksMax,
+    };
     const key = { serviceId_complexityId: { serviceId, complexityId } };
     return prisma.$transaction(async (tx) => {
       const before = await tx.pricingCellOverride.findUnique({ where: key });
@@ -184,8 +192,19 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
   }
 
   if (body.kind === "terms") {
-    const { kind: _kind, usdRateReviewedOn, ...fields } = body;
-    const data = { ...fields, usdRateReviewedOn: new Date(usdRateReviewedOn) };
+    const data = {
+      vatRate: body.vatRate,
+      revisionHourlyRate: body.revisionHourlyRate,
+      revisionHourlyRateUsd: body.revisionHourlyRateUsd,
+      includedRevisionRounds: body.includedRevisionRounds,
+      paymentSplitFirst: body.paymentSplitFirst,
+      paymentSplitSecond: body.paymentSplitSecond,
+      paymentSplitFinal: body.paymentSplitFinal,
+      proposalValidityDays: body.proposalValidityDays,
+      postLaunchWarrantyDays: body.postLaunchWarrantyDays,
+      usdEgpRate: body.usdEgpRate,
+      usdRateReviewedOn: new Date(body.usdRateReviewedOn),
+    };
     return prisma.$transaction(async (tx) => {
       const before = await tx.commercialTermsOverride.findUnique({
         where: { id: "default" },
@@ -205,7 +224,14 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
   // delegates through a structural type would defeat the typed models on the
   // one path in the system that changes a published price.
   if (body.kind === "maintenance") {
-    const { kind: _kind, id, ...fields } = body;
+    const { id } = body;
+    const fields = {
+      price: body.price,
+      requestsPerCycle: body.requestsPerCycle,
+      overageHourlyRate: body.overageHourlyRate,
+      internalHourEquivalent: body.internalHourEquivalent,
+      status: body.status,
+    };
     return prisma.$transaction(async (tx) => {
       const before = await tx.maintenancePlanOverride.findUnique({ where: { id } });
       await tx.maintenancePlanOverride.upsert({
@@ -220,7 +246,12 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
   }
 
   if (body.kind === "consulting") {
-    const { kind: _kind, id, ...fields } = body;
+    const { id } = body;
+    const fields = {
+      price: body.price,
+      durationBusinessDays: body.durationBusinessDays,
+      status: body.status,
+    };
     return prisma.$transaction(async (tx) => {
       const before = await tx.consultingPackageOverride.findUnique({ where: { id } });
       await tx.consultingPackageOverride.upsert({
@@ -234,7 +265,14 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
     });
   }
 
-  const { kind: _kind, id, ...fields } = body;
+  const { id } = body;
+  const fields = {
+    costBasis: body.costBasis,
+    markupType: body.markupType,
+    markupValue: body.markupValue,
+    billingCycle: body.billingCycle,
+    status: body.status,
+  };
   return prisma.$transaction(async (tx) => {
     const before = await tx.addonOverride.findUnique({ where: { id } });
     await tx.addonOverride.upsert({

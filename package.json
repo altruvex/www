@@ -9,8 +9,9 @@
     "check-types": "turbo run check-types",
     "validate:pricing": "node scripts/validate-pricing-literals.mjs",
     "report:pricing": "bun scripts/pricing-parity-report.mjs",
-    "validate": "node scripts/validate-pricing-literals.mjs && bun scripts/pricing-parity-report.mjs",
-    "verify:rendered": "node scripts/verify-rendered-pricing.mjs"
+    "validate": "node scripts/validate-pricing-literals.mjs && bun scripts/pricing-parity-report.mjs && bun scripts/verify-billing-cycles.ts",
+    "verify:rendered": "node scripts/verify-rendered-pricing.mjs",
+    "verify:cycles": "bun scripts/verify-billing-cycles.ts"
   },
   "devDependencies": {
     "@repo/pricing-schema": "workspace:*",
