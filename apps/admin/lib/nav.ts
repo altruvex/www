@@ -23,6 +23,7 @@ import {
   Shapes,
   ShieldCheck,
   Sparkles,
+  Tags,
   Target,
   Users,
   Wallet,
@@ -124,6 +125,13 @@ export const GROUPS: NavGroup[] = [
     id: "sales",
     label: "Sales",
     items: [
+      {
+        href: "/pricing",
+        label: "Pricing",
+        icon: Tags,
+        state: "live",
+        blurb: "The only place a price is edited",
+      },
       {
         href: "/proposals",
         label: "Proposals",

@@ -158,7 +158,23 @@ function inspectMessages(full, rel) {
   }
 }
 
-/** `internalHourEquivalent` is margin planning and must stay in the schema. */
+/**
+ * Files permitted to touch `internalHourEquivalent`.
+ *
+ * The rule protects against margin data reaching a CLIENT, not against it
+ * existing at all — the admin pricing screen has to be able to edit it, and a
+ * guard that forbids that would just be switched off. These four are the
+ * admin-only management path. Everything else, including the admin app's own
+ * unauthenticated `/portal` and `/sign` routes, stays covered.
+ */
+const INTERNAL_FIELD_ALLOWED = new Set([
+  "apps/admin/lib/pricing-store.ts",
+  "apps/admin/app/api/admin/pricing/route.ts",
+  "apps/admin/app/(dashboard)/pricing/page.tsx",
+  "apps/admin/app/(dashboard)/pricing/pricing-client.tsx",
+]);
+
+/** `internalHourEquivalent` is margin planning and must never reach a client. */
 function checkInternalLeak() {
   const leaked = [];
   const scan = (dir) => {
@@ -169,6 +185,7 @@ function checkInternalLeak() {
       else if (SCAN_EXT.has(name.slice(name.lastIndexOf(".")))) {
         const rel = relative(ROOT, full).split(sep).join("/");
         if (rel.startsWith(SCHEMA_DIR)) continue;
+        if (INTERNAL_FIELD_ALLOWED.has(rel)) continue;
         if (readFileSync(full, "utf8").includes("internalHourEquivalent")) leaked.push(rel);
       }
     }
@@ -192,7 +209,7 @@ if (problems.length > 0) {
   console.error("Prose may quote a price only as a {token} filled by fillPricingTokens().\n");
 }
 if (leaked.length > 0) {
-  console.error(`✗ internalHourEquivalent referenced outside the schema (margin data must not reach a client surface):`);
+  console.error(`✗ internalHourEquivalent referenced outside the schema or the admin pricing screen (margin data must not reach a client surface):`);
   for (const f of leaked) console.error(`  ${f}`);
 }
 process.exit(1);

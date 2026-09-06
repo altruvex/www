@@ -627,3 +627,135 @@ model RateLimitBucket {
   @@index([windowStart])
   @@map("rate_limit_buckets")
 }
+
+// ---------------------------------------------------------------------------
+// Pricing overrides
+//
+// `@repo/pricing-schema` holds the typed contract and the shipped defaults;
+// these tables hold only what an admin has actually changed. Resolution is
+// `override ?? default`, so an empty table renders exactly what the last
+// deploy shipped and a database outage degrades to those values rather than
+// taking prices off the marketing site.
+//
+// Only commercially meaningful fields live here. Bilingual names and
+// descriptions stay in the schema package alongside the numbers they describe.
+// ---------------------------------------------------------------------------
+
+/// One cell of the service price matrix: a (service, complexity) pair.
+model PricingCellOverride {
+  serviceId    String
+  complexityId String
+
+  priceMin Int
+  priceMax Int
+  weeksMin Int
+  weeksMax Int
+
+  version   Int      @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([serviceId, complexityId])
+  @@map("pricing_cell_overrides")
+}
+
+model MaintenancePlanOverride {
+  id String @id
+
+  /// Null means quote-only; the plan renders as "Custom" and shows no figure.
+  price                  Int?
+  requestsPerCycle       Int?
+  overageHourlyRate      Int?
+  /// Internal margin planning. Never rendered on a client surface.
+  internalHourEquivalent Int?
+  status                 String @default("active")
+
+  version   Int      @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("maintenance_plan_overrides")
+}
+
+model ConsultingPackageOverride {
+  id String @id
+
+  price                Int
+  durationBusinessDays Int
+  status               String @default("active")
+
+  version   Int      @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("consulting_package_overrides")
+}
+
+model AddonOverride {
+  id String @id
+
+  /// Null while the real supplier cost is not on file. A null-cost add-on is
+  /// never priced and never shown to a client.
+  costBasis    Int?
+  markupType   String @default("percent")
+  markupValue  Int    @default(0)
+  billingCycle String @default("annual")
+  status       String @default("planned")
+
+  version   Int      @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addon_overrides")
+}
+
+/// Singleton. VAT, revision rate, milestone split, and the fixed USD rate.
+model CommercialTermsOverride {
+  id String @id @default("default")
+
+  vatRate                Float
+  revisionHourlyRate     Int
+  revisionHourlyRateUsd  Int
+  includedRevisionRounds Int
+  paymentSplitFirst      Int
+  paymentSplitSecond     Int
+  paymentSplitFinal      Int
+  proposalValidityDays   Int
+  postLaunchWarrantyDays Int
+
+  usdEgpRate        Int
+  usdRateReviewedOn DateTime
+
+  version   Int      @default(1)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("commercial_terms_overrides")
+}
+
+/// Append-only record of every pricing change.
+///
+/// A published price is a commitment a client can read back, so "what did this
+/// cost in March, and who changed it" has to be answerable. The audit found no
+/// such record existed.
+model PricingChangeLog {
+  id String @id @default(uuid())
+
+  entityType String
+  entityId   String
+  field      String
+  oldValue   String?
+  newValue   String?
+
+  changedBy String?
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("pricing_change_log")
+}

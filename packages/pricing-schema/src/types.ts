@@ -58,3 +58,27 @@ export type Locale = "en" | "ar";
 
 /** Copy is authored per locale next to the number it describes. */
 export type Localized<T> = Readonly<Record<Locale, T>>;
+
+/**
+ * Validation bounds for admin-entered pricing.
+ *
+ * The plausible range of a price is pricing-domain knowledge, so it lives here
+ * rather than as loose literals in a request validator — which also keeps the
+ * CI literal guard honest instead of inviting someone to un-group a number to
+ * slip past it.
+ */
+export const PRICE_BOUNDS = {
+  /** Any single money field, in EGP. */
+  moneyMin: 0,
+  moneyMax: 100_000_000,
+  /** Percent or flat markup on a pass-through add-on. */
+  markupMax: 10_000,
+  /** EGP per USD. */
+  exchangeRateMin: 1,
+  exchangeRateMax: 10_000,
+  weeksMin: 1,
+  weeksMax: 200,
+  requestsPerCycleMax: 1000,
+  revisionRoundsMax: 50,
+  durationDaysMax: 365,
+} as const;
