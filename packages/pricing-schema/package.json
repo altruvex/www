@@ -1,16 +1,14 @@
 {
-  "name": "@repo/pricing",
+  "name": "@repo/pricing-schema",
   "version": "1.0.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {

@@ -10,7 +10,8 @@ import {
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
+import { fillPricingTokens, type Locale } from "@repo/pricing-schema";
+import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
 
 interface FaqSectionProps {
@@ -34,6 +35,7 @@ export const FaqSection = memo(function FaqSection({
   questionKeys = DEFAULT_QUESTION_KEYS,
 }: FaqSectionProps) {
   const t = useTranslations(namespace);
+  const locale = useLocale() as Locale;
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle();
@@ -71,7 +73,9 @@ export const FaqSection = memo(function FaqSection({
                 const entry = questions?.[key];
                 if (!entry) return null;
                 const question = entry.q ?? entry.question ?? "";
-                const answer = entry.a ?? entry.answer ?? "";
+                // Answers are prose that may quote a price; the figure comes from the
+                // schema so it cannot drift from what /pricing renders.
+                const answer = fillPricingTokens(entry.a ?? entry.answer ?? "", locale);
                 return (
                   <AccordionItem key={key} value={key} className="border-border">
                     <AccordionTrigger className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed font-sans font-light hover:text-foreground transition-all py-6 text-start">

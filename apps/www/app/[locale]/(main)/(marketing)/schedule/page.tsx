@@ -48,7 +48,7 @@ export default async function SchedulePage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries),
+          ...buildFaqPageSchemas(faqEntries, locale),
         ]}
       />
       <PageClient />

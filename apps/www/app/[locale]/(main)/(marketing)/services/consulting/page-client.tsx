@@ -14,7 +14,8 @@ import { getCommercialCta } from "@/lib/config/commercial";
 import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
+import { consultingView, type Locale } from "@repo/pricing-schema";
+import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function ConsultingPage() {
@@ -51,14 +52,17 @@ function HeroSection() {
 }
 
 function AuditOfferSection() {
+  // The audit's price, duration and deliverables come from
+  // packages/pricing-schema — the same audit figure the homepage
+  // authority card and the FAQ quote, which previously each held their own copy.
   const t = useTranslations("serviceDetails.consulting.auditOffer");
+  const audit = consultingView("technical-audit", useLocale() as Locale);
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const bodyRef = useSectionDescription();
   const panelRef = useSectionElement();
 
-  const included = t.raw("included") as string[];
 
   return (
     <section
@@ -78,7 +82,7 @@ function AuditOfferSection() {
                 ref={eyebrowRef}
                 className={cn(monoCaps, "text-s-mid mb-4 block")}
               >
-                {t("eyebrow")}
+                {audit.eyebrow}
               </p>
               <h2
                 ref={titleRef}
@@ -88,7 +92,7 @@ function AuditOfferSection() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                {t("title")} <Highlight>{t("titleItalic")}</Highlight>
+                {audit.title} <Highlight>{audit.titleItalic}</Highlight>
               </h2>
               <p
                 ref={bodyRef}
@@ -105,7 +109,7 @@ function AuditOfferSection() {
                 >
                   <Link href="/contact?service=consulting&package=audit">
                     <span className="flex items-center gap-2">
-                      {t("cta")}
+                      {audit.ctaLabel}
                       <ArrowIcon className="h-4 w-4" />
                     </span>
                   </Link>
@@ -118,7 +122,7 @@ function AuditOfferSection() {
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1">
                 <div className="border-b border-s-border pb-4">
                   <p className={cn(monoCaps, "text-s-mid mb-2")}>
-                    {t("priceLabel")}
+                    {audit.priceLabelCaption}
                   </p>
                   <p
                     className="font-sans font-light leading-none text-s-high"
@@ -127,24 +131,24 @@ function AuditOfferSection() {
                       letterSpacing: "-0.03em",
                     }}
                   >
-                    {t("price")}
+                    {audit.priceLabel}
                   </p>
                 </div>
                 <div className="border-b border-s-border pb-4">
                   <p className={cn(monoCaps, "text-s-mid mb-2")}>
-                    {t("durationLabel")}
+                    {audit.durationLabel}
                   </p>
                   <p className="text-base leading-relaxed text-s-high">
-                    {t("duration")}
+                    {audit.duration}
                   </p>
                 </div>
               </div>
               <div className="mt-5">
                 <p className={cn(monoCaps, "text-s-mid mb-4")}>
-                  {t("includedLabel")}
+                  {audit.includedLabel}
                 </p>
                 <ul className="space-y-3">
-                  {included.map((item, i) => (
+                  {audit.deliverables.map((item, i) => (
                     <li
                       key={`${i}-${item}`}
                       className="flex items-start gap-3 text-sm leading-relaxed text-s-mid"

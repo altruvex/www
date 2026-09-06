@@ -29,7 +29,7 @@ import {
   type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
 import { cn } from "@/lib/utils/utils";
-import { type EstimateResult } from "@repo/pricing";
+import { COMPLEXITY_TO_LEGACY_BAND, type EstimateResult } from "@repo/pricing-schema";
 import { Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -91,14 +91,10 @@ const KNOWN_TIERS = new Set([
   "flagship",
 ]);
 
-const COMPLEXITY_TIER: Record<
-  NonNullable<Complexity>,
-  Exclude<DeliverableTier, "enterprise">
-> = {
-  basic: "small",
-  standard: "medium",
-  premium: "large",
-};
+// The PDF's deliverables tables are keyed by the legacy band names. The
+// mapping lives in the schema so this is the only place that consumes it,
+// rather than a fourth copy of the same three pairs.
+const COMPLEXITY_TIER = COMPLEXITY_TO_LEGACY_BAND;
 
 export interface TransparencyEstimatorProps {
   pageHeading?: boolean;

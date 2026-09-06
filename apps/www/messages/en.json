@@ -163,25 +163,6 @@
     }
   },
   "articles": {},
-  "authority": {
-    "cards": {
-      "card1": {
-        "body": "This site is built by us. Every animation, every line, every interaction - that is the production standard we bring to client systems.",
-        "title": "We show our work"
-      },
-      "card2": {
-        "body": "Fixed-scope Technical Audit at 15,000 EGP. Project investment ranges published. No scope creep disguised as discovery.",
-        "title": "We price transparently"
-      },
-      "card3": {
-        "body": "RTL is not a CSS override here. Our architecture treats every supported language as a first-class citizen - structurally equal from day one.",
-        "title": "No language is an afterthought"
-      }
-    },
-    "eyebrow": "WHY CLIENTS CHOOSE US",
-    "subtitle": "Until client testimonials are earned, this is the proof you can inspect directly on the page in front of you.",
-    "title": "What you can verify right now."
-  },
   "caseStudies": {
     "altruvex-site": {
       "client": "Internal / Altruvex",
@@ -294,10 +275,6 @@
     "ctas": {
       "architecture": "Talk Through the Architecture",
       "maintenancePlans": "See Maintenance Plans",
-      "pricingEcommerce": "Get Commerce Estimate",
-      "pricingEssential": "Get Launch Estimate",
-      "pricingFlagship": "Book Architecture Call",
-      "pricingProfessional": "Get Growth Estimate",
       "projectRange": "Request a Scope",
       "realBuild": "See a Real Build",
       "technicalAudit": "Start with a Technical Audit",
@@ -336,28 +313,6 @@
         "audience": "Sharper positioning, faster pages, and a direct conversion path for serious service or product businesses.",
         "outcome": "A custom multilingual website with strong performance, clear messaging, and a conversion-ready structure.",
         "title": "Website Systems"
-      }
-    },
-    "pricing": {
-      "ecommerce": {
-        "buyerLabel": "E-commerce Platform",
-        "internalLabel": "Storefront plus operations",
-        "nextStep": "Next step: open Transparency and scope the commerce path."
-      },
-      "essential": {
-        "buyerLabel": "Simple Marketing Site",
-        "internalLabel": "Focused launch scope",
-        "nextStep": "Next step: open Transparency and define the launch scope."
-      },
-      "flagship": {
-        "buyerLabel": "Business Web System",
-        "internalLabel": "Operations and workflows",
-        "nextStep": "Next step: open Transparency and map dashboards, portals, or internal logic."
-      },
-      "professional": {
-        "buyerLabel": "Full Marketing Site",
-        "internalLabel": "Marketing plus operations",
-        "nextStep": "Next step: open Transparency and map the workflows and integrations."
       }
     },
     "trust": {
@@ -680,7 +635,7 @@
         "index": "01",
         "title": "Scope and range",
         "body": "One tier, one fixed scope, one range. The range narrows to a single number after discovery, and it does not move upward without a signed change order.",
-        "figure": "22,000 – 45,000 EGP · Marketing System",
+        "figure": "{essentialRange} · Marketing System",
         "note": "The range is the honest part. A single number quoted before discovery is a guess wearing the clothes of a commitment."
       },
       "schedule": {
@@ -729,7 +684,7 @@
       }
     },
     "footer": {
-      "minimum": "Projects start at 22,000 EGP.",
+      "minimum": "Projects start at {minimumEngagement}.",
       "ctaLabel": "See full pricing",
       "footnote": "Sample document. Your quote is issued after discovery."
     }
@@ -752,7 +707,6 @@
       }
     },
     "description": "The tiers below help buyers self-qualify quickly before opening full Transparency.",
-    "minimumEngagement": "Projects from 22,000 EGP",
     "minimumEngagementLabel": "Minimum Engagement",
     "ownershipNote": "Every project includes <strong>full source code ownership</strong> - <dim>not a Shopify subscription, not a WordPress plugin stack.</dim> You own everything, permanently.",
     "faq": {
@@ -782,26 +736,6 @@
       "title": "Pricing Questions"
     },
     "label": "12 - Investment Logic",
-    "maintenance": [
-      {
-        "featured": false,
-        "index": "01",
-        "key": "essential",
-        "price": "2,000 EGP / month"
-      },
-      {
-        "featured": true,
-        "index": "02",
-        "key": "professional",
-        "price": "4,000 EGP / month"
-      },
-      {
-        "featured": false,
-        "index": "03",
-        "key": "enterprise",
-        "price": "Custom"
-      }
-    ],
     "recommended": "Most common starting point",
     "roi": {
       "calculation": "A site rebuilt 18 months after launch because it could not handle integrations, user accounts, or traffic typically costs <strong>2–3× the original build</strong> - plus the revenue lost during the gap.",
@@ -826,68 +760,6 @@
       },
       "title": "The wrong system",
       "titleItalic": "compounds in cost."
-    },
-    "tiers": {
-      "ecommerce": {
-        "cta": "Get Commerce Estimate",
-        "features": [
-          "Commerce architecture and product catalog model",
-          "Checkout flow with payment gateway planning",
-          "Inventory, shipping, and order management foundations",
-          "Revenue-focused performance and analytics setup",
-          "Operational handoff for managing products and orders"
-        ],
-        "idealFor": "For stores that need catalog, checkout, payments, shipping, order operations, and reliable performance.",
-        "name": "Commerce Engine",
-        "notIncluded": "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
-        "originalPrice": "",
-        "priceRange": "95,000 – 160,000 EGP"
-      },
-      "essential": {
-        "cta": "Get Launch Estimate",
-        "features": [
-          "Custom launch page or compact site structure",
-          "Responsive UI implementation across key devices",
-          "Lead capture forms and analytics baseline",
-          "SEO, performance, and deployment setup",
-          "Domain, SSL, and base hosting setup"
-        ],
-        "idealFor": "For a focused launch or compact marketing site that needs custom design, speed, lead capture, and room to grow.",
-        "name": "Marketing System",
-        "notIncluded": "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
-        "originalPrice": "",
-        "priceRange": "22,000 – 45,000 EGP"
-      },
-      "flagship": {
-        "cta": "Request a Scope",
-        "features": [
-          "Custom product discovery and architecture",
-          "Dashboards, portals, or workflow engines",
-          "Role-based access and business logic",
-          "Multiple integrations and data flows",
-          "Phased delivery roadmap with infrastructure planning"
-        ],
-        "idealFor": "For portals, dashboards, and operational systems that need custom workflows beyond a marketing site.",
-        "name": "Custom Infrastructure",
-        "notIncluded": null,
-        "originalPrice": "",
-        "priceRange": "From 180,000 EGP"
-      },
-      "professional": {
-        "cta": "Get Growth Estimate",
-        "features": [
-          "Everything in Simple Marketing Site",
-          "CMS setup for repeatable content workflows",
-          "Bilingual structure with QA across key journeys",
-          "One key integration such as CRM, booking, or auth",
-          "Technical discovery, architecture, and analytics plan"
-        ],
-        "idealFor": "For businesses that need repeatable content operations, multilingual UX, and practical integrations with their tools.",
-        "name": "Business Platform",
-        "notIncluded": "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
-        "originalPrice": "",
-        "priceRange": "50,000 – 75,000 EGP"
-      }
     },
     "title": "Pricing reflects system depth and engineering complexity.",
     "titleItalic": "Nothing more."
@@ -1259,23 +1131,7 @@
   "serviceDetails": {
     "consulting": {
       "auditOffer": {
-        "cta": "Start with the audit",
-        "description": "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>",
-        "duration": "5 business days",
-        "durationLabel": "Duration",
-        "eyebrow": "Fixed-scope entry offer",
-        "included": [
-          "Current stack and architecture review",
-          "Performance bottleneck identification",
-          "Security surface assessment",
-          "Actionable remediation roadmap",
-          "1-hour debrief call"
-        ],
-        "includedLabel": "What is included",
-        "price": "15,000 EGP",
-        "priceLabel": "Fixed price",
-        "title": "Technical Audit -",
-        "titleItalic": "Fixed Scope, Fixed Price."
+        "description": "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>"
       },
       "seo": {
         "body": "Technical consulting is for teams that need a clear engineering decision before they invest in a rebuild, migration, portal, ecommerce system, or performance recovery plan. Altruvex reviews the current state, identifies risk, and turns technical uncertainty into a practical roadmap.",
@@ -1580,7 +1436,6 @@
         }
       },
       "pricing": {
-        "customPrice": "Custom",
         "eyebrow": "Maintenance Plans",
         "getStarted": "See Maintenance Plans",
         "notes": {
@@ -1595,42 +1450,6 @@
           "scope": {
             "label": "Scope Limit",
             "value": "Maintenance plans cover system stability and small updates. Major features, rebuilds, or new page systems are scoped and priced separately."
-          }
-        },
-        "perMonth": "/ mo",
-        "plans": {
-          "enterprise": {
-            "features": [
-              "Custom SLA and dedicated response protocol",
-              "Architecture, performance, and security review cadence",
-              "Coordinated deployments and rollback support",
-              "Multi-system monitoring and incident management",
-              "Optional tooling and integration management"
-            ],
-            "name": "Enterprise",
-            "price": "Custom"
-          },
-          "essential": {
-            "features": [
-              "Monthly security and dependency update cycle",
-              "Uptime monitoring and backup verification",
-              "Up to 30 minutes of content or config changes per month",
-              "Business-hours WhatsApp or email support",
-              "Quarterly health summary"
-            ],
-            "name": "Essential",
-            "price": "2,000 EGP"
-          },
-          "professional": {
-            "features": [
-              "Weekly checks and priority incident handling",
-              "Daily monitoring with backup and uptime review",
-              "Up to 2 hours of content, landing page, or config updates per month",
-              "Monthly performance and security report",
-              "Support for small rollout or release updates"
-            ],
-            "name": "Professional",
-            "price": "4,000 EGP"
           }
         },
         "recommended": "Recommended",
@@ -2306,53 +2125,6 @@
     },
     "startOver": "Start Over",
     "step": "Step",
-    "step1": {
-      "options": {
-        "corporate": {
-          "desc": "High-performance company presence, lead generation",
-          "title": "Corporate Website"
-        },
-        "custom": {
-          "desc": "SaaS, portals, complex interactive features",
-          "title": "Custom Web App"
-        },
-        "ecommerce": {
-          "desc": "Online store, payments, inventory management",
-          "title": "E-Commerce Platform"
-        },
-        "performance": {
-          "desc": "Speed up and optimize an existing system",
-          "title": "Performance / UX Audit"
-        }
-      },
-      "question": "Step 1 - What type of project are you building?"
-    },
-    "step2": {
-      "options": {
-        "enterprise": "140,000+ EGP - Enterprise architecture and multi-system delivery",
-        "large": "140,000+ EGP - Operational Product and heavier custom systems",
-        "medium": "70,000 – 140,000 EGP - Connected Platform / integrated systems",
-        "small": "35,000 – 70,000 EGP - Focused Website / focused custom builds"
-      },
-      "question": "Step 2 - What is your allocated investment range?"
-    },
-    "step3": {
-      "options": {
-        "flexible": {
-          "desc": "No rush - 3+ months is fine",
-          "title": "Flexible"
-        },
-        "soon": {
-          "desc": "Aiming for 1–3 months",
-          "title": "Soon"
-        },
-        "urgent": {
-          "desc": "Need it live within 4 weeks",
-          "title": "ASAP"
-        }
-      },
-      "question": "Step 3 - What is your target launch timeline?"
-    },
     "steps": {
       "brand": {
         "hint": "This helps us understand how much design groundwork is already in place.",
@@ -2371,28 +2143,6 @@
           }
         },
         "title": "What is your brand identity status?"
-      },
-      "budget": {
-        "hint": "Define your investment level - <strong>this calibrates scope</strong>, <dim>not ambition</dim>.",
-        "options": {
-          "custom": {
-            "range": "140,000+ EGP - enterprise architecture, multi-system builds, or phased technical programs.",
-            "title": "Architecture Consultation"
-          },
-          "large": {
-            "range": "140,000+ EGP - custom products, dashboards, portals, and heavier operational systems.",
-            "title": "Operational Product"
-          },
-          "medium": {
-            "range": "70,000 – 140,000 EGP - connected systems with one or two serious integrations or richer multilingual scope.",
-            "title": "Connected Platform"
-          },
-          "small": {
-            "range": "35,000 – 70,000 EGP - custom marketing sites and focused corporate builds.",
-            "title": "Focused Website"
-          }
-        },
-        "title": "What is your allocated technical budget?"
       },
       "complexity": {
         "hint": "<strong>This helps us calibrate scope</strong>, <dim>not just price</dim>.",
@@ -2529,6 +2279,11 @@
       "title": "Want it as a document?",
       "subtitle": "The estimate above is yours either way. Leave a number only if you want the PDF and a follow-up call.",
       "skip": "No thanks — I have what I need"
+    },
+    "terms": {
+      "title": "Commercial terms",
+      "subtitle": "The figures that appear at contract stage, published here first.",
+      "itemColumn": "Item"
     }
   },
   "validations": {
@@ -2677,7 +2432,7 @@
       },
       "08": {
         "question": "What happens after the 30-day post-launch warranty ends?",
-        "answer": "<p>You have three options:</p><ol><li><strong>Maintenance Retainer</strong> (Recommended for most): Essential tier is 2,000 EGP/month, Professional is 4,000 EGP/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because <span class=\"text-foreground/60\">it means someone's always watching for performance degradation or security issues</span>.</p>"
+        "answer": "<p>You have three options:</p><ol><li><strong>Maintenance Retainer</strong> (Recommended for most): Essential tier is {maintenanceEssential}/month, Professional is {maintenanceProfessional}/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because <span class=\"text-foreground/60\">it means someone's always watching for performance degradation or security issues</span>.</p>"
       },
       "09": {
         "question": "Can we hire a different developer to maintain our system later?",
