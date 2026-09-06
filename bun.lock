@@ -154,6 +154,15 @@
         "typescript-eslint": "^8.50.0",
       },
     },
+    "packages/pricing": {
+      "name": "@repo/pricing",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/node": "^24.10.2",
+        "typescript": "6.0.2",
+      },
+    },
     "packages/pricing-schema": {
       "name": "@repo/pricing-schema",
       "version": "1.0.0",
@@ -836,6 +845,8 @@
     "@repo/database": ["@repo/database@workspace:packages/database"],
 
     "@repo/eslint-config": ["@repo/eslint-config@workspace:packages/eslint-config"],
+
+    "@repo/pricing": ["@repo/pricing@workspace:packages/pricing"],
 
     "@repo/pricing-schema": ["@repo/pricing-schema@workspace:packages/pricing-schema"],
 
