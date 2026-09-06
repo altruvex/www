@@ -2,6 +2,8 @@ import { TechnicalSection } from "@/components/sections/technical-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
+import { consultingView, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -34,6 +36,9 @@ export default async function ConsultingServicePage({
     namespace: "serviceDetails.consulting.seo",
   });
 
+  const pricing = await getPublicPricing();
+  const audit = consultingView("technical-audit", locale as Locale, pricing);
+
   const faqItems = t.raw("faq.items") as ConsultingSeoFaq[];
   const faqEntries = faqItems.map((item) => ({
     answer: item.a,
@@ -45,10 +50,10 @@ export default async function ConsultingServicePage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries, locale),
+          ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
-      <PageClient />
+      <PageClient audit={audit} />
       <TechnicalSection />
     </>
   );

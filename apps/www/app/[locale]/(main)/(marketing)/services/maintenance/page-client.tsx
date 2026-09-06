@@ -12,17 +12,21 @@ import { getCommercialCta } from "@/lib/config/commercial";
 import { monoCaps } from "@/lib/utils/mono-caps";
 import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { formatNumber, maintenanceViews, type Locale } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import type { MaintenanceView } from "@repo/pricing-schema";
+import { useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
-export default function MaintenancePage() {
+export default function MaintenancePage({
+  plans,
+}: {
+  plans: readonly MaintenanceView[];
+}) {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden">
       <HeroSection />
       <StatsSection />
       <FeaturesSection />
-      <PricingSection />
+      <PricingSection plans={plans} />
       <CtaSection />
     </div>
   );
@@ -219,18 +223,11 @@ function FeaturesSection() {
   );
 }
 
-function PricingSection() {
+function PricingSection({ plans }: { plans: readonly MaintenanceView[] }) {
   const t = useTranslations("serviceDetails.maintenance");
-  const locale = useLocale() as Locale;
   const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-pricing-card]" });
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
-
-  // Prices, request caps, the overage term and the plan feature lists all come
-  // from packages/pricing-schema. This page and /pricing previously each held
-  // their own copy of the maintenance prices, and the Arabic copy had drifted
-  // 25% above the English.
-  const plans = maintenanceViews(locale);
 
   const commercialNotes = ["infra", "scope", "addons"].map((key) => ({
     key,
@@ -275,7 +272,7 @@ function PricingSection() {
                 aria-hidden
                 className={cn(monoCaps, "text-foreground/20 mb-6")}
               >
-                {formatNumber(i + 1, locale).padStart(2, "0")}
+                {String(i + 1).padStart(2, "0")}
               </div>
               <div className="mb-1 flex items-center justify-between">
                 <h3

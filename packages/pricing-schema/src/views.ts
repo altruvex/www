@@ -23,11 +23,18 @@ import {
 } from "./maintenance";
 import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers";
 import { minimumEngagement } from "./services";
-import { ORDERED_TIERS, tierEstimatorQuery, tierPriceRange } from "./tiers";
-import type { Locale } from "./types";
+import { ORDERED_TIERS, tierEstimatorQuery, TIERS } from "./tiers";
+import { resolvePricing, type ResolvedPricing } from "./overrides";
+import type { Locale, PriceRange } from "./types";
 
 /**
  * Render-ready view models.
+ *
+ * Each takes an optional `ResolvedPricing`. Omitted, it is the values this
+ * package ships, which is what keeps a page that has no datastore — and every
+ * existing call site — working unchanged. A surface that can reach the admin
+ * overrides passes the resolved set instead, and the same renderer produces the
+ * edited numbers without knowing where they came from.
  *
  * Surfaces consume these rather than reaching for entities and formatting
  * numbers themselves. A page that only ever receives a finished string has no
@@ -50,11 +57,26 @@ export interface TierView {
   readonly highlight: boolean;
 }
 
-export function tierViews(locale: Locale): readonly TierView[] {
+/** Shipped defaults, resolved once. The fallback for every view below. */
+const DEFAULT_PRICING: ResolvedPricing = resolvePricing();
+
+/** A tier's cell, read out of whichever pricing set the caller supplied. */
+export function tierRangeFrom(
+  tierId: TierView["id"],
+  pricing: ResolvedPricing,
+): PriceRange {
+  const tier = TIERS[tierId];
+  return pricing.services[tier.serviceId].price[tier.complexityId];
+}
+
+export function tierViews(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): readonly TierView[] {
   const copy = pricingCopy(locale);
 
   return ORDERED_TIERS.map((tier) => {
-    const range = tierPriceRange(tier.id);
+    const range = tierRangeFrom(tier.id, pricing);
     const text = copy.tiers[tier.id];
 
     return {
@@ -77,8 +99,16 @@ export function tierViews(locale: Locale): readonly TierView[] {
   });
 }
 
-export function minimumEngagementLabel(locale: Locale): string {
-  return formatFrom(minimumEngagement(), locale);
+export function minimumEngagementLabel(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): string {
+  return formatFrom(lowestCell(pricing), locale);
+}
+
+/** The engagement floor: the lowest published cell in the matrix. */
+function lowestCell(pricing: ResolvedPricing): number {
+  return Math.min(...Object.values(pricing.services).map((s) => s.price.basic.min));
 }
 
 export interface MaintenanceView {
@@ -119,11 +149,17 @@ function maintenanceFeatures(
   return features;
 }
 
-export function maintenanceViews(locale: Locale): readonly MaintenanceView[] {
+export function maintenanceViews(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): readonly MaintenanceView[] {
   const copy = pricingCopy(locale);
   const tpl = copy.maintenanceTemplates;
 
-  return publicMaintenancePlans().map((plan) => ({
+  return Object.values(pricing.maintenance)
+    .filter((plan) => plan.status === "active")
+    .sort((a, b) => a.order - b.order)
+    .map((plan) => ({
     id: plan.id,
     name: copy.maintenance[plan.id].name,
     priceLabel:
@@ -160,8 +196,9 @@ export interface ConsultingView {
 export function consultingView(
   id: ConsultingPackageId,
   locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
 ): ConsultingView {
-  const pkg = CONSULTING_PACKAGES[id];
+  const pkg = pricing.consulting[id];
   const text = pricingCopy(locale).consulting[id];
 
   return {
@@ -213,15 +250,21 @@ function toAddonView(addon: Addon, locale: Locale): AddonView {
 }
 
 /** Client-safe: `planned` add-ons, the Managed bundle included, are excluded. */
-export function publicAddonViews(locale: Locale): readonly AddonView[] {
-  return Object.values(ADDONS)
+export function publicAddonViews(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): readonly AddonView[] {
+  return Object.values(pricing.addons)
     .filter((addon) => addon.status === "active")
     .map((addon) => toAddonView(addon, locale));
 }
 
 /** Admin-only: includes roadmap placeholders so they can carry a SOON badge. */
-export function allAddonViews(locale: Locale): readonly AddonView[] {
-  return Object.values(ADDONS).map((addon) => toAddonView(addon, locale));
+export function allAddonViews(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): readonly AddonView[] {
+  return Object.values(pricing.addons).map((addon) => toAddonView(addon, locale));
 }
 
 export interface TermsView {
@@ -244,8 +287,12 @@ export interface TermsView {
  * VAT and the revision rate were previously first disclosed in the contract.
  * Rendering them here is the point of that page.
  */
-export function termsView(locale: Locale): TermsView {
+export function termsView(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): TermsView {
   const t = pricingCopy(locale).terms;
+  const { terms: COMMERCIAL_TERMS, exchangeRate: USD_EXCHANGE_RATE } = pricing;
 
   return {
     vatLabel: t.vatLabel,
@@ -281,25 +328,31 @@ export function termsView(locale: Locale): TermsView {
  */
 export function pricingTokens(
   locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
 ): Readonly<Record<string, string>> {
-  const audit = CONSULTING_PACKAGES["technical-audit"];
-  const essential = MAINTENANCE_PLANS.essential;
-  const professional = MAINTENANCE_PLANS.professional;
+  const audit = pricing.consulting["technical-audit"];
+  const essential = pricing.maintenance.essential;
+  const professional = pricing.maintenance.professional;
+  const COMMERCIAL_TERMS = pricing.terms;
 
   return {
     auditPrice: formatMoney(audit.price, locale),
-    essentialRange: formatRange(tierPriceRange("essential"), locale),
+    essentialRange: formatRange(tierRangeFrom("essential", pricing), locale),
     maintenanceEssential:
       essential.price === null ? "" : formatMoney(essential.price, locale),
     maintenanceProfessional:
       professional.price === null ? "" : formatMoney(professional.price, locale),
-    minimumEngagement: formatMoney(minimumEngagement(), locale),
+    minimumEngagement: formatMoney(lowestCell(pricing), locale),
     revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
     vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
   };
 }
 
 /** Fills every `{token}` in a prose string from `pricingTokens`. */
-export function fillPricingTokens(text: string, locale: Locale): string {
-  return fillTemplate(text, pricingTokens(locale));
+export function fillPricingTokens(
+  text: string,
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): string {
+  return fillTemplate(text, pricingTokens(locale, pricing));
 }

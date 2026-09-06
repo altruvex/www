@@ -1,6 +1,7 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -22,6 +23,7 @@ export default async function FAQPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const pricing = await getPublicPricing();
   const t = await getTranslations({ locale, namespace: "faq" });
   const faqEntries = Object.values(
     t.raw("questions") as Record<string, { answer: string; question: string }>,
@@ -35,7 +37,7 @@ export default async function FAQPage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries, locale),
+          ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
       <PageClient />

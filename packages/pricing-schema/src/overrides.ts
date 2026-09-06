@@ -43,7 +43,15 @@ export interface MaintenanceOverride {
   readonly price: number | null;
   readonly requestsPerCycle: number | null;
   readonly overageHourlyRate: number | null;
-  readonly internalHourEquivalent: number | null;
+  /**
+   * Internal margin planning. Optional on purpose: a consumer with no business
+   * reading margin data — the public site — omits it entirely, so the figure
+   * never enters that process at all rather than merely going unrendered.
+   *
+   * `undefined` means "not supplied, keep the default"; `null` means an
+   * operator explicitly cleared it.
+   */
+  readonly internalHourEquivalent?: number | null;
   readonly status: EntityStatus;
   readonly version: number;
 }
@@ -146,7 +154,10 @@ export function resolvePricing(
       price: row.price,
       requestsPerCycle: row.requestsPerCycle,
       overageHourlyRate: row.overageHourlyRate,
-      internalHourEquivalent: row.internalHourEquivalent,
+      internalHourEquivalent:
+        row.internalHourEquivalent === undefined
+          ? base.internalHourEquivalent
+          : row.internalHourEquivalent,
       status: row.status,
       version: Math.max(base.version, row.version),
     };

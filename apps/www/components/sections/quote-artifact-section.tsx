@@ -13,8 +13,8 @@ import {
   useSectionTitle,
 } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { fillPricingTokens, type Locale } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 
@@ -79,7 +79,7 @@ function ScheduleBar(): React.ReactElement {
 
 export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
   const t = useTranslations("quoteArtifact");
-  const locale = useLocale() as Locale;
+  const fillTokens = useFillPricingTokens();
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
@@ -137,7 +137,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                   {key === "schedule" ? <ScheduleBar /> : null}
                   {key === "scope" ? (
                     <p className="mt-6 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.15] tracking-[-0.018em] tabular-nums text-foreground">
-                      {fillPricingTokens(t("clauses.scope.figure"), locale)}
+                      {fillTokens(t("clauses.scope.figure"))}
                     </p>
                   ) : null}
                 </div>
@@ -160,7 +160,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
         >
           <div className="flex flex-col items-start gap-5">
             <p className="text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-foreground">
-              {fillPricingTokens(t("footer.minimum"), locale)}
+              {fillTokens(t("footer.minimum"))}
             </p>
             <MagneticButton asChild size="lg" className="group">
               <Link href="/pricing">

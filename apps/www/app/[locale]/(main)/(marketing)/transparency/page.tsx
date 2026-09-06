@@ -2,6 +2,8 @@ import { TransparencyMeasuresDetailsSection } from "@/components/sections/transp
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
+import { publicAddonViews, termsView, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -24,6 +26,10 @@ export default async function TransparencyPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const pricing = await getPublicPricing();
+  const terms = termsView(locale as Locale, pricing);
+  const addons = publicAddonViews(locale as Locale, pricing);
+
   const t = await getTranslations({ locale, namespace: "transparency.faq" });
   const faqEntries = ["1", "2", "3", "4"].map((key) => ({
     answer: t.raw(`a${key}`) as string,
@@ -35,10 +41,10 @@ export default async function TransparencyPage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries, locale),
+          ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
-      <PageClient />
+      <PageClient terms={terms} addons={addons} />
       <TransparencyMeasuresDetailsSection />
     </>
   );
