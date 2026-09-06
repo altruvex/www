@@ -11,7 +11,7 @@ import {
   ADDONS, allAddonViews, calculateEstimate, COMMERCIAL_TERMS, computeAddonPrice,
   consultingView, MAINTENANCE_PLANS, maintenanceViews, minimumEngagement,
   ORDERED_TIERS, PRICING_VERSION, publicAddonViews, resolveTierToken, SERVICES,
-  termsView, tierEstimatorQuery, tierPriceRange, TIERS, tierViews,
+  termsView, tierEstimatorQuery, tierPriceRange, tierViews,
   USD_EXCHANGE_RATE,
 } from "@repo/pricing-schema";
 
