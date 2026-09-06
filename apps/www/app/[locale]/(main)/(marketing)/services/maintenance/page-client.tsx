@@ -12,7 +12,8 @@ import { getCommercialCta } from "@/lib/config/commercial";
 import { monoCaps } from "@/lib/utils/mono-caps";
 import { MOTION, useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
+import { formatNumber, maintenanceViews, type Locale } from "@repo/pricing-schema";
+import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
 export default function MaintenancePage() {
@@ -220,30 +221,17 @@ function FeaturesSection() {
 
 function PricingSection() {
   const t = useTranslations("serviceDetails.maintenance");
+  const locale = useLocale() as Locale;
   const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-pricing-card]" });
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
 
-  const plans = [
-    {
-      key: "essential",
-      price: t("pricing.plans.essential.price"),
-      featured: false,
-      index: "01",
-    },
-    {
-      key: "professional",
-      price: t("pricing.plans.professional.price"),
-      featured: true,
-      index: "02",
-    },
-    {
-      key: "enterprise",
-      price: t("pricing.plans.enterprise.price"),
-      featured: false,
-      index: "03",
-    },
-  ];
+  // Prices, request caps, the overage term and the plan feature lists all come
+  // from packages/pricing-schema. This page and /pricing previously each held
+  // their own copy of the maintenance prices, and the Arabic copy had drifted
+  // 25% above the English.
+  const plans = maintenanceViews(locale);
+
   const commercialNotes = ["infra", "scope", "addons"].map((key) => ({
     key,
     label: t(`pricing.notes.${key}.label`),
@@ -269,25 +257,25 @@ function PricingSection() {
           />
         </div>
         <div className="grid md:grid-cols-3 gap-4">
-          {plans.map(({ key, price, featured, index }) => (
+          {plans.map((plan, i) => (
             <div
-              key={key}
+              key={plan.id}
               data-pricing-card
               className={cn(
                 "group relative border rounded-lg bg-foreground/2 p-7 md:p-8 overflow-hidden flex flex-col transition-colors duration-300",
-                featured
+                plan.highlight
                   ? "border-foreground/20"
                   : "transition-all border-foreground/8 hover:bg-foreground/4",
               )}
             >
-              {featured && (
+              {plan.highlight && (
                 <div className="absolute top-0 left-0 right-0 h-[2px] bg-foreground/60" />
               )}
               <div
                 aria-hidden
                 className={cn(monoCaps, "text-foreground/20 mb-6")}
               >
-                {index}
+                {formatNumber(i + 1, locale).padStart(2, "0")}
               </div>
               <div className="mb-1 flex items-center justify-between">
                 <h3
@@ -297,9 +285,9 @@ function PricingSection() {
                     letterSpacing: "-0.015em",
                   }}
                 >
-                  {t(`pricing.plans.${key}.name`)}
+                  {plan.name}
                 </h3>
-                {featured && (
+                {plan.highlight && (
                   <span
                     className={cn(
                       monoCaps,
@@ -318,43 +306,41 @@ function PricingSection() {
                     letterSpacing: "-0.03em",
                   }}
                 >
-                  {price ?? t("pricing.customPrice")}
+                  {plan.priceLabel}
                 </span>
-                {price && (
+                {!plan.isCustomQuote && (
                   <span className={cn(monoCaps, "text-primary/35 ml-2")}>
-                    {t("pricing.perMonth")}
+                    {plan.cycleLabel}
                   </span>
                 )}
               </div>
               <ul className="flex flex-col gap-2.5 mb-8 flex-1">
-                {([0, 1, 2, 3, 4] as const).map((i) => {
-                  const features = t.raw(
-                    `pricing.plans.${key}.features`,
-                  ) as string[];
-                  const feature = features[i];
-                  if (!feature) return null;
-                  return (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 text-sm text-primary/55 leading-relaxed"
+                {plan.features.map((feature) => (
+                  <li
+                    key={feature}
+                    className="flex items-start gap-3 text-sm text-primary/55 leading-relaxed"
+                  >
+                    <span
+                      className={cn(
+                        monoCaps,
+                        "text-primary/30 mt-0.5 shrink-0 select-none",
+                      )}
                     >
-                      <span
-                        className={cn(
-                          monoCaps,
-                          "text-primary/30 mt-0.5 shrink-0 select-none",
-                        )}
-                      >
-                        -
-                      </span>
-                      {feature}
-                    </li>
-                  );
-                })}
+                      -
+                    </span>
+                    {feature}
+                  </li>
+                ))}
+                {plan.overageNote && (
+                  <li className="mt-1 text-xs text-primary/45 leading-relaxed">
+                    {plan.overageNote}
+                  </li>
+                )}
               </ul>
               <MagneticButton
                 asChild
                 size="lg"
-                variant={featured ? "primary" : "secondary"}
+                variant={plan.highlight ? "primary" : "secondary"}
                 className="mt-auto w-full justify-center group"
               >
                 <Link href="/contact">

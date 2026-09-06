@@ -14,12 +14,13 @@ import {
 } from "lucide-react";
 import {
   calculateEstimate,
-  type BrandIdentity,
-  type Complexity,
-  type ContentReadiness,
-  type ProjectType,
-  type Timeline,
-} from "@repo/pricing";
+  egpToUsd,
+  type BrandIdentityId as BrandIdentity,
+  type ComplexityId as Complexity,
+  type ContentReadinessId as ContentReadiness,
+  type ServiceId as ProjectType,
+  type TimelineId as Timeline,
+} from "@repo/pricing-schema";
 import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui";
 import { SegmentedControl, segmentClass } from "@repo/ui";
@@ -159,8 +160,8 @@ export default function NewProposalPage() {
   const estimate = React.useMemo(() => {
     if (!projectType || !complexity || !timeline) return null;
     return calculateEstimate({
-      projectType,
-      complexity,
+      serviceId: projectType,
+      complexityId: complexity,
       timeline,
       brandIdentity,
       contentReadiness,
@@ -181,7 +182,10 @@ export default function NewProposalPage() {
     setSyncedSignature(estimateSignature);
     const midPrice = Math.round((estimate.minPrice + estimate.maxPrice) / 2 / 500) * 500;
     const midWeeks = Math.round((estimate.minWeeks + estimate.maxWeeks) / 2);
-    const priceInCurrency = currency === "USD" ? Math.round(midPrice / 50 / 10) * 10 : midPrice;
+    // The USD rate is the schema's fixed, quarterly-reviewed figure — it used
+    // to be a bare `/ 50` here, which meant a rate change had to be remembered
+    // in two places.
+    const priceInCurrency = currency === "USD" ? egpToUsd(midPrice) : midPrice;
     setContent(
       buildDefaultProposalContent({
         clientName: client.name
@@ -325,7 +329,7 @@ export default function NewProposalPage() {
   // The estimator's own three figures, converted with the same rule the seed
   // uses so a preset can never disagree with the number the deck opened on.
   const toSeedCurrency = (egp: number) =>
-    currency === "USD" ? Math.round(egp / 50 / 10) * 10 : Math.round(egp / 500) * 500;
+    currency === "USD" ? egpToUsd(egp) : Math.round(egp / 500) * 500;
   const pricePresets: PricePreset[] = estimate
     ? [
         { label: "Min", amount: toSeedCurrency(estimate.minPrice) },

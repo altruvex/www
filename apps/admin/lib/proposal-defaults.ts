@@ -12,7 +12,7 @@ import {
   STANDARD_TERMS,
 } from "./proposal-content";
 import { NO_DISCOUNT, type ProposalContent } from "./proposal-schema";
-import type { ProjectType } from "@repo/pricing";
+import { COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
 
 // Starting point for a new proposal's content. This is a SEED for the Admin
 // form only — the generator never reads it. Once a proposal is saved, its
@@ -78,17 +78,19 @@ const DEFAULT_LABELS = {
   keyTerms: "KEY TERMS",
 };
 
+// Percentages come from the schema so a proposal and the contract generated
+// from it cannot disagree about the milestone split.
 const DEFAULT_PAYMENT_SCHEDULE = [
-  { label: "First Payment", trigger: "Upon signing + confirmed brief", percent: 50 },
-  { label: "Second Payment", trigger: "Upon design approval by client", percent: 30 },
-  { label: "Final Payment", trigger: "Before launch (staging review)", percent: 20 },
+  { label: "First Payment", trigger: "Upon signing + confirmed brief", percent: COMMERCIAL_TERMS.paymentSplit[0] },
+  { label: "Second Payment", trigger: "Upon design approval by client", percent: COMMERCIAL_TERMS.paymentSplit[1] },
+  { label: "Final Payment", trigger: "Before launch (staging review)", percent: COMMERCIAL_TERMS.paymentSplit[2] },
 ];
 
 export interface DefaultContentInput {
   clientName: string;
   clientCompany: string;
   industry?: string | null;
-  projectType: ProjectType;
+  projectType: ServiceId;
   currency: string;
   totalPrice: number;
   timelineWeeks: number;
@@ -112,7 +114,7 @@ export function buildDefaultProposalContent(
       clientCompany: input.clientCompany,
       projectLabel: `Custom ${input.industry?.trim() || projectTypeLabel(input.projectType)} Platform`,
       proposalDate: date.toISOString().slice(0, 10),
-      validityDays: input.validityDays ?? 30,
+      validityDays: input.validityDays ?? COMMERCIAL_TERMS.proposalValidityDays,
       currency: input.currency,
     },
     labels: { ...DEFAULT_LABELS, cover: { ...DEFAULT_LABELS.cover } },

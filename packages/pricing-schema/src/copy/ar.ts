@@ -1,4 +1,4 @@
-import type { PricingCopy } from "./types.js";
+import type { PricingCopy } from "./types";
 
 /**
  * AR copy for every priced entity.
@@ -11,21 +11,30 @@ import type { PricingCopy } from "./types.js";
 export const AR_COPY: PricingCopy = {
   services: {
     website: {
+      documentName: "موقع مؤسسي",
       name: "موقع مؤسسي",
       description: "مواقع تسويقية ومؤسسية مخصصة — تصميم وبناء وإطلاق.",
     },
     webapp: {
+      documentName: "تطبيق ويب مخصص",
       name: "تطبيق ويب Custom Webapp",
       description: "تطبيقات ويب مخصصة: لوحات تحكم وبوابات وأنظمة داخلية.",
     },
     ecommerce: {
+      documentName: "نظام تجارة إلكترونية",
       name: "نظام تجارة إلكترونية",
       description: "متاجر إلكترونية بكتالوج وسلة دفع وأدوات تشغيل.",
     },
     pwa: {
+      documentName: "تطبيق ويب تقدمي",
       name: "تطبيق ويب Webapp",
       description: "تطبيقات قابلة للتثبيت وتعمل دون اتصال، مبنية على الويب.",
     },
+  },
+  bands: {
+    basic: "الأساسية",
+    standard: "الاحترافية",
+    premium: "الرائدة",
   },
   tiers: {
     essential: {
@@ -136,6 +145,8 @@ export const AR_COPY: PricingCopy = {
   },
   consulting: {
     "technical-audit": {
+      title: "مراجعة تقني -",
+      titleItalic: "نطاق ثابت، سعر ثابت.",
       name: "مراجعة تقني - نطاق ثابت، سعر ثابت.",
       description: "تعاون أول محدد قبل أي إعادة بناء أو توسع. نفحص النظام الحالية ونعزل المخاطر التقنية ونحول النتائج إلى <strong>خارطة طريق جاهزة للتنفيذ.</strong>",
       deliverables: [

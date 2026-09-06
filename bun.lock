@@ -31,7 +31,7 @@
         "@radix-ui/react-tabs": "^1.1.21",
         "@radix-ui/react-tooltip": "^1.2.16",
         "@repo/database": "workspace:*",
-        "@repo/pricing": "workspace:*",
+        "@repo/pricing-schema": "workspace:*",
         "@repo/ui": "workspace:*",
         "better-auth": "^1.6.27",
         "class-variance-authority": "^0.7.1",
@@ -79,7 +79,7 @@
         "@radix-ui/react-select": "^2.2.6",
         "@radix-ui/react-slot": "^1.2.4",
         "@repo/database": "workspace:*",
-        "@repo/pricing": "workspace:*",
+        "@repo/pricing-schema": "workspace:*",
         "@repo/ui": "workspace:*",
         "@types/mdx": "^2.0.13",
         "@vercel/analytics": "^2.0.1",
@@ -153,20 +153,10 @@
         "typescript-eslint": "^8.50.0",
       },
     },
-    "packages/pricing": {
-      "name": "@repo/pricing",
-      "version": "1.0.0",
-      "devDependencies": {
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "^24.10.2",
-        "typescript": "6.0.2",
-      },
-    },
     "packages/pricing-schema": {
       "name": "@repo/pricing-schema",
       "version": "1.0.0",
       "devDependencies": {
-        "@repo/pricing": "workspace:*",
         "@repo/typescript-config": "workspace:*",
         "@types/node": "^24.10.2",
         "typescript": "6.0.2",
@@ -845,8 +835,6 @@
     "@repo/database": ["@repo/database@workspace:packages/database"],
 
     "@repo/eslint-config": ["@repo/eslint-config@workspace:packages/eslint-config"],
-
-    "@repo/pricing": ["@repo/pricing@workspace:packages/pricing"],
 
     "@repo/pricing-schema": ["@repo/pricing-schema@workspace:packages/pricing-schema"],
 

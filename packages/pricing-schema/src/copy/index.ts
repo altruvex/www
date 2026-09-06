@@ -1,9 +1,9 @@
-import type { Locale } from "../types.js";
-import { AR_COPY } from "./ar.js";
-import { EN_COPY } from "./en.js";
-import type { PricingCopy } from "./types.js";
+import type { Locale } from "../types";
+import { AR_COPY } from "./ar";
+import { EN_COPY } from "./en";
+import type { PricingCopy } from "./types";
 
-export * from "./types.js";
+export * from "./types";
 
 const CATALOGUE: Readonly<Record<Locale, PricingCopy>> = {
   en: EN_COPY,

@@ -1,4 +1,4 @@
-import type { Amount, Versioned } from "./types.js";
+import type { Amount, Versioned } from "./types";
 
 /** Estimator refiners. Ported verbatim from `@repo/pricing`. */
 
@@ -57,6 +57,16 @@ export interface CommercialTerms extends Versioned {
   readonly vatRate: number;
   /** EGP per hour for revisions beyond the included rounds. */
   readonly revisionHourlyRate: Amount;
+  /**
+   * USD-native revision rate, NOT the EGP figure converted.
+   *
+   * At the fixed 50 EGP/USD rate, 800 EGP is ~16 USD, so this 80 USD figure is
+   * a separate USD price list carried over verbatim from the contract template
+   * rather than a conversion. Preserved as-authored because changing a rate
+   * that is already in signed contracts is a commercial decision, not a
+   * refactor — flagged for review.
+   */
+  readonly revisionHourlyRateUsd: Amount;
   readonly includedRevisionRounds: number;
   /** Milestone split, as percentages summing to 100. */
   readonly paymentSplit: readonly [number, number, number];
@@ -67,6 +77,7 @@ export interface CommercialTerms extends Versioned {
 export const COMMERCIAL_TERMS: CommercialTerms = {
   vatRate: 0.14,
   revisionHourlyRate: 800,
+  revisionHourlyRateUsd: 80,
   includedRevisionRounds: 3,
   paymentSplit: [50, 30, 20],
   proposalValidityDays: 30,

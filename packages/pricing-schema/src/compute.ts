@@ -1,5 +1,5 @@
-import { ADDONS, type Addon } from "./addons.js";
-import type { AddonId, ComplexityId, ServiceId } from "./ids.js";
+import { ADDONS, type Addon } from "./addons";
+import type { AddonId, ComplexityId, ServiceId } from "./ids";
 import {
   BRAND_FACTORS,
   COMMERCIAL_TERMS,
@@ -11,9 +11,9 @@ import {
   type BrandIdentityId,
   type ContentReadinessId,
   type TimelineId,
-} from "./modifiers.js";
-import { SERVICES } from "./services.js";
-import type { Amount } from "./types.js";
+} from "./modifiers";
+import { SERVICES } from "./services";
+import type { Amount } from "./types";
 
 export interface EstimateInput {
   readonly serviceId: ServiceId;

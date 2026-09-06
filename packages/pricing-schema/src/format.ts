@@ -1,4 +1,4 @@
-import type { Amount, Currency, Locale, PriceRange } from "./types.js";
+import type { Amount, Currency, Locale, PriceRange } from "./types";
 
 /**
  * Money formatting.

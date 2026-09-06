@@ -1,7 +1,7 @@
-import { ADDONS, type Addon } from "./addons.js";
-import { computeAddonPrice, type AddonPrice } from "./compute.js";
-import { CONSULTING_PACKAGES } from "./consulting.js";
-import { pricingCopy } from "./copy/index.js";
+import { ADDONS, type Addon } from "./addons";
+import { computeAddonPrice, type AddonPrice } from "./compute";
+import { CONSULTING_PACKAGES } from "./consulting";
+import { pricingCopy } from "./copy/index";
 import {
   fillTemplate,
   formatFrom,
@@ -9,18 +9,18 @@ import {
   formatNumber,
   formatPercent,
   formatRange,
-} from "./format.js";
+} from "./format";
 import type {
   AddonId,
   ConsultingPackageId,
   MaintenancePlanId,
   TierId,
-} from "./ids.js";
-import { publicMaintenancePlans, type MaintenancePlan } from "./maintenance.js";
-import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers.js";
-import { minimumEngagement } from "./services.js";
-import { ORDERED_TIERS, tierEstimatorQuery, tierPriceRange } from "./tiers.js";
-import type { Locale } from "./types.js";
+} from "./ids";
+import { publicMaintenancePlans, type MaintenancePlan } from "./maintenance";
+import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers";
+import { minimumEngagement } from "./services";
+import { ORDERED_TIERS, tierEstimatorQuery, tierPriceRange } from "./tiers";
+import type { Locale } from "./types";
 
 /**
  * Render-ready view models.
@@ -139,6 +139,8 @@ export function maintenanceViews(locale: Locale): readonly MaintenanceView[] {
 
 export interface ConsultingView {
   readonly id: ConsultingPackageId;
+  readonly title: string;
+  readonly titleItalic: string;
   readonly name: string;
   readonly description: string;
   readonly priceLabel: string;
@@ -160,6 +162,8 @@ export function consultingView(
 
   return {
     id,
+    title: text.title,
+    titleItalic: text.titleItalic,
     name: text.name,
     description: text.description,
     priceLabel: formatMoney(pkg.price, locale),

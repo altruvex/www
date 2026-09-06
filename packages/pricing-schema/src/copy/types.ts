@@ -1,13 +1,23 @@
 import type {
   AddonId,
+  ComplexityId,
   ConsultingPackageId,
   MaintenancePlanId,
   ServiceId,
   TierId,
-} from "../ids.js";
-import type { BillingCycle } from "../types.js";
+} from "../ids";
+import type { BillingCycle } from "../types";
 
 export interface ServiceCopy {
+  /**
+   * Formal name used in proposals and contracts.
+   *
+   * Kept distinct from `name` because generated documents already in a
+   * client's hands say "Corporate Website", while the estimator's option list
+   * says "Website". Changing document wording is out of scope for a data-layer
+   * refactor, so both spellings are held rather than reconciled.
+   */
+  readonly documentName: string;
   readonly name: string;
   readonly description: string;
 }
@@ -46,6 +56,9 @@ export interface MaintenanceTemplates {
 }
 
 export interface ConsultingCopy {
+  /** Heading split: the page renders `titleItalic` inside a <Highlight>. */
+  readonly title: string;
+  readonly titleItalic: string;
   readonly name: string;
   readonly description: string;
   readonly deliverables: readonly string[];
@@ -79,6 +92,8 @@ export interface TermsCopy {
 
 export interface PricingCopy {
   readonly services: Readonly<Record<ServiceId, ServiceCopy>>;
+  /** Complexity band names as they appear in proposals and contracts. */
+  readonly bands: Readonly<Record<ComplexityId, string>>;
   readonly tiers: Readonly<Record<TierId, TierCopy>>;
   readonly maintenance: Readonly<Record<MaintenancePlanId, MaintenanceCopy>>;
   readonly maintenanceTemplates: MaintenanceTemplates;

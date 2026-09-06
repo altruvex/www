@@ -1,5 +1,5 @@
-import type { MaintenancePlanId } from "./ids.js";
-import type { Amount, BillingCycle, EntityStatus, Versioned } from "./types.js";
+import type { MaintenancePlanId } from "./ids";
+import type { Amount, BillingCycle, EntityStatus, Versioned } from "./types";
 
 /**
  * Maintenance retainers.

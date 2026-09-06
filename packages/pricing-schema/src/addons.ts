@@ -1,5 +1,5 @@
-import type { AddonId } from "./ids.js";
-import type { Amount, BillingCycle, EntityStatus, Versioned } from "./types.js";
+import type { AddonId } from "./ids";
+import type { Amount, BillingCycle, EntityStatus, Versioned } from "./types";
 
 export const ADDON_CATEGORIES = [
   "domain",

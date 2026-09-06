@@ -1,4 +1,8 @@
-import type { Complexity, ProjectType } from "@repo/pricing";
+import {
+  pricingCopy,
+  type ComplexityId,
+  type ServiceId,
+} from "@repo/pricing-schema";
 
 export interface ProblemCard {
   title: string;
@@ -21,7 +25,7 @@ export interface LineItem {
   amount: number;
 }
 
-const PROBLEMS: Record<ProjectType, ProblemCard[]> = {
+const PROBLEMS: Record<ServiceId, ProblemCard[]> = {
   website: [
     { title: "Outdated brand presence", description: "The current site undersells the business and erodes trust before the first conversation happens." },
     { title: "No lead capture system", description: "Interested visitors have no clear, fast path to becoming a qualified conversation." },
@@ -44,7 +48,7 @@ const PROBLEMS: Record<ProjectType, ProblemCard[]> = {
   ],
 };
 
-const SOLUTIONS: Record<ProjectType, SolutionModule[]> = {
+const SOLUTIONS: Record<ServiceId, SolutionModule[]> = {
   website: [
     { title: "Brand-precise design system", description: "A custom visual language built around the business, not a theme." },
     { title: "Conversion-focused architecture", description: "Every page engineered around a single, clear next action." },
@@ -90,7 +94,7 @@ const PHASE_SHARE: { name: string; share: number }[] = [
   { name: "Launch", share: 0.05 },
 ];
 
-const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
+const PHASE_DELIVERABLES: Record<ServiceId, string[]> = {
   website: [
     "Brief confirmed, sitemap locked",
     "Full visual design, all pages",
@@ -125,11 +129,11 @@ const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
   ],
 };
 
-export function getProblems(projectType: ProjectType): ProblemCard[] {
+export function getProblems(projectType: ServiceId): ProblemCard[] {
   return PROBLEMS[projectType];
 }
 
-export function getSolutionModules(projectType: ProjectType): SolutionModule[] {
+export function getSolutionModules(projectType: ServiceId): SolutionModule[] {
   return SOLUTIONS[projectType];
 }
 
@@ -142,7 +146,7 @@ export function getProgressTargets(): { label: string; percent: number }[] {
 }
 
 export function getTimelinePhases(
-  projectType: ProjectType,
+  projectType: ServiceId,
   totalWeeks: number,
 ): TimelinePhase[] {
   const deliverables = PHASE_DELIVERABLES[projectType];
@@ -231,23 +235,12 @@ export function getDefaultLineItems(totalPrice: number): LineItem[] {
   return items;
 }
 
-export function projectTypeLabel(projectType: ProjectType): string {
-  const labels: Record<ProjectType, string> = {
-    website: "Corporate Website",
-    webapp: "Custom Web Application",
-    ecommerce: "E-Commerce System",
-    pwa: "Progressive Web App",
-  };
-  return labels[projectType];
+export function projectTypeLabel(projectType: ServiceId): string {
+  return pricingCopy("en").services[projectType].documentName;
 }
 
-export function complexityLabel(complexity: Complexity): string {
-  const labels: Record<Complexity, string> = {
-    basic: "Essential",
-    standard: "Professional",
-    premium: "Flagship",
-  };
-  return labels[complexity];
+export function complexityLabel(complexity: ComplexityId): string {
+  return pricingCopy("en").bands[complexity];
 }
 
 export const CONTACT = {

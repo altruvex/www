@@ -15,18 +15,9 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { useTranslations } from "next-intl";
+import { tierViews, minimumEngagementLabel, type Locale } from "@repo/pricing-schema";
+import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
-
-// Each destination must land the estimator on the exact PRICING_TABLE cell the
-// card advertises, otherwise the page contradicts itself one click later.
-// Keep in sync with TIER_COMPLEXITY in hooks/use-transparency.ts.
-const TIER_DESTINATION = {
-  essential: "/transparency?tier=essential&projectType=website",
-  professional: "/transparency?tier=professional&projectType=website",
-  ecommerce: "/transparency?tier=commerce&projectType=ecommerce",
-  flagship: "/transparency?tier=flagship&projectType=webapp",
-} as const;
 
 function HighlightBlobs() {
   return (
@@ -75,8 +66,7 @@ function HighlightBlobs() {
 
 export default function PricingPage() {
   const t = useTranslations("pricing");
-  const tp = useTranslations("commercial.pricing");
-  const tCTAs = useTranslations("commercial.ctas");
+  const locale = useLocale() as Locale;
 
   const heroEyebrowRef = useSectionEyebrow();
   const heroTitleRef = useSectionTitle<HTMLHeadingElement>();
@@ -88,64 +78,11 @@ export default function PricingPage() {
   const roiBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".roi-p" });
   const roiStatsRef = useSectionDescription();
 
-  const tiers = [
-    {
-      id: "essential" as const,
-      name: t("tiers.essential.name"),
-      buyerLabel: tp("essential.buyerLabel"),
-      internalLabel: tp("essential.internalLabel"),
-      ctaLabel: tCTAs("pricingEssential"),
-      priceRange: t("tiers.essential.priceRange"),
-      originalPrice: t("tiers.essential.originalPrice"),
-      idealFor: t("tiers.essential.idealFor"),
-      notIncluded: t("tiers.essential.notIncluded"),
-      highlight: false,
-      nextStep: tp("essential.nextStep"),
-      features: Array.from({ length: 5 }, (_, i) => t(`tiers.essential.features.${i}`)),
-    },
-    {
-      id: "professional" as const,
-      name: t("tiers.professional.name"),
-      buyerLabel: tp("professional.buyerLabel"),
-      internalLabel: tp("professional.internalLabel"),
-      ctaLabel: tCTAs("pricingProfessional"),
-      priceRange: t("tiers.professional.priceRange"),
-      originalPrice: t("tiers.professional.originalPrice"),
-      idealFor: t("tiers.professional.idealFor"),
-      notIncluded: t("tiers.professional.notIncluded"),
-      highlight: true,
-      nextStep: tp("professional.nextStep"),
-      features: Array.from({ length: 5 }, (_, i) => t(`tiers.professional.features.${i}`)),
-    },
-    {
-      id: "ecommerce" as const,
-      name: t("tiers.ecommerce.name"),
-      buyerLabel: tp("ecommerce.buyerLabel"),
-      internalLabel: tp("ecommerce.internalLabel"),
-      ctaLabel: tCTAs("pricingEcommerce"),
-      priceRange: t("tiers.ecommerce.priceRange"),
-      originalPrice: t("tiers.ecommerce.originalPrice"),
-      idealFor: t("tiers.ecommerce.idealFor"),
-      notIncluded: t("tiers.ecommerce.notIncluded"),
-      highlight: false,
-      nextStep: tp("ecommerce.nextStep"),
-      features: Array.from({ length: 5 }, (_, i) => t(`tiers.ecommerce.features.${i}`)),
-    },
-    {
-      id: "flagship" as const,
-      name: t("tiers.flagship.name"),
-      buyerLabel: tp("flagship.buyerLabel"),
-      internalLabel: tp("flagship.internalLabel"),
-      ctaLabel: tCTAs("pricingFlagship"),
-      priceRange: t("tiers.flagship.priceRange"),
-      originalPrice: t("tiers.flagship.originalPrice"),
-      idealFor: t("tiers.flagship.idealFor"),
-      notIncluded: null,
-      highlight: false,
-      nextStep: tp("flagship.nextStep"),
-      features: Array.from({ length: 5 }, (_, i) => t(`tiers.flagship.features.${i}`)),
-    },
-  ];
+  // Every figure, name, feature list and CTA target on this page comes from
+  // packages/pricing-schema. The page used to carry its own price strings,
+  // which is how it ended up publishing a range the estimator disagreed with
+  // one click later.
+  const tiers = tierViews(locale);
 
   const roiStats = [
     {
@@ -254,13 +191,8 @@ export default function PricingPage() {
                         >
                           {tier.buyerLabel}
                         </h2>
-                        {tier.originalPrice && (
-                          <span className="font-mono text-[11px] line-through text-muted-foreground mb-0.5">
-                            {tier.originalPrice}
-                          </span>
-                        )}
                         <p className="font-mono text-xs tracking-wider uppercase text-foreground mb-5">
-                          {tier.priceRange}
+                          {tier.priceLabel}
                         </p>
                         <p className="text-[13px] text-muted-foreground leading-relaxed mb-6 font-medium">
                           {tier.idealFor}
@@ -284,7 +216,7 @@ export default function PricingPage() {
                             className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
                           >
                             <Link
-                              href={TIER_DESTINATION[tier.id]}
+                              href={tier.estimatorHref}
                               className="w-full justify-center"
                               aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
                             >
@@ -317,7 +249,7 @@ export default function PricingPage() {
                           {tier.buyerLabel}
                         </h2>
                         <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase mb-5">
-                          {tier.priceRange}
+                          {tier.priceLabel}
                         </p>
                         <p className="text-[13px] text-muted-foreground leading-relaxed mb-6">
                           {tier.idealFor}
@@ -339,7 +271,7 @@ export default function PricingPage() {
                             className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface"
                           >
                             <Link
-                              href={TIER_DESTINATION[tier.id]}
+                              href={tier.estimatorHref}
                               className="w-full justify-center"
                               aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
                             >
@@ -360,7 +292,7 @@ export default function PricingPage() {
                     {t("minimumEngagementLabel")}
                   </p>
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
-                    {t("minimumEngagement")}
+                    {minimumEngagementLabel(locale)}
                   </p>
                   <p className="mx-auto max-w-(--measure-wide) text-sm leading-relaxed text-muted-foreground">
                     {t.rich("ownershipNote", bodyMarks)}

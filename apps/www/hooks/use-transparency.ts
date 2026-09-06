@@ -1,19 +1,21 @@
 import { useCallback, useState } from "react";
 import {
   calculateEstimate,
-  type BrandIdentity as PricingBrandIdentity,
-  type Complexity as PricingComplexity,
-  type ContentReadiness as PricingContentReadiness,
+  resolveTierToken,
+  TIERS,
+  type BrandIdentityId,
+  type ComplexityId,
+  type ContentReadinessId,
   type EstimateResult,
-  type ProjectType as PricingProjectType,
-  type Timeline as PricingTimeline,
-} from "@repo/pricing";
+  type ServiceId,
+  type TimelineId,
+} from "@repo/pricing-schema";
 
-export type ProjectType = PricingProjectType | null;
-export type Complexity = PricingComplexity | null;
-export type Timeline = PricingTimeline | null;
-export type BrandIdentity = PricingBrandIdentity | null;
-export type ContentReadiness = PricingContentReadiness | null;
+export type ProjectType = ServiceId | null;
+export type Complexity = ComplexityId | null;
+export type Timeline = TimelineId | null;
+export type BrandIdentity = BrandIdentityId | null;
+export type ContentReadiness = ContentReadinessId | null;
 
 /**
  * The five inputs `calculateEstimate` actually consumes — no more, no less.
@@ -39,23 +41,24 @@ interface UseTransparencyOptions {
   initialProjectType?: ProjectType;
 }
 
-/** Deep links from /pricing land here with a tier already chosen. */
-const TIER_COMPLEXITY: Record<string, NonNullable<Complexity>> = {
-  essential: "basic",
-  small: "basic",
-  professional: "standard",
-  medium: "standard",
-  commerce: "standard",
-  flagship: "standard",
-  large: "premium",
-};
+/**
+ * Deep links from /pricing land here with a tier already chosen.
+ *
+ * The band is read off the tier's own schema entry rather than a second map,
+ * so a card and the estimator it links to cannot disagree about which cell the
+ * visitor was promised.
+ */
+function complexityForTierToken(token: string): NonNullable<Complexity> | null {
+  const tierId = resolveTierToken(token);
+  return tierId === null ? null : TIERS[tierId].complexityId;
+}
 
 export function useTransparency({
   initialTier = null,
   initialProjectType = null,
 }: UseTransparencyOptions = {}) {
   const presetComplexity =
-    initialTier !== null ? (TIER_COMPLEXITY[initialTier] ?? null) : null;
+    initialTier !== null ? complexityForTierToken(initialTier) : null;
 
   const createInitialState = useCallback(
     (): TransparencyState => ({
@@ -100,8 +103,8 @@ export function useTransparency({
     if (!state.projectType || !state.complexity) return null;
 
     return calculateEstimate({
-      projectType: state.projectType,
-      complexity: state.complexity,
+      serviceId: state.projectType,
+      complexityId: state.complexity,
       timeline: state.timeline ?? "standard",
       brandIdentity: state.brandIdentity,
       contentReadiness: state.contentReadiness,

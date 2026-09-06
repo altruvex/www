@@ -1,5 +1,5 @@
-import type { ComplexityId, ServiceId } from "./ids.js";
-import type { PriceRange, Versioned, WeekRange } from "./types.js";
+import type { ComplexityId, ServiceId } from "./ids";
+import type { PriceRange, Versioned, WeekRange } from "./types";
 
 /**
  * Core productized services and their price/timeline matrices.

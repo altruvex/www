@@ -1,4 +1,4 @@
-import type { PricingCopy } from "./types.js";
+import type { PricingCopy } from "./types";
 
 /**
  * EN copy for every priced entity.
@@ -11,21 +11,30 @@ import type { PricingCopy } from "./types.js";
 export const EN_COPY: PricingCopy = {
   services: {
     website: {
+      documentName: "Corporate Website",
       name: "Website",
       description: "Custom marketing and corporate sites — design, build, and launch.",
     },
     webapp: {
+      documentName: "Custom Web Application",
       name: "Web App",
       description: "Custom web applications: dashboards, portals, and internal systems.",
     },
     ecommerce: {
+      documentName: "E-Commerce System",
       name: "E-commerce",
       description: "Storefronts with catalogue, checkout, and operational tooling.",
     },
     pwa: {
+      documentName: "Progressive Web App",
       name: "PWA",
       description: "Installable, offline-capable applications built on the web platform.",
     },
+  },
+  bands: {
+    basic: "Essential",
+    standard: "Professional",
+    premium: "Flagship",
   },
   tiers: {
     essential: {
@@ -136,6 +145,8 @@ export const EN_COPY: PricingCopy = {
   },
   consulting: {
     "technical-audit": {
+      title: "Technical Audit -",
+      titleItalic: "Fixed Scope, Fixed Price.",
       name: "Technical Audit - Fixed Scope, Fixed Price.",
       description: "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>",
       deliverables: [

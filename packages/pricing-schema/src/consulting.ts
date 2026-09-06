@@ -1,5 +1,5 @@
-import type { ConsultingPackageId } from "./ids.js";
-import type { Amount, EntityStatus, Versioned } from "./types.js";
+import type { ConsultingPackageId } from "./ids";
+import type { Amount, EntityStatus, Versioned } from "./types";
 
 /**
  * Fixed-scope consulting engagements.

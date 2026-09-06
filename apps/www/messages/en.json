@@ -2465,6 +2465,11 @@
       "title": "Want it as a document?",
       "subtitle": "The estimate above is yours either way. Leave a number only if you want the PDF and a follow-up call.",
       "skip": "No thanks — I have what I need"
+    },
+    "terms": {
+      "title": "Commercial terms",
+      "subtitle": "The figures that appear at contract stage, published here first.",
+      "itemColumn": "Item"
     }
   },
   "validations": {

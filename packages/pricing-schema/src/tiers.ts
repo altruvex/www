@@ -1,6 +1,6 @@
-import type { ComplexityId, ServiceId, TierId } from "./ids.js";
-import { SERVICES } from "./services.js";
-import type { PriceRange, Versioned, WeekRange } from "./types.js";
+import type { ComplexityId, ServiceId, TierId } from "./ids";
+import { SERVICES } from "./services";
+import type { PriceRange, Versioned, WeekRange } from "./types";
 
 /**
  * The four marketed packages on `/pricing`.
