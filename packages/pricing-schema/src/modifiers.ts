@@ -107,3 +107,15 @@ export const USD_EXCHANGE_RATE: ExchangeRate = {
   version: 2,
   lastUpdated: "2026-09-06",
 };
+
+/**
+ * Internal lead-scoring bands, in EGP.
+ *
+ * Not client-facing, but derived from the same table: these thresholds only
+ * mean anything relative to what the estimator quotes, so they belong beside
+ * it rather than in a scoring file that nobody re-reads when a tier moves.
+ */
+export const LEAD_SCORE_THRESHOLDS = {
+  large: 200_000,
+  medium: 80_000,
+} as const;

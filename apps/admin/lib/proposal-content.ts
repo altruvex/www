@@ -1,4 +1,5 @@
 import {
+  COMMERCIAL_TERMS,
   pricingCopy,
   type ComplexityId,
   type ServiceId,
@@ -270,12 +271,12 @@ export const SCOPE_NOT_INCLUDED = [
 ];
 
 export const STANDARD_TERMS: [string, string][] = [
-  ["VALIDITY", "Proposal valid for 30 days from the proposal date."],
-  ["PAYMENT", "50% to start · 30% at milestone · 20% before launch. No deposit = no project start."],
+  ["VALIDITY", `Proposal valid for ${COMMERCIAL_TERMS.proposalValidityDays} days from the proposal date.`],
+  ["PAYMENT", `${COMMERCIAL_TERMS.paymentSplit[0]}% to start · ${COMMERCIAL_TERMS.paymentSplit[1]}% at milestone · ${COMMERCIAL_TERMS.paymentSplit[2]}% before launch. No deposit = no project start.`],
   ["TIMELINE", "Starts after first payment + confirmed brief."],
   ["LAUNCH", "Client reviews on Altruvex staging; live domain pointed after final payment."],
   ["CONTENT", "Client provides all text, images, brand assets, and access credentials."],
-  ["REVISIONS", "3 rounds included. Additional at 800 EGP/hr."],
+  ["REVISIONS", `${COMMERCIAL_TERMS.includedRevisionRounds} rounds included. Additional at ${COMMERCIAL_TERMS.revisionHourlyRate.toLocaleString("en-US")} EGP/hr.`],
   ["OWNERSHIP", "Full source code ownership transfers to client upon final payment."],
-  ["SUPPORT", "30 days of post-launch support for critical fixes included."],
+  ["SUPPORT", `${COMMERCIAL_TERMS.postLaunchWarrantyDays} days of post-launch support for critical fixes included.`],
 ];

@@ -9,6 +9,10 @@ import {
 import type { RouteMetaKey, SupportedLocale } from "@/lib/metadata";
 import type { Article } from "@/types/mdx";
 import type { Testimonial } from "@/lib/data/testimonials";
+import {
+  fillPricingTokens,
+  type Locale as PricingLocale,
+} from "@repo/pricing-schema";
 
 export type JsonLdSchema = Record<string, unknown>;
 type FaqEntry = { answer: string; question: string };
@@ -861,10 +865,21 @@ function stripFaqMarkup(text: string): string {
     .trim();
 }
 
-export function buildFaqPageSchemas(entries: FaqEntry[]): JsonLdSchema[] {
+/**
+ * FAQ answers reach search engines as machine-readable text, so a stale price
+ * here is published as a structured offer, not just prose. Pricing tokens are
+ * filled centrally rather than at each of the five call sites — one of which
+ * would eventually be forgotten.
+ */
+export function buildFaqPageSchemas(
+  entries: FaqEntry[],
+  locale: string = "en",
+): JsonLdSchema[] {
+  const loc: PricingLocale = locale === "ar" ? "ar" : "en";
   const plainEntries = entries.map((entry) => ({
     ...entry,
-    answer: stripFaqMarkup(entry.answer),
+    answer: stripFaqMarkup(fillPricingTokens(entry.answer, loc)),
+    question: fillPricingTokens(entry.question, loc),
   }));
 
   return plainEntries.length > 0 ? [SCHEMAS.faq(plainEntries)] : [];

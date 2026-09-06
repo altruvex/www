@@ -16,7 +16,11 @@ import type {
   MaintenancePlanId,
   TierId,
 } from "./ids";
-import { publicMaintenancePlans, type MaintenancePlan } from "./maintenance";
+import {
+  MAINTENANCE_PLANS,
+  publicMaintenancePlans,
+  type MaintenancePlan,
+} from "./maintenance";
 import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers";
 import { minimumEngagement } from "./services";
 import { ORDERED_TIERS, tierEstimatorQuery, tierPriceRange } from "./tiers";
@@ -264,4 +268,38 @@ export function termsView(locale: Locale): TermsView {
     markupLabel: t.markupLabel,
     totalLabel: t.totalLabel,
   };
+}
+
+/**
+ * Named figures for prose interpolation.
+ *
+ * Some client-facing copy is a sentence that happens to quote a price — an FAQ
+ * answer, a homepage artifact caption. Those live in the app's next-intl
+ * catalogue because they are prose, but the number inside them must still come
+ * from here or it drifts the moment a price changes. The copy carries a
+ * `{token}` and the renderer fills it from this map.
+ */
+export function pricingTokens(
+  locale: Locale,
+): Readonly<Record<string, string>> {
+  const audit = CONSULTING_PACKAGES["technical-audit"];
+  const essential = MAINTENANCE_PLANS.essential;
+  const professional = MAINTENANCE_PLANS.professional;
+
+  return {
+    auditPrice: formatMoney(audit.price, locale),
+    essentialRange: formatRange(tierPriceRange("essential"), locale),
+    maintenanceEssential:
+      essential.price === null ? "" : formatMoney(essential.price, locale),
+    maintenanceProfessional:
+      professional.price === null ? "" : formatMoney(professional.price, locale),
+    minimumEngagement: formatMoney(minimumEngagement(), locale),
+    revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
+    vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
+  };
+}
+
+/** Fills every `{token}` in a prose string from `pricingTokens`. */
+export function fillPricingTokens(text: string, locale: Locale): string {
+  return fillTemplate(text, pricingTokens(locale));
 }

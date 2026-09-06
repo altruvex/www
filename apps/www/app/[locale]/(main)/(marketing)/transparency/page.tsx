@@ -35,7 +35,7 @@ export default async function TransparencyPage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries),
+          ...buildFaqPageSchemas(faqEntries, locale),
         ]}
       />
       <PageClient />

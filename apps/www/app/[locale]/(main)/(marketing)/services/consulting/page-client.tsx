@@ -53,7 +53,7 @@ function HeroSection() {
 
 function AuditOfferSection() {
   // The audit's price, duration and deliverables come from
-  // packages/pricing-schema — the same 15,000 EGP figure the homepage
+  // packages/pricing-schema — the same audit figure the homepage
   // authority card and the FAQ quote, which previously each held their own copy.
   const t = useTranslations("serviceDetails.consulting.auditOffer");
   const audit = consultingView("technical-audit", useLocale() as Locale);

@@ -106,7 +106,7 @@ export default function AutomationsPage() {
       ruleId: "rule-proposal-accept",
       ruleName: "Proposal Accepted → Contract Generation",
       trigger: "proposal.accepted",
-      targetEntity: "Proposal #3810 (EGP 87,500)",
+      targetEntity: "Proposal #3810",
       status: "SUCCESS",
       latencyMs: 112,
       executedAt: new Date(now - 86400000).toISOString(),

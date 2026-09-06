@@ -48,7 +48,7 @@ export default async function PricingPage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries),
+          ...buildFaqPageSchemas(faqEntries, locale),
           ...buildPricingOfferSchemas(locale, offerEntries),
         ]}
       />

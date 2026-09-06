@@ -5,6 +5,8 @@
     "": {
       "name": "altruvex-bun",
       "devDependencies": {
+        "@repo/pricing-schema": "workspace:*",
+        "playwright-core": "^1.63.0",
         "prettier": "^3.7.4",
         "turbo": "^2.10.9",
         "typescript": "6.0.2",
@@ -2065,6 +2067,8 @@
     "picomatch": ["picomatch@4.0.4", "", {}, "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A=="],
 
     "pkg-types": ["pkg-types@2.3.1", "", { "dependencies": { "confbox": "^0.2.4", "exsolve": "^1.0.8", "pathe": "^2.0.3" } }, "sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg=="],
+
+    "playwright-core": ["playwright-core@1.63.0", "", { "bin": { "playwright-core": "cli.js" } }, "sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg=="],
 
     "pluralize": ["pluralize@1.2.1", "", {}, "sha512-TH+BeeL6Ct98C7as35JbZLf8lgsRzlNJb5gklRIGHKaPkGl1esOKBc5ALUMd+q08Sr6tiEKM+Icbsxg5vuhMKQ=="],
 
