@@ -14,18 +14,18 @@ import { getCommercialCta } from "@/lib/config/commercial";
 import { monoCaps } from "@/lib/utils/mono-caps";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { consultingView, type Locale } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import type { ConsultingView } from "@repo/pricing-schema";
+import { useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
-export default function ConsultingPage() {
+export default function ConsultingPage({ audit }: { audit: ConsultingView }) {
   return (
     <div>
       <HeroSection />
       <div className="pb-48">
         <ConsultingBriefSection />
       </div>
-      <AuditOfferSection />
+      <AuditOfferSection audit={audit} />
       <CtaSection />
     </div>
   );
@@ -51,12 +51,11 @@ function HeroSection() {
   );
 }
 
-function AuditOfferSection() {
-  // The audit's price, duration and deliverables come from
-  // packages/pricing-schema — the same audit figure the homepage
-  // authority card and the FAQ quote, which previously each held their own copy.
+function AuditOfferSection({ audit }: { audit: ConsultingView }) {
+  // The audit's price, duration and deliverables are resolved on the server so
+  // an admin price change reaches this panel; the surrounding prose stays on
+  // next-intl's rich-text pipeline.
   const t = useTranslations("serviceDetails.consulting.auditOffer");
-  const audit = consultingView("technical-audit", useLocale() as Locale);
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();

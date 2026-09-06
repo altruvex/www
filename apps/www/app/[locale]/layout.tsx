@@ -1,10 +1,13 @@
 import { LayoutEffects } from "@/components/layout-effects";
+import { PricingTokensProvider } from "@/components/providers/pricing-tokens-provider";
 import { Providers } from "@/components/providers";
 import { JsonLd } from "@/components/seo/json-ld";
 import { VercelAnalytics } from "@/components/shared/vercel-analytics";
 import { routing } from "@/i18n/routing";
 import "@/lib/config/env";
 import { buildGlobalSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
+import { pricingTokens, type Locale } from "@repo/pricing-schema";
 import { cn } from "@/lib/utils/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -65,6 +68,10 @@ export default async function RootLayout({ children, params }: Props) {
 
   setRequestLocale(locale);
 
+  // Resolved once per request and shared with every client component that
+  // renders prose quoting a price.
+  const priceTokens = pricingTokens(locale as Locale, await getPublicPricing());
+
   const tA11y = await getTranslations({ locale, namespace: "a11y" });
 
   return (
@@ -95,7 +102,9 @@ export default async function RootLayout({ children, params }: Props) {
         <JsonLd schemas={buildGlobalSchemas(locale)} />
         <NextIntlClientProvider>
           <Providers>
-            <LayoutEffects>{children}</LayoutEffects>
+            <PricingTokensProvider tokens={priceTokens}>
+              <LayoutEffects>{children}</LayoutEffects>
+            </PricingTokensProvider>
           </Providers>
         </NextIntlClientProvider>
         <VercelAnalytics />

@@ -1,6 +1,8 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
+import { maintenanceViews, type Locale } from "@repo/pricing-schema";
 import PageClient from "./page-client";
 
 const metaKey: RouteMetaKey = "serviceMaintenance";
@@ -21,11 +23,12 @@ export default async function MaintenanceServicePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const plans = maintenanceViews(locale as Locale, await getPublicPricing());
 
   return (
     <>
       <JsonLd schemas={buildPageSchemas(locale, metaKey)} />
-      <PageClient />
+      <PageClient plans={plans} />
     </>
   );
 }

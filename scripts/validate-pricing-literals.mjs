@@ -91,7 +91,7 @@ function plausiblePrice(match) {
 // Colour functions carry no word boundary in Tailwind arbitrary values
 // (`4px_rgba(34,197,94,0.4)`), so they are matched without one.
 const NON_PRICE_CONTEXT =
-  /\b(?:EMU|emu|inches?|z-index|maxAge|max-age|revalidate|timeout|getTime|Date\.now|duration_?ms|color|colou?r|stroke)\b|rgba?\(|hsla?\(|#[0-9a-fA-F]{6}|\d+px|\bcompact\b|\bnotation\b/;
+  /\b(?:EMU|emu|inches?|z-index|maxAge|max-age|revalidate|getTime|Date\.now|color|colou?r|stroke)\b|\b\w*(?:TIMEOUT|[Tt]imeout|DELAY|[Dd]elay|DURATION|[Dd]uration|INTERVAL|[Ii]nterval)\w*\b|\b\w*_(?:MS|SECONDS|SEC|MINUTES)\b|rgba?\(|hsla?\(|#[0-9a-fA-F]{6}|\d+px|\bcompact\b|\bnotation\b/;
 
 const problems = [];
 
@@ -158,7 +158,41 @@ function inspectMessages(full, rel) {
   }
 }
 
-/** `internalHourEquivalent` is margin planning and must stay in the schema. */
+/**
+ * Files permitted to touch `internalHourEquivalent`.
+ *
+ * The rule protects against margin data reaching a CLIENT, not against it
+ * existing at all — the admin pricing screen has to be able to edit it, and a
+ * guard that forbids that would just be switched off. These four are the
+ * admin-only management path. Everything else, including the admin app's own
+ * unauthenticated `/portal` and `/sign` routes, stays covered.
+ */
+const INTERNAL_FIELD_ALLOWED = new Set([
+  "apps/admin/lib/pricing-store.ts",
+  "apps/admin/app/api/admin/pricing/route.ts",
+  "apps/admin/app/(dashboard)/pricing/page.tsx",
+  "apps/admin/app/(dashboard)/pricing/pricing-client.tsx",
+]);
+
+/**
+ * True when a file actually reads the field, ignoring comments.
+ *
+ * Documentation saying "this is deliberately not read here" is exactly the
+ * comment you want next to a client-facing read path. Flagging it would push
+ * people to delete the explanation to get a green build — the same reasoning
+ * that keeps comments out of the price-literal scan.
+ */
+function referencesInternalField(source) {
+  return source.split("\n").some((raw) => {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
+      return false;
+    }
+    return raw.replace(/\/\/.*$/, "").includes("internalHourEquivalent");
+  });
+}
+
+/** `internalHourEquivalent` is margin planning and must never reach a client. */
 function checkInternalLeak() {
   const leaked = [];
   const scan = (dir) => {
@@ -169,7 +203,8 @@ function checkInternalLeak() {
       else if (SCAN_EXT.has(name.slice(name.lastIndexOf(".")))) {
         const rel = relative(ROOT, full).split(sep).join("/");
         if (rel.startsWith(SCHEMA_DIR)) continue;
-        if (readFileSync(full, "utf8").includes("internalHourEquivalent")) leaked.push(rel);
+        if (INTERNAL_FIELD_ALLOWED.has(rel)) continue;
+        if (referencesInternalField(readFileSync(full, "utf8"))) leaked.push(rel);
       }
     }
   };
@@ -192,7 +227,7 @@ if (problems.length > 0) {
   console.error("Prose may quote a price only as a {token} filled by fillPricingTokens().\n");
 }
 if (leaked.length > 0) {
-  console.error(`✗ internalHourEquivalent referenced outside the schema (margin data must not reach a client surface):`);
+  console.error(`✗ internalHourEquivalent referenced outside the schema or the admin pricing screen (margin data must not reach a client surface):`);
   for (const f of leaked) console.error(`  ${f}`);
 }
 process.exit(1);

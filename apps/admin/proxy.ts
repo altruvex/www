@@ -6,7 +6,18 @@ const ADMIN_ROLES = new Set(["ADMIN", "SUPERADMIN"]);
 
 export default async function proxy(request: NextRequest) {
   const publicPaths = ["/login", "/offline"];
-  const publicPrefixes = ["/api/auth/", "/sign/", "/api/sign/", "/portal/", "/api/portal/"];
+  // Client-facing surfaces. Each is reached by a single-purpose unguessable
+  // token rather than a session, so the admin gate would only ever redirect the
+  // client it is meant to serve to a login they cannot pass.
+  const publicPrefixes = [
+    "/api/auth/",
+    "/sign/",
+    "/api/sign/",
+    "/portal/",
+    "/api/portal/",
+    "/client-portal/",
+    "/api/client-portal/",
+  ];
   const isPublicPath =
     publicPaths.some((path) => request.nextUrl.pathname === path) ||
     publicPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix)) ||

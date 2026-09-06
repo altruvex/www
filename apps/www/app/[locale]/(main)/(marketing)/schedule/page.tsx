@@ -3,6 +3,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -35,6 +36,7 @@ export default async function SchedulePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  const pricing = await getPublicPricing();
   const t = await getTranslations({ locale, namespace: "schedule.seo" });
   const sections = t.raw("sections") as ScheduleSeoSection[];
   const faqItems = t.raw("faq.items") as ScheduleSeoFaq[];
@@ -48,7 +50,7 @@ export default async function SchedulePage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries, locale),
+          ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
       <PageClient />

@@ -6,15 +6,15 @@ import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { ChevronDown, MessageCircle } from "lucide-react";
-import { fillPricingTokens, type Locale } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 export default function FAQPageClient() {
   const t = useTranslations("faq");
-  // FAQ prose quotes prices as {token}s filled from the schema, so an answer
-  // cannot state a figure that /pricing no longer charges.
-  const locale = useLocale() as Locale;
+  // FAQ prose quotes prices as {token}s, filled from the resolved pricing so an
+  // answer cannot state a figure that /pricing no longer charges.
+  const fillTokens = useFillPricingTokens();
   const questions = Object.values(
     t.raw("questions") as Record<
       string,
@@ -62,7 +62,7 @@ export default function FAQPageClient() {
               <FAQItem
                 key={index}
                 question={item.question}
-                answer={fillPricingTokens(item.answer, locale)}
+                answer={fillTokens(item.answer)}
                 isOpen={openIndex === index}
                 onToggle={() =>
                   setOpenIndex(openIndex === index ? null : index)

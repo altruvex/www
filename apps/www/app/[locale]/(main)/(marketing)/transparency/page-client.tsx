@@ -5,17 +5,19 @@ import { bodyMarks } from "@/components/ui/rich-text";
 import { Container } from "@/components/shared/container";
 import { TransparencyEstimator } from "@/components/sections/transparency-estimator";
 import type { ProjectType } from "@/hooks/use-transparency";
-import {
-  publicAddonViews,
-  termsView,
-  type Locale,
-} from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import type { AddonView, TermsView } from "@repo/pricing-schema";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 const PROJECT_TYPES = ["website", "webapp", "ecommerce", "pwa"] as const;
 
-export default function TransparencyPageClient() {
+export default function TransparencyPageClient({
+  terms,
+  addons,
+}: {
+  terms: TermsView;
+  addons: readonly AddonView[];
+}) {
   const searchParams = useSearchParams();
 
   const initialTier = searchParams.get("tier");
@@ -33,7 +35,7 @@ export default function TransparencyPageClient() {
         initialTier={initialTier}
         initialProjectType={initialProjectType}
       />
-      <CommercialTermsSection />
+      <CommercialTermsSection terms={terms} addons={addons} />
       <TransparencyFaqSection />
     </>
   );
@@ -48,11 +50,14 @@ export default function TransparencyPageClient() {
  * margin, and each is rendered as its own row — never folded into a project
  * total. All figures come from packages/pricing-schema.
  */
-function CommercialTermsSection() {
+function CommercialTermsSection({
+  terms,
+  addons,
+}: {
+  terms: TermsView;
+  addons: readonly AddonView[];
+}) {
   const t2 = useTranslations("transparency");
-  const locale = useLocale() as Locale;
-  const terms = termsView(locale);
-  const addons = publicAddonViews(locale);
 
   const rows = [
     { key: "vat", label: terms.vatLabel, value: terms.vatNote },

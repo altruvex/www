@@ -15,8 +15,8 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { tierViews, minimumEngagementLabel, type Locale } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import type { TierView } from "@repo/pricing-schema";
+import { useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
 function HighlightBlobs() {
@@ -64,9 +64,14 @@ function HighlightBlobs() {
   );
 }
 
-export default function PricingPage() {
+export default function PricingPage({
+  tiers,
+  floorLabel,
+}: {
+  tiers: readonly TierView[];
+  floorLabel: string;
+}) {
   const t = useTranslations("pricing");
-  const locale = useLocale() as Locale;
 
   const heroEyebrowRef = useSectionEyebrow();
   const heroTitleRef = useSectionTitle<HTMLHeadingElement>();
@@ -77,12 +82,6 @@ export default function PricingPage() {
   const roiTitleRef = useSectionTitle<HTMLHeadingElement>();
   const roiBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".roi-p" });
   const roiStatsRef = useSectionDescription();
-
-  // Every figure, name, feature list and CTA target on this page comes from
-  // packages/pricing-schema. The page used to carry its own price strings,
-  // which is how it ended up publishing a range the estimator disagreed with
-  // one click later.
-  const tiers = tierViews(locale);
 
   const roiStats = [
     {
@@ -292,7 +291,7 @@ export default function PricingPage() {
                     {t("minimumEngagementLabel")}
                   </p>
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
-                    {minimumEngagementLabel(locale)}
+                    {floorLabel}
                   </p>
                   <p className="mx-auto max-w-(--measure-wide) text-sm leading-relaxed text-muted-foreground">
                     {t.rich("ownershipNote", bodyMarks)}

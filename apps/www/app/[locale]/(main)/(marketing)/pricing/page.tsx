@@ -5,7 +5,8 @@ import {
   buildPageSchemas,
   buildPricingOfferSchemas,
 } from "@/lib/schema";
-import { tierViews, type Locale } from "@repo/pricing-schema";
+import { minimumEngagementLabel, tierViews, type Locale } from "@repo/pricing-schema";
+import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -36,7 +37,11 @@ export default async function PricingPage({
   // Structured-data offers are built from the schema, not from message copy.
   // These become machine-readable Offer prices in search results, so a stale
   // string here publishes a wrong price to Google, not just to a visitor.
-  const offerEntries = tierViews(locale as Locale).map((tier) => ({
+  // Resolved server-side so an admin price change reaches both the rendered
+  // cards and the machine-readable offers, not just one of them.
+  const pricing = await getPublicPricing();
+  const tiers = tierViews(locale as Locale, pricing);
+  const offerEntries = tiers.map((tier) => ({
     description: tier.idealFor,
     features: [...tier.features],
     name: tier.buyerLabel,
@@ -48,11 +53,11 @@ export default async function PricingPage({
       <JsonLd
         schemas={[
           ...buildPageSchemas(locale, metaKey),
-          ...buildFaqPageSchemas(faqEntries, locale),
+          ...buildFaqPageSchemas(faqEntries, locale, pricing),
           ...buildPricingOfferSchemas(locale, offerEntries),
         ]}
       />
-      <PageClient />
+      <PageClient tiers={tiers} floorLabel={minimumEngagementLabel(locale as Locale, pricing)} />
     </>
   );
 }

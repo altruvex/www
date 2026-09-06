@@ -12,6 +12,7 @@ import type { Testimonial } from "@/lib/data/testimonials";
 import {
   fillPricingTokens,
   type Locale as PricingLocale,
+  type ResolvedPricing,
 } from "@repo/pricing-schema";
 
 export type JsonLdSchema = Record<string, unknown>;
@@ -874,12 +875,13 @@ function stripFaqMarkup(text: string): string {
 export function buildFaqPageSchemas(
   entries: FaqEntry[],
   locale: string = "en",
+  pricing?: ResolvedPricing,
 ): JsonLdSchema[] {
   const loc: PricingLocale = locale === "ar" ? "ar" : "en";
   const plainEntries = entries.map((entry) => ({
     ...entry,
-    answer: stripFaqMarkup(fillPricingTokens(entry.answer, loc)),
-    question: fillPricingTokens(entry.question, loc),
+    answer: stripFaqMarkup(fillPricingTokens(entry.answer, loc, pricing)),
+    question: fillPricingTokens(entry.question, loc, pricing),
   }));
 
   return plainEntries.length > 0 ? [SCHEMAS.faq(plainEntries)] : [];

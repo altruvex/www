@@ -6,6 +6,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_CLARITY_ID: z.string().optional(),
   NEXT_PUBLIC_APP_VERSION: z.string().default("0.1.0"),
   DATABASE_URL: z.string().url(),
+  // Optional: without it the revalidation endpoint fails closed and pricing
+  // changes simply wait out the cache TTL. That degrades latency, not
+  // correctness, so it must not stop the site from booting.
+  PRICING_REVALIDATE_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
