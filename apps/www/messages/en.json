@@ -680,7 +680,7 @@
         "index": "01",
         "title": "Scope and range",
         "body": "One tier, one fixed scope, one range. The range narrows to a single number after discovery, and it does not move upward without a signed change order.",
-        "figure": "22,000 – 45,000 EGP · Marketing System",
+        "figure": "35,000 – 70,000 EGP · Marketing System",
         "note": "The range is the honest part. A single number quoted before discovery is a guess wearing the clothes of a commitment."
       },
       "schedule": {
@@ -729,7 +729,7 @@
       }
     },
     "footer": {
-      "minimum": "Projects start at 22,000 EGP.",
+      "minimum": "Projects start at 35,000 EGP.",
       "ctaLabel": "See full pricing",
       "footnote": "Sample document. Your quote is issued after discovery."
     }
@@ -752,7 +752,7 @@
       }
     },
     "description": "The tiers below help buyers self-qualify quickly before opening full Transparency.",
-    "minimumEngagement": "Projects from 22,000 EGP",
+    "minimumEngagement": "Projects from 35,000 EGP",
     "minimumEngagementLabel": "Minimum Engagement",
     "ownershipNote": "Every project includes <strong>full source code ownership</strong> - <dim>not a Shopify subscription, not a WordPress plugin stack.</dim> You own everything, permanently.",
     "faq": {
@@ -787,13 +787,13 @@
         "featured": false,
         "index": "01",
         "key": "essential",
-        "price": "2,000 EGP / month"
+        "price": "2,500 EGP / month"
       },
       {
         "featured": true,
         "index": "02",
         "key": "professional",
-        "price": "4,000 EGP / month"
+        "price": "5,000 EGP / month"
       },
       {
         "featured": false,
@@ -841,7 +841,7 @@
         "name": "Commerce Engine",
         "notIncluded": "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
         "originalPrice": "",
-        "priceRange": "95,000 – 160,000 EGP"
+        "priceRange": "95,000 – 180,000 EGP"
       },
       "essential": {
         "cta": "Get Launch Estimate",
@@ -856,7 +856,7 @@
         "name": "Marketing System",
         "notIncluded": "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
         "originalPrice": "",
-        "priceRange": "22,000 – 45,000 EGP"
+        "priceRange": "35,000 – 70,000 EGP"
       },
       "flagship": {
         "cta": "Request a Scope",
@@ -871,7 +871,7 @@
         "name": "Custom Infrastructure",
         "notIncluded": null,
         "originalPrice": "",
-        "priceRange": "From 180,000 EGP"
+        "priceRange": "From 150,000 EGP"
       },
       "professional": {
         "cta": "Get Growth Estimate",
@@ -886,7 +886,7 @@
         "name": "Business Platform",
         "notIncluded": "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
         "originalPrice": "",
-        "priceRange": "50,000 – 75,000 EGP"
+        "priceRange": "70,000 – 140,000 EGP"
       }
     },
     "title": "Pricing reflects system depth and engineering complexity.",
@@ -1605,7 +1605,8 @@
               "Architecture, performance, and security review cadence",
               "Coordinated deployments and rollback support",
               "Multi-system monitoring and incident management",
-              "Optional tooling and integration management"
+              "Optional tooling and integration management",
+              "Client Portal access — track every request and its status"
             ],
             "name": "Enterprise",
             "price": "Custom"
@@ -1614,23 +1615,27 @@
             "features": [
               "Monthly security and dependency update cycle",
               "Uptime monitoring and backup verification",
-              "Up to 30 minutes of content or config changes per month",
+              "Up to 2 edit requests per month (content or image swaps, minor section edits)",
               "Business-hours WhatsApp or email support",
-              "Quarterly health summary"
+              "Quarterly health summary",
+              "Client Portal access — track every request and its status"
             ],
             "name": "Essential",
-            "price": "2,000 EGP"
+            "price": "2,500 EGP",
+            "overage": "Additional requests are billed at 800 EGP/hr."
           },
           "professional": {
             "features": [
               "Weekly checks and priority incident handling",
               "Daily monitoring with backup and uptime review",
-              "Up to 2 hours of content, landing page, or config updates per month",
+              "Up to 4 edit requests per month, with priority turnaround",
               "Monthly performance and security report",
-              "Support for small rollout or release updates"
+              "Support for small rollout or release updates",
+              "Client Portal access — track every request and its status"
             ],
             "name": "Professional",
-            "price": "4,000 EGP"
+            "price": "5,000 EGP",
+            "overage": "Additional requests are billed at 800 EGP/hr."
           }
         },
         "recommended": "Recommended",
@@ -2306,53 +2311,6 @@
     },
     "startOver": "Start Over",
     "step": "Step",
-    "step1": {
-      "options": {
-        "corporate": {
-          "desc": "High-performance company presence, lead generation",
-          "title": "Corporate Website"
-        },
-        "custom": {
-          "desc": "SaaS, portals, complex interactive features",
-          "title": "Custom Web App"
-        },
-        "ecommerce": {
-          "desc": "Online store, payments, inventory management",
-          "title": "E-Commerce Platform"
-        },
-        "performance": {
-          "desc": "Speed up and optimize an existing system",
-          "title": "Performance / UX Audit"
-        }
-      },
-      "question": "Step 1 - What type of project are you building?"
-    },
-    "step2": {
-      "options": {
-        "enterprise": "140,000+ EGP - Enterprise architecture and multi-system delivery",
-        "large": "140,000+ EGP - Operational Product and heavier custom systems",
-        "medium": "70,000 – 140,000 EGP - Connected Platform / integrated systems",
-        "small": "35,000 – 70,000 EGP - Focused Website / focused custom builds"
-      },
-      "question": "Step 2 - What is your allocated investment range?"
-    },
-    "step3": {
-      "options": {
-        "flexible": {
-          "desc": "No rush - 3+ months is fine",
-          "title": "Flexible"
-        },
-        "soon": {
-          "desc": "Aiming for 1–3 months",
-          "title": "Soon"
-        },
-        "urgent": {
-          "desc": "Need it live within 4 weeks",
-          "title": "ASAP"
-        }
-      },
-      "question": "Step 3 - What is your target launch timeline?"
-    },
     "steps": {
       "brand": {
         "hint": "This helps us understand how much design groundwork is already in place.",
@@ -2371,28 +2329,6 @@
           }
         },
         "title": "What is your brand identity status?"
-      },
-      "budget": {
-        "hint": "Define your investment level - <strong>this calibrates scope</strong>, <dim>not ambition</dim>.",
-        "options": {
-          "custom": {
-            "range": "140,000+ EGP - enterprise architecture, multi-system builds, or phased technical programs.",
-            "title": "Architecture Consultation"
-          },
-          "large": {
-            "range": "140,000+ EGP - custom products, dashboards, portals, and heavier operational systems.",
-            "title": "Operational Product"
-          },
-          "medium": {
-            "range": "70,000 – 140,000 EGP - connected systems with one or two serious integrations or richer multilingual scope.",
-            "title": "Connected Platform"
-          },
-          "small": {
-            "range": "35,000 – 70,000 EGP - custom marketing sites and focused corporate builds.",
-            "title": "Focused Website"
-          }
-        },
-        "title": "What is your allocated technical budget?"
       },
       "complexity": {
         "hint": "<strong>This helps us calibrate scope</strong>, <dim>not just price</dim>.",
@@ -2677,7 +2613,7 @@
       },
       "08": {
         "question": "What happens after the 30-day post-launch warranty ends?",
-        "answer": "<p>You have three options:</p><ol><li><strong>Maintenance Retainer</strong> (Recommended for most): Essential tier is 2,000 EGP/month, Professional is 4,000 EGP/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because <span class=\"text-foreground/60\">it means someone's always watching for performance degradation or security issues</span>.</p>"
+        "answer": "<p>You have three options:</p><ol><li><strong>Maintenance Retainer</strong> (Recommended for most): Essential tier is 2,500 EGP/month, Professional is 5,000 EGP/month. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because <span class=\"text-foreground/60\">it means someone's always watching for performance degradation or security issues</span>.</p>"
       },
       "09": {
         "question": "Can we hire a different developer to maintain our system later?",

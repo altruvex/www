@@ -18,11 +18,14 @@ import {
 import { useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 
+// Each destination must land the estimator on the exact PRICING_TABLE cell the
+// card advertises, otherwise the page contradicts itself one click later.
+// Keep in sync with TIER_COMPLEXITY in hooks/use-transparency.ts.
 const TIER_DESTINATION = {
-  essential: "/transparency?tier=essential",
-  professional: "/transparency?tier=professional",
+  essential: "/transparency?tier=essential&projectType=website",
+  professional: "/transparency?tier=professional&projectType=website",
   ecommerce: "/transparency?tier=commerce&projectType=ecommerce",
-  flagship: "/transparency?tier=flagship",
+  flagship: "/transparency?tier=flagship&projectType=webapp",
 } as const;
 
 function HighlightBlobs() {
@@ -354,7 +357,7 @@ export default function PricingPage() {
               <div className="mb-32 grid grid-cols-1 gap-12 border-t border-border pt-16 md:grid-cols-3">
                 <div className="md:col-span-1">
                   <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {t("minimumEngagement").includes("٢٢") ? "الحد الأدنى للمشاريع" : "Minimum Engagement"}
+                    {t("minimumEngagementLabel")}
                   </p>
                   <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
                     {t("minimumEngagement")}

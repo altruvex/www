@@ -45,8 +45,8 @@ const TIER_COMPLEXITY: Record<string, NonNullable<Complexity>> = {
   small: "basic",
   professional: "standard",
   medium: "standard",
-  commerce: "premium",
-  flagship: "premium",
+  commerce: "standard",
+  flagship: "standard",
   large: "premium",
 };
 
