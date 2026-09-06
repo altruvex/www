@@ -14,7 +14,6 @@
   },
   "devDependencies": {
     "@repo/pricing-schema": "workspace:*",
-    "playwright-core": "^1.63.0",
     "prettier": "^3.7.4",
     "turbo": "^2.10.9",
     "typescript": "6.0.2"

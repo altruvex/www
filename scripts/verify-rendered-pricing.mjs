@@ -12,14 +12,36 @@
  * Requires a running production build. Not part of `bun run validate` because
  * it needs a server; run it before shipping a pricing change.
  */
-import { chromium } from "playwright-core";
+// Imported dynamically and left out of the repo's dependencies on purpose:
+// this is a manual pre-ship check, and a browser-automation package has no
+// business in the install path of every production deploy. Install it ad hoc
+// (`bun add -d playwright-core`) when you want to run this.
+let chromium;
+try {
+  ({ chromium } = await import("playwright-core"));
+} catch {
+  console.error(
+    "playwright-core is not installed — it is deliberately not a repo dependency.\n" +
+      "Run `bun add -d playwright-core` to use this check, and remove it afterwards.",
+  );
+  process.exit(2);
+}
 
 // Point at a running production build: `bun run build && bun run start` in
 // apps/www, then `node scripts/verify-rendered-pricing.mjs`.
 const B = process.env.PRICING_VERIFY_URL ?? "http://localhost:3000";
-const browser = await chromium.launch(
-  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
-);
+let browser;
+try {
+  browser = await chromium.launch(
+    process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
+  );
+} catch (err) {
+  console.error(
+    `Could not launch Chromium: ${err.message}\n` +
+      "Set CHROMIUM_PATH to an existing browser binary, or run `npx playwright install chromium`.",
+  );
+  process.exit(2);
+}
 const page = await browser.newPage();
 let fails = 0;
 const check = (cond, what) => { console.log(`${cond ? "PASS" : "FAIL"}  ${what}`); if (!cond) fails++; };
