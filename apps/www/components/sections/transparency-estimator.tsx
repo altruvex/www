@@ -581,7 +581,7 @@ function LiveReadout({
           <div className="space-y-3.5">
             {QUESTIONS.map((q, i) => (
               <div key={q.key} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs text-muted-foreground/50">{num(String(i + 1).padStart(2, "0"))}</span>
+                <span className="font-mono text-xs text-muted-foreground">{num(String(i + 1).padStart(2, "0"))}</span>
                 <span className="text-muted-foreground">{t(`readiness.labels.${q.key}`)}</span>
               </div>
             ))}
@@ -607,7 +607,7 @@ function LiveReadout({
               return (
                 <div key={q.key} className="flex items-start justify-between gap-4 text-sm">
                   <span className="text-muted-foreground flex items-center gap-2.5">
-                    <span className="font-mono text-xs opacity-50">{num(String(i + 1).padStart(2, "0"))}</span>
+                    <span className="font-mono text-xs">{num(String(i + 1).padStart(2, "0"))}</span>
                     {t(`readiness.labels.${q.key}`)}
                   </span>
                   <span className={cn("text-right", answerKey ? "text-foreground font-medium" : "text-muted-foreground/40")}>

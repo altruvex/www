@@ -62,7 +62,7 @@ function ProblemSection() {
           eyebrow={t("eyebrow")}
           firstTitle={`${t("label.common")} vs`}
           secondTitle={t("label.altruvex")}
-          accent="forest"
+          accent="world"
           secondTitleBreak={false}
           className="mb-16 block"
           classes={{ title: "text-primary" }}
@@ -126,7 +126,6 @@ function DecisionsSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          accent="forest"
           className="mb-16 block"
           classes={{ title: "text-primary" }}
         />
@@ -167,7 +166,6 @@ function ConstraintsSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          accent="forest"
           className="mb-12 block"
           classes={{ title: "text-primary" }}
         />
@@ -206,7 +204,6 @@ function BilingualSection() {
           eyebrow={t("eyebrow")}
           firstTitle={firstTitle}
           secondTitle={secondTitle}
-          accent="forest"
           className="mb-12 block"
           classes={{ title: "text-primary" }}
         />
@@ -283,7 +280,6 @@ function BoundariesSection() {
             eyebrow={t("eyebrow")}
             firstTitle={firstTitle}
             secondTitle={secondTitle}
-            accent="ember"
             className="mb-6 block"
             classes={{ title: "text-primary" }}
           />
@@ -328,7 +324,7 @@ function ClosingSection() {
             descriptionRef={descRef}
             firstTitle={t("title")}
             secondTitle={t("titleItalic")}
-            accent="ember"
+            accent="world"
             description={t.rich("description", bodyMarks)}
             className="mb-12 block"
             classes={{

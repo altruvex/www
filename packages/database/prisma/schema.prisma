@@ -398,6 +398,12 @@ model Proposal {
   colorWorld ColorWorld @default(BLUE)
   accentName String
 
+  // Full editable proposal content — every string the deck renders, per
+  // client. Shape and validation live in apps/admin/lib/proposal-schema.ts.
+  // The scalar columns above stay populated (derived from this document on
+  // save) because the contract builder and the signing flow read them.
+  content Json?
+
   fileUrl String?
   pdfUrl  String?
 
@@ -419,6 +425,27 @@ model Proposal {
   @@index([clientId])
   @@index([status])
   @@map("proposals")
+}
+
+/// Company-wide branding and contact details. Shared by every proposal —
+/// deliberately NOT per-client: the deck's visual system is fixed and only
+/// its content varies. Single row, id "default".
+model CompanySettings {
+  id String @id @default("default")
+
+  phone   String
+  email   String
+  website String
+
+  // The one brand accent, in its light-surface and dark-surface forms.
+  // Changing these is a company-wide branding decision, not a per-client one.
+  brandColor     String @default("0E51AA")
+  brandColorDark String @default("3687F2")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_settings")
 }
 
 enum ContractStatus {

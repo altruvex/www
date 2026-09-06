@@ -36,7 +36,7 @@ export function CtaSection() {
             eyebrow={t("eyebrow")}
             firstTitle={t("title")}
             secondTitle={t("titleAccent")}
-            accent="ember"
+            accent="world"
             secondTitleBreak={false}
             className="block min-w-0"
             classes={{

@@ -192,9 +192,7 @@ export default function PricingPage() {
         <Container>
           <div className="mb-16">
             <div className="py-12 md:py-24">
-              
-              {/* ORIGINAL HERO SECTION */}
-              <div className="mb-20 sm:max-w-5xl max-w-full">
+              <div className="mb-20 max-w-176">
                 <p
                   ref={heroEyebrowRef}
                   className="text-xs leading-normal text-muted-foreground mb-5 block"
@@ -217,8 +215,6 @@ export default function PricingPage() {
                 </p>
               </div>
               <div className="h-px w-full bg-border mb-14" />
-              
-              {/* ORIGINAL PRICING CARDS */}
               <div
                 ref={tierCardsRef}
                 className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-24 items-start"
@@ -227,13 +223,13 @@ export default function PricingPage() {
                   tier.highlight ? (
                     <TiltCard key={tier.id}>
                     <article
-                      className="tier-card group relative rounded-2xl flex flex-col transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10"
+                      className="tier-card group relative rounded-lg flex flex-col transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10"
                     >
-                      <div className="absolute inset-0 overflow-hidden rounded-2xl z-0">
+                      <div className="absolute inset-0 overflow-hidden rounded-lg z-0">
                         <div className="absolute inset-0 bg-background/40 z-0" />
                         <HighlightBlobs />
                       </div>
-                      <div className="absolute inset-0 z-10 liquid-glass rounded-2xl pointer-events-none" />
+                      <div className="absolute inset-0 z-10 liquid-glass rounded-lg pointer-events-none" />
                       <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
                         <div className="mb-5">
                           <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border shadow-sm">
@@ -299,7 +295,7 @@ export default function PricingPage() {
                   ) : (
                     <article
                       key={tier.id}
-                      className="tier-card group relative rounded-2xl p-7 md:p-8 flex flex-col overflow-hidden transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 bg-s-surface border border-s-border hover:border-s-border-hover"
+                      className="tier-card group relative rounded-lg p-7 md:p-8 flex flex-col overflow-hidden transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 bg-s-surface border border-s-border hover:border-s-border-hover"
                     >
                       <div className="relative z-20 flex flex-col h-full">
                         <span

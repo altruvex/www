@@ -1,11 +1,15 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
-import { ExternalDirectionalLink } from "@/components/shared/directional-link";
+import {
+  DirectionalLink,
+  ExternalDirectionalLink,
+} from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { FOUNDER_LINK } from "@/lib/config/commercial";
+import { getAllTestimonials } from "@/lib/data/testimonials";
 import {
   useSectionCardGrid,
   useSectionDescription,
@@ -13,10 +17,12 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { getAllTestimonials } from "@/lib/data/testimonials";
+import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
+
+const MOVEMENT_GAP = "mt-16 md:mt-20";
 
 export const TrustSection = memo(function TrustSection() {
   const t = useTranslations("commercial.trust");
@@ -28,21 +34,19 @@ export const TrustSection = memo(function TrustSection() {
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const bodyRef = useSectionDescription();
 
-  const pointsRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".trust-point",
+  // 01 — Proof strip: same data source (t.raw("points")), new treatment.
+  // Dense, side-by-side, scannable in <2s — not a paragraph list.
+  const proofRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-proof-item]",
   });
+
+  const founderRef = useSectionElement<HTMLDivElement>();
 
   const testimonialsRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".trust-testimonial",
-    stagger: 0.08,
+    selector: "[data-trust-testimonial]",
   });
 
-  const founderRef = useSectionElement();
-
-  const points = t.raw("points") as Array<{
-    title: string;
-    body: string;
-  }>;
+  const points = t.raw("points") as Array<{ title: string; body: string }>;
 
   return (
     <section
@@ -58,99 +62,131 @@ export const TrustSection = memo(function TrustSection() {
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
           secondTitle={t("titleAccent")}
+          accent="world"
           description={t.rich("body", bodyMarks)}
-          className="mb-16"
+          className="mb-14 md:mb-20"
         />
-        <div
-          ref={pointsRef}
-          className="border-t border-border"
-        >
-          {points.map((point) => (
-            <article
-              key={point.title}
-              className="trust-point flex items-center justify-between gap-6 border-b border-border py-8 md:gap-x-12 md:py-10"
-            >
-              <div className="flex items-center gap-4">
-                <h3 className="max-w-md text-[clamp(1.35rem,2vw,1.75rem)] font-medium leading-[1.15] tracking-[-0.02em] text-foreground">
+        <div ref={proofRef} className="relative pl-14 md:pl-16">
+          <div
+            aria-hidden
+            className="absolute top-5 bottom-5 left-6 w-px bg-border md:left-7"
+          />
+          <ol className="list-none space-y-14 md:space-y-16">
+            {points.map((point, index) => (
+              <li key={point.title} data-proof-item className="relative">
+                <span
+                  aria-hidden
+                  className="absolute top-0.5 -left-14 flex h-12 w-12 items-center justify-center rounded-full border border-border-strong bg-background font-mono text-base tabular-nums text-foreground md:-left-14 md:h-12 md:w-12 md:text-md"
+                >
+                  <Num value={index + 1} pad={2} />
+                </span>
+                <h3 className="text-[clamp(2.25rem,2.3vw,2.75rem)] font-medium leading-snug text-foreground">
                   {point.title}
                 </h3>
-              </div>
-              <div className="flex gap-4 md:gap-10">
-                <p className="max-w-[68ch] text-[clamp(1rem,1.02vw,1.125rem)] leading-[1.7] text-muted-foreground">
+                <p className="mt-3 max-w-[52ch] text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground">
                   {point.body}
                 </p>
-              </div>
-            </article>
-          ))}
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div
+          ref={founderRef}
+          className={cn(
+            MOVEMENT_GAP,
+            "border-t border-border pt-16 md:pt-20"
+          )}
+        >
+          <Eyebrow tone="accent">{t("founder.eyebrow")}</Eyebrow>
+          <p className="mt-6 max-w-[42ch] text-[clamp(1.75rem,3.4vw,2.75rem)] font-medium leading-[1.15] tracking-tight text-balance text-foreground">
+            {t.rich("founder.body", bodyMarks)}
+          </p>
+          <div className="mt-8 flex items-center gap-4">
+            <div
+              aria-hidden
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm font-medium text-foreground"
+            >
+              {t("founder.name").charAt(0)}
+            </div>
+            <div>
+              <p className="text-sm">
+                <span className="font-medium text-foreground">
+                  {t("founder.name")}
+                </span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {t("founder.role")}
+                </span>
+              </p>
+              <ExternalDirectionalLink
+                href={FOUNDER_LINK}
+                className="mt-1 inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors hover:text-local-accent-text pointer-coarse:min-h-11"
+              >
+                {t("founder.linkLabel")}
+              </ExternalDirectionalLink>
+            </div>
+          </div>
         </div>
         {testimonials.length > 0 ? (
-          <div
-            ref={testimonialsRef}
-            className="mt-20 border-t border-border md:mt-24"
-          >
-            <div className="flex items-end justify-between gap-8 border-b border-border py-6">
+          <div className={MOVEMENT_GAP}>
+            <div className="flex items-baseline gap-4">
               <Eyebrow>{t("testimonials.eyebrow")}</Eyebrow>
-              <span className="hidden text-sm text-muted-foreground md:block">
+              <span className="text-sm tabular-nums text-muted-foreground ltr:font-mono">
                 <Num value={testimonials.length} pad={2} />
               </span>
             </div>
-            <div className="grid md:grid-cols-2">
-              {testimonials.map((item, index) => (
+            <div
+              ref={testimonialsRef}
+              className="mt-8 grid gap-6 md:mt-10 md:grid-cols-2"
+            >
+              {testimonials.map((item) => (
                 <figure
                   key={item.id}
-                  className="trust-testimonial group border-b border-border py-9 md:px-8 md:py-10"
-                  style={{
-                    paddingLeft: index % 2 === 0 ? undefined : undefined,
-                  }}
+                  data-trust-testimonial
+                  className="rounded-lg border border-border bg-background p-6 md:p-8"
                 >
-                  <blockquote className="max-w-120 text-[clamp(1.25rem,1.8vw,1.7rem)] leading-[1.45] tracking-[-0.015em] text-foreground/90">
-                    “{item.quote[locale]}”
+                  <blockquote className="text-[clamp(1rem,1.15vw,1.125rem)] leading-relaxed text-foreground/85">
+                    {item.quote[locale]}
                   </blockquote>
-                  <figcaption className="mt-8">
-                    <div className="text-sm font-medium text-foreground">
-                      {item.author}
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <div
+                      aria-hidden
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-xs font-medium text-foreground"
+                    >
+                      {item.author.charAt(0)}
                     </div>
-                    <Eyebrow className="mt-1 text-muted-foreground">
-                      {item.role[locale]}
-                    </Eyebrow>
+                    <div>
+                      <p className="text-sm">
+                        <span className="font-medium text-foreground">
+                          {item.author}
+                        </span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {item.role[locale]}
+                        </span>
+                      </p>
+                      {item.caseStudySlug ? (
+                        <DirectionalLink
+                          href={`/work/${item.caseStudySlug}`}
+                          ariaLabel={tW("labels.readCaseStudyWith", {
+                            name: item.author,
+                          })}
+                          className="inline-flex min-h-6 items-center text-sm text-muted-foreground transition-colors hover:text-local-accent-text pointer-coarse:min-h-11"
+                        >
+                          {tW("labels.viewCaseStudy")}
+                        </DirectionalLink>
+                      ) : null}
+                    </div>
                   </figcaption>
                 </figure>
               ))}
             </div>
           </div>
         ) : null}
-        <div
-          ref={founderRef}
-          className="mt-20 border-t border-border pt-10 md:mt-24 md:pt-12"
-        >
-          <div className="grid gap-8 md:grid-cols-[minmax(0,0.65fr)_minmax(0,1.35fr)] md:gap-16">
-            <div>
-              <Eyebrow>{t("founder.eyebrow")}</Eyebrow>
-            </div>
-            <div>
-              <p className="max-w-[48ch] text-[clamp(1.35rem,2vw,1.75rem)] leading-[1.45] tracking-[-0.015em] text-foreground">
-                {t.rich("founder.body", bodyMarks)}
-              </p>
-              <div className="mt-8 flex flex-wrap items-baseline gap-x-4 gap-y-2">
-                <span className="text-sm font-medium text-foreground">
-                  {t("founder.name")}
-                </span>
-                <Eyebrow className="text-muted-foreground">
-                  {t("founder.role")}
-                </Eyebrow>
-                <ExternalDirectionalLink
-                  href={FOUNDER_LINK}
-                  className="ml-auto inline-flex min-h-6 items-center text-sm text-foreground transition-colors hover:text-muted-foreground pointer-coarse:min-h-11"
-                >
-                  {t("founder.linkLabel")}
-                </ExternalDirectionalLink>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-10 flex items-center gap-4">
+
+        <div className="mt-10 flex items-center gap-4 md:mt-12">
           <Eyebrow>{tW("labels.integrity")}</Eyebrow>
-          <div className="h-px flex-1 bg-border" />
+          <div aria-hidden className="h-px flex-1 bg-border/60" />
         </div>
       </Container>
     </section>

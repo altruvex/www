@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma, Prisma, SubmissionStatus, Priority, ClientSource } from "@repo/database";
+import { prisma, Prisma, SubmissionStatus, Priority, ClientSource, normalizePhone } from "@repo/database";
 import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(request: NextRequest) {
@@ -117,11 +117,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = createClientSchema.parse(body);
+    const phone = normalizePhone(validatedData.phone);
+    if (!phone) {
+      return NextResponse.json(
+        { success: false, message: "Enter a valid phone number" },
+        { status: 400 },
+      );
+    }
 
     const client = await prisma.client.create({
       data: {
         name: validatedData.name,
-        phone: validatedData.phone,
+        phone,
         email: validatedData.email || undefined,
         company: validatedData.company || undefined,
         industry: validatedData.industry || undefined,

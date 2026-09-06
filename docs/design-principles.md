@@ -210,6 +210,7 @@ Applies to: Color worlds, gradient keys, semantic tokens.
 Script scope: both (verify hue conventions hold for the Arab market audience; no known inversions for these three).
 Verify by: Table of section → world → job; flag any hue fighting its section's job.
 Class: heuristic
+See also: `docs/section-heading-emphasis.md` — the heading-level application (Italic vs Colour, `accent="world"`, per-page budget).
 
 ### C11 — Semantic colors signal state, never decorate
 Rule: Use success/warning/error tokens only for genuine state; approving color for emphasis comes from the color world, not from `--success`.

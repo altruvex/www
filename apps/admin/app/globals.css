@@ -5,42 +5,80 @@
 @source "../lib/**/*.{js,jsx,ts,tsx}";
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   ALTRUVEX ADMIN OS — operational token layer
+   --------------------------------------------------------------------------
+   This is NOT apps/www's stylesheet. The marketing site is a reading surface:
+   18px body, 1.75 leading, 4.5rem headlines, glass cards, ambient glow.
+   An operating system is a scanning surface: 13px body, 1.45 leading, 20px
+   page titles, flat planes divided by hairlines, zero ambient anything.
+
+   Token NAMES are deliberately identical to apps/www so there is one
+   vocabulary across the company (design-master Phase 4 / design-tokens rule:
+   never emit a second token vocabulary — remap into the canonical names).
+   Only the VALUES differ, plus a small set of admin-only additions
+   (--row-h, --status-*, --elev-*, --sidebar-w) that the marketing site has
+   no use for.
+
+   Layering law: components read semantic tokens only (--background, --card,
+   --status-success…). Nothing outside this file touches --n-* primitives.
+   ========================================================================== */
+
 @theme inline {
+  /* -- semantic surfaces ------------------------------------------------- */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-surface: hsl(var(--surface));
+  --color-surface-2: hsl(var(--surface-2));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-subtle-foreground: hsl(var(--subtle-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+
+  /* -- brand ------------------------------------------------------------- */
   --color-brand: hsl(var(--brand));
   --color-brand-hover: hsl(var(--brand-hover));
   --color-brand-soft: var(--brand-soft);
   --color-brand-foreground: hsl(var(--brand-foreground));
-  --color-destructive: hsl(var(--destructive));
+
+  /* -- structure --------------------------------------------------------- */
   --color-border: hsl(var(--border));
   --color-border-mid: hsl(var(--border-mid));
+  --color-border-strong: hsl(var(--border-strong));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-success: hsl(var(--success));
-  --color-warning: hsl(var(--warning));
-  --color-error: hsl(var(--error));
-  --color-surface: hsl(var(--surface));
-  --color-s-high: var(--s-high);
-  --color-s-mid: var(--s-mid);
-  --color-s-low: var(--s-low);
-  --color-s-muted: var(--s-muted);
-  --color-s-surface: var(--s-surface);
-  --color-s-border: var(--s-border);
-  --color-s-border-hover: var(--s-border-hover);
-  --color-s-high-soft: var(--s-high-soft);
+
+  /* -- semantic status: ONE registry, used by lib/status.ts -------------- */
+  --color-neutral: hsl(var(--status-neutral));
+  --color-info: hsl(var(--status-info));
+  --color-success: hsl(var(--status-success));
+  --color-warning: hsl(var(--status-warning));
+  --color-danger: hsl(var(--status-danger));
+  --color-error: hsl(var(--status-danger));
+  --color-destructive: hsl(var(--status-danger));
+  --color-progress: hsl(var(--status-progress));
+
+  /* -- categorical chart series (dataviz skill, validate_palette.js: PASS) ---
+     Fixed order, never cycled. Status tones are RESERVED and never reused as
+     a series colour. Light and dark are separately chosen steps, not a flip —
+     an inverted light palette fails the CVD and lightness-band checks. */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+
+  /* -- neutral ramp (primitives — components must not reference these) --- */
   --color-n-0: hsl(var(--n-0));
   --color-n-1: hsl(var(--n-1));
   --color-n-2: hsl(var(--n-2));
@@ -50,359 +88,338 @@
   --color-n-6: hsl(var(--n-6));
   --color-n-7: hsl(var(--n-7));
   --color-n-8: hsl(var(--n-8));
-  --color-logo-wordmark: hsl(var(--logo-wordmark));
-  --color-logo-tagline: hsl(var(--logo-tagline));
-  --color-inverted-bg: hsl(var(--inverted-bg));
-  --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
-  --color-selection-accent: hsl(var(--selection-accent));
-  
+
+  /* -- app chrome -------------------------------------------------------- */
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
+  --color-selection-accent: hsl(var(--selection-accent));
 
+  /* -- type -------------------------------------------------------------- */
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
-  --font-mono:
-    var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
-  --font-serif: Georgia, "Times New Roman", serif;
-  --radius-xs: calc(var(--radius) - 4px);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 4px);
-  --radius-xl: calc(var(--radius) + 8px);
-  --radius-2xl: calc(var(--radius) + 12px);
-  --radius-3xl: calc(var(--radius) + 16px);
-  --radius-surface: var(--radius-lg);
-  --radius-overlay: var(--radius-xl);
-  --radius-section: var(--radius-2xl);
-  --radius-nested: var(--radius-sm);
+  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  --animate-slide-down: slide-down 1.8s ease-in-out infinite;
-  --animate-ripple: ripple 0.6s ease-out forwards;
-  --animate-services-rail: services-rail-slide 0.8s ease forwards;
-  --animate-step-in: step-in 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  --text-micro: 0.6875rem;   /* 11px — mono telemetry labels */
+  --text-meta: 0.75rem;      /* 12px — secondary cell text, timestamps */
+  --text-base: 0.8125rem;    /* 13px — the OS body size. Everything defaults here */
+  --text-md: 0.875rem;       /* 14px — emphasized row text, inputs */
+  --text-lg: 1rem;           /* 16px — section headers (h2/h3) */
+  --text-xl: 1.25rem;        /* 20px — page title (h1) */
+  --text-metric: 1.75rem;    /* 28px — stat-tile numerals. The scale contrast. */
+
+  /* -- radii: tight. An OS is not a landing page. ------------------------ */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+
+  /* -- animation --------------------------------------------------------- */
+  --animate-palette-in: palette-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-panel-in: panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
 :root {
-  --duration-instant: 120ms;
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --text-body-base: clamp(17px, 1.05vw, 18px);
-  --leading-body: 1.75;
+  /* ---- motion budget (emil-design-eng: invisible, interruptible) -------- */
+  --dur-state: 120ms;   /* hover, focus, selection */
+  --dur-panel: 180ms;   /* sheets, popovers, palette */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  --n-0: 220 23% 98%;
-  --n-1: 220 22% 96%;
-  --n-2: 220 21% 93%;
-  --n-3: 220 19% 88%;
-  --n-4: 218 18% 78%;
-  --n-5: 218 14% 58%;
-  --n-6: 218 14% 42%;
-  --n-7: 222 30% 16%;
-  --n-8: 225 33% 6%;
+  /* ---- control rail: ONE height scale for every interactive control ----
+     28 / 32 / 36. Buttons, inputs, select triggers, toolbar icon buttons and
+     topbar controls all resolve here — nothing hardcodes its own height, which
+     is how a "+" ended up 4px taller than the search chip beside it. */
+  --control-h-sm: 28px;   /* toolbars, topbar rail, sidebar rows, table filters */
+  --control-h: 32px;      /* the default: form controls, primary page actions */
+  --control-h-lg: 36px;   /* the one prominent action on a page */
 
+  /* ---- density: one dial the whole app reads --------------------------- */
+  --row-h: 40px;        /* comfortable */
+  --row-px: 0.75rem;
+  --sidebar-w: 232px;
+  --sidebar-w-collapsed: 56px;
+  --topbar-h: 48px;
+
+  /* ---- neutral ramp (cool, flat — no warm cast) ------------------------ */
+  --n-0: 220 24% 99%;
+  --n-1: 220 20% 97%;
+  --n-2: 220 17% 94%;
+  --n-3: 220 15% 89%;
+  --n-4: 220 13% 80%;
+  --n-5: 220 10% 60%;
+  --n-6: 220 11% 44%;
+  --n-7: 222 24% 20%;
+  --n-8: 222 32% 6%;
+
+  /* ---- brand (unchanged from the company token — Altruvex blue) -------- */
   --brand: 226 60% 56%;
   --brand-hover: 226 54% 49%;
-  --brand-soft: hsl(var(--brand) / 0.08);
-  --brand-foreground: 220 23% 98%;
-  --success: 162 95% 31%;
-  --warning: 38 96% 40%;
-  --error: 0 65% 51%;
-  --destructive: var(--error);
-  --radius: 0.5rem;
-  --font-inter:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-outfit:
-    "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
-  --font-vazirmatn: "Vazirmatn", sans-serif;
-  --inverted-bg: 222 25% 10%;
-  --background: var(--n-0);
+  --brand-soft: hsl(var(--brand) / 0.1);
+  --brand-foreground: 220 24% 99%;
+
+  /* ---- status registry -------------------------------------------------
+     Six tones, no more. Every enum in the Prisma schema maps into exactly
+     one of these in lib/status.ts. A seventh colour is a design bug. */
+  --status-neutral: 220 10% 41%;   /* inert / archived / draft            */
+  --status-info: 226 60% 51%;      /* in flight, nothing wrong            */
+  --status-success: 162 88% 24%;   /* terminal-good: won, signed, paid    */
+  --status-warning: 33 92% 30%;    /* needs a human soon                  */
+  --status-danger: 0 66% 45%;      /* failed / lost / overdue             */
+  --status-progress: 258 68% 54%;  /* actively being worked               */
+
+  /* Categorical series, light surface. Validated against #FFFFFF:
+     lightness band PASS · chroma floor PASS · CVD adjacent ΔE 13.1 (deutan)
+     PASS · normal-vision ΔE 24.1 PASS · contrast ≥3:1 PASS. */
+  --chart-1: #4F62D4;  /* indigo  — the brand hue, always series 1 */
+  --chart-2: #C2610C;  /* orange  */
+  --chart-3: #0E9E97;  /* teal    */
+  --chart-4: #96387E;  /* magenta */
+  --chart-5: #5F7F12;  /* olive   */
+  --chart-6: #9B7BEA;  /* violet  */
+
+  /* ---- semantic surfaces (light) --------------------------------------- */
+  --background: 220 22% 97%;
   --foreground: var(--n-8);
-  --surface: 220 22% 95%;
+  --surface: 220 20% 95%;
+  --surface-2: 220 17% 92%;
   --card: 0 0% 100%;
   --card-foreground: var(--n-8);
   --popover: 0 0% 100%;
   --popover-foreground: var(--n-8);
   --primary: var(--n-8);
   --primary-foreground: var(--n-0);
-  --secondary: 220 22% 95%;
-  --secondary-foreground: 218 16% 28%;
-  --muted: 220 20% 93%;
-  --muted-foreground: 218 14% 42%;
+  --secondary: 220 18% 94%;
+  --secondary-foreground: 222 20% 26%;
+  --muted: 220 18% 94%;
+  /* Three text ranks, ALL of them AA at body size. The third rank is NOT a
+     lighter grey — an 11px label at 3.6:1 fails AA no matter how "meta" it is.
+     Rank is carried by size, weight and the mono face instead (C4: hierarchy
+     must survive greyscale; colour reinforces rank, it never creates it). */
+  --muted-foreground: 220 12% 34%;   /* 8.0:1 on --card */
+  --subtle-foreground: 220 10% 42%;  /* 5.6:1 on --card, 4.6:1 on --surface-2 */
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
-  --border: 225 33% 6% / 0.12;
-  --border-mid: 225 33% 6% / 0.2;
-  --input: 220 22% 95%;
+
+  --border: 222 32% 6% / 0.09;
+  --border-mid: 222 32% 6% / 0.16;
+  --border-strong: 222 32% 6% / 0.28;
+  --input: 0 0% 100%;
   --ring: var(--brand);
-  --logo-wordmark: var(--n-8);
-  --logo-tagline: 218 14% 42%;
-  --selection-accent: 243 75% 60%;
-  --s-high: hsl(225 33% 6% / 0.9);
-  --s-mid: hsl(225 33% 6% / 0.72);
-  --s-low: hsl(225 33% 6% / 0.52);
-  --s-muted: hsl(225 33% 6% / 0.4);
-  --s-surface: hsl(225 33% 6% / 0.04);
-  --s-border: hsl(225 33% 6% / 0.1);
-  --s-border-hover: hsl(225 33% 6% / 0.18);
-  --s-high-soft: hsl(225 33% 6% / 0.03);
-  --messaging-whatsapp: 142 70% 49%;
 
-  --sidebar: var(--n-0);
+  --sidebar: 220 24% 98%;
   --sidebar-foreground: var(--n-8);
-  --sidebar-primary: var(--brand);
-  --sidebar-primary-foreground: var(--brand-foreground);
-  --sidebar-accent: 220 22% 95%;
+  --sidebar-accent: 220 18% 93%;
   --sidebar-accent-foreground: var(--n-8);
-  --sidebar-border: 225 33% 6% / 0.12;
-  --sidebar-ring: var(--brand);
+  --sidebar-border: 222 32% 6% / 0.09;
 
-  --tech-accent-nextjs: 239 84% 74%;
-  --tech-accent-react: 187 85% 53%;
-  --tech-accent-typescript: 217 91% 60%;
-  --tech-accent-nodejs: 142 69% 58%;
-  --tech-accent-postgresql: 213 94% 68%;
-  --tech-accent-prisma: 258 90% 76%;
-  --tech-accent-tailwind: 187 85% 53%;
-  --tech-accent-vercel: 240 5% 90%;
-  --tech-accent-vps: 215 16% 65%;
-  --section-y-top: clamp(5rem, 10vh, 8rem);
-  --section-y-bottom: clamp(5rem, 14vh, 10rem);
+  --messaging-whatsapp: 142 62% 34%;
+  --selection-accent: 226 60% 56%;
+
+  /* ---- elevation: rare, ultra-diffuse. Depth is lightness, not shadow. -- */
+  --elev-1: 0 1px 2px hsl(222 32% 6% / 0.05);
+  --elev-2: 0 4px 12px -2px hsl(222 32% 6% / 0.1), 0 2px 4px -2px hsl(222 32% 6% / 0.06);
+
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* Density dial — set on <html> by the density toggle, persisted per user. */
+:root[data-density="compact"] {
+  --row-h: 32px;
+  --row-px: 0.625rem;
+}
+:root[data-density="relaxed"] {
+  --row-h: 48px;
+  --row-px: 1rem;
 }
 
 .dark {
-  --inverted-bg: 240 20% 99%;
-  --background: 222 25% 10%;
-  --foreground: 220 22% 94%;
-  --surface: 222 25% 16%;
-  --card: 222 25% 13%;
-  --card-foreground: 220 22% 94%;
-  --popover: 222 25% 13%;
-  --popover-foreground: 220 22% 94%;
-  --primary: 220 22% 94%;
-  --primary-foreground: 222 25% 10%;
-  --secondary: 222 25% 16%;
-  --secondary-foreground: 220 22% 94%;
-  --muted: 220 25% 18%;
-  --muted-foreground: 218 14% 60%;
+  --background: 222 22% 9%;
+  --foreground: 220 20% 92%;
+  --surface: 222 20% 12%;
+  --surface-2: 222 18% 15%;
+  --card: 222 20% 11%;
+  --card-foreground: 220 20% 92%;
+  --popover: 222 20% 13%;
+  --popover-foreground: 220 20% 92%;
+  --primary: 220 20% 92%;
+  --primary-foreground: 222 22% 9%;
+  --secondary: 222 18% 16%;
+  --secondary-foreground: 220 20% 92%;
+  --muted: 222 18% 16%;
+  --muted-foreground: 220 10% 66%;   /* 7.1:1 on --card */
+  --subtle-foreground: 220 9% 57%;   /* 4.7:1 on --card, 4.6:1 on --surface-2 */
+
+  /* C8: dark drops chroma, lifts tone. Every status tone re-derived, not
+     inverted — the light values glow and fail contrast on dark surfaces. */
+  --status-neutral: 220 9% 60%;
+  --status-info: 226 78% 70%;
+  --status-success: 162 60% 50%;
+  --status-warning: 36 84% 60%;
+  --status-danger: 0 74% 68%;
+  --status-progress: 258 76% 72%;
+
+  /* Categorical series, dark surface. Separately chosen, then validated:
+     all six inside the dark lightness band, CVD adjacent ΔE 8.6 (deutan). */
+  --chart-1: #6E7CE2;
+  --chart-2: #C86B20;
+  --chart-3: #17A69E;
+  --chart-4: #AC4E94;
+  --chart-5: #7A9C22;
+  --chart-6: #9276DE;
+
+  --brand: 226 74% 66%;
+  --brand-hover: 226 80% 72%;
+  --brand-soft: hsl(var(--brand) / 0.14);
+  --brand-foreground: 222 32% 8%;
+
   --border: 0 0% 100% / 0.08;
   --border-mid: 0 0% 100% / 0.14;
-  --input: 0 0% 100% / 0.06;
-  --ring: var(--brand);
-  --logo-wordmark: 220 22% 94%;
-  --logo-tagline: 218 14% 60%;
+  --border-strong: 0 0% 100% / 0.26;
+  --input: 0 0% 100% / 0.05;
 
-  --sidebar: 222 25% 13%;
-  --sidebar-foreground: 220 22% 94%;
-  --sidebar-accent: 222 25% 16%;
-  --sidebar-accent-foreground: 220 22% 94%;
-  --sidebar-border: 0 0% 100% / 0.08;
-  --sidebar-ring: var(--brand);
+  --sidebar: 222 22% 10%;
+  --sidebar-foreground: 220 20% 92%;
+  --sidebar-accent: 222 18% 16%;
+  --sidebar-accent-foreground: 220 20% 92%;
+  --sidebar-border: 0 0% 100% / 0.07;
 
-  --s-high: hsl(220 23% 98% / 0.9);
-  --s-mid: hsl(220 23% 98% / 0.72);
-  --s-low: hsl(220 23% 98% / 0.52);
-  --s-muted: hsl(220 23% 98% / 0.4);
-  --s-surface: hsl(220 23% 98% / 0.05);
-  --s-border: hsl(220 23% 98% / 0.1);
-  --s-border-hover: hsl(220 23% 98% / 0.18);
-  --s-high-soft: hsl(220 23% 98% / 0.04);
-}
+  --messaging-whatsapp: 142 55% 55%;
+  --selection-accent: 226 74% 66%;
 
-[data-scene="inverted"] {
-  background-color: hsl(var(--inverted-bg));
-  --s-high: hsl(0 0% 100% / 0.92);
-  --s-mid: hsl(0 0% 100% / 0.55);
-  --s-low: hsl(0 0% 100% / 0.35);
-  --s-muted: hsl(0 0% 100% / 0.22);
-  --s-surface: hsl(0 0% 100% / 0.04);
-  --s-border: hsl(0 0% 100% / 0.08);
-  --s-border-hover: hsl(0 0% 100% / 0.16);
-  --s-high-soft: hsl(0 0% 100% / 0.025);
-}
-
-.dark [data-scene="inverted"] {
-  --s-high: hsl(225 33% 6% / 0.9);
-  --s-mid: hsl(225 33% 6% / 0.72);
-  --s-low: hsl(225 33% 6% / 0.52);
-  --s-muted: hsl(225 33% 6% / 0.4);
-  --s-surface: hsl(225 33% 6% / 0.04);
-  --s-border: hsl(225 33% 6% / 0.1);
-  --s-border-hover: hsl(225 33% 6% / 0.18);
-  --s-high-soft: hsl(225 33% 6% / 0.03);
+  --elev-1: 0 1px 2px hsl(0 0% 0% / 0.4);
+  --elev-2: 0 8px 24px -4px hsl(0 0% 0% / 0.5), 0 2px 6px -2px hsl(0 0% 0% / 0.35);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
     scrollbar-width: thin;
-    scrollbar-color: var(--border-mid) transparent;
+    scrollbar-color: hsl(var(--border-mid)) transparent;
   }
 
   *:focus-visible {
-    @apply outline-2 outline-offset-2 outline-ring;
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 1px;
+    border-radius: 2px;
   }
 
   ::selection {
-    background-color: hsl(var(--selection-accent) / 0.14);
+    background-color: hsl(var(--selection-accent) / 0.22);
     color: hsl(var(--foreground));
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: var(--border-mid);
+    background: hsl(var(--border-mid));
     border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
   }
+  ::-webkit-scrollbar-thumb:hover { background-clip: content-box; background-color: hsl(var(--border-strong)); }
+
+  html { -webkit-text-size-adjust: 100%; }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: var(--font-inter);
-    font-size: var(--text-body-base);
-    line-height: var(--leading-body);
-    background-image:
-      radial-gradient(circle at top,
-        hsl(var(--brand) / 0.12),
-        transparent 24%),
-      linear-gradient(180deg,
-        hsl(var(--background) / 0.98),
-        hsl(var(--background)));
+    font-size: var(--text-base);
+    line-height: 1.45;
+    letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* No ambient gradient. An operating system has no weather. */
   }
 
-  .dark body {
-    background-image:
-      radial-gradient(circle at top,
-        hsl(var(--brand) / 0.2),
-        transparent 28%),
-      radial-gradient(circle at bottom right,
-        hsl(var(--brand) / 0.08),
-        transparent 30%),
-      linear-gradient(180deg,
-        hsl(var(--background) / 0.98),
-        hsl(var(--background)));
-  }
-
-  main {
-    opacity: 1;
-    visibility: visible;
-  }
-
-  [data-initial-load="complete"] main {
-    transition: opacity 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  section {
-    contain: layout;
-  }
-
-  [data-watermark]::after {
-    content: attr(data-watermark);
-  }
-
+  /* T4: heading levels are scope, not size. The OS scale is flat on purpose —
+     hierarchy comes from weight, position and hairlines, not from 4rem type. */
   h1 {
     font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(3rem, 5vw, 4.5rem);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    font-weight: 300;
+    font-size: var(--text-xl);
+    line-height: 1.2;
+    letter-spacing: -0.014em;
+    font-weight: 600;
   }
-
   h2 {
     font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(2.125rem, 4vw, 3.25rem);
-    line-height: 1.08;
-    letter-spacing: -0.02em;
-    font-weight: 400;
+    font-size: var(--text-lg);
+    line-height: 1.25;
+    letter-spacing: -0.008em;
+    font-weight: 600;
   }
-
   h3 {
     font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(1.5rem, 2.4vw, 2rem);
-    line-height: 1.15;
-    letter-spacing: -0.018em;
-    font-weight: 400;
+    font-size: var(--text-md);
+    line-height: 1.3;
+    font-weight: 600;
+  }
+  h4, h5, h6 {
+    font-family: var(--font-inter), sans-serif;
+    font-size: var(--text-base);
+    line-height: 1.35;
+    font-weight: 600;
   }
 
-  h4 {
-    font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(1.125rem, 2vw, 1.75rem);
-    line-height: 1.2;
-    letter-spacing: -0.015em;
+  /* Every number in this app is scanned in a column. */
+  table, .tabular, [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  input, textarea, select, button { font: inherit; letter-spacing: inherit; }
+
+  [hidden] { display: none !important; }
+}
+
+@layer components {
+  /* The single micro-label treatment. T8: caps is a label treatment, ≤4 words. */
+  .telemetry {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    line-height: 1.4;
     font-weight: 500;
   }
 
-  h5,
-  h6 {
-    font-family: var(--font-outfit), sans-serif;
+  /* A "plane" is the OS's only container: flat, hairline-bounded, no shadow.
+     Cards float; planes tile. This app tiles. */
+  .plane {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-lg);
   }
+
+  /* Row grid used by every table body. Hairlines between, none at the ends. */
+  .rows > * + * { border-top: 1px solid hsl(var(--border)); }
 }
 
-@keyframes slide-down {
-  0% {
-    transform: translateY(-100%);
-  }
-
-  100% {
-    transform: translateY(200%);
-  }
+@keyframes palette-in {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
 }
 
-@keyframes ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0.01);
-    opacity: 0.3;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0;
-  }
-}
-
-@keyframes services-rail-slide {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes step-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.liquid-glass {
-  background-color: color-mix(in srgb, var(--color-background) 60%, transparent);
-  backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--color-foreground) 10%, transparent);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-}
-
-.dark .liquid-glass {
-  background-color: color-mix(in srgb, var(--color-background) 40%, transparent);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.2);
 }

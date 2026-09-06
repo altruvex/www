@@ -116,7 +116,7 @@ export function OwnershipStackSection() {
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
           secondTitle={t("titleAccent")}
-          accent="iris"
+          accent="world"
           description={t("subtitle")}
           className="mb-12 lg:mb-16"
         />

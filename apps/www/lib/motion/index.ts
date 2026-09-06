@@ -24,13 +24,19 @@ export { useText } from "@/lib/motion/hooks/use-text";
 export type { TextConfig } from "@/lib/motion/hooks/use-text";
 export { useTilt } from "@/lib/motion/hooks/use-tilt";
 export type { TiltConfig } from "@/lib/motion/hooks/use-tilt";
-export { DEFAULTS, MOTION, SECTION_DELAYS } from "./config";
+export { DEFAULTS, MOTION, SECTION_DELAYS, resolveEase, resolveSpring, resolveTrigger } from "./tokens";
 export type {
   MotionDistance,
   MotionDuration,
   MotionEase,
+  MotionSpring,
   MotionStagger,
-  MotionTrigger
-} from "./config";
+  MotionTrigger,
+  SpringConfig
+} from "./tokens";
+export { createSpring } from "./utils/spring";
+export type { Spring } from "./utils/spring";
+export { readMotionEnv } from "./utils/env";
+export type { MotionEnv } from "./utils/env";
+export { readDirection } from "./utils/direction";
 export { motion } from "./utils/presets";
-

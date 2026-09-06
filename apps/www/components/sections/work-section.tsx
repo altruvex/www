@@ -73,8 +73,6 @@ export const WorkSection = memo(function WorkSection() {
             />
           ))}
         </ol>
-        
-        {/* REFINED: Stacked on mobile, side-by-side on desktop */}
         <div className="mt-10 flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
           <div className="space-y-3">
             <Eyebrow>{tW("labels.liveProof")}</Eyebrow>
@@ -89,9 +87,9 @@ export const WorkSection = memo(function WorkSection() {
             className="w-full flex-col gap-3 sm:w-auto sm:flex-row lg:flex-col lg:items-stretch"
           />
         </div>
-        
+
         <FlagshipBlock metaRef={metaRef} tf={tf} stepLabel={stepLabel} />
-        
+
         <div className="mt-8 flex items-center gap-4 md:mt-6">
           <div className="h-px flex-1 bg-border" />
           <Eyebrow>{tW("labels.footer")}</Eyebrow>
@@ -134,28 +132,35 @@ function FlagshipBlock({
             "max-w-sm text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75]",
         }}
       />
-      <ol className="mt-10 list-none border-t border-border md:mt-16">
+      <ol className="mt-10 grid list-none gap-4 md:mt-16 md:grid-cols-3 md:gap-px md:overflow-hidden md:rounded-[1.5rem] md:border md:border-border/70 md:bg-border/70">
         {movements.map((movement, index) => (
-          /* REFINED: flex-col on mobile, flex-row aligned to start on md+ */
           <li
             key={movement.label}
-            className="flex flex-col gap-3 border-b border-border py-6 md:flex-row md:items-start md:justify-between md:gap-x-10 md:py-8"
+            className="relative bg-card px-6 py-7 md:px-7 md:py-8"
           >
-            {/* REFINED: Added explicit width to the label column on desktop for a clean editorial grid */}
-            <div className="flex shrink-0 items-baseline gap-4 md:w-[280px] md:pt-1">
+            <div className="flex items-start justify-between gap-6">
               <span
                 aria-hidden
-                className="shrink-0 text-sm tabular-nums text-muted-foreground ltr:font-mono"
+                className="text-[clamp(2.75rem,5vw,4rem)] font-medium leading-none tracking-[-0.06em] text-foreground/20 tabular-nums"
               >
                 <Num value={index + 1} pad={2} />
               </span>
+
+              <span
+                aria-hidden
+                className="mt-2 size-2 shrink-0 rounded-full bg-local-accent"
+              />
+            </div>
+
+            <div className="mt-10">
               <Eyebrow tone="accent">
                 {stepLabel} · {movement.label}
               </Eyebrow>
+
+              <p className="mt-4 max-w-[34ch] text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75] text-foreground/85">
+                {movement.body}
+              </p>
             </div>
-            <p className="max-w-[78ch] flex-1 text-[clamp(1rem,1.02vw,1.125rem)] leading-[1.7] text-foreground/85">
-              {movement.body}
-            </p>
           </li>
         ))}
       </ol>

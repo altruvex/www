@@ -258,7 +258,7 @@ function NamePrincipleSection() {
             >
               {t("title")}{" "}
               <Highlight className="block mt-2 md:mt-0 md:inline">
-                {t("titleAccent")}
+                {t("titleItalic")}
               </Highlight>
             </h2>
           </div>

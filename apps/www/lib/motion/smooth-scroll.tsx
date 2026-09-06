@@ -29,7 +29,7 @@ export function SmoothScrollProvider({
           await Promise.all([
             import("@/lib/utils/gsap"),
             import("lenis"),
-            import("@/lib/motion/config"),
+            import("@/lib/motion/tokens"),
           ]);
 
         if (cancelled) return;
@@ -45,21 +45,20 @@ export function SmoothScrollProvider({
             duration: MOTION.lenis.duration,
             easing: MOTION.lenis.easing,
             smoothWheel: MOTION.lenis.smoothWheel,
+            // Lenis is stepped from the GSAP ticker below — never from its own
+            // rAF loop, otherwise two loops fight over one scroll position.
+            autoRaf: false,
           });
 
           lenisRef = lenis;
           setLenis(lenis);
-          let stPending = false;
 
-          lenis.on("scroll", () => {
-            if (!stPending) {
-              stPending = true;
-              requestAnimationFrame(() => {
-                ScrollTrigger.update();
-                stPending = false;
-              });
-            }
-          });
+          // Lenis emits `scroll` synchronously inside `lenis.raf()`, i.e.
+          // inside the GSAP ticker frame. Updating ScrollTrigger right there
+          // keeps scrub tweens in the SAME frame as the scroll position;
+          // deferring to a second rAF put them one frame behind Lenis, which
+          // reads as a faint shimmer on every scrub-linked element.
+          lenis.on("scroll", ScrollTrigger.update);
 
           tickFn = (time: number) => lenis.raf(time * 1000);
           gsap.ticker.add(tickFn);

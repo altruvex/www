@@ -139,7 +139,7 @@ export const MagneticButton = forwardRef<
 
     const sharedClassName = [
       "relative inline-flex items-center justify-center overflow-hidden rounded-xl font-medium",
-      "transition-[background-color,border-color,color,box-shadow,opacity] duration-300 ease-out will-change-transform",
+      "transition-[background-color,border-color,color,opacity] duration-300 ease-out will-change-transform",
       "outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring",
       "disabled:opacity-50 disabled:cursor-not-allowed",
       variants[variant],

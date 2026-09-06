@@ -31,13 +31,18 @@ function alignAccentGradients(root: HTMLElement): void {
     const accentRect = accentEl.getBoundingClientRect();
     if (!accentRect.width) return;
 
-    fragments.forEach((fragment) => {
-      const fragmentRect = fragment.getBoundingClientRect();
+    // Read every rect first, then write: interleaving a write with the next
+    // read forces a synchronous layout per fragment (layout thrash).
+    const offsets = fragments.map(
+      (fragment) => fragment.getBoundingClientRect().left - accentRect.left,
+    );
+
+    fragments.forEach((fragment, i) => {
       fragment.style.backgroundSize = `${accentRect.width}px 100%`;
       // --sweep-x (inherited from the accent, default 0px) lets useText pan
       // every fragment's gradient as one sheet for the `animate="sweep"` wipe
       // without touching the per-fragment alignment offsets.
-      fragment.style.backgroundPositionX = `calc(${-(fragmentRect.left - accentRect.left)}px + var(--sweep-x, 0px))`;
+      fragment.style.backgroundPositionX = `calc(${-offsets[i]}px + var(--sweep-x, 0px))`;
     });
   });
 }

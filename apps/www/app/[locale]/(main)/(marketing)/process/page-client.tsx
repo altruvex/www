@@ -126,7 +126,6 @@ function ClosingSection() {
             descriptionRef={descRef}
             firstTitle={t("flexibility.title")}
             secondTitle={t("flexibility.titleItalic")}
-            accent="ember"
             secondTitleBreak={false}
             description={t.rich("flexibility.description", bodyMarks)}
             className="mb-12 block"

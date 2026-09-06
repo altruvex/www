@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Link, usePathname } from "@/i18n/navigation";
 import { getLenis } from "@/lib/motion/lenis-instance";
+import { ScrollTrigger } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
 import { Calendar } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -38,32 +39,47 @@ export function Nav() {
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
+  // Scroll state via ScrollTrigger, not a raw `scroll` listener: trigger
+  // positions are measured once per refresh (the smooth-scroll provider
+  // refreshes on body-height changes), so a scroll update costs one cached
+  // scrollY read — never a getBoundingClientRect. Both flags are re-derived
+  // on every update rather than in onToggle (ScrollTrigger suppresses toggle
+  // callbacks while a refresh is in flight); React bails out of identical
+  // setState calls, so it re-renders only at the actual threshold crossings.
   useEffect(() => {
-    const check = () => {
-      setIsScrolled(window.scrollY > 20);
-      const servicesWrapper = document.getElementById("services-wrapper");
-      if (servicesWrapper && window.scrollY > 100) {
-        const rect = servicesWrapper.getBoundingClientRect();
-        const overlaps = rect.top <= 64 && rect.bottom >= 0;
-        setIsNavInverted(overlaps && !isMobileMenuOpen);
-      } else {
-        setIsNavInverted(false);
-      }
+    const servicesWrapper = document.getElementById("services-wrapper");
+    const inverted = servicesWrapper
+      ? ScrollTrigger.create({
+          trigger: servicesWrapper,
+          // Header is 64px tall: inverted while the section overlaps it.
+          start: "top 64px",
+          end: "bottom top",
+        })
+      : null;
+
+    const sync = (self: ScrollTrigger) => {
+      setIsScrolled(self.scroll() > 20);
+      setIsNavInverted(inverted?.isActive ?? false);
     };
-
-    window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-
-    const ro = new ResizeObserver(check);
-    ro.observe(document.body);
-    check();
+    const page = ScrollTrigger.create({
+      start: 0,
+      end: "max",
+      onUpdate: sync,
+      onRefresh: sync,
+    });
+    // Settle: ScrollTrigger fires this once when scrolling stops, outside the
+    // per-trigger callback gating, so a jump that landed during a refresh
+    // still ends in the right state.
+    const settle = () => sync(page);
+    ScrollTrigger.addEventListener("scrollEnd", settle);
 
     return () => {
-      window.removeEventListener("scroll", check);
-      window.removeEventListener("resize", check);
-      ro.disconnect();
+      ScrollTrigger.removeEventListener("scrollEnd", settle);
+      page.kill();
+      inverted?.kill();
     };
-  }, [isMobileMenuOpen]);
+    // pathname: the services wrapper is page content and changes per route.
+  }, [pathname]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -78,7 +94,7 @@ export function Nav() {
   return (
     <header
       dir={dir}
-      data-scene={isNavInverted ? "inverted" : undefined}
+      data-scene={isNavInverted && !isMobileMenuOpen ? "inverted" : undefined}
       className={cn(
         "fixed top-0 w-full transition-all duration-300",
         isMobileMenuOpen

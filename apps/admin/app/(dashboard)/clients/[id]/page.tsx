@@ -1,629 +1,580 @@
-"use client";
-
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { prisma } from "@repo/database";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  clientSourceBadge,
-  submissionPriorityBadge,
-  submissionStatusBadge,
-} from "@/lib/status-badges";
-import { cn } from "@/lib/utils";
-import {
-  AlertCircle,
-  Building2,
-  Calendar,
-  Clock,
   Download,
+  ExternalLink,
+  FileSignature,
   FileText,
-  MessageSquare,
+  Mail,
+  MessageCircle,
   Phone,
   Plus,
-  Tag,
-  User,
 } from "lucide-react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
-import { LoadingIcon } from "@/components/loading-icon";
+import { PageHeader, MetaItem } from "@/components/os/page-header";
+import { Panel } from "@/components/os/panel";
+import { TabNav } from "@/components/os/tab-nav";
+import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
+import { Timeline } from "@/components/os/timeline";
+import { EmptyInline } from "@/components/os/empty-state";
+import { StatusPill } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { deriveClientStage } from "@/lib/dashboard-data";
+import { buildActivity } from "@/lib/activity";
+import { statusOf } from "@/lib/status";
+import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
+import { StatusMenu, LifecycleButton, MarkSignedButton } from "./client-actions";
+import { Button } from "@/components/ui/button";
 
-type ClientStatus =
-  | "NEW"
-  | "VIEWED"
-  | "CONTACTED"
-  | "QUALIFIED"
-  | "PROPOSAL_SENT"
-  | "WON"
-  | "LOST"
-  | "SPAM";
+export const dynamic = "force-dynamic";
 
-type Priority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
-type ClientSource =
-  | "WEBSITE_CONTACT_FORM"
-  | "TRANSPARENCY_ESTIMATOR"
-  | "MANUAL"
-  | "WHATSAPP_INBOUND"
-  | "REFERRAL";
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "proposals", label: "Proposals" },
+  { id: "contracts", label: "Contracts" },
+  { id: "projects", label: "Projects" },
+  { id: "communication", label: "Communication" },
+  { id: "documents", label: "Documents" },
+  { id: "activity", label: "Activity" },
+];
 
-const SOURCE_LABELS: Record<ClientSource, string> = {
-  WEBSITE_CONTACT_FORM: "Contact form",
-  TRANSPARENCY_ESTIMATOR: "Estimator",
-  MANUAL: "Manual",
-  WHATSAPP_INBOUND: "WhatsApp",
-  REFERRAL: "Referral",
-};
+export default async function ClientDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { id } = await params;
+  const { tab: tabParam } = await searchParams;
+  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "overview";
 
-interface Note {
-  id: string;
-  content: string;
-  createdAt: string;
-  createdBy: { name: string | null; email: string };
-}
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: {
+      contactSubmission: {
+        include: {
+          notes: { include: { createdBy: { select: { name: true, email: true } } } },
+          tags: true,
+          meetings: true,
+        },
+      },
+      transparencyLead: true,
+      proposals: { orderBy: { createdAt: "desc" } },
+      contracts: { orderBy: { createdAt: "desc" } },
+      projects: {
+        include: {
+          payments: true,
+          contract: { select: { proposal: { select: { currency: true } } } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      messages: { orderBy: { createdAt: "desc" } },
+    },
+  });
 
-interface DetailTag {
-  id: string;
-  name: string;
-  createdAt: string;
-}
+  if (!client) notFound();
 
-interface Meeting {
-  id: string;
-  title: string;
-  type: string;
-  status: string;
-  scheduledDate: string;
-  scheduledTime: string;
-  durationMinutes: number;
-}
+  const stage = deriveClientStage(client);
+  const displayName = client.company || client.name || "Unnamed client";
+  const activity = buildActivity({
+    client,
+    submission: client.contactSubmission,
+    transparencyLead: client.transparencyLead,
+    proposals: client.proposals,
+    contracts: client.contracts,
+    projects: client.projects,
+    payments: client.projects.flatMap((p) =>
+      p.payments.map((pay) => ({
+        ...pay,
+        projectId: p.id,
+        currency: p.contract.proposal.currency,
+      })),
+    ),
+    messages: client.messages,
+    meetings: client.contactSubmission?.meetings ?? [],
+  });
 
-interface WhatsAppMessage {
-  id: string;
-  direction: "OUTBOUND" | "INBOUND";
-  status: string;
-  body: string;
-  createdAt: string;
-}
+  const documents = [
+    ...client.proposals.flatMap((p) =>
+      [
+        p.fileUrl && { kind: "Proposal deck", url: p.fileUrl, at: p.createdAt, ref: `/proposals/${p.id}` },
+        p.pdfUrl && { kind: "Proposal PDF", url: p.pdfUrl, at: p.createdAt, ref: `/proposals/${p.id}` },
+      ].filter(Boolean),
+    ),
+    ...client.contracts.flatMap((c) =>
+      [
+        c.fileUrl && { kind: "Contract", url: c.fileUrl, at: c.createdAt, ref: `/contracts/${c.id}` },
+        c.signedFileUrl && {
+          kind: "Signed contract",
+          url: c.signedFileUrl,
+          at: c.signedAt ?? c.createdAt,
+          ref: `/contracts/${c.id}`,
+        },
+      ].filter(Boolean),
+    ),
+  ] as { kind: string; url: string; at: Date; ref: string }[];
 
-interface ClientDetail {
-  id: string;
-  name: string | null;
-  phone: string;
-  email: string | null;
-  company: string | null;
-  industry: string | null;
-  source: ClientSource;
-  status: ClientStatus;
-  priority: Priority;
-  createdAt: string;
-  contactSubmission?: {
-    id: string;
-    message: string;
-    serviceInterest?: string | null;
-    notes: Note[];
-    tags: DetailTag[];
-    meetings: Meeting[];
-  } | null;
-  transparencyLead?: {
-    projectType: string;
-    complexity: string;
-    timeline: string;
-    priceMin: number;
-    priceMax: number;
-    weeksMin: number;
-    weeksMax: number;
-  } | null;
-  proposals: {
-    id: string;
-    status: string;
-    totalPrice: number;
-    currency: string;
-    fileUrl: string | null;
-    pdfUrl: string | null;
-    createdAt: string;
-  }[];
-  contracts: { id: string; status: string; createdAt: string }[];
-  messages: WhatsAppMessage[];
-}
-
-export default function ClientDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const id = params.id as string;
-
-  const [client, setClient] = useState<ClientDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchClient = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`/api/admin/clients/${id}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setClient(data.client);
-      } else {
-        setError(data.message || "Failed to load client");
-      }
-    } catch (error: unknown) {
-      console.error("Error fetching client:", error);
-      setError("Failed to load client details");
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchClient();
-    }
-  }, [id, fetchClient]);
-
-  const updateClient = async (updates: {
-    status?: ClientStatus;
-    priority?: Priority;
-  }) => {
-    try {
-      setUpdating(true);
-      const response = await fetch(`/api/admin/clients/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        await fetchClient();
-      } else {
-        setError(data.message || "Failed to update client");
-      }
-    } catch (error: unknown) {
-      console.error("Error updating client:", error);
-      setError("Failed to update client");
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const getStatusColor = (status: ClientStatus) =>
-    submissionStatusBadge[status] ?? submissionStatusBadge.NEW;
-
-  const getPriorityColor = (priority: Priority) =>
-    submissionPriorityBadge[priority] ?? submissionPriorityBadge.MEDIUM;
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatEGP = (amount: number) =>
-    new Intl.NumberFormat("en-EG", {
-      style: "currency",
-      currency: "EGP",
-      maximumFractionDigits: 0,
-    }).format(amount);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <LoadingIcon size={24} />
-          <p className="mt-4 text-muted-foreground">Loading client details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !client) {
-    return (
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center h-64 border rounded-lg bg-destructive/10">
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-lg font-semibold text-destructive">{error}</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              The client you&apos;re looking for doesn&apos;t exist or has been
-              deleted.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!client) {
-    return null;
-  }
+  const tabs = TABS.map((t) => ({
+    ...t,
+    count:
+      t.id === "proposals"
+        ? client.proposals.length
+        : t.id === "contracts"
+          ? client.contracts.length
+          : t.id === "projects"
+            ? client.projects.length
+            : t.id === "communication"
+              ? client.messages.length
+              : t.id === "documents"
+                ? documents.length
+                : undefined,
+  }));
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{client.name || "Unnamed client"}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <p className="text-muted-foreground">Client Details</p>
-            <span
-              className={cn(
-                "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border",
-                clientSourceBadge[client.source],
-              )}
-            >
-              {SOURCE_LABELS[client.source]}
-            </span>
-          </div>
-        </div>
-        <Button variant="brand" className="rounded-xl" asChild>
-          <Link href={`/clients/${client.id}/new-proposal`}>
-            <Plus className="h-4 w-4" />
-            New Proposal
-          </Link>
-        </Button>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[200px]">
-          <label className="text-sm font-medium mb-2 block">Stage</label>
-          <Select
-            value={client.status}
-            onValueChange={(value) =>
-              updateClient({ status: value as ClientStatus })
-            }
-            disabled={updating}
-          >
-            <SelectTrigger className={getStatusColor(client.status)}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="NEW">New</SelectItem>
-              <SelectItem value="VIEWED">Viewed</SelectItem>
-              <SelectItem value="CONTACTED">Contacted</SelectItem>
-              <SelectItem value="QUALIFIED">Qualified</SelectItem>
-              <SelectItem value="PROPOSAL_SENT">Proposal Sent</SelectItem>
-              <SelectItem value="WON">Won</SelectItem>
-              <SelectItem value="LOST">Lost</SelectItem>
-              <SelectItem value="SPAM">Spam</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="text-sm font-medium mb-2 block">Priority</label>
-          <Select
-            value={client.priority}
-            onValueChange={(value) =>
-              updateClient({ priority: value as Priority })
-            }
-            disabled={updating}
-          >
-            <SelectTrigger className={getPriorityColor(client.priority)}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LOW">Low</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
-          <div className="liquid-glass rounded-2xl p-6 space-y-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Contact Information
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Phone className="h-4 w-4 text-muted-foreground mt-1" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
-                  <a
-                    href={`tel:${client.phone}`}
-                    className="text-sm font-medium hover:underline"
-                  >
-                    <bdi>{client.phone}</bdi>
-                  </a>
-                </div>
-              </div>
-              {client.email && (
-                <div className="flex items-start gap-3">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Email</p>
-                    <a
-                      href={`mailto:${client.email}`}
-                      className="text-sm font-medium hover:underline"
-                    >
-                      {client.email}
-                    </a>
-                  </div>
-                </div>
-              )}
-              {client.company && (
-                <div className="flex items-start gap-3">
-                  <Building2 className="h-4 w-4 text-muted-foreground mt-1" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Company</p>
-                    <p className="text-sm font-medium">
-                      {client.company}
-                      {client.industry ? ` · ${client.industry}` : ""}
-                    </p>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-start gap-3">
-                <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Added</p>
-                  <p className="text-sm font-medium">
-                    {formatDate(client.createdAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {client.transparencyLead && (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Transparency Estimate
-              </h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Project type</span>
-                  <span className="font-medium">
-                    {client.transparencyLead.projectType} ·{" "}
-                    {client.transparencyLead.complexity}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Timeline</span>
-                  <span className="font-medium">
-                    {client.transparencyLead.timeline}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Price range</span>
-                  <span className="font-medium">
-                    {formatEGP(client.transparencyLead.priceMin)} –{" "}
-                    {formatEGP(client.transparencyLead.priceMax)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Delivery</span>
-                  <span className="font-medium">
-                    {client.transparencyLead.weeksMin}–
-                    {client.transparencyLead.weeksMax} weeks
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {client.contactSubmission?.message && (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
+    <div className="space-y-4">
+      <PageHeader
+        crumbs={[{ label: "Clients", href: "/clients" }, { label: displayName }]}
+        title={
+          <span className="flex items-center gap-2">
+            <Avatar name={displayName} size="lg" />
+            {displayName}
+          </span>
+        }
+        status={
+          <>
+            <StatusPill registry="pipelineStage" value={stage} />
+            <StatusPill registry="priority" value={client.priority} />
+          </>
+        }
+        meta={
+          <>
+            <MetaItem label="Source">{statusOf("clientSource", client.source).label}</MetaItem>
+            <MetaItem label="Added">{date(client.createdAt)}</MetaItem>
+            <MetaItem label="Last activity">{when(client.updatedAt)}</MetaItem>
+            {client.industry && <MetaItem label="Industry">{client.industry}</MetaItem>}
+          </>
+        }
+        actions={
+          <>
+            <StatusMenu clientId={client.id} status={client.status} priority={client.priority} />
+            <Button asChild variant="outline">
+              <Link href={`/whatsapp/${client.id}`}>
+                <MessageCircle className="size-3.5" />
                 Message
-              </h2>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {client.contactSubmission.message}
-              </p>
-            </div>
-          )}
+              </Link>
+            </Button>
+            <Button asChild variant="brand">
+              <Link href={`/clients/${client.id}/new-proposal`}>
+                <Plus className="size-3.5" />
+                New proposal
+              </Link>
+            </Button>
+          </>
+        }
+        tabs={<TabNav tabs={tabs} active={tab} basePath={`/clients/${client.id}`} />}
+      />
 
-          <div className="liquid-glass rounded-2xl p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              WhatsApp ({client.messages.length})
-            </h2>
-            {client.messages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No messages yet — proposal and contract sends will show up here.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {client.messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={cn(
-                      "rounded-xl p-3 text-sm",
-                      message.direction === "OUTBOUND"
-                        ? "bg-brand/10 ms-8"
-                        : "bg-muted me-8",
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{message.body}</p>
-                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{message.status}</span>
-                      <span>•</span>
-                      <span>{formatDate(message.createdAt)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+      <DetailLayout
+        aside={
+          <>
+            <Panel title="Details" flush>
+              <MetaList
+                items={[
+                  {
+                    label: "Phone",
+                    value: (
+                      <a href={`tel:${client.phone}`} className="font-mono text-meta hover:text-brand">
+                        {fmtPhone(client.phone)}
+                      </a>
+                    ),
+                  },
+                  {
+                    label: "Email",
+                    value: client.email ? (
+                      <a href={`mailto:${client.email}`} className="truncate hover:text-brand">
+                        {client.email}
+                      </a>
+                    ) : (
+                      "—"
+                    ),
+                  },
+                  { label: "Company", value: client.company ?? "—" },
+                  { label: "Contact", value: client.name ?? "—" },
+                  { label: "Industry", value: client.industry ?? "—" },
+                  { label: "Source", value: statusOf("clientSource", client.source).label },
+                  { label: "Created", value: dateTime(client.createdAt) },
+                  { label: "Updated", value: dateTime(client.updatedAt) },
+                  {
+                    label: "Record",
+                    value: <span className="font-mono text-micro">{client.id.slice(0, 8)}</span>,
+                    hint: "Internal record id",
+                  },
+                ]}
+              />
+            </Panel>
+
+            <Panel title="Quick actions" flush>
+              <QuickActions>
+                <Button asChild variant="outline">
+                  <a href={`tel:${client.phone}`}>
+                    <Phone className="size-3.5 text-subtle-foreground" />
+                    Call {fmtPhone(client.phone)}
+                  </a>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href={`/whatsapp/${client.id}`}>
+                    <MessageCircle className="size-3.5 text-messaging-whatsapp" />
+                    Open conversation
+                  </Link>
+                </Button>
+                {client.email && (
+                  <Button asChild variant="outline">
+                    <a href={`mailto:${client.email}`}>
+                      <Mail className="size-3.5 text-subtle-foreground" />
+                      Send email
+                    </a>
+                  </Button>
+                )}
+              </QuickActions>
+            </Panel>
+
+            {client.transparencyLead && (
+              <Panel title="Estimator quote" description="What the public site told them">
+                <dl className="space-y-1.5 text-base">
+                  <Row label="Project">{client.transparencyLead.projectType}</Row>
+                  <Row label="Complexity">{client.transparencyLead.complexity}</Row>
+                  <Row label="Quoted">
+                    <span className="font-mono text-meta tabular-nums">
+                      {money(client.transparencyLead.priceMin)} – {money(client.transparencyLead.priceMax)}
+                    </span>
+                  </Row>
+                  <Row label="Weeks">
+                    <span className="font-mono text-meta tabular-nums">
+                      {client.transparencyLead.weeksMin}–{client.transparencyLead.weeksMax}
+                    </span>
+                  </Row>
+                </dl>
+              </Panel>
             )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {client.contactSubmission && client.contactSubmission.tags.length > 0 && (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Tag className="h-5 w-5" />
-                Tags
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {client.contactSubmission.tags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-brand/10 text-brand border border-brand/25"
-                  >
-                    {tag.name}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {client.contactSubmission ? (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Notes ({client.contactSubmission.notes.length})
-              </h2>
-              {client.contactSubmission.notes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No notes yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {client.contactSubmission.notes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="border-l-2 border-brand/30 pl-4 py-2"
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {note.content}
-                      </p>
-                      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{note.createdBy.name || note.createdBy.email}</span>
-                        <span>•</span>
-                        <span>{formatDate(note.createdAt)}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Notes
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Notes require a linked contact form submission.
-              </p>
-            </div>
-          )}
-
-          {client.contactSubmission && client.contactSubmission.meetings.length > 0 && (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Related Meetings ({client.contactSubmission.meetings.length})
-              </h2>
-              <div className="space-y-3">
-                {client.contactSubmission.meetings.map((meeting) => (
-                  <div
-                    key={meeting.id}
-                    className="liquid-glass rounded-2xl p-4 hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => router.push("/meetings")}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{meeting.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {meeting.type.replace(/_/g, " ")}
-                        </p>
-                      </div>
-                      <span className="text-xs px-2 py-1 rounded bg-brand/10 text-brand">
-                        {meeting.status}
+          </>
+        }
+      >
+        {tab === "overview" && (
+          <>
+            {client.contactSubmission?.message && (
+              <Panel title="What they asked for" description="Verbatim from the website form">
+                <p className="max-w-prose whitespace-pre-wrap text-base">
+                  {client.contactSubmission.message}
+                </p>
+                {client.contactSubmission.tags.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
+                    {client.contactSubmission.tags.map((t) => (
+                      <span
+                        key={t.id}
+                        className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                      >
+                        {t.name}
                       </span>
-                    </div>
-                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(meeting.scheduledDate).toLocaleDateString()}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {formatTime(meeting.scheduledTime)} (
-                        {meeting.durationMinutes} min)
-                      </span>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                )}
+              </Panel>
+            )}
 
-          {(client.proposals.length > 0 || client.contracts.length > 0) && (
-            <div className="liquid-glass rounded-2xl p-6">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Proposals & Contracts
-              </h2>
-              <div className="space-y-3">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Panel title="Proposals">
+                <p className="font-sans text-lg font-medium tabular-nums">{client.proposals.length}</p>
+                <p className="text-meta text-muted-foreground">
+                  {client.proposals.filter((p) => p.status === "ACCEPTED").length} accepted
+                </p>
+              </Panel>
+              <Panel title="Contracts">
+                <p className="font-sans text-lg font-medium tabular-nums">{client.contracts.length}</p>
+                <p className="text-meta text-muted-foreground">
+                  {client.contracts.filter((c) => c.status === "SIGNED").length} signed
+                </p>
+              </Panel>
+              <Panel title="Projects">
+                <p className="font-sans text-lg font-medium tabular-nums">{client.projects.length}</p>
+                <p className="text-meta text-muted-foreground">
+                  {client.projects.filter((p) => p.status === "ACTIVE").length} active
+                </p>
+              </Panel>
+            </div>
+
+            <Panel title="Recent activity" flush bodyClassName="p-2">
+              <Timeline
+                events={activity.slice(0, 8)}
+                dense
+                emptyLabel="Nothing recorded for this client yet."
+              />
+            </Panel>
+          </>
+        )}
+
+        {tab === "proposals" && (
+          <Panel title="Proposals" flush>
+            {client.proposals.length === 0 ? (
+              <EmptyInline
+                action={
+                  <Button asChild variant="brand">
+                    <Link href={`/clients/${client.id}/new-proposal`}>
+                      <Plus className="size-3.5" />
+                      Build a proposal
+                    </Link>
+                  </Button>
+                }
+              >
+                No proposal has been issued to this client. Building one prices the work
+                from the same table the public estimator uses, so the number they were
+                quoted and the number you send cannot disagree.
+              </EmptyInline>
+            ) : (
+              <ul className="rows">
                 {client.proposals.map((proposal) => (
-                  <div
-                    key={proposal.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>
-                      Proposal ·{" "}
-                      {new Intl.NumberFormat("en-US", {
-                        style: "currency",
-                        currency: proposal.currency,
-                        maximumFractionDigits: 0,
-                      }).format(proposal.totalPrice)}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {proposal.fileUrl && (
-                        <a
-                          href={proposal.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground transition-colors"
-                          title="Download .pptx"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                      <span className="text-xs px-2 py-1 rounded bg-warning/10 text-warning">
-                        {proposal.status}
-                      </span>
+                  <li key={proposal.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+                    <FileText className="size-3.5 shrink-0 text-subtle-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/proposals/${proposal.id}`} className="text-base font-medium hover:text-brand">
+                        {proposal.projectType}
+                      </Link>
+                      <p className="text-meta text-muted-foreground">
+                        {money(proposal.totalPrice, proposal.currency)} · {proposal.timelineWeeks} weeks ·
+                        valid until {date(proposal.validUntil)}
+                      </p>
                     </div>
-                  </div>
+                    <StatusPill registry="proposalStatus" value={proposal.status} />
+                    <div className="flex items-center gap-1.5">
+                      {proposal.status === "DRAFT" && (
+                        <LifecycleButton
+                          label="Send via WhatsApp"
+                          busyLabel="Sending…"
+                          endpoint={`/api/admin/proposals/${proposal.id}/send`}
+                          variant="brand"
+                        />
+                      )}
+                      {proposal.status === "ACCEPTED" && (
+                        <LifecycleButton
+                          label="Generate contract"
+                          busyLabel="Generating…"
+                          endpoint="/api/admin/contracts"
+                          body={{ proposalId: proposal.id }}
+                        />
+                      )}
+                      {proposal.pdfUrl && (
+                        <Button asChild variant="outline">
+                          <a href={proposal.pdfUrl} target="_blank" rel="noreferrer">
+                            <Download className="size-3.5" />
+                            PDF
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </li>
                 ))}
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        {tab === "contracts" && (
+          <Panel title="Contracts" flush>
+            {client.contracts.length === 0 ? (
+              <EmptyInline>
+                No contract yet. A contract is generated from an accepted proposal, so
+                the commitment always references an offer the client actually saw.
+              </EmptyInline>
+            ) : (
+              <ul className="rows">
                 {client.contracts.map((contract) => (
-                  <div
-                    key={contract.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>Contract</span>
-                    <span className="text-xs px-2 py-1 rounded bg-success/10 text-success">
-                      {contract.status}
-                    </span>
-                  </div>
+                  <li key={contract.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+                    <FileSignature className="size-3.5 shrink-0 text-subtle-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/contracts/${contract.id}`} className="text-base font-medium hover:text-brand">
+                        Contract {contract.id.slice(0, 8).toUpperCase()}
+                      </Link>
+                      <p className="text-meta text-muted-foreground">
+                        Created {date(contract.createdAt)}
+                        {contract.signedAt && ` · signed ${date(contract.signedAt)} by ${contract.signedByName}`}
+                      </p>
+                    </div>
+                    <StatusPill registry="contractStatus" value={contract.status} />
+                    <div className="flex items-center gap-1.5">
+                      {contract.status === "DRAFT" && (
+                        <LifecycleButton
+                          label="Send for signature"
+                          busyLabel="Sending…"
+                          endpoint={`/api/admin/contracts/${contract.id}/send`}
+                          variant="brand"
+                        />
+                      )}
+                      {contract.status === "SENT" && <MarkSignedButton contractId={contract.id} />}
+                      {contract.signToken && (
+                        <Button asChild variant="outline">
+                          <a href={`/sign/${contract.signToken}`} target="_blank" rel="noreferrer">
+                            <ExternalLink className="size-3.5" />
+                            Signing page
+                          </a>
+                        </Button>
+                      )}
+                    </div>
+                  </li>
                 ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        {tab === "projects" && (
+          <Panel title="Projects" flush>
+            {client.projects.length === 0 ? (
+              <EmptyInline>
+                Delivery has not started. A project is created from a signed contract —
+                that is the only route in, so a project always has a commitment behind it.
+              </EmptyInline>
+            ) : (
+              <ul className="rows">
+                {client.projects.map((project) => {
+                  const paid = project.payments.filter((p) => p.status === "PAID");
+                  const total = project.payments.reduce((s, p) => s + p.amount, 0);
+                  const collected = paid.reduce((s, p) => s + p.amount, 0);
+                  return (
+                    <li key={project.id} className="px-3 py-2.5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/projects/${project.id}`} className="text-base font-medium hover:text-brand">
+                            {project.name}
+                          </Link>
+                          <p className="text-meta text-muted-foreground">
+                            {project.targetLaunchDate ? `Target ${date(project.targetLaunchDate)}` : "No target date"}
+                          </p>
+                        </div>
+                        <StatusPill registry="projectPhase" value={project.phase} variant="dot" />
+                        <StatusPill registry="projectStatus" value={project.status} />
+                      </div>
+                      {total > 0 && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
+                            <span
+                              className="block h-full rounded-full bg-success"
+                              style={{ width: `${Math.round((collected / total) * 100)}%` }}
+                            />
+                          </span>
+                          <span className="font-mono text-micro tabular-nums text-muted-foreground">
+                            {money(collected, project.contract.proposal.currency)} /{" "}
+                            {money(total, project.contract.proposal.currency)}
+                          </span>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        {tab === "communication" && (
+          <Panel
+            title="Conversation"
+            description="Every WhatsApp message bound to this client"
+            action={
+              <Link href={`/whatsapp/${client.id}`} className="text-meta text-muted-foreground hover:text-foreground">
+                Open thread →
+              </Link>
+            }
+            flush
+          >
+            {client.messages.length === 0 ? (
+              <EmptyInline>
+                Nothing has been sent or received. Messages sent from a proposal or a
+                contract land here automatically and stay attached to those records.
+              </EmptyInline>
+            ) : (
+              <ul className="rows">
+                {client.messages.slice(0, 30).map((message) => (
+                  <li key={message.id} className="flex gap-3 px-3 py-2.5">
+                    <span
+                      className={
+                        message.direction === "INBOUND"
+                          ? "mt-1 size-1.5 shrink-0 rounded-full bg-progress"
+                          : "mt-1 size-1.5 shrink-0 rounded-full bg-neutral"
+                      }
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="whitespace-pre-wrap text-base">{message.body}</p>
+                      <p className="mt-0.5 font-mono text-micro text-subtle-foreground">
+                        {message.direction === "INBOUND" ? "FROM CLIENT" : "SENT"} ·{" "}
+                        {statusOf("whatsappStatus", message.status).label} · {when(message.createdAt)}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        {tab === "documents" && (
+          <Panel title="Documents" description="Every file this client's records produced" flush>
+            {documents.length === 0 ? (
+              <EmptyInline>
+                No files yet. Documents are generated by the proposal and contract
+                builders — they are never uploaded loose, so every file here belongs to
+                a record you can open.
+              </EmptyInline>
+            ) : (
+              <ul className="rows">
+                {documents.map((doc) => (
+                  <li key={doc.url} className="flex items-center gap-3 px-3 py-2.5">
+                    <FileText className="size-3.5 shrink-0 text-subtle-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-base font-medium">{doc.kind}</p>
+                      <Link href={doc.ref} className="text-meta text-muted-foreground hover:text-brand">
+                        Belongs to {doc.ref.split("/")[1].replace(/s$/, "")} {doc.ref.split("/")[2].slice(0, 8)}
+                      </Link>
+                    </div>
+                    <span className="shrink-0 font-mono text-micro text-subtle-foreground">
+                      {date(doc.at)}
+                    </span>
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border px-2 text-meta hover:bg-surface"
+                    >
+                      <Download className="size-3" />
+                      Open
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        )}
+
+        {tab === "activity" && (
+          <Panel
+            title="Everything that happened"
+            description="Derived from the records themselves — this cannot drift from the data"
+            flush
+            bodyClassName="p-2"
+          >
+            <Timeline events={activity} emptyLabel="Nothing recorded for this client yet." />
+          </Panel>
+        )}
+      </DetailLayout>
+    </div>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="telemetry text-subtle-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-end">{children}</dd>
     </div>
   );
 }

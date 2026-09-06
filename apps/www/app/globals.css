@@ -429,6 +429,55 @@
   --local-accent-soft: hsl(214 89% 48% / 0.1);
 }
 
+/* World-native gradient. `<Accent gradient="world">` / `<SectionHeading accent="world">`
+   read these, so a coloured heading always wears the world of the section it sits in
+   (blue = brand, orange = ember, green = forest). Explicit gradient names stay available
+   for the documented alternates - see docs/section-heading-emphasis.md. */
+.accent-world-blue {
+  --world-grad-from: hsl(214 90% 44%);
+  --world-grad-via: hsl(224 84% 50%);
+  --world-grad-to: hsl(236 80% 56%);
+}
+
+.dark .accent-world-blue,
+[data-scene="inverted"] .accent-world-blue {
+  --world-grad-from: hsl(210 95% 62%);
+  --world-grad-via: hsl(222 92% 66%);
+  --world-grad-to: hsl(234 88% 70%);
+}
+
+.accent-world-orange {
+  --world-grad-from: hsl(36 94% 46%);
+  --world-grad-via: hsl(24 92% 48%);
+  --world-grad-to: hsl(12 88% 50%);
+}
+
+.dark .accent-world-orange,
+[data-scene="inverted"] .accent-world-orange {
+  --world-grad-from: hsl(40 96% 60%);
+  --world-grad-via: hsl(26 96% 60%);
+  --world-grad-to: hsl(14 92% 60%);
+}
+
+.accent-world-green {
+  --world-grad-from: hsl(162 70% 34%);
+  --world-grad-via: hsl(152 62% 38%);
+  --world-grad-to: hsl(168 72% 36%);
+}
+
+.dark .accent-world-green,
+[data-scene="inverted"] .accent-world-green {
+  --world-grad-from: hsl(156 54% 52%);
+  --world-grad-via: hsl(148 46% 54%);
+  --world-grad-to: hsl(170 58% 50%);
+}
+
+.accent-world {
+  --grad-from: var(--world-grad-from, hsl(214 90% 44%));
+  --grad-via: var(--world-grad-via, hsl(224 84% 50%));
+  --grad-to: var(--world-grad-to, hsl(236 80% 56%));
+}
+
 .accent-brand {
   --grad-from: hsl(214 90% 44%);
   --grad-via: hsl(224 84% 50%);
@@ -479,6 +528,19 @@
   --grad-from: hsl(40 96% 60%);
   --grad-via: hsl(26 96% 60%);
   --grad-to: hsl(14 92% 60%);
+}
+
+.accent-sunset {
+  --grad-from: hsl(30 94% 48%);
+  --grad-via: hsl(10 86% 54%);
+  --grad-to: hsl(340 78% 54%);
+}
+
+.dark .accent-sunset,
+[data-scene="inverted"] .accent-sunset {
+  --grad-from: hsl(34 96% 62%);
+  --grad-via: hsl(12 92% 64%);
+  --grad-to: hsl(342 88% 68%);
 }
 
 .accent-forest {

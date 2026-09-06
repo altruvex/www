@@ -1,5 +1,6 @@
 "use client";
 
+import { markMotionReady } from "@/lib/motion/utils/ready";
 import {
   createContext,
   ReactNode,
@@ -25,6 +26,12 @@ export function LoadingProvider({
 }) {
   const [isLoading, setIsLoading] = useState(!isBot);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(isBot);
+
+  // Motion hooks listen on an imperative bus rather than this context, so
+  // flipping the flag doesn't re-render every animated element on the page.
+  useEffect(() => {
+    if (isInitialLoadComplete) markMotionReady();
+  }, [isInitialLoadComplete]);
 
   useEffect(() => {
     if (!isLoading && !isInitialLoadComplete) {

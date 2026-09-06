@@ -10,6 +10,9 @@ export function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // The mounted gate exists precisely because the resolved theme is only
+    // knowable on the client; this is the intended shape of that pattern.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

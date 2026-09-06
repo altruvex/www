@@ -3,26 +3,31 @@
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
 import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
+import { MOTION, resolveSpring, type MotionSpring, type SpringConfig } from "../tokens";
 import { readMotionEnv } from "../utils/env";
+import { createSpring } from "../utils/spring";
 
 export interface PressConfig {
   /** Scale at full press. Default 0.97. */
   scale?: number;
-  /** Press-down duration (s). Default 0.12. */
-  inDuration?: number;
-  /** Spring-release duration (s). Default 0.55. */
-  outDuration?: number;
+  /** Spring used while pressing down. Default `MOTION.spring.press`. */
+  pressSpring?: SpringConfig | MotionSpring;
+  /** Spring used on release. Default `MOTION.spring.release` (one soft overshoot). */
+  releaseSpring?: SpringConfig | MotionSpring;
   /** Mirror the press for keyboard Enter/Space so keyboard users get parity. Default true. */
   keyboard?: boolean;
 }
 
 /**
- * Tactile press: a small scale-down on press, spring back on release.
- * The detail that makes a button feel like a physical object.
+ * Tactile press: scale-down on press, spring back on release.
  *
- * - Scale is movement, so it is skipped entirely under reduced motion.
- * - Pointer AND keyboard: Enter/Space mirror the press on focusable elements,
- *   and losing focus mid-press safely releases. Click semantics are untouched.
+ * - One `scale` spring, retuned between the press and release physics so a
+ *   release mid-press-in continues from the live velocity instead of
+ *   restarting — the detail that makes a button feel like an object.
+ * - Pointer AND keyboard: Enter/Space mirror the press on focusable elements;
+ *   losing focus or the pointer mid-press releases. Click semantics untouched.
+ * - Reduced motion: scale is movement, so the press becomes an opacity dip
+ *   (`MOTION.reduced.pressOpacity`) — feedback survives, motion doesn't.
  */
 export function usePress<T extends HTMLElement = HTMLButtonElement>(
   config: PressConfig = {},
@@ -30,32 +35,79 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
   const ref = useRef<T | null>(null);
   const {
     scale = 0.97,
-    inDuration = 0.12,
-    outDuration = 0.55,
+    pressSpring = "press",
+    releaseSpring = "release",
     keyboard = true,
   } = config;
+  const pressCfg = resolveSpring(pressSpring);
+  const releaseCfg = resolveSpring(releaseSpring);
 
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     const env = readMotionEnv();
-    if (env.reduce) return;
+    const reduce = env.reduce;
 
     let active = false;
 
-    // overwrite:"auto" kills only conflicting `scale` tweens — never the
-    // magnetic x/y quickTo tweens that may share this element (MagneticButton).
+    const isDisabled = () =>
+      (el as unknown as { disabled?: boolean }).disabled === true ||
+      el.getAttribute("aria-disabled") === "true";
+
+    // ── Reduced tier: opacity dip, no transform ──────────────────────────
+    const dim = (to: number) =>
+      gsap.to(el, {
+        opacity: to,
+        duration: MOTION.duration.instant,
+        ease: MOTION.ease.ui,
+        overwrite: "auto",
+      });
+
+    // ── Full tier: single scale spring, retuned per phase ────────────────
+    // Two setters, not `quickSetter(el, "scale")`: CSSPlugin aliases `scale`
+    // to "scaleX,scaleY" before quickSetter resolves it, and the comma form
+    // falls through to a generic property setter that writes nothing.
+    let spring: ReturnType<typeof createSpring> | null = null;
+    if (!reduce) {
+      const setX = gsap.quickSetter(el, "scaleX") as (v: number) => void;
+      const setY = gsap.quickSetter(el, "scaleY") as (v: number) => void;
+      spring = createSpring(
+        (v) => {
+          setX(v);
+          setY(v);
+        },
+        pressCfg,
+        1,
+      );
+    }
+
     const press = () => {
+      if (active || isDisabled()) return;
       active = true;
-      gsap.to(el, { scale, duration: inDuration, ease: "power2.out", overwrite: "auto" });
+      if (spring) {
+        spring.retune(pressCfg);
+        spring.set(scale);
+      } else {
+        dim(MOTION.reduced.pressOpacity);
+      }
     };
+
     const release = () => {
       if (!active) return;
       active = false;
-      gsap.to(el, { scale: 1, duration: outDuration, ease: "elastic.out(1, 0.6)", overwrite: "auto" });
+      if (spring) {
+        spring.retune(releaseCfg);
+        spring.set(1);
+      } else {
+        dim(1);
+      }
     };
 
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      press();
+    };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.repeat) return;
       if (e.key === " " || e.key === "Enter") press();
@@ -64,7 +116,7 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
       if (e.key === " " || e.key === "Enter") release();
     };
 
-    el.addEventListener("pointerdown", press);
+    el.addEventListener("pointerdown", onPointerDown);
     el.addEventListener("pointerup", release);
     el.addEventListener("pointerleave", release);
     el.addEventListener("pointercancel", release);
@@ -75,17 +127,31 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
     }
 
     return () => {
-      el.removeEventListener("pointerdown", press);
+      el.removeEventListener("pointerdown", onPointerDown);
       el.removeEventListener("pointerup", release);
       el.removeEventListener("pointerleave", release);
       el.removeEventListener("pointercancel", release);
       el.removeEventListener("keydown", onKeyDown);
       el.removeEventListener("keyup", onKeyUp);
       el.removeEventListener("blur", release);
-      gsap.killTweensOf(el);
-      gsap.set(el, { clearProps: "scale" });
+      if (spring) {
+        spring.kill();
+        gsap.set(el, { scale: 1 });
+      } else {
+        gsap.killTweensOf(el, "opacity");
+        gsap.set(el, { clearProps: "opacity" });
+      }
     };
-  }, [scale, inDuration, outDuration, keyboard]);
+  }, [
+    scale,
+    keyboard,
+    pressCfg.stiffness,
+    pressCfg.damping,
+    pressCfg.mass,
+    releaseCfg.stiffness,
+    releaseCfg.damping,
+    releaseCfg.mass,
+  ]);
 
   return ref;
 }

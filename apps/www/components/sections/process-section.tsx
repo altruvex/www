@@ -85,10 +85,6 @@ export const ProcessSection = memo(function ProcessSection() {
             );
             const veil = card.querySelector<HTMLElement>("[data-stack-veil]");
             if (!surface) return;
-
-            // Shrink toward the stuck top edge, so the exposed sliver stays put
-            // and the card reads as sliding UNDER the next one. With the
-            // default centre origin it reads as an unrelated zoom-out instead.
             gsap.set(surface, {
               transformOrigin: "center top",
               transformPerspective: 1200,
@@ -152,11 +148,11 @@ export const ProcessSection = memo(function ProcessSection() {
               }}
             >
               <div data-stack-surface>
-                <SurfaceCard className="relative overflow-hidden rounded-4xl border border-border/70 bg-card p-0 shadow-card-lg transition-colors duration-500 hover:border-local-accent/30 lg:shadow-2xl">
+                <SurfaceCard className="relative overflow-hidden rounded-lg border border-s-border-hover bg-card p-0 shadow-card-lg transition-colors duration-500 hover:border-local-accent/30 lg:shadow-2xl">
                   <div
                     data-stack-veil
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 z-10 rounded-4xl bg-background/50 opacity-0"
+                    className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-black/45 opacity-0"
                   />
                   <div className="grid min-h-112 lg:grid-cols-12">
                     <div className="relative flex flex-col justify-between gap-10 border-b border-border/70 p-7 md:p-8 lg:col-span-3 lg:border-b-0 lg:border-e lg:p-10">
@@ -247,7 +243,7 @@ function BuildSequence() {
           key={key}
           className="flex items-baseline gap-4 text-[11px] font-medium tracking-[0.12em] uppercase ltr:font-mono"
         >
-          <span className="text-s-muted/50 tabular-nums">
+          <span className="text-s-mid tabular-nums">
             <Num value={i + 1} pad={2} />
           </span>
           <span className="text-s-high/90">{t(key)}</span>

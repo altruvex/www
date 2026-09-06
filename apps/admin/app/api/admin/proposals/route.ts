@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
 import { requireAdminSession } from "@/lib/require-admin";
-import { buildProposalPptx } from "@/lib/proposal-builder";
+import { buildProposalPptx, totalTimelineWeeks } from "@/lib/proposal-builder";
 import { convertPptxToPdf } from "@/lib/pptx-to-pdf";
 import { upload } from "@/lib/storage";
 import { getIntentAccent } from "@/lib/intent-accent";
+import { getCompanySettings } from "@/lib/company-settings";
+import { ProposalQaError, runProposalContentGate } from "@/lib/proposal-qa";
+import { discountAmount, netTotal, validUntilDate } from "@/lib/proposal-schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,19 +39,15 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const lineItemSchema = z.object({
-  name: z.string().trim().min(1),
-  amount: z.number().int().nonnegative(),
-});
-
+// Only the fields the pipeline needs beyond the content document itself.
+// Everything the deck renders lives in `content` and is validated by the
+// shared schema, not duplicated here.
 const createProposalSchema = z.object({
   clientId: z.string().uuid(),
   projectType: z.enum(["website", "webapp", "ecommerce", "pwa"]),
   complexity: z.enum(["basic", "standard", "premium"]),
-  timelineWeeks: z.number().int().positive(),
-  currency: z.enum(["EGP", "USD"]).default("EGP"),
-  lineItems: z.array(lineItemSchema).min(1),
   accentName: z.string().min(1),
+  content: z.unknown(),
 });
 
 export async function POST(request: NextRequest) {
@@ -64,6 +63,21 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createProposalSchema.parse(body);
 
+    // Server-side gate. The Admin form runs the same checks, but never
+    // trust client-side validation alone.
+    let content;
+    try {
+      content = runProposalContentGate(validatedData.content);
+    } catch (error) {
+      if (error instanceof ProposalQaError) {
+        return NextResponse.json(
+          { success: false, message: error.message, issues: error.issues },
+          { status: 400 },
+        );
+      }
+      throw error;
+    }
+
     const client = await prisma.client.findUnique({
       where: { id: validatedData.clientId },
     });
@@ -74,37 +88,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const totalPrice = validatedData.lineItems.reduce(
-      (sum, item) => sum + item.amount,
-      0,
-    );
+    // The scalar columns are derived from the content document, never
+    // entered separately — the contract builder and signing flow read them
+    // and must not be able to disagree with the deck.
+    // `totalPrice` is the NET figure — what the client owes after any
+    // discount. Every downstream reader (contract value, VAT, milestone
+    // payments, pipeline value, analytics) uses this column, and all of them
+    // mean the amount actually invoiced. The pre-discount subtotal is
+    // recoverable from `lineItems`, and the discount itself from `content`.
+    const totalPrice = netTotal(content.investmentItems, content.discount);
+    const timelineWeeks = totalTimelineWeeks(content.timelinePhases);
+    const lineItems = content.investmentItems.map((item) => ({
+      name: item.item,
+      amount: item.amount,
+    }));
+    // Carried alongside the items so a reader of `lineItems` alone cannot
+    // mistake the subtotal for the fee.
+    const reduction = discountAmount(content.investmentItems, content.discount);
+    if (reduction > 0) {
+      lineItems.push({
+        name: content.discount.label.trim() || "Discount",
+        amount: -reduction,
+      });
+    }
+    const [first, second, final] = content.paymentSchedule;
+    const paymentSplit = {
+      first: first?.percent ?? 0,
+      second: second?.percent ?? 0,
+      final: final?.percent ?? 0,
+    };
     const intent = getIntentAccent(validatedData.accentName);
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 30);
 
     const proposal = await prisma.proposal.create({
       data: {
         clientId: validatedData.clientId,
         projectType: validatedData.projectType,
         complexity: validatedData.complexity,
-        currency: validatedData.currency,
+        currency: content.meta.currency,
         totalPrice,
-        lineItems: validatedData.lineItems,
-        timelineWeeks: validatedData.timelineWeeks,
+        lineItems,
+        timelineWeeks,
+        paymentSplit,
         colorWorld: intent.world,
         accentName: validatedData.accentName,
-        validUntil,
+        content,
+        validUntil: validUntilDate(content.meta),
         createdBy: session.user.id,
       },
     });
-
-    const proposalWithClient = { ...proposal, client };
 
     let fileUrl: string | null = null;
     let pdfUrl: string | null = null;
 
     try {
-      const pptxBuffer = await buildProposalPptx(proposalWithClient);
+      const company = await getCompanySettings();
+      const pptxBuffer = await buildProposalPptx(content, company);
       fileUrl = await upload(
         pptxBuffer,
         `proposals/${proposal.id}.pptx`,
@@ -120,11 +158,15 @@ export async function POST(request: NextRequest) {
         console.error("Error generating proposal file:", error);
       }
       // The Proposal row still exists (status DRAFT, no fileUrl) — Ali can
-      // retry generation rather than losing the priced line items.
+      // retry generation rather than losing the edited content.
       return NextResponse.json(
         {
           success: false,
-          message: "Proposal was priced but the document failed to generate.",
+          message:
+            error instanceof ProposalQaError
+              ? error.message
+              : "Proposal was saved but the document failed to generate.",
+          issues: error instanceof ProposalQaError ? error.issues : undefined,
           proposal,
         },
         { status: 502 },

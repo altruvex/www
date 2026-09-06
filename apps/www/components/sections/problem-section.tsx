@@ -82,7 +82,7 @@ export const ProblemSection = memo(function ProblemSection() {
           descriptionRef={bodyRef}
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
-          secondTitle={t("titleAccent")}
+          secondTitle={t("titleItalic")}
           description={t("subtitle")}
           className="mb-16 lg:mb-20"
         />

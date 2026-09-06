@@ -42,7 +42,6 @@ export default function OfflinePage() {
           <h1 className="mb-4 font-sans text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground">
             You&apos;re Offline
           </h1>
-
           <p className="mb-8 max-w-md text-lg text-muted-foreground">
             It looks like you&apos;ve lost your internet connection. Check your
             network and try again.
@@ -57,7 +56,6 @@ export default function OfflinePage() {
               <RefreshCw className="w-4 h-4" />
               Try Again
             </Button>
-
             <Button
               size="lg"
               variant="secondary"
@@ -66,16 +64,14 @@ export default function OfflinePage() {
               Go Back
             </Button>
           </div>
-
           <div className="mt-12 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
             <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-            <p className="text-sm text-muted-foreground font-mono">
+            <p className="text-md text-muted-foreground font-mono">
               Network Status: Offline
             </p>
           </div>
         </div>
       </Container>
-
       <div className="absolute top-20 left-10 w-32 h-32 rounded-full blur-3xl opacity-10 bg-primary animate-pulse" />
       <div
         className="absolute bottom-20 right-10 w-40 h-40 rounded-full blur-3xl opacity-10 bg-accent animate-pulse"

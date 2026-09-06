@@ -173,7 +173,7 @@ function ClosingSection() {
             descriptionRef={descRef}
             firstTitle={t("title")}
             secondTitle={t("titleItalic")}
-            accent="forest"
+            accent="world"
             description={t.rich("description", bodyMarks)}
             className="mb-10 block"
             classes={{

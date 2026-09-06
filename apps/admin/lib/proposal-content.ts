@@ -100,7 +100,7 @@ const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
     "Domain live, monitoring in place",
   ],
   webapp: [
-    "Brief confirmed, data model drafted",
+    "Brief confirmed, model drafted",
     "UI/UX design across all core flows",
     "Core system built and integrated",
     "Functional and regression testing",
@@ -108,7 +108,7 @@ const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
     "Domain live, monitoring in place",
   ],
   ecommerce: [
-    "Brief confirmed, catalog structure set",
+    "Brief confirmed, structure set",
     "Storefront and checkout design",
     "Store built, payments integrated",
     "Order flow and payment testing",
@@ -116,7 +116,7 @@ const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
     "Domain live, monitoring in place",
   ],
   pwa: [
-    "Brief confirmed, offline strategy set",
+    "Brief confirmed, strategy set",
     "App-shell and interaction design",
     "Built, installable, offline-tested",
     "Cross-device and connectivity testing",
@@ -152,14 +152,29 @@ export function getTimelinePhases(
 
   // Distribute leftover weeks to the phases with the largest fractional
   // remainder first, so the phases always sum to exactly totalWeeks.
-  const order = rawWeeks
+  const byFracDesc = rawWeeks
     .map((w, i) => ({ i, frac: w - Math.floor(w) }))
     .sort((a, b) => b.frac - a.frac);
 
-  for (const { i } of order) {
+  for (const { i } of byFracDesc) {
     if (remainder <= 0) break;
     floored[i]++;
     remainder--;
+  }
+
+  // The Math.max(1, ...) floor above can push the total *past* totalWeeks
+  // for a short timeline (many phases each rounding up to a 1-week
+  // minimum) — remainder goes negative. Claw the excess back from the
+  // phases with the weakest claim to their current week (smallest
+  // fractional share first), never below the 1-week floor, so every
+  // timeline always sums to exactly totalWeeks instead of silently
+  // drifting over it.
+  const byFracAsc = [...byFracDesc].reverse();
+  for (const { i } of byFracAsc) {
+    if (remainder >= 0) break;
+    if (floored[i] <= 1) continue;
+    floored[i]--;
+    remainder++;
   }
 
   return PHASE_SHARE.map((phase, i) => ({
@@ -167,6 +182,28 @@ export function getTimelinePhases(
     deliverable: deliverables[i],
     weeks: floored[i],
   }));
+}
+
+// Effort curve across the project's weeks, as a percentage of peak load:
+// slow start, peak during build, taper into launch. The reference deck's
+// six-week chart IS this profile; other durations resample it, so the shape
+// holds instead of every bar rendering at one constant height.
+const WEEKLY_LOAD_PROFILE = [30, 60, 100, 75, 45, 35];
+
+export function getWeeklyLoad(totalWeeks: number): number[] {
+  const weeks = Math.max(1, Math.floor(totalWeeks));
+  if (weeks === 1) return [WEEKLY_LOAD_PROFILE[2]];
+
+  const lastIndex = WEEKLY_LOAD_PROFILE.length - 1;
+  return Array.from({ length: weeks }, (_, i) => {
+    const pos = (i / (weeks - 1)) * lastIndex;
+    const low = Math.floor(pos);
+    const high = Math.min(lastIndex, low + 1);
+    const t = pos - low;
+    const value =
+      WEEKLY_LOAD_PROFILE[low] * (1 - t) + WEEKLY_LOAD_PROFILE[high] * t;
+    return Math.round(value);
+  });
 }
 
 const LINE_ITEM_SPLIT: { name: string; share: number }[] = [
@@ -212,3 +249,40 @@ export function complexityLabel(complexity: Complexity): string {
   };
   return labels[complexity];
 }
+
+export const CONTACT = {
+  phone: "+20 102 312 5493",
+  email: "hello@altruvex.com",
+  website: "altruvex.com",
+};
+
+// Shared between the proposal (slide 6) and the contract (SOW clause) so the
+// two documents never quote different scope for the same deal.
+export const SCOPE_INCLUDED = [
+  "Custom design & development",
+  "Responsive, mobile-first build",
+  "Bilingual-ready content layer",
+  "Domain, SSL & Year 1 hosting setup",
+  "3 rounds of revisions",
+  "30 days post-launch support",
+];
+
+export const SCOPE_NOT_INCLUDED = [
+  "Branding from scratch",
+  "Copywriting",
+  "Paid stock / premium assets",
+  "SMS / email credits",
+  "Third-party subscriptions",
+  "Ongoing retainer (quoted separately)",
+];
+
+export const STANDARD_TERMS: [string, string][] = [
+  ["VALIDITY", "Proposal valid for 30 days from the proposal date."],
+  ["PAYMENT", "50% to start · 30% at milestone · 20% before launch. No deposit = no project start."],
+  ["TIMELINE", "Starts after first payment + confirmed brief."],
+  ["LAUNCH", "Client reviews on Altruvex staging; live domain pointed after final payment."],
+  ["CONTENT", "Client provides all text, images, brand assets, and access credentials."],
+  ["REVISIONS", "3 rounds included. Additional at 800 EGP/hr."],
+  ["OWNERSHIP", "Full source code ownership transfers to client upon final payment."],
+  ["SUPPORT", "30 days of post-launch support for critical fixes included."],
+];

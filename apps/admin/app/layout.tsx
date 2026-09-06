@@ -9,14 +9,14 @@ import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   variable: "--font-inter",
   display: "swap",
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "600"],
+  weight: ["400", "500", "600"],
   variable: "--font-outfit",
   display: "swap",
 });
@@ -28,9 +28,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Altruvex Admin",
+  title: {
+    default: "Altruvex OS",
+    template: "%s · Altruvex OS",
+  },
   description:
-    "Altruvex internal admin dashboard for managing contacts, leads, and meetings.",
+    "The internal operating system of Altruvex: leads, proposals, contracts, delivery and finance in one place.",
 };
 
 export default function RootLayout({
@@ -41,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`min-h-screen flex flex-col antialiased overflow-x-auto ${inter.variable} ${outfit.variable} ${geistMono.variable} font-body`}
+        className={`min-h-dvh antialiased ${inter.variable} ${outfit.variable} ${geistMono.variable} font-body`}
       >
         <ThemeProvider
           attribute="class"

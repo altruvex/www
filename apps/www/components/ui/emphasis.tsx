@@ -18,6 +18,43 @@ export const ACCENT_GRADIENTS = [
 
 export type AccentGradient = (typeof ACCENT_GRADIENTS)[number];
 
+/**
+ * `"world"` resolves to the primary gradient of the enclosing `accent-world-*`
+ * section (blue → brand, orange → ember, green → forest) via the
+ * `--world-grad-*` custom properties in globals.css. It is the default choice
+ * for coloured headings: a heading can never wear the wrong world.
+ */
+export const WORLD_ACCENT = "world" as const;
+
+/**
+ * Gradients approved for section headings, grouped by the accent-world they
+ * belong to. Everything else in ACCENT_GRADIENTS (aurora, lavender, neon,
+ * candy) is playground / MDX colour only - never a heading.
+ *
+ * - `primary` is what `"world"` resolves to; reach for it by name only when
+ *   the section has no `accent-world-*` wrapper of its own.
+ * - `alt` is for a second Accent in the SAME world on one page, or a
+ *   same-world section that sits directly before the closing CTA.
+ * - `hero` is the page-level h1 only (one per page).
+ *
+ * Full rules: docs/section-heading-emphasis.md
+ */
+export const HEADING_ACCENTS = {
+  blue: { primary: "brand", alt: "ocean", hero: "iris" },
+  orange: { primary: "ember", alt: "sunset" },
+  green: { primary: "forest", alt: "mint" },
+} as const;
+
+export type HeadingAccent =
+  | typeof WORLD_ACCENT
+  | "brand"
+  | "ocean"
+  | "iris"
+  | "ember"
+  | "sunset"
+  | "forest"
+  | "mint";
+
 const DIRECTION_CLASSES = {
   r: "bg-linear-to-r rtl:bg-linear-to-l",
   l: "bg-linear-to-l rtl:bg-linear-to-r",
@@ -43,7 +80,7 @@ export type AccentSpeed = keyof typeof MOTION.accent.shimmer;
 type AccentStyle = CSSProperties & { "--text-gradient-duration"?: string };
 
 export interface AccentProps extends ComponentPropsWithoutRef<"span"> {
-  gradient?: AccentGradient | (string & {});
+  gradient?: AccentGradient | typeof WORLD_ACCENT | (string & {});
   direction?: GradientDirection;
   /** `true` is an alias for `"shimmer"` (back-compat). */
   animate?: boolean | AccentAnimation;
@@ -103,7 +140,9 @@ export const Accent = forwardRef<HTMLSpanElement, AccentProps>(
     },
     ref,
   ) => {
-    const isPredefined = (ACCENT_GRADIENTS as readonly string[]).includes(gradient);
+    const isPredefined =
+      gradient === WORLD_ACCENT ||
+      (ACCENT_GRADIENTS as readonly string[]).includes(gradient);
     const accentClass = isPredefined ? `accent-${gradient}` : undefined;
     const customGradientClasses = isPredefined ? undefined : gradient;
 

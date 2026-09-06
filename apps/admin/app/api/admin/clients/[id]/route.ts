@@ -35,7 +35,10 @@ export async function GET(
         transparencyLead: true,
         proposals: { orderBy: { createdAt: "desc" } },
         contracts: { orderBy: { createdAt: "desc" } },
-        projects: { orderBy: { createdAt: "desc" } },
+        projects: {
+          orderBy: { createdAt: "desc" },
+          include: { payments: { orderBy: { createdAt: "asc" } } },
+        },
         messages: { orderBy: { createdAt: "desc" } },
       },
     });

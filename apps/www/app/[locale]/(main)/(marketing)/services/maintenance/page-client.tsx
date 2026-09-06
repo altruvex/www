@@ -5,7 +5,7 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { ServiceHero } from "@/components/sections/service-hero";
-import { Accent, Highlight } from "@/components/ui/emphasis";
+import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
 import { accentWorldClass } from "@/lib/config/accent-world";
 import { getCommercialCta } from "@/lib/config/commercial";
@@ -264,7 +264,7 @@ function PricingSection() {
             eyebrow={t("pricing.eyebrow")}
             firstTitle={t("pricing.title")}
             secondTitle={t("pricing.titleAccent")}
-            accent="iris"
+            accent="world"
             description={t("pricing.subtitle")}
           />
         </div>
@@ -479,7 +479,7 @@ function CtaSection() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                {t("cta.title")} <Accent gradient="ember">{t("cta.titleItalic")}</Accent>
+                {t("cta.title")} <Highlight>{t("cta.titleItalic")}</Highlight>
               </h2>
               <p className="text-base text-primary/60 leading-relaxed max-w-[44ch]">
                 {t.rich("cta.description", bodyMarks)}

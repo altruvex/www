@@ -59,7 +59,7 @@ const ServiceCard = memo(function ServiceCard({
         <Num value={service.index} />
       </span>
       <div className="relative z-10 mb-10 flex items-baseline gap-3">
-        <span className="text-[11px] font-mono font-medium tracking-widest text-s-muted transition-colors duration-300 group-hover:text-local-accent">
+        <span className="text-[11px] font-mono font-medium tracking-widest text-s-high/80 transition-colors duration-300 group-hover:text-local-accent">
           <Num value={service.index} />
         </span>
         <span aria-hidden className="text-xs font-mono text-s-muted/40">/</span>
@@ -119,7 +119,7 @@ const ProcessRail = memo(function ProcessRail() {
         {SERVICES.map((service, i) => (
           <Fragment key={service.key}>
             <div className="group/rail flex shrink-0 flex-row items-center gap-4 md:flex-col md:items-start md:gap-3">
-              <span className="text-[11px] font-mono tracking-[0.2em] text-s-muted transition-colors duration-300 group-hover/rail:text-local-accent">
+              <span className="text-[11px] font-mono tracking-[0.2em] text-s-high/80 transition-colors duration-300 group-hover/rail:text-local-accent">
                 <Num value={service.index} />
               </span>
               <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-s-mid md:mt-0">

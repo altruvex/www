@@ -6,9 +6,10 @@ const ADMIN_ROLES = new Set(["ADMIN", "SUPERADMIN"]);
 
 export default async function proxy(request: NextRequest) {
   const publicPaths = ["/login", "/offline"];
+  const publicPrefixes = ["/api/auth/", "/sign/", "/api/sign/", "/portal/", "/api/portal/"];
   const isPublicPath =
     publicPaths.some((path) => request.nextUrl.pathname === path) ||
-    request.nextUrl.pathname.startsWith("/api/auth/") ||
+    publicPrefixes.some((prefix) => request.nextUrl.pathname.startsWith(prefix)) ||
     // Meta calls this directly (verification handshake + delivery/inbound
     // events) with no session cookie — authenticity is the webhook's own
     // X-Hub-Signature-256 check, not this proxy.

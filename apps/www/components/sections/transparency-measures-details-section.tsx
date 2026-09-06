@@ -9,18 +9,6 @@ type MeasureSection = {
   title: string;
 };
 
-/**
- * How the estimate works — editorial reference column.
- *
- * Proof shape: sequence — what the estimator measures, why the range moves,
- * then how to act on the result. The order is the argument, so the section is
- * numbered and runs as one column rather than three parallel boxes.
- *
- * Device: a quiet reference column. This is the only section on the page whose
- * job is to be *read* rather than to perform — it sits under a live calculator
- * and must not compete with it. The bordered 3-card grid it replaces did
- * compete, and it was the site's over-subscribed device besides.
- */
 export function TransparencyMeasuresDetailsSection() {
   const t = useTranslations("transparency.seo");
   const locale = useLocale();
@@ -44,7 +32,6 @@ export function TransparencyMeasuresDetailsSection() {
             {t("body")}
           </p>
         </div>
-
         <ol className="mt-14 list-none border-b border-border md:mt-16">
           {sections.map((section, index) => (
             <li
@@ -62,7 +49,6 @@ export function TransparencyMeasuresDetailsSection() {
                   {section.title}
                 </h3>
               </div>
-
               <div>
                 <p className="max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
                   {section.body}

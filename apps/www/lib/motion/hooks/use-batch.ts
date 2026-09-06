@@ -1,13 +1,13 @@
 "use client";
 
-import { useLoading } from "@/components/providers/loading-provider";
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
-import { gsap } from "@/lib/utils/gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
-import { MOTION, MotionEase, MotionTrigger, getConstrainedDevice, resolveEase, resolveTrigger } from "../config";
-import { REDUCED_FADE } from "../utils/env";
-import { RevealDirection } from "./use-reveal";
+import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../tokens";
+import { readDirection } from "../utils/direction";
+import { REDUCED_FADE, getConstrainedDevice } from "../utils/env";
+import { whenMotionReady } from "../utils/ready";
+import { RevealDirection, revealFrom } from "./use-reveal";
 
 export interface BatchConfig {
   direction?: RevealDirection;
@@ -19,6 +19,7 @@ export interface BatchConfig {
   trigger?: string | MotionTrigger;
   once?: boolean;
   selector?: string;
+  /** Alternate odd/even items from opposite inline sides (needs a horizontal direction). */
   alternate?: boolean;
   batchMax?: number;
 }
@@ -37,11 +38,20 @@ const DEFAULTS = {
   batchMax: 6,
 } as const;
 
+const OPPOSITE: Partial<Record<RevealDirection, RevealDirection>> = {
+  left: "right",
+  right: "left",
+  start: "end",
+  end: "start",
+};
+
+/** Reduced-motion stagger: kept tiny because it costs no vestibular risk and preserves "arriving as a group". */
+const REDUCED_STAGGER = 0.02;
+
 export function useBatch<T extends HTMLElement = HTMLDivElement>(
   config: BatchConfig = {},
 ): RefObject<T | null> {
   const ref = useRef<T | null>(null);
-  const { isInitialLoadComplete } = useLoading();
 
   const {
     direction = DEFAULTS.direction,
@@ -59,59 +69,93 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
 
   useIsomorphicLayoutEffect(() => {
     const container = ref.current;
-    if (!container || !isInitialLoadComplete) return;
+    if (!container) return;
 
-    const items = selector
-      ? Array.from(container.querySelectorAll<HTMLElement>(selector))
-      : (Array.from(container.children) as HTMLElement[]);
+    let ctx: gsap.Context | null = null;
 
-    if (!items.length) return;
+    const off = whenMotionReady(() => {
+      const items = selector
+        ? Array.from(container.querySelectorAll<HTMLElement>(selector))
+        : (Array.from(container.children) as HTMLElement[]);
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
+      if (!items.length) return;
 
-      mm.add(
-        {
-          motion: "(prefers-reduced-motion: no-preference)",
-          reduced: "(prefers-reduced-motion: reduce)",
-        },
-        () => {
-          // ── Reduced-motion tier ──────────────────────────────────────────
-          // Was: gsap.set(items, { opacity: 1, x: 0, y: 0, scale: 1, clearProps: "willChange" })
-          //      - every card in the grid appears with zero signal at once.
-          // Now: short opacity-only settle, tiny stagger (20ms) kept ONLY
-          // because it costs no vestibular risk (no movement) and preserves
-          // "these belong together, arriving as a group" - the one piece of
-          // grid semantics worth keeping. No transform/scale.
-          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            gsap.fromTo(
-              items,
-              { opacity: 0 },
-              { opacity: 1, ...REDUCED_FADE, stagger: 0.02, clearProps: "opacity,willChange" },
-            );
-            return;
-          }
+      ctx = gsap.context(() => {
+        const mm = gsap.matchMedia();
 
-          const constrained = getConstrainedDevice();
-          const effectiveDistance = constrained ? Math.round(distance * 0.6) : distance;
-          const resolvedEasing = resolveEase(ease);
-          const resolvedTriggering = resolveTrigger(trigger);
+        mm.add(
+          {
+            motion: "(prefers-reduced-motion: no-preference)",
+            reduced: "(prefers-reduced-motion: reduce)",
+          },
+          (context) => {
+            const { reduced } = context.conditions as { reduced: boolean };
 
-          if (alternate && (direction === "left" || direction === "right")) {
-            const evens = items.filter((_, i) => i % 2 === 0);
-            const odds = items.filter((_, i) => i % 2 === 1);
-            const evenFrom = buildFrom(direction, effectiveDistance);
-            const oddDir: RevealDirection = direction === "left" ? "right" : "left";
-            const oddFrom = buildFrom(oddDir, effectiveDistance);
+            // ── Reduced-motion tier ──────────────────────────────────────
+            if (reduced) {
+              gsap.fromTo(
+                items,
+                { opacity: 0 },
+                {
+                  opacity: 1,
+                  ...REDUCED_FADE,
+                  stagger: REDUCED_STAGGER,
+                  clearProps: "opacity,willChange",
+                },
+              );
+              return;
+            }
 
-            gsap.set(evens, { ...evenFrom, willChange: "transform, opacity" });
-            gsap.set(odds, { ...oddFrom, willChange: "transform, opacity" });
-          } else {
-            const from = buildFrom(direction, effectiveDistance);
+            const dir = readDirection(container);
+            const constrained = getConstrainedDevice();
+            const effectiveDistance = constrained ? Math.round(distance * 0.6) : distance;
+            const resolvedEasing = resolveEase(ease);
+            const resolvedTriggering = resolveTrigger(trigger);
+            const opposite = OPPOSITE[direction];
+            const useAlternate = alternate && opposite !== undefined;
+
+            if (useAlternate) {
+              const evens = items.filter((_, i) => i % 2 === 0);
+              const odds = items.filter((_, i) => i % 2 === 1);
+              gsap.set(evens, {
+                ...revealFrom(direction, effectiveDistance, dir),
+                willChange: "transform, opacity",
+              });
+              gsap.set(odds, {
+                ...revealFrom(opposite, effectiveDistance, dir),
+                willChange: "transform, opacity",
+              });
+
+              items.forEach((item, i) => {
+                gsap.to(item, {
+                  opacity: 1,
+                  x: 0,
+                  y: 0,
+                  scale: 1,
+                  duration,
+                  delay: delay + i * stagger,
+                  ease: resolvedEasing,
+                  force3D: true,
+                  overwrite: "auto",
+                  scrollTrigger: {
+                    trigger: item,
+                    start: resolvedTriggering,
+                    once,
+                    fastScrollEnd: true,
+                    toggleActions: once ? "play none none none" : "play none none reverse",
+                    invalidateOnRefresh: true,
+                  },
+                  onComplete() {
+                    gsap.set(item, { clearProps: "willChange,transform" });
+                  },
+                });
+              });
+              return;
+            }
+
+            const from = revealFrom(direction, effectiveDistance, dir);
             gsap.set(items, { ...from, willChange: "transform, opacity" });
-          }
 
-          if (!alternate) {
             ScrollTrigger.batch(items, {
               start: resolvedTriggering,
               once,
@@ -132,65 +176,34 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
                   },
                 });
               },
-              onLeaveBack: once ? undefined : (batch: Element[]) => {
-                const from = buildFrom(direction, effectiveDistance);
-                gsap.to(batch, {
-                  ...from,
-                  duration: duration * 0.6,
-                  ease: "power1.in",
-                  force3D: true,
-                  overwrite: "auto",
-                  onStart() {
-                    gsap.set(batch, { willChange: "transform, opacity" });
+              onLeaveBack: once
+                ? undefined
+                : (batch: Element[]) => {
+                    gsap.to(batch, {
+                      ...from,
+                      duration: duration * 0.6,
+                      ease: "power1.in",
+                      force3D: true,
+                      overwrite: "auto",
+                      onStart() {
+                        gsap.set(batch, { willChange: "transform, opacity" });
+                      },
+                      onComplete() {
+                        gsap.set(batch, { clearProps: "willChange,transform" });
+                      },
+                    });
                   },
-                  onComplete() {
-                    gsap.set(batch, { clearProps: "willChange,transform" });
-                  },
-                });
-              },
             });
-          } else {
-            items.forEach((item, i) => {
-              gsap.to(item, {
-                opacity: 1,
-                x: 0,
-                y: 0,
-                scale: 1,
-                duration,
-                delay: delay + i * stagger,
-                ease: resolvedEasing,
-                force3D: true,
-                overwrite: "auto",
-                scrollTrigger: {
-                  trigger: item,
-                  start: resolvedTriggering,
-                  once,
-                  fastScrollEnd: true,
-                  toggleActions: once ? "play none none none" : "play none none reverse",
-                  invalidateOnRefresh: true,
-                },
-                onComplete() {
-                  gsap.set(item, { clearProps: "willChange,transform" });
-                },
-              });
-            });
-          }
-        }
-      );
-    }, container);
+          },
+        );
+      }, container);
+    });
 
-    return () => ctx.revert();
-  }, [isInitialLoadComplete, direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate, batchMax]);
+    return () => {
+      off();
+      ctx?.revert();
+    };
+  }, [direction, delay, duration, distance, stagger, ease, trigger, once, selector, alternate, batchMax]);
 
   return ref;
-}
-
-function buildFrom(direction: RevealDirection, distance: number): gsap.TweenVars {
-  const base: gsap.TweenVars = { opacity: 0 };
-  if (direction === "up") return { ...base, y: distance };
-  if (direction === "down") return { ...base, y: -distance };
-  if (direction === "left") return { ...base, x: distance };
-  if (direction === "right") return { ...base, x: -distance };
-  if (direction === "scale") return { ...base, scale: 0.95 };
-  return base;
 }

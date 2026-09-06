@@ -118,7 +118,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       <SectionWatermark>{watermark}</SectionWatermark>
 
       <Container className="flex w-full flex-col justify-end lg:py-0 py-12">
-        <div className="w-full max-w-full sm:max-w-5xl">
+        <div className="w-full max-w-full">
 
           <HeroReveal delay={0.1} className="mb-4 flex items-center gap-2">
             <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success animate-pulse" />
@@ -132,7 +132,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
           <HeroHeadline
             as="h1"
             id="home-heading"
-            className="mb-7 md:mb-8 max-w-[44rem] text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal font-sans font-light text-foreground select-none"
+            className="mb-7 md:mb-8 max-w-176 text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] lg:leading-[1.02] tracking-[-0.03em] rtl:tracking-normal font-sans font-light text-foreground select-none"
           >
             <span className="block">
               {titlePre} <Accent gradient="iris">{titleAccent}</Accent>
@@ -151,7 +151,7 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
               className="mt-3 hidden h-px w-full bg-border md:block"
               aria-hidden
             />
-            <div className="max-w-[42rem] space-y-3">
+            <div className="max-w-2xl space-y-3">
               <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                 {t("hero.problem")}
               </p>

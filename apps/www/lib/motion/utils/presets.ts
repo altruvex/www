@@ -1,4 +1,8 @@
-import { DEFAULTS, MOTION, SECTION_DELAYS } from "../config";
+/**
+ * Named motion presets — the vocabulary components speak. Every value here is
+ * either a `MOTION` token or the one shape parameter that defines the preset
+ * (e.g. a magnetic strength). Components never pass raw numbers.
+ */
 import type { BatchConfig } from "../hooks/use-batch";
 import type { CounterConfig } from "../hooks/use-counter";
 import type { MagneticConfig } from "../hooks/use-magnetic";
@@ -7,6 +11,9 @@ import type { PressConfig } from "../hooks/use-press";
 import type { RevealConfig } from "../hooks/use-reveal";
 import type { TextConfig } from "../hooks/use-text";
 import type { TiltConfig } from "../hooks/use-tilt";
+import { MOTION } from "../tokens";
+
+// ── Reveals ────────────────────────────────────────────────────────────────
 
 const fadeUp = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   direction: "up",
@@ -23,21 +30,31 @@ const fadeIn = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   ...overrides,
 });
 
-const slideLeft = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
-  direction: "left",
+/** Slides in from the inline-START edge (left in LTR, right in RTL). */
+const slideStart = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  direction: "start",
   duration: MOTION.duration.slow,
   distance: MOTION.distance.lg,
   ease: MOTION.ease.smooth,
   ...overrides,
 });
 
-const slideRight = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
-  direction: "right",
+/** Slides in from the inline-END edge (right in LTR, left in RTL). */
+const slideEnd = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  direction: "end",
   duration: MOTION.duration.slow,
   distance: MOTION.distance.lg,
   ease: MOTION.ease.smooth,
   ...overrides,
 });
+
+/** Physical: travels leftward. Prefer `slideStart`/`slideEnd` for anything bilingual. */
+const slideLeft = (overrides: Partial<RevealConfig> = {}): RevealConfig =>
+  slideEnd({ direction: "left", ...overrides });
+
+/** Physical: travels rightward. Prefer `slideStart`/`slideEnd` for anything bilingual. */
+const slideRight = (overrides: Partial<RevealConfig> = {}): RevealConfig =>
+  slideStart({ direction: "right", ...overrides });
 
 const scaleIn = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   direction: "scale",
@@ -46,48 +63,48 @@ const scaleIn = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
   ...overrides,
 });
 
+// ── Section choreography ───────────────────────────────────────────────────
+
 const sectionTitle = (overrides: Partial<TextConfig> = {}): TextConfig => ({
-  ...DEFAULTS.heading,
+  ...MOTION.text.heading,
   ease: MOTION.ease.text,
   ...overrides,
 });
 
 const sectionEyebrow = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
-  ...DEFAULTS.body,
-  delay: SECTION_DELAYS.eyebrow,
+  ...MOTION.text.body,
+  delay: MOTION.section.eyebrow,
   ...overrides,
 });
 
-const sectionDescription = (
-  overrides: Partial<RevealConfig> = {},
-): RevealConfig => ({
-  ...DEFAULTS.body,
-  delay: SECTION_DELAYS.description,
+const sectionDescription = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  ...MOTION.text.body,
+  delay: MOTION.section.description,
   ...overrides,
 });
 
 const sectionElement = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
-  ...DEFAULTS.element,
-  delay: SECTION_DELAYS.element,
+  ...MOTION.text.element,
+  delay: MOTION.section.element,
   // Meaningful reveals (CTAs, featured blocks) get the anticipation
   // micro-beat (principles M2); pass `anticipate: false` to opt out.
   anticipate: true,
   ...overrides,
 });
 
-const sectionScrollHint = (
-  overrides: Partial<RevealConfig> = {},
-): RevealConfig => ({
-  ...DEFAULTS.element,
+const sectionScrollHint = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
+  ...MOTION.text.element,
   direction: "fade",
-  delay: SECTION_DELAYS.scrollHint,
+  delay: MOTION.section.scrollHint,
   ...overrides,
 });
 
 const sectionCardGrid = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
-  ...DEFAULTS.card,
+  ...MOTION.text.card,
   ...overrides,
 });
+
+// ── Text ───────────────────────────────────────────────────────────────────
 
 const headline = (overrides: Partial<TextConfig> = {}): TextConfig =>
   sectionTitle(overrides);
@@ -103,11 +120,11 @@ const heroReveal = (overrides: Partial<RevealConfig> = {}): RevealConfig => ({
 const heroHeadline = (overrides: Partial<TextConfig> = {}): TextConfig => ({
   splitBy: "word",
   blur: true,
-  duration: 1.1,
-  stagger: 0.07,
+  duration: MOTION.duration.display,
+  stagger: MOTION.stagger.display,
   distance: MOTION.distance.lg,
   ease: "power4.out",
-  trigger: "top 95%",
+  trigger: MOTION.trigger.hero,
   scrubExit: false,
   ...overrides,
 });
@@ -131,6 +148,8 @@ const body = (overrides: Partial<TextConfig> = {}): TextConfig => ({
   ...overrides,
 });
 
+// ── Groups ─────────────────────────────────────────────────────────────────
+
 const cardGrid = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
   direction: "up",
   duration: MOTION.duration.base,
@@ -149,19 +168,21 @@ const listItems = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
   ...overrides,
 });
 
+// ── Scroll-linked ──────────────────────────────────────────────────────────
+
 const parallax = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig => ({
-  speed: 0.3,
+  speed: MOTION.parallax.base,
   direction: "y",
-  scrub: 1.5,
+  scrub: MOTION.parallax.scrub,
   anchor: "section",
   ...overrides,
 });
 
 const parallaxSlow = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
-  parallax({ speed: 0.15, ...overrides });
+  parallax({ speed: MOTION.parallax.slow, ...overrides });
 
 const parallaxFast = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
-  parallax({ speed: 0.5, ...overrides });
+  parallax({ speed: MOTION.parallax.fast, ...overrides });
 
 const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterConfig => ({
   from: 0,
@@ -173,79 +194,81 @@ const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterCon
   ...overrides,
 });
 
-// ── Micro-interaction presets ──────────────────────────────────────────────
-// Same factory pattern as everything above. Keep new presets additive - do
-// not invent a fourth interaction primitive without a real, named UI need.
+// ── Interaction (spring-driven) ────────────────────────────────────────────
+// Keep new presets additive — do not invent a fourth interaction primitive
+// without a real, named UI need.
 
-/** Primary CTAs - confident pull, generous travel. */
+/** Primary CTAs — confident pull, generous travel. */
 const magneticCTA = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
   strength: 0.4,
   max: 28,
-  smoothing: 0.5,
+  spring: "magnetic",
   ...overrides,
 });
 
-/** Icon buttons / nav glyphs - tighter radius, snappier follow. */
+/** Icon buttons / nav glyphs — tighter radius, crisper follow. */
 const magneticIcon = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
   strength: 0.5,
   max: 16,
-  smoothing: 0.35,
+  spring: "snappy",
   ...overrides,
 });
 
-/** MagneticButton's own pull - locked spec (Ali 2026-07-05): strength 0.15. */
+/** MagneticButton's own pull — locked spec (Ali 2026-07-05): strength 0.15. */
 const magneticButton = (overrides: Partial<MagneticConfig> = {}): MagneticConfig => ({
   strength: 0.15,
   max: 24,
-  smoothing: 0.5,
+  spring: "magnetic",
   ...overrides,
 });
 
-/** Feature / pricing cards - subtle depth, slight lift toward the viewer. */
+/** Feature / pricing cards — subtle depth, slight lift toward the viewer. */
 const tiltCard = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   max: 5,
   lift: 8,
   perspective: 900,
-  smoothing: 0.4,
+  spring: "tilt",
   ...overrides,
 });
 
-/** Small tiles / logos - barely-there tilt, no lift. */
+/** Small tiles / logos — barely-there tilt, no lift. */
 const tiltSubtle = (overrides: Partial<TiltConfig> = {}): TiltConfig => ({
   max: 3,
   lift: 0,
   perspective: 700,
-  smoothing: 0.35,
+  spring: "tilt",
   ...overrides,
 });
 
 /** Default tactile press for any clickable element. */
 const pressDefault = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   scale: 0.97,
-  inDuration: 0.12,
-  outDuration: 0.55,
+  pressSpring: "press",
+  releaseSpring: "release",
   ...overrides,
 });
 
-/** Smaller hit targets (icon buttons) - press reads at a smaller scale delta too. */
+/** Smaller hit targets (icon buttons) — press reads at a larger scale delta. */
 const pressIcon = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   scale: 0.92,
-  inDuration: 0.1,
-  outDuration: 0.5,
+  pressSpring: "press",
+  releaseSpring: "release",
   ...overrides,
 });
 
-/** MagneticButton's press - locked spec (Ali 2026-07-05): scale 0.95. */
+/** MagneticButton's press — locked spec (Ali 2026-07-05): scale 0.95. */
 const pressButton = (overrides: Partial<PressConfig> = {}): PressConfig => ({
   scale: 0.95,
-  inDuration: 0.12,
-  outDuration: 0.55,
+  pressSpring: "press",
+  releaseSpring: "release",
   ...overrides,
 });
 
 export const motion = {
   fadeUp,
   fadeIn,
+  slideStart,
+  slideEnd,
   slideLeft,
   slideRight,
   scaleIn,

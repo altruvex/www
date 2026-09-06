@@ -1,4 +1,4 @@
-import { Accent, Highlight, type AccentAnimation, type AccentGradient, type GradientDirection } from "@/components/ui/emphasis";
+import { Accent, Highlight, type AccentAnimation, type GradientDirection, type HeadingAccent } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils/utils";
 import { ReactNode, RefObject } from "react";
@@ -13,7 +13,23 @@ interface SectionHeadingProps {
   descriptionRef?: RefObject<HTMLElement | null>;
   className?: string;
   theme?: "default" | "surface";
-  accent?: AccentGradient | (string & {});
+  /**
+   * How the second title line is emphasised.
+   *
+   * - omitted → `<Highlight>`: dimmed serif-italic (bold sans in RTL). The
+   *   default. Use for craft, method, restraint, philosophy, identity - and
+   *   for ANY negative / loss / risk framing ("a gamble.", "compounds in cost.").
+   * - `"world"` → `<Accent>` in the enclosing `accent-world-*` gradient. Use
+   *   for outcome, value-prop, proof and conversion phrases ("no hidden costs.",
+   *   "scope your build?"). Requires an `accent-world-*` ancestor.
+   * - a named gradient → only the documented alternates (`HEADING_ACCENTS`):
+   *   same-world second Accent on one page, or the page hero's `iris`.
+   *
+   * Budget: ≤ 2 Accents per page (homepage exempt), never two of the same
+   * world back-to-back. `theme="surface"` sections have no world → no accent.
+   * Rules: docs/section-heading-emphasis.md
+   */
+  accent?: HeadingAccent;
   accentDirection?: GradientDirection;
   accentAnimate?: boolean | AccentAnimation;
   secondTitleBreak?: boolean;

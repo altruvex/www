@@ -17,18 +17,6 @@ import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 
-/**
- * Quote Artifact — the document itself, annotated.
- *
- * Claim: every number a client will be charged is already on this page.
- * Proof shape: artifact (a real quote, shown rather than described).
- * Device: annotated document — clause rows with a margin note rail. Deliberately
- * NOT a card grid; that device is over-subscribed on this site.
- *
- * The payment schedule renders at its true proportion (50/30/20) with CSS widths,
- * so the argument survives with all motion disabled.
- */
-
 const CLAUSE_KEYS = [
   "scope",
   "schedule",
@@ -40,7 +28,6 @@ const CLAUSE_KEYS = [
 
 type ClauseKey = (typeof CLAUSE_KEYS)[number];
 
-/** Segments carry their true share as a flex basis — proportion is structural, not decorative. */
 const SCHEDULE_SEGMENTS = [
   { key: "start", basis: "basis-1/2", tone: "bg-local-accent" },
   { key: "milestone", basis: "basis-[30%]", tone: "bg-local-accent/55" },
@@ -117,16 +104,13 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
           description={t("subtitle")}
           className="mb-16"
         />
-
-        <div ref={documentRef} className="border border-border bg-card">
-          {/* Document header — states what this is before it can be mistaken for a contract */}
+        <div ref={documentRef} className="border border-border bg-card rounded-lg">
           <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-b border-border px-6 py-5 md:px-10">
             <Eyebrow tone="accent">{t("document.label")}</Eyebrow>
             <p className="text-[0.8125rem] leading-snug text-muted-foreground">
               {t("document.status")}
             </p>
           </div>
-
           <ol className="list-none">
             {CLAUSE_KEYS.map((key: ClauseKey, index) => (
               <li
@@ -145,21 +129,16 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                       {t(`clauses.${key}.title`)}
                     </h3>
                   </div>
-
                   <p className="mt-4 max-w-[62ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
                     {t(`clauses.${key}.body`)}
                   </p>
-
                   {key === "schedule" ? <ScheduleBar /> : null}
-
                   {key === "scope" ? (
                     <p className="mt-6 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.15] tracking-[-0.018em] tabular-nums text-foreground">
                       {t("clauses.scope.figure")}
                     </p>
                   ) : null}
                 </div>
-
-                {/* Margin note — the annotation rail; a hairline stands in for a leader line */}
                 <p
                   className={cn(
                     "text-[0.875rem] leading-relaxed text-muted-foreground",
@@ -173,7 +152,6 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
             ))}
           </ol>
         </div>
-
         <div
           ref={footerRef}
           className="mt-10 grid gap-8 border-t border-border pt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:items-start"

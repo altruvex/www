@@ -1,11 +1,11 @@
 "use client";
 
-import { useLoading } from "@/components/providers/loading-provider";
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
 import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
-import { MOTION, getConstrainedDevice, resolveEase, resolveTrigger, MotionEase, MotionTrigger } from "../config";
-import { REDUCED_FADE } from "../utils/env";
+import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../tokens";
+import { REDUCED_FADE, readMotionEnv } from "../utils/env";
+import { whenMotionReady } from "../utils/ready";
 import { alignAccentGradients, autoSplit } from "../utils/splite";
 
 export interface TextConfig {
@@ -17,6 +17,13 @@ export interface TextConfig {
   trigger?: string | MotionTrigger;
   once?: boolean;
   splitBy?: "char" | "word" | "line";
+  /**
+   * Blur-in per fragment. `filter` is not a compositor-only property: each
+   * blurred fragment re-rasterises every frame for the tween's length. It is
+   * therefore a one-shot enter effect only (never interaction-frequency),
+   * gated to fine-pointer + non-constrained devices and capped at
+   * `MOTION.text.blurCap` fragments.
+   */
   blur?: boolean;
   scrubExit?: boolean;
 }
@@ -34,13 +41,10 @@ const DEFAULTS: Required<TextConfig> = {
   scrubExit: false,
 };
 
-const MAX_TOTAL_STAGGER_DURATION = 0.6;
-
 export function useText<T extends HTMLElement = HTMLHeadingElement>(
   config: TextConfig = {},
 ): RefObject<T | null> {
   const ref = useRef<T | null>(null);
-  const { isInitialLoadComplete } = useLoading();
 
   const {
     delay = DEFAULTS.delay,
@@ -57,170 +61,187 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
 
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
-    if (!el || !isInitialLoadComplete) return;
+    if (!el) return;
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-
-      mm.add(
-        {
-          motion: "(prefers-reduced-motion: no-preference)",
-          reduced: "(prefers-reduced-motion: reduce)",
-        },
-        () => {
-          // ── Reduced-motion tier ──────────────────────────────────────────
-          // Was: gsap.set(el, { opacity: 1, y: 0, x: 0, filter: "none" })
-          //      - instant, no signal that content settled in.
-          // Now: short opacity-only settle on the whole element (not the
-          // split chars/words - no point splitting text a reduced-motion
-          // user will never see staggered). No transform/blur.
-          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-            gsap.fromTo(
-              el,
-              { opacity: 0 },
-              { opacity: 1, ...REDUCED_FADE, clearProps: "opacity,filter" },
-            );
-            return;
-          }
-
-          const constrained = getConstrainedDevice();
-          let targets: Element[];
-          let isRTL = false;
-          let canBlur = blur && !constrained;
-
-          const alreadySplit = el.hasAttribute("data-m-split");
-
-          if (!alreadySplit) {
-            el.setAttribute("data-m-split", splitBy);
-            const result = autoSplit(el, splitBy);
-            targets = result.targets;
-            isRTL = result.isRTL;
-            canBlur = blur && result.canBlur && !constrained;
-          } else {
-            const splitType = el.getAttribute("data-m-split");
-            const selector = splitType === "char" ? ".m-char" : splitType === "word" ? ".m-word" : ".m-line";
-            targets = Array.from(el.querySelectorAll(selector));
-            isRTL = targets.some((t) => (t as HTMLElement).dataset.script === "arabic");
-            canBlur = blur && !isRTL && !constrained;
-          }
-
-          if (!targets.length) targets = [el];
-          
-          const effectiveStagger = targets.length > 1
-            ? Math.min(stagger, MAX_TOTAL_STAGGER_DURATION / targets.length)
-            : stagger;
-
-          const fromVars: gsap.TweenVars = {
-            opacity: 0,
-            y: distance,
-            willChange: "transform, opacity",
-          };
-
-          if (!constrained) fromVars.scale = 0.96;
-          if (canBlur) fromVars.filter = "blur(4px)";
-
-          gsap.set(targets, fromVars);
-
-          const resolvedEasing = resolveEase(ease);
-          const resolvedTriggering = resolveTrigger(trigger);
-
-          const animProps: gsap.TweenVars = {
-            opacity: 1,
-            y: 0,
-            duration,
-            stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
-            delay,
-            ease: resolvedEasing,
-            force3D: true,
-            overwrite: "auto",
-            scrollTrigger: {
-              trigger: el,
-              start: resolvedTriggering,
-              once,
-              fastScrollEnd: true,
-              toggleActions: once ? "play none none none" : "play none none reverse",
-              invalidateOnRefresh: true,
-            },
-            onComplete() {
-              gsap.set(targets, { clearProps: "willChange,filter,transform" });
-            },
-          };
-
-          if (!constrained) animProps.scale = 1;
-          if (canBlur) animProps.filter = "blur(0px)";
-
-          gsap.to(targets, animProps);
-
-          // ── Accent sweep ─────────────────────────────────────────────────
-          // `<Accent animate="sweep">` gradients wipe across the phrase once,
-          // in lockstep with the word/char reveal. Fragments position their
-          // inherited gradient via calc(<offset> + var(--sweep-x)) (splite.ts),
-          // so panning one inherited custom property on the accent moves every
-          // fragment's gradient as a single continuous sheet. no-repeat means
-          // glyphs the sheet hasn't reached yet render transparent - the wipe.
-          if (!constrained) {
-            const sweepAccents = Array.from(
-              el.querySelectorAll<HTMLElement>('[data-accent-anim="sweep"]'),
-            );
-            sweepAccents.forEach((accentEl) => {
-              const accentWidth = accentEl.getBoundingClientRect().width;
-              if (!accentWidth) return;
-              gsap.fromTo(
-                accentEl,
-                { "--sweep-x": `${isRTL ? accentWidth : -accentWidth}px` },
-                {
-                  "--sweep-x": "0px",
-                  duration: duration * MOTION.accent.sweepRatio,
-                  delay: delay + MOTION.accent.sweepDelay,
-                  ease: resolvedEasing,
-                  scrollTrigger: {
-                    trigger: el,
-                    start: resolvedTriggering,
-                    once,
-                    fastScrollEnd: true,
-                    toggleActions: once ? "play none none none" : "play none none reverse",
-                  },
-                },
-              );
-            });
-          }
-
-          if (scrubExit && !constrained) {
-            const section = el.closest("section") ?? el;
-            gsap.to(targets, {
-              yPercent: isRTL ? 0 : -20,
-              opacity: 0,
-              ease: "power1.in",
-              overwrite: "auto",
-              force3D: true,
-              scrollTrigger: {
-                trigger: section,
-                start: "center top",
-                end: "bottom top",
-                scrub: 1.5,
-              },
-            });
-          }
-        }
-      );
-    }, el);
-
-    // Gradient-accent fragments are aligned to the phrase's measured layout at split
-    // time. Reflow (viewport resize, font swap, RTL/locale change) shifts those
-    // measurements, so re-align on resize to keep the sweep continuous.
+    let ctx: gsap.Context | null = null;
+    let resizeObserver: ResizeObserver | null = null;
     let resizeFrame = 0;
-    const resizeObserver = new ResizeObserver(() => {
-      cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => alignAccentGradients(el));
+
+    const off = whenMotionReady(() => {
+      ctx = gsap.context(() => {
+        const mm = gsap.matchMedia();
+
+        mm.add(
+          {
+            motion: "(prefers-reduced-motion: no-preference)",
+            reduced: "(prefers-reduced-motion: reduce)",
+          },
+          (context) => {
+            const { reduced } = context.conditions as { reduced: boolean };
+
+            // ── Reduced-motion tier: whole-element opacity settle ────────
+            // No split: a reduced-motion user never sees the stagger, so
+            // there is no reason to rewrite their DOM.
+            if (reduced) {
+              gsap.fromTo(
+                el,
+                { opacity: 0 },
+                { opacity: 1, ...REDUCED_FADE, clearProps: "opacity,filter" },
+              );
+              return;
+            }
+
+            const env = readMotionEnv();
+            const constrained = env.constrained;
+            let targets: Element[];
+            let isRTL = false;
+            let scriptAllowsBlur = true;
+
+            const alreadySplit = el.hasAttribute("data-m-split");
+
+            if (!alreadySplit) {
+              el.setAttribute("data-m-split", splitBy);
+              const result = autoSplit(el, splitBy);
+              targets = result.targets;
+              isRTL = result.isRTL;
+              scriptAllowsBlur = result.canBlur;
+            } else {
+              const splitType = el.getAttribute("data-m-split");
+              const selector =
+                splitType === "char" ? ".m-char" : splitType === "word" ? ".m-word" : ".m-line";
+              targets = Array.from(el.querySelectorAll(selector));
+              isRTL = targets.some((t) => (t as HTMLElement).dataset.script === "arabic");
+              scriptAllowsBlur = !isRTL;
+            }
+
+            if (!targets.length) targets = [el];
+
+            const canBlur =
+              blur &&
+              scriptAllowsBlur &&
+              env.fine &&
+              !constrained &&
+              targets.length <= MOTION.text.blurCap;
+
+            const effectiveStagger =
+              targets.length > 1
+                ? Math.min(stagger, MOTION.text.maxTotalStagger / targets.length)
+                : stagger;
+
+            const fromVars: gsap.TweenVars = {
+              opacity: 0,
+              y: distance,
+              willChange: "transform, opacity",
+            };
+            if (!constrained) fromVars.scale = 0.96;
+            if (canBlur) fromVars.filter = "blur(4px)";
+
+            gsap.set(targets, fromVars);
+
+            const resolvedEasing = resolveEase(ease);
+            const resolvedTriggering = resolveTrigger(trigger);
+
+            const animProps: gsap.TweenVars = {
+              opacity: 1,
+              y: 0,
+              duration,
+              stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
+              delay,
+              ease: resolvedEasing,
+              force3D: true,
+              overwrite: "auto",
+              scrollTrigger: {
+                trigger: el,
+                start: resolvedTriggering,
+                once,
+                fastScrollEnd: true,
+                toggleActions: once ? "play none none none" : "play none none reverse",
+                invalidateOnRefresh: true,
+              },
+              onComplete() {
+                gsap.set(targets, { clearProps: "willChange,filter,transform" });
+              },
+            };
+
+            if (!constrained) animProps.scale = 1;
+            if (canBlur) animProps.filter = "blur(0px)";
+
+            gsap.to(targets, animProps);
+
+            // ── Accent sweep ─────────────────────────────────────────────
+            // `<Accent animate="sweep">` gradients wipe across the phrase
+            // once, in lockstep with the reveal. Panning one inherited custom
+            // property moves every fragment's gradient as a single sheet.
+            // This is a paint-bound (background-position) one-shot; it is
+            // never interaction-frequency and is off on constrained devices.
+            if (!constrained) {
+              const sweepAccents = Array.from(
+                el.querySelectorAll<HTMLElement>('[data-accent-anim="sweep"]'),
+              );
+              // Batch the reads before any write.
+              const widths = sweepAccents.map((a) => a.getBoundingClientRect().width);
+              sweepAccents.forEach((accentEl, i) => {
+                const accentWidth = widths[i];
+                if (!accentWidth) return;
+                gsap.fromTo(
+                  accentEl,
+                  { "--sweep-x": `${isRTL ? accentWidth : -accentWidth}px` },
+                  {
+                    "--sweep-x": "0px",
+                    duration: duration * MOTION.accent.sweepRatio,
+                    delay: delay + MOTION.accent.sweepDelay,
+                    ease: resolvedEasing,
+                    scrollTrigger: {
+                      trigger: el,
+                      start: resolvedTriggering,
+                      once,
+                      fastScrollEnd: true,
+                      toggleActions: once ? "play none none none" : "play none none reverse",
+                    },
+                  },
+                );
+              });
+            }
+
+            if (scrubExit && !constrained) {
+              const section = el.closest("section") ?? el;
+              gsap.to(targets, {
+                // Arabic fragments are `display:inline` (shaping must not break),
+                // and inline boxes can't be transformed — opacity only there.
+                yPercent: isRTL ? 0 : -20,
+                opacity: 0,
+                ease: "power1.in",
+                overwrite: "auto",
+                force3D: true,
+                scrollTrigger: {
+                  trigger: section,
+                  start: "center top",
+                  end: "bottom top",
+                  scrub: MOTION.parallax.scrub,
+                },
+              });
+            }
+          },
+        );
+      }, el);
+
+      // Gradient-accent fragments are aligned to the phrase's measured layout
+      // at split time. Reflow (viewport resize, font swap, locale change)
+      // shifts those measurements, so re-align on resize.
+      resizeObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(() => alignAccentGradients(el));
+      });
+      resizeObserver.observe(el);
     });
-    resizeObserver.observe(el);
 
     return () => {
+      off();
       cancelAnimationFrame(resizeFrame);
-      resizeObserver.disconnect();
-      ctx.revert();
+      resizeObserver?.disconnect();
+      ctx?.revert();
     };
-  }, [isInitialLoadComplete, delay, duration, stagger, distance, ease, trigger, once, splitBy, blur, scrubExit]);
+  }, [delay, duration, stagger, distance, ease, trigger, once, splitBy, blur, scrubExit]);
 
   return ref;
 }

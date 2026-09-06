@@ -1,4 +1,4 @@
-import { MOTION } from "@/lib/motion/config";
+import { MOTION } from "@/lib/motion/tokens";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { ScrollTrigger } from "gsap/ScrollTrigger";

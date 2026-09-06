@@ -1,9 +1,11 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
 
+const isDev = process.env.NODE_ENV === "development";
+
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: isDev,
   register: true,
   workboxOptions: {
     runtimeCaching: [
@@ -20,6 +22,30 @@ const withPWA = withPWAInit({
     ],
   },
 });
+
+/**
+ * Content-Security-Policy for the admin app.
+ * React's dev build needs eval() for debugging features (call-stack
+ * reconstruction), and Turbopack HMR connects over a websocket, so both are
+ * allowed in development only.
+ */
+function buildContentSecurityPolicy(): string {
+  const scriptSrc = ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])];
+  const connectSrc = ["'self'", ...(isDev ? ["ws:", "wss:"] : [])];
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc.join(" ")}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    `connect-src ${connectSrc.join(" ")}`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
+  ].join("; ");
+}
 
 const nextConfig: NextConfig = {
   turbopack: {},
@@ -58,8 +84,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+            value: buildContentSecurityPolicy(),
           },
         ],
       },
