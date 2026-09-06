@@ -57,11 +57,11 @@ export const TIERS: Readonly<Record<TierId, Tier>> = {
   flagship: {
     id: "flagship",
     serviceId: "webapp",
-    complexityId: "standard",
+    complexityId: "premium",
     display: "from",
     order: 4,
     highlight: false,
-    version: 2,
+    version: 3,
     lastUpdated: "2026-09-06",
   },
 };

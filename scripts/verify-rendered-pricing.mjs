@@ -39,8 +39,8 @@ for (const locale of ["en", "ar"]) {
   await page.goto(`${B}/${locale}/pricing`, { waitUntil: "networkidle" });
   const pricing = await page.locator("body").innerText();
   const want = locale === "en"
-    ? ["35,000 – 70,000 EGP", "70,000 – 140,000 EGP", "95,000 – 180,000 EGP", "From 150,000 EGP", "From 35,000 EGP"]
-    : ["٣٥٬٠٠٠ – ٧٠٬٠٠٠ جنيه", "٧٠٬٠٠٠ – ١٤٠٬٠٠٠ جنيه", "٩٥٬٠٠٠ – ١٨٠٬٠٠٠ جنيه", "تبدأ من ١٥٠٬٠٠٠ جنيه"];
+    ? ["35,000 – 70,000 EGP", "70,000 – 140,000 EGP", "95,000 – 180,000 EGP", "From 280,000 EGP", "From 35,000 EGP"]
+    : ["٣٥٬٠٠٠ – ٧٠٬٠٠٠ جنيه", "٧٠٬٠٠٠ – ١٤٠٬٠٠٠ جنيه", "٩٥٬٠٠٠ – ١٨٠٬٠٠٠ جنيه", "تبدأ من ٢٨٠٬٠٠٠ جنيه"];
   const pricingLower = pricing.toLowerCase();
   for (const t of want) check(pricingLower.includes(t.toLowerCase()), `/pricing shows "${t}"`);
   for (const stale of ["22,000", "45,000", "٢٢٬٠٠٠", "٤٥٬٠٠٠"])
@@ -63,7 +63,7 @@ for (const locale of ["en", "ar"]) {
 
 // The tier card and the estimator it links to must agree.
 console.log("\n===== deep-link agreement =====");
-for (const [tier, lo, hi] of [["essential","35,000","70,000"], ["professional","70,000","140,000"], ["ecommerce","95,000","180,000"], ["flagship","150,000","280,000"]]) {
+for (const [tier, lo, hi] of [["essential","35,000","70,000"], ["professional","70,000","140,000"], ["ecommerce","95,000","180,000"], ["flagship","280,000","450,000"]]) {
   await page.goto(`${B}/en/pricing`, { waitUntil: "networkidle" });
   const href = await page.locator(`a[href*="tier=${tier}"]`).first().getAttribute("href");
   await page.goto(`${B}/en${href}`, { waitUntil: "networkidle" });

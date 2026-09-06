@@ -48,7 +48,7 @@ The third guard is separate and deliberate: hour-equivalents are margin planning
 | essential | website/basic | 35,000–70,000 | 35,000–70,000 | `tier=essential&projectType=website` |
 | professional | website/standard | 70,000–140,000 | 70,000–140,000 | `tier=professional&projectType=website` |
 | ecommerce | ecommerce/standard | 95,000–180,000 | 95,000–180,000 | `tier=ecommerce&projectType=ecommerce` |
-| flagship | webapp/standard | From 150,000 | 150,000–280,000 | `tier=flagship&projectType=webapp` |
+| flagship | webapp/premium | From 280,000 | 280,000–450,000 | `tier=flagship&projectType=webapp` |
 
 Both halves derive from the same `tierPriceRange()` call, so they cannot drift. Legacy `tier=commerce` and `tier=small`/`medium`/`large` tokens still resolve — links already sent to clients keep working.
 
@@ -59,7 +59,7 @@ Both halves derive from the same `tierPriceRange()` call, so they cannot drift. 
 | essential | `35,000 – 70,000 EGP` | `٣٥٬٠٠٠ – ٧٠٬٠٠٠ جنيه` |
 | professional | `70,000 – 140,000 EGP` | `٧٠٬٠٠٠ – ١٤٠٬٠٠٠ جنيه` |
 | ecommerce | `95,000 – 180,000 EGP` | `٩٥٬٠٠٠ – ١٨٠٬٠٠٠ جنيه` |
-| flagship | `From 150,000 EGP` | `تبدأ من ١٥٠٬٠٠٠ جنيه` |
+| flagship | `From 280,000 EGP` | `تبدأ من ٢٨٠٬٠٠٠ جنيه` |
 | maintenance essential | `2,500 EGP` | `٢٬٥٠٠ جنيه` |
 | maintenance professional | `5,000 EGP` | `٥٬٠٠٠ جنيه` |
 | maintenance enterprise | `Custom` | `مخصص` |
@@ -112,7 +112,7 @@ Unchanged by design. Verified:
 
 **USD revision rate.** The contract bills revisions at 800 EGP/hr or **80 USD**/hr. At the fixed 50 EGP/USD rate, 800 EGP is ~16 USD — so the USD figure is a separate price list, roughly 5× the EGP rate, not a conversion. Carried over verbatim because it appears in signed agreements. Confirm whether it is intentional.
 
-**Flagship floor.** The tier previously published "From 180,000 EGP". No cell in the canonical matrix has that floor; `webapp/standard` (150,000–280,000) is the closest fit for "Business Web System — operations and workflows", so the published floor moved 180,000 → 150,000. If flagship should mean `webapp/premium`, the floor becomes 280,000 — a one-line change in `tiers.ts`.
+**Flagship floor — resolved.** The tier previously published "From 180,000 EGP", a floor no cell in the canonical matrix carried. Confirmed as `webapp/premium`, so it now publishes **From 280,000 EGP** (280,000–450,000). This raises the flagship floor by 100,000 against what the site previously advertised — intentional, and the reason the tier is a "from" rather than a range: the conversation there starts with a call.
 
 ## 9. Not built this pass — deliberately deferred
 

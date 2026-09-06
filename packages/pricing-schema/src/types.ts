@@ -51,7 +51,7 @@ export interface Versioned {
  * Bumped whenever any priced figure in this package changes. A cached surface
  * holding a different value knows its copy is stale without diffing entities.
  */
-export const PRICING_VERSION = 2;
+export const PRICING_VERSION = 3;
 export const PRICING_LAST_UPDATED = "2026-09-06" as const;
 
 export type Locale = "en" | "ar";
