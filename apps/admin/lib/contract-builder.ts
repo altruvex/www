@@ -25,7 +25,7 @@ import {
   investmentTotal,
   proposalContentSchema,
 } from "./proposal-schema";
-import { applyVat, COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
+import type { ProjectType } from "@repo/pricing";
 
 // ---- Locked layout (ported from ~/.claude/skills/altruvex-contract Step 5) ----
 const FONT_BODY = "Trebuchet MS";
@@ -35,7 +35,7 @@ const SIZE_H1 = 32; // 16pt
 const SIZE_H2 = 24; // 12pt
 const SIZE_SMALL = 18; // 9pt
 const MARGIN = 1440; // 1" in twips
-
+const VAT_RATE = 0.14;
 
 type ContractWithRelations = Contract & {
   client: Client;
@@ -149,19 +149,6 @@ function formatCurrency(amount: number, currency: string): string {
   }).format(amount);
 }
 
-/**
- * Contract prose spells a count and repeats it in digits ("Three (3) rounds").
- * The wording is legal text already present in signed agreements, so the
- * number is sourced from the schema while the phrasing is preserved exactly.
- */
-function spellSmallNumber(n: number): string {
-  const words = [
-    "Zero", "One", "Two", "Three", "Four", "Five",
-    "Six", "Seven", "Eight", "Nine", "Ten",
-  ];
-  return words[n] ?? String(n);
-}
-
 function paymentTable(proposal: Proposal): Table {
   const split = proposal.paymentSplit as unknown as {
     first: number;
@@ -208,7 +195,8 @@ export async function buildContractDocx(
   const signatoryName = client.name || "Authorized Signatory";
   // VAT is charged on what is actually invoiced, so it follows the net figure
   // in `totalPrice` — never the pre-discount list price.
-  const { vat: vatAmount, gross: grandTotal } = applyVat(proposal.totalPrice);
+  const vatAmount = Math.round(proposal.totalPrice * VAT_RATE);
+  const grandTotal = proposal.totalPrice + vatAmount;
 
   // A discount has to be stated in the agreement, not just in the deck: the
   // client signs the reduced fee, and the reduction is what makes the number
@@ -223,7 +211,7 @@ export async function buildContractDocx(
   const discountLabel = parsedContent.success
     ? parsedContent.data.discount.label.trim() || "discount"
     : "discount";
-  const modules = getSolutionModules(proposal.projectType as ServiceId);
+  const modules = getSolutionModules(proposal.projectType as ProjectType);
   const effectiveDate = new Date(contract.createdAt).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -237,7 +225,7 @@ export async function buildContractDocx(
 
     clauseHeading(1, "Parties & Recitals"),
     body(
-      `This Agreement is entered into on ${effectiveDate} between Altruvex ("Altruvex", ${CONTACT.email}, ${CONTACT.phone}) and ${clientName} ("Client"), referencing the proposal accepted by the Client for a ${projectTypeLabel(proposal.projectType as ServiceId)} engagement.`,
+      `This Agreement is entered into on ${effectiveDate} between Altruvex ("Altruvex", ${CONTACT.email}, ${CONTACT.phone}) and ${clientName} ("Client"), referencing the proposal accepted by the Client for a ${projectTypeLabel(proposal.projectType as ProjectType)} engagement.`,
     ),
 
     clauseHeading(2, "Scope of Work"),
@@ -259,7 +247,7 @@ export async function buildContractDocx(
         ]
       : []),
     body(
-      `Total project fee: ${formatCurrency(proposal.totalPrice, proposal.currency)} (excl. VAT)${reduction > 0 ? ", after the discount above" : ""}. VAT at ${Math.round(COMMERCIAL_TERMS.vatRate * 100)}%: ${formatCurrency(vatAmount, proposal.currency)}. Total incl. VAT: ${formatCurrency(grandTotal, proposal.currency)}.`,
+      `Total project fee: ${formatCurrency(proposal.totalPrice, proposal.currency)} (excl. VAT)${reduction > 0 ? ", after the discount above" : ""}. VAT at 14%: ${formatCurrency(vatAmount, proposal.currency)}. Total incl. VAT: ${formatCurrency(grandTotal, proposal.currency)}.`,
     ),
     paymentTable(proposal),
     body(
@@ -278,7 +266,7 @@ export async function buildContractDocx(
 
     clauseHeading(6, "Revisions & Change Orders"),
     body(
-      `${spellSmallNumber(COMMERCIAL_TERMS.includedRevisionRounds)} (${COMMERCIAL_TERMS.includedRevisionRounds}) rounds of revisions are included. Additional revision work is billed at ${formatCurrency(COMMERCIAL_TERMS.revisionHourlyRate, "EGP")}/hr (or ${formatCurrency(COMMERCIAL_TERMS.revisionHourlyRateUsd, "USD")}/hr USD). Any change to the agreed scope requires a signed Change Order before work on it begins. Scope reductions are re-scoped as a separate deliverable at a corresponding price adjustment — never a discount on the original scope.`,
+      `Three (3) rounds of revisions are included. Additional revision work is billed at ${formatCurrency(800, "EGP")}/hr (or $80/hr USD). Any change to the agreed scope requires a signed Change Order before work on it begins. Scope reductions are re-scoped as a separate deliverable at a corresponding price adjustment — never a discount on the original scope.`,
     ),
 
     clauseHeading(7, "Timeline"),

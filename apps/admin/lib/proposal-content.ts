@@ -1,9 +1,4 @@
-import {
-  COMMERCIAL_TERMS,
-  pricingCopy,
-  type ComplexityId,
-  type ServiceId,
-} from "@repo/pricing-schema";
+import type { Complexity, ProjectType } from "@repo/pricing";
 
 export interface ProblemCard {
   title: string;
@@ -26,7 +21,7 @@ export interface LineItem {
   amount: number;
 }
 
-const PROBLEMS: Record<ServiceId, ProblemCard[]> = {
+const PROBLEMS: Record<ProjectType, ProblemCard[]> = {
   website: [
     { title: "Outdated brand presence", description: "The current site undersells the business and erodes trust before the first conversation happens." },
     { title: "No lead capture system", description: "Interested visitors have no clear, fast path to becoming a qualified conversation." },
@@ -49,7 +44,7 @@ const PROBLEMS: Record<ServiceId, ProblemCard[]> = {
   ],
 };
 
-const SOLUTIONS: Record<ServiceId, SolutionModule[]> = {
+const SOLUTIONS: Record<ProjectType, SolutionModule[]> = {
   website: [
     { title: "Brand-precise design system", description: "A custom visual language built around the business, not a theme." },
     { title: "Conversion-focused architecture", description: "Every page engineered around a single, clear next action." },
@@ -95,7 +90,7 @@ const PHASE_SHARE: { name: string; share: number }[] = [
   { name: "Launch", share: 0.05 },
 ];
 
-const PHASE_DELIVERABLES: Record<ServiceId, string[]> = {
+const PHASE_DELIVERABLES: Record<ProjectType, string[]> = {
   website: [
     "Brief confirmed, sitemap locked",
     "Full visual design, all pages",
@@ -130,11 +125,11 @@ const PHASE_DELIVERABLES: Record<ServiceId, string[]> = {
   ],
 };
 
-export function getProblems(projectType: ServiceId): ProblemCard[] {
+export function getProblems(projectType: ProjectType): ProblemCard[] {
   return PROBLEMS[projectType];
 }
 
-export function getSolutionModules(projectType: ServiceId): SolutionModule[] {
+export function getSolutionModules(projectType: ProjectType): SolutionModule[] {
   return SOLUTIONS[projectType];
 }
 
@@ -147,7 +142,7 @@ export function getProgressTargets(): { label: string; percent: number }[] {
 }
 
 export function getTimelinePhases(
-  projectType: ServiceId,
+  projectType: ProjectType,
   totalWeeks: number,
 ): TimelinePhase[] {
   const deliverables = PHASE_DELIVERABLES[projectType];
@@ -236,12 +231,23 @@ export function getDefaultLineItems(totalPrice: number): LineItem[] {
   return items;
 }
 
-export function projectTypeLabel(projectType: ServiceId): string {
-  return pricingCopy("en").services[projectType].documentName;
+export function projectTypeLabel(projectType: ProjectType): string {
+  const labels: Record<ProjectType, string> = {
+    website: "Corporate Website",
+    webapp: "Custom Web Application",
+    ecommerce: "E-Commerce System",
+    pwa: "Progressive Web App",
+  };
+  return labels[projectType];
 }
 
-export function complexityLabel(complexity: ComplexityId): string {
-  return pricingCopy("en").bands[complexity];
+export function complexityLabel(complexity: Complexity): string {
+  const labels: Record<Complexity, string> = {
+    basic: "Essential",
+    standard: "Professional",
+    premium: "Flagship",
+  };
+  return labels[complexity];
 }
 
 export const CONTACT = {
@@ -271,12 +277,12 @@ export const SCOPE_NOT_INCLUDED = [
 ];
 
 export const STANDARD_TERMS: [string, string][] = [
-  ["VALIDITY", `Proposal valid for ${COMMERCIAL_TERMS.proposalValidityDays} days from the proposal date.`],
-  ["PAYMENT", `${COMMERCIAL_TERMS.paymentSplit[0]}% to start · ${COMMERCIAL_TERMS.paymentSplit[1]}% at milestone · ${COMMERCIAL_TERMS.paymentSplit[2]}% before launch. No deposit = no project start.`],
+  ["VALIDITY", "Proposal valid for 30 days from the proposal date."],
+  ["PAYMENT", "50% to start · 30% at milestone · 20% before launch. No deposit = no project start."],
   ["TIMELINE", "Starts after first payment + confirmed brief."],
   ["LAUNCH", "Client reviews on Altruvex staging; live domain pointed after final payment."],
   ["CONTENT", "Client provides all text, images, brand assets, and access credentials."],
-  ["REVISIONS", `${COMMERCIAL_TERMS.includedRevisionRounds} rounds included. Additional at ${COMMERCIAL_TERMS.revisionHourlyRate.toLocaleString("en-US")} EGP/hr.`],
+  ["REVISIONS", "3 rounds included. Additional at 800 EGP/hr."],
   ["OWNERSHIP", "Full source code ownership transfers to client upon final payment."],
-  ["SUPPORT", `${COMMERCIAL_TERMS.postLaunchWarrantyDays} days of post-launch support for critical fixes included.`],
+  ["SUPPORT", "30 days of post-launch support for critical fixes included."],
 ];

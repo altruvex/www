@@ -1,4 +1,3 @@
-import { LEAD_SCORE_THRESHOLDS } from "@repo/pricing-schema";
 /**
  * §4 — lead score.
  *
@@ -58,11 +57,7 @@ export function scoreLead(input: ScoreInput): { score: number; reasons: string[]
   else if (input.estimatorPriceMax) {
     // No declared budget, but the estimator produced a number — use it.
     const points =
-      input.estimatorPriceMax >= LEAD_SCORE_THRESHOLDS.large
-        ? 26
-        : input.estimatorPriceMax >= LEAD_SCORE_THRESHOLDS.medium
-          ? 18
-          : 10;
+      input.estimatorPriceMax >= 200_000 ? 26 : input.estimatorPriceMax >= 80_000 ? 18 : 10;
     add(points, "estimator quote size");
   }
 

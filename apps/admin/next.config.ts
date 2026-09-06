@@ -108,7 +108,7 @@ const nextConfig: NextConfig = {
     ];
   },
   reactStrictMode: true,
-  transpilePackages: ["@repo/database", "@repo/pricing-schema", "@repo/ui"],
+  transpilePackages: ["@repo/database", "@repo/pricing", "@repo/ui"],
   compress: true,
   poweredByHeader: false,
 };
