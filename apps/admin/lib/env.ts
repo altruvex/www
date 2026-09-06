@@ -1,3 +1,4 @@
+import { PHASE_PRODUCTION_BUILD } from "next/constants";
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -27,7 +28,12 @@ if (!parsed.success) {
     "❌ Invalid environment variables:",
     JSON.stringify(parsed.error.format(), null, 2),
   );
-  if (process.env.NODE_ENV === "production") {
+  // `next build` evaluates this module (imported for its side effect from
+  // the root layout) while collecting page data for every route, including
+  // ones that never touch auth. Runtime secrets like BETTER_AUTH_SECRET are
+  // often only present in the deploy's runtime environment, not the build
+  // environment, so only hard-fail once the app is actually serving traffic.
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
     throw new Error("Invalid environment variables. Check server logs.");
   }
 }
