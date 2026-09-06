@@ -6,14 +6,9 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types",
-    "validate:pricing": "node scripts/validate-pricing-literals.mjs",
-    "report:pricing": "bun scripts/pricing-parity-report.mjs",
-    "validate": "node scripts/validate-pricing-literals.mjs && bun scripts/pricing-parity-report.mjs",
-    "verify:rendered": "node scripts/verify-rendered-pricing.mjs"
+    "check-types": "turbo run check-types"
   },
   "devDependencies": {
-    "@repo/pricing-schema": "workspace:*",
     "prettier": "^3.7.4",
     "turbo": "^2.10.9",
     "typescript": "6.0.2"
