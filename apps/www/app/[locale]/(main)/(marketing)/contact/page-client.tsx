@@ -3,7 +3,7 @@
 import { MagneticButton } from "@/components/magnetic-button";
 import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/shared/container";
-import { Input, SelectField, Textarea } from "@/components/ui/input";
+import { Input, SelectField, Textarea } from "@repo/ui";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";

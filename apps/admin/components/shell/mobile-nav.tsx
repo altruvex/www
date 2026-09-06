@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { GROUPS, PRIMARY, canSee, type BadgeKey, type Role } from "@/lib/nav";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody } from "@repo/ui";
 import { CountBadge } from "@/components/ui/badge";
 import { Target, Building2, LayoutDashboard, Inbox, MoreHorizontal } from "lucide-react";
 import { NavIcon } from "./nav-icon";

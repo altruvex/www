@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/components/container";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { cn } from "@/lib/utils";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";

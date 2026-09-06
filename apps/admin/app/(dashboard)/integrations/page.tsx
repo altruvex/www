@@ -6,7 +6,7 @@ import { ToneBadge } from "@/components/ui/badge";
 import { MetaList } from "@/components/os/detail-layout";
 import { getHealthChecks, STATE_LABEL, STATE_TONE } from "@/lib/system-health";
 import { dateTime } from "@/lib/format";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

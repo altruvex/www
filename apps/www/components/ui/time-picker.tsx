@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui";
 import { cn } from "@/lib/utils/utils";
 import { Clock } from "lucide-react";
 import * as React from "react";

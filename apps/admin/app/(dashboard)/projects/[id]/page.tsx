@@ -14,7 +14,7 @@ import { buildActivity } from "@/lib/activity";
 import { PROJECT_PHASE_ORDER, statusOf } from "@/lib/status";
 import { date, dateTime, dueLabel, money, when } from "@/lib/format";
 import { PhaseControl } from "./phase-control";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

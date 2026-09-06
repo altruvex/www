@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { convertSubmissionToClient } from "@/app/(dashboard)/_actions/records";
 
 export function ConvertButton({ submissionId }: { submissionId: string }) {

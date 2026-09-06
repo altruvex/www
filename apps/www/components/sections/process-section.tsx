@@ -4,7 +4,7 @@ import { useLoading } from "@/components/providers/loading-provider";
 import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { SurfaceCard } from "@repo/ui";
 import {
   useSectionDescription,
   useSectionElement,

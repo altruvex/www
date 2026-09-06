@@ -1,0 +1,88 @@
+@theme inline {
+  --color-glass: var(--glass-background);
+  --color-glass-strong: var(--glass-background-strong);
+  --color-glass-border: var(--glass-border);
+  --color-glass-highlight: var(--glass-highlight);
+}
+
+:root {
+  --glass-background: linear-gradient(135deg, hsl(0 0% 100% / 0.68), hsl(0 0% 100% / 0.2));
+  --glass-background-strong: linear-gradient(180deg, hsl(var(--card) / 0.86), hsl(var(--card) / 0.68));
+  --glass-background-flat: linear-gradient(135deg, hsl(0 0% 100% / 0.52), hsl(0 0% 100% / 0.14));
+  --glass-border: hsl(0 0% 100% / 0.34);
+  --glass-border-strong: hsl(var(--foreground) / 0.12);
+  --glass-highlight: hsl(0 0% 100% / 0.42);
+  --glass-shadow: inset 0 1px 1px hsl(0 0% 100% / 0.42), inset 0 -1px 2px hsl(222 32% 6% / 0.06), 0 12px 34px -22px hsl(222 32% 6% / 0.34);
+  --glass-shadow-flat: inset 0 1px 1px hsl(0 0% 100% / 0.36), inset 0 -1px 2px hsl(222 32% 6% / 0.05);
+  --glass-blur: blur(10px) saturate(128%);
+  --glass-blur-soft: blur(7px) saturate(118%);
+}
+
+.dark {
+  --glass-background: linear-gradient(135deg, hsl(0 0% 100% / 0.18), hsl(0 0% 100% / 0.045));
+  --glass-background-strong: linear-gradient(180deg, hsl(var(--card) / 0.76), hsl(var(--card) / 0.48));
+  --glass-background-flat: linear-gradient(135deg, hsl(0 0% 100% / 0.14), hsl(0 0% 100% / 0.035));
+  --glass-border: hsl(0 0% 100% / 0.18);
+  --glass-border-strong: hsl(0 0% 100% / 0.12);
+  --glass-highlight: hsl(0 0% 100% / 0.16);
+  --glass-shadow: inset 0 1px 1px hsl(0 0% 100% / 0.14), inset 0 -1px 2px hsl(0 0% 0% / 0.24), 0 18px 42px -22px hsl(0 0% 0% / 0.72);
+  --glass-shadow-flat: inset 0 1px 1px hsl(0 0% 100% / 0.14), inset 0 -1px 2px hsl(0 0% 0% / 0.22);
+}
+
+@layer utilities {
+  .liquid-glass,
+  .liquid-glass-flat,
+  .liquid-glass-panel,
+  .liquid-glass-toolbar {
+    border: 1px solid var(--glass-border);
+    transform: translateZ(0);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  .liquid-glass {
+    background: var(--glass-background);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .liquid-glass-flat {
+    background: var(--glass-background-flat);
+    box-shadow: var(--glass-shadow-flat);
+  }
+
+  .liquid-glass-panel {
+    background: var(--glass-background-strong);
+    border-color: var(--glass-border-strong);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .liquid-glass-toolbar {
+    background: var(--glass-background-flat);
+    box-shadow: var(--glass-shadow-flat);
+  }
+
+  .glass-highlight {
+    box-shadow: inset 0 1px 0 var(--glass-highlight);
+  }
+}
+
+@media (max-width: 768px) {
+  .liquid-glass,
+  .liquid-glass-flat,
+  .liquid-glass-panel,
+  .liquid-glass-toolbar {
+    -webkit-backdrop-filter: var(--glass-blur-soft);
+    backdrop-filter: var(--glass-blur-soft);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass,
+  .liquid-glass-flat,
+  .liquid-glass-panel,
+  .liquid-glass-toolbar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: hsl(var(--card));
+  }
+}

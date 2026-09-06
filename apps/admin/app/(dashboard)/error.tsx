@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { ErrorState } from "@/components/os/error-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export default function DashboardError({
   error,

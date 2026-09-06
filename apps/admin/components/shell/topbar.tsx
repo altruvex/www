@@ -18,9 +18,9 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { navItemFor, groupFor } from "@/lib/nav";
 import { signOut } from "@/lib/auth-client";
-import { Kbd } from "@/components/ui/kbd";
-import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Kbd } from "@repo/ui";
+import { Avatar } from "@repo/ui";
+import { Button } from "@repo/ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +30,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@repo/ui";
 
 /**
  * Every control on the topbar rail is exactly --control-h-sm (28px) — the mobile
@@ -68,7 +68,7 @@ export function Topbar({
 
   return (
     <header
-      className="sticky top-0 z-30 flex shrink-0 items-center gap-2 border-b border-border bg-background/85 px-3 backdrop-blur-md"
+      className="liquid-glass-toolbar sticky top-0 z-30 flex shrink-0 items-center gap-2 border-x-0 border-t-0 border-b border-border bg-background/85 px-3"
       style={{ height: "var(--topbar-h)" }}
     >
       <button

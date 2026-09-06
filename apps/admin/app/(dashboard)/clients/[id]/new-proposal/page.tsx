@@ -21,19 +21,19 @@ import {
   type Timeline,
 } from "@repo/pricing";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { SegmentedControl, segmentClass } from "@/components/ui/segmented-control";
+import { Button } from "@repo/ui";
+import { SegmentedControl, segmentClass } from "@repo/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { EmptyState } from "@/components/os/empty-state";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@repo/ui";
 import {
   ProposalContentEditor,
   PROPOSAL_GROUPS,

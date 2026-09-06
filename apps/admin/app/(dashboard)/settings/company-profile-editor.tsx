@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Edit2, Globe, Loader2, Mail, Phone } from "lucide-react";
 import { updateCompanyProfile } from "@/app/(dashboard)/_actions/records";
-import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
+import { Button } from "@repo/ui";
+import { Field, Input } from "@repo/ui";
 import {
   Sheet,
   SheetBody,
@@ -16,7 +16,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@repo/ui";
 
 /**
  * Editing one record is contextual work, so it happens in a `Sheet` — the

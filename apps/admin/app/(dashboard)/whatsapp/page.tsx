@@ -9,7 +9,7 @@ import { AlertBar } from "@/components/os/error-state";
 import { ThreadList } from "@/components/os/thread-list";
 import { getThreads } from "@/lib/threads";
 import { percent } from "@/lib/format";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

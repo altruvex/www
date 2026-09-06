@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
+import { Button } from "@repo/ui";
+import { Field, Input } from "@repo/ui";
 import { signIn } from "@/lib/auth-client";
 import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useTransition } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from "@repo/ui";
 
 function LoginForm() {
   const [email, setEmail] = useState("");

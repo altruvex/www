@@ -15,7 +15,7 @@ import { statusOf } from "@/lib/status";
 import { discountAmount, investmentTotal, proposalContentSchema } from "@/lib/proposal-schema";
 import { date, dateTime, money } from "@/lib/format";
 import { LifecycleButton, MarkSignedButton } from "@/app/(dashboard)/clients/[id]/client-actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

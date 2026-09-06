@@ -19,8 +19,8 @@ import { ToneBadge } from "@/components/ui/badge";
 import { dateTime, when } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { segmentClass } from "@/components/ui/segmented-control";
+import { Button } from "@repo/ui";
+import { segmentClass } from "@repo/ui";
 
 export interface AutomationRule {
   id: string;

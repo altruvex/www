@@ -7,7 +7,7 @@ import { StatTile } from "@/components/os/stat-tile";
 import { scoreLead } from "@/lib/lead-score";
 import { deriveClientStage } from "@/lib/dashboard-data";
 import { LeadsTable, type LeadRow } from "./leads-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

@@ -21,7 +21,8 @@
     "paths": {
       "@/*": ["./*"],
       "@repo/database": ["../../packages/database"],
-      "@repo/pricing": ["../../packages/pricing"]
+      "@repo/pricing": ["../../packages/pricing"],
+      "@repo/ui": ["../../packages/ui/src"]
     }
   },
   "include": [

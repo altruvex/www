@@ -1,10 +1,10 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@repo/ui";
+import { Label } from "@repo/ui";
 import {
   useTransparency,
   type BrandIdentity,

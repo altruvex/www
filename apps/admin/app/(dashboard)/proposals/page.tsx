@@ -6,7 +6,7 @@ import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
 import { moneyByCurrency, percent, sumByCurrency } from "@/lib/format";
 import { ProposalsTable, type ProposalRow } from "./proposals-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

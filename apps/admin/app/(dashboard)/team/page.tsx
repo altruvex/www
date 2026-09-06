@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { AlertBar } from "@/components/os/error-state";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@repo/ui";
 import { ToneBadge } from "@/components/ui/badge";
 import {
   ACTIONS,

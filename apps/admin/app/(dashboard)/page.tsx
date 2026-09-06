@@ -11,7 +11,7 @@ import { ActionCenter } from "@/components/os/action-center";
 import { FunnelBars } from "@/components/os/funnel";
 import { Timeline } from "@/components/os/timeline";
 import { EmptyInline } from "@/components/os/empty-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

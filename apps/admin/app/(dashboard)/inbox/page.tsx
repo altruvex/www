@@ -6,7 +6,7 @@ import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
 import { ThreadList } from "@/components/os/thread-list";
 import { getThreads } from "@/lib/threads";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

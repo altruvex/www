@@ -7,7 +7,7 @@ import { StatTile } from "@/components/os/stat-tile";
 import { deriveClientStage } from "@/lib/dashboard-data";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { ClientsTable, type ClientRow } from "./clients-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

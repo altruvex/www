@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { setMeetingStatus } from "@/app/(dashboard)/_actions/records";
 
 export function MeetingActions({ meetingId }: { meetingId: string }) {

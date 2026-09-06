@@ -25,6 +25,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@repo/database": "workspace:*",
     "@repo/pricing": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@types/mdx": "^2.0.13",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",

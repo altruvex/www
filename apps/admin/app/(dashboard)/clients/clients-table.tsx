@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Archive, CheckCircle2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
 import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@repo/ui";
 import { money, phone as fmtPhone, when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { bulkSetClientStatus } from "@/app/(dashboard)/_actions/records";

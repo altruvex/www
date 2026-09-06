@@ -1,7 +1,7 @@
 "use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody, SheetDescription } from "@/components/ui/sheet";
-import { Kbd } from "@/components/ui/kbd";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetBody, SheetDescription } from "@repo/ui";
+import { Kbd } from "@repo/ui";
 
 const SECTIONS: { title: string; rows: { keys: string[]; label: string }[] }[] = [
   {

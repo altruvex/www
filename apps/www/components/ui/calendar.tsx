@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@repo/ui";
 import { cn } from "@/lib/utils/utils";
 import {
   ChevronDownIcon,

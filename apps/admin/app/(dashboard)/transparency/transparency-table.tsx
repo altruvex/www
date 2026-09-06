@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { money, when, phone as fmtPhone } from "@/lib/format";
 import { convertEstimateToClient } from "@/app/(dashboard)/_actions/records";
 

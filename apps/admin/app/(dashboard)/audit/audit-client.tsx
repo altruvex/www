@@ -1,37 +1,26 @@
 "use client";
 
-import * as React from "react";
-import {
-  ScrollText,
-  User,
-  Shield,
-  FileSignature,
-  FileText,
-  Building2,
-  Wallet,
-  Eye,
-  ArrowRight,
-} from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
-import { Button } from "@/components/ui/button";
+import { ToneBadge } from "@/components/ui/badge";
+import { dateTime, when } from "@/lib/format";
 import {
-  Select,
+  Button, Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Sheet,
+  SelectValue, Sheet,
   SheetBody,
   SheetContent,
   SheetDescription,
   SheetFooter,
   SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { ToneBadge } from "@/components/ui/badge";
-import { dateTime, when } from "@/lib/format";
+  SheetTitle
+} from "@repo/ui";
+import {
+  ArrowRight,
+  Eye
+} from "lucide-react";
+import * as React from "react";
 
 export type AuditAction = "CREATE" | "UPDATE" | "STATUS_CHANGE" | "DELETE" | "SIGN" | "SEND" | "AUTH";
 

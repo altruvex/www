@@ -15,7 +15,7 @@ import {
   type Role,
 } from "@/lib/nav";
 import { CountBadge } from "@/components/ui/badge";
-import { Hint } from "@/components/ui/tooltip";
+import { Hint } from "@repo/ui";
 
 /**
  * §29 — grouped navigation with progressive disclosure.
@@ -76,7 +76,7 @@ export function Sidebar({
 
   return (
     <div
-      className="flex h-full flex-col bg-sidebar"
+      className="liquid-glass-toolbar flex h-full flex-col bg-sidebar"
       style={{ width: collapsed ? "var(--sidebar-w-collapsed)" : "var(--sidebar-w)" }}
     >
       {/* ---- identity ---------------------------------------------------- */}

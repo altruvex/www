@@ -9,16 +9,16 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
-import { Button } from "@/components/ui/button";
-import { Field, Input, Textarea } from "@/components/ui/input";
-import { segmentClass } from "@/components/ui/segmented-control";
+import { Button } from "@repo/ui";
+import { Field, Input, Textarea } from "@repo/ui";
+import { segmentClass } from "@repo/ui";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@repo/ui";
 import {
   Sheet,
   SheetBody,
@@ -27,8 +27,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
-import { Avatar } from "@/components/ui/avatar";
+} from "@repo/ui";
+import { Avatar } from "@repo/ui";
 import { ToneBadge } from "@/components/ui/badge";
 import { dueLabel, initials } from "@/lib/format";
 import { toast } from "sonner";

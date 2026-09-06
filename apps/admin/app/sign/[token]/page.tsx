@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { LoadingIcon } from "@/components/loading-icon";
 import { AlertCircle, CheckCircle2, Download } from "lucide-react";
 import { useParams } from "next/navigation";

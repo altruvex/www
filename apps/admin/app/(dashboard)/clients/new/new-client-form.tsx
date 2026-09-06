@@ -4,8 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/input";
+import { Button } from "@repo/ui";
+import { Field, Input } from "@repo/ui";
 import { ErrorState } from "@/components/os/error-state";
 
 export function NewClientForm() {

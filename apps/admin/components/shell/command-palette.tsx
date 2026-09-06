@@ -19,7 +19,7 @@ import {
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { ALL_NAV_ITEMS } from "@/lib/nav";
-import { Kbd } from "@/components/ui/kbd";
+import { Kbd } from "@repo/ui";
 import { NavIcon } from "./nav-icon";
 
 /**

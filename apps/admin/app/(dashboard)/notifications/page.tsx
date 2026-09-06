@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/os/empty-state";
 import { when, dateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { MarkAllRead } from "./mark-all-read";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

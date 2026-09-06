@@ -8,11 +8,11 @@ import { DetailLayout, MetaList } from "@/components/os/detail-layout";
 import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@repo/ui";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { dateTime, money, phone as fmtPhone, when } from "@/lib/format";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

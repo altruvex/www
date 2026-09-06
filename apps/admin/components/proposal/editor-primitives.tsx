@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import {
   Field,
   Input,
   Textarea,
   controlSurface,
   useFieldMeta,
-} from "@/components/ui/input";
+} from "@repo/ui";
 import { cn } from "@/lib/utils";
 
 /**

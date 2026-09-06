@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@repo/ui";
 import { when, truncate } from "@/lib/format";
 import type { Thread } from "@/lib/threads";
 

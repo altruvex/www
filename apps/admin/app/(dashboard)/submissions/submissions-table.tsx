@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
 import { StatusPill } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 import { when, truncate, phone as fmtPhone } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { convertSubmissionToClient } from "@/app/(dashboard)/_actions/records";

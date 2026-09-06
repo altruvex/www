@@ -12,7 +12,7 @@ import { statusOf } from "@/lib/status";
 import { dateTime, phone as fmtPhone } from "@/lib/format";
 import { ConvertButton } from "./convert-button";
 import { NotesPanel } from "./notes-panel";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

@@ -14,7 +14,7 @@ import {
 import { moneyByCurrency, percent, sumByCurrency, scaleByCurrency } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { PipelineBoard, type PipelineCardData } from "./pipeline-board";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

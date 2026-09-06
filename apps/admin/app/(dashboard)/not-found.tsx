@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileQuestion } from "lucide-react";
 import { EmptyState } from "@/components/os/empty-state";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export default function DashboardNotFound() {
   return (

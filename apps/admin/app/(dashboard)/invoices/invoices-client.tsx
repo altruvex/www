@@ -4,8 +4,8 @@
 import * as React from "react";
 import { Receipt, Printer, X, CheckCircle2, Clock, AlertCircle, Eye, Building2, Calendar, FileText } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
-import { Button } from "@/components/ui/button";
-import { segmentClass } from "@/components/ui/segmented-control";
+import { Button } from "@repo/ui";
+import { segmentClass } from "@repo/ui";
 import { StatusPill } from "@/components/ui/badge";
 import { money, date, dueLabel } from "@/lib/format";
 import { statusOf } from "@/lib/status";

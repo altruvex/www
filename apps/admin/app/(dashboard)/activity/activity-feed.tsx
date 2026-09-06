@@ -4,9 +4,9 @@ import * as React from "react";
 import { Search, X, Filter, Activity as ActivityIcon, MessageCircle, FileText, FileSignature, UserPlus, Wallet, CalendarDays } from "lucide-react";
 import { Timeline, type TimelineEvent } from "@/components/os/timeline";
 import { Panel } from "@/components/os/panel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { segmentClass } from "@/components/ui/segmented-control";
+import { Button } from "@repo/ui";
+import { Input } from "@repo/ui";
+import { segmentClass } from "@repo/ui";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [

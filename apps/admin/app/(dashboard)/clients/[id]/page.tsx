@@ -18,13 +18,13 @@ import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-lay
 import { Timeline } from "@/components/os/timeline";
 import { EmptyInline } from "@/components/os/empty-state";
 import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@repo/ui";
 import { deriveClientStage } from "@/lib/dashboard-data";
 import { buildActivity } from "@/lib/activity";
 import { statusOf } from "@/lib/status";
 import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
 import { StatusMenu, LifecycleButton, MarkSignedButton } from "./client-actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

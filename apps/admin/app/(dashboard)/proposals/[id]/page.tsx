@@ -19,7 +19,7 @@ import {
 import { statusOf } from "@/lib/status";
 import { date, dateTime, daysFromNow, money, when } from "@/lib/format";
 import { LifecycleButton } from "@/app/(dashboard)/clients/[id]/client-actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

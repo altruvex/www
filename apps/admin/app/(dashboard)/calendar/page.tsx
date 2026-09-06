@@ -10,7 +10,7 @@ import { toneDot } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { date as fmtDate } from "@/lib/format";
 import { MeetingActions } from "./meeting-actions";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 

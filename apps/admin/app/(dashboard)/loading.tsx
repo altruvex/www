@@ -1,4 +1,4 @@
-import { Skeleton, TilesSkeleton, TableSkeleton } from "@/components/ui/skeleton";
+import { Skeleton, TilesSkeleton, TableSkeleton } from "@repo/ui";
 
 /**
  * The loading state mirrors the SHAPE of a typical page — a header, a tile row,
