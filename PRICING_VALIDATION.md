@@ -106,15 +106,17 @@ Unchanged by design. Verified:
 | §5.5 SEO offers built from message strings | **Closed** — `buildPricingOfferSchemas` and `buildFaqPageSchemas` render from the schema |
 | §5.6 No version/staleness field | **Closed** — `PRICING_VERSION` plus per-entity `version`/`lastUpdated` |
 
-## 8. Open — needs your input
+## 8. Resolved after the audit
+
+**USD revision rate — intentional.** The contract bills revisions at 800 EGP/hr or 80 USD/hr. At the fixed 50 EGP/USD rate 800 EGP is ~16 USD, so the USD figure is a separate price list at roughly 5x the EGP rate rather than a conversion. Confirmed deliberate; `revisionHourlyRateUsd` carries a note not to derive it from the EGP rate.
+
+**Flagship band — `webapp/premium`.** The tier previously published "From 180,000 EGP", a floor no cell in the canonical matrix carried; the audit flagged it as the one tier the table could not settle. Confirmed as `webapp/premium`, now publishing **From 280,000 EGP** (280,000–450,000) — a deliberate 100,000 lift on the previously advertised floor, not a correction.
+
+## 9. Open — needs your input
 
 **Add-on cost bases.** `domain`, `hosting` and `business-mail` are modelled, typed, and `status: "planned"`, with `costBasis: null` and a `TODO`. They are filtered off every client surface until real supplier figures exist. `computeAddonPrice` returns `null` rather than defaulting to zero, so an unpriced add-on cannot quote a client 0 EGP. Supply the three costs and set `status: "active"` to publish them.
 
-**USD revision rate.** The contract bills revisions at 800 EGP/hr or **80 USD**/hr. At the fixed 50 EGP/USD rate, 800 EGP is ~16 USD — so the USD figure is a separate price list, roughly 5× the EGP rate, not a conversion. Carried over verbatim because it appears in signed agreements. Confirm whether it is intentional.
-
-**Flagship floor — resolved.** The tier previously published "From 180,000 EGP", a floor no cell in the canonical matrix carried. Confirmed as `webapp/premium`, so it now publishes **From 280,000 EGP** (280,000–450,000). This raises the flagship floor by 100,000 against what the site previously advertised — intentional, and the reason the tier is a "from" rather than a range: the conversation there starts with a call.
-
-## 9. Not built this pass — deliberately deferred
+## 10. Not built this pass — deliberately deferred
 
 **Admin pricing CRUD** (Phase 3 item 6). `apps/admin` still has no pricing UI; `settings/page.tsx:211` documents this as intentional. Prices are edited in `packages/pricing-schema` and deployed. This is net-new construction, not migration, and was sequenced after the public-surface fixes by agreement. The schema is built for it: every entity is a plain typed record with `version`/`lastUpdated`, `allAddonViews()` already returns planned entities for a SOON badge, and `publicAddons()` / `publicMaintenancePlans()` already enforce the client-visibility boundary. What remains is persistence (the entities move from constants to rows), an edit UI, and an audit trail.
 

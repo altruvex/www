@@ -58,13 +58,13 @@ export interface CommercialTerms extends Versioned {
   /** EGP per hour for revisions beyond the included rounds. */
   readonly revisionHourlyRate: Amount;
   /**
-   * USD-native revision rate, NOT the EGP figure converted.
+   * USD-native revision rate. Intentionally NOT the EGP figure converted.
    *
-   * At the fixed 50 EGP/USD rate, 800 EGP is ~16 USD, so this 80 USD figure is
-   * a separate USD price list carried over verbatim from the contract template
-   * rather than a conversion. Preserved as-authored because changing a rate
-   * that is already in signed contracts is a commercial decision, not a
-   * refactor — flagged for review.
+   * At the fixed 50 EGP/USD rate 800 EGP is ~16 USD, so this is a separate USD
+   * price list at roughly 5x the EGP rate, not a conversion. Confirmed
+   * deliberate — do not "fix" it by deriving it from `revisionHourlyRate` or
+   * `egpToUsd`, and do not let the two drift into each other: they are two
+   * prices, and each moves on its own.
    */
   readonly revisionHourlyRateUsd: Amount;
   readonly includedRevisionRounds: number;
