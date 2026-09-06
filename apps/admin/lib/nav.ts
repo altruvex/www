@@ -25,6 +25,7 @@ import {
   Sparkles,
   Tags,
   Target,
+  Wrench,
   Users,
   Wallet,
 } from "lucide-react";
@@ -167,6 +168,13 @@ export const GROUPS: NavGroup[] = [
         icon: ListChecks,
         state: "live",
         blurb: "Work items inside a project, with assignee and due date",
+      },
+      {
+        href: "/maintenance",
+        label: "Maintenance",
+        icon: Wrench,
+        state: "live",
+        blurb: "Retainers, allowances, and client requests",
       },
       {
         href: "/calendar",
