@@ -10,6 +10,26 @@ export const size = {
 
 export const revalidate = 86400;
 
+async function loadGoogleFont(family: string, weight: number, text: string) {
+  const cssUrl = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(
+    family,
+  )}:wght@${weight}&text=${encodeURIComponent(text)}`;
+  const css = await fetch(cssUrl, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/535.11 (KHTML, like Gecko) Chrome/17.0.963.56 Safari/535.11",
+    },
+  }).then((res) => res.text());
+
+  const fontUrlMatch = css.match(/url\((https:\/\/[^)]+)\)/);
+  if (!fontUrlMatch) {
+    throw new Error(`Could not find font URL for ${family}`);
+  }
+
+  const fontRes = await fetch(fontUrlMatch[1]);
+  return fontRes.arrayBuffer();
+}
+
 export default async function OpenGraphImage({
   params,
 }: {
@@ -17,7 +37,36 @@ export default async function OpenGraphImage({
 }) {
   const { locale } = await params;
   const loc = normalizeLocale(locale);
-  const isArabic = loc === "ar";
+
+  /**
+   * Satori — the renderer behind `ImageResponse` — performs no bidi
+   * reordering, so Arabic lays out in logical (LTR) word order: the heading
+   * reads "مخصصة ويب مواقع تطوير" instead of "تطوير مواقع ويب مخصصة".
+   * Letterforms and joining are correct; only word order is wrong, and
+   * neither `direction: rtl` nor a `dir` attribute changes it — both render
+   * byte-identical output.
+   *
+   * Rather than publish a share card that reads backwards, /ar serves the
+   * English card until bidi is supported upstream. Flip this to `true` to
+   * restore the Arabic layout — every RTL branch below is still wired up.
+   */
+  const BIDI_SUPPORTED: boolean = false;
+  const isArabic = BIDI_SUPPORTED && loc === "ar";
+
+  const text =
+    "استوديو تطوير ويب القاهرة تطوير مواقع ويب مخصصة للأنظمة متعددة اللغات الموجّهة للأعمال تطوير ويب مخصص وNext.js واستشارات تقنية للفرق التي تحتاج أداءً ومصداقيةً وجودة تنفيذ من اليوم الأول العربية + English Web Engineering Studio Cairo Custom web development for multilingual B2B systems Architecture-first builds Performance by default Founder-direct English + العربية " +
+    SITE_CONFIG.name +
+    (SITE_CONFIG.url ?? "altruvex.com");
+
+  const [interRegular, interBold, vazirmatnRegular, vazirmatnBold] =
+    await Promise.all([
+      loadGoogleFont("Inter", 400, text),
+      loadGoogleFont("Inter", 700, text),
+      loadGoogleFont("Vazirmatn", 400, text),
+      loadGoogleFont("Vazirmatn", 700, text),
+    ]);
+
+  const fontFamily = isArabic ? "Vazirmatn" : "Inter";
 
   return new ImageResponse(
     (
@@ -27,7 +76,7 @@ export default async function OpenGraphImage({
           background: "#FAFAFA",
           color: "#0F0F0F",
           display: "flex",
-          fontFamily: "Helvetica, Arial, sans-serif",
+          fontFamily,
           height: "100%",
           justifyContent: "space-between",
           padding: "72px",
@@ -158,6 +207,24 @@ export default async function OpenGraphImage({
         </div>
       </div>
     ),
-    size,
+    {
+      ...size,
+      fonts: [
+        { data: interRegular, name: "Inter", style: "normal", weight: 400 },
+        { data: interBold, name: "Inter", style: "normal", weight: 700 },
+        {
+          data: vazirmatnRegular,
+          name: "Vazirmatn",
+          style: "normal",
+          weight: 400,
+        },
+        {
+          data: vazirmatnBold,
+          name: "Vazirmatn",
+          style: "normal",
+          weight: 700,
+        },
+      ],
+    },
   );
 }

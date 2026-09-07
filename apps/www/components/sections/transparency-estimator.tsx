@@ -1,10 +1,7 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Button } from "@repo/ui";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Input } from "@repo/ui";
-import { Label } from "@repo/ui";
 import {
   useTransparency,
   type BrandIdentity,
@@ -25,11 +22,11 @@ import {
   generateEstimatePdf,
   mapProjectType,
   validatePhone,
-  type DeliverableTier,
-  type TransparencyTranslator,
+  type TransparencyTranslator
 } from "@/lib/utils/transparency-utils";
 import { cn } from "@/lib/utils/utils";
 import { COMPLEXITY_TO_LEGACY_BAND, type EstimateResult } from "@repo/pricing-schema";
+import { Button, Input, Label } from "@repo/ui";
 import { Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
@@ -338,7 +335,7 @@ export function TransparencyEstimator({
               {complete && estimate && (
                 <div className="mt-24 border-t border-border pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-smooth">
                   <div className="mb-14">
-                    <Eyebrow tone="muted" className="mb-6">Estimate</Eyebrow>
+                    <Eyebrow tone="muted" className="mb-6">{t("results.estimateLabel")}</Eyebrow>
                     <p className="text-[clamp(2.25rem,4vw,3.25rem)] font-medium leading-[1.1] tabular-nums text-foreground mb-4">
                       {money(estimate.minPrice)} – {money(estimate.maxPrice)}
                     </p>
@@ -348,7 +345,7 @@ export function TransparencyEstimator({
                   </div>
                   <div className="h-px w-full bg-border mb-14" />
                   <div className="mb-14">
-                    <Eyebrow tone="foreground" className="mb-6">What this includes</Eyebrow>
+                    <Eyebrow tone="foreground" className="mb-6">{t("results.includesLabel")}</Eyebrow>
                     <ul className="space-y-4 max-w-2xl">
                       {deliverables.slice(0, 5).map((item) => (
                         <li key={item} className="flex items-start gap-4 text-base leading-relaxed text-foreground">
@@ -357,6 +354,11 @@ export function TransparencyEstimator({
                         </li>
                       ))}
                     </ul>
+                    {deliverables.length > 5 ? (
+                      <p className="mt-5 text-sm text-muted-foreground">
+                        {t("results.moreInPdf", { count: num(deliverables.length - 5) })}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="h-px w-full bg-border mb-14" />
                   <div className="mb-16">
@@ -367,7 +369,7 @@ export function TransparencyEstimator({
                   </div>
                   <div className="rounded-xl border border-border bg-surface/40 p-8 md:p-10">
                     <header className="mb-8">
-                      <h4 className="text-[clamp(1.25rem,2vw,1.5rem)] font-medium leading-[1.2] tracking-[-0.01em] text-foreground mb-2">Get the detailed estimate</h4>
+                      <h4 className="text-[clamp(1.25rem,2vw,1.5rem)] font-medium leading-[1.2] tracking-[-0.01em] text-foreground mb-2">{t("results.detailedEstimateTitle")}</h4>
                       <p className="text-sm text-muted-foreground max-w-md">{t("phoneCapture.subtitle")}</p>
                     </header>
                     {!submitted ? (
@@ -569,7 +571,7 @@ function LiveReadout({
       {!hasEnoughContext ? (
         <div className="animate-in fade-in duration-500">
           <Eyebrow tone="muted" className="mb-5">
-            Project Estimate
+            {t("live.projectEstimateLabel")}
           </Eyebrow>
           <p className="text-sm text-muted-foreground leading-relaxed mb-8">
             {t("live.pickTypeFirst")} {t("live.updatesAsYouShape")}
@@ -586,7 +588,7 @@ function LiveReadout({
       ) : (
         <div className="animate-in fade-in duration-500">
           <Eyebrow tone="muted" className="mb-5">
-            Estimate
+            {t("live.estimateLabel")}
           </Eyebrow>
           <div className="mb-7">
             <p className="text-2xl xl:text-[1.75rem] font-medium leading-tight tabular-nums text-foreground mb-1.5">

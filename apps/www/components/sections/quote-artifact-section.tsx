@@ -137,7 +137,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                   {key === "schedule" ? <ScheduleBar /> : null}
                   {key === "scope" ? (
                     <p className="mt-6 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.15] tracking-[-0.018em] tabular-nums text-foreground">
-                      {fillTokens(t("clauses.scope.figure"))}
+                      {fillTokens(t.raw("clauses.scope.figure"))}
                     </p>
                   ) : null}
                 </div>
@@ -160,7 +160,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
         >
           <div className="flex flex-col items-start gap-5">
             <p className="text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-foreground">
-              {fillTokens(t("footer.minimum"))}
+              {fillTokens(t.raw("footer.minimum"))}
             </p>
             <MagneticButton asChild size="lg" className="group">
               <Link href="/pricing">

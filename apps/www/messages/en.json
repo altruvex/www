@@ -357,8 +357,7 @@
       "title": "Ready to",
       "titleAccent": "scope your build?"
     },
-    "step": "Step",
-    "stepOf": "Step {current} of {total}"
+    "step": "Step"
   },
   "contact": {
     "email": "Email",
@@ -2093,33 +2092,18 @@
       }
     },
     "results": {
-      "basedOnProject": "Based on your project",
       "badge": "Estimate Ready",
-      "consultationGate": "Need an exact number? <strong>Book a technical call and pressure-test the scope directly.</strong>",
-      "cta": "Schedule a Briefing",
-      "ctaPrimary": "Book a Technical Call",
-      "detailCta": "Get detailed estimate",
-      "disclaimer": "This is a preliminary estimate. Final investment is confirmed after a detailed requirements session.",
+      "detailedEstimateTitle": "Get the detailed estimate",
+      "estimateLabel": "Estimate",
       "fallbackDeliverables": [
         "Custom design",
         "Responsive development",
         "Production deployment",
         "Performance and launch QA"
       ],
-      "hostingIncluded": "Domain + base hosting included where scoped",
-      "infraDescription": "Year 1 includes domain, SSL, and base hosting where this scope requires them. Renewal from Year 2 starts at {amount}/year. Paid third-party tools are quoted separately.",
-      "infraLabel": "Infrastructure",
-      "investment": "Investment Range",
+      "includesLabel": "What this includes",
       "moreInPdf": "+ {count} more deliverables in the PDF",
-      "or": "Or",
-      "rangeCopy": "<strong>Projects like yours typically fall between {min} – {max}</strong>, with a delivery window of {weeksMin}–{weeksMax} weeks. <dim>The exact window is confirmed in discovery, once scope and content readiness are known.</dim>",
-      "rangeCta": "This is an initial estimate to help you plan. <strong>For a precise proposal tailored to your specific goals</strong>, <dim>Schedule a Briefing</dim>.",
-      "rangeCtaLabel": "Engineering Note",
-      "strategicNote": "This is a strategic estimate based on your inputs - not a generic price range.",
-      "timeline": "Estimated Timeline",
-      "title": "Your Project Investment Estimate",
       "weeks": "weeks",
-      "whatYouGet": "What you get",
       "whyCopy": "The range is shaped by the system type, scope depth, brand readiness, content support, and delivery pace. It is a planning range, not a locked quote.",
       "whyTitle": "Why this range?"
     },
@@ -2266,13 +2250,10 @@
       }
     },
     "live": {
-      "eyebrow": "Live estimate",
-      "widest": "Widest honest range. Every answer narrows it.",
-      "narrowing": "Narrowing — {answered} of {total} answered",
-      "settled": "Settled on your answers.",
-      "applied": "applied",
-      "neutral": "no effect on price",
+      "estimateLabel": "Estimate",
       "pickTypeFirst": "Pick a project type to start the range.",
+      "projectEstimateLabel": "Project Estimate",
+      "settled": "Settled on your answers.",
       "updatesAsYouShape": "Updates live as you shape requirements."
     },
     "optIn": {

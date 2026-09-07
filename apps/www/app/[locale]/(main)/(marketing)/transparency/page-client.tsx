@@ -44,14 +44,6 @@ export default function TransparencyPageClient({
 }
 
 /**
- * The terms a client would otherwise meet for the first time at signing.
- *
- * VAT and the revision rate were hardcoded inside the contract builder and
- * published nowhere, so anyone budgeting from this page was 14% short by the
- * time they saw a contract. Pass-through items are stated as cost plus a named
- * margin, and each is rendered as its own row — never folded into a project
- * total. All figures come from packages/pricing-schema.
- *
  * Presentation: a hairline cell grid, not a stack of rows. Four terms of equal
  * standing are peers, and a grid says peer where a list says sequence. The
  * pass-through ledger below it keeps the tabular form its numbers need, inside
