@@ -1,33 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "@repo/ui/styles";
+@import "@repo/ui/styles.css";
 @source "../app/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../components/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../lib/**/*.{js,jsx,ts,tsx}";
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
 @custom-variant dark (&:is(.dark *));
 
-/* ==========================================================================
-   ALTRUVEX ADMIN OS — operational token layer
-   --------------------------------------------------------------------------
-   This is NOT apps/www's stylesheet. The marketing site is a reading surface:
-   18px body, 1.75 leading, 4.5rem headlines, glass cards, ambient glow.
-   An operating system is a scanning surface: 13px body, 1.45 leading, 20px
-   page titles, flat planes divided by hairlines, zero ambient anything.
-
-   Token NAMES are deliberately identical to apps/www so there is one
-   vocabulary across the company (design-master Phase 4 / design-tokens rule:
-   never emit a second token vocabulary — remap into the canonical names).
-   Only the VALUES differ, plus a small set of admin-only additions
-   (--row-h, --status-*, --elev-*, --sidebar-w) that the marketing site has
-   no use for.
-
-   Layering law: components read semantic tokens only (--background, --card,
-   --status-success…). Nothing outside this file touches --n-* primitives.
-   ========================================================================== */
-
 @theme inline {
-  /* -- semantic surfaces ------------------------------------------------- */
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -46,20 +26,17 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
-  /* -- brand ------------------------------------------------------------- */
   --color-brand: hsl(var(--brand));
   --color-brand-hover: hsl(var(--brand-hover));
   --color-brand-soft: var(--brand-soft);
   --color-brand-foreground: hsl(var(--brand-foreground));
 
-  /* -- structure --------------------------------------------------------- */
   --color-border: hsl(var(--border));
   --color-border-mid: hsl(var(--border-mid));
   --color-border-strong: hsl(var(--border-strong));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* -- semantic status: ONE registry, used by lib/status.ts -------------- */
   --color-neutral: hsl(var(--status-neutral));
   --color-info: hsl(var(--status-info));
   --color-success: hsl(var(--status-success));
@@ -69,10 +46,6 @@
   --color-destructive: hsl(var(--status-danger));
   --color-progress: hsl(var(--status-progress));
 
-  /* -- categorical chart series (dataviz skill, validate_palette.js: PASS) ---
-     Fixed order, never cycled. Status tones are RESERVED and never reused as
-     a series colour. Light and dark are separately chosen steps, not a flip —
-     an inverted light palette fails the CVD and lightness-band checks. */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -80,7 +53,6 @@
   --color-chart-5: var(--chart-5);
   --color-chart-6: var(--chart-6);
 
-  /* -- neutral ramp (primitives — components must not reference these) --- */
   --color-n-0: hsl(var(--n-0));
   --color-n-1: hsl(var(--n-1));
   --color-n-2: hsl(var(--n-2));
@@ -91,7 +63,6 @@
   --color-n-7: hsl(var(--n-7));
   --color-n-8: hsl(var(--n-8));
 
-  /* -- app chrome -------------------------------------------------------- */
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
@@ -100,20 +71,18 @@
   --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
   --color-selection-accent: hsl(var(--selection-accent));
 
-  /* -- type -------------------------------------------------------------- */
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  --text-micro: 0.6875rem;   /* 11px — mono telemetry labels */
-  --text-meta: 0.75rem;      /* 12px — secondary cell text, timestamps */
-  --text-base: 0.8125rem;    /* 13px — the OS body size. Everything defaults here */
-  --text-md: 0.875rem;       /* 14px — emphasized row text, inputs */
-  --text-lg: 1rem;           /* 16px — section headers (h2/h3) */
-  --text-xl: 1.25rem;        /* 20px — page title (h1) */
-  --text-metric: 1.75rem;    /* 28px — stat-tile numerals. The scale contrast. */
+  --text-micro: 0.6875rem;
+  --text-meta: 0.75rem;
+  --text-base: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-metric: 1.75rem;
 
-  /* -- radii: tight. An OS is not a landing page. ------------------------ */
   --radius-xs: 3px;
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -121,34 +90,26 @@
   --radius-xl: 10px;
   --radius-2xl: 12px;
 
-  /* -- animation --------------------------------------------------------- */
   --animate-palette-in: palette-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-panel-in: panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
 :root {
-  /* ---- motion budget (emil-design-eng: invisible, interruptible) -------- */
-  --dur-state: 120ms;   /* hover, focus, selection */
-  --dur-panel: 180ms;   /* sheets, popovers, palette */
+  --dur-state: 120ms;
+  --dur-panel: 180ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
-  /* ---- control rail: ONE height scale for every interactive control ----
-     28 / 32 / 36. Buttons, inputs, select triggers, toolbar icon buttons and
-     topbar controls all resolve here — nothing hardcodes its own height, which
-     is how a "+" ended up 4px taller than the search chip beside it. */
-  --control-h-sm: 28px;   /* toolbars, topbar rail, sidebar rows, table filters */
-  --control-h: 32px;      /* the default: form controls, primary page actions */
-  --control-h-lg: 36px;   /* the one prominent action on a page */
+  --control-h-sm: 28px;
+  --control-h: 32px;
+  --control-h-lg: 36px;
 
-  /* ---- density: one dial the whole app reads --------------------------- */
-  --row-h: 40px;        /* comfortable */
+  --row-h: 40px;
   --row-px: 0.75rem;
   --sidebar-w: 232px;
   --sidebar-w-collapsed: 56px;
   --topbar-h: 48px;
 
-  /* ---- neutral ramp (cool, flat — no warm cast) ------------------------ */
   --n-0: 220 24% 99%;
   --n-1: 220 20% 97%;
   --n-2: 220 17% 94%;
@@ -159,33 +120,25 @@
   --n-7: 222 24% 20%;
   --n-8: 222 32% 6%;
 
-  /* ---- brand (unchanged from the company token — Altruvex blue) -------- */
   --brand: 226 60% 56%;
   --brand-hover: 226 54% 49%;
   --brand-soft: hsl(var(--brand) / 0.1);
   --brand-foreground: 220 24% 99%;
 
-  /* ---- status registry -------------------------------------------------
-     Six tones, no more. Every enum in the Prisma schema maps into exactly
-     one of these in lib/status.ts. A seventh colour is a design bug. */
-  --status-neutral: 220 10% 41%;   /* inert / archived / draft            */
-  --status-info: 226 60% 51%;      /* in flight, nothing wrong            */
-  --status-success: 162 88% 24%;   /* terminal-good: won, signed, paid    */
-  --status-warning: 33 92% 30%;    /* needs a human soon                  */
-  --status-danger: 0 66% 45%;      /* failed / lost / overdue             */
-  --status-progress: 258 68% 54%;  /* actively being worked               */
+  --status-neutral: 220 10% 41%;
+  --status-info: 226 60% 51%;
+  --status-success: 162 88% 24%;
+  --status-warning: 33 92% 30%;
+  --status-danger: 0 66% 45%;
+  --status-progress: 258 68% 54%;
 
-  /* Categorical series, light surface. Validated against #FFFFFF:
-     lightness band PASS · chroma floor PASS · CVD adjacent ΔE 13.1 (deutan)
-     PASS · normal-vision ΔE 24.1 PASS · contrast ≥3:1 PASS. */
-  --chart-1: #4F62D4;  /* indigo  — the brand hue, always series 1 */
-  --chart-2: #C2610C;  /* orange  */
-  --chart-3: #0E9E97;  /* teal    */
-  --chart-4: #96387E;  /* magenta */
-  --chart-5: #5F7F12;  /* olive   */
-  --chart-6: #9B7BEA;  /* violet  */
+  --chart-1: #4F62D4;
+  --chart-2: #C2610C;
+  --chart-3: #0E9E97;
+  --chart-4: #96387E;
+  --chart-5: #5F7F12;
+  --chart-6: #9B7BEA;
 
-  /* ---- semantic surfaces (light) --------------------------------------- */
   --background: 220 22% 97%;
   --foreground: var(--n-8);
   --surface: 220 20% 95%;
@@ -199,12 +152,8 @@
   --secondary: 220 18% 94%;
   --secondary-foreground: 222 20% 26%;
   --muted: 220 18% 94%;
-  /* Three text ranks, ALL of them AA at body size. The third rank is NOT a
-     lighter grey — an 11px label at 3.6:1 fails AA no matter how "meta" it is.
-     Rank is carried by size, weight and the mono face instead (C4: hierarchy
-     must survive greyscale; colour reinforces rank, it never creates it). */
-  --muted-foreground: 220 12% 34%;   /* 8.0:1 on --card */
-  --subtle-foreground: 220 10% 42%;  /* 5.6:1 on --card, 4.6:1 on --surface-2 */
+  --muted-foreground: 220 12% 34%;
+  --subtle-foreground: 220 10% 42%;
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
 
@@ -223,12 +172,9 @@
   --messaging-whatsapp: 142 62% 34%;
   --selection-accent: 226 60% 56%;
 
-  /* ---- elevation: rare, ultra-diffuse. Depth is lightness, not shadow. -- */
   --elev-1: 0 1px 2px hsl(222 32% 6% / 0.05);
   --elev-2: 0 4px 12px -2px hsl(222 32% 6% / 0.1), 0 2px 4px -2px hsl(222 32% 6% / 0.06);
 
-  /* Admin uses the shared Liquid Glass material at lower intensity than www:
-     chrome can diffuse; dense data planes stay readable. */
   --glass-background: linear-gradient(135deg, hsl(0 0% 100% / 0.72), hsl(220 24% 98% / 0.46));
   --glass-background-strong: linear-gradient(180deg, hsl(0 0% 100% / 0.9), hsl(220 20% 97% / 0.78));
   --glass-background-flat: linear-gradient(135deg, hsl(0 0% 100% / 0.62), hsl(220 18% 96% / 0.42));
@@ -245,7 +191,6 @@
   --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 }
 
-/* Density dial — set on <html> by the density toggle, persisted per user. */
 :root[data-density="compact"] {
   --row-h: 32px;
   --row-px: 0.625rem;
@@ -269,11 +214,9 @@
   --secondary: 222 18% 16%;
   --secondary-foreground: 220 20% 92%;
   --muted: 222 18% 16%;
-  --muted-foreground: 220 10% 66%;   /* 7.1:1 on --card */
-  --subtle-foreground: 220 9% 57%;   /* 4.7:1 on --card, 4.6:1 on --surface-2 */
+  --muted-foreground: 220 10% 66%;
+  --subtle-foreground: 220 9% 57%;
 
-  /* C8: dark drops chroma, lifts tone. Every status tone re-derived, not
-     inverted — the light values glow and fail contrast on dark surfaces. */
   --status-neutral: 220 9% 60%;
   --status-info: 226 78% 70%;
   --status-success: 162 60% 50%;
@@ -281,8 +224,6 @@
   --status-danger: 0 74% 68%;
   --status-progress: 258 76% 72%;
 
-  /* Categorical series, dark surface. Separately chosen, then validated:
-     all six inside the dark lightness band, CVD adjacent ΔE 8.6 (deutan). */
   --chart-1: #6E7CE2;
   --chart-2: #C86B20;
   --chart-3: #17A69E;
@@ -361,11 +302,8 @@
     letter-spacing: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* No ambient gradient. An operating system has no weather. */
   }
 
-  /* T4: heading levels are scope, not size. The OS scale is flat on purpose —
-     hierarchy comes from weight, position and hairlines, not from 4rem type. */
   h1 {
     font-family: var(--font-outfit), sans-serif;
     font-size: var(--text-xl);
@@ -393,7 +331,6 @@
     font-weight: 600;
   }
 
-  /* Every number in this app is scanned in a column. */
   table, .tabular, [data-numeric] {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
@@ -405,7 +342,6 @@
 }
 
 @layer components {
-  /* The single micro-label treatment. T8: caps is a label treatment, ≤4 words. */
   .telemetry {
     font-family: var(--font-mono);
     font-size: var(--text-micro);
@@ -415,8 +351,6 @@
     font-weight: 500;
   }
 
-  /* A "plane" is the OS's only container: flat, hairline-bounded, no shadow.
-     Cards float; planes tile. This app tiles. */
   .plane {
     background: var(--glass-background-strong);
     border: 1px solid var(--glass-border-strong);
@@ -426,7 +360,6 @@
     backdrop-filter: var(--glass-blur-soft);
   }
 
-  /* Row grid used by every table body. Hairlines between, none at the ends. */
   .rows > * + * { border-top: 1px solid hsl(var(--border)); }
 }
 
