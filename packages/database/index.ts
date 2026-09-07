@@ -1,16 +1,29 @@
-import { PrismaClient, type ClientSource } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient, type ClientSource } from "./generated/prisma/client";
 
 declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-export const prisma = globalThis.__prisma || new PrismaClient();
+/**
+ * Prisma 7 requires an explicit driver adapter — `new PrismaClient()` with no
+ * adapter throws. The connection string is still read from `DATABASE_URL`;
+ * only the plumbing moved from the datasource block to here.
+ */
+function createPrismaClient(): PrismaClient {
+  const adapter = new PrismaPg({
+    connectionString: process.env.DATABASE_URL,
+  });
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalThis.__prisma || createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalThis.__prisma = prisma;
 }
 
-export * from "@prisma/client";
+export * from "./generated/prisma/client";
 
 export function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "");
