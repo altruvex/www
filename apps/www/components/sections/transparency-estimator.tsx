@@ -1,7 +1,9 @@
 "use client";
 
+import { TransparencyChapter } from "@/components/sections/transparency-chapter";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { bodyMarks } from "@/components/ui/rich-text";
 import {
   useTransparency,
   type BrandIdentity,
@@ -10,27 +12,24 @@ import {
   type ProjectType,
   type Timeline,
 } from "@/hooks/use-transparency";
-import {
-  useReveal,
-  useSectionDescription,
-  useSectionEyebrow,
-  useSectionTitle,
-} from "@/lib/motion";
+import { useReveal } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
 import {
   buildPDFHtml,
   generateEstimatePdf,
   mapProjectType,
   validatePhone,
-  type TransparencyTranslator
+  type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
 import { cn } from "@/lib/utils/utils";
-import { COMPLEXITY_TO_LEGACY_BAND, type EstimateResult } from "@repo/pricing-schema";
+import {
+  COMPLEXITY_TO_LEGACY_BAND,
+  type EstimateResult,
+} from "@repo/pricing-schema";
 import { Button, Input, Label } from "@repo/ui";
 import { Check, Download, Loader2, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
-import { SectionHeading } from "./section-heading";
 
 type QuestionKey =
   | "projectType"
@@ -130,9 +129,6 @@ export function TransparencyEstimator({
   const [submitted, setSubmitted] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
-  const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const descRef = useSectionDescription<HTMLParagraphElement>();
   const estimatorRef = useReveal<HTMLDivElement>();
 
   const answers: AnswerMap = {
@@ -169,10 +165,17 @@ export function TransparencyEstimator({
       if (key === "projectType") setProjectType(value as ProjectType);
       if (key === "complexity") setComplexity(value as Complexity);
       if (key === "brandIdentity") setBrandIdentity(value as BrandIdentity);
-      if (key === "contentReadiness") setContentReadiness(value as ContentReadiness);
+      if (key === "contentReadiness")
+        setContentReadiness(value as ContentReadiness);
       if (key === "timeline") setTimeline(value as Timeline);
     },
-    [setBrandIdentity, setComplexity, setContentReadiness, setProjectType, setTimeline],
+    [
+      setBrandIdentity,
+      setComplexity,
+      setContentReadiness,
+      setProjectType,
+      setTimeline,
+    ],
   );
 
   const startOver = useCallback(() => {
@@ -249,57 +252,71 @@ export function TransparencyEstimator({
     } finally {
       setDownloading(false);
     }
-  }, [complexity, estimate, isAr, locale, name, phone, projectType, t, timeline]);
+  }, [
+    complexity,
+    estimate,
+    isAr,
+    locale,
+    name,
+    phone,
+    projectType,
+    t,
+    timeline,
+  ]);
 
   const deliverables =
     projectType && complexity
-      ? ((t.raw(`pdfContent.deliverables.${mapProjectType(projectType)}.${COMPLEXITY_TIER[complexity]}`) as string[]) ?? [])
+      ? ((t.raw(
+          `pdfContent.deliverables.${mapProjectType(projectType)}.${COMPLEXITY_TIER[complexity]}`,
+        ) as string[]) ?? [])
       : (t.raw("results.fallbackDeliverables") as string[]);
 
   return (
     <section
       id="transparency-estimator"
       aria-labelledby="transparency-estimator-heading"
-      className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div>
-          <header className="mb-20">
-            <SectionHeading
-              titleId="transparency-estimator-heading"
-              titleAs={pageHeading ? "h1" : "h2"}
-              eyebrowRef={eyebrowRef}
-              titleRef={titleRef}
-              descriptionRef={descRef}
-              eyebrow={t("badge")}
-              firstTitle={t("title")}
-              secondTitle={t("titleItalic")}
-              description={t("subtitle")}
-            />
-            {initialTier && KNOWN_TIERS.has(initialTier) ? (
-              <PreselectedTier label={t(`tierNames.${initialTier}`)} t={t} />
-            ) : null}
-          </header>
-          <div ref={estimatorRef} className="lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_24rem] lg:gap-20 lg:items-start">
-            <div className="space-y-16">
-              <QuestionBlock
-                index={1}
-                question={QUESTIONS[0]}
-                selected={answers.projectType}
-                onSelect={(val) => select(QUESTIONS[0].key, val)}
-                t={t}
-                num={num}
-              />
-              <QuestionBlock
-                index={2}
-                question={QUESTIONS[1]}
-                selected={answers.complexity}
-                onSelect={(val) => select(QUESTIONS[1].key, val)}
-                t={t}
-                num={num}
-              />
-              <div className="block lg:hidden">
+        {/* No chapter index: the estimator is the instrument that produces the
+            figure, not one of the three chapters that then explain it. */}
+        <TransparencyChapter
+          titleId="transparency-estimator-heading"
+          titleAs={pageHeading ? "h1" : "h2"}
+          eyebrow={t("badge")}
+          title={t("title")}
+          titleItalic={t("titleItalic")}
+          lede={t("subtitle")}
+        />
+        {initialTier && KNOWN_TIERS.has(initialTier) ? (
+          <PreselectedTier label={t(`tierNames.${initialTier}`)} t={t} />
+        ) : null}
+
+        <div
+          ref={estimatorRef}
+          className="mt-14 lg:mt-20 lg:grid lg:grid-cols-12 lg:items-start lg:gap-12 xl:gap-16"
+        >
+          {/* Input rail. */}
+          <div className="lg:col-span-7">
+            <div className="space-y-12 lg:space-y-16">
+              {PRIMARY_QUESTIONS.map((question, i) => (
+                <QuestionBlock
+                  key={question.key}
+                  index={i + 1}
+                  question={question}
+                  selected={answers[question.key]}
+                  onSelect={(val) => select(question.key, val)}
+                  t={t}
+                  num={num}
+                />
+              ))}
+
+              {/* The instrument travels with the reader on desktop; on a phone
+                  it belongs here, where the first two answers have just made
+                  it meaningful and the readiness questions follow. */}
+              <div className="lg:hidden">
                 <LiveReadout
+                  answeredCount={answeredCount}
                   hasEnoughContext={hasEnoughContext}
                   estimate={estimate}
                   answers={answers}
@@ -308,172 +325,96 @@ export function TransparencyEstimator({
                   t={t}
                 />
               </div>
-              <QuestionBlock
-                index={3}
-                question={QUESTIONS[2]}
-                selected={answers.brandIdentity}
-                onSelect={(val) => select(QUESTIONS[2].key, val)}
-                t={t}
-                num={num}
-              />
-              <QuestionBlock
-                index={4}
-                question={QUESTIONS[3]}
-                selected={answers.contentReadiness}
-                onSelect={(val) => select(QUESTIONS[3].key, val)}
-                t={t}
-                num={num}
-              />
-              <QuestionBlock
-                index={5}
-                question={QUESTIONS[4]}
-                selected={answers.timeline}
-                onSelect={(val) => select(QUESTIONS[4].key, val)}
-                t={t}
-                num={num}
-              />
-              {complete && estimate && (
-                <div className="mt-24 border-t border-border pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-smooth">
-                  <div className="mb-14">
-                    <Eyebrow tone="muted" className="mb-6">{t("results.estimateLabel")}</Eyebrow>
-                    <p className="text-[clamp(2.25rem,4vw,3.25rem)] font-medium leading-[1.1] tabular-nums text-foreground mb-4">
-                      {money(estimate.minPrice)} – {money(estimate.maxPrice)}
-                    </p>
-                    <p className="text-lg text-muted-foreground">
-                      {num(estimate.minWeeks)}–{num(estimate.maxWeeks)} {t("results.weeks")}
-                    </p>
-                  </div>
-                  <div className="h-px w-full bg-border mb-14" />
-                  <div className="mb-14">
-                    <Eyebrow tone="foreground" className="mb-6">{t("results.includesLabel")}</Eyebrow>
-                    <ul className="space-y-4 max-w-2xl">
-                      {deliverables.slice(0, 5).map((item) => (
-                        <li key={item} className="flex items-start gap-4 text-base leading-relaxed text-foreground">
-                          <Check aria-hidden className="mt-1 size-4 shrink-0 text-local-accent" strokeWidth={2} />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    {deliverables.length > 5 ? (
-                      <p className="mt-5 text-sm text-muted-foreground">
-                        {t("results.moreInPdf", { count: num(deliverables.length - 5) })}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="h-px w-full bg-border mb-14" />
-                  <div className="mb-16">
-                    <Eyebrow tone="foreground" className="mb-6">{t("results.whyTitle")}</Eyebrow>
-                    <p className="text-base leading-relaxed text-muted-foreground max-w-2xl">
-                      {t("results.whyCopy")}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-border bg-surface/40 p-8 md:p-10">
-                    <header className="mb-8">
-                      <h4 className="text-[clamp(1.25rem,2vw,1.5rem)] font-medium leading-[1.2] tracking-[-0.01em] text-foreground mb-2">{t("results.detailedEstimateTitle")}</h4>
-                      <p className="text-sm text-muted-foreground max-w-md">{t("phoneCapture.subtitle")}</p>
-                    </header>
-                    {!submitted ? (
-                      <div className="space-y-6 max-w-xl">
-                        <div className="grid gap-6 sm:grid-cols-2">
-                          <div>
-                            <Label htmlFor="estimate-name" className="normal-case tracking-normal font-sans text-xs font-medium text-muted-foreground block mb-2">
-                              {t("phoneCapture.nameLabel")}
-                            </Label>
-                            <Input
-                              id="estimate-name"
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                              placeholder={t("phoneCapture.namePlaceholder")}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="estimate-phone" className="normal-case tracking-normal font-sans text-xs font-medium text-muted-foreground block mb-2">
-                              {t("phoneCapture.phoneLabel")}
-                            </Label>
-                            <Input
-                              id="estimate-phone"
-                              type="tel"
-                              inputMode="tel"
-                              dir="ltr"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                              placeholder={t("phoneCapture.phonePlaceholder")}
-                              aria-invalid={phoneError !== null}
-                              aria-describedby="estimate-phone-hint"
-                            />
-                            {phoneError && (
-                              <p id="estimate-phone-hint" className="mt-2 text-xs text-destructive" role="alert">
-                                {phoneError}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row items-center gap-5 pt-2">
-                          <Button variant="brand" size="lg" onClick={submit} loading={submitting} className="w-full sm:w-auto">
-                            {submitting ? t("phoneCapture.submitting") : t("pdf.button")}
-                          </Button>
-                          <button
-                            type="button"
-                            onClick={startOver}
-                            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ease-smooth"
-                          >
-                            <RotateCcw className="size-3.5" />
-                            <span>{t("startOver")}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="animate-in fade-in duration-500 max-w-xl">
-                        <p className="text-foreground font-medium mb-6">{t("results.badge")}</p>
-                        <div className="flex flex-col sm:flex-row items-center gap-5">
-                          <Button variant="brand" size="lg" onClick={downloadPdf} disabled={downloading} className="w-full sm:w-auto">
-                            {downloading ? <><Loader2 className="animate-spin mr-2 size-4" />{t("pdf.generating")}</> : <><Download className="mr-2 size-4" />{t("pdf.button")}</>}
-                          </Button>
-                          <button
-                            type="button"
-                            onClick={startOver}
-                            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors ease-smooth"
-                          >
-                            <RotateCcw className="size-3.5" />
-                            <span>{t("startOver")}</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+
+              {/* Stage break: the first two questions describe the build, the
+                  last three describe what the client brings to it. */}
+              <div className="flex items-center gap-4 pt-2">
+                <Eyebrow className="shrink-0 text-[11px] leading-none">
+                  {t("readiness.title")}
+                </Eyebrow>
+                <span aria-hidden className="h-px min-w-6 flex-1 bg-border" />
+              </div>
+
+              {READINESS_QUESTIONS.map((question, i) => (
+                <QuestionBlock
+                  key={question.key}
+                  index={PRIMARY_QUESTIONS.length + i + 1}
+                  question={question}
+                  selected={answers[question.key]}
+                  onSelect={(val) => select(question.key, val)}
+                  t={t}
+                  num={num}
+                />
+              ))}
             </div>
-            <aside className="hidden lg:block sticky top-32">
-              <LiveReadout
-                hasEnoughContext={hasEnoughContext}
-                estimate={estimate}
-                answers={answers}
-                money={money}
-                num={num}
-                t={t}
-              />
-            </aside>
           </div>
+
+          <aside className="sticky top-28 hidden lg:col-span-5 lg:block">
+            <LiveReadout
+              answeredCount={answeredCount}
+              hasEnoughContext={hasEnoughContext}
+              estimate={estimate}
+              answers={answers}
+              money={money}
+              num={num}
+              t={t}
+            />
+          </aside>
         </div>
+
+        {/* The payoff spans the container. Left inside the input rail it
+            rendered at half width with the instrument column empty beside it —
+            the number the reader came for, set narrower than the questions
+            that produced it. */}
+        {complete && estimate ? (
+          <ResultPanel
+            estimate={estimate}
+            deliverables={deliverables}
+            money={money}
+            num={num}
+            t={t}
+            name={name}
+            setName={setName}
+            phone={phone}
+            setPhone={setPhone}
+            phoneError={phoneError}
+            submitting={submitting}
+            submitted={submitted}
+            downloading={downloading}
+            onSubmit={submit}
+            onDownload={downloadPdf}
+            onStartOver={startOver}
+          />
+        ) : null}
       </Container>
     </section>
   );
 }
 
-
-
 function PreselectedTier({ label, t }: { label: string; t: Translator }) {
   return (
-    <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-border bg-surface px-4 py-2">
+    <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border bg-surface px-4 py-2">
       <span className="size-2 rounded-full bg-local-accent" aria-hidden />
-      <span className="eyebrow text-muted-foreground">
+      <span className="eyebrow text-[11px] text-muted-foreground">
         {t("preselected")} / {label}
       </span>
     </div>
   );
 }
 
+/**
+ * One question, as an indexed rule and a hairline-ruled list of answers.
+ *
+ * The options were a two-column grid of bordered cards with a radio dot — the
+ * default shape of every SaaS form, and one that leaves a hole in the grid
+ * whenever a question has three answers instead of four. Rows never leave a
+ * hole, hold the whole answer on two lines instead of four, and let the reader
+ * compare answers down a single column rather than across a broken grid.
+ *
+ * Selection carries three signals, not one: an accent edge, a tinted ground,
+ * and a check (principles C13 — colour is never the only signal). The radio
+ * semantics are unchanged.
+ */
 function QuestionBlock({
   index,
   question,
@@ -492,18 +433,38 @@ function QuestionBlock({
   const base = `steps.${question.msg}`;
 
   return (
-    <section aria-labelledby={`question-${question.key}`} className="scroll-mt-32">
-      <header className="mb-8">
-        <p className="text-sm tabular-nums text-muted-foreground mb-3 font-mono">
-          {num(String(index).padStart(2, "0"))} /{" "}
-          {num(String(TOTAL).padStart(2, "0"))}
-        </p>
-        <h3 id={`question-${question.key}`} className="text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-foreground">
+    <section
+      aria-labelledby={`question-${question.key}`}
+      className="scroll-mt-32"
+    >
+      <header className="mb-6">
+        <div className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className="eyebrow shrink-0 text-[11px] leading-none tabular-nums text-local-accent-text ltr:font-mono"
+          >
+            {num(String(index).padStart(2, "0"))}
+          </span>
+          <span aria-hidden className="h-px min-w-6 flex-1 bg-border" />
+        </div>
+        <h3
+          id={`question-${question.key}`}
+          className="mt-5 text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-foreground"
+        >
           {t(`${base}.title`)}
         </h3>
+        {/* Already written and translated in both locales, and never shown
+            until now: the sentence that says why the question is asked. */}
+        <p className="mt-3 max-w-[58ch] text-sm leading-relaxed text-muted-foreground">
+          {t.rich(`${base}.hint`, bodyMarks)}
+        </p>
       </header>
 
-      <div role="radiogroup" aria-label={t(`${base}.title`)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        role="radiogroup"
+        aria-label={t(`${base}.title`)}
+        className="grid list-none gap-px overflow-hidden rounded-lg border border-border bg-border"
+      >
         {question.options.map((option) => {
           const isSelected = selected === option;
 
@@ -515,34 +476,44 @@ function QuestionBlock({
               aria-checked={isSelected}
               onClick={() => onSelect(option)}
               className={cn(
-                "group relative text-left p-6 rounded-lg border transition-all duration-200 ease-smooth outline-none",
-                "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "group relative flex w-full items-start gap-4 px-5 py-5 text-start outline-none transition-colors duration-200 ease-smooth sm:px-6 sm:py-6",
+                "focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
                 isSelected
-                  ? "border-local-accent bg-local-accent/5"
-                  : "border-border bg-transparent hover:border-border-mid hover:bg-surface/50"
+                  ? "bg-local-accent-soft"
+                  : "bg-background hover:bg-surface/70",
               )}
             >
-              <div className="flex items-start gap-4">
-                <div
+              {/* Selection edge — the first of three signals. */}
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute inset-y-0 start-0 w-0.5 transition-colors",
+                  isSelected ? "bg-local-accent" : "bg-transparent",
+                )}
+              />
+              <span className="grid min-w-0 flex-1 gap-x-6 gap-y-1.5 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)] sm:items-baseline">
+                <span
                   className={cn(
-                    "mt-1 shrink-0 flex items-center justify-center size-4 rounded-full border transition-colors",
-                    isSelected ? "border-local-accent" : "border-border-mid group-hover:border-foreground/30"
+                    "block text-[0.9375rem] font-medium transition-colors sm:text-base",
+                    isSelected
+                      ? "text-local-accent-text"
+                      : "text-foreground/85 group-hover:text-foreground",
                   )}
                 >
-                  {isSelected && <div className="size-2 rounded-full bg-local-accent" />}
-                </div>
-                <div>
-                  <span className={cn(
-                    "block text-base font-medium mb-1.5 transition-colors",
-                    isSelected ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
-                  )}>
-                    {t(`${base}.options.${option}.title`)}
-                  </span>
-                  <span className="block text-sm text-muted-foreground leading-relaxed">
-                    {t(`${base}.options.${option}.description`)}
-                  </span>
-                </div>
-              </div>
+                  {t(`${base}.options.${option}.title`)}
+                </span>
+                <span className="block max-w-[62ch] text-sm leading-relaxed text-muted-foreground">
+                  {t(`${base}.options.${option}.description`)}
+                </span>
+              </span>
+              <Check
+                aria-hidden
+                strokeWidth={2}
+                className={cn(
+                  "mt-0.5 size-4 shrink-0 transition-opacity",
+                  isSelected ? "text-local-accent opacity-100" : "opacity-0",
+                )}
+              />
             </button>
           );
         })}
@@ -551,7 +522,19 @@ function QuestionBlock({
   );
 }
 
+/**
+ * The instrument: the figure, how far the reader is from settling it, and what
+ * every answer so far has been.
+ *
+ * This was a small grey box parked at the top of a two-thousand-pixel column.
+ * It is now the panel the section is built around — the number set at display
+ * scale, a five-segment meter that fills as answers land (the count beside it
+ * carries the same state without relying on colour), and the answer ledger
+ * underneath. It is `aria-live="polite"`, so a screen reader hears the range
+ * settle rather than having to hunt for it.
+ */
 function LiveReadout({
+  answeredCount,
   hasEnoughContext,
   estimate,
   answers,
@@ -559,6 +542,7 @@ function LiveReadout({
   num,
   t,
 }: {
+  answeredCount: number;
   hasEnoughContext: boolean;
   estimate: EstimateResult | null;
   answers: AnswerMap;
@@ -566,60 +550,343 @@ function LiveReadout({
   num: (n: string | number) => string;
   t: Translator;
 }) {
+  const settled = answeredCount === TOTAL;
+
   return (
-    <div className="rounded-xl border border-border bg-surface p-7 md:p-8" aria-live="polite">
-      {!hasEnoughContext ? (
-        <div className="animate-in fade-in duration-500">
-          <Eyebrow tone="muted" className="mb-5">
-            {t("live.projectEstimateLabel")}
+    <div
+      className="overflow-hidden rounded-lg border border-border bg-surface"
+      aria-live="polite"
+    >
+      <div className="border-b border-border bg-background px-7 py-7 md:px-8">
+        <div className="flex items-center justify-between gap-4">
+          <Eyebrow className="text-[11px] leading-none">
+            {hasEnoughContext
+              ? t("live.estimateLabel")
+              : t("live.projectEstimateLabel")}
           </Eyebrow>
-          <p className="text-sm text-muted-foreground leading-relaxed mb-8">
-            {t("live.pickTypeFirst")} {t("live.updatesAsYouShape")}
-          </p>
-          <div className="space-y-3.5">
-            {QUESTIONS.map((q, i) => (
-              <div key={q.key} className="flex items-center gap-3 text-sm">
-                <span className="font-mono text-xs text-muted-foreground">{num(String(i + 1).padStart(2, "0"))}</span>
-                <span className="text-muted-foreground">{t(`readiness.labels.${q.key}`)}</span>
-              </div>
-            ))}
-          </div>
+          <span
+            className="eyebrow shrink-0 text-[11px] leading-none tabular-nums text-muted-foreground ltr:font-mono"
+            aria-hidden
+          >
+            {num(String(answeredCount).padStart(2, "0"))} /{" "}
+            {num(String(TOTAL).padStart(2, "0"))}
+          </span>
         </div>
-      ) : (
-        <div className="animate-in fade-in duration-500">
-          <Eyebrow tone="muted" className="mb-5">
-            {t("live.estimateLabel")}
-          </Eyebrow>
-          <div className="mb-7">
-            <p className="text-2xl xl:text-[1.75rem] font-medium leading-tight tabular-nums text-foreground mb-1.5">
-              {money(estimate!.minPrice)} – {money(estimate!.maxPrice)}
+
+        {hasEnoughContext && estimate ? (
+          <div className="mt-6">
+            <p className="text-[clamp(1.75rem,2.6vw,2.25rem)] font-medium leading-[1.1] tracking-[-0.03em] tabular-nums text-foreground">
+              {money(estimate.minPrice)} – {money(estimate.maxPrice)}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {num(estimate!.minWeeks)}–{num(estimate!.maxWeeks)} {t("results.weeks")}
+            <p className="mt-2 text-sm tabular-nums text-muted-foreground">
+              {num(estimate.minWeeks)}–{num(estimate.maxWeeks)}{" "}
+              {t("results.weeks")}
             </p>
           </div>
-          <div className="h-px w-full bg-border mb-7" />
-          <div className="space-y-3.5">
-            {QUESTIONS.map((q, i) => {
-              const answerKey = answers[q.key];
-              return (
-                <div key={q.key} className="flex items-start justify-between gap-4 text-sm">
-                  <span className="text-muted-foreground flex items-center gap-2.5">
-                    <span className="font-mono text-xs">{num(String(i + 1).padStart(2, "0"))}</span>
-                    {t(`readiness.labels.${q.key}`)}
-                  </span>
-                  <span className={cn("text-right", answerKey ? "text-foreground font-medium" : "text-muted-foreground/40")}>
-                    {answerKey ? t(`steps.${q.msg}.options.${answerKey}.title`) : "—"}
-                  </span>
-                </div>
-              );
-            })}
+        ) : (
+          <div className="mt-6">
+            <p
+              aria-hidden
+              className="text-[clamp(1.75rem,2.6vw,2.25rem)] font-medium leading-[1.1] tracking-[-0.03em] text-foreground/15"
+            >
+              —
+            </p>
+            <p className="mt-2 max-w-[36ch] text-sm leading-relaxed text-muted-foreground">
+              {t("live.pickTypeFirst")}
+            </p>
           </div>
-          <p className="mt-8 text-xs text-muted-foreground italic leading-relaxed">
-            {Object.values(answers).every(Boolean) ? t("live.settled") : t("live.updatesAsYouShape")}
-          </p>
+        )}
+
+        {/* Meter. Five segments, one per question — the same state the count
+            above states in words, so neither colour nor shape carries it alone. */}
+        <div aria-hidden className="mt-7 flex gap-1.5">
+          {QUESTIONS.map((q, i) => (
+            <span
+              key={q.key}
+              className={cn(
+                "h-1 flex-1 rounded-full transition-colors duration-300 ease-smooth",
+                i < answeredCount ? "bg-local-accent" : "bg-border-mid",
+              )}
+            />
+          ))}
         </div>
-      )}
+      </div>
+
+      <dl className="divide-y divide-border">
+        {QUESTIONS.map((q, i) => {
+          const answerKey = answers[q.key];
+          return (
+            <div
+              key={q.key}
+              className="flex items-baseline justify-between gap-4 px-7 py-3.5 md:px-8"
+            >
+              <dt className="flex min-w-0 items-baseline gap-3 text-sm text-muted-foreground">
+                <span
+                  aria-hidden
+                  className="shrink-0 text-[11px] tabular-nums ltr:font-mono"
+                >
+                  {num(String(i + 1).padStart(2, "0"))}
+                </span>
+                <span className="truncate">
+                  {t(`readiness.labels.${q.key}`)}
+                </span>
+              </dt>
+              <dd
+                className={cn(
+                  "shrink-0 text-end text-sm",
+                  answerKey
+                    ? "font-medium text-foreground"
+                    : "text-muted-foreground/40",
+                )}
+              >
+                {answerKey
+                  ? t(`steps.${q.msg}.options.${answerKey}.title`)
+                  : "—"}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+
+      <p className="border-t border-border px-7 py-4 text-xs leading-relaxed text-muted-foreground md:px-8">
+        {settled ? t("live.settled") : t("live.updatesAsYouShape")}
+      </p>
     </div>
+  );
+}
+
+/**
+ * The payoff, as one object.
+ *
+ * The result used to be four detached fragments stacked at the bottom of the
+ * page — a range, a checklist, a paragraph, then a form in a box of its own —
+ * so the number the reader came for arrived as the least designed thing on the
+ * page. It is now a single panel that opens on the figure at display scale,
+ * splits the evidence from the reasoning, and closes on the one action it
+ * wants.
+ */
+function ResultPanel({
+  estimate,
+  deliverables,
+  money,
+  num,
+  t,
+  name,
+  setName,
+  phone,
+  setPhone,
+  phoneError,
+  submitting,
+  submitted,
+  downloading,
+  onSubmit,
+  onDownload,
+  onStartOver,
+}: {
+  estimate: EstimateResult;
+  deliverables: string[];
+  money: (n: number) => string;
+  num: (n: string | number) => string;
+  t: Translator;
+  name: string;
+  setName: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
+  phoneError: string | null;
+  submitting: boolean;
+  submitted: boolean;
+  downloading: boolean;
+  onSubmit: () => void;
+  onDownload: () => void;
+  onStartOver: () => void;
+}) {
+  return (
+    <div className="mt-16 overflow-hidden rounded-lg border border-border bg-background animate-in fade-in slide-in-from-bottom-4 duration-700 ease-smooth lg:mt-20">
+      {/* The verdict. */}
+      <div className="border-b border-border bg-surface/60 px-7 py-9 sm:px-9 md:px-11 md:py-11">
+        <Eyebrow tone="accent" className="text-[11px] leading-none">
+          {t("results.estimateLabel")}
+        </Eyebrow>
+        <p className="mt-6 text-[clamp(2rem,4.4vw,3.25rem)] font-medium leading-[1.05] tracking-[-0.035em] tabular-nums text-foreground">
+          {money(estimate.minPrice)} – {money(estimate.maxPrice)}
+        </p>
+        <p className="mt-3 text-[clamp(1rem,1.1vw,1.125rem)] tabular-nums text-muted-foreground">
+          {num(estimate.minWeeks)}–{num(estimate.maxWeeks)} {t("results.weeks")}
+        </p>
+      </div>
+
+      {/* Evidence beside reasoning, so neither reads as a footnote to the other. */}
+      <div className="grid gap-px bg-border md:grid-cols-2">
+        <div className="bg-background px-7 py-8 sm:px-9 md:px-11 md:py-10">
+          <Eyebrow className="text-[11px] leading-none">
+            {t("results.includesLabel")}
+          </Eyebrow>
+          <ul className="mt-6 space-y-3.5">
+            {deliverables.slice(0, 5).map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-3.5 text-[0.9375rem] leading-relaxed text-foreground"
+              >
+                <Check
+                  aria-hidden
+                  strokeWidth={2}
+                  className="mt-1 size-4 shrink-0 text-local-accent"
+                />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+          {deliverables.length > 5 ? (
+            <p className="mt-5 text-sm text-muted-foreground">
+              {t("results.moreInPdf", { count: num(deliverables.length - 5) })}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="bg-background px-7 py-8 sm:px-9 md:px-11 md:py-10">
+          <Eyebrow className="text-[11px] leading-none">
+            {t("results.whyTitle")}
+          </Eyebrow>
+          <p className="mt-6 max-w-[52ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+            {t("results.whyCopy")}
+          </p>
+        </div>
+      </div>
+
+      {/* The one action the panel wants. */}
+      <div className="border-t border-border bg-surface/60 px-7 py-9 sm:px-9 md:px-11 md:py-11">
+        <div className="grid gap-x-16 gap-y-8 lg:grid-cols-12">
+          <header className="lg:col-span-5">
+            <h4 className="text-[clamp(1.25rem,2vw,1.5rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground">
+              {t("results.detailedEstimateTitle")}
+            </h4>
+            <p className="mt-3 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
+              {t("phoneCapture.subtitle")}
+            </p>
+          </header>
+
+          <div className="lg:col-span-7">
+            {!submitted ? (
+              <div className="space-y-6">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <Label
+                      htmlFor="estimate-name"
+                      className="mb-2 block font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground"
+                    >
+                      {t("phoneCapture.nameLabel")}
+                    </Label>
+                    <Input
+                      id="estimate-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder={t("phoneCapture.namePlaceholder")}
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="estimate-phone"
+                      className="mb-2 block font-sans text-xs font-medium normal-case tracking-normal text-muted-foreground"
+                    >
+                      {t("phoneCapture.phoneLabel")}
+                    </Label>
+                    <Input
+                      id="estimate-phone"
+                      type="tel"
+                      inputMode="tel"
+                      dir="ltr"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder={t("phoneCapture.phonePlaceholder")}
+                      aria-invalid={phoneError !== null}
+                      aria-describedby="estimate-phone-hint"
+                    />
+                    <p
+                      id="estimate-phone-hint"
+                      className={cn(
+                        "mt-2 text-xs leading-relaxed",
+                        phoneError
+                          ? "text-destructive"
+                          : "text-muted-foreground",
+                      )}
+                      role={phoneError ? "alert" : undefined}
+                    >
+                      {phoneError ?? t("phoneCapture.phoneHint")}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+                  <Button
+                    variant="brand"
+                    size="lg"
+                    onClick={onSubmit}
+                    loading={submitting}
+                    className="w-full sm:w-auto"
+                  >
+                    {submitting
+                      ? t("phoneCapture.submitting")
+                      : t("pdf.button")}
+                  </Button>
+                  <StartOverButton
+                    label={t("startOver")}
+                    onClick={onStartOver}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="animate-in fade-in duration-500">
+                <p className="font-medium text-foreground">
+                  {t("results.badge")}
+                </p>
+                <div className="mt-6 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
+                  <Button
+                    variant="brand"
+                    size="lg"
+                    onClick={onDownload}
+                    disabled={downloading}
+                    className="w-full sm:w-auto"
+                  >
+                    {downloading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        {t("pdf.generating")}
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-2 size-4" />
+                        {t("pdf.button")}
+                      </>
+                    )}
+                  </Button>
+                  <StartOverButton
+                    label={t("startOver")}
+                    onClick={onStartOver}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StartOverButton({
+  label,
+  onClick,
+}: {
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex min-h-11 items-center justify-center gap-2 text-sm text-muted-foreground transition-colors ease-smooth hover:text-foreground sm:justify-start"
+    >
+      <RotateCcw aria-hidden className="size-3.5" />
+      <span>{label}</span>
+    </button>
   );
 }
