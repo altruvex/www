@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Altruvex's monorepo: a bilingual (EN/AR) marketing site plus an internal admin/ERP app for a web
 engineering studio. Turborepo + Bun workspaces, two Next.js 16 (App Router) apps, a shared Prisma
-database package, and a shared pricing-calculation package.
+database package, and a shared pricing schema that is the single source of truth for every
+price either app publishes.
 
 ## Commands
 
@@ -68,14 +69,45 @@ workspace needs the compiled `dist/` output) before consumers will pick up the n
 - `packages/database` (`@repo/database`) — single Prisma schema + client shared by both apps.
   Exports the singleton `prisma` client, all generated Prisma types/enums, and cross-app domain
   helpers (e.g. `linkClientToLead`, `normalizePhone`).
-- `packages/pricing` (`@repo/pricing`) — pure estimate-calculation logic (`calculateEstimate`,
-  `PRICING_TABLE`) shared between the public pricing/estimator UI and admin proposal generation.
+- `packages/pricing-schema` (`@repo/pricing-schema`) — **the only place a price exists.** Services,
+  complexity bands, tiers, maintenance plans, consulting packages and add-ons, with EN/AR copy,
+  the estimate engine (`calculateEstimate`), and the view models every surface renders from.
+  Identity is two independent axes: `ServiceId` (what is built) x `ComplexityId` (how much scope)
+  resolves to a price cell; `TierId` only *names* a cell and chooses how to present it — a tier
+  owns no price of its own.
 - `packages/eslint-config`, `packages/typescript-config` — shared lint/tsconfig bases
   (`base`, `next-js`/`nextjs`, `react-internal`/`react-library`), consumed via workspace deps.
 
-Both apps depend on `@repo/database` and `@repo/pricing` via `workspace:*`. Turbo's `build`/`lint`/
+Both apps depend on `@repo/database` and `@repo/pricing-schema` via `workspace:*`. Turbo's `build`/`lint`/
 `check-types` tasks all `dependsOn: ["^build"|"^lint"|"^check-types"]`, so shared packages build
 before the apps that consume them.
+
+### Pricing (single source of truth)
+
+Every published price — cards, the estimator, maintenance and consulting pages, JSON-LD offers,
+proposals and contracts — resolves from `@repo/pricing-schema`. Before this existed there were four
+independent pricing authorities, and `/pricing` contradicted its own estimator by up to 59%.
+
+Rules that hold across the repo:
+
+- **Never write a price literal outside `packages/pricing-schema`.** `scripts/validate-pricing-literals.mjs`
+  runs in `bun run validate` and fails the build on one. Fix the schema, do not group the digits
+  differently to slip past the check.
+- **Internal margin data never leaves the schema or the admin app.** `internalHourEquivalent` exists
+  for margin planning; the guard allowlists exactly four `apps/admin` files, and a read from
+  `apps/www` (or from admin's own client portal) fails the build. It must not reach client-facing
+  copy, proposals, or contracts.
+- **Editing a price is an admin action, not a deploy.** Overrides live in the database and layer over
+  the shipped defaults as `override ?? default`, so an empty store or an unreachable database renders
+  what the last deploy shipped. `apps/www` resolves them server-side behind a cache tag;
+  `POST /api/revalidate-pricing` (authenticated, fails closed) drops that tag so a change lands
+  immediately rather than on the 5-minute TTL.
+- **Add-ons refuse to price without a cost basis.** `costBasis: null` is deliberate for anything with
+  no recorded supplier figure; `computeAddonPrice` throws rather than defaulting to zero.
+
+`bun run validate` = price-literal guard + parity report + billing-cycle checks. Run it before
+pushing anything that touches pricing.
+
 
 ### Data model (`packages/database/prisma/schema.prisma`)
 
@@ -121,13 +153,22 @@ WhatsApp — get linked into via phone-number matching; see `linkClientToLead` i
   `ADMIN`/`SUPERADMIN` role check on the `better-auth` session.
 - **Env validation**: `lib/env.ts` parses `process.env` with a `zod` schema at import time; add new
   required env vars there (and to `turbo.json`'s `build.env` allowlist) rather than reading
-  `process.env` directly in app code.
+  `process.env` directly in app code. The schema hard-fails in production *at runtime only* —
+  `next build` is exempt, because runtime-only secrets are not present in a build environment.
+  `PUBLIC_SITE_URL` and `PRICING_REVALIDATE_SECRET` are optional: without them a price change
+  still saves and still reaches the public site, just on its cache timer instead of immediately.
 - **Domain routes**: `app/(dashboard)/clients/[id]` (client detail + `new-proposal` flow),
-  `app/(dashboard)/meetings`; API routes under `app/api/admin/{clients,meetings,proposals}` and
-  `app/api/whatsapp/webhook`.
+  `app/(dashboard)/meetings`, `app/(dashboard)/pricing` (the only place a price is edited),
+  `app/(dashboard)/maintenance` (retainers, allowance usage, client requests); API routes under
+  `app/api/admin/{clients,meetings,proposals,pricing,maintenance}` and `app/api/whatsapp/webhook`.
+- **Client portal**: `app/client-portal/[token]` and `app/api/client-portal/*` are *not* admin
+  routes — they are reached by clients with a single-purpose token and are exempted in `proxy.ts`'s
+  `publicPrefixes`. Forget that exemption and every client is redirected to a login they cannot
+  pass. Both endpoints are rate limited (reads per IP, writes per IP *and* per token).
 - **Proposals**: `lib/proposal-builder.ts` + `lib/proposal-content.ts` generate client proposals as
   `.pptx` (via `pptxgenjs`); `lib/pptx-to-pdf.ts` converts to PDF. Pricing figures come from
-  `@repo/pricing`.
+  `@repo/pricing-schema` — document wording is deliberately pinned there (service and band labels
+  keep separate document spellings) because changing it would alter signed agreements.
 - **Integrations**: WhatsApp Business API (`lib/whatsapp-api.ts`, webhook handler) for
   lead/notification flow; Cloudflare R2 (`@aws-sdk/client-s3`, `lib/storage.ts`) for file storage.
 - **UI**: same shadcn/ui + Tailwind v4 stack as `www`, no i18n (admin is English-only).
