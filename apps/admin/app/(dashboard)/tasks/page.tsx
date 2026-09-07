@@ -1,139 +1,138 @@
+import Link from "next/link";
+import { ListChecks } from "lucide-react";
+
 import { prisma } from "@repo/database";
+import { Button } from "@repo/ui";
+
+import { EmptyState } from "@/components/os/empty-state";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { TasksClient, type TaskItem } from "./tasks-client";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Delivery tasks (§5).
+ *
+ * These rows are real. The previous version of this screen derived three tasks
+ * per project from its phase, gave them ids like `task-<projectId>-1`, and
+ * answered "create" with a toast that wrote nothing — so an operator who
+ * assigned work here lost it on refresh. Everything below is `ProjectTask`.
+ */
 export default async function TasksPage() {
-  const [projects, users] = await Promise.all([
+  const [tasks, projects, users] = await Promise.all([
+    prisma.projectTask.findMany({
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      include: {
+        assignee: { select: { id: true, name: true, email: true } },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            phase: true,
+            client: { select: { id: true, name: true, company: true } },
+          },
+        },
+      },
+    }),
     prisma.project.findMany({
+      where: { status: { in: ["ACTIVE", "ON_HOLD"] } },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,
         name: true,
         phase: true,
-        status: true,
-        createdAt: true,
-        client: { select: { id: true, name: true, company: true } },
+        client: { select: { name: true, company: true } },
       },
     }),
     prisma.user.findMany({
+      where: { role: { in: ["ADMIN", "SUPERADMIN"] } },
       select: { id: true, name: true, email: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
-  const defaultAssignee = users[0]?.name || users[0]?.email || "Lead Engineer";
+  const now = new Date();
 
-  // Derive active delivery tasks from existing projects and their phases
-  const tasks: TaskItem[] = projects.flatMap((p, idx) => {
-    const clientLabel = p.client.company || p.client.name || "Client";
-    const baseDate = new Date(p.createdAt);
+  const items: TaskItem[] = tasks.map((task) => ({
+    id: task.id,
+    title: task.title,
+    detail: task.detail,
+    status: task.status,
+    priority: task.priority,
+    phase: task.phase,
+    projectId: task.project.id,
+    projectName: task.project.name,
+    clientName: task.project.client.company || task.project.client.name || "Unnamed client",
+    assigneeId: task.assignee?.id ?? null,
+    assigneeName: task.assignee?.name || task.assignee?.email || null,
+    dueDate: task.dueDate?.toISOString() ?? null,
+    completedAt: task.completedAt?.toISOString() ?? null,
+    createdAt: task.createdAt.toISOString(),
+  }));
 
-    return [
-      {
-        id: `task-${p.id}-1`,
-        title: `Technical Discovery & Architecture Spec for ${p.name}`,
-        description: `Define system boundaries, database schemas, and integration points with ${clientLabel}.`,
-        projectId: p.id,
-        projectName: p.name,
-        clientName: clientLabel,
-        status: p.phase === "DISCOVERY" ? "IN_PROGRESS" : "DONE",
-        priority: "HIGH",
-        assigneeName: defaultAssignee,
-        dueDate: new Date(baseDate.getTime() + 7 * 86400000).toISOString(),
-        createdAt: baseDate.toISOString(),
-      },
-      {
-        id: `task-${p.id}-2`,
-        title: `Design Tokens & Interactive Components for ${p.name}`,
-        description: `Implement verified UI/UX components matching brand aesthetic.`,
-        projectId: p.id,
-        projectName: p.name,
-        clientName: clientLabel,
-        status: p.phase === "DESIGN" ? "IN_PROGRESS" : p.phase === "DISCOVERY" ? "TODO" : "DONE",
-        priority: "MEDIUM",
-        assigneeName: defaultAssignee,
-        dueDate: new Date(baseDate.getTime() + 14 * 86400000).toISOString(),
-        createdAt: baseDate.toISOString(),
-      },
-      {
-        id: `task-${p.id}-3`,
-        title: `Core Backend API & Database Implementation`,
-        description: `Build REST/GraphQL endpoints, security rules, and business logic.`,
-        projectId: p.id,
-        projectName: p.name,
-        clientName: clientLabel,
-        status: p.phase === "DEVELOPMENT" ? "IN_PROGRESS" : ["DISCOVERY", "DESIGN"].includes(p.phase) ? "BACKLOG" : "DONE",
-        priority: "URGENT",
-        assigneeName: defaultAssignee,
-        dueDate: new Date(baseDate.getTime() + 21 * 86400000).toISOString(),
-        createdAt: baseDate.toISOString(),
-      },
-      {
-        id: `task-${p.id}-4`,
-        title: `Staging Deployment & Quality Assurance Review`,
-        description: `Automated test suites, cross-browser verification, and client walkthrough.`,
-        projectId: p.id,
-        projectName: p.name,
-        clientName: clientLabel,
-        status: p.phase === "QA" || p.phase === "STAGING_REVIEW" ? "REVIEW" : p.phase === "LAUNCHED" ? "DONE" : "BACKLOG",
-        priority: "HIGH",
-        assigneeName: defaultAssignee,
-        dueDate: new Date(baseDate.getTime() + 28 * 86400000).toISOString(),
-        createdAt: baseDate.toISOString(),
-      },
-    ];
-  });
-
-  const inProgressCount = tasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const reviewCount = tasks.filter((t) => t.status === "REVIEW").length;
-  const urgentCount = tasks.filter((t) => t.priority === "URGENT" || t.priority === "HIGH").length;
-  const completedCount = tasks.filter((t) => t.status === "DONE").length;
+  const openTasks = items.filter((t) => t.status !== "DONE" && t.status !== "CANCELLED");
+  const overdue = openTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now);
+  const blocked = openTasks.filter((t) => t.status === "BLOCKED");
+  const unassigned = openTasks.filter((t) => !t.assigneeId);
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Tasks"
-        description="Project work items, delivery sprints, and engineering milestones. Viewable as an interactive Kanban board or dense list."
+        description="Work items inside a delivery project. Every task belongs to a project — a task with no project is a note, and notes belong on the client record."
       />
 
-      {/* Stat Tiles */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
-          label="Total Tasks"
-          value={tasks.length}
-          sub={`${projects.length} connected projects`}
+          label="Open"
+          value={openTasks.length}
+          sub={`of ${items.length} total`}
+          tone={openTasks.length > 0 ? "progress" : "neutral"}
         />
         <StatTile
-          label="In Progress"
-          value={inProgressCount}
-          tone="progress"
-          sub={`${reviewCount} in review`}
+          label="Overdue"
+          value={overdue.length}
+          sub="Past their due date"
+          tone={overdue.length > 0 ? "danger" : "success"}
         />
         <StatTile
-          label="Urgent & High Priority"
-          value={urgentCount}
-          tone={urgentCount > 0 ? "warning" : "neutral"}
-          sub="Requires attention"
+          label="Blocked"
+          value={blocked.length}
+          sub="Waiting on someone else"
+          tone={blocked.length > 0 ? "warning" : "neutral"}
         />
         <StatTile
-          label="Completed"
-          value={completedCount}
-          tone="success"
-          sub={`${Math.round((completedCount / (tasks.length || 1)) * 100)}% delivery progress`}
+          label="Unassigned"
+          value={unassigned.length}
+          sub="Open with no owner"
+          tone={unassigned.length > 0 ? "warning" : "neutral"}
         />
       </div>
 
-      <TasksClient
-        initialTasks={tasks}
-        projects={projects.map((p) => ({
-          id: p.id,
-          name: p.name,
-          clientName: p.client.company || p.client.name || "Client",
-        }))}
-        teamUsers={users}
-      />
+      {projects.length === 0 ? (
+        <EmptyState
+          icon={ListChecks}
+          title="No project to put work against"
+          body="A task belongs to a delivery project, and a project is created from a signed contract. Sign a contract and the project — and somewhere to track its work — appears."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/contracts">Open contracts</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <TasksClient
+          items={items}
+          projects={projects.map((p) => ({
+            id: p.id,
+            name: p.name,
+            phase: p.phase,
+            clientName: p.client.company || p.client.name || "Unnamed client",
+          }))}
+          users={users}
+        />
+      )}
     </div>
   );
 }

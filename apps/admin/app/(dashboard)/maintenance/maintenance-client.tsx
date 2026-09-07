@@ -34,7 +34,12 @@ const REQUEST_TONE: Record<string, "neutral" | "warning" | "success" | "danger">
   DECLINED: "danger",
 };
 
-const SUBSCRIPTION_STATUSES = ["ACTIVE", "PAUSED", "CANCELLED"] as const;
+/**
+ * The statuses an operator may SET. PAST_DUE, GRACE and EXPIRED are derived from
+ * the billing period by `deriveStatus` and are deliberately not settable — a
+ * hand-set lapsed status would permanently contradict the calendar.
+ */
+const SUBSCRIPTION_STATUSES = ["TRIALING", "ACTIVE", "SUSPENDED", "PAUSED", "CANCELLED"] as const;
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -109,7 +114,12 @@ export function MaintenanceClient({
   );
 
   const totalOpen = subscriptions.reduce((n, s) => n + s.openRequests, 0);
-  const active = subscriptions.filter((s) => s.status === "ACTIVE").length;
+  // Effective, not stored: a retainer whose period lapsed this morning is not
+  // "active" just because nobody has changed the column yet.
+  const active = subscriptions.filter((s) => s.effectiveStatus === "ACTIVE").length;
+  const needsBilling = subscriptions.filter(
+    (s) => s.renewalUrgency === "overdue" || s.renewalUrgency === "due-soon",
+  ).length;
   const overCap = subscriptions.filter(
     (s) => s.requestsPerCycle !== null && s.requestsUsed >= s.requestsPerCycle,
   ).length;
@@ -130,7 +140,12 @@ export function MaintenanceClient({
           sub={overCap ? "Further work bills as overage" : "All within allowance"}
           tone={overCap ? "warning" : "neutral"}
         />
-        <StatTile label="Plans offered" value={plans.length} sub="From the pricing schema" />
+        <StatTile
+          label="Needs billing"
+          value={needsBilling}
+          sub={needsBilling ? "Overdue or due within 30 days" : "Nothing due"}
+          tone={needsBilling ? "warning" : "success"}
+        />
       </div>
 
       <Panel
@@ -205,7 +220,13 @@ export function MaintenanceClient({
             <Panel
               key={sub.id}
               title={sub.clientName}
-              description={`${sub.planName} · ${sub.planPriceLabel} · cycle ${shortDate(sub.cycleStart)}–${shortDate(sub.cycleEnd)}, renews in ${sub.daysUntilRenewal}d`}
+              description={`${sub.planName} · ${sub.planPriceLabel} · ${sub.effectiveStatusLabel} · ${
+                sub.daysUntilRenewal < 0
+                  ? `renewal ${Math.abs(sub.daysUntilRenewal)}d overdue`
+                  : sub.autoRenew
+                    ? `renews in ${sub.daysUntilRenewal}d`
+                    : `ends in ${sub.daysUntilRenewal}d — not renewing`
+              }`}
               action={
                 <div className="flex items-center gap-2">
                   <PortalLink token={sub.portalToken} />

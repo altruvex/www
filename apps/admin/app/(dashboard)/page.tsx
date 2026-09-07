@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Rocket, Wallet } from "lucide-react";
 import { getDashboardData, STAGE_TONE } from "@/lib/dashboard-data";
 import { getActionCentre } from "@/lib/action-center";
+import { getEngineeringSummary } from "@/lib/engineering";
 import { statusOf } from "@/lib/status";
 import { money, moneyByCurrency, percent, dueLabel, sumByCurrency } from "@/lib/format";
 import { PageHeader } from "@/components/os/page-header";
@@ -16,7 +17,11 @@ import { Button } from "@repo/ui";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [data, actions] = await Promise.all([getDashboardData(), getActionCentre()]);
+  const [data, actions, engineering] = await Promise.all([
+    getDashboardData(),
+    getActionCentre(),
+    getEngineeringSummary(),
+  ]);
 
   const withCurrency = (rows: typeof data.paymentsOverdue) =>
     rows.map((p) => ({ amount: p.amount, currency: p.project.contract.proposal.currency }));
@@ -259,6 +264,46 @@ export default async function DashboardPage() {
           )}
         </Panel>
       </div>
+
+      {/* ---- the running estate ----------------------------------------
+          Business health is answered above; this is the other half of the
+          question. Hidden entirely when no product exists, rather than showing
+          four zeros that look like a healthy system. */}
+      {!engineering.isEmpty && (
+        <Panel
+          title="Live estate"
+          description="What Altruvex is currently running for clients"
+          action={<PanelLink href="/products">All products</PanelLink>}
+        >
+          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+            <HealthCell
+              label="Live products"
+              value={engineering.liveProducts}
+              tone={engineering.liveProducts > 0 ? "success" : "neutral"}
+            />
+            <HealthCell
+              label="Open incidents"
+              value={engineering.openIncidents}
+              tone={engineering.openIncidents > 0 ? "danger" : "success"}
+            />
+            <HealthCell
+              label="Failed deploys · 7d"
+              value={engineering.failedDeployments}
+              tone={engineering.failedDeployments > 0 ? "warning" : "neutral"}
+            />
+            <HealthCell
+              label="Errors · 24h"
+              value={engineering.recentErrors}
+              tone={engineering.recentErrors > 0 ? "warning" : "neutral"}
+            />
+          </div>
+          <p className="mt-2.5 text-meta text-subtle-foreground">
+            {engineering.lastDeployment?.finishedAt
+              ? `Last deployment: ${engineering.lastDeployment.product.name}, ${dueLabel(engineering.lastDeployment.finishedAt.toISOString())}.`
+              : "No deployment has been reported yet — connect a pipeline to the ingest endpoint on a product."}
+          </p>
+        </Panel>
+      )}
 
       {/* ---- the operational memory ------------------------------------ */}
       <Panel

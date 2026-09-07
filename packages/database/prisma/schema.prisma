@@ -41,6 +41,10 @@ model User {
   notes              ContactNote[]
   sessions           Session[]
   accounts           Account[]
+  activityEvents     ActivityEvent[]
+  ownedIncidents     Incident[]          @relation("IncidentOwner")
+  incidentUpdates    IncidentUpdate[]
+  assignedTasks      ProjectTask[]       @relation("TaskAssignee")
 
   @@index([email])
   @@index([role])
@@ -361,6 +365,7 @@ model Client {
   projects      Project[]
   messages      WhatsAppMessage[]
   subscriptions MaintenanceSubscription[]
+  products      Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -536,6 +541,8 @@ model Project {
   actualLaunchDate DateTime?
 
   payments Payment[]
+  products Product[]
+  tasks    ProjectTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -782,9 +789,26 @@ model PricingChangeLog {
 // ---------------------------------------------------------------------------
 
 enum MaintenanceSubscriptionStatus {
+  /// Paid trial period; converts to ACTIVE at `trialEndsAt`.
+  TRIALING
   ACTIVE
+  /// Renewal date passed, payment not recorded. Service continues.
+  PAST_DUE
+  /// Past due beyond the grace window. Service continues, escalation is due.
+  GRACE
+  /// Deliberately halted by Altruvex. Service stopped, subscription retained.
+  SUSPENDED
+  /// Halted at the client's request but still inside a paid period.
   PAUSED
   CANCELLED
+  /// Ran to the end of its final period without renewing.
+  EXPIRED
+}
+
+enum BillingInterval {
+  MONTHLY
+  QUARTERLY
+  ANNUAL
 }
 
 enum MaintenanceRequestStatus {
@@ -814,6 +838,24 @@ model MaintenanceSubscription {
   startedAt   DateTime  @default(now())
   cancelledAt DateTime?
 
+  billingInterval BillingInterval @default(MONTHLY)
+
+  /// The period currently paid for. `currentPeriodEnd` IS the renewal date —
+  /// storing one derived from the other is how the two drift apart.
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+
+  /// False means it runs to `currentPeriodEnd` and then EXPIRES. The renewals
+  /// screen sorts on this: a non-renewing subscription is a churn event with a
+  /// known date, not a surprise.
+  autoRenew Boolean @default(true)
+
+  trialEndsAt DateTime?
+
+  /// Set when a renewal is invoiced/collected, so PAST_DUE is measurable
+  /// rather than inferred from silence.
+  lastRenewedAt DateTime?
+
   requests MaintenanceRequest[]
 
   createdAt DateTime @default(now())
@@ -821,6 +863,7 @@ model MaintenanceSubscription {
 
   @@index([clientId])
   @@index([status])
+  @@index([currentPeriodEnd])
   @@map("maintenance_subscriptions")
 }
 
@@ -853,4 +896,439 @@ model MaintenanceRequest {
   @@index([subscriptionId, cycleStart])
   @@index([status])
   @@map("maintenance_requests")
+}
+
+// ---------------------------------------------------------------------------
+// Activity / audit trail
+//
+// Everything before this model was a *projection*: /activity and /audit read
+// `updatedAt` off business rows and inferred that something had happened. That
+// can show a row changed but never who changed it, from what, to what — which
+// is the only question an audit log exists to answer.
+//
+// This model is written at the mutation site, not derived after the fact.
+// `actorLabel` is denormalised on purpose: an event must stay readable after
+// the user who caused it is deleted, and many actors are not Users at all
+// (a client signing through a portal token, the WhatsApp webhook, a CI token).
+//
+// `before`/`after` hold only the fields that actually changed. Never put a
+// secret in them — see `redactAuditValue` in packages/database/index.ts.
+// ---------------------------------------------------------------------------
+
+enum ActorKind {
+  USER
+  CLIENT
+  SYSTEM
+  INTEGRATION
+}
+
+model ActivityEvent {
+  id String @id @default(uuid())
+
+  /// Dot-namespaced and stable, e.g. "client.created", "deployment.succeeded".
+  /// Parsed nowhere — it is grouped and filtered as an opaque string.
+  action String
+
+  actorKind  ActorKind @default(SYSTEM)
+  actor      User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorId    String?
+  /// Survives actor deletion. "Ali", "CI (github-actions)", "client portal".
+  actorLabel String
+
+  entityType String
+  entityId   String
+  /// Human-readable at the time of the event, so the feed stays legible even
+  /// after the entity is renamed or removed.
+  entityLabel String?
+
+  /// One line, already written for a human. The feed renders this directly.
+  summary String
+
+  /// Changed fields only, redacted. `{ status: "DRAFT" }` → `{ status: "SENT" }`.
+  before Json?
+  after  Json?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@index([actorId])
+  @@map("activity_events")
+}
+
+// ---------------------------------------------------------------------------
+// Engineering operations: products, builds, deployments, logs, incidents
+//
+// A Project is the *engagement* (a contract being delivered). A Product is the
+// thing that stays alive afterwards: the site or app Altruvex operates for a
+// client. Conflating them is why `Project.stagingUrl`/`liveUrl` could never
+// answer "what is deployed right now" — a project ends, a product does not, and
+// one engagement can ship several products.
+//
+// Environment is an enum, not a table: Altruvex runs production/staging/preview
+// and nothing else, so a join buys a query cost and no expressiveness.
+//
+// Nothing in here is written by the UI. Builds, deployments and logs arrive
+// from CI through the ingest endpoint (`/api/ingest/*`, bearer-authenticated
+// per product). Until a pipeline is pointed at it these tables are empty and
+// the screens say so — they are never seeded with plausible-looking rows.
+// ---------------------------------------------------------------------------
+
+enum ProductKind {
+  WEBSITE
+  WEB_APP
+  API
+  ECOMMERCE
+  LANDING_PAGE
+  INTERNAL_TOOL
+}
+
+enum ProductStatus {
+  PLANNED
+  IN_DEVELOPMENT
+  LIVE
+  MAINTENANCE
+  SUNSET
+}
+
+enum DeployEnvironment {
+  PRODUCTION
+  STAGING
+  PREVIEW
+}
+
+model Product {
+  id String @id @default(uuid())
+
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  /// Optional: a product can outlive the project that built it, and can exist
+  /// before any contract does.
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+
+  name String
+  /// URL-safe identity used by the ingest endpoint, so CI does not need a UUID.
+  slug String @unique
+
+  kind   ProductKind   @default(WEBSITE)
+  status ProductStatus @default(PLANNED)
+
+  productionUrl String?
+  stagingUrl    String?
+  repositoryUrl String?
+
+  framework       String?
+  hostingProvider String?
+
+  /// SHA-256 of the ingest bearer token. The token itself is shown once at
+  /// creation and never stored — the UI has nothing to leak.
+  ingestTokenHash String?   @unique
+  ingestTokenLast4 String?
+  ingestTokenIssuedAt DateTime?
+
+  builds      Build[]
+  deployments Deployment[]
+  logs        LogEntry[]
+  incidents   Incident[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status])
+  @@map("products")
+}
+
+enum BuildStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+model Build {
+  id String @id @default(uuid())
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  environment DeployEnvironment @default(PRODUCTION)
+  status      BuildStatus       @default(QUEUED)
+
+  /// Monotonic per product, assigned at ingest. What an operator actually says
+  /// out loud ("build 41 failed") — a UUID is not that.
+  number Int
+
+  /// The CI system's own id for the run. The idempotency key for ingest: a
+  /// pipeline posts the same build as it progresses (QUEUED → RUNNING →
+  /// SUCCEEDED) and must update one row, not create three.
+  externalId String?
+
+  commitSha     String?
+  commitMessage String?
+  branch        String?
+
+  /// Free text from CI ("github-actions", "ali@altruvex.com"). Not a User FK:
+  /// the actor is frequently a machine that has no account here.
+  triggeredBy String?
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+  durationMs Int?
+
+  /// Why it failed, in one line. The detail belongs in the linked logs.
+  failureReason String?
+
+  deployments Deployment[]
+  logs        LogEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, number])
+  @@unique([productId, externalId])
+  @@index([productId, createdAt])
+  @@index([status])
+  @@map("builds")
+}
+
+enum DeploymentStatus {
+  PENDING
+  IN_PROGRESS
+  SUCCEEDED
+  FAILED
+  ROLLED_BACK
+}
+
+model Deployment {
+  id String @id @default(uuid())
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  build   Build?  @relation(fields: [buildId], references: [id], onDelete: SetNull)
+  buildId String?
+
+  environment DeployEnvironment @default(PRODUCTION)
+  status      DeploymentStatus  @default(PENDING)
+
+  number Int
+
+  /// Idempotency key from the deploying system, same contract as `Build`.
+  externalId String?
+
+  version   String?
+  commitSha String?
+  url       String?
+
+  triggeredBy String?
+
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  /// Set on the deployment that was rolled back, pointing at the one that
+  /// replaced it. Reading "what undid this" is the common direction.
+  rolledBackBy   Deployment?  @relation("Rollback", fields: [rolledBackById], references: [id], onDelete: SetNull)
+  rolledBackById String?
+  rollbackOf     Deployment[] @relation("Rollback")
+
+  failureReason String?
+
+  logs      LogEntry[]
+  incidents Incident[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, number])
+  @@unique([productId, externalId])
+  @@index([productId, createdAt])
+  @@index([status])
+  @@index([environment, createdAt])
+  @@map("deployments")
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+model LogEntry {
+  id String @id @default(uuid())
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  environment DeployEnvironment @default(PRODUCTION)
+  level       LogLevel          @default(INFO)
+
+  /// Emitting subsystem: "web", "worker", "build", "edge".
+  source  String?
+  message String
+
+  /// Ties a log line to the request that produced it, so an operator can pull
+  /// the whole trace from one error.
+  requestId String?
+
+  /// When the event happened at the source — NOT when it arrived here. Ingest
+  /// can lag, and sorting by arrival reorders an incident's timeline.
+  timestamp DateTime @default(now())
+
+  build   Build?  @relation(fields: [buildId], references: [id], onDelete: Cascade)
+  buildId String?
+
+  deployment   Deployment? @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
+  deploymentId String?
+
+  incident   Incident? @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  incidentId String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([productId, timestamp])
+  @@index([productId, level, timestamp])
+  @@index([buildId, timestamp])
+  @@index([deploymentId, timestamp])
+  @@index([requestId])
+  @@map("log_entries")
+}
+
+enum IncidentSeverity {
+  SEV1
+  SEV2
+  SEV3
+  SEV4
+}
+
+enum IncidentStatus {
+  INVESTIGATING
+  IDENTIFIED
+  MONITORING
+  RESOLVED
+}
+
+model Incident {
+  id String @id @default(uuid())
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+
+  /// The deployment suspected of causing it, when there is one.
+  deployment   Deployment? @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
+  deploymentId String?
+
+  number Int
+
+  title  String
+  detail String?
+
+  severity IncidentSeverity @default(SEV3)
+  status   IncidentStatus   @default(INVESTIGATING)
+
+  owner   User?   @relation("IncidentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId String?
+
+  detectedAt   DateTime  @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt   DateTime?
+
+  /// Written after the fact. Absent on an unresolved incident.
+  resolution String?
+
+  updates IncidentUpdate[]
+  logs    LogEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, number])
+  @@index([status, severity])
+  @@index([productId, detectedAt])
+  @@map("incidents")
+}
+
+model IncidentUpdate {
+  id String @id @default(uuid())
+
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  incidentId String
+
+  /// Status the incident moved to with this update, when it moved at all.
+  status IncidentStatus?
+
+  body String
+
+  authorLabel String
+  author      User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([incidentId, createdAt])
+  @@map("incident_updates")
+}
+
+// ---------------------------------------------------------------------------
+// Delivery tasks
+//
+// Replaces a screen that synthesised three tasks per project from its phase and
+// toasted "Task created successfully" without writing anything. Either the work
+// items are real rows an operator can assign and close, or the screen should
+// not exist.
+// ---------------------------------------------------------------------------
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+  CANCELLED
+}
+
+model ProjectTask {
+  id String @id @default(uuid())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  title  String
+  detail String?
+
+  status   TaskStatus @default(TODO)
+  priority Priority   @default(MEDIUM)
+
+  assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  assigneeId String?
+
+  /// Phase this task belongs to, so a board can group by delivery stage
+  /// instead of inventing its own parallel taxonomy.
+  phase ProjectPhase?
+
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  /// Manual ordering within a column. Sparse (steps of 1000) so a reorder
+  /// touches one row instead of renumbering the board.
+  position Int @default(0)
+
+  createdBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, status])
+  @@index([assigneeId, status])
+  @@index([dueDate])
+  @@map("project_tasks")
 }

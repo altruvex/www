@@ -78,6 +78,12 @@ export interface DataTableProps<T> {
    * text rather than linking to the page it is already on.
    */
   rowHref?: (row: T) => string | undefined;
+  /**
+   * Opens a detail surface for the row when the record has no page of its own
+   * (an audit entry, a log line). Mutually exclusive with `rowHref` in practice:
+   * a row that navigates should be a real anchor, not a click handler.
+   */
+  onRowClick?: (row: T) => void;
   /** Column ids shown on the mobile card: [title, subtitle, ...meta]. */
   mobile?: { title: string; subtitle?: string; meta?: string[] };
   selectable?: boolean;
@@ -129,6 +135,7 @@ export function DataTable<T>({
   columns,
   rowKey,
   rowHref,
+  onRowClick,
   mobile,
   selectable = false,
   bulkActions = [],
@@ -445,10 +452,28 @@ export function DataTable<T>({
                     <tr
                       key={key}
                       data-selected={isSelected || undefined}
+                      // A clickable row is a real button for assistive tech and
+                      // for the keyboard — a bare onClick on a <tr> is reachable
+                      // by mouse only.
+                      {...(onRowClick
+                        ? {
+                            role: "button" as const,
+                            tabIndex: 0,
+                            onClick: () => onRowClick(row),
+                            onKeyDown: (event: React.KeyboardEvent) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                onRowClick(row);
+                              }
+                            },
+                          }
+                        : {})}
                       className={cn(
                         "border-b border-border last:border-b-0",
                         "transition-colors duration-[var(--dur-state)]",
                         "hover:bg-surface/70 data-[selected]:bg-brand-soft",
+                        onRowClick &&
+                          "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                       )}
                     >
                       {selectable && (
@@ -526,6 +551,16 @@ export function DataTable<T>({
                           >
                             {titleCol?.cell(row)}
                           </Link>
+                        ) : onRowClick ? (
+                          // Same stretched-target trick as the link case, so the
+                          // whole card is tappable without nesting interactives.
+                          <button
+                            type="button"
+                            onClick={() => onRowClick(row)}
+                            className="block max-w-full truncate text-start after:absolute after:inset-0 after:content-['']"
+                          >
+                            {titleCol?.cell(row)}
+                          </button>
                         ) : (
                           titleCol?.cell(row)
                         )}

@@ -6,10 +6,13 @@ import {
   FileSignature,
   FileText,
   MessageCircle,
+  RefreshCw,
   Rocket,
+  ShieldAlert,
   Target,
   Wallet,
 } from "lucide-react";
+import { deriveStatus, renewalView } from "@/lib/subscription-lifecycle";
 import type { Tone } from "@/lib/status";
 
 /**
@@ -31,7 +34,10 @@ export interface ActionItem {
     | "payment"
     | "message"
     | "meeting"
-    | "project";
+    | "project"
+    | "incident"
+    | "deployment"
+    | "renewal";
   icon: LucideIcon;
   tone: Tone;
   title: string;
@@ -65,6 +71,9 @@ export async function getActionCentre(): Promise<ActionItem[]> {
     unansweredInbound,
     slippedProjects,
     failedMessages,
+    openIncidents,
+    failedDeployments,
+    renewableSubscriptions,
   ] = await Promise.all([
     // A lead nobody has contacted. The single most expensive thing to ignore.
     prisma.client.findMany({
@@ -164,6 +173,30 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       },
       orderBy: { createdAt: "desc" },
       take: 25,
+    }),
+    // Anything broken and unresolved. An incident exists precisely because a
+    // human decided it needs one, so all of them belong here.
+    prisma.incident.findMany({
+      where: { status: { not: "RESOLVED" } },
+      orderBy: [{ severity: "asc" }, { detectedAt: "asc" }],
+      include: { product: { select: { id: true, name: true } } },
+    }),
+    // A failed production deploy in the last week that has not since been
+    // followed by a successful one is still the current state of that product.
+    prisma.deployment.findMany({
+      where: {
+        status: "FAILED",
+        environment: "PRODUCTION",
+        createdAt: { gte: new Date(now.getTime() - 7 * DAY) },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { product: { select: { id: true, name: true } } },
+    }),
+    // Renewal urgency is derived, so every revenue-bearing retainer is fetched
+    // and judged in code rather than guessed at with a date filter.
+    prisma.maintenanceSubscription.findMany({
+      where: { status: { in: ["TRIALING", "ACTIVE"] } },
+      include: { client: { select: { id: true, name: true, company: true } } },
     }),
   ]);
 
@@ -368,6 +401,71 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       cta: "Retry",
       score: 95,
       ageDays: ageInDays(msg.createdAt),
+    });
+  }
+
+  for (const incident of openIncidents) {
+    const age = ageInDays(incident.detectedAt);
+    const critical = incident.severity === "SEV1" || incident.severity === "SEV2";
+    items.push({
+      id: `inc-${incident.id}`,
+      kind: "incident",
+      icon: ShieldAlert,
+      tone: critical ? "danger" : "warning",
+      title: `${incident.severity} · ${incident.title}`,
+      detail: `${incident.product.name} · open ${age}d · ${incident.status.toLowerCase()}`,
+      href: "/incidents",
+      cta: "Open incident",
+      // A SEV1 outranks everything else on this list, including a late payment:
+      // money can wait an hour, a down production site cannot.
+      score: (critical ? 140 : 85) + Math.min(age, 14) * 2,
+      ageDays: age,
+    });
+  }
+
+  // Only surface a failed deploy while it is still the newest one for that
+  // product and environment — a failure already fixed by a later deploy is
+  // history, not an action.
+  const supersededProducts = new Set<string>();
+  for (const deployment of failedDeployments) {
+    if (supersededProducts.has(deployment.productId)) continue;
+    supersededProducts.add(deployment.productId);
+    const age = ageInDays(deployment.finishedAt ?? deployment.createdAt);
+    items.push({
+      id: `dep-${deployment.id}`,
+      kind: "deployment",
+      icon: Rocket,
+      tone: "danger",
+      title: `Production deploy failed · ${deployment.product.name}`,
+      detail: deployment.failureReason ?? `Deployment #${deployment.number}, ${age}d ago`,
+      href: `/products/${deployment.productId}?tab=deployments`,
+      cta: "Investigate",
+      score: 110 - Math.min(age, 7) * 4,
+      ageDays: age,
+    });
+  }
+
+  for (const sub of renewableSubscriptions) {
+    const view = renewalView(sub, now);
+    if (view.urgency !== "overdue" && view.urgency !== "ending") continue;
+    const effective = deriveStatus(sub, now);
+    const clientLabel = sub.client.company || sub.client.name || "A client";
+    const overdue = view.urgency === "overdue";
+    items.push({
+      id: `ren-${sub.id}`,
+      kind: "renewal",
+      icon: RefreshCw,
+      tone: overdue ? (effective === "GRACE" ? "danger" : "warning") : "warning",
+      title: overdue
+        ? `Renewal overdue · ${clientLabel}`
+        : `Retainer ending · ${clientLabel}`,
+      detail: overdue
+        ? `${Math.abs(view.daysUntil)}d past the renewal date · ${effective.toLowerCase().replace("_", " ")}`
+        : `Auto-renew is off — expires in ${view.daysUntil}d`,
+      href: "/maintenance",
+      cta: overdue ? "Renew or suspend" : "Review",
+      score: overdue ? 90 + Math.min(Math.abs(view.daysUntil), 30) : 70,
+      ageDays: overdue ? Math.abs(view.daysUntil) : 0,
     });
   }
 

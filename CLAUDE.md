@@ -41,8 +41,19 @@ bun run analyze                   # ANALYZE=true next build, opens bundle analyz
 bun run sync:transparency-i18n    # bun scripts/update-transparency-json.js
 ```
 
-No test runner is configured in either app (no `test` script, no test files) — there is no unit
-test suite to run.
+No unit-test runner is configured in either app. Correctness is pinned instead by verification
+scripts under `apps/admin/scripts`, run from `apps/admin`:
+
+```bash
+bun run verify:lifecycle      # pure date/state-machine logic — needs no database
+bun run verify:engineering    # ingest endpoints end-to-end   — needs DATABASE_URL
+bun run verify:admin-api      # audit trail, tokens, subscriptions, tasks — needs DATABASE_URL
+bun run verify:maintenance    # portal/admin allowance agreement — needs DATABASE_URL
+bun run check-types           # tsc --noEmit
+```
+
+The database-backed ones write and then remove their own records — point them at a scratch
+database, not production.
 
 ### Database (`packages/database`, Prisma, Postgres)
 
@@ -108,6 +119,50 @@ Rules that hold across the repo:
 `bun run validate` = price-literal guard + parity report + billing-cycle checks. Run it before
 pushing anything that touches pricing.
 
+### Engineering operations (the rules that keep these screens trustworthy)
+
+- **Builds, deployments and logs are written by CI, never by the UI.** They arrive through
+  `POST /api/ingest/{builds,deployments,logs}`, authenticated by a per-product bearer token
+  (`lib/ingest-auth.ts`), and `/api/ingest/` is exempted in `proxy.ts` because a build agent holds
+  no session. A "Deploy" button in the admin app would be a claim, not a cause — the split is why
+  the deployment history can be read as a record of what actually shipped. Contract:
+  `docs/ingest-api.md`.
+- **An ingest token is shown once and stored only as a SHA-256** plus its last four characters.
+  There is nothing for the UI to leak, and "show it again" is correctly impossible.
+- **Empty is the honest state.** Until a pipeline is connected these tables are empty and the
+  screens say so. Never seed them with plausible-looking history.
+
+### Audit trail
+
+- **Write the event at the mutation site**, via `recordActivity`/`recordChange` in
+  `lib/activity-log.ts`. `/audit` used to be a projection over `updatedAt`, which can show that a
+  row changed but never who changed it or from what.
+- `recordChange` skips the write when nothing actually moved, and `before`/`after` carry only the
+  changed fields. Values are redacted by field name — never put a secret in a payload.
+- **Recording must never break the mutation it describes.** These helpers swallow their own errors.
+
+### Subscription lifecycle
+
+- **Stored status is what an operator set; effective status is what the calendar says.**
+  `deriveStatus` in `lib/subscription-lifecycle.ts` is a pure function of the row and the clock, so
+  a retainer that lapsed this morning reads as past due with no cron job and no write. Only
+  `TRIALING`/`ACTIVE`/`SUSPENDED`/`PAUSED`/`CANCELLED` are settable by hand; `PAST_DUE`, `GRACE`
+  and `EXPIRED` are derived and must stay that way.
+- **A renewal anchors to the period that just ended, never to `now`** (`computeRenewal`), or
+  renewing three days late walks the billing anchor forward every cycle. The month arithmetic
+  clamps to month length so a retainer anchored on the 31st does not decay to the 28th.
+- That module is deliberately isomorphic (no `server-only`): admin, dashboard and client portal
+  must all derive the same status for the same row.
+
+### Honesty rule
+
+A screen may be empty, and a capability may be marked Planned (`components/os/planned.tsx`,
+`state: "planned"` in `lib/nav.ts`) — but it must never *simulate* working. No `toast.success` over
+a mutation that persists nothing, no invented run counts, no mock rows that look real. Two screens
+previously broke this (`/tasks` synthesised tasks from project phases; `/automations` listed
+invented rules with fake run counts and a test-run button that executed nothing); both are now
+backed by real data or honestly labelled.
+
 
 ### Data model (`packages/database/prisma/schema.prisma`)
 
@@ -119,6 +174,12 @@ Single Postgres schema shared by both apps. Key models: `User`/`Session`/`Accoun
 WhatsApp — get linked into via phone-number matching; see `linkClientToLead` in
 `packages/database/index.ts`). Schema changes go through Prisma migrations in
 `packages/database/prisma/migrations/`.
+
+Engineering-operations models: `Product` (a site or app Altruvex *operates* — distinct from
+`Project`, which is the engagement that built it and has an end date), `Build`, `Deployment`,
+`LogEntry`, `Incident`/`IncidentUpdate`, plus `ProjectTask` for delivery work and `ActivityEvent`
+for the audit trail. `MaintenanceSubscription` carries the billing lifecycle
+(`billingInterval`, `currentPeriodStart`/`End`, `autoRenew`, `trialEndsAt`, `lastRenewedAt`).
 
 ### apps/www (marketing site)
 
@@ -159,8 +220,12 @@ WhatsApp — get linked into via phone-number matching; see `linkClientToLead` i
   still saves and still reaches the public site, just on its cache timer instead of immediately.
 - **Domain routes**: `app/(dashboard)/clients/[id]` (client detail + `new-proposal` flow),
   `app/(dashboard)/meetings`, `app/(dashboard)/pricing` (the only place a price is edited),
-  `app/(dashboard)/maintenance` (retainers, allowance usage, client requests); API routes under
-  `app/api/admin/{clients,meetings,proposals,pricing,maintenance}` and `app/api/whatsapp/webhook`.
+  `app/(dashboard)/maintenance` (retainers, renewals, allowance usage, client requests), and the
+  engineering group `app/(dashboard)/{products,deployments,logs,incidents}`; API routes under
+  `app/api/admin/{clients,meetings,proposals,pricing,maintenance,products,tasks,incidents}`,
+  `app/api/ingest/*` and `app/api/whatsapp/webhook`. New admin routes should use `withAdmin`
+  (`lib/with-admin.ts`) rather than re-implementing the session guard — it makes forgetting the
+  check structurally impossible.
 - **Client portal**: `app/client-portal/[token]` and `app/api/client-portal/*` are *not* admin
   routes — they are reached by clients with a single-purpose token and are exempted in `proxy.ts`'s
   `publicPrefixes`. Forget that exemption and every client is redirected to a login they cannot

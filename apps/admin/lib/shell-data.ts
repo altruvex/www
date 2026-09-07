@@ -19,6 +19,7 @@ export async function getShellBadges(): Promise<{
     inboundByClient,
     outboundByClient,
     overduePayments,
+    openIncidents,
     unreadNotifications,
   ] = await Promise.all([
     prisma.client.count({ where: { status: { in: ["NEW", "VIEWED"] } } }),
@@ -38,6 +39,8 @@ export async function getShellBadges(): Promise<{
     prisma.payment.count({
       where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: now } },
     }),
+    // Open, not total: a resolved incident is history and needs nobody.
+    prisma.incident.count({ where: { status: { not: "RESOLVED" } } }),
     prisma.notification.count({ where: { read: false } }),
   ]);
 
@@ -58,6 +61,7 @@ export async function getShellBadges(): Promise<{
       meetings: pendingMeetings,
       inbox: unanswered,
       payments: overduePayments,
+      incidents: openIncidents,
       actions: 0,
     },
     unread: unreadNotifications,

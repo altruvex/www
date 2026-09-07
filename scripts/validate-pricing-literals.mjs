@@ -87,11 +87,11 @@ function plausiblePrice(match) {
   return digits.length > 0 && Number(digits) < MAX_PLAUSIBLE_PRICE;
 }
 
-/** Lines carrying one of these are geometry/time/colour, never money. */
+/** Lines carrying one of these are geometry/time/colour/size, never money. */
 // Colour functions carry no word boundary in Tailwind arbitrary values
 // (`4px_rgba(34,197,94,0.4)`), so they are matched without one.
 const NON_PRICE_CONTEXT =
-  /\b(?:EMU|emu|inches?|z-index|maxAge|max-age|revalidate|getTime|Date\.now|color|colou?r|stroke)\b|\b\w*(?:TIMEOUT|[Tt]imeout|DELAY|[Dd]elay|DURATION|[Dd]uration|INTERVAL|[Ii]nterval)\w*\b|\b\w*_(?:MS|SECONDS|SEC|MINUTES)\b|rgba?\(|hsla?\(|#[0-9a-fA-F]{6}|\d+px|\bcompact\b|\bnotation\b/;
+  /\b(?:EMU|emu|inches?|z-index|maxAge|max-age|revalidate|getTime|Date\.now|color|colou?r|stroke)\b|\b\w*(?:TIMEOUT|[Tt]imeout|DELAY|[Dd]elay|DURATION|[Dd]uration|INTERVAL|[Ii]nterval)\w*\b|\b\w*_(?:MS|SECONDS|SEC|MINUTES|LENGTH|BYTES|CHARS)\b|rgba?\(|hsla?\(|#[0-9a-fA-F]{6}|\d+px|\bcompact\b|\bnotation\b/;
 
 const problems = [];
 

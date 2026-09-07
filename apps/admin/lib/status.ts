@@ -222,6 +222,105 @@ export const pipelineStage: Registry = {
   SPAM: { label: "Spam", tone: "neutral" },
 };
 
+/* -- Engineering operations ------------------------------------------------
+   Tone here follows the same rule as everywhere else: it describes what the
+   operator must DO, not how the event feels. A failed build is `danger`
+   because someone has to fix it; a queued one is `neutral` because nobody
+   should touch it yet. */
+
+export const productStatus: Registry = {
+  PLANNED: { label: "Planned", tone: "neutral", hint: "Agreed, not started" },
+  IN_DEVELOPMENT: { label: "In development", tone: "progress" },
+  LIVE: { label: "Live", tone: "success", hint: "Serving production traffic" },
+  MAINTENANCE: { label: "Maintenance", tone: "info", hint: "Live and under retainer" },
+  SUNSET: { label: "Sunset", tone: "neutral", hint: "Retired, kept for the record" },
+};
+
+export const productKind: Registry = {
+  WEBSITE: { label: "Website", tone: "neutral" },
+  WEB_APP: { label: "Web app", tone: "neutral" },
+  API: { label: "API", tone: "neutral" },
+  ECOMMERCE: { label: "E-commerce", tone: "neutral" },
+  LANDING_PAGE: { label: "Landing page", tone: "neutral" },
+  INTERNAL_TOOL: { label: "Internal tool", tone: "neutral" },
+};
+
+export const deployEnvironment: Registry = {
+  PRODUCTION: { label: "Production", tone: "warning", hint: "Real users are on this" },
+  STAGING: { label: "Staging", tone: "info" },
+  PREVIEW: { label: "Preview", tone: "neutral" },
+};
+
+export const buildStatus: Registry = {
+  QUEUED: { label: "Queued", tone: "neutral" },
+  RUNNING: { label: "Running", tone: "progress" },
+  SUCCEEDED: { label: "Succeeded", tone: "success" },
+  FAILED: { label: "Failed", tone: "danger" },
+  CANCELLED: { label: "Cancelled", tone: "neutral" },
+};
+
+export const deploymentStatus: Registry = {
+  PENDING: { label: "Pending", tone: "neutral" },
+  IN_PROGRESS: { label: "In progress", tone: "progress" },
+  SUCCEEDED: { label: "Succeeded", tone: "success" },
+  FAILED: { label: "Failed", tone: "danger" },
+  ROLLED_BACK: { label: "Rolled back", tone: "warning", hint: "Replaced by a later deploy" },
+};
+
+export const logLevel: Registry = {
+  DEBUG: { label: "Debug", tone: "neutral" },
+  INFO: { label: "Info", tone: "info" },
+  WARN: { label: "Warn", tone: "warning" },
+  ERROR: { label: "Error", tone: "danger" },
+  FATAL: { label: "Fatal", tone: "danger" },
+};
+
+export const incidentSeverity: Registry = {
+  SEV1: { label: "SEV1", tone: "danger", hint: "Down or unusable for everyone" },
+  SEV2: { label: "SEV2", tone: "danger", hint: "Major function broken" },
+  SEV3: { label: "SEV3", tone: "warning", hint: "Degraded, with a workaround" },
+  SEV4: { label: "SEV4", tone: "info", hint: "Minor, no client impact" },
+};
+
+export const incidentStatus: Registry = {
+  INVESTIGATING: { label: "Investigating", tone: "danger", hint: "Cause not yet known" },
+  IDENTIFIED: { label: "Identified", tone: "warning", hint: "Cause known, fix pending" },
+  MONITORING: { label: "Monitoring", tone: "progress", hint: "Fix applied, watching" },
+  RESOLVED: { label: "Resolved", tone: "success" },
+};
+
+export const taskStatus: Registry = {
+  TODO: { label: "To do", tone: "neutral" },
+  IN_PROGRESS: { label: "In progress", tone: "progress" },
+  BLOCKED: { label: "Blocked", tone: "danger", hint: "Someone else has to move first" },
+  DONE: { label: "Done", tone: "success" },
+  CANCELLED: { label: "Cancelled", tone: "neutral" },
+};
+
+/* -- Subscription lifecycle -------------------------------------------------
+   Mirrors STATUS_TONE in lib/subscription-lifecycle.ts. That module is
+   isomorphic (it has no Tailwind and no registry) and this one is the single
+   place tone becomes colour, so the two are kept deliberately in step. */
+
+export const subscriptionStatus: Registry = {
+  TRIALING: { label: "Trial", tone: "info" },
+  ACTIVE: { label: "Active", tone: "success" },
+  PAST_DUE: { label: "Past due", tone: "warning", hint: "Renewal date passed unpaid" },
+  GRACE: { label: "Grace period", tone: "danger", hint: "Overdue — decide whether to suspend" },
+  SUSPENDED: { label: "Suspended", tone: "danger", hint: "Service stopped by Altruvex" },
+  PAUSED: { label: "Paused", tone: "neutral", hint: "Halted at the client's request" },
+  CANCELLED: { label: "Cancelled", tone: "neutral" },
+  EXPIRED: { label: "Expired", tone: "neutral", hint: "Ran out without renewing" },
+};
+
+export const renewalUrgency: Registry = {
+  overdue: { label: "Overdue", tone: "danger" },
+  "due-soon": { label: "Due soon", tone: "warning" },
+  ending: { label: "Not renewing", tone: "warning", hint: "Auto-renew is off" },
+  scheduled: { label: "Scheduled", tone: "neutral" },
+  none: { label: "—", tone: "neutral" },
+};
+
 export const REGISTRIES = {
   submissionStatus,
   priority,
@@ -239,6 +338,17 @@ export const REGISTRIES = {
   projectTimeline: projectTimelineLabels,
   budgetRange,
   pipelineStage,
+  productStatus,
+  productKind,
+  deployEnvironment,
+  buildStatus,
+  deploymentStatus,
+  logLevel,
+  incidentSeverity,
+  incidentStatus,
+  taskStatus,
+  subscriptionStatus,
+  renewalUrgency,
 } as const;
 
 export type RegistryName = keyof typeof REGISTRIES;

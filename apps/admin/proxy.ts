@@ -17,6 +17,11 @@ export default async function proxy(request: NextRequest) {
     "/api/portal/",
     "/client-portal/",
     "/api/client-portal/",
+    // CI ingest. A build agent holds a per-product bearer token, never a
+    // session, so the admin gate would redirect every pipeline to a login it
+    // cannot pass. Authenticity is the token check in lib/ingest-auth.ts —
+    // which is scoped to exactly one product and grants no read access.
+    "/api/ingest/",
   ];
   const isPublicPath =
     publicPaths.some((path) => request.nextUrl.pathname === path) ||

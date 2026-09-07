@@ -4,6 +4,7 @@ import {
   BarChart3,
   Bell,
   Blocks,
+  Boxes,
   Building2,
   CalendarDays,
   FileSignature,
@@ -18,13 +19,16 @@ import {
   Mail,
   MessageCircle,
   Receipt,
+  Rocket,
   ScrollText,
+  ShieldAlert,
   Settings,
   Shapes,
   ShieldCheck,
   Sparkles,
   Tags,
   Target,
+  Terminal,
   Wrench,
   Users,
   Wallet,
@@ -72,7 +76,8 @@ export type BadgeKey =
   | "contracts"
   | "meetings"
   | "inbox"
-  | "payments";
+  | "payments"
+  | "incidents";
 
 export const PRIMARY: NavItem[] = [
   {
@@ -174,7 +179,7 @@ export const GROUPS: NavGroup[] = [
         label: "Maintenance",
         icon: Wrench,
         state: "live",
-        blurb: "Retainers, allowances, and client requests",
+        blurb: "Retainers, renewals, allowances and client requests",
       },
       {
         href: "/calendar",
@@ -183,6 +188,41 @@ export const GROUPS: NavGroup[] = [
         state: "live",
         blurb: "Meetings, deadlines, milestones and payment dates on one grid",
         badgeKey: "meetings",
+      },
+    ],
+  },
+  {
+    id: "engineering",
+    label: "Engineering",
+    items: [
+      {
+        href: "/products",
+        label: "Products",
+        icon: Boxes,
+        state: "live",
+        blurb: "Every site and app Altruvex operates, and what is deployed on it",
+      },
+      {
+        href: "/deployments",
+        label: "Deployments",
+        icon: Rocket,
+        state: "live",
+        blurb: "What shipped, what failed, and the builds behind them",
+      },
+      {
+        href: "/logs",
+        label: "Logs",
+        icon: Terminal,
+        state: "live",
+        blurb: "What products report, filtered and traceable by request",
+      },
+      {
+        href: "/incidents",
+        label: "Incidents",
+        icon: ShieldAlert,
+        state: "live",
+        blurb: "What is broken right now, who owns it, and what has been tried",
+        badgeKey: "incidents",
       },
     ],
   },
@@ -293,7 +333,7 @@ export const GROUPS: NavGroup[] = [
         label: "Automations",
         icon: Sparkles,
         state: "live",
-        blurb: "When X happens, do Y — the rules that run the loop",
+        blurb: "What the system does on its own, and where each behaviour lives",
       },
     ],
   },
