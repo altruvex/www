@@ -1,7 +1,10 @@
-import { prisma } from "@repo/database";
+import {
+  prisma,
+  type BillingInterval,
+  type MaintenanceSubscriptionStatus,
+} from "@repo/database";
 import {
   currentBillingCycle,
-  daysUntilCycleEnd,
   formatMoney,
   MAINTENANCE_PLAN_IDS,
   pricingCopy,
@@ -10,6 +13,15 @@ import {
 
 import { getPricing } from "@/lib/pricing-store";
 import { diffFields, recordChanges } from "@/lib/pricing-store";
+import { recordActivity, systemActor, type Actor } from "@/lib/activity-log";
+import {
+  computeRenewal,
+  deriveStatus,
+  nextPeriodEnd,
+  renewalView,
+  STATUS_LABEL,
+  type RenewalUrgency,
+} from "@/lib/subscription-lifecycle";
 
 /**
  * Admin view of maintenance retainers.
@@ -38,12 +50,28 @@ export interface AdminSubscription {
   readonly planId: string;
   readonly planName: string;
   readonly planPriceLabel: string;
-  readonly status: string;
+  /** What an operator set. PAUSED/SUSPENDED/CANCELLED only get here by hand. */
+  readonly status: MaintenanceSubscriptionStatus;
+  /** What the calendar says today — see `deriveStatus`. */
+  readonly effectiveStatus: MaintenanceSubscriptionStatus;
+  readonly effectiveStatusLabel: string;
+  readonly billingInterval: BillingInterval;
+  readonly autoRenew: boolean;
+  readonly currentPeriodStart: string;
+  readonly currentPeriodEnd: string;
+  /** Alias of `currentPeriodEnd`: the renewal date IS the period end. */
+  readonly renewsAt: string;
+  readonly renewalUrgency: RenewalUrgency;
+  /** Negative once the renewal date has passed. */
+  readonly daysUntilRenewal: number;
+  readonly trialEndsAt: string | null;
+  readonly lastRenewedAt: string | null;
+  /** Plan price per interval, in minor units. Null on a quote-only plan. */
+  readonly monthlyValue: number | null;
   readonly portalToken: string;
   readonly startedAt: string;
   readonly cycleStart: string;
   readonly cycleEnd: string;
-  readonly daysUntilRenewal: number;
   /** Null on a quote-only plan, which publishes no cap. */
   readonly requestsPerCycle: number | null;
   readonly requestsUsed: number;
@@ -77,6 +105,9 @@ export async function listSubscriptions(
     const planId = isPlanId(sub.planId) ? sub.planId : null;
     const plan = planId ? pricing.maintenance[planId] : null;
 
+    const effective = deriveStatus(sub, now);
+    const renewal = renewalView(sub, now);
+
     const inCycle = sub.requests.filter(
       (r) =>
         r.cycleStart.getTime() >= cycle.start.getTime() &&
@@ -95,12 +126,26 @@ export async function listSubscriptions(
         plan === null || plan.price === null
           ? tpl.customPrice
           : formatMoney(plan.price, "en"),
+      // Stored status is what an operator set; effective status is what the
+      // calendar says today. Both are exposed so a screen can show "Active"
+      // that has silently become "Past due" without a write.
       status: sub.status,
+      effectiveStatus: effective,
+      effectiveStatusLabel: STATUS_LABEL[effective],
+      billingInterval: sub.billingInterval,
+      autoRenew: sub.autoRenew,
+      currentPeriodStart: sub.currentPeriodStart.toISOString(),
+      currentPeriodEnd: sub.currentPeriodEnd.toISOString(),
+      renewsAt: sub.currentPeriodEnd.toISOString(),
+      renewalUrgency: renewal.urgency,
+      daysUntilRenewal: renewal.daysUntil,
+      trialEndsAt: sub.trialEndsAt?.toISOString() ?? null,
+      lastRenewedAt: sub.lastRenewedAt?.toISOString() ?? null,
+      monthlyValue: plan?.price ?? null,
       portalToken: sub.portalToken,
       startedAt: sub.startedAt.toISOString(),
       cycleStart: cycle.start.toISOString(),
       cycleEnd: cycle.end.toISOString(),
-      daysUntilRenewal: daysUntilCycleEnd(cycle, now),
       requestsPerCycle: plan?.requestsPerCycle ?? null,
       requestsUsed: inCycle.filter((r) => r.countsToCap).length,
       openRequests: sub.requests.filter(
@@ -128,7 +173,20 @@ export const REQUEST_STATUSES = [
 ] as const;
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
-export const SUBSCRIPTION_STATUSES = ["ACTIVE", "PAUSED", "CANCELLED"] as const;
+/**
+ * Statuses an operator may set by hand.
+ *
+ * PAST_DUE, GRACE and EXPIRED are deliberately absent: those are *derived* from
+ * the billing period by `deriveStatus`, and letting someone set them by hand
+ * would put the stored value and the calendar into permanent disagreement.
+ */
+export const SUBSCRIPTION_STATUSES = [
+  "TRIALING",
+  "ACTIVE",
+  "SUSPENDED",
+  "PAUSED",
+  "CANCELLED",
+] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 /**
@@ -194,6 +252,7 @@ export async function setSubscriptionStatus(
   id: string,
   status: SubscriptionStatus,
   actor: string | null,
+  auditActor: Actor = systemActor(actor ?? "System"),
 ): Promise<boolean> {
   const before = await prisma.maintenanceSubscription.findUnique({ where: { id } });
   if (!before) return false;
@@ -203,6 +262,9 @@ export async function setSubscriptionStatus(
     data: {
       status,
       cancelledAt: status === "CANCELLED" ? (before.cancelledAt ?? new Date()) : null,
+      // Moving off a trial by hand clears the trial deadline, so `deriveStatus`
+      // cannot later read the row back as still trialing.
+      trialEndsAt: status === "TRIALING" ? before.trialEndsAt : null,
     },
   });
 
@@ -210,6 +272,110 @@ export async function setSubscriptionStatus(
     diffFields("maintenance_subscription", id, { status: before.status }, { status }),
     actor,
   );
+
+  await recordActivity({
+    action: `subscription.${status.toLowerCase()}`,
+    actor: auditActor,
+    entityType: "subscription",
+    entityId: id,
+    entityLabel: before.planId,
+    summary: `Retainer moved to ${STATUS_LABEL[status]}`,
+    before: { status: before.status },
+    after: { status },
+  });
+  return true;
+}
+
+/**
+ * Advances a subscription into its next billing period (§10).
+ *
+ * The new period is anchored to the end of the one that just closed, never to
+ * `now` — see `computeRenewal`. Renewing three days late must not move the
+ * billing anchor three days later, every time, forever.
+ *
+ * This records the renewal; it does not take a payment. There is no payment
+ * provider wired into this system, so `lastRenewedAt` means "an operator
+ * confirmed this was collected", which is exactly what it is.
+ */
+export async function renewSubscription(
+  id: string,
+  actor: string | null,
+  auditActor: Actor = systemActor(actor ?? "System"),
+  now: Date = new Date(),
+): Promise<{ ok: boolean; message: string }> {
+  const before = await prisma.maintenanceSubscription.findUnique({ where: { id } });
+  if (!before) return { ok: false, message: "That subscription no longer exists." };
+
+  if (before.status === "CANCELLED") {
+    return { ok: false, message: "A cancelled retainer cannot be renewed. Start a new one." };
+  }
+
+  const period = computeRenewal(before, now);
+
+  await prisma.maintenanceSubscription.update({
+    where: { id },
+    data: {
+      ...period,
+      lastRenewedAt: now,
+      // Renewing resolves whatever lapsed state the calendar had derived, and
+      // converts a trial into a normal paid subscription.
+      status: before.status === "TRIALING" ? "ACTIVE" : before.status,
+      trialEndsAt: null,
+    },
+  });
+
+  await recordActivity({
+    action: "subscription.renewed",
+    actor: auditActor,
+    entityType: "subscription",
+    entityId: id,
+    entityLabel: before.planId,
+    summary: `Retainer renewed through ${period.currentPeriodEnd.toISOString().slice(0, 10)}`,
+    before: { currentPeriodEnd: before.currentPeriodEnd },
+    after: { currentPeriodEnd: period.currentPeriodEnd },
+  });
+
+  return { ok: true, message: "Renewed. The next period is now current." };
+}
+
+/**
+ * Turns auto-renewal on or off.
+ *
+ * Off is not a cancellation: the retainer runs to the end of its paid period
+ * and then EXPIRES. The renewals screen shows it as "Not renewing" from the
+ * moment it enters the horizon, so a churn event is visible before the date
+ * rather than discovered after it.
+ *
+ * Returns false only when the subscription does not exist.
+ */
+export async function setAutoRenew(
+  id: string,
+  autoRenew: boolean,
+  actor: string | null,
+  auditActor: Actor = systemActor(actor ?? "System"),
+): Promise<boolean> {
+  const before = await prisma.maintenanceSubscription.findUnique({ where: { id } });
+  if (!before) return false;
+
+  // Idempotent: setting the value it already holds succeeds silently and writes
+  // no activity line. `false` is reserved for "no such subscription", which is
+  // the only case the caller should turn into a 404.
+  if (before.autoRenew === autoRenew) return true;
+
+  await prisma.maintenanceSubscription.update({ where: { id }, data: { autoRenew } });
+
+  await recordActivity({
+    action: "subscription.auto_renew_changed",
+    actor: auditActor,
+    entityType: "subscription",
+    entityId: id,
+    entityLabel: before.planId,
+    summary: autoRenew
+      ? "Auto-renewal switched on"
+      : `Auto-renewal switched off — expires ${before.currentPeriodEnd.toISOString().slice(0, 10)}`,
+    before: { autoRenew: before.autoRenew },
+    after: { autoRenew },
+  });
   return true;
 }
 
@@ -217,6 +383,8 @@ export async function createSubscription(
   clientId: string,
   planId: MaintenancePlanId,
   actor: string | null,
+  interval: BillingInterval = "MONTHLY",
+  auditActor: Actor = systemActor(actor ?? "System"),
 ): Promise<{ ok: boolean; message: string; id?: string }> {
   const client = await prisma.client.findUnique({ where: { id: clientId } });
   if (!client) return { ok: false, message: "That client no longer exists." };
@@ -224,7 +392,10 @@ export async function createSubscription(
   // One live retainer per client: two active subscriptions would give the same
   // client two separate allowances and two portal links.
   const existing = await prisma.maintenanceSubscription.findFirst({
-    where: { clientId, status: { in: ["ACTIVE", "PAUSED"] } },
+    where: {
+      clientId,
+      status: { in: ["TRIALING", "ACTIVE", "PAUSED", "SUSPENDED"] },
+    },
   });
   if (existing) {
     return {
@@ -233,8 +404,18 @@ export async function createSubscription(
     };
   }
 
+  const startedAt = new Date();
   const created = await prisma.maintenanceSubscription.create({
-    data: { clientId, planId },
+    data: {
+      clientId,
+      planId,
+      billingInterval: interval,
+      startedAt,
+      currentPeriodStart: startedAt,
+      // The first period is computed the same way every later renewal is, so a
+      // subscription's first renewal date is never a special case.
+      currentPeriodEnd: nextPeriodEnd(startedAt, interval),
+    },
   });
 
   await recordChanges(
@@ -249,6 +430,20 @@ export async function createSubscription(
     ],
     actor,
   );
+
+  await recordActivity({
+    action: "subscription.created",
+    actor: auditActor,
+    entityType: "subscription",
+    entityId: created.id,
+    entityLabel: client.company || client.name || "Client",
+    summary: `Started the ${planId} retainer for ${client.company || client.name || "a client"}`,
+    after: {
+      planId,
+      billingInterval: interval,
+      currentPeriodEnd: created.currentPeriodEnd,
+    },
+  });
 
   return { ok: true, message: "Maintenance plan started.", id: created.id };
 }

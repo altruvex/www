@@ -1,495 +1,399 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+
 import {
-  List,
-  LayoutGrid,
-  Plus,
-  Search,
-  ArrowRight,
-} from "lucide-react";
-import { DataTable, type Column } from "@/components/os/data-table";
-import { Button } from "@repo/ui";
-import { Field, Input, Textarea } from "@repo/ui";
-import { segmentClass } from "@repo/ui";
-import {
+  Button,
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui";
-import {
   Sheet,
-  SheetBody,
   SheetContent,
-  SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui";
-import { Avatar } from "@repo/ui";
-import { ToneBadge } from "@/components/ui/badge";
-import { dueLabel, initials } from "@/lib/format";
-import { toast } from "sonner";
 
-export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
-export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+import { EmptyInline } from "@/components/os/empty-state";
+import { Panel } from "@/components/os/panel";
+import { StatusPill } from "@/components/ui/badge";
+import { dueLabel } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export interface TaskItem {
   id: string;
   title: string;
-  description?: string;
+  detail: string | null;
+  status: string;
+  priority: string;
+  phase: string | null;
   projectId: string;
   projectName: string;
   clientName: string;
-  status: TaskStatus;
-  priority: TaskPriority;
+  assigneeId: string | null;
   assigneeName: string | null;
   dueDate: string | null;
+  completedAt: string | null;
   createdAt: string;
 }
 
-const COLUMNS: { id: TaskStatus; label: string }[] = [
-  { id: "BACKLOG", label: "Backlog" },
-  { id: "TODO", label: "To Do" },
-  { id: "IN_PROGRESS", label: "In Progress" },
-  { id: "REVIEW", label: "In Review" },
-  { id: "DONE", label: "Completed" },
-];
+/**
+ * Columns mirror the `TaskStatus` enum exactly.
+ *
+ * The board this replaced had five columns (BACKLOG, TODO, IN_PROGRESS, REVIEW,
+ * DONE) that existed in no schema anywhere, so a card could sit in a column the
+ * database had no way to store.
+ */
+const COLUMNS = [
+  { id: "TODO", label: "To do" },
+  { id: "IN_PROGRESS", label: "In progress" },
+  { id: "BLOCKED", label: "Blocked" },
+  { id: "DONE", label: "Done" },
+] as const;
 
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; tone: "neutral" | "info" | "warning" | "danger" }> = {
-  LOW: { label: "Low", tone: "neutral" },
-  MEDIUM: { label: "Medium", tone: "info" },
-  HIGH: { label: "High", tone: "warning" },
-  URGENT: { label: "Urgent", tone: "danger" },
-};
-
-/** Radix Select has no empty value, so "nobody" needs a token of its own. */
+const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 const UNASSIGNED = "__unassigned__";
 
 export function TasksClient({
-  initialTasks,
+  items,
   projects,
-  teamUsers,
+  users,
 }: {
-  initialTasks: TaskItem[];
-  projects: { id: string; name: string; clientName: string }[];
-  teamUsers: { id: string; name: string | null; email: string }[];
+  items: TaskItem[];
+  projects: { id: string; name: string; phase: string; clientName: string }[];
+  users: { id: string; name: string | null; email: string }[];
 }) {
-  const [tasks, setTasks] = React.useState<TaskItem[]>(initialTasks);
-  const [viewMode, setViewMode] = React.useState<"board" | "list">("board");
-  const [selectedProject, setSelectedProject] = React.useState<string>("all");
-  const [selectedPriority, setSelectedPriority] = React.useState<string>("all");
-  const [searchQuery, setSearchQuery] = React.useState<string>("");
-  const [isCreateOpen, setIsCreateOpen] = React.useState(false);
+  const router = useRouter();
+  const [creating, setCreating] = React.useState(false);
+  const [pending, setPending] = React.useState<string | null>(null);
+  const [projectFilter, setProjectFilter] = React.useState<string>(UNASSIGNED);
 
-  // New task form state
-  const [newTaskTitle, setNewTaskTitle] = React.useState("");
-  const [newTaskDesc, setNewTaskDesc] = React.useState("");
-  const [newTaskProject, setNewTaskProject] = React.useState(projects[0]?.id ?? "");
-  const [newTaskPriority, setNewTaskPriority] = React.useState<TaskPriority>("MEDIUM");
-  const [newTaskAssignee, setNewTaskAssignee] = React.useState(teamUsers[0]?.name ?? "");
-  const [newTaskDueDate, setNewTaskDueDate] = React.useState("");
+  const visible =
+    projectFilter === UNASSIGNED
+      ? items
+      : items.filter((task) => task.projectId === projectFilter);
 
-  const handleMoveStatus = (taskId: string, newStatus: TaskStatus) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
-    );
-    const colName = COLUMNS.find((c) => c.id === newStatus)?.label;
-    toast.success(`Task moved to ${colName}`);
-  };
-
-  const handleCreateTask = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim()) return;
-
-    const proj = projects.find((p) => p.id === newTaskProject);
-    const created: TaskItem = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle.trim(),
-      description: newTaskDesc.trim() || undefined,
-      projectId: newTaskProject,
-      projectName: proj?.name ?? "Internal",
-      clientName: proj?.clientName ?? "Altruvex",
-      status: "TODO",
-      priority: newTaskPriority,
-      assigneeName: newTaskAssignee || null,
-      dueDate: newTaskDueDate ? new Date(newTaskDueDate).toISOString() : null,
-      createdAt: new Date().toISOString(),
-    };
-
-    setTasks((prev) => [created, ...prev]);
-    setIsCreateOpen(false);
-    setNewTaskTitle("");
-    setNewTaskDesc("");
-    toast.success("Task created successfully");
-  };
-
-  const filteredTasks = React.useMemo(() => {
-    return tasks.filter((t) => {
-      if (selectedProject !== "all" && t.projectId !== selectedProject) return false;
-      if (selectedPriority !== "all" && t.priority !== selectedPriority) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = t.title.toLowerCase().includes(q);
-        const matchesProject = t.projectName.toLowerCase().includes(q);
-        const matchesAssignee = t.assigneeName?.toLowerCase().includes(q) ?? false;
-        return matchesTitle || matchesProject || matchesAssignee;
-      }
-      return true;
+  async function call(
+    method: "POST" | "PATCH" | "DELETE",
+    body: unknown,
+    okMessage: string,
+  ): Promise<boolean> {
+    const res = await fetch("/api/admin/tasks", {
+      method,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
     });
-  }, [tasks, selectedProject, selectedPriority, searchQuery]);
+    if (res.status === 401) {
+      toast.error("Your session expired. Sign in again.");
+      router.push("/login");
+      return false;
+    }
+    const data = (await res.json()) as { success: boolean; message?: string };
+    if (!data.success) {
+      toast.error(data.message ?? "That change could not be saved.");
+      return false;
+    }
+    toast.success(okMessage);
+    router.refresh();
+    return true;
+  }
 
-  const listColumns: Column<TaskItem>[] = [
-    {
-      id: "title",
-      header: "Task",
-      hideable: false,
-      cell: (row) => (
-        <span className="min-w-0">
-          <span className="block truncate font-medium text-foreground">{row.title}</span>
-          <span className="block truncate text-meta text-muted-foreground">
-            {row.projectName} · {row.clientName}
-          </span>
-        </span>
-      ),
-      sortValue: (row) => row.title.toLowerCase(),
-      searchValue: (row) => `${row.title} ${row.projectName} ${row.clientName}`,
-    },
-    {
-      id: "status",
-      header: "Status",
-      width: "140px",
-      cell: (row) => (
-        <Select
-          value={row.status}
-          onValueChange={(value) => handleMoveStatus(row.id, value as TaskStatus)}
-        >
-          <SelectTrigger size="sm" aria-label={`Status of ${row.title}`}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {COLUMNS.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ),
-      sortValue: (row) => row.status,
-    },
-    {
-      id: "priority",
-      header: "Priority",
-      width: "110px",
-      cell: (row) => (
-        <ToneBadge tone={PRIORITY_CONFIG[row.priority].tone}>
-          {PRIORITY_CONFIG[row.priority].label}
-        </ToneBadge>
-      ),
-      sortValue: (row) => ["URGENT", "HIGH", "MEDIUM", "LOW"].indexOf(row.priority),
-    },
-    {
-      id: "assignee",
-      header: "Assignee",
-      width: "140px",
-      cell: (row) => (
-        <span className="flex items-center gap-1.5 text-meta text-muted-foreground">
-          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-micro font-semibold text-foreground">
-            {initials(row.assigneeName)}
-          </span>
-          <span className="truncate">{row.assigneeName ?? "Unassigned"}</span>
-        </span>
-      ),
-      sortValue: (row) => row.assigneeName ?? "",
-    },
-    {
-      id: "dueDate",
-      header: "Due",
-      width: "130px",
-      cell: (row) =>
-        row.dueDate ? (
-          <span className="font-mono text-meta text-muted-foreground">{dueLabel(row.dueDate)}</span>
-        ) : (
-          <span className="font-mono text-meta text-subtle-foreground">—</span>
-        ),
-      sortValue: (row) => (row.dueDate ? new Date(row.dueDate).getTime() : 0),
-    },
-  ];
+  async function move(task: TaskItem, status: string) {
+    if (status === task.status) return;
+    setPending(task.id);
+    await call("PATCH", { id: task.id, status }, `Moved to ${status.replace("_", " ").toLowerCase()}.`);
+    setPending(null);
+  }
 
   return (
-    <div className="space-y-4">
-      {/* Controls Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger aria-label="Filter by project">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All projects ({tasks.length})</SelectItem>
-              {projects.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-            <SelectTrigger aria-label="Filter by priority">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All priorities</SelectItem>
-              <SelectItem value="URGENT">Urgent</SelectItem>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="LOW">Low</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="relative min-w-0 sm:w-56">
-            <Search className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter tasks…"
-              aria-label="Filter tasks"
-              className="ps-7"
-            />
+    <>
+      <Panel
+        title="Board"
+        description={`${visible.length} task${visible.length === 1 ? "" : "s"}`}
+        action={
+          <div className="flex items-center gap-1.5">
+            <Select value={projectFilter} onValueChange={setProjectFilter}>
+              <SelectTrigger className="w-48" aria-label="Filter by project">
+                <SelectValue placeholder="All projects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>All projects</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button variant="brand" size="sm" onClick={() => setCreating(true)}>
+              <Plus className="size-3.5" />
+              New task
+            </Button>
           </div>
-        </div>
+        }
+        flush
+      >
+        {visible.length === 0 ? (
+          <EmptyInline
+            action={
+              <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+                Add the first task
+              </Button>
+            }
+          >
+            {items.length === 0
+              ? "No task has been created yet. A task is a unit of delivery work with an owner and a due date — add one and it appears on this board and on its project."
+              : "No task on that project."}
+          </EmptyInline>
+        ) : (
+          <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-4">
+            {COLUMNS.map((column) => {
+              const columnTasks = visible.filter((task) => task.status === column.id);
+              return (
+                <section key={column.id} className="min-w-0 space-y-2">
+                  <header className="flex items-center justify-between gap-2">
+                    <h3 className="telemetry text-subtle-foreground">{column.label}</h3>
+                    <span className="text-meta tabular-nums text-subtle-foreground">
+                      {columnTasks.length}
+                    </span>
+                  </header>
 
-        <div className="flex items-center gap-2">
-          {/* Two views of one list: a segmented control, the same one the
-              proposal builder uses — not two buttons that happen to look joined. */}
-          <div role="radiogroup" aria-label="View" className="flex items-center gap-1.5">
-            {([
-              { id: "board", label: "Board", icon: LayoutGrid },
-              { id: "list", label: "List", icon: List },
-            ] as const).map((view) => (
-              <button
-                key={view.id}
-                type="button"
-                role="radio"
-                aria-checked={viewMode === view.id}
-                onClick={() => setViewMode(view.id)}
-                className={segmentClass({ selected: viewMode === view.id })}
-              >
-                <view.icon />
-                {view.label}
-              </button>
-            ))}
-          </div>
-
-          <Button variant="brand" onClick={() => setIsCreateOpen(true)}>
-            <Plus />
-            New task
-          </Button>
-        </div>
-      </div>
-
-      {/* Main View */}
-      {viewMode === "board" ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-5 items-start">
-          {COLUMNS.map((col) => {
-            const colTasks = filteredTasks.filter((t) => t.status === col.id);
-            return (
-              <div
-                key={col.id}
-                className="flex flex-col rounded-lg border border-border bg-surface/50 p-2.5 space-y-2.5 min-h-[350px]"
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between px-1">
-                  <span className="font-mono text-micro uppercase font-semibold text-foreground/80">
-                    {col.label}
-                  </span>
-                  <span className="rounded-full bg-surface-2 px-2 py-0.5 font-mono text-micro tabular-nums text-muted-foreground">
-                    {colTasks.length}
-                  </span>
-                </div>
-
-                {/* Column Task Cards */}
-                <div className="space-y-2">
-                  {colTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="group space-y-2 rounded-md border border-border bg-card p-3 transition-colors duration-[var(--dur-state)] hover:border-border-mid"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-base font-medium leading-snug text-foreground line-clamp-2">
-                          {task.title}
-                        </span>
-                        <ToneBadge tone={PRIORITY_CONFIG[task.priority].tone}>
-                          {PRIORITY_CONFIG[task.priority].label}
-                        </ToneBadge>
-                      </div>
-
-                      {task.description && (
-                        <p className="text-meta text-muted-foreground line-clamp-2 leading-relaxed">
-                          {task.description}
+                  <ul className="space-y-1.5">
+                    {columnTasks.length === 0 && (
+                      <li className="rounded-sm border border-dashed border-border px-2 py-4 text-center text-meta text-subtle-foreground">
+                        Empty
+                      </li>
+                    )}
+                    {columnTasks.map((task) => (
+                      <li
+                        key={task.id}
+                        className={cn(
+                          "plane space-y-1.5 p-2",
+                          pending === task.id && "opacity-60",
+                        )}
+                      >
+                        <p className="text-base leading-snug">{task.title}</p>
+                        <p className="truncate text-meta text-subtle-foreground">
+                          <Link
+                            href={`/projects/${task.projectId}`}
+                            className="hover:text-foreground hover:underline"
+                          >
+                            {task.projectName}
+                          </Link>
+                          {" · "}
+                          {task.assigneeName ?? "Unassigned"}
                         </p>
-                      )}
-
-                      <div className="border-t border-border/50 pt-2 flex items-center justify-between text-meta text-muted-foreground">
-                        <span className="max-w-[110px] truncate font-mono text-micro">
-                          {task.projectName}
-                        </span>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {task.assigneeName && (
-                            <Avatar name={task.assigneeName} size="sm" />
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <StatusPill registry="priority" value={task.priority} variant="dot" />
+                          {task.dueDate && task.status !== "DONE" && (
+                            <span
+                              className={cn(
+                                "text-meta",
+                                new Date(task.dueDate) < new Date()
+                                  ? "text-danger"
+                                  : "text-subtle-foreground",
+                              )}
+                            >
+                              {dueLabel(task.dueDate)}
+                            </span>
                           )}
                         </div>
-                      </div>
-
-                      {/* Quick Move Next Stage */}
-                      <div className="flex items-center justify-between pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {col.id !== "DONE" ? (
-                          <button
-                            onClick={() => {
-                              const nextIdx = COLUMNS.findIndex((c) => c.id === col.id) + 1;
-                              if (nextIdx < COLUMNS.length) handleMoveStatus(task.id, COLUMNS[nextIdx].id);
-                            }}
-                            className="inline-flex cursor-pointer items-center gap-1 font-mono text-micro text-brand hover:underline"
+                        <Select
+                          value={task.status}
+                          onValueChange={(value) => move(task, value)}
+                          disabled={pending === task.id}
+                        >
+                          <SelectTrigger
+                            className="h-7 w-full"
+                            aria-label={`Status for ${task.title}`}
                           >
-                            <span>Advance</span>
-                            <ArrowRight className="size-2.5" />
-                          </button>
-                        ) : (
-                          <span className="text-micro text-success font-mono">Done ✓</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {colTasks.length === 0 && (
-                    <div className="rounded-md border border-dashed border-border/70 p-4 text-center text-meta text-subtle-foreground">
-                      Empty
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <DataTable
-          tableId="tasks-list"
-          rows={filteredTasks}
-          columns={listColumns}
-          rowKey={(r) => r.id}
-          searchPlaceholder="Search tasks…"
-          empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No tasks found.</div>}
-        />
-      )}
-
-      {/* Creating a task is contextual work, so it happens in a Sheet: the board
-          stays visible behind it. */}
-      <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <SheetContent aria-describedby={undefined}>
-          <SheetHeader>
-            <SheetTitle>New task</SheetTitle>
-            <SheetDescription>Tracked against a project, owned by one person.</SheetDescription>
-          </SheetHeader>
-
-          <form onSubmit={handleCreateTask} className="flex min-h-0 flex-1 flex-col">
-            <SheetBody className="space-y-4">
-              <Field label="Task title">
-                <Input
-                  type="text"
-                  required
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  placeholder="e.g. Finalize payment gateway integration"
-                />
-              </Field>
-
-              <Field label="Project">
-                <Select value={newTaskProject} onValueChange={setNewTaskProject}>
-                  <SelectTrigger className="w-full" aria-label="Project">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name} ({p.clientName})
-                      </SelectItem>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COLUMNS.map((option) => (
+                              <SelectItem key={option.id} value={option.id}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </li>
                     ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Priority">
-                  <Select
-                    value={newTaskPriority}
-                    onValueChange={(value) => setNewTaskPriority(value as TaskPriority)}
-                  >
-                    <SelectTrigger className="w-full" aria-label="Priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LOW">Low</SelectItem>
-                      <SelectItem value="MEDIUM">Medium</SelectItem>
-                      <SelectItem value="HIGH">High</SelectItem>
-                      <SelectItem value="URGENT">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
+      <CreateTaskSheet
+        // Remount per opening so the form starts clean without an effect.
+        key={creating ? `open-${projectFilter}` : "closed"}
+        open={creating}
+        onOpenChange={setCreating}
+        projects={projects}
+        users={users}
+        defaultProjectId={projectFilter === UNASSIGNED ? (projects[0]?.id ?? "") : projectFilter}
+        onSubmit={async (body) => {
+          const done = await call("POST", body, "Task created.");
+          if (done) setCreating(false);
+        }}
+      />
+    </>
+  );
+}
 
-                <Field label="Assignee">
-                  <Select
-                    value={newTaskAssignee || UNASSIGNED}
-                    onValueChange={(value) => setNewTaskAssignee(value === UNASSIGNED ? "" : value)}
-                  >
-                    <SelectTrigger className="w-full" aria-label="Assignee">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                      {teamUsers.map((u) => (
-                        <SelectItem key={u.id} value={u.name ?? u.email}>
-                          {u.name ?? u.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
+function CreateTaskSheet({
+  open,
+  onOpenChange,
+  projects,
+  users,
+  defaultProjectId,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projects: { id: string; name: string; clientName: string }[];
+  users: { id: string; name: string | null; email: string }[];
+  defaultProjectId: string;
+  onSubmit: (body: Record<string, unknown>) => Promise<void>;
+}) {
+  const [busy, setBusy] = React.useState(false);
+  // Seeded once per open; the caller remounts on `open` via `key`, so the
+  // operator's choice is never overwritten while the sheet is on screen.
+  const [projectId, setProjectId] = React.useState(defaultProjectId);
+  const [title, setTitle] = React.useState("");
+  const [detail, setDetail] = React.useState("");
+  const [priority, setPriority] = React.useState<string>("MEDIUM");
+  const [assigneeId, setAssigneeId] = React.useState<string>(UNASSIGNED);
+  const [dueDate, setDueDate] = React.useState("");
 
-              <Field label="Due date">
-                <Input
-                  type="date"
-                  value={newTaskDueDate}
-                  onChange={(e) => setNewTaskDueDate(e.target.value)}
-                />
-              </Field>
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="end" className="w-full sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>New task</SheetTitle>
+        </SheetHeader>
+        <form
+          className="space-y-3 p-4"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (!title.trim() || !projectId) return;
+            setBusy(true);
+            await onSubmit({
+              projectId,
+              title: title.trim(),
+              detail: detail.trim() || null,
+              priority,
+              assigneeId: assigneeId === UNASSIGNED ? null : assigneeId,
+              dueDate: dueDate || null,
+            });
+            setBusy(false);
+            setTitle("");
+            setDetail("");
+            setDueDate("");
+          }}
+        >
+          <label className="block space-y-1">
+            <span className="telemetry block text-subtle-foreground">Project</span>
+            <Select value={projectId} onValueChange={setProjectId}>
+              <SelectTrigger className="w-full" aria-label="Project">
+                <SelectValue placeholder="Pick a project" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={project.id}>
+                    {project.name} · {project.clientName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
 
-              <Field label="Description / notes">
-                <Textarea
-                  rows={3}
-                  value={newTaskDesc}
-                  onChange={(e) => setNewTaskDesc(e.target.value)}
-                  placeholder="Optional context or acceptance criteria…"
-                />
-              </Field>
-            </SheetBody>
+          <label className="block space-y-1">
+            <span className="telemetry block text-subtle-foreground">Task</span>
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Wire the contact form to the CRM"
+              required
+              maxLength={300}
+            />
+          </label>
 
-            <SheetFooter>
-              <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="brand">
-                Create task
-              </Button>
-            </SheetFooter>
-          </form>
-        </SheetContent>
-      </Sheet>
-    </div>
+          <label className="block space-y-1">
+            <span className="telemetry block text-subtle-foreground">Detail</span>
+            <textarea
+              value={detail}
+              onChange={(event) => setDetail(event.target.value)}
+              rows={3}
+              maxLength={5000}
+              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1">
+              <span className="telemetry block text-subtle-foreground">Priority</span>
+              <Select value={priority} onValueChange={setPriority}>
+                <SelectTrigger className="w-full" aria-label="Priority">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {value.charAt(0) + value.slice(1).toLowerCase()}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+
+            <label className="block space-y-1">
+              <span className="telemetry block text-subtle-foreground">Due</span>
+              <Input
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+              />
+            </label>
+          </div>
+
+          <label className="block space-y-1">
+            <span className="telemetry block text-subtle-foreground">Assignee</span>
+            <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <SelectTrigger className="w-full" aria-label="Assignee">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name || user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="brand" disabled={busy || !title.trim() || !projectId}>
+              {busy ? "Creating…" : "Create task"}
+            </Button>
+          </div>
+        </form>
+      </SheetContent>
+    </Sheet>
   );
 }

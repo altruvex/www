@@ -4,6 +4,7 @@ import { MAINTENANCE_PLAN_IDS, pricingCopy } from "@repo/pricing-schema";
 import { PageHeader } from "@/components/os/page-header";
 import { listSubscriptions } from "@/lib/maintenance-admin";
 import { MaintenanceClient } from "./maintenance-client";
+import { RenewalsPanel } from "./renewals-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,12 @@ export default async function MaintenancePage() {
     <div className="space-y-4">
       <PageHeader
         title="Maintenance"
-        description="Retainers, this cycle's allowance, and every request a client has sent."
+        description="Retainers, renewals, this cycle's allowance, and every request a client has sent. Lifecycle status is derived from the billing period, so a retainer that lapsed this morning reads as past due without anyone touching it."
       />
+
+      {/* Renewals first: this is the part with a deadline attached. */}
+      <RenewalsPanel subscriptions={subscriptions} />
+
       <MaintenanceClient
         subscriptions={subscriptions}
         clients={clients.map((c) => ({

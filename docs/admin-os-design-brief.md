@@ -42,5 +42,9 @@ Stack         : Next.js 16 App Router / React 19 / Tailwind v4 / Radix primitive
 Constraints   : dark mode required (both directions), WCAG 2.2 AA floor, keyboard-first,
                 mobile card fallback for every table, RBAC-aware nav, no fake data —
                 unmodeled modules render an honest Planned state, never a mock screen.
-Out of scope  : new Prisma models/migrations (schema stays as-is this pass); real WhatsApp
-                Cloud API sends; e-signature vendor integration; charting library.
+Out of scope  : real WhatsApp Cloud API sends; e-signature vendor integration; payment
+                gateway; charting library.
+                (Superseded 2026-09: "no new Prisma models" applied to the first pass
+                only. The engineering-operations pass added Product/Build/Deployment/
+                LogEntry/Incident/ProjectTask/ActivityEvent — see docs/admin-os.md.
+                The design constraints above are unchanged and still binding.)
