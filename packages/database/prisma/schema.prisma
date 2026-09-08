@@ -1,7 +1,7 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../generated/prisma"
-  moduleFormat = "cjs"
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  moduleFormat        = "cjs"
   // Bare specifiers so the generated client resolves both from TypeScript
   // source (Turbopack transpiles this package via `transpilePackages`) and
   // from the compiled `dist/` output. A ".js" extension only resolves once
@@ -303,19 +303,43 @@ model Notification {
   @@map("notifications")
 }
 
+/// A visitor who ran the public estimator and asked for the scoped brief.
+///
+/// The estimator asks five questions; until now only three of the answers were
+/// kept. `brandIdentity` and `contentReadiness` are the two that say how much
+/// groundwork a deal carries before engineering starts, so a lead that arrives
+/// without them cannot be routed or priced for effort — they are recorded here
+/// alongside the rest.
+///
+/// `reference` is the handle the estimate is discussed by: it is shown to the
+/// visitor on the result panel and quoted in the WhatsApp hand-off, so a
+/// conversation that starts in a chat window can be tied back to the exact
+/// answers that produced the range.
 model TransparencyLead {
-  id          String    @id @default(uuid())
-  phone       String
-  name        String?
-  projectType String
-  complexity  String
-  timeline    String
-  priceMin    Int
-  priceMax    Int
-  weeksMin    Int
-  weeksMax    Int
-  convertedAt DateTime?
-  createdAt   DateTime  @default(now())
+  id               String    @id @default(uuid())
+  reference        String    @unique
+  phone            String
+  name             String?
+  email            String?
+  company          String?
+  projectType      String
+  complexity       String
+  timeline         String
+  /// "complete" | "partial" | "scratch" — how much of the identity exists.
+  brandIdentity    String?
+  /// "provide" | "need-help" | "unsure" — how much copy work the build carries.
+  contentReadiness String?
+  priceMin         Int
+  priceMax         Int
+  weeksMin         Int
+  weeksMax         Int
+  locale           String    @default("en")
+  referrer         String?
+  utmSource        String?
+  utmMedium        String?
+  utmCampaign      String?
+  convertedAt      DateTime?
+  createdAt        DateTime  @default(now())
 
   client Client?
 

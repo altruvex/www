@@ -107,6 +107,7 @@
   --animate-step-in: step-in 0.35s var(--ease-default) both;
   --animate-text-gradient: text-gradient 6s linear infinite;
   --animate-brand-kenburns: brand-kenburns 24s var(--ease-smooth) forwards;
+  --animate-edge-sweep: edge-sweep 1.15s var(--ease-strong) both;
 
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -959,6 +960,27 @@ html.lenis body {
 
   100% {
     background-position: -200% center;
+  }
+}
+
+/* One-shot highlight travelling along a rule, used to mark the moment a panel
+   settles. Decorative: it states nothing the panel does not already say, and
+   the global reduced-motion rule collapses it to a single frame. Mirror it for
+   RTL at the call site (`rtl:-scale-x-100`) so it travels inline-start to
+   inline-end in both directions. */
+@keyframes edge-sweep {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(200%);
   }
 }
 
