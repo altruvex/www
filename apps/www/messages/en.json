@@ -2069,6 +2069,10 @@
     },
     "phoneCapture": {
       "button": "View Your Estimate",
+      "companyLabel": "Company (Optional)",
+      "companyPlaceholder": "Company name",
+      "emailLabel": "Email (Optional)",
+      "emailPlaceholder": "you@company.com",
       "nameLabel": "Name or Company (Optional)",
       "namePlaceholder": "Your name or company name",
       "phoneError": "Enter a valid phone or WhatsApp number.",
@@ -2093,6 +2097,7 @@
     },
     "results": {
       "badge": "Estimate Ready",
+      "bookCall": "Book a technical call",
       "detailedEstimateTitle": "Get the detailed estimate",
       "estimateLabel": "Estimate",
       "fallbackDeliverables": [
@@ -2101,9 +2106,16 @@
         "Production deployment",
         "Performance and launch QA"
       ],
+      "fullScopeLabel": "Full scope",
       "includesLabel": "What this includes",
       "moreInPdf": "+ {count} more deliverables in the PDF",
+      "nextStepBody": "The PDF is yours to keep. Narrowing the range to a single number happens in a conversation — not in a form.",
+      "nextStepTitle": "Next step",
+      "referenceLabel": "Estimate reference",
+      "requestAudit": "Request a technical audit",
+      "talkNow": "Talk on WhatsApp",
       "weeks": "weeks",
+      "whatsappMessage": "Hi — I ran the estimator on altruvex.com. My estimate reference is {reference}.",
       "whyCopy": "The range is shaped by the system type, scope depth, brand readiness, content support, and delivery pace. It is a planning range, not a locked quote.",
       "whyTitle": "Why this range?"
     },
@@ -2292,6 +2304,7 @@
     },
     "transparency-lead": {
       "complexity": "Complexity is required.",
+      "email": "Enter a valid email address.",
       "name": "Name must not exceed 120 characters.",
       "phone": "Invalid phone number.",
       "projectType": "Project type is required.",

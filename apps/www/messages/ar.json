@@ -2069,6 +2069,10 @@
     },
     "phoneCapture": {
       "button": "عرض تقديرك",
+      "companyLabel": "الشركة (اختياري)",
+      "companyPlaceholder": "اسم الشركة",
+      "emailLabel": "البريد الإلكتروني (اختياري)",
+      "emailPlaceholder": "you@company.com",
       "nameLabel": "الاسم أو الشركة (اختياري)",
       "namePlaceholder": "اسمك أو اسم شركتك",
       "phoneError": "أدخل رقم هاتف أو واتساب صحيح.",
@@ -2093,6 +2097,7 @@
     },
     "results": {
       "badge": "التقدير جاهز",
+      "bookCall": "احجز مكالمة تقنية",
       "detailedEstimateTitle": "احصل على التقدير التفصيلي",
       "estimateLabel": "التقدير",
       "fallbackDeliverables": [
@@ -2101,9 +2106,16 @@
         "نشر الإنتاج",
         "ضمان الأداء والإطلاق"
       ],
+      "fullScopeLabel": "النطاق الكامل",
       "includesLabel": "ما يشمله هذا التقدير",
       "moreInPdf": "+ {count} مخرجات إضافية في PDF",
+      "nextStepBody": "ملف الـ PDF لك. أما تضييق النطاق إلى رقم واحد فيحدث في محادثة — لا في نموذج.",
+      "nextStepTitle": "الخطوة التالية",
+      "referenceLabel": "مرجع التقدير",
+      "requestAudit": "اطلب تدقيقاً تقنياً",
+      "talkNow": "تحدّث على واتساب",
       "weeks": "أسابيع",
+      "whatsappMessage": "مرحباً — استخدمت حاسبة التقدير على altruvex.com. مرجع تقديري هو {reference}.",
       "whyCopy": "يتشكل النطاق حسب نوع النظام، وعمق النطاق، وجاهزية الهوية، ودعم المحتوى، ووتيرة التسليم. إنه نطاق تخطيطي، وليس عرضاً نهائياً.",
       "whyTitle": "لماذا هذا النطاق؟"
     },
@@ -2292,6 +2304,7 @@
     },
     "transparency-lead": {
       "complexity": "درجة التعقيد مطلوبة.",
+      "email": "أدخل بريداً إلكترونياً صالحاً.",
       "name": "يجب ألا يتجاوز الاسم ١٢٠ حرفًا.",
       "phone": "رقم الهاتف غير صالح.",
       "projectType": "نوع المشروع مطلوب.",

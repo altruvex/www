@@ -3,7 +3,13 @@
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
 import { gsap } from "@/lib/utils/gsap";
 import { RefObject, useRef } from "react";
-import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../tokens";
+import {
+  MOTION,
+  MotionEase,
+  MotionTrigger,
+  resolveEase,
+  resolveTrigger,
+} from "../tokens";
 import { getConstrainedDevice } from "../utils/env";
 import { whenMotionReady } from "../utils/ready";
 
@@ -19,6 +25,19 @@ export interface CounterConfig {
   suffix?: string;
   decimals?: number;
   format?: "none" | "locale";
+  /**
+   * Renders the tweened value. Takes precedence over `format`, `prefix`,
+   * `suffix` and `decimals`.
+   *
+   * `format: "locale"` calls `toLocaleString()` with the browser's locale,
+   * which is not necessarily the reading locale — and it cannot produce a
+   * currency, or Arabic-Indic digits, at all. Anything already formatting
+   * through `Intl.NumberFormat` or `localizeNumbers` passes that formatter in
+   * here rather than having the hook guess.
+   *
+   * Must be referentially stable (`useCallback`): it is an effect dependency.
+   */
+  formatter?: (value: number) => string;
 }
 
 /**
@@ -46,6 +65,7 @@ export function useCounter<T extends HTMLElement = HTMLSpanElement>(
     suffix = "",
     decimals = 0,
     format = "none",
+    formatter,
   } = config;
 
   useIsomorphicLayoutEffect(() => {
@@ -53,11 +73,13 @@ export function useCounter<T extends HTMLElement = HTMLSpanElement>(
     if (!el) return;
 
     const fmt = (n: number): string => {
+      if (formatter) return formatter(n);
       if (format === "locale") return Math.floor(n).toLocaleString();
       return decimals > 0 ? n.toFixed(decimals) : String(Math.round(n));
     };
 
-    if (!el.style.fontVariantNumeric) el.style.fontVariantNumeric = "tabular-nums";
+    if (!el.style.fontVariantNumeric)
+      el.style.fontVariantNumeric = "tabular-nums";
     el.textContent = `${prefix}${fmt(from)}${suffix}`;
 
     let ctx: gsap.Context | null = null;
@@ -109,7 +131,20 @@ export function useCounter<T extends HTMLElement = HTMLSpanElement>(
       off();
       ctx?.revert();
     };
-  }, [from, to, duration, delay, ease, trigger, once, prefix, suffix, decimals, format]);
+  }, [
+    from,
+    to,
+    duration,
+    delay,
+    ease,
+    trigger,
+    once,
+    prefix,
+    suffix,
+    decimals,
+    format,
+    formatter,
+  ]);
 
   return ref;
 }
