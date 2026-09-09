@@ -1,5 +1,6 @@
 "use client";
 
+import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Container } from "@/components/shared/container";
 import { TransparencyChapter } from "@/components/sections/transparency-chapter";
@@ -153,13 +154,17 @@ function CommercialTermsSection({
 function TransparencyFaqSection() {
   const t = useTranslations("transparency");
   const locale = useLocale();
+  // One answer publishes the post-launch warranty window. It is a rich-text
+  // message, so the figure arrives as an ICU value rather than through
+  // `useFillPricingTokens`, but it is the same resolved term either way.
+  const { warrantyDays } = usePricingTokens();
 
   const itemsRef = useSectionCardGrid<HTMLDListElement>({
     selector: "[data-faq]",
   });
 
   const items = ["1", "2", "3", "4"].map((key) => ({
-    answer: t.rich(`faq.a${key}`, bodyMarks),
+    answer: t.rich(`faq.a${key}`, { ...bodyMarks, warrantyDays }),
     question: t(`faq.q${key}`),
     value: key,
   }));

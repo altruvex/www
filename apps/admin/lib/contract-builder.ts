@@ -299,7 +299,7 @@ export async function buildContractDocx(
 
     clauseHeading(9, "Warranty & Support"),
     body(
-      "The delivered system is built to industry best practices, tested before handoff, and covered by 30 days of post-launch support for critical fixes at no additional charge. Not covered: traffic or conversion outcomes, third-party service uptime, unsupported post-delivery modifications, or issues arising from Client security negligence. Ongoing maintenance beyond the 30-day window is available under a separate retainer agreement.",
+      `The delivered system is built to industry best practices, tested before handoff, and covered by ${COMMERCIAL_TERMS.postLaunchWarrantyDays} days of post-launch support for critical fixes at no additional charge. Not covered: traffic or conversion outcomes, third-party service uptime, unsupported post-delivery modifications, or issues arising from Client security negligence. Ongoing maintenance beyond the ${COMMERCIAL_TERMS.postLaunchWarrantyDays}-day window is available under a separate retainer agreement.`,
     ),
 
     clauseHeading(10, "Confidentiality"),

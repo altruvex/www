@@ -25,6 +25,7 @@ import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { localizeNumbers } from "@/lib/utils/number";
 import {
   buildPDFHtml,
+  fillScopeTokens,
   generateEstimatePdf,
   mapProjectType,
   validatePhone,
@@ -33,6 +34,7 @@ import {
 import { cn } from "@/lib/utils/utils";
 import {
   COMPLEXITY_TO_LEGACY_BAND,
+  MAX_DELIVERY_WEEKS,
   type EstimateResult,
 } from "@repo/pricing-schema";
 import { Button, Input, Label } from "@repo/ui";
@@ -308,12 +310,15 @@ export function TransparencyEstimator({
     timeline,
   ]);
 
-  const deliverables =
+  // Scope lines quote the post-launch warranty window as a `{token}`; the
+  // downloadable PDF fills it the same way, from the same term.
+  const deliverables = (
     projectType && complexity
       ? ((t.raw(
           `pdfContent.deliverables.${mapProjectType(projectType)}.${COMPLEXITY_TIER[complexity]}`,
         ) as string[]) ?? [])
-      : (t.raw("results.fallbackDeliverables") as string[]);
+      : (t.raw("results.fallbackDeliverables") as string[])
+  ).map((item) => fillScopeTokens(item, locale));
 
   return (
     <section
@@ -631,6 +636,12 @@ function LiveReadout({
             <p className="mt-2 text-sm tabular-nums text-muted-foreground">
               {num(estimate.minWeeks)}–{num(estimate.maxWeeks)}{" "}
               {t("results.weeks")}
+              <span className="mx-2 text-border-mid" aria-hidden>
+                ·
+              </span>
+              {t("live.deliveryCeiling", {
+                weeks: num(MAX_DELIVERY_WEEKS),
+              })}
             </p>
           </div>
         ) : (
@@ -832,6 +843,12 @@ function ResultPanel({
         </p>
         <p className="mt-3 text-[clamp(1rem,1.1vw,1.125rem)] tabular-nums text-muted-foreground">
           {num(estimate.minWeeks)}–{num(estimate.maxWeeks)} {t("results.weeks")}
+        </p>
+        {/* The ceiling is a published promise, not a property of this answer
+            set — it reads next to the window it bounds rather than in a
+            footnote nobody scrolls to. */}
+        <p className="mt-2 max-w-[46ch] text-sm leading-relaxed text-muted-foreground">
+          {t("results.deliveryCeiling", { weeks: num(MAX_DELIVERY_WEEKS) })}
         </p>
       </div>
 

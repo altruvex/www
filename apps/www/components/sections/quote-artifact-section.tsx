@@ -132,7 +132,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                     </h3>
                   </div>
                   <p className="mt-4 max-w-[62ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
-                    {t(`clauses.${key}.body`)}
+                    {fillTokens(t.raw(`clauses.${key}.body`))}
                   </p>
                   {key === "schedule" ? <ScheduleBar /> : null}
                   {key === "scope" ? (

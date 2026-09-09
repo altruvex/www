@@ -9,6 +9,7 @@ import {
   formatNumber,
   formatPercent,
   formatRange,
+  formatWeeks,
 } from "./format";
 import type {
   AddonId,
@@ -25,7 +26,12 @@ import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers";
 import { minimumEngagement } from "./services";
 import { ORDERED_TIERS, tierEstimatorQuery, TIERS } from "./tiers";
 import { resolvePricing, type ResolvedPricing } from "./overrides";
-import type { Locale, PriceRange } from "./types";
+import {
+  MAX_DELIVERY_WEEKS,
+  type Locale,
+  type PriceRange,
+  type WeekRange,
+} from "./types";
 
 /**
  * Render-ready view models.
@@ -48,6 +54,10 @@ export interface TierView {
   readonly buyerLabel: string;
   readonly internalLabel: string;
   readonly priceLabel: string;
+  /** Wording for the delivery window, e.g. "Delivery". */
+  readonly timelineLabel: string;
+  /** The window itself, e.g. "3–5 weeks". Always a range, never a "from". */
+  readonly timelineValue: string;
   readonly idealFor: string;
   readonly notIncluded: string;
   readonly features: readonly string[];
@@ -69,6 +79,34 @@ export function tierRangeFrom(
   return pricing.services[tier.serviceId].price[tier.complexityId];
 }
 
+/**
+ * The same cell's delivery window.
+ *
+ * Read from the resolved set for the same reason the price is: an operator who
+ * moves a cell's weeks in the admin app moves the card with it, so the tier a
+ * buyer reads and the estimate they get one click later cannot disagree about
+ * how long the work takes.
+ */
+export function tierWeeksFrom(
+  tierId: TierView["id"],
+  pricing: ResolvedPricing,
+): WeekRange {
+  const tier = TIERS[tierId];
+  return pricing.services[tier.serviceId].weeks[tier.complexityId];
+}
+
+/**
+ * The published delivery ceiling, as a sentence.
+ *
+ * Rendered next to the tier cards so the cap is stated where the windows are,
+ * not only inside the estimator a click away.
+ */
+export function deliveryCeilingLabel(locale: Locale): string {
+  return fillTemplate(pricingCopy(locale).tierTemplates.ceiling, {
+    max: formatNumber(MAX_DELIVERY_WEEKS, locale),
+  });
+}
+
 export function tierViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -77,6 +115,7 @@ export function tierViews(
 
   return ORDERED_TIERS.map((tier) => {
     const range = tierRangeFrom(tier.id, pricing);
+    const weeks = tierWeeksFrom(tier.id, pricing);
     const text = copy.tiers[tier.id];
 
     return {
@@ -88,6 +127,10 @@ export function tierViews(
         tier.display === "from"
           ? formatFrom(range.min, locale)
           : formatRange(range, locale),
+      timelineLabel: copy.tierTemplates.timelineLabel,
+      timelineValue: fillTemplate(copy.tierTemplates.timelineValue, {
+        weeks: formatWeeks(weeks.min, weeks.max, locale),
+      }),
       idealFor: text.idealFor,
       notIncluded: text.notIncluded,
       features: text.features,
@@ -108,7 +151,9 @@ export function minimumEngagementLabel(
 
 /** The engagement floor: the lowest published cell in the matrix. */
 function lowestCell(pricing: ResolvedPricing): number {
-  return Math.min(...Object.values(pricing.services).map((s) => s.price.basic.min));
+  return Math.min(
+    ...Object.values(pricing.services).map((s) => s.price.basic.min),
+  );
 }
 
 export interface MaintenanceView {
@@ -139,9 +184,13 @@ function maintenanceFeatures(
       : tpl.requestCap;
     // Inserted at the position the hand-written lists used, so the card's
     // reading order is unchanged by the migration.
-    features.splice(2, 0, fillTemplate(template, {
-      count: formatNumber(plan.requestsPerCycle, locale),
-    }));
+    features.splice(
+      2,
+      0,
+      fillTemplate(template, {
+        count: formatNumber(plan.requestsPerCycle, locale),
+      }),
+    );
   }
 
   if (plan.clientPortalAccess) features.push(tpl.portal);
@@ -160,21 +209,21 @@ export function maintenanceViews(
     .filter((plan) => plan.status === "active")
     .sort((a, b) => a.order - b.order)
     .map((plan) => ({
-    id: plan.id,
-    name: copy.maintenance[plan.id].name,
-    priceLabel:
-      plan.price === null ? tpl.customPrice : formatMoney(plan.price, locale),
-    cycleLabel: plan.price === null ? "" : tpl.perCycle[plan.billingCycle],
-    isCustomQuote: plan.price === null,
-    features: maintenanceFeatures(plan, locale),
-    overageNote:
-      plan.overageHourlyRate === null
-        ? null
-        : fillTemplate(tpl.overage, {
-            rate: formatNumber(plan.overageHourlyRate, locale),
-          }),
-    highlight: plan.highlight,
-  }));
+      id: plan.id,
+      name: copy.maintenance[plan.id].name,
+      priceLabel:
+        plan.price === null ? tpl.customPrice : formatMoney(plan.price, locale),
+      cycleLabel: plan.price === null ? "" : tpl.perCycle[plan.billingCycle],
+      isCustomQuote: plan.price === null,
+      features: maintenanceFeatures(plan, locale),
+      overageNote:
+        plan.overageHourlyRate === null
+          ? null
+          : fillTemplate(tpl.overage, {
+              rate: formatNumber(plan.overageHourlyRate, locale),
+            }),
+      highlight: plan.highlight,
+    }));
 }
 
 export interface ConsultingView {
@@ -264,7 +313,9 @@ export function allAddonViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): readonly AddonView[] {
-  return Object.values(pricing.addons).map((addon) => toAddonView(addon, locale));
+  return Object.values(pricing.addons).map((addon) =>
+    toAddonView(addon, locale),
+  );
 }
 
 export interface TermsView {
@@ -341,10 +392,17 @@ export function pricingTokens(
     maintenanceEssential:
       essential.price === null ? "" : formatMoney(essential.price, locale),
     maintenanceProfessional:
-      professional.price === null ? "" : formatMoney(professional.price, locale),
+      professional.price === null
+        ? ""
+        : formatMoney(professional.price, locale),
     minimumEngagement: formatMoney(lowestCell(pricing), locale),
     revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
     vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
+    // The post-launch warranty is a published commercial term, not a price,
+    // but it is quoted in the same prose and drifts the same way: the FAQ, the
+    // terms of service and the quote artifact all name the window, and the
+    // contract promises it.
+    warrantyDays: formatNumber(COMMERCIAL_TERMS.postLaunchWarrantyDays, locale),
   };
 }
 

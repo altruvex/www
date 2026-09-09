@@ -116,6 +116,6 @@ export const USD_EXCHANGE_RATE: ExchangeRate = {
  * it rather than in a scoring file that nobody re-reads when a tier moves.
  */
 export const LEAD_SCORE_THRESHOLDS = {
-  large: 200_000,
-  medium: 80_000,
+  large: 150_000,
+  medium: 60_000,
 } as const;

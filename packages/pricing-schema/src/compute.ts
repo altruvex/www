@@ -12,8 +12,8 @@ import {
   type ContentReadinessId,
   type TimelineId,
 } from "./modifiers";
-import { SERVICES } from "./services";
-import type { Amount } from "./types";
+import { minimumEngagement, SERVICES } from "./services";
+import { MAX_DELIVERY_WEEKS, type Amount } from "./types";
 
 export interface EstimateInput {
   readonly serviceId: ServiceId;
@@ -34,16 +34,29 @@ function roundEstimate(value: number): number {
   return Math.round(value / ESTIMATE_ROUNDING) * ESTIMATE_ROUNDING;
 }
 
+/** At least one week, never more than the published delivery ceiling. */
+function clampWeeks(value: number): number {
+  return Math.min(Math.max(Math.round(value), 1), MAX_DELIVERY_WEEKS);
+}
+
 /**
  * The estimate engine.
- *
- * Behaviour is identical to the previous `@repo/pricing.calculateEstimate` —
- * same cells, same factors, same rounding — because proposals already sent were
- * priced with it. Only the source of the matrices moved.
  *
  * Brand and content stay neutral until answered, which is what lets the
  * estimator show a real range from the first two answers instead of withholding
  * the number until the questionnaire is complete.
+ *
+ * Two published promises are enforced here rather than trusted to the matrix,
+ * because the modifiers compound and a future edit to any one cell could break
+ * either without the cell looking wrong on its own:
+ *
+ *   - The estimate never falls below `minimumEngagement()`. `/pricing` prints
+ *     that figure as the floor, and a `flexible` timeline discount used to be
+ *     able to round the estimator under it — the floor and the estimator
+ *     disagreeing is exactly the contradiction this package exists to prevent.
+ *   - The estimate never exceeds `MAX_DELIVERY_WEEKS`. Compounding the timeline,
+ *     brand and content week factors reaches 1.45x, so the ceiling is applied
+ *     after they are, not before.
  */
 export function calculateEstimate(input: EstimateInput): EstimateResult {
   const service = SERVICES[input.serviceId];
@@ -61,11 +74,13 @@ export function calculateEstimate(input: EstimateInput): EstimateResult {
   const priceFactor = timeline.price * brand.price * content.price;
   const weekFactor = timeline.weeks * brand.weeks * content.weeks;
 
+  const floor = minimumEngagement();
+
   return {
-    minWeeks: Math.max(Math.round(weekRange.min * weekFactor), 1),
-    maxWeeks: Math.max(Math.round(weekRange.max * weekFactor), 1),
-    minPrice: roundEstimate(priceRange.min * priceFactor),
-    maxPrice: roundEstimate(priceRange.max * priceFactor),
+    minWeeks: clampWeeks(weekRange.min * weekFactor),
+    maxWeeks: clampWeeks(weekRange.max * weekFactor),
+    minPrice: Math.max(roundEstimate(priceRange.min * priceFactor), floor),
+    maxPrice: Math.max(roundEstimate(priceRange.max * priceFactor), floor),
   };
 }
 

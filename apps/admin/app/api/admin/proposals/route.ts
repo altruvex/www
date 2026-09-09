@@ -8,7 +8,12 @@ import { upload } from "@/lib/storage";
 import { getIntentAccent } from "@/lib/intent-accent";
 import { getCompanySettings } from "@/lib/company-settings";
 import { ProposalQaError, runProposalContentGate } from "@/lib/proposal-qa";
-import { discountAmount, netTotal, validUntilDate } from "@/lib/proposal-schema";
+import {
+  discountAmount,
+  netTotal,
+  validUntilDate,
+} from "@/lib/proposal-schema";
+import { MAX_DELIVERY_WEEKS } from "@repo/pricing-schema";
 
 export async function GET(request: NextRequest) {
   try {
@@ -98,6 +103,21 @@ export async function POST(request: NextRequest) {
     // recoverable from `lineItems`, and the discount itself from `content`.
     const totalPrice = netTotal(content.investmentItems, content.discount);
     const timelineWeeks = totalTimelineWeeks(content.timelinePhases);
+    // The published ceiling, enforced where the document is created rather
+    // than trusted to the operator. The estimator that seeds this form already
+    // clamps to it, but the phase durations are hand-editable afterwards — and
+    // a proposal is the artefact a client holds us to. `/pricing` and
+    // `/transparency` both promise this number; a deck that quoted past it
+    // would be the one surface able to contradict them.
+    if (timelineWeeks > MAX_DELIVERY_WEEKS) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `Timeline is ${timelineWeeks} weeks. Published delivery ceiling is ${MAX_DELIVERY_WEEKS} weeks — split the scope into phases instead.`,
+        },
+        { status: 400 },
+      );
+    }
     const lineItems = content.investmentItems.map((item) => ({
       name: item.item,
       amount: item.amount,
@@ -151,7 +171,11 @@ export async function POST(request: NextRequest) {
 
       const pdfBuffer = await convertPptxToPdf(pptxBuffer);
       if (pdfBuffer) {
-        pdfUrl = await upload(pdfBuffer, `proposals/${proposal.id}.pdf`, "application/pdf");
+        pdfUrl = await upload(
+          pdfBuffer,
+          `proposals/${proposal.id}.pdf`,
+          "application/pdf",
+        );
       }
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
@@ -178,7 +202,10 @@ export async function POST(request: NextRequest) {
       data: { fileUrl, pdfUrl },
     });
 
-    return NextResponse.json({ success: true, proposal: updated }, { status: 201 });
+    return NextResponse.json(
+      { success: true, proposal: updated },
+      { status: 201 },
+    );
   } catch (error: unknown) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Error creating proposal:", error);

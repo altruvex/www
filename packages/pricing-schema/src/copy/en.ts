@@ -13,22 +13,26 @@ export const EN_COPY: PricingCopy = {
     website: {
       documentName: "Corporate Website",
       name: "Website",
-      description: "Custom marketing and corporate sites — design, build, and launch.",
+      description:
+        "Custom marketing and corporate sites — design, build, and launch.",
     },
     webapp: {
       documentName: "Custom Web Application",
       name: "Web App",
-      description: "Custom web applications: dashboards, portals, and internal systems.",
+      description:
+        "Custom web applications: dashboards, portals, and internal systems.",
     },
     ecommerce: {
       documentName: "E-Commerce System",
       name: "E-commerce",
-      description: "Storefronts with catalogue, checkout, and operational tooling.",
+      description:
+        "Storefronts with catalogue, checkout, and operational tooling.",
     },
     pwa: {
       documentName: "Progressive Web App",
       name: "PWA",
-      description: "Installable, offline-capable applications built on the web platform.",
+      description:
+        "Installable, offline-capable applications built on the web platform.",
     },
   },
   bands: {
@@ -41,8 +45,10 @@ export const EN_COPY: PricingCopy = {
       name: "Marketing System",
       buyerLabel: "Simple Marketing Site",
       internalLabel: "Focused launch scope",
-      idealFor: "For a focused launch or compact marketing site that needs custom design, speed, lead capture, and room to grow.",
-      notIncluded: "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
+      idealFor:
+        "For a focused launch or compact marketing site that needs custom design, speed, lead capture, and room to grow.",
+      notIncluded:
+        "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
       features: [
         "Custom launch page or compact site structure",
         "Responsive UI implementation across key devices",
@@ -57,8 +63,10 @@ export const EN_COPY: PricingCopy = {
       name: "Business Platform",
       buyerLabel: "Full Marketing Site",
       internalLabel: "Marketing plus operations",
-      idealFor: "For businesses that need repeatable content operations, multilingual UX, and practical integrations with their tools.",
-      notIncluded: "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
+      idealFor:
+        "For businesses that need repeatable content operations, multilingual UX, and practical integrations with their tools.",
+      notIncluded:
+        "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
       features: [
         "Everything in Simple Marketing Site",
         "CMS setup for repeatable content workflows",
@@ -66,15 +74,18 @@ export const EN_COPY: PricingCopy = {
         "One key integration such as CRM, booking, or auth",
         "Technical discovery, architecture, and analytics plan",
       ],
-      nextStep: "Next step: open Transparency and map the workflows and integrations.",
+      nextStep:
+        "Next step: open Transparency and map the workflows and integrations.",
       ctaLabel: "Get Growth Estimate",
     },
     ecommerce: {
       name: "Commerce Engine",
       buyerLabel: "E-commerce Platform",
       internalLabel: "Storefront plus operations",
-      idealFor: "For stores that need catalog, checkout, payments, shipping, order operations, and reliable performance.",
-      notIncluded: "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
+      idealFor:
+        "For stores that need catalog, checkout, payments, shipping, order operations, and reliable performance.",
+      notIncluded:
+        "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
       features: [
         "Commerce architecture and product catalog model",
         "Checkout flow with payment gateway planning",
@@ -89,7 +100,8 @@ export const EN_COPY: PricingCopy = {
       name: "Custom Infrastructure",
       buyerLabel: "Business Web System",
       internalLabel: "Operations and workflows",
-      idealFor: "For portals, dashboards, and operational systems that need custom workflows beyond a marketing site.",
+      idealFor:
+        "For portals, dashboards, and operational systems that need custom workflows beyond a marketing site.",
       notIncluded: "",
       features: [
         "Custom product discovery and architecture",
@@ -98,9 +110,16 @@ export const EN_COPY: PricingCopy = {
         "Multiple integrations and data flows",
         "Phased delivery roadmap with infrastructure planning",
       ],
-      nextStep: "Next step: open Transparency and map dashboards, portals, or internal logic.",
+      nextStep:
+        "Next step: open Transparency and map dashboards, portals, or internal logic.",
       ctaLabel: "Book Architecture Call",
     },
+  },
+  tierTemplates: {
+    timelineLabel: "Delivery",
+    timelineValue: "{weeks} weeks",
+    ceiling:
+      "No engagement runs past {max} weeks. Anything larger ships in phases.",
   },
   maintenance: {
     essential: {
@@ -132,8 +151,10 @@ export const EN_COPY: PricingCopy = {
     },
   },
   maintenanceTemplates: {
-    requestCap: "Up to {count} edit requests per month (content or image swaps, minor section edits)",
-    requestCapPriority: "Up to {count} edit requests per month, with priority turnaround",
+    requestCap:
+      "Up to {count} edit requests per month (content or image swaps, minor section edits)",
+    requestCapPriority:
+      "Up to {count} edit requests per month, with priority turnaround",
     portal: "Client Portal access — track every request and its status",
     overage: "Additional requests are billed at {rate} EGP/hr.",
     customPrice: "Custom",
@@ -148,7 +169,8 @@ export const EN_COPY: PricingCopy = {
       title: "Technical Audit -",
       titleItalic: "Fixed Scope, Fixed Price.",
       name: "Technical Audit - Fixed Scope, Fixed Price.",
-      description: "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>",
+      description:
+        "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>",
       deliverables: [
         "Current stack and architecture review",
         "Performance bottleneck identification",
@@ -175,22 +197,28 @@ export const EN_COPY: PricingCopy = {
     },
     "business-mail": {
       name: "Business email",
-      description: "Annual mailbox licensing, billed at cost plus a stated margin.",
+      description:
+        "Annual mailbox licensing, billed at cost plus a stated margin.",
     },
     "managed-bundle": {
       name: "Managed renewals",
-      description: "Renewal tracking and one consolidated invoice for domain, hosting, and business email.",
+      description:
+        "Renewal tracking and one consolidated invoice for domain, hosting, and business email.",
     },
   },
   terms: {
     vatLabel: "VAT",
-    vatNote: "All project figures are quoted excluding VAT. VAT at {rate}% is added at contract stage.",
+    vatNote:
+      "All project figures are quoted excluding VAT. VAT at {rate}% is added at contract stage.",
     revisionLabel: "Revision rate",
-    revisionNote: "{rounds} rounds of revisions are included. Further revision work is billed at {rate} EGP/hr.",
+    revisionNote:
+      "{rounds} rounds of revisions are included. Further revision work is billed at {rate} EGP/hr.",
     usdLabel: "USD rate",
-    usdNote: "USD figures convert at a fixed {rate} EGP/USD, reviewed quarterly. Last reviewed {reviewedOn}.",
+    usdNote:
+      "USD figures convert at a fixed {rate} EGP/USD, reviewed quarterly. Last reviewed {reviewedOn}.",
     addonLabel: "Pass-through items",
-    addonNote: "Domain, hosting, and business email are billed at what we pay, plus a stated margin. Each appears as its own line — never folded into a project total.",
+    addonNote:
+      "Domain, hosting, and business email are billed at what we pay, plus a stated margin. Each appears as its own line — never folded into a project total.",
     costBasisLabel: "Our cost",
     markupLabel: "Margin",
     totalLabel: "You pay",

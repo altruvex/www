@@ -12,8 +12,10 @@ import { useState } from "react";
 
 export default function FAQPageClient() {
   const t = useTranslations("faq");
-  // FAQ prose quotes prices as {token}s, filled from the resolved pricing so an
-  // answer cannot state a figure that /pricing no longer charges.
+  // FAQ prose quotes prices and the post-launch warranty window as {token}s,
+  // filled from the resolved pricing so an answer cannot state a figure that
+  // /pricing no longer charges — or a warranty the contract no longer grants.
+  // Questions carry them too: one of them names the warranty window.
   const fillTokens = useFillPricingTokens();
   const questions = Object.values(
     t.raw("questions") as Record<
@@ -61,7 +63,7 @@ export default function FAQPageClient() {
             {questions.map((item, index) => (
               <FAQItem
                 key={index}
-                question={item.question}
+                question={fillTokens(item.question)}
                 answer={fillTokens(item.answer)}
                 isOpen={openIndex === index}
                 onToggle={() =>

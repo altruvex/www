@@ -67,17 +67,24 @@ function HighlightBlobs() {
 export default function PricingPage({
   tiers,
   floorLabel,
+  ceilingLabel,
 }: {
   tiers: readonly TierView[];
   floorLabel: string;
+  /** The delivery ceiling, already worded and localized by the schema. */
+  ceilingLabel: string;
 }) {
   const t = useTranslations("pricing");
 
   const heroEyebrowRef = useSectionEyebrow();
   const heroTitleRef = useSectionTitle<HTMLHeadingElement>();
   const heroDescRef = useSectionDescription();
-  const tierCardsRef = useSectionCardGrid<HTMLDivElement>({ selector: ".tier-card" });
-  const commercialNotesRef = useSectionCardGrid<HTMLDivElement>({ selector: ".commercial-note" });
+  const tierCardsRef = useSectionCardGrid<HTMLDivElement>({
+    selector: ".tier-card",
+  });
+  const commercialNotesRef = useSectionCardGrid<HTMLDivElement>({
+    selector: ".commercial-note",
+  });
   const roiEyebrowRef = useSectionEyebrow();
   const roiTitleRef = useSectionTitle<HTMLHeadingElement>();
   const roiBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".roi-p" });
@@ -120,6 +127,13 @@ export default function PricingPage({
       label: t("commercial.items.paymentTerms.label"),
       value: t.rich("commercial.items.paymentTerms.value", bodyMarks),
     },
+    // The cap sits with the other commercial terms rather than in a card,
+    // because it governs every tier rather than any one of them.
+    {
+      key: "deliveryWindow",
+      label: t("commercial.items.deliveryWindow.label"),
+      value: ceilingLabel,
+    },
   ];
 
   return (
@@ -144,7 +158,9 @@ export default function PricingPage({
                 >
                   {t("title")}
                   <br />
-                  <Highlight className="text-foreground/40">{t("titleItalic")}</Highlight>
+                  <Highlight className="text-foreground/40">
+                    {t("titleItalic")}
+                  </Highlight>
                 </h1>
                 <p
                   ref={heroDescRef}
@@ -161,70 +177,84 @@ export default function PricingPage({
                 {tiers.map((tier, i) =>
                   tier.highlight ? (
                     <TiltCard key={tier.id}>
-                    <article
-                      className="tier-card group relative rounded-lg flex flex-col transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10"
-                    >
-                      <div className="absolute inset-0 overflow-hidden rounded-lg z-0">
-                        <div className="absolute inset-0 bg-background/40 z-0" />
-                        <HighlightBlobs />
-                      </div>
-                      <div className="absolute inset-0 z-10 liquid-glass rounded-lg pointer-events-none" />
-                      <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
-                        <div className="mb-5">
-                          <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border shadow-sm">
-                            {t("recommended")}
-                          </span>
+                      <article className="tier-card group relative rounded-lg flex flex-col transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10">
+                        <div className="absolute inset-0 overflow-hidden rounded-lg z-0">
+                          <div className="absolute inset-0 bg-background/40 z-0" />
+                          <HighlightBlobs />
                         </div>
-                        <span
-                          className="absolute top-5 inset-e-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
-                          style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
-                        >
-                          <Num value={i + 1} pad={2} />
-                        </span>
-                        <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
-                          {tier.internalLabel}
-                        </p>
-                        <h2
-                          className="font-sans font-semibold text-foreground mb-4"
-                          style={{ fontSize: "clamp(16px, 1.6vw, 19px)", letterSpacing: "-0.018em" }}
-                        >
-                          {tier.buyerLabel}
-                        </h2>
-                        <p className="font-mono text-xs tracking-wider uppercase text-foreground mb-5">
-                          {tier.priceLabel}
-                        </p>
-                        <p className="text-[13px] text-muted-foreground leading-relaxed mb-6 font-medium">
-                          {tier.idealFor}
-                        </p>
-                        <ul className="space-y-2 mb-8 relative z-20">
-                          {tier.features.map((feature, j) => (
-                            <li
-                              key={j}
-                              className="flex items-start gap-2.5 text-[12px] text-foreground font-medium"
-                            >
-                              <div
-                                className="w-[6px] h-[6px] rounded-full shrink-0 mt-[4px] bg-brand shadow-[0_0_8px_hsl(var(--brand))]"
-                              />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3.5 relative z-20">
-                          <MagneticButton asChild
-                            variant="primary"
-                            className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
+                        <div className="absolute inset-0 z-10 liquid-glass rounded-lg pointer-events-none" />
+                        <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
+                          <div className="mb-5">
+                            <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border shadow-sm">
+                              {t("recommended")}
+                            </span>
+                          </div>
+                          <span
+                            className="absolute top-5 inset-e-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
+                            style={{
+                              fontSize: "clamp(64px, 7vw, 80px)",
+                              letterSpacing: "-0.04em",
+                            }}
                           >
-                            <Link
-                              href={tier.estimatorHref}
-                              className="w-full justify-center"
-                              aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
+                            <Num value={i + 1} pad={2} />
+                          </span>
+                          <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
+                            {tier.internalLabel}
+                          </p>
+                          <h2
+                            className="font-sans font-semibold text-foreground mb-4"
+                            style={{
+                              fontSize: "clamp(16px, 1.6vw, 19px)",
+                              letterSpacing: "-0.018em",
+                            }}
+                          >
+                            {tier.buyerLabel}
+                          </h2>
+                          <p className="font-mono text-xs tracking-wider uppercase text-foreground mb-2.5">
+                            {tier.priceLabel}
+                          </p>
+                          {/* The window belongs beside the figure it is priced
+                            with — a buyer comparing tiers is choosing a budget
+                            and a date at the same time. */}
+                          <p className="flex items-baseline gap-2 font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5">
+                            <span>{tier.timelineLabel}</span>
+                            <span className="tabular-nums text-foreground/70">
+                              {tier.timelineValue}
+                            </span>
+                          </p>
+                          <p className="text-[13px] text-muted-foreground leading-relaxed mb-6 font-medium">
+                            {tier.idealFor}
+                          </p>
+                          <ul className="space-y-2 mb-8 relative z-20">
+                            {tier.features.map((feature, j) => (
+                              <li
+                                key={j}
+                                className="flex items-start gap-2.5 text-[12px] text-foreground font-medium"
+                              >
+                                <div className="w-[6px] h-[6px] rounded-full shrink-0 mt-[4px] bg-brand shadow-[0_0_8px_hsl(var(--brand))]" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3.5 relative z-20">
+                            <MagneticButton
+                              asChild
+                              variant="primary"
+                              className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
                             >
-                              <ArrowLabel className="text-xs">{tier.ctaLabel}</ArrowLabel>
-                            </Link>
-                          </MagneticButton>
+                              <Link
+                                href={tier.estimatorHref}
+                                className="w-full justify-center"
+                                aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
+                              >
+                                <ArrowLabel className="text-xs">
+                                  {tier.ctaLabel}
+                                </ArrowLabel>
+                              </Link>
+                            </MagneticButton>
+                          </div>
                         </div>
-                      </div>
-                    </article>
+                      </article>
                     </TiltCard>
                   ) : (
                     <article
@@ -234,7 +264,10 @@ export default function PricingPage({
                       <div className="relative z-20 flex flex-col h-full">
                         <span
                           className="absolute bottom-4 inset-e-1 font-mono font-bold select-none pointer-events-none leading-none text-foreground/3"
-                          style={{ fontSize: "clamp(64px, 7vw, 80px)", letterSpacing: "-0.04em" }}
+                          style={{
+                            fontSize: "clamp(64px, 7vw, 80px)",
+                            letterSpacing: "-0.04em",
+                          }}
                         >
                           <Num value={i + 1} pad={2} />
                         </span>
@@ -243,12 +276,24 @@ export default function PricingPage({
                         </p>
                         <h2
                           className="font-sans font-semibold text-foreground mb-4"
-                          style={{ fontSize: "clamp(15px, 1.5vw, 18px)", letterSpacing: "-0.016em" }}
+                          style={{
+                            fontSize: "clamp(15px, 1.5vw, 18px)",
+                            letterSpacing: "-0.016em",
+                          }}
                         >
                           {tier.buyerLabel}
                         </h2>
-                        <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase mb-5">
+                        <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase mb-2.5">
                           {tier.priceLabel}
+                        </p>
+                        {/* The window belongs beside the figure it is priced
+                            with — a buyer comparing tiers is choosing a budget
+                            and a date at the same time. */}
+                        <p className="flex items-baseline gap-2 font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5">
+                          <span>{tier.timelineLabel}</span>
+                          <span className="tabular-nums text-foreground/70">
+                            {tier.timelineValue}
+                          </span>
                         </p>
                         <p className="text-[13px] text-muted-foreground leading-relaxed mb-6">
                           {tier.idealFor}
@@ -265,7 +310,8 @@ export default function PricingPage({
                           ))}
                         </ul>
                         <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3 relative z-20">
-                          <MagneticButton asChild
+                          <MagneticButton
+                            asChild
                             variant="secondary"
                             className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface"
                           >
@@ -274,13 +320,15 @@ export default function PricingPage({
                               className="w-full justify-center"
                               aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
                             >
-                              <ArrowLabel className="text-xs">{tier.ctaLabel}</ArrowLabel>
+                              <ArrowLabel className="text-xs">
+                                {tier.ctaLabel}
+                              </ArrowLabel>
                             </Link>
                           </MagneticButton>
                         </div>
                       </div>
                     </article>
-                  )
+                  ),
                 )}
               </div>
 
@@ -297,8 +345,11 @@ export default function PricingPage({
                     {t.rich("ownershipNote", bodyMarks)}
                   </p>
                 </div>
-                
-                <div ref={commercialNotesRef} className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2">
+
+                <div
+                  ref={commercialNotesRef}
+                  className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2"
+                >
                   {commercialNotes.map((note) => (
                     <div key={note.key} className="commercial-note">
                       <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -315,11 +366,18 @@ export default function PricingPage({
               {/* REDESIGNED ROI SECTION */}
               <section className="accent-world-orange border-t border-border pt-24 pb-12">
                 <div className="mb-16 max-w-3xl">
-                  <p ref={roiEyebrowRef} className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <p
+                    ref={roiEyebrowRef}
+                    className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
+                  >
                     {t("roi.eyebrow")}
                   </p>
-                  <h2 ref={roiTitleRef} className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground">
-                    {t("roi.title")} <Highlight>{t("roi.titleItalic")}</Highlight>
+                  <h2
+                    ref={roiTitleRef}
+                    className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground"
+                  >
+                    {t("roi.title")}{" "}
+                    <Highlight>{t("roi.titleItalic")}</Highlight>
                   </h2>
                   <div ref={roiBodyRef} className="grid gap-6 md:grid-cols-2">
                     <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">
@@ -331,7 +389,10 @@ export default function PricingPage({
                   </div>
                 </div>
 
-                <div ref={roiStatsRef} className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12">
+                <div
+                  ref={roiStatsRef}
+                  className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12"
+                >
                   {roiStats.map((stat) => (
                     <div key={stat.key}>
                       <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -347,13 +408,15 @@ export default function PricingPage({
                   ))}
                 </div>
               </section>
-
             </div>
           </div>
         </Container>
       </section>
-      
-      <FaqSection namespace="pricing.faq" className="border-t border-border pt-12 pb-32" />
+
+      <FaqSection
+        namespace="pricing.faq"
+        className="border-t border-border pt-12 pb-32"
+      />
       <SectionEndCta variant="transparency" />
     </>
   );

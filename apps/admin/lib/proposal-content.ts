@@ -257,8 +257,8 @@ export const SCOPE_INCLUDED = [
   "Responsive, mobile-first build",
   "Bilingual-ready content layer",
   "Domain, SSL & Year 1 hosting setup",
-  "3 rounds of revisions",
-  "30 days post-launch support",
+  `${COMMERCIAL_TERMS.includedRevisionRounds} rounds of revisions`,
+  `${COMMERCIAL_TERMS.postLaunchWarrantyDays} days post-launch support`,
 ];
 
 export const SCOPE_NOT_INCLUDED = [

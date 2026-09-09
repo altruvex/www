@@ -5,7 +5,12 @@ import {
   buildPageSchemas,
   buildPricingOfferSchemas,
 } from "@/lib/schema";
-import { minimumEngagementLabel, tierViews, type Locale } from "@repo/pricing-schema";
+import {
+  deliveryCeilingLabel,
+  minimumEngagementLabel,
+  tierViews,
+  type Locale,
+} from "@repo/pricing-schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
@@ -57,7 +62,11 @@ export default async function PricingPage({
           ...buildPricingOfferSchemas(locale, offerEntries),
         ]}
       />
-      <PageClient tiers={tiers} floorLabel={minimumEngagementLabel(locale as Locale, pricing)} />
+      <PageClient
+        tiers={tiers}
+        floorLabel={minimumEngagementLabel(locale as Locale, pricing)}
+        ceilingLabel={deliveryCeilingLabel(locale as Locale)}
+      />
     </>
   );
 }

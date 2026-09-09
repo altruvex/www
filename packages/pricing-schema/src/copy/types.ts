@@ -90,11 +90,26 @@ export interface TermsCopy {
   readonly pendingLabel: string;
 }
 
+/**
+ * Wording around a tier's delivery window.
+ *
+ * A template, not a literal, for the same reason the maintenance scope lines
+ * are: the weeks come from the service matrix, so a card cannot advertise a
+ * window the estimator would not quote. `ceiling` states the published cap the
+ * whole matrix fits inside.
+ */
+export interface TierTemplates {
+  readonly timelineLabel: string;
+  readonly timelineValue: string;
+  readonly ceiling: string;
+}
+
 export interface PricingCopy {
   readonly services: Readonly<Record<ServiceId, ServiceCopy>>;
   /** Complexity band names as they appear in proposals and contracts. */
   readonly bands: Readonly<Record<ComplexityId, string>>;
   readonly tiers: Readonly<Record<TierId, TierCopy>>;
+  readonly tierTemplates: TierTemplates;
   readonly maintenance: Readonly<Record<MaintenancePlanId, MaintenanceCopy>>;
   readonly maintenanceTemplates: MaintenanceTemplates;
   readonly consulting: Readonly<Record<ConsultingPackageId, ConsultingCopy>>;

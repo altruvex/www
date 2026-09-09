@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
   calculateEstimate,
+  MAX_DELIVERY_WEEKS,
   egpToUsd,
   type BrandIdentityId as BrandIdentity,
   type ComplexityId as Complexity,
@@ -43,7 +44,10 @@ import {
   unassignedIssues,
   type ProposalGroupId,
 } from "@/components/proposal/content-editor";
-import { PriceControl, type PricePreset } from "@/components/proposal/price-control";
+import {
+  PriceControl,
+  type PricePreset,
+} from "@/components/proposal/price-control";
 import { INTENT_ACCENTS, suggestIntentAccent } from "@/lib/intent-accent";
 import { buildDefaultProposalContent } from "@/lib/proposal-defaults";
 import {
@@ -117,14 +121,20 @@ export default function NewProposalPage() {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [previewing, setPreviewing] = React.useState(false);
-  const [previewSlides, setPreviewSlides] = React.useState<string[] | null>(null);
+  const [previewSlides, setPreviewSlides] = React.useState<string[] | null>(
+    null,
+  );
   const [rail, setRail] = React.useState<RailId>("setup");
 
-  const [projectType, setProjectType] = React.useState<ProjectType | null>(null);
+  const [projectType, setProjectType] = React.useState<ProjectType | null>(
+    null,
+  );
   const [complexity, setComplexity] = React.useState<Complexity | null>(null);
   const [timeline, setTimeline] = React.useState<Timeline | null>(null);
-  const [brandIdentity, setBrandIdentity] = React.useState<BrandIdentity | null>(null);
-  const [contentReadiness, setContentReadiness] = React.useState<ContentReadiness | null>(null);
+  const [brandIdentity, setBrandIdentity] =
+    React.useState<BrandIdentity | null>(null);
+  const [contentReadiness, setContentReadiness] =
+    React.useState<ContentReadiness | null>(null);
   const [currency, setCurrency] = React.useState<"EGP" | "USD">("EGP");
   const [accentName, setAccentName] = React.useState<string | null>(null);
 
@@ -176,11 +186,19 @@ export default function NewProposalPage() {
     estimate && projectType && client
       ? `${projectType}-${estimate.minPrice}-${estimate.maxPrice}-${estimate.minWeeks}-${estimate.maxWeeks}-${currency}`
       : null;
-  const [syncedSignature, setSyncedSignature] = React.useState<string | null>(null);
+  const [syncedSignature, setSyncedSignature] = React.useState<string | null>(
+    null,
+  );
 
-  if (estimate && projectType && client && estimateSignature !== syncedSignature) {
+  if (
+    estimate &&
+    projectType &&
+    client &&
+    estimateSignature !== syncedSignature
+  ) {
     setSyncedSignature(estimateSignature);
-    const midPrice = Math.round((estimate.minPrice + estimate.maxPrice) / 2 / 500) * 500;
+    const midPrice =
+      Math.round((estimate.minPrice + estimate.maxPrice) / 2 / 500) * 500;
     const midWeeks = Math.round((estimate.minWeeks + estimate.maxWeeks) / 2);
     // The USD rate is the schema's fixed, quarterly-reviewed figure — it used
     // to be a bare `/ 50` here, which meant a rate change had to be remembered
@@ -231,7 +249,13 @@ export default function NewProposalPage() {
     fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clientId, projectType, complexity, accentName, content }),
+      body: JSON.stringify({
+        clientId,
+        projectType,
+        complexity,
+        accentName,
+        content,
+      }),
     });
 
   const handlePreview = async () => {
@@ -308,9 +332,7 @@ export default function NewProposalPage() {
         }
         action={
           <Button asChild variant="outline">
-            <Link href="/clients">
-              Back to clients
-            </Link>
+            <Link href="/clients">Back to clients</Link>
           </Button>
         }
       />
@@ -319,11 +341,21 @@ export default function NewProposalPage() {
 
   const clientLabel = client.company || client.name || client.phone;
   const subtotal = content ? investmentTotal(content.investmentItems) : 0;
-  const reduction = content ? discountAmount(content.investmentItems, content.discount) : 0;
-  const total = content ? netTotal(content.investmentItems, content.discount) : 0;
-  const percentTotal = content ? paymentPercentTotal(content.paymentSchedule) : 0;
+  const reduction = content
+    ? discountAmount(content.investmentItems, content.discount)
+    : 0;
+  const total = content
+    ? netTotal(content.investmentItems, content.discount)
+    : 0;
+  const percentTotal = content
+    ? paymentPercentTotal(content.paymentSchedule)
+    : 0;
   const percentOk = Math.abs(percentTotal - 100) < 0.001;
   const weeks = content ? timelineWeeks(content.timelinePhases) : 0;
+  // Phase durations stay hand-editable, but the server refuses a deck past the
+  // published ceiling. Say so here rather than letting the operator find out
+  // from a 400 after writing the whole document.
+  const overCeiling = weeks > MAX_DELIVERY_WEEKS;
   const deckLocked = !content;
 
   // The estimator's own three figures, converted with the same rule the seed
@@ -359,7 +391,13 @@ export default function NewProposalPage() {
     issues: number;
     disabled: boolean;
   }[] = [
-    { id: "setup", shortSlide: "◇", label: "Scope", issues: 0, disabled: false },
+    {
+      id: "setup",
+      shortSlide: "◇",
+      label: "Scope",
+      issues: 0,
+      disabled: false,
+    },
     ...PROPOSAL_GROUPS.map((group) => ({
       id: group.id as RailId,
       shortSlide: group.slide,
@@ -367,7 +405,13 @@ export default function NewProposalPage() {
       issues: issueCounts[group.id],
       disabled: deckLocked,
     })),
-    { id: "preview" as RailId, shortSlide: "▣", label: "Preview", issues: 0, disabled: deckLocked },
+    {
+      id: "preview" as RailId,
+      shortSlide: "▣",
+      label: "Preview",
+      issues: 0,
+      disabled: deckLocked,
+    },
   ];
 
   return (
@@ -393,7 +437,16 @@ export default function NewProposalPage() {
                   </span>
                 </MetaItem>
               )}
-              <MetaItem label="Timeline">{weeks} weeks</MetaItem>
+              <MetaItem label="Timeline">
+                <span className={overCeiling ? "text-danger" : undefined}>
+                  {weeks} weeks
+                </span>
+                {overCeiling && (
+                  <span className="ms-2 text-muted-foreground">
+                    over the {MAX_DELIVERY_WEEKS}-week ceiling
+                  </span>
+                )}
+              </MetaItem>
               <MetaItem label="Split">
                 <span className={percentOk ? "text-success" : "text-danger"}>
                   {formatPercent(percentTotal)}%
@@ -418,7 +471,10 @@ export default function NewProposalPage() {
                   disabled={entry.disabled}
                   aria-current={rail === entry.id ? "step" : undefined}
                   className={cn(
-                    segmentClass({ selected: rail === entry.id, disabled: entry.disabled }),
+                    segmentClass({
+                      selected: rail === entry.id,
+                      disabled: entry.disabled,
+                    }),
                     "whitespace-nowrap",
                   )}
                 >
@@ -467,11 +523,19 @@ export default function NewProposalPage() {
                   active={rail === group.id}
                   disabled={deckLocked}
                   onClick={() => setRail(group.id)}
-                  slide={<span className="font-mono text-micro">{group.slide}</span>}
+                  slide={
+                    <span className="font-mono text-micro">{group.slide}</span>
+                  }
                   label={group.label}
                   blurb={group.blurb}
                   issues={issueCounts[group.id]}
-                  state={deckLocked ? "locked" : issueCounts[group.id] ? "error" : "done"}
+                  state={
+                    deckLocked
+                      ? "locked"
+                      : issueCounts[group.id]
+                        ? "error"
+                        : "done"
+                  }
                 />
               ))}
             </ul>
@@ -530,7 +594,9 @@ export default function NewProposalPage() {
                       </span>
                       <Select
                         value={brandIdentity ?? undefined}
-                        onValueChange={(v) => setBrandIdentity(v as BrandIdentity)}
+                        onValueChange={(v) =>
+                          setBrandIdentity(v as BrandIdentity)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Optional" />
@@ -548,13 +614,17 @@ export default function NewProposalPage() {
                       </span>
                       <Select
                         value={contentReadiness ?? undefined}
-                        onValueChange={(v) => setContentReadiness(v as ContentReadiness)}
+                        onValueChange={(v) =>
+                          setContentReadiness(v as ContentReadiness)
+                        }
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Optional" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="provide">Client provides</SelectItem>
+                          <SelectItem value="provide">
+                            Client provides
+                          </SelectItem>
                           <SelectItem value="need-help">Needs help</SelectItem>
                           <SelectItem value="unsure">Unsure</SelectItem>
                         </SelectContent>
@@ -581,9 +651,10 @@ export default function NewProposalPage() {
                       </span>
                     </div>
                     <p className="mt-3 max-w-prose border-t border-border pt-3 text-base text-muted-foreground">
-                      A proposal commits to <span className="text-foreground">one</span> number, not
-                      a range. The deck is seeded with the midpoint — every figure in it is editable
-                      before you generate.
+                      A proposal commits to{" "}
+                      <span className="text-foreground">one</span> number, not a
+                      range. The deck is seeded with the midpoint — every figure
+                      in it is editable before you generate.
                     </p>
                   </Panel>
 
@@ -603,10 +674,14 @@ export default function NewProposalPage() {
                       />
                       {outsideRange && (
                         <p className="mt-3 flex items-start gap-1.5 border-t border-border pt-3 text-meta text-muted-foreground">
-                          <SlidersHorizontal className="mt-0.5 size-3 shrink-0" aria-hidden />
+                          <SlidersHorizontal
+                            className="mt-0.5 size-3 shrink-0"
+                            aria-hidden
+                          />
                           <span>
-                            The subtotal is {outsideRange} the estimator range. That is allowed — the
-                            range is a reference, not a rule.
+                            The subtotal is {outsideRange} the estimator range.
+                            That is allowed — the range is a reference, not a
+                            rule.
                           </span>
                         </p>
                       )}
@@ -622,20 +697,27 @@ export default function NewProposalPage() {
                         <span className="block text-meta font-medium text-muted-foreground">
                           Colour world
                         </span>
-                        <Select value={accentName ?? undefined} onValueChange={setAccentName}>
+                        <Select
+                          value={accentName ?? undefined}
+                          onValueChange={setAccentName}
+                        >
                           <SelectTrigger className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {Object.values(INTENT_ACCENTS).map((accent) => (
-                              <SelectItem key={accent.accentName} value={accent.accentName}>
+                              <SelectItem
+                                key={accent.accentName}
+                                value={accent.accentName}
+                              >
                                 {accent.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <span className="block text-meta text-subtle-foreground">
-                          Pipeline metadata only — the deck’s accent is the one brand colour.
+                          Pipeline metadata only — the deck’s accent is the one
+                          brand colour.
                         </span>
                       </label>
                       <label className="space-y-1.5">
@@ -655,12 +737,17 @@ export default function NewProposalPage() {
                           </SelectContent>
                         </Select>
                         <span className="block text-meta text-subtle-foreground">
-                          Re-seeds the deck. The document reads the currency in the content itself.
+                          Re-seeds the deck. The document reads the currency in
+                          the content itself.
                         </span>
                       </label>
                     </div>
                     <div className="mt-4 border-t border-border pt-3">
-                      <Button variant="brand" size="sm" onClick={() => setRail("cover")}>
+                      <Button
+                        variant="brand"
+                        size="sm"
+                        onClick={() => setRail("cover")}
+                      >
                         Edit the deck
                       </Button>
                     </div>
@@ -669,8 +756,9 @@ export default function NewProposalPage() {
               ) : (
                 <Panel title="Nothing to price yet">
                   <p className="max-w-prose text-base text-muted-foreground">
-                    Pick a project type, a complexity and a timeline. The estimator produces a range
-                    the moment all three are set, and the deck is seeded from its midpoint.
+                    Pick a project type, a complexity and a timeline. The
+                    estimator produces a range the moment all three are set, and
+                    the deck is seeded from its midpoint.
                   </p>
                 </Panel>
               )}
@@ -690,12 +778,20 @@ export default function NewProposalPage() {
           )}
 
           {orphanIssues.length > 0 && (
-            <Panel title="Issues with no field" description="These block generation">
+            <Panel
+              title="Issues with no field"
+              description="These block generation"
+            >
               <ul className="space-y-1">
                 {orphanIssues.map((issue, i) => (
                   <li key={i} className="text-base">
-                    <span className="font-mono text-micro text-foreground">{issue.path}</span>
-                    <span className="text-muted-foreground"> — {issue.message}</span>
+                    <span className="font-mono text-micro text-foreground">
+                      {issue.path}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      — {issue.message}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -765,7 +861,9 @@ export default function NewProposalPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const firstBroken = PROPOSAL_GROUPS.find((g) => issueCounts[g.id] > 0);
+                  const firstBroken = PROPOSAL_GROUPS.find(
+                    (g) => issueCounts[g.id] > 0,
+                  );
                   if (firstBroken) setRail(firstBroken.id);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-sm text-base text-danger hover:underline"
@@ -784,7 +882,11 @@ export default function NewProposalPage() {
                   </span>{" "}
                 </>
               )}
-              {formatCurrency(total, content.meta.currency)} · {weeks}W ·{" "}
+              {formatCurrency(total, content.meta.currency)} ·{" "}
+              <span className={overCeiling ? "text-danger" : undefined}>
+                {weeks}W
+              </span>{" "}
+              ·{" "}
               <span className={percentOk ? undefined : "text-danger"}>
                 {formatPercent(percentTotal)}%
               </span>
@@ -798,7 +900,11 @@ export default function NewProposalPage() {
                 aria-busy={previewing}
                 onClick={handlePreview}
               >
-                {previewing ? <Loader2 className="size-3.5 animate-spin" /> : <Images className="size-3.5" />}
+                {previewing ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Images className="size-3.5" />
+                )}
                 {previewing ? "Rendering…" : "Preview"}
               </Button>
               <Button
@@ -808,7 +914,11 @@ export default function NewProposalPage() {
                 aria-busy={submitting}
                 onClick={handleGenerate}
               >
-                {submitting ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+                {submitting ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Send className="size-3.5" />
+                )}
                 {submitting ? "Generating…" : "Generate proposal"}
               </Button>
             </div>
@@ -862,8 +972,14 @@ function RailItem({
           {slide}
         </span>
         <span className="min-w-0 flex-1">
-          <span className={cn("block truncate text-base", active && "font-medium")}>{label}</span>
-          <span className="block truncate text-meta text-subtle-foreground">{blurb}</span>
+          <span
+            className={cn("block truncate text-base", active && "font-medium")}
+          >
+            {label}
+          </span>
+          <span className="block truncate text-meta text-subtle-foreground">
+            {blurb}
+          </span>
         </span>
         {state === "error" && issues > 0 && (
           <span className="mt-0.5 inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-danger/12 px-1 font-mono text-micro font-medium tabular-nums text-danger">
@@ -871,7 +987,10 @@ function RailItem({
           </span>
         )}
         {state === "done" && (
-          <Check className="mt-0.5 size-3 shrink-0 text-success" aria-label="complete" />
+          <Check
+            className="mt-0.5 size-3 shrink-0 text-success"
+            aria-label="complete"
+          />
         )}
       </button>
     </li>

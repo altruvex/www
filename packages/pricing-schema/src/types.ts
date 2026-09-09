@@ -60,6 +60,20 @@ export type Locale = "en" | "ar";
 export type Localized<T> = Readonly<Record<Locale, T>>;
 
 /**
+ * The published delivery ceiling, in weeks from kick-off.
+ *
+ * A hard limit, not a typical case: no cell in the service matrix reaches it,
+ * the estimator clamps to it after the timeline/brand/content factors are
+ * applied, the admin pricing screen cannot set a cell past it, and a proposal
+ * whose phases sum past it is refused. Anything bigger is sold as phases.
+ *
+ * It lives here, beside `PRICE_BOUNDS`, because it is a bound on admin-entered
+ * data as much as a published promise — and because `types.ts` imports nothing,
+ * so every module can read it without a cycle.
+ */
+export const MAX_DELIVERY_WEEKS = 12;
+
+/**
  * Validation bounds for admin-entered pricing.
  *
  * The plausible range of a price is pricing-domain knowledge, so it lives here
@@ -77,7 +91,8 @@ export const PRICE_BOUNDS = {
   exchangeRateMin: 1,
   exchangeRateMax: 10_000,
   weeksMin: 1,
-  weeksMax: 200,
+  /** No cell may promise past the published ceiling. */
+  weeksMax: MAX_DELIVERY_WEEKS,
   requestsPerCycleMax: 1000,
   revisionRoundsMax: 50,
   durationDaysMax: 365,

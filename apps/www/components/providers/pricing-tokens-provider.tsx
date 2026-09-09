@@ -33,6 +33,18 @@ export function PricingTokensProvider({
 }
 
 /**
+ * The resolved token map itself.
+ *
+ * `t.rich` parses its message as ICU and returns a ReactNode, so prose that
+ * carries both rich tags and a `{token}` cannot be post-processed as a string
+ * — the token has to be handed to next-intl as a value instead. This is the
+ * hook for that case; everything else wants `useFillPricingTokens`.
+ */
+export function usePricingTokens(): Readonly<Record<string, string>> {
+  return React.useContext(PricingTokensContext);
+}
+
+/**
  * Fills `{token}` placeholders in a prose string.
  *
  * Falls back to leaving the text untouched if no provider is present, so a

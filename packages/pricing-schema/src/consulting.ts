@@ -23,11 +23,11 @@ export const CONSULTING_PACKAGES: Readonly<
   "technical-audit": {
     id: "technical-audit",
     status: "active",
-    price: 15_000,
+    price: 12_000,
     durationBusinessDays: 5,
     deliverableCount: 5,
-    version: 2,
-    lastUpdated: "2026-09-06",
+    version: 3,
+    lastUpdated: "2026-09-09",
   },
 };
 

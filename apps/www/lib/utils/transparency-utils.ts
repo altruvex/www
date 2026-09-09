@@ -1,5 +1,30 @@
+import {
+  COMMERCIAL_TERMS,
+  fillTemplate,
+  formatNumber,
+  type Locale,
+} from "@repo/pricing-schema";
 import { SITE_CONFIG } from "../metadata";
 import { localizeNumbers, normalizeNumeralsToEnglish } from "./number";
+
+/**
+ * Fills the `{token}`s a scope line may carry.
+ *
+ * The deliverable lists name the post-launch warranty window, which is a
+ * published commercial term rather than a wording choice — the contract
+ * grants the same number. The estimator renders these lines on screen and
+ * this module renders them into the PDF, and the fallback list below has to
+ * agree with the catalogue, so the fill lives here for all three.
+ *
+ * The estimator prices from the shipped schema rather than the database
+ * overrides, so this reads the shipped term for the same reason.
+ */
+export function fillScopeTokens(text: string, locale: string): string {
+  const l: Locale = locale.startsWith("ar") ? "ar" : "en";
+  return fillTemplate(text, {
+    warrantyDays: formatNumber(COMMERCIAL_TERMS.postLaunchWarrantyDays, l),
+  });
+}
 
 export type DeliverableTier = "small" | "medium" | "large" | "enterprise";
 export type DeliverableProject =
@@ -28,11 +53,19 @@ export function mapProjectType(raw: string | null): DeliverableProject {
   return map[raw ?? ""] ?? "corporate";
 }
 
+/**
+ * Year-2 hosting renewal, in EGP per year, by scope tier.
+ *
+ * Not a margin line — it is what the stack a project of that size actually
+ * runs on costs to keep up for a year. Recalibrated with the 2026-09 pricing
+ * pass: the old top figure equalled a whole entry-level engagement, which made
+ * the PDF read as if the site cost as much to host as it did to build.
+ */
 export const HOSTING_RENEWAL: Record<DeliverableTier, number> = {
-  small: 4_500,
-  medium: 8_500,
-  large: 14_500,
-  enterprise: 22_000,
+  small: 3_500,
+  medium: 6_000,
+  large: 9_500,
+  enterprise: 15_000,
 };
 
 const TIER_LABELS: Record<DeliverableTier, string> = {
@@ -49,10 +82,17 @@ const PROJECT_LABELS: Record<DeliverableProject, string> = {
   performance: "Performance & SEO Overhaul",
 };
 
+/**
+ * Fallbacks for the PDF, used only when the message catalogue has no entry.
+ *
+ * They state the same delivery ceiling the catalogue does. A fallback that
+ * promised "3+ months" while every other surface capped at twelve weeks was a
+ * contradiction waiting for the one render that reached it.
+ */
 const TIMELINE_LABELS: Record<string, string> = {
-  urgent: "Urgent - Sprint delivery",
-  soon: "Standard - 1–3 months",
-  flexible: "Extended - 3+ months",
+  urgent: "Urgent - compressed sprint",
+  soon: "Standard - 4–8 weeks",
+  flexible: "Extended - up to 12 weeks",
   standard: "Standard - balanced pace",
 };
 
@@ -148,8 +188,8 @@ const TIMELINE_COPY: Record<string, { ar: string; en: string }> = {
     en: "You chose a balanced timeline - the smartest choice in most cases. It gives us enough time to gather requirements precisely, build a solid system, and test it thoroughly before launch without unnecessary pressure.",
   },
   flexible: {
-    ar: "اخترت المرونة في التوقيت - وهذه ميزة مصممة حقيقية. وقت أطول يعني اختباراً أعمق، تحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
-    en: "You chose a flexible timeline - a genuine engineering advantage. More time means deeper testing, more performance refinement, and a system built to hold up long-term without needing a rebuild.",
+    ar: "اخترت المرونة في التوقيت - وهذه ميزة هندسية حقيقية. وقت أوسع داخل سقف الاثني عشر أسبوعاً يعني اختباراً أعمق، وتحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
+    en: "You chose a flexible timeline - a genuine engineering advantage. A wider window inside the same 12-week ceiling means deeper testing, more performance refinement, and a system built to hold up long-term without needing a rebuild.",
   },
 };
 
@@ -197,8 +237,8 @@ const DEADLINE_COPY: Record<string, { ar: string; en: string }> = {
     en: "You have two months - a solid timeline that allows a complete design-and-development cycle with room for testing.",
   },
   flexible: {
-    ar: "التوقيت مرن - ميزة تتيح لنا التركيز على الجودة وليس السرعة فقط.",
-    en: "Your timeline is flexible - an advantage that lets us focus on quality, not just speed.",
+    ar: "التوقيت مرن - ميزة تتيح لنا التركيز على الجودة وليس السرعة فقط، مع تسليم خلال ١٢ أسبوعاً على الأكثر.",
+    en: "Your timeline is flexible - an advantage that lets us focus on quality, not just speed, with handover inside 12 weeks either way.",
   },
 };
 
@@ -289,7 +329,7 @@ const DELIVERABLES: Record<
       "Mobile-first storefront implementation",
       "Essential SEO, analytics, and launch tracking",
       "Multilingual-ready structure where the scope requires it",
-      "30-day launch assurance for critical fixes",
+      "{warrantyDays}-day launch assurance for critical fixes",
     ],
     medium: [
       "Larger catalog with variants, bundles, or collections",
@@ -299,7 +339,7 @@ const DELIVERABLES: Record<
       "CMS support for landing pages, blog, or campaign content",
       "Multilingual storefront and QA where required",
       "Analytics, pixels, and search-readiness setup",
-      "30-day launch assurance with structured handover",
+      "{warrantyDays}-day launch assurance with structured handover",
     ],
     large: [
       "Everything in Professional",
@@ -309,7 +349,7 @@ const DELIVERABLES: Record<
       "Custom reporting surfaces for key commerce metrics",
       "Performance pass for higher traffic and heavier catalogs",
       "Infrastructure planning for scale, CDN, and backup strategy",
-      "30-day launch assurance plus rollout support",
+      "{warrantyDays}-day launch assurance plus rollout support",
     ],
     enterprise: [
       "Custom commerce architecture for complex operational needs",
@@ -331,7 +371,7 @@ const DELIVERABLES: Record<
       "Basic SEO setup, analytics, and search console readiness",
       "Multilingual-ready structure where the scope calls for it",
       "Deployment and launch checklist",
-      "30-day launch assurance for critical fixes",
+      "{warrantyDays}-day launch assurance for critical fixes",
     ],
     medium: [
       "Everything in Essential",
@@ -341,7 +381,7 @@ const DELIVERABLES: Record<
       "Full Multilingual implementation and QA where required",
       "Tracking, SEO, and conversion event setup",
       "Structured handover for internal marketing teams",
-      "30-day launch assurance with post-launch review",
+      "{warrantyDays}-day launch assurance with post-launch review",
     ],
     large: [
       "Everything in Professional",
@@ -351,7 +391,7 @@ const DELIVERABLES: Record<
       "Performance hardening for heavier content and higher traffic",
       "Reusable design system for future landing pages",
       "Launch planning across environments and stakeholders",
-      "30-day launch assurance plus rollout support",
+      "{warrantyDays}-day launch assurance plus rollout support",
     ],
     enterprise: [
       "Custom corporate platform with portal or secure stakeholder areas",
@@ -373,7 +413,7 @@ const DELIVERABLES: Record<
       "Responsive web app UI for desktop and mobile",
       "Basic notifications or status updates where required",
       "Deployment, environment setup, and documentation baseline",
-      "30-day launch assurance for critical fixes",
+      "{warrantyDays}-day launch assurance for critical fixes",
     ],
     medium: [
       "Everything in Essential",
@@ -383,7 +423,7 @@ const DELIVERABLES: Record<
       "QA coverage for key business flows",
       "Documentation and handover for product ownership",
       "Launch plan with staging and production readiness",
-      "30-day launch assurance with post-launch review",
+      "{warrantyDays}-day launch assurance with post-launch review",
     ],
     large: [
       "Everything in Professional",
@@ -487,10 +527,11 @@ export function buildPDFHtml(p: PDFParams): string {
   const rawItems = p.t.raw?.(
     `pdfContent.deliverables.${p.projectType}.${p.tier}`,
   );
-  const items =
+  const items = (
     Array.isArray(rawItems) && rawItems.length > 0
       ? rawItems.filter((item): item is string => typeof item === "string")
-      : DELIVERABLES[p.projectType][p.tier] || [];
+      : DELIVERABLES[p.projectType][p.tier] || []
+  ).map((item) => fillScopeTokens(item, p.locale));
 
   const hosting = HOSTING_RENEWAL[p.tier];
   const half = Math.ceil(items.length / 2);
@@ -721,7 +762,10 @@ export function buildPDFHtml(p: PDFParams): string {
 </html>`;
 }
 
-export async function generateEstimatePdf(html: string, filename: string): Promise<void> {
+export async function generateEstimatePdf(
+  html: string,
+  filename: string,
+): Promise<void> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import("html2canvas"),
     import("jspdf"),
