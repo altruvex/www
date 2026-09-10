@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
+import { recordActivity, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 import { buildProposalPptx, totalTimelineWeeks } from "@/lib/proposal-builder";
 import { convertPptxToPdf } from "@/lib/pptx-to-pdf";
@@ -200,6 +201,17 @@ export async function POST(request: NextRequest) {
     const updated = await prisma.proposal.update({
       where: { id: proposal.id },
       data: { fileUrl, pdfUrl },
+    });
+
+    await recordActivity({
+      action: "proposal.created",
+      actor: userActor(session),
+      entityType: "proposal",
+      entityId: proposal.id,
+      entityLabel: client.name || client.company,
+      summary: `Drafted a proposal for ${client.name || client.company || "a client"}`,
+      after: { projectType: proposal.projectType, complexity: proposal.complexity, totalPrice: proposal.totalPrice },
+      metadata: { clientId: client.id },
     });
 
     return NextResponse.json(

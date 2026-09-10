@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date } from "@/lib/format";
 import { statusOf } from "@/lib/status";
@@ -23,6 +24,7 @@ export interface ContractRow {
 }
 
 export function ContractsTable({ rows }: { rows: ContractRow[] }) {
+  const del = useRecordDelete({ entity: "contract" });
   const columns: Column<ContractRow>[] = [
     {
       id: "client",
@@ -121,16 +123,22 @@ export function ContractsTable({ rows }: { rows: ContractRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="contracts"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/contracts/${row.id}`}
-      searchPlaceholder="Search contracts by client or signatory…"
-      initialSort={{ columnId: "created", dir: "desc" }}
-      mobile={{ title: "client", subtitle: "scope", meta: ["status", "value", "signed", "delivery"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No contracts.</div>}
-    />
+    <>
+      <DataTable
+        tableId="contracts"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/contracts/${row.id}`}
+        searchPlaceholder="Search contracts by client or signatory…"
+        initialSort={{ columnId: "created", dir: "desc" }}
+        mobile={{ title: "client", subtitle: "scope", meta: ["status", "value", "signed", "delivery"] }}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No contracts.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

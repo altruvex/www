@@ -1,6 +1,7 @@
 "use client";
 
 import { Num } from "@/components/ui/num";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -252,19 +253,7 @@ export default function HowWeWorkPage() {
                 <span className="border-b border-transparent group-hover:border-foreground/30 transition-all duration-300 pb-0.5">
                   {t("standards.link")}
                 </span>
-                <svg
-                  className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                <ArrowIcon className="h-3.5 w-3.5" />
               </Link>
             </div>
           </section>

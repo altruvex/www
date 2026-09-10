@@ -12,10 +12,12 @@ import { notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
  * project from its phase and answered "create" with a toast, so nothing an
  * operator did on it survived a refresh.
  *
- * There is deliberately no DELETE. `CANCELLED` already removes a task from the
- * board and from every open count, while keeping the record that it was once
- * planned — which is the whole point of an auditable system. A hard delete
- * would buy nothing and destroy that.
+ * There is deliberately no DELETE *here*. `CANCELLED` already removes a task
+ * from the board and from every open count while keeping the record that it was
+ * once planned, and that is the right answer for work that was dropped.
+ * Removing a row that should never have existed is a different act: it goes
+ * through `deleteRecords` in app/(dashboard)/_actions/delete.ts, which writes
+ * what it destroyed to the audit trail first.
  */
 
 export const dynamic = "force-dynamic";

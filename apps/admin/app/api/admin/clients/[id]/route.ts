@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma, Prisma, SubmissionStatus, Priority } from "@repo/database";
+import { recordChange, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(
@@ -87,7 +88,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!(await requireAdminSession(request))) {
+    const session = await requireAdminSession(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -112,9 +114,34 @@ export async function PATCH(
     if (validatedData.priority !== undefined)
       updateData.priority = validatedData.priority as Priority;
 
+    const before = await prisma.client.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        email: true,
+        company: true,
+        industry: true,
+        status: true,
+        priority: true,
+      },
+    });
+
     const client = await prisma.client.update({
       where: { id },
       data: updateData,
+    });
+
+    await recordChange({
+      action: "client.updated",
+      actor: userActor(session),
+      entityType: "client",
+      entityId: id,
+      entityLabel: client.company || client.name,
+      summary: `Updated ${client.company || client.name || "client"}`,
+      before: Object.fromEntries(
+        Object.keys(validatedData).map((k) => [k, before?.[k as keyof typeof before]]),
+      ),
+      after: validatedData,
     });
 
     return NextResponse.json({ success: true, client });

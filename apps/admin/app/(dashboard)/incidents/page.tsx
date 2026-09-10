@@ -68,14 +68,14 @@ export default async function IncidentsPage() {
         description="What is broken, who owns it, and what has been tried. An incident is a human judgement over machine evidence — it links to the deployment suspected of causing it and the logs around it."
         alert={
           critical.length > 0 ? (
-            <AlertBar tone="danger">
+            <AlertBar tone="danger" href="#open-incidents" cta="Review the open incidents">
               {critical.length} critical incident{critical.length === 1 ? "" : "s"} open.
               {unowned.length > 0
                 ? ` ${unowned.length} open incident${unowned.length === 1 ? " has" : "s have"} no owner.`
                 : ""}
             </AlertBar>
           ) : unowned.length > 0 ? (
-            <AlertBar tone="warning">
+            <AlertBar tone="warning" href="#open-incidents" cta="Assign an owner">
               {unowned.length} open incident{unowned.length === 1 ? " has" : "s have"} no
               owner. An unowned incident is one nobody is actually working on.
             </AlertBar>
@@ -113,7 +113,9 @@ export default async function IncidentsPage() {
         />
       </div>
 
-      <IncidentsClient records={records} products={products} users={users} />
+      <div id="open-incidents" className="scroll-mt-20">
+        <IncidentsClient records={records} products={products} users={users} />
+      </div>
     </div>
   );
 }

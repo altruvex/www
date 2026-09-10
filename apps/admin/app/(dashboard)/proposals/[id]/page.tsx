@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
 import { Download, ExternalLink, FileText } from "lucide-react";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -20,6 +21,11 @@ import { statusOf } from "@/lib/status";
 import { date, dateTime, daysFromNow, money, when } from "@/lib/format";
 import { LifecycleButton } from "@/app/(dashboard)/clients/[id]/client-actions";
 import { Button } from "@repo/ui";
+import { headers } from "next/headers";
+
+import { SendDocument } from "@/components/os/send-document";
+import { proposalDraft } from "@/lib/email-templates";
+import { emailTransport } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -51,11 +57,22 @@ export default async function ProposalDetailPage({
   const proposal = await prisma.proposal.findUnique({
     where: { id },
     include: {
-      client: { select: { id: true, name: true, company: true, phone: true } },
+      client: { select: { id: true, name: true, company: true, phone: true, email: true } },
       contract: { select: { id: true, status: true, signedAt: true } },
     },
   });
   if (!proposal) notFound();
+
+  // The draft the send screen opens with, built from the same template the
+  // route falls back to — two copies of this wording would drift, and only a
+  // client would ever notice.
+  const docUrl = proposal.pdfUrl ?? proposal.fileUrl;
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
+  const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+  const absoluteDoc =
+    docUrl && /^https?:\/\//.test(docUrl) ? docUrl : docUrl ? `${scheme}://${host}${docUrl}` : "";
+  const draft = proposalDraft(proposal.client.name, absoluteDoc);
 
   // `createdBy` stores a user id. Showing the raw uuid in the sidebar leaks an
   // internal identifier where a person's name belongs.
@@ -144,12 +161,17 @@ export default async function ProposalDetailPage({
                 </a>
               </Button>
             )}
-            {proposal.status === "DRAFT" && (
-              <LifecycleButton
-                label="Send via WhatsApp"
-                busyLabel="Sending…"
+            {proposal.status === "DRAFT" && docUrl && (
+              <SendDocument
+                label="Send proposal"
                 endpoint={`/api/admin/proposals/${proposal.id}/send`}
-                variant="brand"
+                defaultSubject={draft.subject}
+                defaultBody={draft.body}
+                clientEmail={proposal.client.email}
+                emailConfigured={emailTransport() !== "none"}
+                whatsappConfigured={Boolean(
+                  process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
+                )}
               />
             )}
             {proposal.status === "ACCEPTED" && !proposal.contract && (
@@ -161,15 +183,34 @@ export default async function ProposalDetailPage({
                 variant="brand"
               />
             )}
+            <DeleteRecordButton
+              entity="proposal"
+              id={proposal.id}
+              label={`${proposal.projectType} · ${proposal.client.company ?? proposal.client.name ?? "Client"}`}
+              redirectTo="/proposals"
+              variant="ghost"
+            />
           </>
         }
         alert={
           isOpen && expiresIn != null && expiresIn <= 7 ? (
-            <AlertBar tone={expiresIn < 0 ? "danger" : "warning"}>
-              {expiresIn < 0
-                ? `This proposal expired ${Math.abs(expiresIn)} day${Math.abs(expiresIn) === 1 ? "" : "s"} ago. The price is no longer committed — reissue it before the client accepts.`
-                : `Expires in ${expiresIn} day${expiresIn === 1 ? "" : "s"}. Chase it or extend the validity.`}
-            </AlertBar>
+            expiresIn < 0 ? (
+              <AlertBar
+                tone="danger"
+                href={`/clients/${proposal.clientId}/new-proposal`}
+                cta="Reissue the proposal"
+              >
+                {`This proposal expired ${Math.abs(expiresIn)} day${Math.abs(expiresIn) === 1 ? "" : "s"} ago. The price is no longer committed — reissue it before the client accepts.`}
+              </AlertBar>
+            ) : (
+              <AlertBar
+                tone="warning"
+                href={`/whatsapp/${proposal.clientId}`}
+                cta="Chase on WhatsApp"
+              >
+                {`Expires in ${expiresIn} day${expiresIn === 1 ? "" : "s"}. Chase it or extend the validity.`}
+              </AlertBar>
+            )
           ) : null
         }
         tabs={<TabNav tabs={TABS} active={tab} basePath={`/proposals/${proposal.id}`} />}

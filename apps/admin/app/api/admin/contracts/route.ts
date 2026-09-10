@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
+import { recordActivity, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 import { buildContractDocx } from "@/lib/contract-builder";
 import { upload } from "@/lib/storage";
@@ -41,7 +42,8 @@ const createContractSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    if (!(await requireAdminSession(request))) {
+    const session = await requireAdminSession(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -89,6 +91,16 @@ export async function POST(request: NextRequest) {
       const updated = await prisma.contract.update({
         where: { id: contract.id },
         data: { fileUrl },
+      });
+
+      await recordActivity({
+        action: "contract.created",
+        actor: userActor(session),
+        entityType: "contract",
+        entityId: contract.id,
+        entityLabel: proposal.client.name || proposal.client.company,
+        summary: `Generated a contract for ${proposal.client.name || proposal.client.company || "a client"}`,
+        metadata: { clientId: proposal.clientId, proposalId: proposal.id },
       });
 
       return NextResponse.json({ success: true, contract: updated }, { status: 201 });

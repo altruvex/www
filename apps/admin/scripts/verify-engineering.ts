@@ -1,21 +1,8 @@
-/**
- * End-to-end checks for the engineering-operations pipeline.
- *
- * Calls the real `/api/ingest/*` route handlers with real Requests against a
- * real database, because "the deployment page renders" is not evidence that a
- * deployment can be recorded (§18). Asserts the things that are easy to get
- * quietly wrong: per-product numbering under contention, idempotent re-posts,
- * token scoping, and the product-status write that a successful production
- * deploy performs.
- *
- *   cd apps/admin && DATABASE_URL=... bun run verify:engineering
- *
- * Writes and then removes its own records; point it at a scratch database.
- */
 import { prisma } from "@repo/database";
-
+import { createHmac } from "node:crypto";
 import { POST as ingestBuild } from "../app/api/ingest/builds/route";
 import { POST as ingestDeployment } from "../app/api/ingest/deployments/route";
+import { POST as githubWebhook } from "../app/api/ingest/github/route";
 import { POST as ingestLogs } from "../app/api/ingest/logs/route";
 import { issueToken } from "../lib/ingest-auth";
 
@@ -58,7 +45,6 @@ const product = await prisma.product.create({
   },
 });
 
-// A second product, to prove a token cannot write across the boundary.
 const otherIssued = issueToken();
 const otherProduct = await prisma.product.create({
   data: {
@@ -103,7 +89,6 @@ try {
     check(res.status === 200, "a running build is accepted");
     check(json.build.number === 1, "the first build for a product is #1");
 
-    // Same externalId again: must update, not duplicate.
     const done = await post(ingestBuild, issued.token, {
       externalId: "run-1",
       status: "SUCCEEDED",
@@ -121,7 +106,6 @@ try {
     check(stored?.finishedAt != null, "a terminal status stamps finishedAt");
     check((stored?.durationMs ?? 0) >= 0, "duration is computed from start and finish");
 
-    // A second build gets the next number.
     const second = await post(ingestBuild, issued.token, {
       externalId: "run-2",
       status: "FAILED",
@@ -130,7 +114,6 @@ try {
     const secondJson = (await second.json()) as { build: { number: number } };
     check(secondJson.build.number === 2, "the next build is #2");
 
-    // Numbering is per product, not global.
     const otherFirst = await post(ingestBuild, otherIssued.token, {
       externalId: "run-1",
       status: "SUCCEEDED",
@@ -170,7 +153,6 @@ try {
     );
     check(refreshed?.status === "LIVE", "a successful production deploy marks the product LIVE");
 
-    // Rollback: the superseded deployment must show what undid it.
     const rollback = await post(ingestDeployment, issued.token, {
       externalId: "dpl-2",
       status: "SUCCEEDED",
@@ -186,7 +168,6 @@ try {
       "the superseded deployment points at the one that replaced it",
     );
 
-    // Staging must not touch the production URL.
     await post(ingestDeployment, issued.token, {
       externalId: "dpl-3",
       status: "SUCCEEDED",
@@ -238,6 +219,236 @@ try {
       entries: Array.from({ length: 501 }, () => ({ level: "INFO", message: "x" })),
     });
     check(tooMany.status === 400, "a batch over the cap is refused rather than truncated");
+  }
+
+  console.log("\nGitHub webhook");
+  {
+    const secret = `verify-github-secret-${suffix}`;
+    const repo = `altruvex-verify/site-${suffix}`;
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { repositoryUrl: `https://github.com/${repo}.git` },
+    });
+
+    const ghPost = (event: string, payload: unknown, signWith?: string) => {
+      const raw = JSON.stringify(payload);
+      const headers: Record<string, string> = {
+        "content-type": "application/json",
+        "x-github-event": event,
+        "x-github-delivery": `verify-${Date.now()}`,
+      };
+      if (signWith) {
+        headers["x-hub-signature-256"] =
+          `sha256=${createHmac("sha256", signWith).update(raw, "utf8").digest("hex")}`;
+      }
+      return githubWebhook(
+        new Request("https://admin.local/api/ingest/github", {
+          method: "POST",
+          headers,
+          body: raw,
+        }),
+      );
+    };
+
+    const repository = { full_name: repo, default_branch: "main" };
+    const workflowRun = (
+      id: number,
+      status: string,
+      conclusion: string | null,
+      branch = "main",
+    ) => ({
+      action: status === "completed" ? "completed" : "requested",
+      repository,
+      sender: { login: "ali" },
+      workflow_run: {
+        id,
+        name: "Deploy",
+        head_branch: branch,
+        head_sha: "9f2c1ab",
+        status,
+        conclusion,
+        run_started_at: new Date(Date.now() - 60_000).toISOString(),
+        updated_at: new Date().toISOString(),
+        actor: { login: "ali" },
+        head_commit: { message: "Fix the checkout currency field\n\nlonger body" },
+      },
+    });
+
+    delete process.env.GITHUB_WEBHOOK_SECRET;
+    const unconfigured = await ghPost("ping", { zen: "hi", repository }, secret);
+    check(
+      unconfigured.status === 503,
+      "with no secret configured the receiver refuses rather than accepting unsigned writes",
+    );
+
+    process.env.GITHUB_WEBHOOK_SECRET = secret;
+
+    const unsigned = await ghPost("workflow_run", workflowRun(5001, "completed", "success"));
+    check(unsigned.status === 401, "an unsigned delivery is refused");
+
+    const wrongSignature = await ghPost(
+      "workflow_run",
+      workflowRun(5001, "completed", "success"),
+      "not-the-secret",
+    );
+    check(wrongSignature.status === 401, "a delivery signed with the wrong secret is refused");
+
+    const ping = await ghPost("ping", { zen: "hi", repository }, secret);
+    check(ping.status === 200, "a signed ping is acknowledged");
+
+    const unknownRepo = await ghPost(
+      "workflow_run",
+      { ...workflowRun(5001, "completed", "success"), repository: { full_name: `nobody/none-${suffix}`, default_branch: "main" } },
+      secret,
+    );
+    check(unknownRepo.status === 404, "an event for a repository no product names is refused");
+
+    const failed = await ghPost("workflow_run", workflowRun(5001, "completed", "failure"), secret);
+    check(failed.status === 200, "a signed workflow_run is accepted");
+    const failedRow = await prisma.build.findUnique({
+      where: {
+        productId_externalId: { productId: product.id, externalId: "gh-run-5001" },
+      },
+    });
+    check(failedRow?.status === "FAILED", "a failed conclusion is recorded as a failed build");
+    check(
+      failedRow?.environment === "PRODUCTION",
+      "a run on the default branch is a production build",
+    );
+    check(
+      failedRow?.commitMessage === "Fix the checkout currency field",
+      "only the commit subject is stored, not the whole message body",
+    );
+    check(
+      (failedRow?.failureReason ?? "").includes("failure"),
+      "the failure reason quotes GitHub's conclusion rather than inventing a cause",
+    );
+
+    const rerun = await ghPost("workflow_run", workflowRun(5001, "completed", "success"), secret);
+    check(rerun.status === 200, "a re-run of the same workflow run is accepted");
+    const rerunRow = await prisma.build.findUnique({
+      where: {
+        productId_externalId: { productId: product.id, externalId: "gh-run-5001" },
+      },
+    });
+    check(rerunRow?.id === failedRow?.id, "a re-run updates the same build rather than adding one");
+    check(rerunRow?.status === "SUCCEEDED", "the re-run's conclusion replaced the old one");
+    check(
+      rerunRow?.failureReason === null,
+      "a build retried into success stops showing why it failed before",
+    );
+
+    await ghPost("workflow_run", workflowRun(5002, "completed", "success", "feature/x"), secret);
+    const previewRow = await prisma.build.findUnique({
+      where: {
+        productId_externalId: { productId: product.id, externalId: "gh-run-5002" },
+      },
+    });
+    check(
+      previewRow?.environment === "PREVIEW",
+      "a run on a non-default branch is not filed as production",
+    );
+
+    await ghPost("workflow_run", workflowRun(5003, "completed", "cancelled"), secret);
+    const cancelledRow = await prisma.build.findUnique({
+      where: {
+        productId_externalId: { productId: product.id, externalId: "gh-run-5003" },
+      },
+    });
+    check(
+      cancelledRow?.status === "CANCELLED",
+      "a cancelled run is not reported as a failure nobody caused",
+    );
+
+    const deploymentEvent = (state: string, environment: string, url?: string) => ({
+      action: "created",
+      repository,
+      sender: { login: "ali" },
+      deployment: {
+        id: 7001,
+        sha: "9f2c1ab",
+        ref: "main",
+        environment,
+        creator: { login: "ali" },
+        created_at: new Date(Date.now() - 30_000).toISOString(),
+      },
+      deployment_status: {
+        state,
+        description: state === "failure" ? "Build step exited 1" : "Deployment finished",
+        environment,
+        environment_url: url ?? null,
+        updated_at: new Date().toISOString(),
+        creator: { login: "ali" },
+      },
+    });
+
+    const deployed = await ghPost(
+      "deployment_status",
+      deploymentEvent("success", "Production", "https://verify-site.example.com"),
+      secret,
+    );
+    check(deployed.status === 200, "a signed deployment_status is accepted");
+    const deploymentRow = await prisma.deployment.findUnique({
+      where: {
+        productId_externalId: { productId: product.id, externalId: "gh-deployment-7001" },
+      },
+    });
+    check(deploymentRow?.status === "SUCCEEDED", "the deployment was recorded");
+    check(
+      deploymentRow?.environment === "PRODUCTION",
+      "GitHub's free-text environment name maps onto ours",
+    );
+    const afterDeploy = await prisma.product.findUnique({ where: { id: product.id } });
+    check(
+      afterDeploy?.productionUrl === "https://verify-site.example.com",
+      "a successful production deployment moves the product's recorded live URL",
+    );
+
+    const beforeInactive = await prisma.deployment.count({ where: { productId: product.id } });
+    const inactive = await ghPost(
+      "deployment_status",
+      deploymentEvent("inactive", "Production"),
+      secret,
+    );
+    const afterInactive = await prisma.deployment.count({ where: { productId: product.id } });
+    check(inactive.status === 200, "a state we do not act on is acknowledged, not rejected");
+    check(
+      afterInactive === beforeInactive,
+      "an inactive status writes nothing — being superseded is not a rollback",
+    );
+
+    const ignoredEvent = await ghPost("push", { repository }, secret);
+    check(
+      ignoredEvent.status === 200,
+      "an event we do not read is acknowledged so GitHub's delivery log stays green",
+    );
+
+    // Two products naming one repository: the receiver must refuse rather than
+    // file one product's history under another.
+    await prisma.product.update({
+      where: { id: otherProduct.id },
+      data: { repositoryUrl: `git@github.com:${repo}.git` },
+    });
+    const ambiguous = await ghPost(
+      "workflow_run",
+      workflowRun(5004, "completed", "success"),
+      secret,
+    );
+    check(ambiguous.status === 409, "a repository claimed by two products is refused, not guessed");
+    await prisma.product.update({
+      where: { id: otherProduct.id },
+      data: { repositoryUrl: null },
+    });
+
+    const ghEvents = await prisma.activityEvent.findMany({
+      where: { metadata: { path: ["productSlug"], equals: product.slug }, actorLabel: { startsWith: "GitHub · " } },
+    });
+    check(
+      ghEvents.length > 0,
+      "GitHub-written events are attributed to GitHub, not to the CI token",
+    );
+
+    delete process.env.GITHUB_WEBHOOK_SECRET;
   }
 
   console.log("\nActivity trail");

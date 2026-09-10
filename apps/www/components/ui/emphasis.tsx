@@ -1,6 +1,6 @@
 import { MOTION } from "@/lib/motion/config";
 import { cn } from "@/lib/utils/utils";
-import { forwardRef, type ComponentPropsWithoutRef, type CSSProperties } from "react";
+import { forwardRef, type CSSProperties, type ComponentPropsWithoutRef } from "react";
 
 export const ACCENT_GRADIENTS = [
   "brand",
@@ -18,27 +18,8 @@ export const ACCENT_GRADIENTS = [
 
 export type AccentGradient = (typeof ACCENT_GRADIENTS)[number];
 
-/**
- * `"world"` resolves to the primary gradient of the enclosing `accent-world-*`
- * section (blue → brand, orange → ember, green → forest) via the
- * `--world-grad-*` custom properties in globals.css. It is the default choice
- * for coloured headings: a heading can never wear the wrong world.
- */
 export const WORLD_ACCENT = "world" as const;
 
-/**
- * Gradients approved for section headings, grouped by the accent-world they
- * belong to. Everything else in ACCENT_GRADIENTS (aurora, lavender, neon,
- * candy) is playground / MDX colour only - never a heading.
- *
- * - `primary` is what `"world"` resolves to; reach for it by name only when
- *   the section has no `accent-world-*` wrapper of its own.
- * - `alt` is for a second Accent in the SAME world on one page, or a
- *   same-world section that sits directly before the closing CTA.
- * - `hero` is the page-level h1 only (one per page).
- *
- * Full rules: docs/section-heading-emphasis.md
- */
 export const HEADING_ACCENTS = {
   blue: { primary: "brand", alt: "ocean", hero: "iris" },
   orange: { primary: "ember", alt: "sunset" },
@@ -68,11 +49,6 @@ const DIRECTION_CLASSES = {
 
 export type GradientDirection = keyof typeof DIRECTION_CLASSES;
 
-/**
- * - `shimmer`: decorative infinite gradient pan (CSS keyframe). Works anywhere.
- * - `sweep`: one-shot gradient wipe across the phrase, choreographed by the
- *   surrounding `useText` reveal. Outside a text reveal it renders static.
- */
 export type AccentAnimation = "shimmer" | "sweep";
 
 export type AccentSpeed = keyof typeof MOTION.accent.shimmer;
@@ -82,22 +58,16 @@ type AccentStyle = CSSProperties & { "--text-gradient-duration"?: string };
 export interface AccentProps extends ComponentPropsWithoutRef<"span"> {
   gradient?: AccentGradient | typeof WORLD_ACCENT | (string & {});
   direction?: GradientDirection;
-  /** `true` is an alias for `"shimmer"` (back-compat). */
   animate?: boolean | AccentAnimation;
-  /** Shimmer cycle speed - maps to MOTION.accent.shimmer tokens. */
   speed?: AccentSpeed;
   glow?: boolean;
   solid?: boolean;
 }
 
 const HIGHLIGHT_TONES = {
-  /** Default - body-level de-emphasis on the base scene. */
   muted: "text-muted-foreground",
-  /** Heading-level de-emphasis (second title line on default scenes). */
   soft: "text-foreground/45",
-  /** De-emphasis on `surface` / inverted scenes. */
   surface: "text-s-mid",
-  /** Serif-italic voice without dimming. */
   contrast: "text-foreground",
 } as const;
 

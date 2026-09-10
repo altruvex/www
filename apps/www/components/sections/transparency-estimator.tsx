@@ -37,8 +37,10 @@ import {
   MAX_DELIVERY_WEEKS,
   type EstimateResult,
 } from "@repo/pricing-schema";
-import { Button, Input, Label } from "@repo/ui";
-import { Check, Download, Loader2, RotateCcw } from "lucide-react";
+import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
+import { Input, Label } from "@repo/ui/www";
+import { Check, Download, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
@@ -1086,7 +1088,7 @@ function NextSteps({
             >
               {downloading ? (
                 <>
-                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  <LoadingIcon size="md" className="mr-2" />
                   {t("pdf.generating")}
                 </>
               ) : (

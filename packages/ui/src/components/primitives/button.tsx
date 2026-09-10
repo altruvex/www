@@ -1,42 +1,44 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Loader2 } from "lucide-react";
-
+import { LoadingIcon } from "../feedback/loading-icon";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  [
-    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap font-medium",
-    "rounded-md transition-[color,background-color,border-color,box-shadow,transform,filter,backdrop-filter]",
-    "duration-[var(--duration-state)] ease-[var(--ease-standard)]",
-    "outline-none focus-visible:ring-2 focus-visible:ring-ring/55 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-    "disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
-    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-  ].join(" "),
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-ctl text-sm font-medium transition-[color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter] duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        brand: "bg-brand text-brand-foreground hover:bg-brand-hover focus-visible:ring-brand/50",
+        default:
+          "transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80",
+        brand:
+          "transition-all bg-brand text-brand-foreground hover:bg-brand-hover active:bg-brand-hover/90 focus-visible:ring-brand/50",
         glass:
           "liquid-glass-flat text-foreground hover:border-border-mid hover:bg-card/70 focus-visible:ring-brand/45",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/45",
+          "transition-all bg-destructive text-destructive-foreground hover:bg-destructive/90 active:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "border border-border bg-card text-foreground hover:border-border-mid hover:bg-surface",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "text-muted-foreground hover:bg-surface hover:text-foreground",
-        link: "text-brand underline-offset-4 hover:underline active:text-brand-hover",
+          "transition-all border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:bg-input/30 dark:border-input dark:hover:bg-input/50 dark:active:bg-input/70",
+        secondary:
+          "transition-all bg-secondary text-secondary-foreground hover:bg-secondary/80 active:bg-secondary/70",
+        ghost:
+          "transition-all hover:bg-accent hover:text-accent-foreground active:bg-accent/80 dark:hover:bg-accent/50 dark:active:bg-accent/70",
+        link: "transition-all text-primary underline-offset-4 hover:underline active:text-primary/80",
       },
       size: {
-        sm: "h-[var(--control-h-sm)] gap-1.5 px-3 text-sm has-[>svg]:px-2.5",
-        default: "h-[var(--control-h)] px-4 text-sm has-[>svg]:px-3",
-        lg: "h-[var(--control-h-lg)] px-5 text-sm has-[>svg]:px-4",
-        xl: "h-12 px-8 text-base has-[>svg]:px-6",
-        "icon-sm": "size-[var(--control-h-sm)]",
-        icon: "size-[var(--control-h)]",
-        "icon-lg": "size-[var(--control-h-lg)]",
+        // pointer-coarse: touch targets grow to the 44px minimum (principles
+        // CI1); fine-pointer sizes keep the compact visual spec. Heights and
+        // radii key off the shared --control-h-*/--radius-ctl-* tokens so each
+        // app's own globals.css governs its own scale (www: 32/40/44/48,
+        // admin: 28/32/36/48) from one shared component.
+        default:
+          "h-[var(--control-h)] px-4 py-2 has-[>svg]:px-3 pointer-coarse:min-h-11",
+        sm: "h-[var(--control-h-sm)] gap-1.5 rounded-ctl-sm px-3 has-[>svg]:px-2.5 pointer-coarse:min-h-11",
+        lg: "h-[var(--control-h-lg)] rounded-ctl-lg px-6 has-[>svg]:px-4",
+        xl: "h-[var(--control-h-xl)] rounded-ctl-xl px-8 text-base has-[>svg]:px-6",
+        icon: "size-[var(--control-h-icon)] rounded-ctl-sm pointer-coarse:size-11",
+        "icon-sm": "size-[var(--control-h-icon-sm)] rounded-ctl-sm pointer-coarse:size-11",
+        "icon-lg": "size-[var(--control-h-icon-lg)] pointer-coarse:size-11",
       },
     },
     defaultVariants: {
@@ -58,6 +60,7 @@ function Button({
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
+    /** Shows a spinner and disables the button. Ignored when asChild. */
     loading?: boolean;
   }) {
   const Comp = asChild ? Slot : "button";
@@ -73,11 +76,15 @@ function Button({
       aria-busy={loading || undefined}
       {...props}
     >
+      {/* Slot (asChild) requires a single element child — never emit the
+          spinner sibling in that mode. */}
       {asChild ? (
         children
       ) : (
         <>
-          {showSpinner ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+          {showSpinner ? (
+            <LoadingIcon size={size === "sm" || size === "icon-sm" ? "sm" : "md"} />
+          ) : null}
           {children}
         </>
       )}

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
+import { RepositoryPicker, type RepositoryOption } from "@/components/os/repository-picker";
+
 import {
   Button,
   Input,
@@ -111,6 +113,56 @@ function Form({
   const [productionUrl, setProductionUrl] = React.useState("");
   const [repositoryUrl, setRepositoryUrl] = React.useState("");
   const [framework, setFramework] = React.useState("");
+  const [detectingFramework, setDetectingFramework] = React.useState(false);
+  const [frameworkEvidence, setFrameworkEvidence] = React.useState<string | null>(null);
+
+  /**
+   * Fills the form from the repository GitHub was asked about.
+   *
+   * Only fields the operator has left blank. A pick is a shortcut, not an
+   * instruction to discard what somebody already typed — overwriting a name
+   * chosen on purpose with a repository slug is the kind of "helpful" that
+   * makes people stop using the shortcut.
+   */
+  async function importFromRepository(repo: RepositoryOption) {
+    if (!name.trim()) setName(repo.name);
+    if (!slugTouched && !slug.trim()) setSlug(slugify(repo.name));
+    // A repository's homepage field is normally the live site, and is the one
+    // piece of GitHub metadata that maps onto something this application
+    // publishes. It is still only a default — a successful production deploy
+    // overwrites it with what actually shipped.
+    if (!productionUrl.trim() && repo.homepage) setProductionUrl(repo.homepage);
+
+    // The framework comes from the repository's own manifest, not from
+    // GitHub's `language` field — "TypeScript" is true of a Next.js site, an
+    // Express API and a CLI alike, and is not an answer to "what is this built
+    // with". Read on demand, and left blank when the repository does not say.
+    if (framework.trim()) return;
+    setDetectingFramework(true);
+    try {
+      const res = await fetch(
+        `/api/admin/github/framework?repo=${encodeURIComponent(repo.fullName)}`,
+      );
+      const data = (await res.json()) as {
+        success: boolean;
+        framework?: string | null;
+        evidence?: string | null;
+      };
+      if (data.success && data.framework) {
+        setFramework(data.framework);
+        // Which file answered. In a monorepo the root manifest names no
+        // framework and the answer comes from one app inside it — saying which
+        // is the difference between a value an operator can check and one they
+        // have to trust.
+        setFrameworkEvidence(data.evidence ?? null);
+      }
+    } catch {
+      // Silent: the operator can type it, and a toast about a field that
+      // pre-fills itself would be noise on a form they are still filling in.
+    } finally {
+      setDetectingFramework(false);
+    }
+  }
 
   // Only projects belonging to the chosen client — the server rejects a
   // mismatch, so offering one would be offering a guaranteed error.
@@ -273,21 +325,33 @@ function Form({
             />
           </Field>
 
-          <Field label="Repository">
-            <Input
-              type="url"
+          <Field
+            label="Repository"
+            hint="Picking one fills in anything still blank. Nothing already typed is overwritten."
+          >
+            <RepositoryPicker
               value={repositoryUrl}
-              onChange={(event) => setRepositoryUrl(event.target.value)}
-              placeholder="https://github.com/altruvex/client-site"
+              onChange={setRepositoryUrl}
+              onImport={importFromRepository}
             />
           </Field>
 
-          <Field label="Framework">
+          <Field
+            label="Framework"
+            hint={
+              detectingFramework
+                ? "Reading the repository's manifest…"
+                : frameworkEvidence
+                  ? `Read from ${frameworkEvidence}`
+                  : "Read from the repository when one is picked. Blank when it does not say."
+            }
+          >
             <Input
               value={framework}
               onChange={(event) => setFramework(event.target.value)}
-              placeholder="Next.js 16"
+              placeholder={detectingFramework ? "Detecting…" : "Next.js 16"}
               maxLength={100}
+              disabled={detectingFramework}
             />
           </Field>
 

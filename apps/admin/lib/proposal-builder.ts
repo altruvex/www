@@ -3,6 +3,7 @@ import { runProposalContrastGate } from "./proposal-qa";
 import {
   discountAmount,
   fillTemplate,
+  formatDocDate,
   investmentTotal,
   netTotal,
   paymentAmount,
@@ -968,11 +969,8 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   });
 
-  const validUntil = validUntilDate(content.meta).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const validUntil =
+    formatDocDate(validUntilDate(content.meta)) ?? content.meta.proposalDate;
   // Clears the payment rows rather than sitting at a height that only
   // suits three of them.
   const payBottom = payFirstY + (content.paymentSchedule.length - 1) * payStep + 0.3;

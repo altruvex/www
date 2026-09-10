@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma, Prisma, SubmissionStatus, Priority, ClientSource, normalizePhone } from "@repo/database";
+import { recordActivity, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(request: NextRequest) {
@@ -135,6 +136,16 @@ export async function POST(request: NextRequest) {
         source: "MANUAL",
         addedBy: session.user.id,
       },
+    });
+
+    await recordActivity({
+      action: "client.created",
+      actor: userActor(session),
+      entityType: "client",
+      entityId: client.id,
+      entityLabel: client.company || client.name,
+      summary: `Added ${client.company || client.name || "a client"} manually`,
+      metadata: { source: client.source },
     });
 
     return NextResponse.json({ success: true, client }, { status: 201 });

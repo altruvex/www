@@ -22,6 +22,14 @@ export interface PipelineCardData {
 /** Stages a human is allowed to set. The rest are computed. */
 const WRITABLE = new Set(["NEW", "VIEWED", "CONTACTED", "QUALIFIED", "LOST"]);
 
+/** Said once, in the column that is refusing — not only in a toast after the drop. */
+const DERIVED_REASON: Record<string, string> = {
+  PROPOSAL_SENT: "Set by sending a proposal",
+  PROPOSAL_READ: "Set when the client opens it",
+  CONTRACT_SENT: "Set by generating a contract",
+  SIGNED: "Set by a signed contract",
+};
+
 export function PipelineBoard({
   cards,
   columns,
@@ -38,10 +46,27 @@ export function PipelineBoard({
         .map((c) => ({ amount: c.value!, currency: c.currency })),
     );
     const summary = moneyByCurrency(totals, true);
-    return { ...column, summary: summary === "—" ? undefined : summary };
+    const locked = !WRITABLE.has(column.id);
+    return {
+      ...column,
+      summary: summary === "—" ? undefined : summary,
+      locked,
+      lockedReason: locked ? DERIVED_REASON[column.id] : undefined,
+    };
   });
 
   async function onMove(cardId: string, toColumnId: string) {
+    // A deal whose stage is currently derived cannot be dragged out of it
+    // either: setting the status would not change the documents, so the card
+    // would reappear where it was on the next refresh.
+    const from = cards.find((c) => c.id === cardId)?.stage;
+    if (from && !WRITABLE.has(from)) {
+      toast.error("This deal's stage is derived", {
+        description:
+          "It sits where the proposal and contract records put it. Change the documents, not the card.",
+      });
+      throw new Error("derived stage");
+    }
     if (!WRITABLE.has(toColumnId)) {
       toast.error("That stage is derived", {
         description:
@@ -68,6 +93,7 @@ export function PipelineBoard({
       }))}
       onMove={onMove}
       emptyColumnLabel="No deals"
+      label="Pipeline board, scroll sideways for more stages"
     />
   );
 }

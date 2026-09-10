@@ -49,8 +49,17 @@ bun run verify:lifecycle      # pure date/state-machine logic — needs no datab
 bun run verify:engineering    # ingest endpoints end-to-end   — needs DATABASE_URL
 bun run verify:admin-api      # audit trail, tokens, subscriptions, tasks — needs DATABASE_URL
 bun run verify:maintenance    # portal/admin allowance agreement — needs DATABASE_URL
+bun run verify:delete         # delete registry: plans and protections — needs DATABASE_URL
+bun run verify:github         # GitHub webhook translation — needs no database
+bun run verify:slack          # Slack curation, escaping and delivery — needs no database
+bun run verify:whatsapp       # WhatsApp webhook signature check — needs no database
+bun run verify:email          # mail transport selection and addresses — needs no database
 bun run check-types           # tsc --noEmit
 ```
+
+`verify:delete` runs read-only by default. `DELETE_FIXTURES=1 bun run verify:delete` adds the
+cascade case, which creates a client → proposal → contract → project → payment chain and deletes
+it again.
 
 The database-backed ones write and then remove their own records — point them at a scratch
 database, not production.
@@ -127,10 +136,74 @@ pushing anything that touches pricing.
   no session. A "Deploy" button in the admin app would be a claim, not a cause — the split is why
   the deployment history can be read as a record of what actually shipped. Contract:
   `docs/ingest-api.md`.
+- **`POST /api/ingest/github` is the same evidence arriving on its own.** GitHub's `workflow_run`
+  and `deployment_status` events, verified by HMAC (`GITHUB_WEBHOOK_SECRET`, fails closed) and
+  matched to a product by its `repositoryUrl`. Both transports write through
+  `lib/ingest-writers.ts` — never reimplement the upsert per transport, or the two paths drift and
+  the screens start disagreeing about what shipped. The translation lives in `lib/github.ts` and
+  invents nothing GitHub did not send: a branch-to-environment convention is documented as a
+  convention, `inactive` is not a rollback, and a repository claimed by two products is refused
+  rather than guessed.
+- **A repository is attached by picking it or by typing it, and both stay.** `GITHUB_TOKEN`
+  (private repos) or `GITHUB_ACCOUNT` (one account's public repos, no credential) turns the
+  repository field into a picker that also pre-fills blank product fields; neither is required,
+  and a URL can always be typed for a repository this instance cannot see. The picker marks
+  repositories already attached elsewhere, because the receiver refuses an event two products
+  claim. `components/os/repository-picker.tsx`, `GET /api/admin/github/repositories`.
 - **An ingest token is shown once and stored only as a SHA-256** plus its last four characters.
   There is nothing for the UI to leak, and "show it again" is correctly impossible.
 - **Empty is the honest state.** Until a pipeline is connected these tables are empty and the
   screens say so. Never seed them with plausible-looking history.
+
+### WhatsApp webhook
+
+- **The signature check fails closed in production.** `/api/whatsapp/webhook` is exempt from the
+  session guard in `proxy.ts` and writes straight into the CRM (`handleInboundMessage` creates a
+  `Client`), so with no `WHATSAPP_APP_SECRET` set it refuses every payload rather than accepting
+  unsigned ones. An earlier version accepted anything when the secret was absent and left a comment
+  asking for it to be set before real traffic — production then ran open on exactly that gap. A
+  comment is not an enforcement. Local development keeps the tolerance, because Meta cannot reach a
+  laptop and the handler has to be exercisable by hand.
+- Covered by `bun run verify:whatsapp` (needs no database).
+
+### Email (outbound only)
+
+- **Two transports, chosen by which credentials exist**: `RESEND_API_KEY` (sends from the
+  studio's own domain) or `SMTP_HOST`/`SMTP_USER`/`SMTP_PASSWORD` (sends from that mailbox,
+  including a plain Gmail account with an app password). Resend wins when both are set. Neither
+  is required, and with neither nothing pretends to send.
+- **It is the only client-facing channel that works today.** WhatsApp templates need a verified
+  business, a registered number and a payment method; email needs none of them.
+- **Every attempt is recorded, failures included** (`EmailMessage`, mirroring `WhatsAppMessage`).
+  A row that vanished on failure would make a client's history read as though nobody ever tried.
+- **`sent` means the transport accepted it, not that it arrived.** `DELIVERED`/`BOUNCED`/
+  `COMPLAINED` exist in the enum and *nothing in this application can set them* — they need a
+  provider webhook that is not wired up. `/email` says so on the page.
+- **The channel is chosen per send, and the wording is editable** (`components/os/send-document.tsx`).
+  Defaults come from `lib/email-templates.ts`, which the route also falls back to — one source, so
+  the screen and the server cannot drift. The document link is re-appended server-side by
+  `ensureLink`: an editable body is a deletable body, and a proposal email with no proposal in it
+  looks entirely normal as it is sent.
+- **`EMAIL_REPLY_TO` is applied inside `sendEmail`, not per call site.** Mail goes out from a
+  sending subdomain nobody reads; a send that forgets the header is a client reply that vanishes
+  with no error to notice.
+- **Plain text, no HTML template.** Contract and setup: `docs/email.md`.
+
+### Slack (outbound only)
+
+- **One incoming webhook, no app and no bot token.** `SLACK_WEBHOOK_URL` is the whole
+  integration. Slack's free plan carries unlimited incoming webhooks.
+- **It hooks into `recordActivity`, not into forty mutation sites** — so a new mutation cannot
+  be added and forget to notify. But it is **not a second audit log**: only the curated
+  `NOTIFIED_ACTIONS` set in `lib/slack.ts` reaches the channel (signed contracts, opened
+  incidents, failed deploys, deletions — never `build.succeeded` or `submission.viewed`).
+  Adding or removing an event is one line in that map; that map is the whole policy.
+- **A notification can never break the mutation it describes**: `notifySlack` swallows its own
+  errors and caps the post at four seconds, and it is skipped when a transaction client is
+  passed so an HTTP call cannot hold a business transaction open.
+- **The health check reports "unknown", never "healthy".** A write-only webhook answers nothing
+  until something is posted, so the *Send a test* button on `/integrations` is the real check —
+  and it reports Slack's own error rather than a green toast. Contract: `docs/slack.md`.
 
 ### Audit trail
 
@@ -140,6 +213,25 @@ pushing anything that touches pricing.
 - `recordChange` skips the write when nothing actually moved, and `before`/`after` carry only the
   changed fields. Values are redacted by field name — never put a secret in a payload.
 - **Recording must never break the mutation it describes.** These helpers swallow their own errors.
+
+### Deleting records
+
+- **Every delete goes through `deleteRecords`** (`app/(dashboard)/_actions/delete.ts`), which reads
+  its cascade, its protections and its audit snapshot from one registry (`lib/deletable.ts`). A
+  screen never issues its own `prisma.delete` — the registry is what knows that a contract owns a
+  project which owns payments, and Prisma's default RESTRICT turns a naive delete into a foreign-key
+  error an operator cannot act on.
+- **Deletes are hard, and the audit trail is what survives them.** The row's fields are snapshotted
+  into an `ActivityEvent` before it is removed, so `/audit` still answers what was destroyed, by
+  whom, and what it contained. There is no `deletedAt` column and no archive screen.
+- **Records of things that actually happened are protected**: signed contracts, collected payments,
+  live retainers, and the builds/deployments/logs CI wrote. Those are *soft* blocks — an OWNER can
+  override one deliberately, and the override is written into the event. *Hard* blocks (the last
+  superadmin, an account with attributed notes) cannot be overridden by anyone, because the database
+  would refuse the write anyway.
+- **The confirmation dialog is fed by the server, not by the row on screen.** `describeDeletion`
+  returns the real cascade counts; an operator sees the six records that go with the one they
+  clicked before they type the confirmation.
 
 ### Subscription lifecycle
 
@@ -214,7 +306,11 @@ for the audit trail. `MaintenanceSubscription` carries the billing lifecycle
   `ADMIN`/`SUPERADMIN` role check on the `better-auth` session.
 - **Env validation**: `lib/env.ts` parses `process.env` with a `zod` schema at import time; add new
   required env vars there (and to `turbo.json`'s `build.env` allowlist) rather than reading
-  `process.env` directly in app code. The schema hard-fails in production *at runtime only* —
+  `process.env` directly in app code. `turbo.json` also mirrors that list in
+  `globalPassThroughEnv`: these are runtime-only secrets that change nothing a build produces, so
+  they are made visible to every task without becoming cache keys — the alternative, declaring
+  admin secrets as inputs to `@repo/database#build`, would claim that rotating a WhatsApp token
+  changes the output of `tsc`. The schema hard-fails in production *at runtime only* —
   `next build` is exempt, because runtime-only secrets are not present in a build environment.
   `PUBLIC_SITE_URL` and `PRICING_REVALIDATE_SECRET` are optional: without them a price change
   still saves and still reaches the public site, just on its cache timer instead of immediately.

@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Ban } from "lucide-react";
+import { Ban, Check, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { money, date, dueLabel } from "@/lib/format";
 import { statusOf } from "@/lib/status";
@@ -27,6 +28,7 @@ export interface PaymentRow {
 }
 
 export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
+  const del = useRecordDelete({ entity: "payment" });
   const router = useRouter();
   const [, startTransition] = React.useTransition();
 
@@ -119,21 +121,35 @@ export function PaymentsTable({ rows }: { rows: PaymentRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="payments"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/projects/${row.projectId}?tab=financials`}
-      searchPlaceholder="Search by project, client or reference…"
-      initialSort={{ columnId: "status", dir: "asc" }}
-      selectable
-      mobile={{ title: "project", subtitle: "milestone", meta: ["status", "amount", "due"] }}
-      bulkActions={[
-        { label: "Mark paid", icon: Check, onRun: bulk("PAID", "marked paid") },
-        { label: "Waive", icon: Ban, destructive: true, onRun: bulk("WAIVED", "waived") },
-      ]}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No payments.</div>}
-    />
+    <>
+      <DataTable
+        tableId="payments"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/projects/${row.projectId}?tab=financials`}
+        searchPlaceholder="Search by project, client or reference…"
+        initialSort={{ columnId: "status", dir: "asc" }}
+        selectable
+        selectionNoun="payment"
+        mobile={{ title: "project", subtitle: "milestone", meta: ["status", "amount", "due"] }}
+        bulkActions={[
+          { label: "Mark paid", icon: Check, onRun: bulk("PAID", "marked paid") },
+          { label: "Waive", icon: Ban, destructive: true, onRun: bulk("WAIVED", "waived") },
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: `${row.milestone} · ${row.projectName}` }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.milestone} · ${row.projectName}` })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No payments.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

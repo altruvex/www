@@ -6,7 +6,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
+} from "@repo/ui/www";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";

@@ -1,5 +1,6 @@
 "use client";
 import { Num } from "@/components/ui/num";
+import { ArrowIcon, ArrowLabel } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
@@ -189,19 +190,11 @@ function FeaturesSection() {
                 <span className={cn(monoCaps, "text-foreground/20")}>
                   <Num value={i + 1} pad={2} />
                 </span>
-                <svg
-                  className="w-4 h-4 text-primary/0 group-hover:text-primary/35 transition-all duration-300 ease-out ltr:-translate-x-2 rtl:translate-x-2 group-hover:translate-x-0 rtl:-rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                <ArrowIcon
+                  motion="none"
+                  strokeWidth={1.5}
+                  className="text-primary/0 duration-300 group-hover:text-primary/35 ltr:-translate-x-2 rtl:translate-x-2 group-hover:translate-x-0"
+                />
               </div>
               <h3
                 className="font-sans font-medium text-primary mb-3 group-hover:text-primary/80 transition-all duration-300"
@@ -341,22 +334,7 @@ function PricingSection({ plans }: { plans: readonly MaintenanceView[] }) {
                 className="mt-auto w-full justify-center group"
               >
                 <Link href="/contact">
-                  <span className="flex items-center gap-2">
-                    {t("pricing.getStarted")}
-                    <svg
-                      className="w-4 h-4 transition-all duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </span>
+                  <ArrowLabel>{t("pricing.getStarted")}</ArrowLabel>
                 </Link>
               </MagneticButton>
             </div>

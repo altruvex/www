@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, MessageCircle, Phone, XCircle } from "lucide-react";
+import { CheckCircle2, MessageCircle, Phone, Trash2, XCircle } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { Hint } from "@repo/ui";
 import { Avatar } from "@repo/ui";
@@ -40,6 +41,7 @@ export interface LeadRow {
 }
 
 export function LeadsTable({ rows }: { rows: LeadRow[] }) {
+  const del = useRecordDelete({ entity: "client" });
   const router = useRouter();
   const [, startTransition] = React.useTransition();
 
@@ -234,35 +236,49 @@ export function LeadsTable({ rows }: { rows: LeadRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="leads"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/clients/${row.id}`}
-      searchPlaceholder="Search leads by name, company, phone…"
-      initialSort={{ columnId: "score", dir: "desc" }}
-      selectable
-      mobile={{ title: "name", subtitle: "phone", meta: ["status", "score", "source", "age"] }}
-      bulkActions={[
-        {
-          label: "Mark contacted",
-          icon: CheckCircle2,
-          onRun: runBulk("CONTACTED", "marked contacted"),
-        },
-        {
-          label: "Qualify",
-          icon: CheckCircle2,
-          onRun: runBulk("QUALIFIED", "qualified"),
-        },
-        {
-          label: "Mark lost",
-          icon: XCircle,
-          destructive: true,
-          onRun: runBulk("LOST", "marked lost"),
-        },
-      ]}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No leads.</div>}
-    />
+    <>
+      <DataTable
+        tableId="leads"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/clients/${row.id}`}
+        searchPlaceholder="Search leads by name, company, phone…"
+        initialSort={{ columnId: "score", dir: "desc" }}
+        selectable
+        selectionNoun="lead"
+        mobile={{ title: "name", subtitle: "phone", meta: ["status", "score", "source", "age"] }}
+        bulkActions={[
+          {
+            label: "Mark contacted",
+            icon: CheckCircle2,
+            onRun: runBulk("CONTACTED", "marked contacted"),
+          },
+          {
+            label: "Qualify",
+            icon: CheckCircle2,
+            onRun: runBulk("QUALIFIED", "qualified"),
+          },
+          {
+            label: "Mark lost",
+            icon: XCircle,
+            destructive: true,
+            onRun: runBulk("LOST", "marked lost"),
+          },
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: row.company || row.name || row.phone }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.company || row.name || row.phone })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No leads.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

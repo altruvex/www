@@ -1,5 +1,7 @@
 import { prisma, type ActorKind, type Prisma } from "@repo/database";
 
+import { notifySlack } from "@/lib/slack";
+
 /**
  * The write side of the audit trail (§12).
  *
@@ -164,6 +166,17 @@ export async function recordActivity(
   } catch (error) {
     console.error(`Activity write failed for ${input.action}`, error);
   }
+
+  // Slack hangs off the audit trail rather than off forty mutation sites: this
+  // function already runs at every one of them, so a new mutation cannot be
+  // added and forget to notify. Which events actually reach a channel is the
+  // curated list in `lib/slack.ts`, not everything written here.
+  //
+  // Skipped inside a transaction: an HTTP call there would hold a business
+  // transaction open for as long as Slack takes to answer. No caller currently
+  // passes one, and a tx-bound event that genuinely needs a channel message
+  // should post it after the transaction commits.
+  if (!tx) await notifySlack(input);
 }
 
 /**

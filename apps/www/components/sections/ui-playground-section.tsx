@@ -3,7 +3,7 @@
 import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
 import { Accent, Highlight, type AccentGradient } from "@/components/ui/emphasis";
-import { Input } from "@repo/ui";
+import { Input } from "@repo/ui/www";
 import { SurfaceCard } from "@repo/ui";
 import { TiltCard } from "@/components/ui/tilt-card";
 import {

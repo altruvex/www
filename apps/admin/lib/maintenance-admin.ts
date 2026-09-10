@@ -200,6 +200,7 @@ export async function setRequestStatus(
   id: string,
   status: RequestStatus,
   actor: string | null,
+  auditActor: Actor = systemActor(actor ?? "System"),
 ): Promise<boolean> {
   const before = await prisma.maintenanceRequest.findUnique({ where: { id } });
   if (!before) return false;
@@ -216,6 +217,17 @@ export async function setRequestStatus(
     diffFields("maintenance_request", id, { status: before.status }, { status }),
     actor,
   );
+
+  await recordActivity({
+    action: "maintenance_request.status_changed",
+    actor: auditActor,
+    entityType: "maintenance_request",
+    entityId: id,
+    entityLabel: before.title,
+    summary: `Request status moved to ${status.toLowerCase()}`,
+    before: { status: before.status },
+    after: { status },
+  });
   return true;
 }
 
@@ -230,6 +242,7 @@ export async function setRequestBilling(
   id: string,
   countsToCap: boolean,
   actor: string | null,
+  auditActor: Actor = systemActor(actor ?? "System"),
 ): Promise<boolean> {
   const before = await prisma.maintenanceRequest.findUnique({ where: { id } });
   if (!before) return false;
@@ -245,6 +258,19 @@ export async function setRequestBilling(
     ),
     actor,
   );
+
+  await recordActivity({
+    action: "maintenance_request.billing_changed",
+    actor: auditActor,
+    entityType: "maintenance_request",
+    entityId: id,
+    entityLabel: before.title,
+    summary: countsToCap
+      ? "Request moved back under the allowance cap"
+      : "Request reclassified as billable overage",
+    before: { countsToCap: before.countsToCap },
+    after: { countsToCap },
+  });
   return true;
 }
 

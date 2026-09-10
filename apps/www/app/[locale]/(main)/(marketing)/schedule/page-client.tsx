@@ -1,18 +1,15 @@
 "use client";
 import { Container } from "@/components/shared/container";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DatePicker, Input, Label, TimePicker } from "@repo/ui/www";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Accent } from "@/components/ui/emphasis";
-import { Input } from "@repo/ui";
-import { Label } from "@repo/ui";
-import { TimePicker } from "@/components/ui/time-picker";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import {
   AlertCircle,
-  ArrowLeft,
   Calendar,
   CheckCircle2,
   Clock,
@@ -127,7 +124,7 @@ export default function SchedulePage() {
                   onClick={() => router.back()}
                   className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow mb-10"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:-translate-x-1 rtl:group-hover:translate-x-1 rtl:-rotate-180" />
+                  <ArrowIcon direction="back" className="h-3.5 w-3.5" />
                   {t("back")}
                 </button>
               </div>

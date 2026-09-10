@@ -3,6 +3,7 @@ import { promisify } from "util";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
+import { pathToFileURL } from "url";
 
 const execFileAsync = promisify(execFile);
 
@@ -20,9 +21,21 @@ export async function convertPptxToPdf(pptxBuffer: Buffer): Promise<Buffer | nul
     const pptxPath = path.join(workDir, "input.pptx");
     await writeFile(pptxPath, pptxBuffer);
 
+    // Its own LibreOffice profile, for the same reason the preview renderer
+    // has one: a second soffice sharing the default profile exits silently
+    // and writes nothing, so a generate running beside a preview (or beside
+    // the operator's own open LibreOffice) loses its PDF for no stated cause.
     await execFileAsync(
       "soffice",
-      ["--headless", "--convert-to", "pdf", "--outdir", workDir, pptxPath],
+      [
+        `-env:UserInstallation=${pathToFileURL(path.join(workDir, "lo-profile")).href}`,
+        "--headless",
+        "--convert-to",
+        "pdf",
+        "--outdir",
+        workDir,
+        pptxPath,
+      ],
       { timeout: 60_000 },
     );
 

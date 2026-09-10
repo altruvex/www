@@ -121,7 +121,7 @@ export default async function CalendarPage({
                     {meeting.guestEmail && ` · ${meeting.guestEmail}`}
                   </p>
                 </div>
-                <MeetingActions meetingId={meeting.id} />
+                <MeetingActions meetingId={meeting.id} title={meeting.title} />
               </li>
             ))}
           </ul>

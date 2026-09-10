@@ -19,12 +19,31 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-function isValidSignature(rawBody: string, header: string | null): boolean {
-  const appSecret = process.env.WHATSAPP_APP_SECRET;
-  // No app secret configured yet (pre-launch) — accept unsigned payloads so
-  // the endpoint can be verified/wired up before that step is done. Set
-  // WHATSAPP_APP_SECRET before taking real client traffic.
-  if (!appSecret) return true;
+export function isValidSignature(
+  rawBody: string,
+  header: string | null,
+  appSecret = process.env.WHATSAPP_APP_SECRET,
+  isProduction = process.env.NODE_ENV === "production",
+): boolean {
+  if (!appSecret) {
+    // Fails closed in production. This endpoint is exempt from the session
+    // guard and writes to the CRM — an unsigned payload accepted here becomes a
+    // client row and an inbound message nobody sent. The previous version
+    // accepted anything when the secret was absent and left a comment asking
+    // for it to be set before real traffic; a comment is not an enforcement,
+    // and production ran open on exactly that gap.
+    //
+    // Local development keeps the tolerance on purpose: Meta cannot reach a
+    // laptop, so the only way to exercise this handler there is to post to it
+    // by hand.
+    if (isProduction) {
+      console.error(
+        "WhatsApp webhook rejected: WHATSAPP_APP_SECRET is not set, so no payload can be verified.",
+      );
+      return false;
+    }
+    return true;
+  }
   if (!header?.startsWith("sha256=")) return false;
 
   const expected = createHmac("sha256", appSecret).update(rawBody).digest("hex");

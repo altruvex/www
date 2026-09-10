@@ -1,9 +1,10 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/shared/container";
-import { Input, SelectField, Textarea } from "@repo/ui";
+import { Input, SelectField, Textarea } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
@@ -216,22 +217,7 @@ export default function ContactPage() {
                         size="lg"
                         className="w-full group relative"
                       >
-                        <span className="flex items-center gap-2">
-                          {t("scheduleCall")}
-                          <svg
-                            className="w-4 h-4 transition-all ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 8l4 4m0 0l-4 4m4-4H3"
-                            />
-                          </svg>
-                        </span>
+                        <ArrowLabel>{t("scheduleCall")}</ArrowLabel>
                       </MagneticButton>
                     </Link>
                     <a

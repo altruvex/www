@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui";
-import { Check, Copy, Loader2, Plus } from "lucide-react";
+import { LoadingIcon } from "@repo/ui";
+import { Check, Copy, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyState } from "@/components/os/empty-state";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
@@ -113,6 +115,9 @@ export function MaintenanceClient({
     [router],
   );
 
+  const delSubscription = useRecordDelete({ entity: "maintenanceSubscription" });
+  const delRequest = useRecordDelete({ entity: "maintenanceRequest" });
+
   const totalOpen = subscriptions.reduce((n, s) => n + s.openRequests, 0);
   // Effective, not stored: a retainer whose period lapsed this morning is not
   // "active" just because nobody has changed the column yet.
@@ -198,7 +203,7 @@ export function MaintenanceClient({
             }}
           >
             {busy === "create" ? (
-              <Loader2 className="size-3.5 animate-spin" />
+              <LoadingIcon size="sm" />
             ) : (
               <Plus className="size-3.5" />
             )}
@@ -254,6 +259,15 @@ export function MaintenanceClient({
                       ))}
                     </SelectContent>
                   </Select>
+                  <RowActions
+                    onDelete={() =>
+                      delSubscription.request({
+                        id: sub.id,
+                        label: `${sub.planName} · ${sub.clientName}`,
+                      })
+                    }
+                    deleteLabel="Delete retainer"
+                  />
                 </div>
               }
             >
@@ -345,13 +359,18 @@ export function MaintenanceClient({
                           }
                         >
                           {busy === `bill:${r.id}` ? (
-                            <Loader2 className="size-3.5 animate-spin" />
+                            <LoadingIcon size="sm" />
                           ) : r.countsToCap ? (
                             "Mark as overage"
                           ) : (
                             "Count to allowance"
                           )}
                         </Button>
+
+                        <RowActions
+                          onDelete={() => delRequest.request({ id: r.id, label: r.title })}
+                          deleteLabel="Delete request"
+                        />
                       </div>
                     </li>
                   ))}
@@ -361,6 +380,9 @@ export function MaintenanceClient({
           );
         })
       )}
+
+      {delSubscription.dialog}
+      {delRequest.dialog}
     </div>
   );
 }

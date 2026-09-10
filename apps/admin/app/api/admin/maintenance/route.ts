@@ -131,9 +131,9 @@ export async function PATCH(request: NextRequest) {
 
     const ok =
       body.action === "request-status"
-        ? await setRequestStatus(body.id, body.status, actor)
+        ? await setRequestStatus(body.id, body.status, actor, audit)
         : body.action === "request-billing"
-          ? await setRequestBilling(body.id, body.countsToCap, actor)
+          ? await setRequestBilling(body.id, body.countsToCap, actor, audit)
           : body.action === "subscription-auto-renew"
             ? await setAutoRenew(body.id, body.autoRenew, actor, audit)
             : await setSubscriptionStatus(body.id, body.status, actor, audit);

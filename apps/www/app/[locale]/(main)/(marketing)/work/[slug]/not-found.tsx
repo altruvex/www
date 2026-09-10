@@ -1,9 +1,10 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
-import { ArrowLeft } from "lucide-react";
+
 import { useTranslations } from "next-intl";
 
 export default function WorkCaseStudyNotFound() {
@@ -24,7 +25,7 @@ export default function WorkCaseStudyNotFound() {
             href="/work"
             className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
           >
-            <ArrowLeft className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:-translate-x-0.5 rtl:rotate-180 rtl:group-hover:translate-x-0.5" />
+            <ArrowIcon direction="back" className="h-3.5 w-3.5" />
             {t("backLink")}
           </Link>
         </div>

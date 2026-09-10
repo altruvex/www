@@ -7,6 +7,7 @@ import { MetaList } from "@/components/os/detail-layout";
 import { getHealthChecks, STATE_LABEL, STATE_TONE } from "@/lib/system-health";
 import { dateTime } from "@/lib/format";
 import { Button } from "@repo/ui";
+import { SlackButton } from "@/components/os/slack-button";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,6 @@ const PLANNED = [
   { name: "Stripe", why: "Card and link payments against an invoice, with webhook reconciliation." },
   { name: "Dropbox Sign / DocuSign", why: "Qualified e-signature behind the existing contract status field." },
   { name: "Google Workspace", why: "Two-way calendar sync for meetings and launch dates." },
-  { name: "GitHub", why: "Link a project to its repository and surface deploy status on the project page." },
-  { name: "Slack", why: "Mirror the action centre into a channel." },
 ];
 
 export default async function IntegrationsPage() {
@@ -27,7 +26,7 @@ export default async function IntegrationsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Integrations"
-        description="Connection state, configuration and health for every external dependency. Everything here is checked against the live environment — nothing reports healthy because a flag says so."
+        description="Connection state, configuration and health for every external dependency. Everything here is checked against the live environment — nothing reports healthy because a flag says so. The ones with a screen link to it; the rest are configured by environment variable and need a redeploy."
         actions={
           <Button asChild variant="outline">
             <Link href="/health">
@@ -43,7 +42,23 @@ export default async function IntegrationsPage() {
             key={check.id}
             title={check.name}
             description={check.summary}
-            action={<ToneBadge tone={STATE_TONE[check.state]}>{STATE_LABEL[check.state]}</ToneBadge>}
+            action={
+              <div className="flex items-center gap-2">
+                {check.setup && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={check.setup.href}>{check.setup.label}</Link>
+                  </Button>
+                )}
+                {/* Slack is configured by environment variable, so it has no
+                    screen to link to — but it does have something a person can
+                    press. Posting a real message is the only check that proves
+                    a write-only webhook works. */}
+                {check.id === "slack" && check.state !== "unconfigured" && (
+                  <SlackButton action="test" label="Send a test" pendingLabel="Sending…" />
+                )}
+                <ToneBadge tone={STATE_TONE[check.state]}>{STATE_LABEL[check.state]}</ToneBadge>
+              </div>
+            }
             flush
           >
             <div className="space-y-3 p-3">

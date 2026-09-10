@@ -102,7 +102,7 @@ export default function ClientPortalPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <LoadingIcon size={24} />
+        <LoadingIcon size="lg" />
       </div>
     );
   }

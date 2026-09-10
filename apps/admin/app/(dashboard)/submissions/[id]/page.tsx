@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { DetailLayout, MetaList } from "@/components/os/detail-layout";
@@ -61,15 +62,24 @@ export default async function SubmissionDetailPage({
           </>
         }
         actions={
-          submission.client ? (
-            <Button asChild variant="outline">
-              <Link href={`/clients/${submission.client.id}`}>
-                Open client record
-              </Link>
-            </Button>
-          ) : (
-            <ConvertButton submissionId={submission.id} />
-          )
+          <>
+            {submission.client ? (
+              <Button asChild variant="outline">
+                <Link href={`/clients/${submission.client.id}`}>
+                  Open client record
+                </Link>
+              </Button>
+            ) : (
+              <ConvertButton submissionId={submission.id} />
+            )}
+            <DeleteRecordButton
+              entity="submission"
+              id={submission.id}
+              label={submission.name}
+              redirectTo="/submissions"
+              variant="ghost"
+            />
+          </>
         }
       />
 

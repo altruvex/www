@@ -33,7 +33,9 @@ export function StatTile({
       <p className="telemetry text-subtle-foreground">{label}</p>
       <p
         className={cn(
-          "mt-2 font-sans text-[length:var(--text-metric)] font-medium leading-none tracking-[-0.02em] tabular-nums",
+          "mt-2 font-sans text-[length:var(--text-metric)] font-medium leading-[1.08] tracking-[-0.02em] tabular-nums",
+          // Two currencies ("E£1.2M + $12K") wrap; leading-none clipped the second line.
+          "text-balance [overflow-wrap:anywhere]",
           toneText[tone],
         )}
       >

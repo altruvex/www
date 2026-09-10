@@ -21,6 +21,7 @@ import {
 } from "@repo/ui";
 
 import { EmptyInline } from "@/components/os/empty-state";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import { dueLabel } from "@/lib/format";
@@ -73,6 +74,7 @@ export function TasksClient({
   const [creating, setCreating] = React.useState(false);
   const [pending, setPending] = React.useState<string | null>(null);
   const [projectFilter, setProjectFilter] = React.useState<string>(UNASSIGNED);
+  const del = useRecordDelete({ entity: "task" });
 
   const visible =
     projectFilter === UNASSIGNED
@@ -178,7 +180,12 @@ export function TasksClient({
                           pending === task.id && "opacity-60",
                         )}
                       >
-                        <p className="text-base leading-snug">{task.title}</p>
+                        <div className="flex items-start justify-between gap-1">
+                          <p className="text-base leading-snug">{task.title}</p>
+                          <RowActions
+                            onDelete={() => del.request({ id: task.id, label: task.title })}
+                          />
+                        </div>
                         <p className="truncate text-meta text-subtle-foreground">
                           <Link
                             href={`/projects/${task.projectId}`}
@@ -247,6 +254,8 @@ export function TasksClient({
           if (done) setCreating(false);
         }}
       />
+
+      {del.dialog}
     </>
   );
 }

@@ -104,7 +104,7 @@ export default function SignContractPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <LoadingIcon size={20} />
+        <LoadingIcon size="lg" />
       </div>
     );
   }

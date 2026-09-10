@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
 import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
@@ -25,6 +26,7 @@ export interface DeploymentRow {
 }
 
 export function DeploymentsTable({ rows }: { rows: DeploymentRow[] }) {
+  const del = useRecordDelete({ entity: "deployment" });
   const columns: Column<DeploymentRow>[] = [
     {
       id: "product",
@@ -124,16 +126,22 @@ export function DeploymentsTable({ rows }: { rows: DeploymentRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="deployments"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/products/${row.productId}?tab=deployments`}
-      mobile={{ title: "product", subtitle: "status", meta: ["environment", "at"] }}
-      searchPlaceholder="Search product, version, commit…"
-      initialSort={{ columnId: "at", dir: "asc" }}
-      empty={<EmptyInline>No deployment matches those filters.</EmptyInline>}
-    />
+    <>
+      <DataTable
+        tableId="deployments"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/products/${row.productId}?tab=deployments`}
+        mobile={{ title: "product", subtitle: "status", meta: ["environment", "at"] }}
+        searchPlaceholder="Search product, version, commit…"
+        initialSort={{ columnId: "at", dir: "asc" }}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.productName} · deployment ${row.number}` })} />
+        )}
+        empty={<EmptyInline>No deployment matches those filters.</EmptyInline>}
+      />
+      {del.dialog}
+    </>
   );
 }

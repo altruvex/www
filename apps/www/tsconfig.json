@@ -22,7 +22,8 @@
       "@/*": ["./*"],
       "@repo/database": ["../../packages/database"],
       "@repo/pricing-schema": ["../../packages/pricing-schema/src"],
-      "@repo/ui": ["../../packages/ui/src"]
+      "@repo/ui": ["../../packages/ui/src"],
+      "@repo/ui/www": ["../../packages/ui/src/www"]
     }
   },
   "include": [

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search, Trash2, X } from "lucide-react";
 
 import {
   Button,
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@repo/ui";
 
+import { useRecordDelete } from "@/components/os/delete-record";
 import { EmptyState } from "@/components/os/empty-state";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ export function LogExplorer({
   nextCursor: string | null;
   hasMore: boolean;
 }) {
+  const del = useRecordDelete({ entity: "log" });
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -312,6 +314,23 @@ export function LogExplorer({
                           </pre>
                         </div>
                       )}
+
+                      {/* Log lines are ingested, not authored here, so deleting
+                          one is an owner-level override rather than a routine
+                          row action — the dialog says so before it happens. */}
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-danger hover:text-danger"
+                          onClick={() =>
+                            del.request({ id: row.id, label: row.message.slice(0, 60) })
+                          }
+                        >
+                          <Trash2 className="size-3.5" />
+                          Delete line
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </li>
@@ -332,6 +351,7 @@ export function LogExplorer({
           </div>
         </Panel>
       )}
+      {del.dialog}
     </div>
   );
 }

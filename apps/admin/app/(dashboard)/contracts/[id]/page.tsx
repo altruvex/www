@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
 import { Download, ExternalLink, ShieldCheck } from "lucide-react";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -15,6 +16,11 @@ import { statusOf } from "@/lib/status";
 import { discountAmount, investmentTotal, proposalContentSchema } from "@/lib/proposal-schema";
 import { date, dateTime, money } from "@/lib/format";
 import { LifecycleButton, MarkSignedButton } from "@/app/(dashboard)/clients/[id]/client-actions";
+import { headers } from "next/headers";
+
+import { SendDocument } from "@/components/os/send-document";
+import { contractDraft } from "@/lib/email-templates";
+import { emailTransport } from "@/lib/email";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +63,13 @@ export default async function ContractDetailPage({
     },
   });
   if (!contract) notFound();
+
+  // The signing link, absolute, because it goes into a mail a client opens
+  // somewhere else entirely.
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
+  const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+  const signUrl = contract.signToken ? `${scheme}://${host}/sign/${contract.signToken}` : "";
 
   const clientName = contract.client.company || contract.client.name || "Unnamed client";
 
@@ -141,25 +154,45 @@ export default async function ContractDetailPage({
                 </a>
               </Button>
             )}
-            {contract.status === "DRAFT" && (
-              <LifecycleButton
+            {contract.status === "DRAFT" && contract.signToken && (
+              <SendDocument
                 label="Send for signature"
-                busyLabel="Sending…"
                 endpoint={`/api/admin/contracts/${contract.id}/send`}
-                variant="brand"
+                defaultSubject={contractDraft(contract.client.name, signUrl).subject}
+                defaultBody={contractDraft(contract.client.name, signUrl).body}
+                clientEmail={contract.client.email}
+                emailConfigured={emailTransport() !== "none"}
+                whatsappConfigured={Boolean(
+                  process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
+                )}
               />
             )}
             {contract.status === "SENT" && <MarkSignedButton contractId={contract.id} />}
+            <DeleteRecordButton
+              entity="contract"
+              id={contract.id}
+              label={`${contract.proposal.projectType} · ${contract.client.company ?? contract.client.name ?? "Client"}`}
+              redirectTo="/contracts"
+              variant="ghost"
+            />
           </>
         }
         alert={
           contract.status === "SIGNED" && !contract.project ? (
-            <AlertBar tone="danger">
+            <AlertBar
+              tone="danger"
+              href={`/clients/${contract.clientId}`}
+              cta="Open the client record"
+            >
               This contract is signed but no project exists. Delivery has not formally
               started and no payment schedule is being tracked.
             </AlertBar>
           ) : contract.status === "SIGNED" && !contract.onboardingMessageSentAt ? (
-            <AlertBar tone="warning">
+            <AlertBar
+              tone="warning"
+              href={`/whatsapp/${contract.clientId}`}
+              cta="Open the WhatsApp thread"
+            >
               The client has not been told what happens next. Send the onboarding
               message so the first week does not go quiet.
             </AlertBar>

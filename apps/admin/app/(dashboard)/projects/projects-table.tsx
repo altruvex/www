@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { money, date, dueLabel, when } from "@/lib/format";
 import { statusOf, type Tone } from "@/lib/status";
@@ -33,6 +34,7 @@ const HEALTH: Record<ProjectRow["health"], { label: string; tone: Tone }> = {
 };
 
 export function ProjectsTable({ rows }: { rows: ProjectRow[] }) {
+  const del = useRecordDelete({ entity: "project" });
   const columns: Column<ProjectRow>[] = [
     {
       id: "name",
@@ -136,16 +138,22 @@ export function ProjectsTable({ rows }: { rows: ProjectRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="projects"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/projects/${row.id}`}
-      searchPlaceholder="Search projects and clients…"
-      initialSort={{ columnId: "health", dir: "asc" }}
-      mobile={{ title: "name", subtitle: "phase", meta: ["health", "launch", "billing", "created"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No projects.</div>}
-    />
+    <>
+      <DataTable
+        tableId="projects"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/projects/${row.id}`}
+        searchPlaceholder="Search projects and clients…"
+        initialSort={{ columnId: "health", dir: "asc" }}
+        mobile={{ title: "name", subtitle: "phase", meta: ["health", "launch", "billing", "created"] }}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No projects.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

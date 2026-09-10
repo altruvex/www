@@ -2,8 +2,8 @@
 
 import type { PortalView } from "@/lib/client-portal";
 import { cn } from "@/lib/utils";
-import { Button, Input } from "@repo/ui";
-import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
+import { Button, Input, LoadingIcon } from "@repo/ui";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -14,9 +14,15 @@ const STATUS_LABEL: Record<string, string> = {
   DECLINED: "Not proceeding",
 };
 
+// The in-progress row shows the system's loading indicator rather than a
+// lucide glyph, so "working" looks the same here as it does in every button.
+const InProgressIcon = ({ className }: { className?: string }) => (
+  <LoadingIcon size="md" className={className} />
+);
+
 const STATUS_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
   SUBMITTED: Clock,
-  IN_PROGRESS: Loader2,
+  IN_PROGRESS: InProgressIcon,
   COMPLETED: CheckCircle2,
   DECLINED: XCircle,
 };
@@ -210,7 +216,7 @@ export function PortalClient({
             />
           </label>
           <Button type="submit" disabled={submitting}>
-            {submitting ? <Loader2 className="size-3.5 animate-spin" /> : "Send request"}
+            {submitting ? <LoadingIcon size="md" /> : "Send request"}
           </Button>
         </form>
       </section>
@@ -234,7 +240,6 @@ export function PortalClient({
                     className={cn(
                       "mt-0.5 size-4 shrink-0",
                       r.status === "COMPLETED" ? "text-success" : "text-muted-foreground",
-                      r.status === "IN_PROGRESS" && "animate-spin",
                     )}
                   />
                   <div className="min-w-0 flex-1">

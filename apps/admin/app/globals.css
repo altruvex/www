@@ -83,15 +83,16 @@
   --text-xl: 1.25rem;
   --text-metric: 1.75rem;
 
-  --radius-xs: 3px;
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 10px;
-  --radius-2xl: 12px;
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 12px);
+  --radius-2xl: calc(var(--radius) + 18px);
 
   --animate-palette-in: palette-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-panel-in: panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-dock-in: dock-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
@@ -100,9 +101,16 @@
   --dur-panel: 180ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
+  --radius: 1rem;
+
   --control-h-sm: 28px;
   --control-h: 32px;
   --control-h-lg: 36px;
+  --control-h-xl: 48px;
+
+  --control-h-icon-sm: var(--control-h-sm);
+  --control-h-icon: var(--control-h);
+  --control-h-icon-lg: var(--control-h-lg);
 
   --row-h: 40px;
   --row-px: 0.75rem;
@@ -110,26 +118,26 @@
   --sidebar-w-collapsed: 56px;
   --topbar-h: 48px;
 
-  --n-0: 220 24% 99%;
-  --n-1: 220 20% 97%;
-  --n-2: 220 17% 94%;
-  --n-3: 220 15% 89%;
-  --n-4: 220 13% 80%;
-  --n-5: 220 10% 60%;
-  --n-6: 220 11% 44%;
-  --n-7: 222 24% 20%;
-  --n-8: 222 32% 6%;
+  --n-0: 0 0% 98%;
+  --n-1: 0 0% 96%;
+  --n-2: 0 0% 91%;
+  --n-3: 0 0% 84%;
+  --n-4: 0 0% 65%;
+  --n-5: 0 0% 45%;
+  --n-6: 0 0% 32%;
+  --n-7: 0 0% 18%;
+  --n-8: 0 0% 6%;
 
-  --brand: 226 60% 56%;
-  --brand-hover: 226 54% 49%;
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
   --brand-soft: hsl(var(--brand) / 0.1);
-  --brand-foreground: 220 24% 99%;
+  --brand-foreground: var(--n-0);
 
   --status-neutral: 220 10% 41%;
-  --status-info: 226 60% 51%;
-  --status-success: 162 88% 24%;
-  --status-warning: 33 92% 30%;
-  --status-danger: 0 66% 45%;
+  --status-info: 214 89% 48%;
+  --status-success: 162 95% 31%;
+  --status-warning: 38 96% 40%;
+  --status-danger: 0 65% 51%;
   --status-progress: 258 68% 54%;
 
   --chart-1: #4F62D4;
@@ -139,27 +147,27 @@
   --chart-5: #5F7F12;
   --chart-6: #9B7BEA;
 
-  --background: 220 22% 97%;
+  --background: var(--n-0);
   --foreground: var(--n-8);
-  --surface: 220 20% 95%;
-  --surface-2: 220 17% 92%;
+  --surface: var(--n-1);
+  --surface-2: var(--n-2);
   --card: 0 0% 100%;
   --card-foreground: var(--n-8);
   --popover: 0 0% 100%;
   --popover-foreground: var(--n-8);
   --primary: var(--n-8);
   --primary-foreground: var(--n-0);
-  --secondary: 220 18% 94%;
-  --secondary-foreground: 222 20% 26%;
-  --muted: 220 18% 94%;
-  --muted-foreground: 220 12% 34%;
-  --subtle-foreground: 220 10% 42%;
+  --secondary: var(--n-1);
+  --secondary-foreground: 0 0% 25%;
+  --muted: var(--n-2);
+  --muted-foreground: 0 0% 40%;
+  --subtle-foreground: 0 0% 42%;
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
 
-  --border: 222 32% 6% / 0.09;
-  --border-mid: 222 32% 6% / 0.16;
-  --border-strong: 222 32% 6% / 0.28;
+  --border: 0 0% 6% / 0.1;
+  --border-mid: 0 0% 6% / 0.18;
+  --border-strong: 0 0% 6% / 0.28;
   --input: 0 0% 100%;
   --ring: var(--brand);
 
@@ -201,24 +209,24 @@
 }
 
 .dark {
-  --background: 222 22% 9%;
-  --foreground: 220 20% 92%;
-  --surface: 222 20% 12%;
-  --surface-2: 222 18% 15%;
-  --card: 222 20% 11%;
-  --card-foreground: 220 20% 92%;
-  --popover: 222 20% 13%;
-  --popover-foreground: 220 20% 92%;
-  --primary: 220 20% 92%;
-  --primary-foreground: 222 22% 9%;
-  --secondary: 222 18% 16%;
-  --secondary-foreground: 220 20% 92%;
-  --muted: 222 18% 16%;
-  --muted-foreground: 220 10% 66%;
-  --subtle-foreground: 220 9% 57%;
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --surface: 0 0% 11%;
+  --surface-2: 0 0% 14%;
+  --card: 0 0% 9%;
+  --card-foreground: 0 0% 94%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 94%;
+  --primary: 0 0% 94%;
+  --primary-foreground: 0 0% 7%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 58%;
+  --subtle-foreground: 0 0% 58%;
 
   --status-neutral: 220 9% 60%;
-  --status-info: 226 78% 70%;
+  --status-info: var(--brand);
   --status-success: 162 60% 50%;
   --status-warning: 36 84% 60%;
   --status-danger: 0 74% 68%;
@@ -231,15 +239,12 @@
   --chart-5: #7A9C22;
   --chart-6: #9276DE;
 
-  --brand: 226 74% 66%;
-  --brand-hover: 226 80% 72%;
   --brand-soft: hsl(var(--brand) / 0.14);
-  --brand-foreground: 222 32% 8%;
 
   --border: 0 0% 100% / 0.08;
   --border-mid: 0 0% 100% / 0.14;
   --border-strong: 0 0% 100% / 0.26;
-  --input: 0 0% 100% / 0.05;
+  --input: 0 0% 100% / 0.06;
 
   --sidebar: 222 22% 10%;
   --sidebar-foreground: 220 20% 92%;
@@ -351,6 +356,21 @@
     font-weight: 500;
   }
 
+  /* Tailwind's .sr-only is position:absolute with auto insets, so its containing
+     block is the nearest POSITIONED ancestor — and in a page of static boxes that
+     is the document itself. Inside a horizontally scrolling region (the board, a
+     wide table) its static position can be 2000px to the right, and because the
+     document is its containing block, no ancestor's overflow clips it: the whole
+     page grows a horizontal scrollbar that nothing on screen explains, and every
+     screen looks broken at every width. Pinning it to the start takes it out of
+     the document's scrollable overflow and changes nothing a screen reader gets —
+     reading order is DOM order, not geometry. .not-sr-only resets position to
+     static, so a skip link still reveals itself normally. */
+  .sr-only {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+  }
+
   .plane {
     background: var(--glass-background-strong);
     border: 1px solid var(--glass-border-strong);
@@ -358,6 +378,52 @@
     box-shadow: var(--glass-shadow-flat);
     -webkit-backdrop-filter: var(--glass-blur-soft);
     backdrop-filter: var(--glass-blur-soft);
+  }
+
+  /* The selection dock is the one surface in this OS that sits ON TOP of live
+     rows, so it is the one place the glass is allowed to actually read as
+     glass. Every other plane sits on the background, where translucency would
+     buy nothing but noise — which is why the shared --glass-background-strong
+     is deliberately near-opaque and .plane looks like paper. This tier keeps
+     the veil thin enough to see the rows move under it and leans on a real
+     blur to hold the text legible instead. */
+  .dock-glass {
+    background:
+      linear-gradient(180deg, hsl(0 0% 100% / 0.58), hsl(220 24% 98% / 0.38));
+    border: 1px solid var(--glass-border-strong);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 1px hsl(222 32% 6% / 0.04),
+      0 18px 40px -18px hsl(222 32% 6% / 0.42),
+      0 2px 8px -5px hsl(222 32% 6% / 0.2);
+    /* Not var(--glass-blur): 8px cannot carry a floating surface. The
+       saturation lift is what keeps a status pill scrolling underneath from
+       greying the dock out. */
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+  }
+
+  .dark .dock-glass {
+    background:
+      linear-gradient(180deg, hsl(0 0% 100% / 0.11), hsl(0 0% 100% / 0.045));
+    border-color: hsl(0 0% 100% / 0.14);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.16),
+      0 24px 48px -20px hsl(0 0% 0% / 0.82),
+      0 2px 10px -6px hsl(0 0% 0% / 0.6);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+  }
+
+  /* Same contract as the shared glass utilities: when the operator has asked
+     for less transparency, the dock becomes an ordinary opaque card. */
+  @media (prefers-reduced-transparency: reduce) {
+    .dock-glass,
+    .dark .dock-glass {
+      background: hsl(var(--card));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
   .rows > * + * { border-top: 1px solid hsl(var(--border)); }
@@ -370,6 +436,10 @@
 @keyframes panel-in {
   from { opacity: 0; transform: translateX(8px); }
   to { opacity: 1; transform: translateX(0); }
+}
+@keyframes dock-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes shimmer {
   from { background-position: -200% 0; }

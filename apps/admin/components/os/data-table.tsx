@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SelectionDock } from "@/components/os/selection-dock";
 import { Checkbox } from "@repo/ui";
 import { Input } from "@repo/ui";
 import { Button } from "@repo/ui";
@@ -88,6 +89,14 @@ export interface DataTableProps<T> {
   mobile?: { title: string; subtitle?: string; meta?: string[] };
   selectable?: boolean;
   bulkActions?: BulkAction<T>[];
+  /**
+   * Trailing per-row menu (edit, delete…). Rendered in its own narrow column
+   * so it never competes with the row's own link, and above the stretched
+   * target on the mobile card so it stays tappable.
+   */
+  rowActions?: (row: T) => React.ReactNode;
+  /** Singular record noun the selection dock counts in: "lead", "payment". */
+  selectionNoun?: string;
   searchPlaceholder?: string;
   /** Extra controls rendered into the toolbar (status filters, date range…). */
   toolbar?: React.ReactNode;
@@ -139,6 +148,8 @@ export function DataTable<T>({
   mobile,
   selectable = false,
   bulkActions = [],
+  rowActions,
+  selectionNoun = "row",
   searchPlaceholder = "Search…",
   toolbar,
   empty,
@@ -152,9 +163,9 @@ export function DataTable<T>({
   );
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [limit, setLimit] = React.useState(pageSize ?? Infinity);
-  const [density, setDensity] = React.useState<"compact" | "comfortable" | "relaxed">(
-    "comfortable",
-  );
+  const [density, setDensity] = React.useState<
+    "compact" | "comfortable" | "relaxed"
+  >("comfortable");
   const [hydrated, setHydrated] = React.useState(false);
 
   // Saved view: read once on mount so SSR markup and first paint agree.
@@ -200,7 +211,9 @@ export function DataTable<T>({
     const needle = query.toLowerCase();
     const searchable = columns.filter((c) => c.searchValue);
     return rows.filter((row) =>
-      searchable.some((c) => (c.searchValue!(row) ?? "").toLowerCase().includes(needle)),
+      searchable.some((c) =>
+        (c.searchValue!(row) ?? "").toLowerCase().includes(needle),
+      ),
     );
   }, [rows, query, columns]);
 
@@ -215,14 +228,16 @@ export function DataTable<T>({
       if (av == null && bv == null) return 0;
       if (av == null) return 1; // nulls always last, regardless of direction
       if (bv == null) return -1;
-      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      if (typeof av === "number" && typeof bv === "number")
+        return (av - bv) * dir;
       return String(av).localeCompare(String(bv)) * dir;
     });
   }, [filtered, sort, columns]);
 
   const visible = sorted.slice(0, limit);
   const selectedRows = sorted.filter((r) => selected.has(rowKey(r)));
-  const allVisibleSelected = visible.length > 0 && visible.every((r) => selected.has(rowKey(r)));
+  const allVisibleSelected =
+    visible.length > 0 && visible.every((r) => selected.has(rowKey(r)));
 
   function toggleSort(columnId: string) {
     setSort((prev) => {
@@ -231,6 +246,8 @@ export function DataTable<T>({
       return null; // third click clears — sorting is not a trap
     });
   }
+
+  const clearSelection = React.useCallback(() => setSelected(new Set()), []);
 
   function toggleAll() {
     setSelected((prev) => {
@@ -292,9 +309,15 @@ export function DataTable<T>({
                 value={density}
                 onValueChange={(v) => changeDensity(v as typeof density)}
               >
-                <DropdownMenuRadioItem value="compact">Compact</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="comfortable">Comfortable</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="relaxed">Relaxed</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="compact">
+                  Compact
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="comfortable">
+                  Comfortable
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="relaxed">
+                  Relaxed
+                </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -337,33 +360,28 @@ export function DataTable<T>({
         </div>
       </div>
 
-      {/* ---- bulk action bar -------------------------------------------- */}
-      {selectable && selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
-          <span className="text-base font-medium">
-            {selected.size} selected
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelected(new Set())}
-            className="text-meta text-muted-foreground underline-offset-2 hover:underline"
-          >
-            Clear
-          </button>
-          <div className="ms-auto flex flex-wrap items-center gap-1.5">
-            {bulkActions.map((action) => (
-              <Button
-                key={action.label}
-                size="sm"
-                variant={action.destructive ? "destructive" : "outline"}
-                onClick={() => action.onRun(selectedRows)}
-              >
-                {action.icon && <action.icon className="size-3.5" />}
-                {action.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+      {/* ---- bulk actions ------------------------------------------------
+          Not a banner above the rows: a dock floating over them (§33). Ticking
+          a checkbox no longer pushes the whole table down, and the actions stay
+          reachable at row four hundred. */}
+      {selectable && (
+        <SelectionDock
+          count={selected.size}
+          noun={selectionNoun}
+          onClear={clearSelection}
+          actions={bulkActions.map((action) => ({
+            label: action.label,
+            icon: action.icon,
+            destructive: action.destructive,
+            // The selection is dropped once the action resolves — leaving rows
+            // ticked after they have been mutated invites running the next
+            // action on a set the operator has stopped looking at.
+            onRun: async () => {
+              await action.onRun(selectedRows);
+              clearSelection();
+            },
+          }))}
+        />
       )}
 
       {/* ---- empty ------------------------------------------------------- */}
@@ -371,9 +389,15 @@ export function DataTable<T>({
         query ? (
           <div className="plane px-6 py-12 text-center">
             <p className="text-base text-muted-foreground">
-              Nothing matches <span className="font-medium text-foreground">“{query}”</span>.
+              Nothing matches{" "}
+              <span className="font-medium text-foreground">“{query}”</span>.
             </p>
-            <Button variant="outline" size="sm" className="mt-3" onClick={() => setQuery("")}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => setQuery("")}
+            >
               Clear search
             </Button>
           </div>
@@ -409,7 +433,10 @@ export function DataTable<T>({
                       <th
                         key={c.id}
                         scope="col"
-                        style={{ width: c.width, minWidth: c.width ? undefined : "9rem" }}
+                        style={{
+                          width: c.width,
+                          minWidth: c.width ? undefined : "9rem",
+                        }}
                         className={cn(
                           "h-8 px-3 text-start font-normal",
                           c.align === "end" && "text-end",
@@ -432,16 +459,29 @@ export function DataTable<T>({
                             <Icon
                               className={cn(
                                 "size-3 transition-opacity duration-[var(--dur-state)]",
-                                active ? "opacity-100" : "opacity-0 group-hover:opacity-60",
+                                active
+                                  ? "opacity-100"
+                                  : "opacity-0 group-hover:opacity-60",
                               )}
                             />
                           </button>
                         ) : (
-                          <span className="telemetry text-subtle-foreground">{c.header}</span>
+                          <span className="telemetry text-subtle-foreground">
+                            {c.header}
+                          </span>
                         )}
                       </th>
                     );
                   })}
+                  {rowActions && (
+                    <th
+                      scope="col"
+                      style={{ width: "3rem" }}
+                      className="h-8 px-2"
+                    >
+                      <span className="sr-only">Row actions</span>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -515,6 +555,14 @@ export function DataTable<T>({
                           )}
                         </td>
                       ))}
+                      {rowActions && (
+                        <td
+                          className="px-2 text-end align-middle"
+                          style={{ width: "3rem" }}
+                        >
+                          {rowActions(row)}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -528,7 +576,9 @@ export function DataTable<T>({
           <div className="space-y-2 md:hidden">
             {visible.map((row) => {
               const key = rowKey(row);
-              const titleCol = columns.find((c) => c.id === (mobile?.title ?? columns[0].id));
+              const titleCol = columns.find(
+                (c) => c.id === (mobile?.title ?? columns[0].id),
+              );
               const subtitleCol = mobile?.subtitle
                 ? columns.find((c) => c.id === mobile.subtitle)
                 : undefined;
@@ -571,28 +621,38 @@ export function DataTable<T>({
                         </p>
                       )}
                     </div>
-                    {selectable && (
-                      <Checkbox
-                        className="relative z-10"
-                        checked={selected.has(key)}
-                        onCheckedChange={(checked) =>
-                          setSelected((prev) => {
-                            const next = new Set(prev);
-                            if (checked) next.add(key);
-                            else next.delete(key);
-                            return next;
-                          })
-                        }
-                        aria-label="Select row"
-                      />
-                    )}
+                    <span className="relative z-10 flex shrink-0 items-center gap-1">
+                      {rowActions?.(row)}
+                      {selectable && (
+                        <Checkbox
+                          className="relative z-10"
+                          checked={selected.has(key)}
+                          onCheckedChange={(checked) =>
+                            setSelected((prev) => {
+                              const next = new Set(prev);
+                              if (checked) next.add(key);
+                              else next.delete(key);
+                              return next;
+                            })
+                          }
+                          aria-label="Select row"
+                        />
+                      )}
+                    </span>
                   </div>
                   {metaCols.length > 0 && (
                     <dl className="relative z-10 mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-2.5">
                       {metaCols.map((c) => (
                         <div key={c.id} className="min-w-0">
-                          <dt className="telemetry text-subtle-foreground">{c.header}</dt>
-                          <dd className={cn("truncate", c.mono && "font-mono text-meta tabular-nums")}>
+                          <dt className="telemetry text-subtle-foreground">
+                            {c.header}
+                          </dt>
+                          <dd
+                            className={cn(
+                              "truncate",
+                              c.mono && "font-mono text-meta tabular-nums",
+                            )}
+                          >
                             {c.cell(row)}
                           </dd>
                         </div>
@@ -603,7 +663,10 @@ export function DataTable<T>({
               );
 
               return (
-                <div key={key} className="plane relative p-3 transition-colors duration-[var(--dur-state)] active:bg-surface">
+                <div
+                  key={key}
+                  className="plane relative p-3 transition-colors duration-[var(--dur-state)] active:bg-surface"
+                >
                   {body}
                 </div>
               );
@@ -612,7 +675,11 @@ export function DataTable<T>({
 
           {limit < sorted.length && (
             <div className="flex justify-center">
-              <Button variant="outline" size="sm" onClick={() => setLimit((l) => l + (pageSize ?? 50))}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLimit((l) => l + (pageSize ?? 50))}
+              >
                 Show {Math.min(pageSize ?? 50, sorted.length - limit)} more
                 <span className="text-subtle-foreground">
                   ({sorted.length - limit} left)

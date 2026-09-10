@@ -25,5 +25,6 @@ export * from "./components/navigation/tabs";
 export * from "./components/data-display/avatar";
 export * from "./components/data-display/badge";
 
+export * from "./components/feedback/loading-icon";
 export * from "./components/feedback/skeleton";
 export * from "./components/feedback/sonner";

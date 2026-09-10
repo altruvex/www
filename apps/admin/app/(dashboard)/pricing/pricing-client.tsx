@@ -1,11 +1,12 @@
 "use client";
 
-import { Construction, Loader2 } from "lucide-react";
+import { Construction } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { Button, Input } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { cn } from "@/lib/utils";
 
 /** Serialisable view of resolved pricing, built on the server. */
@@ -217,7 +218,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                           })
                         }
                       >
-                        {saving === key ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+                        {saving === key ? <LoadingIcon size="sm" /> : "Save"}
                       </Button>
                     </td>
                   </tr>
@@ -282,7 +283,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                       })
                     }
                   >
-                    {saving === key ? <Loader2 className="size-3.5 animate-spin" /> : "Save plan"}
+                    {saving === key ? <LoadingIcon size="sm" /> : "Save plan"}
                   </Button>
                 </div>
               );
@@ -315,7 +316,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                         durationBusinessDays: pkg.durationBusinessDays, status: pkg.status,
                       })
                     }>
-                    {saving === key ? <Loader2 className="size-3.5 animate-spin" /> : "Save package"}
+                    {saving === key ? <LoadingIcon size="sm" /> : "Save package"}
                   </Button>
                 </div>
               );
@@ -379,7 +380,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                       billingCycle: addon.billingCycle, status: addon.status,
                     })
                   }>
-                  {saving === key ? <Loader2 className="size-3.5 animate-spin" /> : "Save add-on"}
+                  {saving === key ? <LoadingIcon size="sm" /> : "Save add-on"}
                 </Button>
               </div>
             );
@@ -426,7 +427,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
         </p>
         <Button className="mt-3" size="sm" variant="secondary" disabled={saving === "terms"}
           onClick={() => save("terms", { kind: "terms", ...terms })}>
-          {saving === "terms" ? <Loader2 className="size-3.5 animate-spin" /> : "Save terms"}
+          {saving === "terms" ? <LoadingIcon size="sm" /> : "Save terms"}
         </Button>
       </Panel>
 

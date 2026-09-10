@@ -1,10 +1,10 @@
-"use me";
 "use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { MessageSquarePlus, Send, CornerDownLeft } from "lucide-react";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
 import { Button } from "@repo/ui";
 import { Textarea } from "@repo/ui";
@@ -34,6 +34,18 @@ export function NotesPanel({
   const [notes, setNotes] = React.useState<NoteItem[]>(initialNotes);
   const [content, setContent] = React.useState("");
   const [isPending, startTransition] = React.useTransition();
+  // The list is local state, so a deleted note has to leave it too —
+  // router.refresh() alone re-renders the same array.
+  const [deleting, setDeleting] = React.useState<string | null>(null);
+  const del = useRecordDelete({
+    entity: "note",
+    onDeleted: (count) => {
+      if (count > 0 && deleting) {
+        setNotes((prev) => prev.filter((note) => note.id !== deleting));
+      }
+      setDeleting(null);
+    },
+  });
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,11 +97,20 @@ export function NotesPanel({
                 <span className="font-mono text-micro font-medium text-foreground">
                   {note.createdBy.name ?? note.createdBy.email}
                 </span>
-                <span
-                  title={dateTime(note.createdAt)}
-                  className="font-mono text-micro text-subtle-foreground"
-                >
-                  {when(note.createdAt)}
+                <span className="flex items-center gap-1">
+                  <span
+                    title={dateTime(note.createdAt)}
+                    className="font-mono text-micro text-subtle-foreground"
+                  >
+                    {when(note.createdAt)}
+                  </span>
+                  <RowActions
+                    onDelete={() => {
+                      setDeleting(note.id);
+                      del.request({ id: note.id, label: note.content.slice(0, 60) });
+                    }}
+                    deleteLabel="Delete note"
+                  />
                 </span>
               </div>
               <p className="whitespace-pre-wrap text-meta text-muted-foreground leading-relaxed">
@@ -120,6 +141,7 @@ export function NotesPanel({
           </Button>
         </div>
       </form>
+      {del.dialog}
     </Panel>
   );
 }

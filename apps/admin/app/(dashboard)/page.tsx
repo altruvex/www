@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Rocket, Wallet } from "lucide-react";
 import { getDashboardData, STAGE_TONE } from "@/lib/dashboard-data";
 import { getActionCentre } from "@/lib/action-center";
+import { slackConfigured } from "@/lib/slack";
 import { getEngineeringSummary } from "@/lib/engineering";
 import { statusOf } from "@/lib/status";
 import { money, moneyByCurrency, percent, dueLabel, sumByCurrency } from "@/lib/format";
@@ -9,6 +10,7 @@ import { PageHeader } from "@/components/os/page-header";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { ActionCenter } from "@/components/os/action-center";
+import { SlackButton } from "@/components/os/slack-button";
 import { FunnelBars } from "@/components/os/funnel";
 import { Timeline } from "@/components/os/timeline";
 import { EmptyInline } from "@/components/os/empty-state";
@@ -53,7 +55,14 @@ export default async function DashboardPage() {
       <Panel
         title="Action centre"
         description="Ranked by urgency across every module, not grouped by type"
-        action={actions.length > 0 ? <PanelLink href="/actions">All {actions.length}</PanelLink> : null}
+        action={
+          <div className="flex items-center gap-3">
+            {slackConfigured() && (
+              <SlackButton action="digest" label="Post to Slack" pendingLabel="Posting…" />
+            )}
+            {actions.length > 0 ? <PanelLink href="/actions">All {actions.length}</PanelLink> : null}
+          </div>
+        }
         flush
       >
         <ActionCenter items={actions} limit={8} />

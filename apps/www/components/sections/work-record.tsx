@@ -1,6 +1,7 @@
 "use client";
 
 import { Num } from "@/components/ui/num";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
@@ -95,12 +96,10 @@ export const WorkRecord = memo(function WorkRecord({
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
           <Link
             href={`/work/${slug}`}
-            className="inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-foreground outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+            className="group inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-foreground outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
           >
             {tW("labels.viewCaseStudy")}
-            <span aria-hidden className="rtl:rotate-180">
-              →
-            </span>
+            <ArrowIcon className="h-3.5 w-3.5" />
           </Link>
           {externalUrl && (
             <a

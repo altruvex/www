@@ -22,12 +22,12 @@ export default async function HealthPage() {
         description="What is failing right now, what it costs, and what to do about it. Checks run when this page loads — there is no cached status to go stale."
         alert={
           down.length > 0 ? (
-            <AlertBar tone="danger">
+            <AlertBar tone="danger" href="#dependencies" cta="Read the impact and recovery">
               {down.length} dependenc{down.length === 1 ? "y is" : "ies are"} down. The
               impact is described on each card below.
             </AlertBar>
           ) : degraded.length > 0 ? (
-            <AlertBar tone="warning">
+            <AlertBar tone="warning" href="#dependencies" cta="Read the impact and recovery">
               {degraded.length} dependenc{degraded.length === 1 ? "y is" : "ies are"}{" "}
               degraded — working, but losing some requests.
             </AlertBar>
@@ -42,7 +42,7 @@ export default async function HealthPage() {
         <StatTile label="Not configured" value={unconfigured.length} sub="Feature unavailable" />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div id="dependencies" className="grid scroll-mt-20 gap-4 lg:grid-cols-2">
         {checks.map((check) => (
           <Panel
             key={check.id}

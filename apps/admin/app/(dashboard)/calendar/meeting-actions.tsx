@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import { Button } from "@repo/ui";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { setMeetingStatus } from "@/app/(dashboard)/_actions/records";
 
-export function MeetingActions({ meetingId }: { meetingId: string }) {
+export function MeetingActions({ meetingId, title }: { meetingId: string; title: string }) {
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
+  const del = useRecordDelete({ entity: "meeting" });
 
   function act(status: string, label: string) {
     startTransition(async () => {
@@ -35,6 +37,13 @@ export function MeetingActions({ meetingId }: { meetingId: string }) {
         <X className="size-3.5" />
         Decline
       </Button>
+      {/* Declining keeps the request on the record; deleting is for a booking
+          that was never real — spam, or a duplicate of the one below it. */}
+      <RowActions
+        onDelete={() => del.request({ id: meetingId, label: title })}
+        deleteLabel="Delete request"
+      />
+      {del.dialog}
     </div>
   );
 }

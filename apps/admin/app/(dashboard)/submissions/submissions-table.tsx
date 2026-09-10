@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@repo/ui";
 import { when, truncate, phone as fmtPhone } from "@/lib/format";
@@ -32,6 +33,7 @@ export interface SubmissionRow {
 }
 
 export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
+  const del = useRecordDelete({ entity: "submission" });
   const router = useRouter();
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
@@ -170,17 +172,34 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="submissions"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/submissions/${row.id}`}
-      searchPlaceholder="Search the raw messages…"
-      initialSort={{ columnId: "received", dir: "desc" }}
-      mobile={{ title: "name", subtitle: "message", meta: ["status", "interest", "received"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No submissions.</div>}
-    />
+    <>
+      <DataTable
+        tableId="submissions"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/submissions/${row.id}`}
+        searchPlaceholder="Search the raw messages…"
+        initialSort={{ columnId: "received", dir: "desc" }}
+        mobile={{ title: "name", subtitle: "message", meta: ["status", "interest", "received"] }}
+        selectable
+        selectionNoun="submission"
+        bulkActions={[
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: row.name }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No submissions.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }
 

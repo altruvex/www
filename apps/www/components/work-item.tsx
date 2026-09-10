@@ -1,6 +1,7 @@
 "use client";
 
 import { Num } from "@/components/ui/num";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Link } from "@/i18n/navigation";
 import { getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { gsap } from "@/lib/utils/gsap";
@@ -145,15 +146,11 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
               {year}
             </span>
             <span className="flex h-9 w-9 items-center justify-center rounded-full border border-s-border bg-s-surface text-s-mid transition-all duration-300 group-hover:border-brand/40 group-hover:bg-brand-soft group-hover:text-brand-text group-focus-within:border-brand/40 group-focus-within:bg-brand-soft group-focus-within:text-brand-text">
-              <svg
-                className="h-4 w-4 transition-all duration-300 ltr:group-hover:translate-x-0.5 ltr:group-focus-within:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5 rtl:group-focus-within:-translate-x-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+              <ArrowIcon
+                motion="none"
                 strokeWidth={1.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
+                className="ltr:group-hover:translate-x-0.5 ltr:group-focus-within:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:group-focus-within:-translate-x-0.5"
+              />
             </span>
           </div>
         </div>
@@ -215,15 +212,11 @@ export const WorkItem = memo(function WorkItem({ slug, index }: WorkItemProps) {
                   </span>
                   <span className="flex items-center gap-1 text-s-mid lowercase transition-all group-hover/link:text-brand-text">
                     ({getDomainName(externalUrl)})
-                    <svg
-                      className="h-3.5 w-3.5 transition-all duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-                    </svg>
+                    <ArrowIcon
+                      direction="external"
+                      motion="none"
+                      className="h-3.5 w-3.5 duration-300 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5 rtl:group-hover/link:-translate-x-0.5"
+                    />
                   </span>
                 </a>
               )}

@@ -6,6 +6,7 @@ import { Panel } from "@/components/os/panel";
 import { EmptyState } from "@/components/os/empty-state";
 import { when, dateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { MarkAllRead } from "./mark-all-read";
 import { Button } from "@repo/ui";
 
@@ -97,14 +98,30 @@ export default async function NotificationsPage() {
                 </>
               );
               return (
-                <li key={notification.id}>
+                <li key={notification.id} className="flex items-start gap-1 pe-2">
                   {href ? (
-                    <Link href={href} className="flex gap-2.5 px-3 py-2.5 hover:bg-surface/70">
+                    <Link
+                      href={href}
+                      className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5 hover:bg-surface/70"
+                    >
                       {body}
                     </Link>
                   ) : (
-                    <div className="flex gap-2.5 px-3 py-2.5">{body}</div>
+                    <div className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5">{body}</div>
                   )}
+                  {/* A notification is a message about a record, not the record
+                      itself — deleting one destroys nothing but the message. */}
+                  <span className="pt-2">
+                    <DeleteRecordButton
+                      entity="notification"
+                      id={notification.id}
+                      label={notification.title}
+                      variant="ghost"
+                      size="icon-sm"
+                    >
+                      {null}
+                    </DeleteRecordButton>
+                  </span>
                 </li>
               );
             })}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { MOTION } from "@/lib/motion";
@@ -8,7 +9,6 @@ import { SITE_CONFIG } from "@/lib/metadata";
 import { gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
 import {
-  ArrowUpRight,
   Calendar,
   Check,
   Copy,
@@ -420,9 +420,10 @@ export function CommandPalette({
                       {Icon ? (
                         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                       ) : (
-                        <ArrowUpRight
-                          className="h-4 w-4 shrink-0 text-muted-foreground/60 rtl:-scale-x-100"
-                          aria-hidden
+                        <ArrowIcon
+                          direction="external"
+                          motion="none"
+                          className="text-muted-foreground/60"
                         />
                       )}
                       <span className="flex-1 truncate">{item.label}</span>

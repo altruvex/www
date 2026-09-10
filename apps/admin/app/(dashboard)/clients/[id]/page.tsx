@@ -11,6 +11,7 @@ import {
   Phone,
   Plus,
 } from "lucide-react";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -164,6 +165,13 @@ export default async function ClientDetailPage({
                 Message
               </Link>
             </Button>
+            <DeleteRecordButton
+              entity="client"
+              id={client.id}
+              label={client.company || client.name || client.phone}
+              redirectTo="/clients"
+              variant="ghost"
+            />
             <Button asChild variant="brand">
               <Link href={`/clients/${client.id}/new-proposal`}>
                 <Plus className="size-3.5" />

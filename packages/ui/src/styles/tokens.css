@@ -45,13 +45,19 @@
   --text-micro: var(--text-micro);
   --text-meta: var(--text-meta);
   --text-md: var(--text-md);
-  --radius-xs: calc(var(--radius) - 10px);
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 4px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 6px);
-  --radius-2xl: calc(var(--radius) + 12px);
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 6px);
+  --radius-xl: calc(var(--radius) + 12px);
+  --radius-2xl: calc(var(--radius) + 18px);
   --radius-pill: 9999px;
+
+  --radius-ctl-sm: calc(var(--radius) - 4px);
+  --radius-ctl: var(--radius);
+  --radius-ctl-lg: calc(var(--radius) + 2px);
+  --radius-ctl-xl: calc(var(--radius) + 4px);
+  --radius-overlay: calc(var(--radius) + 12px);
 }
 
 :root {
@@ -84,10 +90,15 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
-  --radius: 14px;
+  --radius: 1rem;
   --control-h-sm: 2rem;
   --control-h: 2.5rem;
   --control-h-lg: 2.75rem;
+  --control-h-xl: 3rem;
+
+  --control-h-icon-sm: 2rem;
+  --control-h-icon: 2.25rem;
+  --control-h-icon-lg: 2.5rem;
 
   --text-display: clamp(3rem, 6vw, 5.5rem);
   --text-heading: clamp(2.125rem, 4vw, 3.25rem);
@@ -101,8 +112,18 @@
   --text-md: 0.875rem;
   --leading-body: 1.7;
 
+  --n-0: 0 0% 98%;
+  --n-1: 0 0% 96%;
+  --n-2: 0 0% 91%;
+  --n-3: 0 0% 84%;
+  --n-4: 0 0% 65%;
+  --n-5: 0 0% 45%;
+  --n-6: 0 0% 32%;
+  --n-7: 0 0% 18%;
+  --n-8: 0 0% 6%;
+
   --background: 220 24% 98%;
-  --foreground: 222 32% 6%;
+  --foreground: var(--n-8);
   --surface: 220 18% 95%;
   --surface-subtle: 220 18% 96%;
   --surface-elevated: 0 0% 100%;
@@ -111,16 +132,16 @@
   --popover: 0 0% 100%;
   --popover-foreground: var(--foreground);
   --primary: var(--foreground);
-  --primary-foreground: 220 24% 99%;
+  --primary-foreground: var(--n-0);
   --secondary: 220 17% 94%;
   --secondary-foreground: 222 20% 24%;
   --muted: 220 17% 93%;
   --muted-foreground: 220 11% 39%;
   --subtle-foreground: 220 10% 43%;
-  --brand: 226 60% 56%;
-  --brand-hover: 226 54% 49%;
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
   --brand-soft: hsl(var(--brand) / 0.1);
-  --brand-foreground: 220 24% 99%;
+  --brand-foreground: var(--n-0);
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
   --border: 222 32% 6% / 0.1;
@@ -129,10 +150,10 @@
   --border-strong: 222 32% 6% / 0.28;
   --input: 0 0% 100%;
   --ring: var(--brand);
-  --destructive: 0 66% 45%;
+  --destructive: 0 65% 51%;
   --danger: var(--destructive);
-  --success: 162 88% 24%;
-  --warning: 33 92% 30%;
+  --success: 162 95% 31%;
+  --warning: 38 96% 40%;
   --info: var(--brand);
   --neutral: 220 10% 41%;
   --progress: 258 68% 54%;
@@ -144,7 +165,7 @@
 .dark {
   color-scheme: dark;
   --background: 222 22% 9%;
-  --foreground: 220 20% 92%;
+  --foreground: 0 0% 94%;
   --surface: 222 20% 12%;
   --surface-subtle: 222 18% 14%;
   --surface-elevated: 222 20% 11%;
@@ -159,10 +180,7 @@
   --muted: 222 18% 16%;
   --muted-foreground: 220 10% 66%;
   --subtle-foreground: 220 9% 57%;
-  --brand: 226 74% 66%;
-  --brand-hover: 226 80% 72%;
   --brand-soft: hsl(var(--brand) / 0.14);
-  --brand-foreground: 222 32% 8%;
   --border: 0 0% 100% / 0.08;
   --border-subtle: 0 0% 100% / 0.05;
   --border-mid: 0 0% 100% / 0.14;

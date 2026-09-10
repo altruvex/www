@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Button } from "@repo/ui";
 import { money, when, phone as fmtPhone } from "@/lib/format";
 import { convertEstimateToClient } from "@/app/(dashboard)/_actions/records";
@@ -26,6 +27,7 @@ export interface EstimateRow {
 }
 
 export function TransparencyTable({ rows }: { rows: EstimateRow[] }) {
+  const del = useRecordDelete({ entity: "transparencyLead" });
   const router = useRouter();
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
@@ -128,17 +130,34 @@ export function TransparencyTable({ rows }: { rows: EstimateRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="transparency"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      // Only converted estimates have somewhere to go; the rest are not links.
-      rowHref={(row) => (row.clientId ? `/clients/${row.clientId}` : undefined)}
-      searchPlaceholder="Search estimates…"
-      initialSort={{ columnId: "at", dir: "desc" }}
-      mobile={{ title: "who", subtitle: "project", meta: ["quote", "weeks", "converted", "at"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No estimates.</div>}
-    />
+    <>
+      <DataTable
+        tableId="transparency"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        // Only converted estimates have somewhere to go; the rest are not links.
+        rowHref={(row) => (row.clientId ? `/clients/${row.clientId}` : undefined)}
+        searchPlaceholder="Search estimates…"
+        initialSort={{ columnId: "at", dir: "desc" }}
+        mobile={{ title: "who", subtitle: "project", meta: ["quote", "weeks", "converted", "at"] }}
+        selectable
+        selectionNoun="lead"
+        bulkActions={[
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: row.name ?? row.phone }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.name ?? row.phone })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No estimates.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

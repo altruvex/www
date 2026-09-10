@@ -252,7 +252,7 @@ export default async function SettingsPage({
 
       {tab === "security" && (
         <div className="space-y-4">
-          <AlertBar tone="info">
+          <AlertBar tone="info" href="/audit" cta="See the audit trail">
             Access to this application is gated at the edge: the proxy refuses every
             request without an ADMIN or SUPERADMIN session before a page renders. Server
             actions re-check permission independently — the UI deciding what to draw is

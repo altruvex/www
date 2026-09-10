@@ -89,7 +89,7 @@ export default async function PipelinePage() {
         description="Every live deal by stage. Stages after Qualified are derived from the proposal and contract records, so they move themselves."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
           label="Weighted value"
           value={moneyByCurrency(weighted, true)}
@@ -124,10 +124,11 @@ export default async function PipelinePage() {
         />
       ) : (
         <>
-          <AlertBar tone="info">
-            Drag between New, Viewed, Contacted, Qualified and Lost. Proposal, Contract
-            and Signed are computed from the documents themselves — send a proposal or
-            generate a contract to move a deal into them.
+          <AlertBar tone="info" href="/clients" cta="Open a client to send a proposal">
+            New, Viewed, Contacted, Qualified and Lost are yours to set — drag a card, or
+            use the stage menu on it (the only way on a touch screen). The locked columns
+            are computed from the documents themselves: send a proposal or generate a
+            contract to move a deal into them.
           </AlertBar>
           <PipelineBoard
             cards={cards}

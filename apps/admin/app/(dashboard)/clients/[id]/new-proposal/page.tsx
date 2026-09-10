@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   Check,
+  ChevronLeft,
+  ChevronRight,
+  History,
   Images,
-  Loader2,
   Send,
   SlidersHorizontal,
 } from "lucide-react";
@@ -24,6 +26,7 @@ import {
 } from "@repo/pricing-schema";
 import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { SegmentedControl, segmentClass } from "@repo/ui";
 import {
   Select,
@@ -61,19 +64,6 @@ import {
   type ValidationIssue,
 } from "@/lib/proposal-schema";
 
-/**
- * The proposal builder.
- *
- * Restructured around the DOCUMENT rather than the schema: a rail of the seven
- * slides plus setup and preview, and one editor pane at a time. The old screen
- * was a single 800-line scroll in which "the pricing table" and "slide 5" were
- * the same thing but never said so.
- *
- * Everything that determines the generated deck is unchanged — the same
- * estimator call, the same seeding rule, the same `ProposalContent`, the same
- * two POST bodies. This is navigation and presentation only.
- */
-
 interface ClientSummary {
   id: string;
   name: string | null;
@@ -103,12 +93,58 @@ const TIMELINES: { value: Timeline; label: string }[] = [
 
 type RailId = "setup" | ProposalGroupId | "preview";
 
+const DRAFT_VERSION = 2;
+const draftKey = (clientId: string) =>
+  `altruvex.proposal-draft.v${DRAFT_VERSION}.${clientId}`;
+
+interface ProposalSource {
+  id: string;
+  createdAt: string;
+  projectType: string;
+  complexity: string;
+  currency: string;
+  totalPrice: number;
+  status: string;
+  content: ProposalContent;
+}
+
+interface ProposalDraft {
+  savedAt: string;
+  estimateSignature: string | null;
+  projectType: ProjectType | null;
+  complexity: Complexity | null;
+  timeline: Timeline | null;
+  brandIdentity: BrandIdentity | null;
+  contentReadiness: ContentReadiness | null;
+  currency: "EGP" | "USD";
+  accentName: string | null;
+  content: ProposalContent;
+}
+
 function formatCurrency(amount: number, currency: string) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+function formatSavedAt(iso: string): string {
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) return "an unknown time";
+  const today = new Date();
+  const sameDay =
+    when.getFullYear() === today.getFullYear() &&
+    when.getMonth() === today.getMonth() &&
+    when.getDate() === today.getDate();
+  return sameDay
+    ? when.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
+    : when.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 }
 
 export default function NewProposalPage() {
@@ -124,7 +160,25 @@ export default function NewProposalPage() {
   const [previewSlides, setPreviewSlides] = React.useState<string[] | null>(
     null,
   );
+  // An edit used to throw the rendered slides away, which left the operator
+  // with nothing to look at exactly when they had just changed something.
+  // The render is kept and marked out of date instead — a stale picture of
+  // the deck beats a blank panel, as long as it never claims to be current.
+  const [previewStale, setPreviewStale] = React.useState(false);
+  const [previewStartedAt, setPreviewStartedAt] = React.useState<number | null>(
+    null,
+  );
   const [rail, setRail] = React.useState<RailId>("setup");
+  // A tick meaning "the schema is happy" is not the same claim as "you have
+  // read this". The rail used to show both as one green check, so nine
+  // never-opened sections looked finished. Visited is tracked separately.
+  const [visited, setVisited] = React.useState<Set<RailId>>(
+    () => new Set<RailId>(["setup"]),
+  );
+  const goTo = React.useCallback((id: RailId) => {
+    setRail(id);
+    setVisited((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
+  }, []);
 
   const [projectType, setProjectType] = React.useState<ProjectType | null>(
     null,
@@ -138,9 +192,21 @@ export default function NewProposalPage() {
   const [currency, setCurrency] = React.useState<"EGP" | "USD">("EGP");
   const [accentName, setAccentName] = React.useState<string | null>(null);
 
-  // The whole editable deck. Seeded once from the estimator, then owned by
-  // the admin — nothing downstream re-derives it.
   const [content, setContent] = React.useState<ProposalContent | null>(null);
+
+  const [draftSavedAt, setDraftSavedAt] = React.useState<string | null>(null);
+  const [draftPending, setDraftPending] = React.useState(false);
+  const [offeredDraft, setOfferedDraft] = React.useState<ProposalDraft | null>(
+    null,
+  );
+  const [storageBlocked, setStorageBlocked] = React.useState(false);
+  const draftChecked = React.useRef(false);
+
+  // Every past proposal that still carries its content document. A deck is
+  // mostly the same sentences every time; the part that changes is the client
+  // and the numbers. Copying one is faster than re-seeding and re-editing it.
+  const [sources, setSources] = React.useState<ProposalSource[] | null>(null);
+  const [sourcesOpen, setSourcesOpen] = React.useState(false);
 
   const fetchClient = React.useCallback(async () => {
     try {
@@ -178,10 +244,6 @@ export default function NewProposalPage() {
     });
   }, [projectType, complexity, timeline, brandIdentity, contentReadiness]);
 
-  // Seed the editable content from the live estimate — the midpoint of the
-  // range is a starting point, not the final number (§5.1 rule 3: Ali edits
-  // before generating). Re-seeding only happens when the estimator inputs
-  // change, so hand edits are never silently overwritten.
   const estimateSignature =
     estimate && projectType && client
       ? `${projectType}-${estimate.minPrice}-${estimate.maxPrice}-${estimate.minWeeks}-${estimate.maxWeeks}-${currency}`
@@ -190,37 +252,207 @@ export default function NewProposalPage() {
     null,
   );
 
+  const clientIdentity = React.useMemo(
+    () =>
+      client
+        ? {
+            clientName: client.name
+              ? `${client.name}${client.company ? ` – ${client.company}` : ""}`
+              : client.company || client.phone,
+            clientCompany: client.company || client.name || "Client",
+          }
+        : null,
+    [client],
+  );
+
+  const buildSeed = React.useCallback((): ProposalContent | null => {
+    if (!estimate || !projectType || !client || !clientIdentity) return null;
+    const midPrice =
+      Math.round((estimate.minPrice + estimate.maxPrice) / 2 / 500) * 500;
+    const midWeeks = Math.round((estimate.minWeeks + estimate.maxWeeks) / 2);
+    const priceInCurrency = currency === "USD" ? egpToUsd(midPrice) : midPrice;
+    return buildDefaultProposalContent({
+      ...clientIdentity,
+      industry: client.industry,
+      projectType,
+      currency,
+      totalPrice: priceInCurrency,
+      timelineWeeks: midWeeks,
+    });
+  }, [estimate, projectType, client, clientIdentity, currency]);
+
+  // Seeding only ever happens into an EMPTY deck now. It used to fire on any
+  // estimator change, which meant toggling complexity after writing nine
+  // sections replaced all of them with a fresh midpoint and no warning — the
+  // old comment claimed hand edits were never silently overwritten, and that
+  // was the one case where they were. A changed estimate is now offered, not
+  // applied: `seedOutOfDate` puts a re-seed button on the screen instead.
   if (
     estimate &&
     projectType &&
     client &&
+    !content &&
     estimateSignature !== syncedSignature
   ) {
     setSyncedSignature(estimateSignature);
-    const midPrice =
-      Math.round((estimate.minPrice + estimate.maxPrice) / 2 / 500) * 500;
-    const midWeeks = Math.round((estimate.minWeeks + estimate.maxWeeks) / 2);
-    // The USD rate is the schema's fixed, quarterly-reviewed figure — it used
-    // to be a bare `/ 50` here, which meant a rate change had to be remembered
-    // in two places.
-    const priceInCurrency = currency === "USD" ? egpToUsd(midPrice) : midPrice;
-    setContent(
-      buildDefaultProposalContent({
-        clientName: client.name
-          ? `${client.name}${client.company ? ` – ${client.company}` : ""}`
-          : client.company || client.phone,
-        clientCompany: client.company || client.name || "Client",
-        industry: client.industry,
-        projectType,
-        currency,
-        totalPrice: priceInCurrency,
-        timelineWeeks: midWeeks,
-      }),
-    );
-    setPreviewSlides(null);
+    const seeded = buildSeed();
+    if (seeded) {
+      setContent(seeded);
+      setPreviewSlides(null);
+      setPreviewStale(false);
+    }
   }
 
-  // Same schema the server gate runs — the form can't disagree with it.
+  const seedOutOfDate = Boolean(
+    estimate && content && estimateSignature !== syncedSignature,
+  );
+
+  const reseedFromEstimator = () => {
+    const seeded = buildSeed();
+    if (!seeded) return;
+    setSyncedSignature(estimateSignature);
+    setContent(seeded);
+    setPreviewSlides(null);
+    setPreviewStale(false);
+    toast.success("Deck re-seeded", {
+      description: "Every section is back to the estimator's starting text.",
+    });
+  };
+
+  React.useEffect(() => {
+    if (draftChecked.current) return;
+    draftChecked.current = true;
+    try {
+      const raw = window.localStorage.getItem(draftKey(clientId));
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as ProposalDraft;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (parsed?.content && parsed?.savedAt) setOfferedDraft(parsed);
+    } catch {
+      setStorageBlocked(true);
+    }
+  }, [clientId]);
+
+  React.useEffect(() => {
+    if (!content) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraftPending(true);
+    const timer = setTimeout(() => {
+      try {
+        const draft: ProposalDraft = {
+          savedAt: new Date().toISOString(),
+          estimateSignature,
+          projectType,
+          complexity,
+          timeline,
+          brandIdentity,
+          contentReadiness,
+          currency,
+          accentName,
+          content,
+        };
+        window.localStorage.setItem(draftKey(clientId), JSON.stringify(draft));
+        setDraftSavedAt(draft.savedAt);
+        setStorageBlocked(false);
+      } catch {
+        setDraftSavedAt(null);
+        setStorageBlocked(true);
+      }
+      setDraftPending(false);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [
+    content,
+    clientId,
+    estimateSignature,
+    projectType,
+    complexity,
+    timeline,
+    brandIdentity,
+    contentReadiness,
+    currency,
+    accentName,
+  ]);
+
+  const loadSources = async () => {
+    setSourcesOpen(true);
+    if (sources) return;
+    try {
+      const response = await fetch("/api/admin/proposals");
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Could not load past proposals");
+        setSources([]);
+        return;
+      }
+      setSources(
+        (data.proposals as ProposalSource[])
+          .filter((proposal) => proposal.content)
+          .slice(0, 25),
+      );
+    } catch (error: unknown) {
+      console.error("Error fetching past proposals:", error);
+      toast.error("Could not load past proposals");
+      setSources([]);
+    }
+  };
+
+  const copyFrom = (source: ProposalSource) => {
+    if (!clientIdentity) return;
+    const today = new Date().toISOString().slice(0, 10);
+    // The client and the date are the only two things a copy must not keep.
+    // Everything else — scope, phases, terms, wording — is the reason to copy.
+    setContent({
+      ...source.content,
+      meta: {
+        ...source.content.meta,
+        ...clientIdentity,
+        proposalDate: today,
+      },
+    });
+    setCurrency(source.content.meta.currency === "USD" ? "USD" : "EGP");
+    if (!projectType) setProjectType(source.projectType as ProjectType);
+    if (!complexity) setComplexity(source.complexity as Complexity);
+    setPreviewSlides(null);
+    setPreviewStale(false);
+    setSourcesOpen(false);
+    goTo("cover");
+    toast.success("Copied", {
+      description:
+        "Client name and proposal date were replaced. Check the price and the scope before you send it.",
+    });
+  };
+
+  const clearDraft = React.useCallback(() => {
+    try {
+      window.localStorage.removeItem(draftKey(clientId));
+    } catch {
+      // Ignored
+    }
+    setDraftSavedAt(null);
+    setOfferedDraft(null);
+  }, [clientId]);
+
+  const restoreDraft = (draft: ProposalDraft) => {
+    setProjectType(draft.projectType);
+    setComplexity(draft.complexity);
+    setTimeline(draft.timeline);
+    setBrandIdentity(draft.brandIdentity);
+    setContentReadiness(draft.contentReadiness);
+    setCurrency(draft.currency);
+    if (draft.accentName) setAccentName(draft.accentName);
+    setSyncedSignature(draft.estimateSignature);
+    setContent(draft.content);
+    setPreviewSlides(null);
+    setPreviewStale(false);
+    setOfferedDraft(null);
+    setDraftSavedAt(draft.savedAt);
+    setRail(PROPOSAL_GROUPS[0]?.id || "setup");
+    toast.success("Draft restored", {
+      description: "It was held in this browser — nothing had been sent to the server.",
+    });
+  };
+
   const validation = React.useMemo(
     () =>
       content
@@ -234,8 +466,6 @@ export default function NewProposalPage() {
     [validation.issues],
   );
 
-  // A schema error that belongs to no group has no field to attach to. Rare,
-  // but silent failure is the one thing this screen must not do.
   const orphanIssues = React.useMemo(
     () => unassignedIssues(validation.issues),
     [validation.issues],
@@ -245,7 +475,7 @@ export default function NewProposalPage() {
     projectType && complexity && accentName && content && validation.ok,
   );
 
-  const postContent = async (url: string) =>
+  const postContent = async (url: string, extra?: Record<string, unknown>) =>
     fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -255,21 +485,60 @@ export default function NewProposalPage() {
         complexity,
         accentName,
         content,
+        ...extra,
       }),
     });
 
-  const handlePreview = async () => {
-    if (!content || !validation.ok) return;
+  /**
+   * Render the deck, or one slide of it.
+   *
+   * Three things this must not do, all of which it used to. It must not
+   * return silently when the deck is invalid — a button that does nothing is
+   * indistinguishable from a broken one, so an invalid deck sends the
+   * operator to the first section that is actually wrong. It must not blank
+   * the slides it already has, because a render takes seconds and an empty
+   * panel for those seconds reads as failure. And it must not navigate: the
+   * section-level render is meant to leave you exactly where you were.
+   */
+  const handlePreview = async (options: { slide?: number; navigate?: boolean } = {}) => {
+    if (!content) return;
+    if (!validation.ok) {
+      const firstBroken = PROPOSAL_GROUPS.find((g) => issueCounts[g.id] > 0);
+      toast.error("The deck has issues the generator will refuse", {
+        description: firstBroken
+          ? `Start with ${firstBroken.label}.`
+          : "Fix the outstanding issues first.",
+      });
+      if (firstBroken) goTo(firstBroken.id);
+      return;
+    }
+
     setPreviewing(true);
-    setPreviewSlides(null);
-    setRail("preview");
+    setPreviewStartedAt(Date.now());
+    if (options.navigate) goTo("preview");
     try {
-      const response = await postContent("/api/admin/proposals/preview");
+      const response = await postContent(
+        "/api/admin/proposals/preview",
+        options.slide ? { slide: options.slide } : undefined,
+      );
       const data = await response.json();
       if (data.success) {
-        setPreviewSlides(data.slides);
+        if (options.slide) {
+          // A single-slide render replaces just that frame, so the rest of
+          // the deck on screen keeps whatever age it already had.
+          setPreviewSlides((prev) => {
+            const next = prev ? [...prev] : [];
+            next[options.slide! - 1] = data.slides[0];
+            return next;
+          });
+        } else {
+          setPreviewSlides(data.slides);
+          setPreviewStale(false);
+        }
       } else {
-        toast.error(data.message || "Preview failed");
+        toast.error(data.message || "Preview failed", {
+          description: data.detail,
+        });
       }
     } catch (error: unknown) {
       console.error("Error rendering preview:", error);
@@ -278,6 +547,7 @@ export default function NewProposalPage() {
       });
     } finally {
       setPreviewing(false);
+      setPreviewStartedAt(null);
     }
   };
 
@@ -288,6 +558,7 @@ export default function NewProposalPage() {
       const response = await postContent("/api/admin/proposals");
       const data = await response.json();
       if (data.success) {
+        clearDraft();
         toast.success("Proposal generated");
         router.push(`/clients/${clientId}`);
       } else {
@@ -308,7 +579,6 @@ export default function NewProposalPage() {
     }
   };
 
-  /* ---- loading / failure ------------------------------------------------ */
   if (loading) {
     return (
       <div className="space-y-4">
@@ -352,29 +622,28 @@ export default function NewProposalPage() {
     : 0;
   const percentOk = Math.abs(percentTotal - 100) < 0.001;
   const weeks = content ? timelineWeeks(content.timelinePhases) : 0;
-  // Phase durations stay hand-editable, but the server refuses a deck past the
-  // published ceiling. Say so here rather than letting the operator find out
-  // from a 400 after writing the whole document.
   const overCeiling = weeks > MAX_DELIVERY_WEEKS;
   const deckLocked = !content;
+  // "Reviewed" means opened AND clean. Neither half alone is the truth.
+  const reviewed = deckLocked
+    ? 0
+    : PROPOSAL_GROUPS.filter(
+        (group) => visited.has(group.id) && issueCounts[group.id] === 0,
+      ).length;
 
-  // The estimator's own three figures, converted with the same rule the seed
-  // uses so a preset can never disagree with the number the deck opened on.
   const toSeedCurrency = (egp: number) =>
     currency === "USD" ? egpToUsd(egp) : Math.round(egp / 500) * 500;
   const pricePresets: PricePreset[] = estimate
     ? [
-        { label: "Min", amount: toSeedCurrency(estimate.minPrice) },
-        {
-          label: "Mid",
-          amount: toSeedCurrency((estimate.minPrice + estimate.maxPrice) / 2),
-        },
-        { label: "Max", amount: toSeedCurrency(estimate.maxPrice) },
-      ]
+      { label: "Min", amount: toSeedCurrency(estimate.minPrice) },
+      {
+        label: "Mid",
+        amount: toSeedCurrency((estimate.minPrice + estimate.maxPrice) / 2),
+      },
+      { label: "Max", amount: toSeedCurrency(estimate.maxPrice) },
+    ]
     : [];
 
-  // Stated rather than blocked: quoting outside the estimator is a normal
-  // commercial decision, and a silent divergence is the thing to avoid.
   const outsideRange =
     estimate && subtotal > 0
       ? subtotal < toSeedCurrency(estimate.minPrice)
@@ -391,28 +660,28 @@ export default function NewProposalPage() {
     issues: number;
     disabled: boolean;
   }[] = [
-    {
-      id: "setup",
-      shortSlide: "◇",
-      label: "Scope",
-      issues: 0,
-      disabled: false,
-    },
-    ...PROPOSAL_GROUPS.map((group) => ({
-      id: group.id as RailId,
-      shortSlide: group.slide,
-      label: group.label,
-      issues: issueCounts[group.id],
-      disabled: deckLocked,
-    })),
-    {
-      id: "preview" as RailId,
-      shortSlide: "▣",
-      label: "Preview",
-      issues: 0,
-      disabled: deckLocked,
-    },
-  ];
+      {
+        id: "setup",
+        shortSlide: "◇",
+        label: "Scope",
+        issues: 0,
+        disabled: false,
+      },
+      ...PROPOSAL_GROUPS.map((group) => ({
+        id: group.id as RailId,
+        shortSlide: group.slide,
+        label: group.label,
+        issues: issueCounts[group.id],
+        disabled: deckLocked,
+      })),
+      {
+        id: "preview" as RailId,
+        shortSlide: "▣",
+        label: "Preview",
+        issues: 0,
+        disabled: deckLocked,
+      },
+    ];
 
   return (
     <div className="space-y-4 pb-24">
@@ -457,17 +726,43 @@ export default function NewProposalPage() {
         }
       />
 
-      {/* On a phone the vertical rail would be 700px of navigation above the
-          first field, so it becomes a horizontal strip instead — the same map,
-          one thumb-reachable row (§33: redesign density, do not shrink it). */}
+      {offeredDraft && (
+        <div className="plane flex flex-wrap items-center gap-x-4 gap-y-2 border-brand/30 bg-brand-soft px-3 py-2">
+          <History className="size-3.5 shrink-0 text-brand" aria-hidden />
+          <p className="min-w-0 flex-1 text-base">
+            An unfinished proposal for this client was left in this browser at{" "}
+            <span className="font-mono text-micro tabular-nums">
+              {formatSavedAt(offeredDraft.savedAt)}
+            </span>
+            .{" "}
+            <span className="text-muted-foreground">
+              Restoring replaces everything on this screen. It was never sent to
+              the server.
+            </span>
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="brand"
+              size="sm"
+              onClick={() => restoreDraft(offeredDraft)}
+            >
+              Restore draft
+            </Button>
+            <Button variant="outline" size="sm" onClick={clearDraft}>
+              Discard
+            </Button>
+          </div>
+        </div>
+      )}
+
       <nav aria-label="Proposal sections" className="lg:hidden">
-        <div className="-mx-3 overflow-x-auto px-3 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="-mx-3 overflow-x-auto px-3 pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden">
           <ul className="flex min-w-max items-stretch gap-1.5">
             {railEntries.map((entry) => (
               <li key={entry.id}>
                 <button
                   type="button"
-                  onClick={() => setRail(entry.id)}
+                  onClick={() => goTo(entry.id)}
                   disabled={entry.disabled}
                   aria-current={rail === entry.id ? "step" : undefined}
                   className={cn(
@@ -495,7 +790,6 @@ export default function NewProposalPage() {
       </nav>
 
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
-        {/* ---- rail: the deck, in order ---------------------------------- */}
         <nav
           aria-label="Proposal sections"
           className="hidden lg:sticky lg:top-4 lg:block lg:self-start"
@@ -504,7 +798,7 @@ export default function NewProposalPage() {
             <ul className="rows">
               <RailItem
                 active={rail === "setup"}
-                onClick={() => setRail("setup")}
+                onClick={() => goTo("setup")}
                 slide={<SlidersHorizontal className="size-3.5" />}
                 label="Scope & price"
                 blurb="Estimator, price, discount"
@@ -512,9 +806,26 @@ export default function NewProposalPage() {
               />
             </ul>
 
-            <p className="telemetry border-y border-border bg-surface px-3 py-1.5 text-subtle-foreground">
-              The deck
-            </p>
+            <div className="border-y border-border bg-surface px-3 py-1.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="telemetry text-subtle-foreground">The deck</p>
+                <p className="font-mono text-micro tabular-nums text-subtle-foreground">
+                  {reviewed}/{PROPOSAL_GROUPS.length}
+                </p>
+              </div>
+              <div
+                className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-border"
+                role="img"
+                aria-label={`${reviewed} of ${PROPOSAL_GROUPS.length} sections opened and free of issues`}
+              >
+                <span
+                  style={{
+                    width: `${(reviewed / PROPOSAL_GROUPS.length) * 100}%`,
+                  }}
+                  className="block h-full bg-brand transition-[width] duration-[var(--dur-state)]"
+                />
+              </div>
+            </div>
 
             <ul className="rows">
               {PROPOSAL_GROUPS.map((group) => (
@@ -522,7 +833,7 @@ export default function NewProposalPage() {
                   key={group.id}
                   active={rail === group.id}
                   disabled={deckLocked}
-                  onClick={() => setRail(group.id)}
+                  onClick={() => goTo(group.id)}
                   slide={
                     <span className="font-mono text-micro">{group.slide}</span>
                   }
@@ -534,7 +845,9 @@ export default function NewProposalPage() {
                       ? "locked"
                       : issueCounts[group.id]
                         ? "error"
-                        : "done"
+                        : visited.has(group.id)
+                          ? "done"
+                          : "todo"
                   }
                 />
               ))}
@@ -548,7 +861,7 @@ export default function NewProposalPage() {
               <RailItem
                 active={rail === "preview"}
                 disabled={deckLocked}
-                onClick={() => setRail("preview")}
+                onClick={() => goTo("preview")}
                 slide={<Images className="size-3.5" />}
                 label="Preview"
                 blurb="Render the real slides"
@@ -558,10 +871,70 @@ export default function NewProposalPage() {
           </Panel>
         </nav>
 
-        {/* ---- pane ------------------------------------------------------- */}
         <div className="min-w-0 space-y-3">
           {rail === "setup" && (
             <>
+              <Panel
+                title="Start from a past proposal"
+                description="A deck is mostly the same sentences every time. Copy one, then change what is actually different."
+                action={
+                  <Button variant="outline" size="sm" onClick={loadSources}>
+                    {sourcesOpen ? "Refresh list" : "Browse past proposals"}
+                  </Button>
+                }
+              >
+                {!sourcesOpen ? (
+                  <p className="max-w-prose text-base text-muted-foreground">
+                    Copying keeps the scope, the phases and the terms, and
+                    replaces the client name and the date. The price comes
+                    across too — check it against the estimator below.
+                  </p>
+                ) : sources === null ? (
+                  <div className="space-y-1.5">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : sources.length === 0 ? (
+                  <p className="max-w-prose text-base text-muted-foreground">
+                    No past proposal carries a content document yet. Decks
+                    generated from here will show up in this list.
+                  </p>
+                ) : (
+                  <ul className="rows -mx-3 -mb-3">
+                    {sources.map((source) => (
+                      <li key={source.id}>
+                        <button
+                          type="button"
+                          onClick={() => copyFrom(source)}
+                          className="flex w-full items-center gap-3 px-3 py-2 text-start transition-colors duration-[var(--dur-state)] hover:bg-surface/70"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-base">
+                              {source.content.meta.clientCompany}
+                              <span className="ms-2 text-muted-foreground">
+                                {source.content.meta.projectLabel}
+                              </span>
+                            </span>
+                            <span className="block truncate text-meta text-subtle-foreground">
+                              {source.projectType} · {source.complexity} ·{" "}
+                              {formatSavedAt(source.createdAt)} ·{" "}
+                              {source.status.toLowerCase()}
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-mono text-micro tabular-nums text-muted-foreground">
+                            {formatCurrency(
+                              source.totalPrice,
+                              source.currency,
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Panel>
+
               <Panel
                 title="What are we building?"
                 description="These five inputs drive the estimator. Changing any of them re-seeds the deck below."
@@ -636,12 +1009,37 @@ export default function NewProposalPage() {
 
               {estimate ? (
                 <>
+                  {seedOutOfDate && (
+                    <div className="plane flex flex-wrap items-center gap-x-4 gap-y-2 border-warning/30 bg-warning/[0.06] px-3 py-2">
+                      <AlertTriangle
+                        className="size-3.5 shrink-0 text-warning"
+                        aria-hidden
+                      />
+                      <p className="min-w-0 flex-1 text-base">
+                        This deck was not produced by these estimator inputs.{" "}
+                        <span className="text-muted-foreground">
+                          It was copied, restored, or written before the inputs
+                          changed — and it was kept rather than overwritten.
+                          Re-seeding replaces every section with fresh starting
+                          text.
+                        </span>
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={reseedFromEstimator}
+                      >
+                        Re-seed the deck
+                      </Button>
+                    </div>
+                  )}
+
                   <Panel
                     title="Estimator range"
                     description="What the public site would have quoted for these inputs"
                   >
                     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
-                      <span className="font-sans text-[length:var(--text-metric)] font-medium leading-none tracking-[-0.02em] tabular-nums">
+                      <span className="font-sans text-(length:--text-metric) font-medium leading-none tracking-[-0.02em] tabular-nums">
                         {formatCurrency(estimate.minPrice, "EGP")}
                         <span className="mx-2 text-subtle-foreground">–</span>
                         {formatCurrency(estimate.maxPrice, "EGP")}
@@ -667,7 +1065,7 @@ export default function NewProposalPage() {
                         content={content}
                         onChange={(next) => {
                           setContent(next);
-                          setPreviewSlides(null);
+                          setPreviewStale(true);
                         }}
                         issues={validation.issues}
                         presets={pricePresets}
@@ -746,7 +1144,9 @@ export default function NewProposalPage() {
                       <Button
                         variant="brand"
                         size="sm"
-                        onClick={() => setRail("cover")}
+                        onClick={() =>
+                          setRail(PROPOSAL_GROUPS[0]?.id || "setup")
+                        }
                       >
                         Edit the deck
                       </Button>
@@ -766,15 +1166,33 @@ export default function NewProposalPage() {
           )}
 
           {rail !== "setup" && rail !== "preview" && content && (
-            <ProposalContentEditor
-              content={content}
-              onChange={(next) => {
-                setContent(next);
-                setPreviewSlides(null);
-              }}
-              issues={validation.issues}
-              activeGroup={rail}
-            />
+            <>
+              <ProposalContentEditor
+                content={content}
+                onChange={(next) => {
+                  setContent(next);
+                  setPreviewStale(true);
+                }}
+                issues={validation.issues}
+                activeGroup={rail}
+              />
+
+              <SlideEcho
+                slide={PROPOSAL_GROUPS.find((g) => g.id === rail)?.slide}
+                slides={previewSlides}
+                stale={previewStale}
+                busy={previewing}
+                startedAt={previewStartedAt}
+                canRender={validation.ok}
+                onRender={(slide) => handlePreview({ slide })}
+              />
+
+              <SectionPager
+                entries={railEntries}
+                current={rail}
+                onNavigate={goTo}
+              />
+            </>
           )}
 
           {orphanIssues.length > 0 && (
@@ -806,22 +1224,33 @@ export default function NewProposalPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!validation.ok || previewing}
-                  onClick={handlePreview}
+                  disabled={previewing}
+                  onClick={() => handlePreview()}
                 >
-                  {previewing && <Loader2 className="size-3.5 animate-spin" />}
+                  {previewing && <LoadingIcon size="sm" />}
                   {previewSlides ? "Re-render" : "Render slides"}
                 </Button>
               }
             >
-              {previewing ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <Skeleton key={i} className="aspect-video w-full" />
-                  ))}
+              {previewing && !previewSlides ? (
+                <div className="space-y-3">
+                  <RenderProgress startedAt={previewStartedAt} />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <Skeleton key={i} className="aspect-video w-full" />
+                    ))}
+                  </div>
                 </div>
               ) : previewSlides ? (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-3">
+                  {previewing && <RenderProgress startedAt={previewStartedAt} />}
+                  {!previewing && previewStale && (
+                    <p className="rounded-md border border-border bg-surface px-2.5 py-2 text-base text-muted-foreground">
+                      Rendered before your last edit. This is the deck as it
+                      was — re-render to see the deck as it is.
+                    </p>
+                  )}
+                  <div className="grid gap-3 sm:grid-cols-2">
                   {previewSlides.map((src, i) => (
                     <figure key={i} className="space-y-1">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -835,6 +1264,7 @@ export default function NewProposalPage() {
                       </figcaption>
                     </figure>
                   ))}
+                  </div>
                 </div>
               ) : (
                 <p className="max-w-prose text-base text-muted-foreground">
@@ -848,10 +1278,9 @@ export default function NewProposalPage() {
         </div>
       </div>
 
-      {/* ---- action bar: state and the two things you can do ------------- */}
       {content && (
         <div className="sticky bottom-3 z-20 lg:bottom-4">
-          <div className="plane flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 shadow-[var(--elev-2)]">
+          <div className="plane flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 shadow-(--elev-2)">
             {validation.ok ? (
               <span className="inline-flex items-center gap-1.5 text-base text-success">
                 <Check className="size-3.5" aria-hidden />
@@ -864,7 +1293,7 @@ export default function NewProposalPage() {
                   const firstBroken = PROPOSAL_GROUPS.find(
                     (g) => issueCounts[g.id] > 0,
                   );
-                  if (firstBroken) setRail(firstBroken.id);
+                  if (firstBroken) goTo(firstBroken.id);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-sm text-base text-danger hover:underline"
               >
@@ -873,6 +1302,19 @@ export default function NewProposalPage() {
                 {validation.issues.length === 1 ? "" : "s"} to fix
               </button>
             )}
+            <span
+              className="hidden items-center gap-1.5 text-meta text-subtle-foreground md:inline-flex"
+              title="Held in this browser only. A proposal exists on the server once it is generated."
+            >
+              <History className="size-3" aria-hidden />
+              {draftPending
+                ? "Keeping a local draft…"
+                : storageBlocked
+                  ? "Local storage blocked — draft not stored"
+                  : draftSavedAt
+                    ? `Draft in this browser · ${formatSavedAt(draftSavedAt)}`
+                    : "Draft not stored"}
+            </span>
 
             <span className="hidden font-mono text-micro tabular-nums text-subtle-foreground sm:inline">
               {reduction > 0 && (
@@ -896,12 +1338,12 @@ export default function NewProposalPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={!validation.ok || previewing}
+                disabled={previewing}
                 aria-busy={previewing}
-                onClick={handlePreview}
+                onClick={() => handlePreview({ navigate: true })}
               >
                 {previewing ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <LoadingIcon size="sm" />
                 ) : (
                   <Images className="size-3.5" />
                 )}
@@ -915,7 +1357,7 @@ export default function NewProposalPage() {
                 onClick={handleGenerate}
               >
                 {submitting ? (
-                  <Loader2 className="size-3.5 animate-spin" />
+                  <LoadingIcon size="sm" />
                 ) : (
                   <Send className="size-3.5" />
                 )}
@@ -926,6 +1368,164 @@ export default function NewProposalPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * How long the render has been going, in plain seconds.
+ *
+ * A spinner says "working"; it does not say "for how long", and a
+ * LibreOffice render is slow enough that the difference matters. Past the
+ * point where the wait stops looking normal, it says so rather than spinning
+ * indefinitely and letting the operator guess.
+ */
+function RenderProgress({ startedAt }: { startedAt: number | null }) {
+  const [now, setNow] = React.useState(() => Date.now());
+
+  React.useEffect(() => {
+    if (!startedAt) return;
+    const timer = setInterval(() => setNow(Date.now()), 500);
+    return () => clearInterval(timer);
+  }, [startedAt]);
+
+  const seconds = startedAt ? Math.floor((now - startedAt) / 1000) : 0;
+  const slow = seconds >= 20;
+
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-surface px-2.5 py-2"
+    >
+      <LoadingIcon size="sm" className="text-brand" />
+      <span className="text-base">
+        Rendering the real deck
+        <span className="ms-1.5 font-mono text-micro tabular-nums text-subtle-foreground">
+          {seconds}s
+        </span>
+      </span>
+      <span className="min-w-0 flex-1 text-meta text-muted-foreground">
+        {slow
+          ? "Longer than usual. Another render may be holding the converter — it will time out rather than hang."
+          : "LibreOffice converts the file, then each slide is rasterised. A few seconds is normal."}
+      </span>
+    </div>
+  );
+}
+
+function SlideEcho({
+  slide,
+  slides,
+  stale,
+  busy,
+  startedAt,
+  canRender,
+  onRender,
+}: {
+  slide?: string;
+  slides: string[] | null;
+  stale: boolean;
+  busy: boolean;
+  startedAt: number | null;
+  canRender: boolean;
+  onRender: (slide: number) => void;
+}) {
+  const index = slide && /^\d+$/.test(slide) ? Number(slide) - 1 : -1;
+  const src = index >= 0 && slides ? slides[index] : undefined;
+  if (index < 0) return null;
+
+  return (
+    <section className="plane overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-3 py-2">
+        <div className="min-w-0">
+          <h3 className="text-md font-semibold">Slide {slide}, as rendered</h3>
+          <p className="mt-0.5 text-meta text-muted-foreground">
+            {src
+              ? stale
+                ? "Rendered before your last edit — the real generator, one revision behind."
+                : "Current. This is the file the client receives."
+              : canRender
+                ? "Not rendered yet. Rendering this one slide is faster than the whole deck."
+                : "The generator refuses a deck with outstanding issues — rendering will point you at the first one."}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={busy}
+          aria-busy={busy}
+          onClick={() => onRender(index + 1)}
+        >
+          {busy ? (
+            <LoadingIcon size="sm" />
+          ) : (
+            <Images className="size-3.5" />
+          )}
+          {src ? "Re-render this slide" : "Render this slide"}
+        </Button>
+      </div>
+      {(src || busy) && (
+        <div className="space-y-3 p-3">
+          {busy && <RenderProgress startedAt={startedAt} />}
+          {src ? (
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={src}
+                alt={`Slide ${slide} as last rendered`}
+                className={cn(
+                  "w-full rounded-md border border-border transition-opacity duration-[var(--dur-state)]",
+                  (stale || busy) && "opacity-50",
+                )}
+              />
+            </div>
+          ) : (
+            <Skeleton className="aspect-video w-full" />
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SectionPager({
+  entries,
+  current,
+  onNavigate,
+}: {
+  entries: { id: RailId; label: string; disabled: boolean }[];
+  current: RailId;
+  onNavigate: (id: RailId) => void;
+}) {
+  const open = entries.filter((entry) => !entry.disabled);
+  const index = open.findIndex((entry) => entry.id === current);
+  const previous = index > 0 ? open[index - 1] : null;
+  const next = index >= 0 && index < open.length - 1 ? open[index + 1] : null;
+
+  return (
+    <nav
+      aria-label="Move through the deck"
+      className="flex items-center justify-between gap-2"
+    >
+      {previous ? (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onNavigate(previous.id)}
+        >
+          <ChevronLeft className="size-3.5" />
+          <span className="truncate">{previous.label}</span>
+        </Button>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <Button variant="outline" size="sm" onClick={() => onNavigate(next.id)}>
+          <span className="truncate">{next.label}</span>
+          <ChevronRight className="size-3.5" />
+        </Button>
+      )}
+    </nav>
   );
 }
 
@@ -957,14 +1557,14 @@ function RailItem({
         aria-current={active ? "step" : undefined}
         className={cn(
           "relative flex w-full items-start gap-2 px-3 py-2 text-start",
-          "transition-colors duration-[var(--dur-state)]",
+          "transition-colors duration-(--dur-state)",
           active ? "bg-brand-soft" : "hover:bg-surface/70",
           disabled && "cursor-not-allowed opacity-40 hover:bg-transparent",
         )}
       >
         {active && (
           <span
-            className="absolute inset-y-1 start-0 w-0.5 rounded-e-full bg-foreground"
+            className="absolute inset-y-1 inset-s-0 w-0.5 rounded-e-full bg-foreground"
             aria-hidden
           />
         )}
@@ -989,7 +1589,13 @@ function RailItem({
         {state === "done" && (
           <Check
             className="mt-0.5 size-3 shrink-0 text-success"
-            aria-label="complete"
+            aria-label="opened, no issues"
+          />
+        )}
+        {state === "todo" && (
+          <span
+            className="mt-1.5 size-1.5 shrink-0 rounded-full bg-border-mid"
+            aria-label="not opened yet"
           />
         )}
       </button>

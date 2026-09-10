@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
 import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
@@ -33,6 +34,7 @@ function duration(ms: number | null): string {
 }
 
 export function BuildsTable({ rows }: { rows: BuildRow[] }) {
+  const del = useRecordDelete({ entity: "build" });
   const columns: Column<BuildRow>[] = [
     {
       id: "product",
@@ -112,16 +114,22 @@ export function BuildsTable({ rows }: { rows: BuildRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="builds"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/products/${row.productId}?tab=builds`}
-      mobile={{ title: "product", subtitle: "status", meta: ["duration", "at"] }}
-      searchPlaceholder="Search product, branch, commit…"
-      initialSort={{ columnId: "at", dir: "asc" }}
-      empty={<EmptyInline>No build matches those filters.</EmptyInline>}
-    />
+    <>
+      <DataTable
+        tableId="builds"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/products/${row.productId}?tab=builds`}
+        mobile={{ title: "product", subtitle: "status", meta: ["duration", "at"] }}
+        searchPlaceholder="Search product, branch, commit…"
+        initialSort={{ columnId: "at", dir: "asc" }}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.productName} · build ${row.number}` })} />
+        )}
+        empty={<EmptyInline>No build matches those filters.</EmptyInline>}
+      />
+      {del.dialog}
+    </>
   );
 }

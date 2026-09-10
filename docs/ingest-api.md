@@ -128,6 +128,147 @@ pulls a whole trace from any one line that carries it.
 Logs write no activity event. They are already the record, and one audit line per
 log line would make the audit feed useless.
 
+## `POST /api/ingest/github` — the GitHub webhook
+
+The same evidence, arriving on its own instead of being posted by a step
+somebody remembered to add to a workflow file. A build recorded this way is
+indistinguishable from one a pipeline posted, because it describes the same run
+and is written by the same code (`lib/ingest-writers.ts`).
+
+### Authentication
+
+GitHub's own HMAC over the raw request body, not an ingest token — a webhook can
+hold neither a session nor a per-product credential.
+
+- Set `GITHUB_WEBHOOK_SECRET` on the server, and the same value as the webhook's
+  secret in GitHub.
+- **It fails closed.** With no secret configured the endpoint returns `503` and
+  writes nothing. An unverified webhook would be an unauthenticated write to the
+  one part of this application whose value is that a human could not have typed
+  it.
+
+### Attaching a repository to a product
+
+Two ways, on purpose — **Products → a product → GitHub → Link a repository**, and the same
+control on the create form:
+
+- **Pick one from a list.** Set `GITHUB_TOKEN` to list everything that token can
+  reach (private repositories included), or `GITHUB_ACCOUNT` to list one
+  account's public repositories with no credential at all. Picking also fills in
+  any product field still blank — the name, the slug, and the production URL
+  from the repository's own homepage.
+- **Type the URL.** Any repository, including one this instance cannot see: an
+  open-source project, or a client's own account.
+
+Neither environment variable is required. Without both, the field is simply a
+text input, which is what it always was.
+
+Picking also fills in the **framework**, read from the repository's own
+manifest rather than from GitHub's `language` field — "TypeScript" is equally
+true of a Next.js site, an Express API and a CLI, and is not an answer to what
+something is built with. Three rules govern it, and each one was a wrong answer
+before it was a rule:
+
+- **Every manifest present is read, not the first one.** `laravel/laravel`
+  carries a `composer.json` that says Laravel and a `package.json` that carries
+  Vite for its assets; stopping at the first answered "Vite".
+- **A build tool never beats a framework.** Vite and a bare `go.mod` are
+  low-confidence and used only when nothing else answers.
+- **A workspace root is not the project.** A monorepo's root manifest lists
+  `turbo` and no framework, so when one declares `workspaces` the applications
+  underneath it are read instead.
+
+The field says which file answered (`Read from apps/admin/package.json`), so a
+wrong value can be traced rather than merely doubted. When nothing recognisable
+is found the field stays blank — a guess that reads like a fact is worse than
+an empty box.
+
+The listing marks a repository already attached to another product. That is not
+a nicety: the receiver **refuses** an event a second product claims, so seeing it
+here is the difference between a rejected webhook and a mystery.
+
+### Which product an event belongs to
+
+The repository the event names, matched against the product's **repository URL**
+(Products → a product → GitHub). Every spelling of the same repository matches —
+`https://github.com/owner/repo`, the `.git` suffix, an `git@github.com:` remote.
+
+- No product names that repository → `404`, and the message says so.
+- **Two products name it** → `409`. A monorepo that builds several products has
+  no per-repository answer to "which product did this run build", and guessing
+  would file one product's history on another's page. Use the per-product ingest
+  tokens there, where the pipeline states which product it means.
+
+### Setup
+
+Repository → **Settings → Webhooks → Add webhook**:
+
+| Field | Value |
+| --- | --- |
+| Payload URL | `https://admin.altruvex.com/api/ingest/github` |
+| Content type | `application/json` |
+| Secret | the same string as `GITHUB_WEBHOOK_SECRET` |
+| Events | **Workflow runs** and **Deployment statuses** |
+
+Subscribing to more events than that is harmless — anything else is acknowledged
+with `200` and dropped, so GitHub's delivery log stays green.
+
+Do **not** also `curl` `/api/ingest/*` from the same workflow. Both paths are
+valid; using both records every run twice.
+
+### `workflow_run` → a build
+
+| GitHub | Becomes |
+| --- | --- |
+| `status: queued / requested / waiting` | `QUEUED` |
+| `status: in_progress` | `RUNNING` |
+| `conclusion: success` | `SUCCEEDED` |
+| `conclusion: cancelled / skipped / stale / neutral` | `CANCELLED` |
+| any other conclusion (`failure`, `timed_out`, `startup_failure`) | `FAILED` |
+
+- `externalId` is `gh-run-<run id>`, so a **re-run updates the same build** —
+  including clearing the failure reason when it is retried into success.
+- A workflow run carries **no environment**. One is inferred: the repository's
+  default branch is `PRODUCTION`, every other branch is `PREVIEW`. This is a
+  stated convention, not something GitHub sent — the alternative, defaulting to
+  production, would file every branch experiment as a production build.
+- `triggeredBy` is `<actor> · <workflow name>`, because a repository with a test
+  workflow and a deploy workflow produces two builds per push and an operator
+  needs to see which one went red.
+- `failureReason` quotes GitHub's conclusion. GitHub reports a conclusion, never
+  a cause; the cause is in the run's own logs.
+
+### `deployment_status` → a deployment
+
+| GitHub state | Becomes |
+| --- | --- |
+| `queued`, `pending` | `PENDING` |
+| `in_progress` | `IN_PROGRESS` |
+| `success` | `SUCCEEDED` |
+| `failure`, `error` | `FAILED` |
+| `inactive` | **nothing** |
+
+- `externalId` is `gh-deployment-<deployment id>`.
+- The environment name is free text on GitHub's side, so it is matched by
+  substring: `prod*` → `PRODUCTION`, `stag*` / `test` / `qa` → `STAGING`,
+  anything unrecognised → `PREVIEW`. Nothing is promoted to production by
+  accident.
+- `environment_url` becomes the deployment's URL, and therefore the product's
+  live URL — but only if it is absolute. A relative value is worth less than
+  what the product already had recorded.
+- `inactive` is **not** a rollback. GitHub sends it when a deployment is
+  superseded, which the superseding deployment's own row already records;
+  writing `ROLLED_BACK` for it would put an undo on the timeline that nobody
+  performed. A real rollback still comes through `/api/ingest/deployments` with
+  `rollbackOfNumber`.
+
+### Verifying it works
+
+```bash
+cd apps/admin && bun run verify:github        # the mapping, no database needed
+cd apps/admin && DATABASE_URL=… bun run verify:engineering   # the route, end to end
+```
+
 ## Never send
 
 Do not put secrets in `message`, `metadata`, `commitMessage`, or `failureReason`.
@@ -135,6 +276,11 @@ Log payloads are rendered verbatim in the admin UI. Field-name-based redaction
 protects the audit trail, not free-text log bodies.
 
 ## GitHub Actions example
+
+Only needed if you are **not** using the webhook above. The webhook reports
+workflow runs and deployments without a step in the workflow file; this is the
+explicit alternative, and for a monorepo that builds several products it is the
+only one that can say which product it means.
 
 ```yaml
 - name: Report deployment

@@ -65,11 +65,7 @@ export function SceneInversionWrapper() {
       ctx?.revert();
     };
   }, []);
-
-  // NOTE: this wrapper clips with `overflow-clip`, never `overflow-hidden`.
-  // `hidden` turns the element into a scroll container, which silently breaks
-  // `position: sticky` for every descendant — including the process-section
-  // card stack. `clip` clips the same box but creates no scroll container.
+  
   return (
     <div
       id="services-wrapper"

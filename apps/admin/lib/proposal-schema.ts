@@ -392,6 +392,30 @@ export function validUntilDate(meta: {
   return end;
 }
 
+/**
+ * The one spelling of a date in a proposal. The deck used to format inline and
+ * the editor showed nothing at all, so an operator setting "30 days" could not
+ * see the date the client would read.
+ */
+export function formatDocDate(date: Date): string | null {
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * Estimated delivery: the proposal date plus the timeline's own total weeks.
+ * Derived, never stored — a stored date drifts the moment a phase is edited.
+ */
+export function deliveryDate(proposalDate: string, weeks: number): Date {
+  const end = new Date(proposalDate);
+  end.setDate(end.getDate() + Math.round(weeks * 7));
+  return end;
+}
+
 /** Fills {token} placeholders in a label. */
 export function fillTemplate(
   template: string,

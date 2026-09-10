@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
@@ -56,19 +57,7 @@ export default function WorkCaseStudyPageClient({
               href="/work"
               className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
             >
-              <svg
-                className="h-3.5 w-3.5 rtl:rotate-180"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                />
-              </svg>
+              <ArrowIcon direction="back" motion="none" className="h-3.5 w-3.5" />
               {tLabels("backLink")}
             </Link>
           </div>
@@ -185,19 +174,7 @@ export default function WorkCaseStudyPageClient({
                     <span className="font-bold border-b border-s-border-hover group-hover:border-local-accent group-hover:text-local-accent-text transition-all duration-300 pb-0.5">
                       {tLabels("visitProj")}
                     </span>
-                    <svg
-                      className="h-5 w-5 rtl:-rotate-180 transition-all duration-300 group-hover:text-local-accent-text ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
+                    <ArrowIcon className="h-5 w-5 group-hover:text-local-accent-text ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
                   </a>
                 </div>
               )}
@@ -223,19 +200,10 @@ export default function WorkCaseStudyPageClient({
                   href="/work"
                   className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
                 >
-                  <svg
-                    className="h-3.5 w-3.5 rtl:rotate-180 transition-all duration-300 ltr:group-hover:-translate-x-0.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                    />
-                  </svg>
+                  <ArrowIcon
+                    direction="back"
+                    className="h-3.5 w-3.5 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
+                  />
                   {tLabels("backLink")}
                 </Link>
               </div>

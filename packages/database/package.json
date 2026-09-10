@@ -16,8 +16,10 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev && prisma generate",
     "studio": "prisma studio",
+    "studio:prod": "NODE_ENV=production prisma studio",
     "backfill:clients": "tsx scripts/backfill-clients.ts",
-    "db:deploy": "prisma migrate deploy && prisma generate"
+    "db:deploy": "prisma migrate deploy && prisma generate",
+    "db:deploy:prod": "NODE_ENV=production prisma migrate deploy && prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

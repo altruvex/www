@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date, daysFromNow } from "@/lib/format";
 import { statusOf } from "@/lib/status";
@@ -28,6 +30,7 @@ export interface ProposalRow {
 }
 
 export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
+  const del = useRecordDelete({ entity: "proposal" });
   const columns: Column<ProposalRow>[] = [
     {
       id: "client",
@@ -150,17 +153,34 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="proposals"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/proposals/${row.id}`}
-      searchPlaceholder="Search by client or scope…"
-      initialSort={{ columnId: "created", dir: "desc" }}
-      mobile={{ title: "client", subtitle: "project", meta: ["status", "value", "validity", "created"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No proposals.</div>}
-    />
+    <>
+      <DataTable
+        tableId="proposals"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/proposals/${row.id}`}
+        searchPlaceholder="Search by client or scope…"
+        initialSort={{ columnId: "created", dir: "desc" }}
+        mobile={{ title: "client", subtitle: "project", meta: ["status", "value", "validity", "created"] }}
+        selectable
+        selectionNoun="proposal"
+        bulkActions={[
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: `${row.projectType} · ${row.clientName}` }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No proposals.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }
 

@@ -21,6 +21,7 @@ import {
 } from "@repo/ui";
 
 import { EmptyState } from "@/components/os/empty-state";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import { dateTime, when } from "@/lib/format";
@@ -71,6 +72,7 @@ export function IncidentsClient({
   const [pending, setPending] = React.useState<string | null>(null);
   const [active, setActive] = React.useState<IncidentRecord | null>(null);
   const [showResolved, setShowResolved] = React.useState(false);
+  const del = useRecordDelete({ entity: "incident" });
 
   const open = records.filter((r) => r.status !== "RESOLVED");
   const resolved = records.filter((r) => r.status === "RESOLVED");
@@ -220,6 +222,12 @@ export function IncidentsClient({
                       </SelectContent>
                     </Select>
                   )}
+                  <RowActions
+                    onDelete={() =>
+                      del.request({ id: incident.id, label: `#${incident.number} ${incident.title}` })
+                    }
+                    deleteLabel="Delete incident"
+                  />
                 </div>
               </li>
             ))}
@@ -249,6 +257,8 @@ export function IncidentsClient({
           if (done) setActive(null);
         }}
       />
+
+      {del.dialog}
     </>
   );
 }

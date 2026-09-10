@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +51,7 @@ export function StatusMenu({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" disabled={busy}>
-          {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
+          {busy ? <LoadingIcon size="sm" /> : null}
           {statusOf("submissionStatus", status).label}
           <ChevronDown className="size-3" />
         </Button>
@@ -130,7 +131,7 @@ export function LifecycleButton({
 
   return (
     <Button variant={variant} onClick={run} disabled={busy}>
-      {busy && <Loader2 className="size-3.5 animate-spin" />}
+      {busy && <LoadingIcon size="sm" />}
       {busy ? busyLabel : label}
     </Button>
   );
@@ -167,7 +168,7 @@ export function MarkSignedButton({ contractId }: { contractId: string }) {
 
   return (
     <Button variant="outline" onClick={run} disabled={busy}>
-      {busy && <Loader2 className="size-3.5 animate-spin" />}
+      {busy && <LoadingIcon size="sm" />}
       Mark signed
     </Button>
   );

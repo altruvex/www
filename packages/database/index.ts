@@ -6,11 +6,49 @@ declare global {
 }
 
 /**
+ * `pg` currently treats `sslmode=require` as an alias for `verify-full`, so a
+ * connection string that says `require` is checking the certificate chain and
+ * the hostname today. pg v9 drops that alias and `require` reverts to libpq's
+ * meaning: encrypted, but unverified — a channel someone can sit in the middle
+ * of. Nothing about that release is visible from here. No error, no failed
+ * connection, no log line; the same query returns the same row over a weaker
+ * link. Naming `verify-full` outright is what survives the upgrade, and this
+ * refuses to connect without it rather than let the downgrade pass silently.
+ *
+ * Held against production only, and only once a connection string exists:
+ * `next build` runs with NODE_ENV=production and often without the runtime
+ * secrets, and a local Postgres over loopback presents no certificate to
+ * verify. Failing a developer's scratch database would teach them to delete
+ * this check rather than keep it.
+ */
+function assertVerifiedTls(connectionString: string | undefined): void {
+  if (process.env.NODE_ENV !== "production" || !connectionString) {
+    return;
+  }
+
+  // Read by pattern rather than by parsing the URL: a password may carry
+  // characters that break a parser, and a thrown parse error here would read
+  // as a database outage. The string itself never reaches the message.
+  const sslmode = /[?&]sslmode=([^&]*)/.exec(connectionString)?.[1];
+
+  if (sslmode !== "verify-full") {
+    throw new Error(
+      `DATABASE_URL must set sslmode=verify-full in production; it ${
+        sslmode ? `sets sslmode=${sslmode}` : "sets no sslmode"
+      }. Every other value stops verifying the server's certificate once pg ` +
+        `drops the verify-full aliases, and stops without saying so.`,
+    );
+  }
+}
+
+/**
  * Prisma 7 requires an explicit driver adapter — `new PrismaClient()` with no
  * adapter throws. The connection string is still read from `DATABASE_URL`;
  * only the plumbing moved from the datasource block to here.
  */
 function createPrismaClient(): PrismaClient {
+  assertVerifiedTls(process.env.DATABASE_URL);
+
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
   });

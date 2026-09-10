@@ -35,24 +35,45 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
+    // One slide when the caller asked for one. The conversion still walks the
+    // whole deck — that part is LibreOffice's — but rasterising and shipping
+    // a single page instead of seven cuts the response by roughly 7x, which
+    // is most of the wait an operator actually feels.
+    const requested = Number(body?.slide);
+    const single =
+      Number.isInteger(requested) && requested >= 1 && requested <= 20
+        ? requested
+        : null;
+
     const company = await getCompanySettings();
     const pptxBuffer = await buildProposalPptx(content, company);
-    const images = await renderPptxToPngs(pptxBuffer);
+    const render = await renderPptxToPngs(
+      pptxBuffer,
+      single ? { firstPage: single, lastPage: single } : {},
+    );
 
-    if (!images) {
+    if (!render.ok) {
+      // Saying "install LibreOffice" to someone whose render merely timed out
+      // sends them to fix a machine that is already correct.
+      const message =
+        render.reason === "unavailable"
+          ? "Preview needs LibreOffice and poppler on this host. The proposal itself can still be generated."
+          : render.reason === "timeout"
+            ? "The renderer ran out of time. Another render may have been running — try again in a moment."
+            : "The renderer produced nothing. The proposal itself can still be generated.";
+
       return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Preview needs LibreOffice and poppler on the server. The proposal itself can still be generated.",
-        },
-        { status: 503 },
+        { success: false, reason: render.reason, message, detail: render.detail },
+        { status: render.reason === "unavailable" ? 503 : 500 },
       );
     }
 
     return NextResponse.json({
       success: true,
-      slides: images.map((buffer) => `data:image/png;base64,${buffer.toString("base64")}`),
+      slide: single,
+      slides: render.images.map(
+        (buffer) => `data:image/png;base64,${buffer.toString("base64")}`,
+      ),
     });
   } catch (error: unknown) {
     if (error instanceof ProposalQaError) {

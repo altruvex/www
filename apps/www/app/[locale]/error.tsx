@@ -1,6 +1,7 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { Highlight } from "@/components/ui/emphasis";
 import { Link } from "@/i18n/navigation";
@@ -161,22 +162,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 className="min-w-[160px] justify-center group"
               >
                 <Link href="/">
-                  <span className="flex items-center gap-2">
-                    Go Home
-                    <svg
-                      className="h-4 w-4 transition-all duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                      />
-                    </svg>
-                  </span>
+                  <ArrowLabel>Go Home</ArrowLabel>
                 </Link>
               </MagneticButton>
             </div>

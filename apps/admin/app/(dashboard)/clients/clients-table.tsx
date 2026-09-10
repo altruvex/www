@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Archive, CheckCircle2 } from "lucide-react";
+import { Archive, CheckCircle2, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar } from "@repo/ui";
 import { money, phone as fmtPhone, when } from "@/lib/format";
@@ -37,6 +38,7 @@ export interface ClientRow {
 }
 
 export function ClientsTable({ rows }: { rows: ClientRow[] }) {
+  const del = useRecordDelete({ entity: "client" });
   const router = useRouter();
   const [, startTransition] = React.useTransition();
 
@@ -186,21 +188,35 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
   }
 
   return (
-    <DataTable
-      tableId="clients"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/clients/${row.id}`}
-      searchPlaceholder="Search clients, phones, projects…"
-      initialSort={{ columnId: "updated", dir: "desc" }}
-      selectable
-      mobile={{ title: "client", subtitle: "phone", meta: ["stage", "value", "source", "updated"] }}
-      bulkActions={[
-        { label: "Qualify", icon: CheckCircle2, onRun: runBulk("QUALIFIED", "qualified") },
-        { label: "Mark lost", icon: Archive, destructive: true, onRun: runBulk("LOST", "marked lost") },
-      ]}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No clients.</div>}
-    />
+    <>
+      <DataTable
+        tableId="clients"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/clients/${row.id}`}
+        searchPlaceholder="Search clients, phones, projects…"
+        initialSort={{ columnId: "updated", dir: "desc" }}
+        selectable
+        selectionNoun="client"
+        mobile={{ title: "client", subtitle: "phone", meta: ["stage", "value", "source", "updated"] }}
+        bulkActions={[
+          { label: "Qualify", icon: CheckCircle2, onRun: runBulk("QUALIFIED", "qualified") },
+          { label: "Mark lost", icon: Archive, destructive: true, onRun: runBulk("LOST", "marked lost") },
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected) =>
+              del.request(selected.map((row) => ({ id: row.id, label: row.company || row.name || row.phone }))),
+          },
+        ]}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.company || row.name || row.phone })} />
+        )}
+        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No clients.</div>}
+      />
+      {del.dialog}
+    </>
   );
 }

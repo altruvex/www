@@ -1,22 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
-import { TooltipProvider } from "@repo/ui";
+import { CommandPalette } from "@/components/shell/command-palette";
+import { MobileBottomBar, MobileNavDrawer } from "@/components/shell/mobile-nav";
+import { ShortcutsSheet } from "@/components/shell/shortcuts";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
-import { MobileBottomBar, MobileNavDrawer } from "@/components/shell/mobile-nav";
-import { CommandPalette } from "@/components/shell/command-palette";
-import { ShortcutsSheet } from "@/components/shell/shortcuts";
 import type { BadgeKey, Role } from "@/lib/nav";
+import { TooltipProvider } from "@repo/ui";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
-/**
- * The application shell. Owns exactly three pieces of client state — sidebar
- * collapse, palette open, mobile drawer open — and the global key handler.
- *
- * Everything else in the app is a server component. Keeping the shell thin is
- * what lets a route like /clients render on the server and still feel instant.
- */
 const GOTO: Record<string, string> = {
   d: "/",
   i: "/inbox",
@@ -54,7 +47,6 @@ export function AppShell({
 
   React.useEffect(() => {
     const saved = window.localStorage.getItem("avx.sidebar.collapsed");
-    // Client-only preference store; see the note in components/os/data-table.tsx.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === "1") setCollapsed(true);
     const density = window.localStorage.getItem("avx.density");
@@ -83,7 +75,6 @@ export function AppShell({
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      // ⌘K / Ctrl+K works even inside a field — it is the universal escape hatch.
       if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         setPaletteOpen((o) => !o);
@@ -106,7 +97,6 @@ export function AppShell({
         toggleCollapse();
         return;
       }
-      // Two-key "go to" chords, the Linear/Gmail idiom: g then d.
       if (event.key.toLowerCase() === "g") {
         gotoArmed.current = true;
         window.setTimeout(() => (gotoArmed.current = false), 1200);
@@ -137,7 +127,6 @@ export function AppShell({
             onToggleCollapse={toggleCollapse}
           />
         </div>
-
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar
             user={user}
@@ -148,7 +137,6 @@ export function AppShell({
           <main className="min-w-0 flex-1 p-3 pb-20 sm:p-4 lg:pb-4">{children}</main>
         </div>
       </div>
-
       <MobileBottomBar badges={badges} onOpenMore={() => setMobileNavOpen(true)} />
       <MobileNavDrawer
         open={mobileNavOpen}

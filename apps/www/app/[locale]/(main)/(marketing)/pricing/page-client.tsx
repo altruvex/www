@@ -286,9 +286,6 @@ export default function PricingPage({
                         <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase mb-2.5">
                           {tier.priceLabel}
                         </p>
-                        {/* The window belongs beside the figure it is priced
-                            with — a buyer comparing tiers is choosing a budget
-                            and a date at the same time. */}
                         <p className="flex items-baseline gap-2 font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5">
                           <span>{tier.timelineLabel}</span>
                           <span className="tabular-nums text-foreground/70">
@@ -304,7 +301,7 @@ export default function PricingPage({
                               key={j}
                               className="flex items-start gap-2.5 text-[12px] text-muted-foreground"
                             >
-                              <div className="w-[5px] h-[5px] rounded-full shrink-0 mt-[5px] bg-border-mid transition-all group-hover:bg-muted-foreground/50" />
+                              <div className="w-1.25 h-1.25 rounded-full shrink-0 mt-1.25 bg-border-mid transition-all group-hover:bg-muted-foreground/50" />
                               {feature}
                             </li>
                           ))}
@@ -331,8 +328,6 @@ export default function PricingPage({
                   ),
                 )}
               </div>
-
-              {/* REDESIGNED LOGISTICS & COMMERCIAL TERMS */}
               <div className="mb-32 grid grid-cols-1 gap-12 border-t border-border pt-16 md:grid-cols-3">
                 <div className="md:col-span-1">
                   <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -345,7 +340,6 @@ export default function PricingPage({
                     {t.rich("ownershipNote", bodyMarks)}
                   </p>
                 </div>
-
                 <div
                   ref={commercialNotesRef}
                   className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2"
@@ -362,8 +356,6 @@ export default function PricingPage({
                   ))}
                 </div>
               </div>
-
-              {/* REDESIGNED ROI SECTION */}
               <section className="accent-world-orange border-t border-border pt-24 pb-12">
                 <div className="mb-16 max-w-3xl">
                   <p
@@ -388,7 +380,6 @@ export default function PricingPage({
                     </p>
                   </div>
                 </div>
-
                 <div
                   ref={roiStatsRef}
                   className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12"
@@ -412,7 +403,6 @@ export default function PricingPage({
           </div>
         </Container>
       </section>
-
       <FaqSection
         namespace="pricing.faq"
         className="border-t border-border pt-12 pb-32"

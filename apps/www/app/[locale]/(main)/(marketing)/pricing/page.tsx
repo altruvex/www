@@ -5,13 +5,13 @@ import {
   buildPageSchemas,
   buildPricingOfferSchemas,
 } from "@/lib/schema";
+import { getPublicPricing } from "@/lib/server/pricing";
 import {
   deliveryCeilingLabel,
   minimumEngagementLabel,
   tierViews,
   type Locale,
 } from "@repo/pricing-schema";
-import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -39,11 +39,6 @@ export default async function PricingPage({
     answer: entry.a,
     question: entry.q,
   }));
-  // Structured-data offers are built from the schema, not from message copy.
-  // These become machine-readable Offer prices in search results, so a stale
-  // string here publishes a wrong price to Google, not just to a visitor.
-  // Resolved server-side so an admin price change reaches both the rendered
-  // cards and the machine-readable offers, not just one of them.
   const pricing = await getPublicPricing();
   const tiers = tierViews(locale as Locale, pricing);
   const offerEntries = tiers.map((tier) => ({

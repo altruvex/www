@@ -1,9 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { Check, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Field, NumberInput, TextInput } from "./editor-primitives";
 import {
   discountAmount,
   investmentTotal,
@@ -13,28 +9,10 @@ import {
   type ProposalContent,
   type ValidationIssue,
 } from "@/lib/proposal-schema";
-
-/**
- * The price control.
- *
- * Before this existed, the only way to move a proposal's number was to retype
- * every line item until the column happened to add up to what had been agreed
- * on a call — the operator was doing arithmetic the machine should do, and
- * there was nowhere at all to express "and I'm giving them 10% off".
- *
- * Two controls, one object:
- *
- *  1. **Total** — name the figure; the line items are rescaled in proportion so
- *     the table underneath still adds up to it. The items stay individually
- *     editable, so this is a starting point, not a lock.
- *  2. **Discount** — off / percentage / fixed amount, with a label the client
- *     sees. Never folded into the items: the deck, the contract and the
- *     milestone payments each need it as a distinct number.
- *
- * Rendered in two places (the builder's Scope pane and the Investment slide
- * editor) because both are places an operator is thinking about money. One
- * component, so the two can never present different rules.
- */
+import { cn } from "@/lib/utils";
+import { Check, Minus } from "lucide-react";
+import * as React from "react";
+import { Field, NumberInput, TextInput } from "./editor-primitives";
 
 const DISCOUNT_MODES: { value: Discount["mode"]; label: string }[] = [
   { value: "none", label: "None" },
@@ -50,12 +28,10 @@ function formatCurrency(amount: number, currency: string) {
       maximumFractionDigits: 0,
     }).format(amount);
   } catch {
-    // An unknown currency code shouldn't blank out the live total.
     return `${currency} ${amount.toLocaleString("en-US")}`;
   }
 }
 
-/** A quick-set chip — the estimator's own numbers, one tap away. */
 function PresetChip({
   label,
   amount,
@@ -76,7 +52,7 @@ function PresetChip({
       aria-pressed={active}
       className={cn(
         "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border px-2 text-base",
-        "transition-colors duration-[var(--dur-state)]",
+        "transition-colors duration-(--dur-state)",
         active
           ? "border-brand bg-brand-soft font-medium text-foreground"
           : "border-border bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
@@ -108,7 +84,6 @@ export function PriceControl({
   content: ProposalContent;
   onChange: (content: ProposalContent) => void;
   issues: ValidationIssue[];
-  /** Optional one-tap figures — the estimator's min / mid / max. */
   presets?: PricePreset[];
   className?: string;
 }) {
@@ -118,11 +93,10 @@ export function PriceControl({
   const net = netTotal(content.investmentItems, content.discount);
   const { discount } = content;
 
-  // Typing a total is a text edit, not a commit: rescaling on every keystroke
-  // would rewrite the whole table while the operator is halfway through a
-  // number. The draft is local, and only lands on blur or Enter.
   const [draft, setDraft] = React.useState<number>(subtotal);
   const [editing, setEditing] = React.useState(false);
+  const [vatPercent, setVatPercent] = React.useState<number>(0);
+
   if (!editing && draft !== subtotal) setDraft(subtotal);
 
   const issueFor = (path: string) =>
@@ -140,6 +114,15 @@ export function PriceControl({
     onChange({ ...content, discount: { ...discount, ...patch } });
 
   const effectivePercent = subtotal > 0 ? (reduction / subtotal) * 100 : 0;
+  const calculatedVat = (net * vatPercent) / 100;
+  const finalTotalWithVat = net + calculatedVat;
+
+  const discountLabelText =
+    discount.mode === "percent"
+      ? discount.value > 0
+        ? `Percentage off (${formatCurrency(subtotal * (discount.value / 100), currency)})`
+        : "Percentage off"
+      : "Amount off";
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -165,7 +148,6 @@ export function PriceControl({
             />
           </div>
         </Field>
-
         {presets.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {presets.map((preset) => (
@@ -181,8 +163,6 @@ export function PriceControl({
           </div>
         )}
       </div>
-
-      {/* ---- discount ---------------------------------------------------- */}
       <div className="space-y-2 border-t border-border pt-3">
         <fieldset>
           <legend className="mb-1.5 text-meta font-medium text-muted-foreground">
@@ -199,7 +179,7 @@ export function PriceControl({
                   onClick={() => setDiscount({ mode: mode.value })}
                   className={cn(
                     "flex h-8 items-center justify-center gap-1.5 rounded-md border px-2 text-base",
-                    "transition-colors duration-[var(--dur-state)]",
+                    "transition-colors duration-(--dur-state)",
                     selected
                       ? "border-brand bg-brand-soft font-medium text-foreground"
                       : "border-border bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
@@ -212,11 +192,10 @@ export function PriceControl({
             })}
           </div>
         </fieldset>
-
         {discount.mode !== "none" && (
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
-              label={discount.mode === "percent" ? "Percentage off" : "Amount off"}
+              label={discountLabelText}
               error={issueFor("discount.value")}
             >
               <NumberInput
@@ -225,7 +204,7 @@ export function PriceControl({
                 max={discount.mode === "percent" ? 100 : undefined}
                 suffix={discount.mode === "percent" ? "%" : currency}
                 invalid={!(discount.value > 0)}
-                onChange={(v) => setDiscount({ value: Number.isFinite(v) ? v : 0 })}
+                onChange={(v) => setDiscount({ value: Number.isFinite(v) ? Math.min(v, discount.mode === "percent" ? 100 : v) : 0 })}
               />
             </Field>
             <Field
@@ -254,8 +233,17 @@ export function PriceControl({
           </div>
         )}
       </div>
-
-      {/* ---- what it adds up to ------------------------------------------ */}
+      <div className="space-y-2 border-t border-border pt-3">
+        <Field label="VAT / Tax Rate (%)" hint="Optional official tax applied to net total.">
+          <NumberInput
+            value={vatPercent}
+            min={0}
+            max={100}
+            suffix="%"
+            onChange={(v) => setVatPercent(Number.isFinite(v) ? Math.max(0, Math.min(v, 100)) : 0)}
+          />
+        </Field>
+      </div>
       <dl className="space-y-1.5 border-t border-border pt-3">
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-base text-muted-foreground">Subtotal</dt>
@@ -277,12 +265,22 @@ export function PriceControl({
             </dd>
           </div>
         )}
+        {vatPercent > 0 && (
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-base text-muted-foreground">
+              VAT ({vatPercent}%)
+            </dt>
+            <dd className="font-mono text-meta tabular-nums text-foreground">
+              +{formatCurrency(calculatedVat, currency)}
+            </dd>
+          </div>
+        )}
         <div className="flex items-baseline justify-between gap-3 border-t border-border pt-1.5">
           <dt className="text-base font-medium text-foreground">
-            {reduction > 0 ? "Client pays" : "Total"}
+            {vatPercent > 0 ? "Grand Total (incl. VAT)" : reduction > 0 ? "Client pays" : "Total"}
           </dt>
           <dd className="font-sans text-md font-medium tabular-nums text-foreground">
-            {formatCurrency(net, currency)}
+            {formatCurrency(finalTotalWithVat, currency)}
           </dd>
         </div>
       </dl>

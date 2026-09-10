@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@repo/database";
+import { recordChange, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 import { sendTemplateMessage } from "@/lib/whatsapp-api";
+import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
+import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
+import { contractDraft, ensureLink } from "@/lib/email-templates";
+import { readOptionalDraft } from "@/lib/read-draft";
 
 function toAbsoluteUrl(url: string, request: NextRequest): string {
   if (/^https?:\/\//.test(url)) return url;
@@ -14,7 +19,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    if (!(await requireAdminSession(request))) {
+    const session = await requireAdminSession(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -51,6 +57,59 @@ export async function POST(
 
     const signUrl = toAbsoluteUrl(`/sign/${contract.signToken}`, request);
 
+    const { searchParams } = new URL(request.url);
+    const channel = searchParams.get("channel") === "email" ? "email" : "whatsapp";
+    const edited = await readOptionalDraft(request);
+
+    if (channel === "email") {
+      try {
+        const draft = contractDraft(contract.client.name, signUrl);
+        const sent = await sendDocumentEmail({
+          client: contract.client,
+          subject: edited.subject?.trim() || draft.subject,
+          body: ensureLink(edited.body?.trim() || draft.body, signUrl),
+          relatedContractId: contract.id,
+        });
+
+        const updated = await prisma.contract.update({
+          where: { id: contract.id },
+          data: { status: "SENT" },
+        });
+
+        await recordChange({
+          action: "contract.sent",
+          actor: userActor(session),
+          entityType: "contract",
+          entityId: contract.id,
+          entityLabel: contract.client.name || contract.client.company,
+          summary: `Sent the contract to ${contract.client.email} by email`,
+          before: { status: contract.status },
+          after: { status: updated.status },
+        });
+
+        return NextResponse.json({ success: true, contract: updated, emailId: sent.id });
+      } catch (error) {
+        const status =
+          error instanceof ClientHasNoAddressError
+            ? 400
+            : error instanceof EmailNotConfiguredError
+              ? 503
+              : 502;
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              error instanceof EmailSendError ||
+              error instanceof ClientHasNoAddressError ||
+              error instanceof EmailNotConfiguredError
+                ? error.message
+                : "Failed to send the contract by email.",
+          },
+          { status },
+        );
+      }
+    }
+
     try {
       const result = await sendTemplateMessage({
         clientId: contract.clientId,
@@ -63,6 +122,17 @@ export async function POST(
       const updated = await prisma.contract.update({
         where: { id: contract.id },
         data: { status: "SENT" },
+      });
+
+      await recordChange({
+        action: "contract.sent",
+        actor: userActor(session),
+        entityType: "contract",
+        entityId: contract.id,
+        entityLabel: contract.client.name || contract.client.company,
+        summary: `Sent the contract to ${contract.client.name || contract.client.company || "the client"} for signing`,
+        before: { status: contract.status },
+        after: { status: updated.status },
       });
 
       return NextResponse.json({

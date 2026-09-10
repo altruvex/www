@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, Prisma, MeetingStatus, MeetingType } from "@repo/database";
 import { z } from "zod";
+import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 
 export async function GET(request: NextRequest) {
@@ -118,7 +119,8 @@ const updateMeetingSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
-    if (!(await requireAdminSession(request))) {
+    const session = await requireAdminSession(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -127,6 +129,11 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = updateMeetingSchema.parse(body);
+
+    const before = await prisma.meeting.findUnique({
+      where: { id: validatedData.id },
+      select: { status: true, title: true, assignedToId: true, meetingUrl: true, adminNotes: true },
+    });
 
     const updateData: Prisma.MeetingUpdateInput = {};
 
@@ -191,6 +198,41 @@ export async function PATCH(request: NextRequest) {
       },
     });
 
+    await recordChange({
+      action: validatedData.status ? "meeting.status_changed" : "meeting.updated",
+      actor: userActor(session),
+      entityType: "meeting",
+      entityId: validatedData.id,
+      entityLabel: before?.title,
+      summary: validatedData.status
+        ? `Status moved to ${validatedData.status.toLowerCase()}`
+        : `Updated "${before?.title ?? "meeting"}"`,
+      before: {
+        ...(validatedData.status !== undefined ? { status: before?.status } : {}),
+        ...(validatedData.assignedToId !== undefined
+          ? { assignedToId: before?.assignedToId }
+          : {}),
+        ...(validatedData.meetingUrl !== undefined
+          ? { meetingUrl: before?.meetingUrl }
+          : {}),
+        ...(validatedData.adminNotes !== undefined
+          ? { adminNotes: before?.adminNotes }
+          : {}),
+      },
+      after: {
+        ...(validatedData.status !== undefined ? { status: validatedData.status } : {}),
+        ...(validatedData.assignedToId !== undefined
+          ? { assignedToId: validatedData.assignedToId }
+          : {}),
+        ...(validatedData.meetingUrl !== undefined
+          ? { meetingUrl: validatedData.meetingUrl }
+          : {}),
+        ...(validatedData.adminNotes !== undefined
+          ? { adminNotes: validatedData.adminNotes }
+          : {}),
+      },
+    });
+
     return NextResponse.json({
       success: true,
       meeting: updated,
@@ -223,7 +265,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    if (!(await requireAdminSession(request))) {
+    const session = await requireAdminSession(request);
+    if (!session) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -259,6 +302,16 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.meeting.delete({
       where: { id },
+    });
+
+    await recordActivity({
+      action: "meeting.deleted",
+      actor: userActor(session),
+      entityType: "meeting",
+      entityId: id,
+      entityLabel: meeting.title,
+      summary: `Deleted "${meeting.title}"`,
+      before: { status: meeting.status },
     });
 
     return NextResponse.json({

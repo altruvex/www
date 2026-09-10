@@ -1,20 +1,46 @@
 "use client";
 
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
 import { signIn } from "@/lib/auth-client";
-import { AlertCircle, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, useTransition } from "react";
+import { Suspense, useEffect, useState, useTransition } from "react";
 import { Checkbox } from "@repo/ui";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("altruvex_remember_me");
+      if (saved !== null) {
+        setRememberMe(saved === "true");
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Could not access localStorage:", err);
+      }
+    }
+  }, []);
+
+  const handleRememberMeChange = (checked: boolean | "indeterminate") => {
+    const shouldRemember = checked === true;
+    setRememberMe(shouldRemember);
+    try {
+      localStorage.setItem("altruvex_remember_me", String(shouldRemember));
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Could not access localStorage:", err);
+      }
+    }
+  };
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -105,12 +131,16 @@ function LoginForm() {
                 </button>
               </div>
             </Field>
-            <div className="flex items-center justify-between text-base">
-              <label className="flex cursor-pointer select-none items-center gap-2 text-muted-foreground">
-                <Checkbox
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked === true)}
-                />
+            <div className="flex items-center gap-2 text-base">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => handleRememberMeChange(checked === true)}
+              />
+              <label
+                htmlFor="remember-me"
+                className="cursor-pointer select-none text-muted-foreground transition-colors hover:text-foreground"
+              >
                 Remember me
               </label>
             </div>
@@ -129,7 +159,7 @@ function LoginForm() {
               disabled={isPending}
               aria-busy={isPending}
             >
-              {isPending && <Loader2 className="size-3.5 animate-spin" />}
+              {isPending && <LoadingIcon size="sm" />}
               {isPending ? "Signing in…" : "Sign in"}
             </Button>
           </form>
@@ -149,7 +179,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-dvh items-center justify-center">
-          <Loader2 className="size-4 animate-spin text-subtle-foreground" />
+          <LoadingIcon size="lg" className="text-subtle-foreground" />
         </div>
       }
     >

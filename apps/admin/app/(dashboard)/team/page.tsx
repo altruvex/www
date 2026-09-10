@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { AlertBar } from "@/components/os/error-state";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { Avatar } from "@repo/ui";
 import { ToneBadge } from "@/components/ui/badge";
 import {
@@ -71,7 +72,7 @@ export default async function TeamPage() {
         />
       </div>
 
-      <AlertBar tone="info">
+      <AlertBar tone="info" href="/settings?tab=security" cta="Security settings">
         The database currently stores three roles (USER, ADMIN, SUPERADMIN). The six
         product roles below are mapped onto those in <code className="font-mono text-micro">lib/rbac.ts</code> —
         SUPERADMIN is Owner, ADMIN is Admin. Sales, PM, Finance and Viewer are defined
@@ -106,6 +107,20 @@ export default async function TeamPage() {
                 <ToneBadge tone={productRole ? "info" : "neutral"}>
                   {productRole ? ROLE_LABELS[productRole] : user.role}
                 </ToneBadge>
+                {/* Removing people is an Owner action, and the server refuses
+                    the two cases that would lock this app: your own account,
+                    and the last superadmin. */}
+                {user.id !== currentId && (
+                  <DeleteRecordButton
+                    entity="user"
+                    id={user.id}
+                    label={user.name ?? user.email}
+                    variant="ghost"
+                    size="icon-sm"
+                  >
+                    {null}
+                  </DeleteRecordButton>
+                )}
               </li>
             );
           })}

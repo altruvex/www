@@ -1,4 +1,5 @@
 import { localizeNumbers } from "@/lib/utils/number";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -82,19 +83,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             href="/writing"
             className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow mb-12"
           >
-            <svg
-              className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:-translate-x-0.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 16l-4-4m0 0l4-4m-4 4h18"
-              />
-            </svg>
+            <ArrowIcon
+              direction="back"
+              className="h-3.5 w-3.5 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
+            />
             {t("backLink")}
           </Link>
           <article>
@@ -175,19 +167,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
               >
                 {t(`ctas.${slug}`)}
-                <svg
-                  className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:-rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                  />
-                </svg>
+                <ArrowIcon className="h-3.5 w-3.5 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
               </Link>
             </section>
           )}
@@ -232,19 +212,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               href="/writing"
               className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
             >
-              <svg
-                className="h-3.5 w-3.5 transition-all duration-300 ltr:group-hover:-translate-x-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16l-4-4m0 0l4-4m-4 4h18"
-                />
-              </svg>
+              <ArrowIcon
+                direction="back"
+                className="h-3.5 w-3.5 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
+              />
               {t("backLink")}
             </Link>
           </footer>

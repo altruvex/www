@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
 import { ErrorState } from "@/components/os/error-state";
 
@@ -81,7 +82,7 @@ export function NewClientForm() {
 
       <div className="flex items-center gap-2 border-t border-border pt-3">
         <Button type="submit" variant="brand" disabled={busy}>
-          {busy && <Loader2 className="size-3.5 animate-spin" />}
+          {busy && <LoadingIcon size="sm" />}
           Create client
         </Button>
         <Button type="button" variant="ghost" onClick={() => router.back()} disabled={busy}>

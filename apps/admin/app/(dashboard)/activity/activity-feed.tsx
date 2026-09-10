@@ -1,23 +1,37 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, Filter, Activity as ActivityIcon, MessageCircle, FileText, FileSignature, UserPlus, Wallet, CalendarDays } from "lucide-react";
+import {
+  Search,
+  X,
+  Activity as ActivityIcon,
+  MessageCircle,
+  FileText,
+  FileSignature,
+  UserPlus,
+  Wallet,
+  CalendarDays,
+} from "lucide-react";
 import { Timeline, type TimelineEvent } from "@/components/os/timeline";
 import { Panel } from "@/components/os/panel";
+import { StatTile } from "@/components/os/stat-tile";
 import { Button } from "@repo/ui";
 import { Input } from "@repo/ui";
 import { segmentClass } from "@repo/ui";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { id: "all", label: "All Activity", icon: ActivityIcon },
+  { id: "all", label: "All activity", icon: ActivityIcon },
   { id: "messages", label: "Messages", icon: MessageCircle },
   { id: "proposals", label: "Proposals", icon: FileText },
-  { id: "contracts", label: "Contracts & Projects", icon: FileSignature },
-  { id: "clients", label: "Clients & Leads", icon: UserPlus },
+  { id: "contracts", label: "Contracts & projects", icon: FileSignature },
+  { id: "clients", label: "Clients & leads", icon: UserPlus },
   { id: "payments", label: "Payments", icon: Wallet },
   { id: "meetings", label: "Meetings", icon: CalendarDays },
 ] as const;
+
+/** Matches the slice the page hands us; the tile must not claim more. */
+const FEED_LIMIT = 200;
 
 export function ActivityFeed({
   events,
@@ -64,45 +78,47 @@ export function ActivityFeed({
     });
   }, [events, activeCategory, searchQuery]);
 
+  const filtered = activeCategory !== "all" || searchQuery.trim().length > 0;
+  const activeLabel =
+    CATEGORIES.find((cat) => cat.id === activeCategory)?.label ?? "All activity";
+
   return (
     <div className="space-y-4">
-      {/* Top Overview Bar */}
+      {/* What this page is holding, in the app's own tiles — a hand-rolled card
+          beside a StatTile is two answers to the same question. */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-border bg-card p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-micro text-muted-foreground uppercase tracking-wider">Today&apos;s activity</span>
-            <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
-          </div>
-          <p className="mt-1 font-mono text-xl font-bold tracking-tight text-foreground tabular-nums">
-            {todayCount} <span className="text-meta font-normal text-muted-foreground">event{todayCount === 1 ? "" : "s"}</span>
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-micro text-muted-foreground uppercase tracking-wider">Total Derived Events</span>
-            <ActivityIcon className="size-3.5 text-muted-foreground/70" />
-          </div>
-          <p className="mt-1 font-mono text-xl font-bold tracking-tight text-foreground tabular-nums">
-            {events.length} <span className="text-meta font-normal text-muted-foreground">recorded</span>
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-border bg-card p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-mono text-micro text-muted-foreground uppercase tracking-wider">Filtered View</span>
-            <Filter className="size-3.5 text-muted-foreground/70" />
-          </div>
-          <p className="mt-1 font-mono text-xl font-bold tracking-tight text-foreground tabular-nums">
-            {filteredEvents.length} <span className="text-meta font-normal text-muted-foreground">matching</span>
-          </p>
-        </div>
+        <StatTile
+          label="Today"
+          value={todayCount}
+          sub={`event${todayCount === 1 ? "" : "s"} since midnight`}
+          tone={todayCount > 0 ? "info" : "neutral"}
+        />
+        <StatTile
+          label="In this feed"
+          value={events.length}
+          sub={events.length >= FEED_LIMIT ? `Newest ${FEED_LIMIT}` : "Every record type"}
+        />
+        <StatTile
+          label="Matching the filter"
+          value={filteredEvents.length}
+          sub={
+            filtered
+              ? `${activeLabel}${searchQuery.trim() ? ` · “${searchQuery.trim()}”` : ""}`
+              : "No filter applied"
+          }
+          tone={filtered && filteredEvents.length === 0 ? "warning" : "neutral"}
+        />
       </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* Category Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        {/* Category tabs. flex-wrap and overflow-x-auto cancel each other out —
+            below sm this scrolls on one axis, above it wraps. */}
+        <div
+          role="radiogroup"
+          aria-label="Activity category"
+          className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+        >
           {CATEGORIES.map((cat) => {
             const Icon = cat.icon;
             const count = categoryCounts[cat.id] ?? 0;

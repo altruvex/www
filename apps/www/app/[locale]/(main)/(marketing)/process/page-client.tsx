@@ -1,6 +1,7 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
+import { ArrowLabel } from "@/components/shared/directional-link";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { PageHero } from "@/components/sections/page-hero";
@@ -138,22 +139,7 @@ function ClosingSection() {
           <div ref={ctaRef}>
             <Link href="/schedule">
               <MagneticButton variant="accent" size="lg" className="group">
-                <span className="flex items-center gap-2">
-                  {t("closing.cta")}
-                  <svg
-                    className="w-4 h-4 transition-all duration-300 ltr:group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:-rotate-180"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                  </svg>
-                </span>
+                <ArrowLabel>{t("closing.cta")}</ArrowLabel>
               </MagneticButton>
             </Link>
           </div>

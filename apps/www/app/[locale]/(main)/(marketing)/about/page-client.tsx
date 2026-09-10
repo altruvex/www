@@ -5,7 +5,7 @@ import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionWatermark } from "@/components/section-watermark";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Container } from "@/components/shared/container";
-import { ExternalDirectionalLink } from "@/components/shared/directional-link";
+import { ArrowIcon, ExternalDirectionalLink } from "@/components/shared/directional-link";
 import { Highlight } from "@/components/ui/emphasis";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
@@ -463,9 +463,7 @@ function PathwaysSection({ routeCards }: PageClientProps) {
                 </p>
               </div>
               <div className="mt-10 flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-background/60 transition-all duration-300 ease-out group-hover:border-foreground group-hover:bg-foreground group-hover:text-background">
-                <svg width="18" height="18" viewBox="0 0 14 14" fill="none" aria-hidden className="text-current transition-all duration-300 ltr:group-hover:translate-x-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1">
-                  <path d="M2 7H12M8 3L12 7L8 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <ArrowIcon strokeWidth={1.5} className="size-[18px] text-current duration-300" />
               </div>
             </Link>
           ))}

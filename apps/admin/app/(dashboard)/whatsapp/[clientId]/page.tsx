@@ -98,13 +98,21 @@ export default async function ThreadPage({
         }
         alert={
           failed.length > 0 ? (
-            <AlertBar tone="danger">
+            <AlertBar
+              tone="danger"
+              href={`/clients/${client.id}`}
+              cta="Open the client record"
+            >
               {failed.length} message{failed.length === 1 ? "" : "s"} in this thread never
               reached the client. Resend from the record it belongs to, or check the
               Cloud API credentials.
             </AlertBar>
           ) : unanswered ? (
-            <AlertBar tone="warning">
+            <AlertBar
+              tone="warning"
+              href={`https://wa.me/${client.phone.replace(/\D/g, "")}`}
+              cta="Reply on WhatsApp"
+            >
               The client spoke last{hoursSinceInbound != null && `, ${Math.round(hoursSinceInbound)} hours ago`}. Nobody has replied.
             </AlertBar>
           ) : null

@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,7 @@ export function PhaseControl({ projectId, phase }: { projectId: string; phase: s
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" disabled={busy}>
-          {busy && <Loader2 className="size-3.5 animate-spin" />}
+          {busy && <LoadingIcon size="sm" />}
           {statusOf("projectPhase", phase).label}
           <ChevronDown className="size-3" />
         </Button>

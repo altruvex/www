@@ -43,13 +43,6 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
   const hasInteracted = useFirstInteraction();
   const shouldMountNonCritical = idleMounted || hasInteracted;
 
-  // SmoothScroll mounts as a SIBLING, never as a wrapper. Swapping the tree
-  // between `content` and `<SmoothScrollLazy>{content}</SmoothScrollLazy>`
-  // changed the element type at this position, so React tore down and rebuilt
-  // the entire app the moment `shouldMountNonCritical` flipped — on the first
-  // pointerdown / touchstart / wheel / keydown. Every piece of client state
-  // below it was wiped, including an open drawer. The provider holds no
-  // context; it only runs an effect, so a sibling works identically.
   return (
     <>
       {shouldMountNonCritical ? <SmoothScrollLazy /> : null}

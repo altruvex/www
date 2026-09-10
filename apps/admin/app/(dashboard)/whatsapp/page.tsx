@@ -29,6 +29,9 @@ export default async function WhatsAppPage() {
   const sent = byStatus.reduce((s, row) => s + row._count._all, 0);
   const failed = count("FAILED");
   const delivered = count("DELIVERED") + count("READ");
+  // One failing thread has an obvious destination; several means the fault is
+  // more likely the connection than any single conversation.
+  const failingThreads = threads.filter((thread) => thread.failed > 0);
 
   return (
     <div className="space-y-4">
@@ -45,7 +48,15 @@ export default async function WhatsAppPage() {
       />
 
       {failed > 0 && (
-        <AlertBar tone="danger">
+        <AlertBar
+          tone="danger"
+          href={
+            failingThreads.length === 1
+              ? `/whatsapp/${failingThreads[0]!.clientId}`
+              : "/integrations"
+          }
+          cta={failingThreads.length === 1 ? "Open the thread" : "Check the connection"}
+        >
           {failed} message{failed === 1 ? "" : "s"} failed to deliver. The client never
           received them — open the thread and resend, or check the Cloud API credentials
           under Integrations.

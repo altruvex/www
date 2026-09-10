@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { ExternalLink, GitBranch } from "lucide-react";
 
@@ -6,6 +7,7 @@ import { Button } from "@repo/ui";
 
 import { EmptyInline } from "@/components/os/empty-state";
 import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
@@ -14,6 +16,8 @@ import { StatusPill } from "@/components/ui/badge";
 import { AlertBar } from "@/components/os/error-state";
 import { dateTime, when } from "@/lib/format";
 import { getProduct } from "@/lib/engineering";
+import { githubRepoSlug } from "@/lib/github";
+import { GithubPanel } from "./github-panel";
 import { IngestTokenPanel } from "./ingest-token-panel";
 
 export const dynamic = "force-dynamic";
@@ -62,6 +66,20 @@ export default async function ProductPage({
   const failedBuilds = product.builds.filter((b) => b.status === "FAILED").length;
   const clientName = product.client.company || product.client.name || "Unnamed client";
 
+  // The webhook's payload URL is whatever host this page was served from, so a
+  // staging instance hands out its own address rather than production's.
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
+  const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+  const repoSlug = githubRepoSlug(product.repositoryUrl);
+  const lastGithubEvent =
+    [
+      ...product.builds.filter((b) => b.externalId?.startsWith("gh-run-")),
+      ...product.deployments.filter((d) => d.externalId?.startsWith("gh-deployment-")),
+    ]
+      .map((row) => row.createdAt)
+      .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -95,18 +113,15 @@ export default async function ProductPage({
         }
         alert={
           openIncidents.length > 0 ? (
-            <AlertBar tone="danger">
+            <AlertBar tone="danger" href="/incidents" cta="Open incidents">
               {openIncidents.length} open incident
               {openIncidents.length === 1 ? "" : "s"} on this product — the most severe is{" "}
-              {openIncidents[0]?.severity}.{" "}
-              <Link href="/incidents" className="underline">
-                Open incidents
-              </Link>
+              {openIncidents[0]?.severity}.
             </AlertBar>
           ) : !product.ingestTokenHash && product.status === "LIVE" ? (
-            <AlertBar tone="warning">
+            <AlertBar tone="warning" href="#ingest-token" cta="Issue an ingest token">
               This product is live but no CI pipeline reports to it, so its deployment
-              history and logs will stay empty. Issue an ingest token below to connect one.
+              history and logs will stay empty. Issue an ingest token to connect one.
             </AlertBar>
           ) : null
         }
@@ -128,6 +143,13 @@ export default async function ProductPage({
                 </a>
               </Button>
             )}
+            <DeleteRecordButton
+              entity="product"
+              id={product.id}
+              label={product.name}
+              redirectTo="/products"
+              variant="ghost"
+            />
           </>
         }
         tabs={<TabNav tabs={[...TABS]} active={tab} basePath={`/products/${product.id}`} />}
@@ -190,12 +212,25 @@ export default async function ProductPage({
               />
             </Panel>
 
-            <IngestTokenPanel
-              productId={product.id}
-              slug={product.slug}
-              last4={product.ingestTokenLast4}
-              issuedAt={product.ingestTokenIssuedAt?.toISOString() ?? null}
-            />
+            <div id="github" className="scroll-mt-20">
+              <GithubPanel
+                productId={product.id}
+                repositoryUrl={product.repositoryUrl}
+                repoSlug={repoSlug}
+                webhookUrl={`${scheme}://${host}/api/ingest/github`}
+                secretConfigured={Boolean(process.env.GITHUB_WEBHOOK_SECRET)}
+                lastEventAt={lastGithubEvent ? dateTime(lastGithubEvent) : null}
+              />
+            </div>
+
+            <div id="ingest-token" className="scroll-mt-20">
+              <IngestTokenPanel
+                productId={product.id}
+                slug={product.slug}
+                last4={product.ingestTokenLast4}
+                issuedAt={product.ingestTokenIssuedAt?.toISOString() ?? null}
+              />
+            </div>
 
             <QuickActions>
               <Button asChild variant="ghost">

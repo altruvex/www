@@ -3,11 +3,12 @@
 import {
   CircleCheckIcon,
   InfoIcon,
-  Loader2,
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+
+import { LoadingIcon } from "./loading-icon";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
@@ -18,7 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         info: <InfoIcon className="size-4" />,
         warning: <TriangleAlertIcon className="size-4" />,
         error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2 className="size-4 animate-spin" />,
+        loading: <LoadingIcon size="md" />,
       }}
       style={
         {

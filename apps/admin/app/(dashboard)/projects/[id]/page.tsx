@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
 import { ExternalLink, Globe, Wallet } from "lucide-react";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -123,17 +124,32 @@ export default async function ProjectDetailPage({
                 Client portal
               </Link>
             </Button>
+            <DeleteRecordButton
+              entity="project"
+              id={project.id}
+              label={project.name}
+              redirectTo="/projects"
+              variant="ghost"
+            />
           </>
         }
         alert={
           late ? (
-            <AlertBar tone="danger">
+            <AlertBar
+              tone="danger"
+              href={`/whatsapp/${project.clientId}`}
+              cta="Message the client"
+            >
               Target launch was {dueLabel(project.targetLaunchDate)} and there is{" "}
               {project.stagingUrl ? "a staging build" : "no staging build"}. Either move
               the date with the client or say why it slipped.
             </AlertBar>
           ) : overdue.length > 0 ? (
-            <AlertBar tone="warning">
+            <AlertBar
+              tone="warning"
+              href={`/projects/${project.id}?tab=financials`}
+              cta="Open the payment schedule"
+            >
               {overdue.length} payment{overdue.length === 1 ? " is" : "s are"} past due on
               this project — {money(overdue.reduce((s, p) => s + p.amount, 0), currency)}{" "}
               outstanding.

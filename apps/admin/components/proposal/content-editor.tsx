@@ -7,20 +7,25 @@ import {
   ListEditor,
   NumberInput,
   Section,
+  SplitMeter,
   TextArea,
   TextInput,
 } from "./editor-primitives";
 import { PriceControl } from "./price-control";
 import {
+  deliveryDate,
   discountAmount,
+  formatDocDate,
   formatPercent,
   investmentTotal,
   netTotal,
   paymentAmount,
   paymentPercentTotal,
+  validUntilDate,
   type ProposalContent,
   type ValidationIssue,
 } from "@/lib/proposal-schema";
+import { COMMERCIAL_TERMS, applyVat } from "@repo/pricing-schema";
 import { cn } from "@/lib/utils";
 
 function formatCurrency(amount: number, currency: string) {
@@ -162,6 +167,20 @@ export function ProposalContentEditor({
   const total = netTotal(content.investmentItems, content.discount);
   const percentTotal = paymentPercentTotal(content.paymentSchedule);
   const percentOk = Math.abs(percentTotal - 100) < 0.001;
+  const percentGap = 100 - percentTotal;
+
+  // Two dates the operator was setting blind: the deck prints a valid-until
+  // line derived from the validity window, and a client reads the timeline as
+  // a delivery promise. Both are derived here with the same rule the document
+  // uses — never stored, so neither can drift from the fields above it.
+  const weeks = timelineWeeks(content.timelinePhases);
+  const validUntil = formatDocDate(validUntilDate(content.meta));
+  // The contract already prints VAT (contract-builder.ts applies the schema's
+  // rate to the same figure). The deck says nothing, so a client can read one
+  // number in the proposal and a bigger one in the agreement. Shown here as
+  // the derived figure it is — the schema owns the rate, not this screen.
+  const vat = applyVat(total);
+  const delivery = formatDocDate(deliveryDate(content.meta.proposalDate, weeks));
 
   return (
     <div className="space-y-3">
@@ -218,6 +237,42 @@ export function ProposalContentEditor({
             </Field>
           </div>
         </div>
+
+        {/* Both of these are already implied by the fields above — the deck
+            prints the first and the client infers the second. Showing them
+            here means the operator sets a validity window and a phase plan
+            while looking at the dates they actually produce. */}
+        <dl className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-meta text-muted-foreground">
+              Valid until
+              <span className="ms-1.5 text-subtle-foreground">
+                — the {"{date}"} the deck prints
+              </span>
+            </dt>
+            <dd>
+              <Derived className="h-auto">
+                {validUntil ?? "Set a proposal date"}
+              </Derived>
+            </dd>
+          </div>
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-meta text-muted-foreground">
+              Estimated delivery
+              <span className="ms-1.5 text-subtle-foreground">
+                — proposal date + {weeks}W
+              </span>
+            </dt>
+            <dd>
+              <Derived
+                className="h-auto"
+                title="Derived from the timeline phases, not stored — edit a phase and this moves."
+              >
+                {delivery ?? "Set a proposal date"}
+              </Derived>
+            </dd>
+          </div>
+        </dl>
       </Section>
       )}
 
@@ -548,9 +603,15 @@ export function ProposalContentEditor({
         title="Timeline"
         description="Slide 4 — one row and one load bar per phase."
         action={
-          <span className="telemetry text-subtle-foreground">
-            Total{" "}
-            <span className="text-foreground">{timelineWeeks(content.timelinePhases)}</span> weeks
+          <span className="telemetry text-end text-subtle-foreground">
+            <span className="block">
+              Total <span className="text-foreground">{weeks}</span> weeks
+            </span>
+            {delivery && (
+              <span className="block text-subtle-foreground">
+                delivers <span className="text-muted-foreground">{delivery}</span>
+              </span>
+            )}
           </span>
         }
       >
@@ -667,8 +728,23 @@ export function ProposalContentEditor({
               )}
             >
               {formatPercent(percentTotal)}% of 100%
+              {!percentOk && (
+                <span className="ms-1.5">
+                  ({percentGap > 0 ? "−" : "+"}
+                  {formatPercent(Math.abs(percentGap))})
+                </span>
+              )}
             </span>
           </div>
+
+          {content.paymentSchedule.length > 0 && (
+            <SplitMeter
+              segments={content.paymentSchedule.map((row) => ({
+                label: row.label,
+                value: row.percent,
+              }))}
+            />
+          )}
 
           <ListEditor
             items={content.paymentSchedule}
@@ -719,6 +795,22 @@ export function ProposalContentEditor({
               Percentages must total exactly 100% before the proposal can be generated.
             </p>
           )}
+
+          <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border pt-3">
+            <dt className="text-meta text-muted-foreground">
+              VAT at {Math.round(COMMERCIAL_TERMS.vatRate * 100)}%
+              <span className="ms-1.5 text-subtle-foreground">
+                — the contract states this; the deck quotes the figure above,
+                excluding it
+              </span>
+            </dt>
+            <dd className="font-mono text-meta tabular-nums text-muted-foreground">
+              +{formatCurrency(vat.vat, currency)}
+              <span className="ms-2 text-foreground">
+                {formatCurrency(vat.gross, currency)} incl.
+              </span>
+            </dd>
+          </dl>
 
           {reduction > 0 && (
             <p className="text-meta text-subtle-foreground">
@@ -859,12 +951,18 @@ export function ProposalContentEditor({
             invalid={!content.whyUs.cta.trim()}
           />
         </Field>
-        <Field label="Value props" error={sectionError("whyUs.valueProps")}>
+        {/* Deliberately not a <Field>: Field hands its one generated id to
+            every control underneath it, so wrapping a list produced N inputs
+            sharing an id and one error marking all of them invalid. */}
+        <div className="space-y-1.5">
+          <h4 className="text-base font-medium text-muted-foreground">Value props</h4>
           <ListEditor
             items={content.whyUs.valueProps}
             onChange={(v) => set("whyUs", { ...content.whyUs, valueProps: v })}
             makeItem={() => ""}
             addLabel="Add value prop"
+            emptyHint={sectionError("whyUs.valueProps")}
+            emptyBody="The three short lines beside the closing paragraph. Slide 7 reads thin without them."
             renderItem={(item, i) => (
               <TextInput
                 value={item}
@@ -875,14 +973,13 @@ export function ProposalContentEditor({
                   })
                 }
                 invalid={!item.trim()}
+                ariaLabel={`Value prop ${i + 1}`}
               />
             )}
           />
-        </Field>
+        </div>
       </Section>
       )}
-
-
     </div>
   );
 }

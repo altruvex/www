@@ -388,6 +388,7 @@ model Client {
   contracts     Contract[]
   projects      Project[]
   messages      WhatsAppMessage[]
+  emails        EmailMessage[]
   subscriptions MaintenanceSubscription[]
   products      Product[]
 
@@ -1355,4 +1356,55 @@ model ProjectTask {
   @@index([assigneeId, status])
   @@index([dueDate])
   @@map("project_tasks")
+}
+
+enum EmailMessageStatus {
+  QUEUED
+  SENT
+  FAILED
+  /// Set by a provider webhook, never by this application. Until one is wired
+  /// up no row ever reaches these — a status nothing can set is better than one
+  /// the UI invents.
+  DELIVERED
+  BOUNCED
+  COMPLAINED
+}
+
+/// One outbound email, recorded the way `WhatsAppMessage` records one message.
+///
+/// Deliberately the same shape: both are a thing sent to a client about a
+/// proposal or a contract, and a client's history is worth less if the two
+/// channels are stored as different kinds of fact.
+model EmailMessage {
+  id       String @id @default(uuid())
+  client   Client @relation(fields: [clientId], references: [id])
+  clientId String
+
+  status EmailMessageStatus @default(QUEUED)
+
+  /// The transport's own id — Resend's, or the Message-ID an SMTP server
+  /// assigned. What a delivery question quotes.
+  providerMessageId String? @unique
+  /// Which transport sent it, because one client's history can span a move
+  /// from one to the other.
+  transport String
+
+  toAddress String
+  subject   String
+  body      String
+
+  relatedProposalId String?
+  relatedContractId String?
+
+  /// Why the transport refused it, in its own words.
+  failureReason String?
+
+  sentAt      DateTime?
+  deliveredAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+  @@index([providerMessageId])
+  @@map("email_messages")
 }

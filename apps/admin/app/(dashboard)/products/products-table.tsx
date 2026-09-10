@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { when } from "@/lib/format";
@@ -31,6 +32,7 @@ export interface ProductRow {
 }
 
 export function ProductsTable({ rows }: { rows: ProductRow[] }) {
+  const del = useRecordDelete({ entity: "product" });
   const columns: Column<ProductRow>[] = [
     {
       id: "name",
@@ -118,20 +120,26 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
   ];
 
   return (
-    <DataTable
-      tableId="products"
-      rows={rows}
-      columns={columns}
-      rowKey={(row) => row.id}
-      rowHref={(row) => `/products/${row.id}`}
-      mobile={{ title: "name", subtitle: "status", meta: ["kind", "deployed"] }}
-      searchPlaceholder="Search products, clients, slugs…"
-      initialSort={{ columnId: "incidents", dir: "asc" }}
-      empty={
-        <EmptyInline>
-          No product matches those filters.
-        </EmptyInline>
-      }
-    />
+    <>
+      <DataTable
+        tableId="products"
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        rowHref={(row) => `/products/${row.id}`}
+        mobile={{ title: "name", subtitle: "status", meta: ["kind", "deployed"] }}
+        searchPlaceholder="Search products, clients, slugs…"
+        initialSort={{ columnId: "incidents", dir: "asc" }}
+        rowActions={(row) => (
+          <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
+        )}
+        empty={
+          <EmptyInline>
+            No product matches those filters.
+          </EmptyInline>
+        }
+      />
+      {del.dialog}
+    </>
   );
 }

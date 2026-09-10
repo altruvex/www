@@ -157,8 +157,7 @@ export default async function ActivityPage() {
     <div className="space-y-6">
       <PageHeader
         title="Activity"
-        description="Everything that happened, newest first. Derived from the records themselves, so it can never disagree with them."
-        meta={<span>{todayCount} event{todayCount === 1 ? "" : "s"} today · {events.length} shown</span>}
+        description="Everything that happened, newest first. Derived from the records themselves, so it can never disagree with them — /audit is the separate, written trail of who changed what."
       />
 
       <ActivityFeed events={serializedEvents} todayCount={todayCount} />

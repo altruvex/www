@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { convertSubmissionToClient } from "@/app/(dashboard)/_actions/records";
 
 export function ConvertButton({ submissionId }: { submissionId: string }) {
@@ -31,7 +32,7 @@ export function ConvertButton({ submissionId }: { submissionId: string }) {
         }
       }}
     >
-      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <UserPlus className="size-3.5" />}
+      {busy ? <LoadingIcon size="sm" /> : <UserPlus className="size-3.5" />}
       Convert to lead
     </Button>
   );

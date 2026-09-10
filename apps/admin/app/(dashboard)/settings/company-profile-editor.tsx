@@ -3,9 +3,10 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Edit2, Globe, Loader2, Mail, Phone } from "lucide-react";
+import { Edit2, Globe, Mail, Phone } from "lucide-react";
 import { updateCompanyProfile } from "@/app/(dashboard)/_actions/records";
 import { Button } from "@repo/ui";
+import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
 import {
   Sheet,
@@ -161,7 +162,7 @@ export function CompanyProfileEditor({
               Cancel
             </Button>
             <Button type="submit" variant="brand" disabled={pending}>
-              {pending && <Loader2 className="animate-spin" />}
+              {pending && <LoadingIcon size="sm" />}
               {pending ? "Saving…" : "Save changes"}
             </Button>
           </SheetFooter>
