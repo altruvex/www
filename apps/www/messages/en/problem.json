@@ -13,7 +13,8 @@
       "number": "02",
       "pitch": "“Fast, modern, fully optimised.”",
       "delivery": "Seven seconds to first paint in production.",
-      "evidence": "Average agency site: 6.8s load time"
+      "evidence": "Average agency site: 6.8s load time",
+      "wait": 7
     },
     {
       "number": "03",
@@ -38,5 +39,8 @@
   "closingHighlight": "every problem above.",
   "trackPitch": "What you were sold",
   "trackDelivery": "What you actually own",
-  "titleItalic": "They're getting templates."
+  "titleItalic": "They're getting templates.",
+  "tally": "Promises kept",
+  "demoLabel": "Replay · first paint",
+  "demoSeconds": "{n}s"
 }

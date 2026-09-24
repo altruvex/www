@@ -20,7 +20,7 @@ import { whenMotionReady } from "../utils/ready";
  * leave content hidden.
  */
 
-function useScene<T extends HTMLElement>(setup: (root: T) => void): RefObject<T | null> {
+function useScene<T extends HTMLElement>(setup: (root: T) => void | (() => void)): RefObject<T | null> {
   const ref = useRef<T | null>(null);
 
   /* Runs once per mount: a scene's shape is fixed by its config, which the
@@ -79,23 +79,44 @@ export function useWordRead<T extends HTMLElement = HTMLParagraphElement>() {
  *
  * The markup rests struck and read (`[--strike:100%]`, final inks), which is
  * the reduced-motion and no-JS state: the argument survives without motion.
+ *
+ * `onStrike` reports when the line finishes (true) or is scrolled back off
+ * (false) — read from the timeline itself, so anything counting strikes can
+ * never disagree with what is drawn. When the scene is torn down (unmount,
+ * reduced motion switched on) it reports true: the markup's resting state.
  */
-export function useStrikeRead<T extends HTMLElement = HTMLElement>() {
+const STRIKE_SHARE = 0.4;
+
+export function useStrikeRead<T extends HTMLElement = HTMLElement>({
+  onStrike,
+}: { onStrike?: (struck: boolean) => void } = {}) {
+  const onStrikeRef = useRef(onStrike);
+  useEffect(() => {
+    onStrikeRef.current = onStrike;
+  }, [onStrike]);
+
   return useScene<T>((root) => {
     const style = getComputedStyle(root);
     const tone = (name: string) => `hsl(${style.getPropertyValue(name).trim()})`;
     const strike = root.querySelector<HTMLElement>("[data-strike]");
     const words = gsap.utils.toArray<HTMLElement>("[data-word]", root);
+    let struck: boolean | null = null;
+    const report = (next: boolean) => {
+      if (next === struck) return;
+      struck = next;
+      onStrikeRef.current?.(next);
+    };
     const tl = gsap.timeline({
       defaults: { ease: "none" },
       scrollTrigger: { trigger: root, start: MOTION.scroll.readStart, end: MOTION.scroll.readEnd, scrub: true },
+      onUpdate: () => report(tl.progress() >= STRIKE_SHARE),
     });
     /* Proportions of the read window: the strike lands first, the answer after. */
     if (strike) {
       tl.fromTo(
         strike,
         { "--strike": "0%", color: tone("--foreground") },
-        { "--strike": "100%", color: tone("--muted-foreground"), duration: 0.4 },
+        { "--strike": "100%", color: tone("--muted-foreground"), duration: STRIKE_SHARE },
         0,
       );
     }
@@ -104,9 +125,11 @@ export function useStrikeRead<T extends HTMLElement = HTMLElement>() {
         words,
         { color: tone("--muted") },
         { color: tone("--foreground"), duration: 0.1, stagger: { amount: 0.5 } },
-        0.4,
+        STRIKE_SHARE,
       );
     }
+    report(tl.progress() >= STRIKE_SHARE);
+    return () => report(true);
   });
 }
 

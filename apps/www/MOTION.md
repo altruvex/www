@@ -183,7 +183,7 @@ in `MOTION.scroll` / `MOTION.duration.settle`. First used on
 | hook | markup | does |
 |---|---|---|
 | `useWordRead()` | `[data-word]` spans (render with `splitWords(text)`) | colour `--muted` → `--foreground` per word over `readStart`→`readEnd` — colour, never opacity (Arabic ghosting) |
-| `useStrikeRead()` | one `[data-strike]` claim (paints `--strike` as a per-line background) + `[data-word]` answer | over `readStart`→`readEnd`: `--strike` 0→100% with ink `--foreground`→`--muted-foreground`, then the words read as in `useWordRead` — markup rests struck and read |
+| `useStrikeRead()` | one `[data-strike]` claim (paints `--strike` as a per-line background) + `[data-word]` answer | over `readStart`→`readEnd`: `--strike` 0→100% with ink `--foreground`→`--muted-foreground`, then the words read as in `useWordRead` — markup rests struck and read. Optional `onStrike(struck)` reports the strike finishing/unwinding from the timeline itself (the problem-section tally), and `true` on teardown |
 | `useMediaSettle({ delay })` | root with a radius, `[data-settle-img]` inside | clip opens from an inset (resolved radius, not `var()`), image eases out of a 1.18 zoom on scroll |
 | `useKineticTrack({ wipeAt })` | tall runway root, sticky stage, `[data-track]` copies, optional `[data-wipe]` layer | tracks cross the inline axis (RTL mirrored); the wipe layer rises through them |
 | `useScrollRise({ distance, scale })` | the block itself | rises into place (travel + slight scale, no fade) as it enters — a screen lifting out of a band |
