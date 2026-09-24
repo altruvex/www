@@ -46,7 +46,7 @@ const LEDGER_GRID = `grid grid-cols-1 gap-y-5 ${LEDGER_COLUMNS}`;
  * scrubs. It rests at 100% — struck is the reduced-motion state.
  */
 const STRIKE =
-  "[--strike:100%] bg-[linear-gradient(var(--local-accent),var(--local-accent))] bg-no-repeat [background-size:var(--strike)_0.075em] [background-position:0_54%] rtl:[background-position:100%_56%] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]";
+  "[--strike:100%] bg-[linear-gradient(var(--local-accent),var(--local-accent))] bg-no-repeat [background-size:var(--strike)_0.075em] [background-position:0_54%] rtl:[background-position:100%_62%] [box-decoration-break:clone] [-webkit-box-decoration-break:clone]";
 
 const DELIVERY_TYPE =
   "text-[clamp(1.75rem,3.4vw,3.25rem)] font-medium leading-[1.05] tracking-[-0.035em] rtl:leading-[1.3] rtl:tracking-normal";
