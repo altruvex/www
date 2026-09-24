@@ -133,7 +133,7 @@ function FirstPaint({ delivery, seconds }: { delivery: string; seconds: number }
             className="h-full w-full origin-left bg-local-accent rtl:origin-right"
           />
         </div>
-        <p className="m-0 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground tabular-nums">
+        <p className="m-0 shrink-0 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground tabular-nums rtl:font-[family-name:var(--font-vazirmatn)] rtl:text-sm rtl:tracking-normal">
           {t("demoLabel")}{" "}
           <span data-paint-timer className="normal-case text-local-accent-text">
             {t("demoSeconds", { n: localizeNumbers(seconds.toFixed(1), locale) })}
@@ -179,7 +179,7 @@ function LedgerRow({
     >
       <p
         aria-hidden="true"
-        className="m-0 font-mono text-sm tabular-nums tracking-[0.12em] text-local-accent-text md:pt-2"
+        className="m-0 font-mono text-sm tabular-nums tracking-[0.12em] text-local-accent-text md:pt-2 rtl:font-[family-name:var(--font-vazirmatn)] rtl:text-xl rtl:font-medium rtl:tracking-normal rtl:md:pt-1"
       >
         {item.number}
       </p>
