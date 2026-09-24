@@ -81,3 +81,7 @@ ehthumbs.db
 # Internal security notes (not published)
 SECURITY_AUDIT.md
 SECURITY_TODO.md
+
+# Written and re-added by `next dev` (agent rules for the installed Next.js)
+apps/www/AGENTS.md
+apps/www/CLAUDE.md
