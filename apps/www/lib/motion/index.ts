@@ -22,6 +22,7 @@ export {
   useMediaSettle,
   useRunwayProgress,
   useScrollRise,
+  useStrikeRead,
   useTileAssemble,
   useWordRead,
 } from "@/lib/motion/hooks/use-scroll-scene";

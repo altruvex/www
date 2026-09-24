@@ -69,6 +69,47 @@ export function useWordRead<T extends HTMLElement = HTMLParagraphElement>() {
   });
 }
 
+/**
+ * A claim struck out, then its answer read in — one scrubbed beat per row,
+ * over the same MOTION.scroll.readStart → readEnd window as useWordRead.
+ * `[data-strike]` draws its line by animating `--strike` (0% → 100%; the
+ * element paints it as a per-line background, so a wrapped claim is struck
+ * on every line) and fades from `--foreground` to `--muted-foreground`; then
+ * every `[data-word]` reads from `--muted` to `--foreground`.
+ *
+ * The markup rests struck and read (`[--strike:100%]`, final inks), which is
+ * the reduced-motion and no-JS state: the argument survives without motion.
+ */
+export function useStrikeRead<T extends HTMLElement = HTMLElement>() {
+  return useScene<T>((root) => {
+    const style = getComputedStyle(root);
+    const tone = (name: string) => `hsl(${style.getPropertyValue(name).trim()})`;
+    const strike = root.querySelector<HTMLElement>("[data-strike]");
+    const words = gsap.utils.toArray<HTMLElement>("[data-word]", root);
+    const tl = gsap.timeline({
+      defaults: { ease: "none" },
+      scrollTrigger: { trigger: root, start: MOTION.scroll.readStart, end: MOTION.scroll.readEnd, scrub: true },
+    });
+    /* Proportions of the read window: the strike lands first, the answer after. */
+    if (strike) {
+      tl.fromTo(
+        strike,
+        { "--strike": "0%", color: tone("--foreground") },
+        { "--strike": "100%", color: tone("--muted-foreground"), duration: 0.4 },
+        0,
+      );
+    }
+    if (words.length) {
+      tl.fromTo(
+        words,
+        { color: tone("--muted") },
+        { color: tone("--foreground"), duration: 0.1, stagger: { amount: 0.5 } },
+        0.4,
+      );
+    }
+  });
+}
+
 /** A sentence as `[data-word]` spans for useWordRead, spaces kept inside. */
 export function splitWords(text: string): Array<{ key: number; word: string }> {
   const words = text.split(" ");

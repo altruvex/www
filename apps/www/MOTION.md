@@ -24,7 +24,7 @@ this document is the implementation layer.
 | `hooks/use-magnetic.ts` `use-press.ts` `use-tilt.ts` | **interaction** primitives — spring-driven |
 | `hooks/use-reveal.ts` `use-batch.ts` `use-text.ts` `use-counter.ts` `use-parallax.ts` | **scroll** primitives — ScrollTrigger + duration/ease |
 | `hooks/use-section-motion.ts` | section choreography wrappers |
-| `hooks/use-scroll-scene.ts` | **scroll scenes** — `useWordRead` (+ `splitWords`), `useMediaSettle`, `useKineticTrack`, `useTileAssemble` |
+| `hooks/use-scroll-scene.ts` | **scroll scenes** — `useWordRead` (+ `splitWords`), `useStrikeRead`, `useMediaSettle`, `useKineticTrack`, `useTileAssemble` |
 | `smooth-scroll.tsx` `lenis-instance.ts` | Lenis boot, ScrollTrigger bridge, body-resize refresh |
 | `lib/utils/gsap.ts` | plugin registration, CustomEase registration of every `MOTION.ease` string, `gsap.defaults` |
 
@@ -183,6 +183,7 @@ in `MOTION.scroll` / `MOTION.duration.settle`. First used on
 | hook | markup | does |
 |---|---|---|
 | `useWordRead()` | `[data-word]` spans (render with `splitWords(text)`) | colour `--muted` → `--foreground` per word over `readStart`→`readEnd` — colour, never opacity (Arabic ghosting) |
+| `useStrikeRead()` | one `[data-strike]` claim (paints `--strike` as a per-line background) + `[data-word]` answer | over `readStart`→`readEnd`: `--strike` 0→100% with ink `--foreground`→`--muted-foreground`, then the words read as in `useWordRead` — markup rests struck and read |
 | `useMediaSettle({ delay })` | root with a radius, `[data-settle-img]` inside | clip opens from an inset (resolved radius, not `var()`), image eases out of a 1.18 zoom on scroll |
 | `useKineticTrack({ wipeAt })` | tall runway root, sticky stage, `[data-track]` copies, optional `[data-wipe]` layer | tracks cross the inline axis (RTL mirrored); the wipe layer rises through them |
 | `useScrollRise({ distance, scale })` | the block itself | rises into place (travel + slight scale, no fade) as it enters — a screen lifting out of a band |
@@ -229,7 +230,7 @@ that covers Tailwind hover transitions; the hooks below never rely on it.)
 | `usePress` | scale spring | opacity dip to `MOTION.reduced.pressOpacity` and back — feedback survives |
 | `useMagnetic` | x/y springs | none (position shift is motion); CSS hover styling remains |
 | `useTilt` | rotation springs | none (rotation is vestibular); CSS hover styling remains |
-| scroll scenes (`useWordRead` `useMediaSettle` `useKineticTrack` `useTileAssemble`) | scrubbed sequence | nothing is set — the markup's resting state is the reduced state (sections render a static fallback where the sticky runway would otherwise be empty) |
+| scroll scenes (`useWordRead` `useStrikeRead` `useMediaSettle` `useKineticTrack` `useTileAssemble`) | scrubbed sequence | nothing is set — the markup's resting state is the reduced state (sections render a static fallback where the sticky runway would otherwise be empty) |
 | `scrollToY` | Lenis glide | immediate jump |
 | route `template.tsx` | 8px lift + fade | fade only |
 | Lenis | smooth wheel | native scroll |
