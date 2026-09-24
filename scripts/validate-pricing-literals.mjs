@@ -19,7 +19,7 @@
  * Internal-only fields are policed separately: `internalHourEquivalent` exists
  * for margin planning and must never reach a client surface.
  */
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/\/$/, "");
@@ -28,9 +28,13 @@ const SCHEMA_DIR = join("packages", "pricing-schema");
 const SCAN_DIRS = ["apps", "packages"];
 const SCAN_EXT = new Set([".ts", ".tsx", ".mjs", ".js", ".json"]);
 
+/**
+ * `.agents` and `.windsurf` hold editor-agent skills (gitignored, or symlinks
+ * into the gitignored tree) — tooling on one machine, not code that ships.
+ */
 const SKIP_DIRS = new Set([
   "node_modules", ".next", "dist", ".turbo", "build", "coverage", ".git",
-  "public", "prisma",
+  "public", "prisma", ".agents", ".windsurf",
 ]);
 
 /**
@@ -92,11 +96,22 @@ const NON_PRICE_CONTEXT =
 
 const problems = [];
 
+/**
+ * A directory's entries for both scans, minus skipped directories and
+ * symlinks. lstat, never stat: a committed link whose target is gitignored
+ * dangles on every clean checkout, and stat() on it threw — stopping this
+ * guard before it checked a single file. A real file a link points at inside
+ * the tree is scanned where it lives.
+ */
+function entries(dir) {
+  return readdirSync(dir)
+    .filter((name) => !SKIP_DIRS.has(name))
+    .map((name) => ({ name, full: join(dir, name), st: lstatSync(join(dir, name)) }))
+    .filter(({ st }) => !st.isSymbolicLink());
+}
+
 function walk(dir) {
-  for (const name of readdirSync(dir)) {
-    if (SKIP_DIRS.has(name)) continue;
-    const full = join(dir, name);
-    const st = statSync(full);
+  for (const { name, full, st } of entries(dir)) {
     if (st.isDirectory()) walk(full);
     else if (SCAN_EXT.has(name.slice(name.lastIndexOf(".")))) inspect(full);
   }
@@ -196,10 +211,8 @@ function referencesInternalField(source) {
 function checkInternalLeak() {
   const leaked = [];
   const scan = (dir) => {
-    for (const name of readdirSync(dir)) {
-      if (SKIP_DIRS.has(name)) continue;
-      const full = join(dir, name);
-      if (statSync(full).isDirectory()) scan(full);
+    for (const { name, full, st } of entries(dir)) {
+      if (st.isDirectory()) scan(full);
       else if (SCAN_EXT.has(name.slice(name.lastIndexOf(".")))) {
         const rel = relative(ROOT, full).split(sep).join("/");
         if (rel.startsWith(SCHEMA_DIR)) continue;
