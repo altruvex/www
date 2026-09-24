@@ -189,6 +189,7 @@ export function MaintenanceClient({
             </Select>
           </label>
           <Button
+            variant="brand"
             size="sm"
             disabled={!newClient || !newPlan || busy === "create"}
             onClick={async () => {

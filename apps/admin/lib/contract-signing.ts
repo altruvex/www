@@ -1,5 +1,7 @@
-import { prisma, type SignatureMethod } from "@repo/database";
+import { prisma, type SignatureMethod, type SignVerificationChannel } from "@repo/database";
 import { clientActor, recordActivity } from "./activity-log";
+import { servicesFromProposal } from "./client-services";
+import { proposalContentSchema } from "./proposal-schema";
 import { sendTemplateMessage } from "./whatsapp-api";
 
 interface HandleContractSignedInput {
@@ -8,6 +10,8 @@ interface HandleContractSignedInput {
   signedIp: string | null;
   signatureMethod: SignatureMethod;
   baseUrl: string;
+  /** Where the one-time code that authorised a link signature was delivered. */
+  verification?: { via: SignVerificationChannel; to: string; hint: string };
 }
 
 /**
@@ -36,6 +40,12 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
         signedByName: input.signedByName,
         signedIp: input.signedIp,
         signatureMethod: input.signatureMethod,
+        ...(input.verification
+          ? {
+              signerVerifiedVia: input.verification.via,
+              signerVerifiedTo: input.verification.to,
+            }
+          : {}),
       },
       include: { client: true, proposal: true },
     });
@@ -93,6 +103,25 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
         ],
       });
 
+      // The recurring services the client agreed to, as PENDING rows. Same
+      // transaction as the project for the same reason as the payments: the
+      // idempotency guard above never re-enters this block, so a project that
+      // committed without them would never get them.
+      const parsed = proposalContentSchema.safeParse(contract.proposal.content);
+      const services = parsed.success ? parsed.data.services : [];
+      if (services.length > 0) {
+        await tx.clientService.createMany({
+          data: servicesFromProposal({
+            services,
+            clientId: contract.clientId,
+            projectId: created.id,
+            proposalId: contract.proposalId,
+            currency: contract.proposal.currency,
+            createdBy: input.signedByName,
+          }),
+        });
+      }
+
       return created;
     });
   }
@@ -111,7 +140,13 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
       summary: `${input.signedByName} signed the contract`,
       before: { status: contract.status },
       after: { status: "SIGNED" },
-      metadata: { signatureMethod: input.signatureMethod, clientId: contract.clientId },
+      metadata: {
+        signatureMethod: input.signatureMethod,
+        clientId: contract.clientId,
+        ...(input.verification
+          ? { verifiedVia: input.verification.via, verifiedTo: input.verification.hint }
+          : {}),
+      },
     });
   }
 

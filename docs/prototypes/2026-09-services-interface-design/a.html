@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A · Specimen — Interface Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.hero{padding:150px 0 90px}
+.hero h1{font-size:clamp(56px,9.4vw,168px);line-height:.94;letter-spacing:-.05em;max-width:12ch}
+.hero .row{display:grid;grid-template-columns:1fr 380px;gap:48px;align-items:end;margin-top:56px;border-top:1px solid var(--line);padding-top:28px}
+.hero .row p{color:var(--muted);font-size:18px;line-height:1.6;max-width:44ch}
+.hero .btns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+.read{position:relative;height:320vh}
+.read .pin{position:sticky;top:0;height:100svh;display:grid;grid-template-columns:1fr 1.5fr;gap:56px;align-items:center}
+.read .copy h2{font-size:clamp(40px,4.4vw,72px);margin:18px 0 20px}
+.read .copy p{color:var(--muted);line-height:1.6;max-width:36ch}
+.steps{margin-top:36px;display:grid;gap:14px}
+.step{display:grid;grid-template-columns:54px 1fr;gap:12px;align-items:baseline;opacity:.28;transition:opacity var(--m-fast) var(--ease-smooth)}
+.step.on{opacity:1}
+.step b{font-family:"Geist Mono";font-weight:400;color:var(--accent);font-size:13px}
+.step span{font-family:Outfit;font-size:22px;letter-spacing:-.02em}
+.shot{position:relative}
+.dot{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font:600 13px Inter;display:grid;place-items:center;transform:scale(0);box-shadow:0 0 0 8px var(--accent-soft)}
+.clock{margin-top:18px;display:flex;align-items:center;gap:14px}
+.clock .bar{flex:1;height:2px;background:var(--line);position:relative;border-radius:2px}
+.clock .bar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);border-radius:2px}
+.clock span{font-family:"Geist Mono";font-size:12px;color:var(--muted);min-width:64px;text-align:right}
+
+.ba{padding:18vh 0}
+.ba h2{font-size:clamp(40px,4.6vw,76px);max-width:16ch;margin:18px 0 48px}
+.cmp{position:relative;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);aspect-ratio:16/10;background:var(--card);user-select:none;cursor:ew-resize}
+.cmp .layer{position:absolute;inset:0}
+.cmp .flat{padding:7% 8%;display:flex;flex-direction:column;gap:14px;background:var(--card)}
+.cmp .flat p{font:400 17px/1.5 Inter;color:var(--muted);max-width:60ch}
+.cmp .flat .b{align-self:flex-start;border:1px solid var(--line);padding:8px 14px;border-radius:6px;font-size:14px;color:var(--muted)}
+.cmp .real{clip-path:inset(0 0 0 50%)}
+.cmp .real img{width:100%;height:100%;object-fit:cover;object-position:top}
+.cmp .handle{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--accent)}
+.cmp .handle span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;font:600 14px Inter;box-shadow:0 10px 30px -8px rgba(0,0,0,.4)}
+.cmp .lab{position:absolute;top:18px;font:500 12px Inter;padding:6px 12px;border-radius:999px}
+.cmp .lab.l{left:18px;background:var(--surface);color:var(--muted)}
+.cmp .lab.r{right:18px;background:var(--accent);color:var(--accent-fg)}
+
+.caps{padding:16vh 0 20vh}
+.cap{border-top:1px solid var(--line);display:grid;grid-template-columns:70px 1fr 380px;gap:24px;align-items:center;padding:22px 0;cursor:default}
+.cap:last-child{border-bottom:1px solid var(--line)}
+.cap b{font-family:"Geist Mono";font-weight:400;color:var(--muted);font-size:13px}
+.cap h3{font-size:clamp(34px,5.2vw,88px);letter-spacing:-.045em;transition:color var(--m-drawer) var(--ease-smooth),transform var(--m-drawer) var(--ease-strong)}
+.cap p{color:var(--muted);font-size:15px;line-height:1.55;opacity:0;transform:translateY(8px);transition:opacity var(--m-drawer) var(--ease-smooth),transform var(--m-drawer) var(--ease-strong)}
+.cap:hover h3{color:var(--accent);transform:translateX(8px)}
+.cap:hover p{opacity:1;transform:none}
+
+.close{background:#171717;color:#f0f0f0;padding:22vh 0 12vh}
+.close h2{font-size:clamp(56px,9vw,150px);max-width:13ch;font-weight:400}
+.close .row{margin-top:10vh;border-top:1px solid rgba(255,255,255,.1);padding-top:28px;display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+.close p{color:#999;max-width:44ch;line-height:1.6}
+.close .pill.s{border-color:rgba(255,255,255,.4);color:#f0f0f0}
+@media(max-width:900px){.hero .row,.read .pin{grid-template-columns:1fr}.cap{grid-template-columns:40px 1fr}.cap p{grid-column:2;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div class="l"><a>Work</a><a class="on">Services</a><a>Pricing</a><a>About</a><a>Contact</a></div><a class="pill sm">Get an Estimate</a></nav>
+
+<section class="hero wrap">
+  <p class="eyebrow a"><span class="tick"></span>Interface design</p>
+  <h1 style="margin-top:22px">Understood in <em class="w">eight seconds.</em></h1>
+  <div class="row">
+    <p>We translate your offer into sharper hierarchy, clearer messaging and one direct path — so the site <b style="color:var(--fg);font-weight:500">qualifies buyers before your team picks up the phone.</b></p>
+    <div class="btns"><a class="pill p">Request a Scope →</a><a class="pill s">See a Real Build →</a></div>
+  </div>
+</section>
+
+<section class="read band" id="read">
+  <div class="pin wrap">
+    <div class="copy">
+      <p class="eyebrow">01 — The designed read</p>
+      <h2>Every screen is read in an order <em class="w">we chose.</em></h2>
+      <p>Not eye-tracking data — the order the hierarchy is built for. Size, weight and position decide what a buyer takes in, second by second.</p>
+      <div class="steps">
+        <div class="step" data-s="0"><b>0s</b><span>What it is</span></div>
+        <div class="step" data-s="1"><b>2s</b><span>Why believe it</span></div>
+        <div class="step" data-s="2"><b>5s</b><span>What it proves</span></div>
+        <div class="step" data-s="3"><b>8s</b><span>What to do next</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="frame shot" id="shot"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt="">
+        <span class="dot" style="left:17%;top:36%">1</span><span class="dot" style="left:43%;top:54%">2</span><span class="dot" style="left:14%;top:86%">3</span><span class="dot" style="left:18%;top:69%">4</span>
+      </div>
+      <div class="clock"><div class="bar"><i id="clockbar"></i></div><span id="clock">0.0s / 8s</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="ba wrap">
+  <p class="eyebrow">02 — Same words, two hierarchies</p>
+  <h2>The content did not change. <em class="w">The order did.</em></h2>
+  <div class="cmp" id="cmp">
+    <div class="layer flat">
+      <p>Precision web engineering — Cairo</p>
+      <p>Build the system your revenue depends on. Architecture first. Performance by default.</p>
+      <p>Custom multilingual web systems for businesses that demand high-end engineering — not recycled templates.</p>
+      <span class="b">Request a Scope</span><span class="b">See a Real Build</span>
+      <p>This page, measured in your browser. Largest paint 1.50s · Layout shift 0.000 · Server response 225ms</p>
+    </div>
+    <div class="layer real" id="real"><img src="img/home.jpg" alt=""></div>
+    <div class="handle" id="handle"><span>⇆</span></div>
+    <span class="lab l">No hierarchy</span><span class="lab r">Designed</span>
+  </div>
+</section>
+
+<section class="caps wrap">
+  <p class="eyebrow" style="margin-bottom:28px">03 — What the work covers</p>
+  <div class="cap"><b>01</b><h3>Conversion layouts</h3><p>Every page structure guides the visitor toward one action — not just presents information and hopes.</p></div>
+  <div class="cap"><b>02</b><h3>User flows</h3><p>Journeys mapped before screens, so every decision is grounded in how people actually navigate.</p></div>
+  <div class="cap"><b>03</b><h3>Visual hierarchy</h3><p>Type, spacing and contrast calibrated so the most important element always wins first.</p></div>
+  <div class="cap"><b>04</b><h3>Identity systems</h3><p>Your identity extended into a system that holds — not a snapshot that drifts after launch.</p></div>
+  <div class="cap"><b>05</b><h3>Performance budgets</h3><p>No asset or motion for its own sake. Every decision measured against load time.</p></div>
+  <div class="cap"><b>06</b><h3>Accessibility</h3><p>WCAG 2.1 AA built into the system — not patched in after development closes.</p></div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <p class="eyebrow a"><span class="tick"></span>Next step</p>
+    <h2 style="margin-top:28px">Need an interface that <em class="w">converts?</em></h2>
+    <div class="row"><p>We review your current design, find what suppresses conversion and map the next step — in a free 30-minute call.</p><div style="display:flex;gap:10px"><a class="pill p">Request a Scope →</a><a class="pill s">Book the call →</a></div></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="switch.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+gsap.from(".hero h1", { y: 40, opacity: 0, duration: 1.1, ease: "power4.out" });
+const dots = gsap.utils.toArray(".dot"), steps = gsap.utils.toArray(".step");
+ScrollTrigger.create({ trigger: "#read", start: "top top", end: "bottom bottom", scrub: .5, onUpdate: s => {
+  const t = s.progress * 8; document.getElementById("clock").textContent = t.toFixed(1) + "s / 8s";
+  document.getElementById("clockbar").style.width = (s.progress * 100) + "%";
+  const at = [0, 2, 5, 7.6];
+  dots.forEach((d, i) => gsap.to(d, { scale: t >= at[i] ? 1 : 0, duration: .4, ease: "back.out(2)", overwrite: true }));
+  steps.forEach((st, i) => st.classList.toggle("on", t >= at[i]));
+}});
+/* before/after: drag, or it sweeps once with scroll */
+const cmp = document.getElementById("cmp"), real = document.getElementById("real"), handle = document.getElementById("handle");
+const set = p => { p = Math.max(0.04, Math.min(0.96, p)); real.style.clipPath = `inset(0 0 0 ${p * 100}%)`; handle.style.left = p * 100 + "%"; };
+let drag = false;
+cmp.addEventListener("pointerdown", e => { drag = true; cmp.setPointerCapture(e.pointerId); move(e); });
+cmp.addEventListener("pointermove", e => drag && move(e));
+cmp.addEventListener("pointerup", () => drag = false);
+const move = e => { const r = cmp.getBoundingClientRect(); set((e.clientX - r.left) / r.width); };
+if (!reduce) { const o = { p: .9 }; gsap.to(o, { p: .12, ease: "none", onUpdate: () => !drag && set(o.p), scrollTrigger: { trigger: cmp, start: "top 75%", end: "bottom 60%", scrub: .6 } }); }
+gsap.utils.toArray(".cap").forEach((c, i) => gsap.from(c, { y: 30, opacity: 0, duration: .7, ease: "power3.out", scrollTrigger: { trigger: c, start: "top 90%" } }));
+</script>
+</body>
+</html>

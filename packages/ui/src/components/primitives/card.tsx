@@ -7,7 +7,7 @@ const cardVariants = cva("min-w-0 rounded-lg border text-card-foreground", {
   variants: {
     variant: {
       default: "border-border bg-card",
-      subtle: "border-border-subtle bg-surface-subtle",
+      subtle: "border-border-subtle bg-surface",
       elevated: "border-border bg-card shadow-card",
       glass: "liquid-glass-panel",
     },

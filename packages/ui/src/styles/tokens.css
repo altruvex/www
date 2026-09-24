@@ -1,13 +1,24 @@
+/*
+ * The one palette. Both apps import this file, and neither redefines a color
+ * that lives here — an app adds only what exists in that app alone (www: scenes,
+ * color worlds, gradients; admin: sidebar, density).
+ *
+ * Values are design.md §3 (neutral ramp, brand blue, semantic colors). Every
+ * color is authored as HSL channels and consumed as hsl(var(--x)), so a token
+ * can take an alpha at the call site: hsl(var(--brand) / 0.1).
+ */
+
+@custom-variant dark (&:is(.dark *));
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --color-surface: hsl(var(--surface));
-  --color-surface-subtle: hsl(var(--surface-subtle));
-  --color-surface-elevated: hsl(var(--surface-elevated));
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-surface: hsl(var(--surface));
+  --color-surface-2: hsl(var(--surface-2));
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-secondary: hsl(var(--secondary));
@@ -17,101 +28,109 @@
   --color-subtle-foreground: hsl(var(--subtle-foreground));
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
+
   --color-brand: hsl(var(--brand));
   --color-brand-hover: hsl(var(--brand-hover));
+  --color-brand-text: hsl(var(--brand-text));
   --color-brand-soft: var(--brand-soft);
   --color-brand-foreground: hsl(var(--brand-foreground));
+
   --color-border: hsl(var(--border));
-  --color-border-subtle: hsl(var(--border-subtle));
   --color-border-mid: hsl(var(--border-mid));
   --color-border-strong: hsl(var(--border-strong));
+  /* The one hairline for Container, Separator and Grid edges. A full color,
+     not channels, so it follows every scene flip of --s-border. */
+  --color-border-subtle: var(--border-subtle);
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  --color-destructive: hsl(var(--destructive));
-  --color-danger: hsl(var(--danger));
+
+  /* Status: one value per tone. error and destructive are names for danger,
+     not second reds. */
   --color-success: hsl(var(--success));
   --color-warning: hsl(var(--warning));
+  --color-danger: hsl(var(--danger));
+  --color-error: hsl(var(--danger));
+  --color-destructive: hsl(var(--danger));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-info: hsl(var(--info));
   --color-neutral: hsl(var(--neutral));
   --color-progress: hsl(var(--progress));
+
+  /* Categorical chart order, validated as a set — take them in order. */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-6: hsl(var(--chart-6));
+
+  --color-s-high: var(--s-high);
+  --color-s-mid: var(--s-mid);
+  --color-s-low: var(--s-low);
+  --color-s-muted: var(--s-muted);
+  --color-s-surface: var(--s-surface);
+  --color-s-border: var(--s-border);
+  --color-s-border-hover: var(--s-border-hover);
+  --color-s-high-soft: var(--s-high-soft);
+
+  --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
+  /* Ink, for scrims behind overlays (bg-n-8/25). */
+  --color-n-8: hsl(var(--n-8));
+
   --shadow-card: var(--elevation-card);
   --shadow-card-lg: var(--elevation-card-lg);
-  --shadow-overlay: var(--elevation-overlay);
-  --shadow-glass: var(--glass-shadow);
+
   --font-sans: var(--font-outfit);
   --font-body: var(--font-inter);
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
-  --text-metadata: var(--text-metadata);
-  --text-micro: var(--text-micro);
-  --text-meta: var(--text-meta);
-  --text-md: var(--text-md);
+
+  --text-micro: 0.6875rem;
+  --text-meta: 0.75rem;
+  --text-md: 0.875rem;
+
   --radius-xs: calc(var(--radius) - 8px);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 6px);
   --radius-xl: calc(var(--radius) + 12px);
   --radius-2xl: calc(var(--radius) + 18px);
-  --radius-pill: 9999px;
 
   --radius-ctl-sm: calc(var(--radius) - 4px);
   --radius-ctl: var(--radius);
   --radius-ctl-lg: calc(var(--radius) + 2px);
   --radius-ctl-xl: calc(var(--radius) + 4px);
   --radius-overlay: calc(var(--radius) + 12px);
+
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 :root {
   color-scheme: light;
+
   --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 
+  --duration-instant: 120ms;
   --duration-state: 140ms;
   --duration-panel: 200ms;
-  --duration-enter: 220ms;
-  --duration-exit: 160ms;
+  --duration-theme: 400ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-emphasized: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --dur-state: var(--duration-state);
   --dur-panel: var(--duration-panel);
   --ease-out: var(--ease-standard);
 
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-  --space-20: 5rem;
-  --space-24: 6rem;
-
-  --radius: 1rem;
+  --radius: 0.625rem;
   --control-h-sm: 2rem;
   --control-h: 2.5rem;
   --control-h-lg: 2.75rem;
   --control-h-xl: 3rem;
-
   --control-h-icon-sm: 2rem;
   --control-h-icon: 2.25rem;
   --control-h-icon-lg: 2.5rem;
 
-  --text-display: clamp(3rem, 6vw, 5.5rem);
-  --text-heading: clamp(2.125rem, 4vw, 3.25rem);
-  --text-title: clamp(1.5rem, 2.4vw, 2rem);
-  --text-body: clamp(1rem, 1.05vw, 1.125rem);
-  --text-label: 0.8125rem;
-  --text-caption: 0.75rem;
-  --text-metadata: 0.6875rem;
-  --text-micro: 0.6875rem;
-  --text-meta: 0.75rem;
-  --text-md: 0.875rem;
-  --leading-body: 1.7;
-
+  /* ── Neutral ramp (design.md §3.2) ─────────────────────────────── */
   --n-0: 0 0% 98%;
   --n-1: 0 0% 96%;
   --n-2: 0 0% 91%;
@@ -122,80 +141,132 @@
   --n-7: 0 0% 18%;
   --n-8: 0 0% 6%;
 
-  --background: 220 24% 98%;
-  --foreground: var(--n-8);
-  --surface: 220 18% 95%;
-  --surface-subtle: 220 18% 96%;
-  --surface-elevated: 0 0% 100%;
-  --card: 0 0% 100%;
-  --card-foreground: var(--foreground);
-  --popover: 0 0% 100%;
-  --popover-foreground: var(--foreground);
-  --primary: var(--foreground);
-  --primary-foreground: var(--n-0);
-  --secondary: 220 17% 94%;
-  --secondary-foreground: 222 20% 24%;
-  --muted: 220 17% 93%;
-  --muted-foreground: 220 11% 39%;
-  --subtle-foreground: 220 10% 43%;
+  /* ── Brand blue (design.md §3.1) ───────────────────────────────── */
   --brand: 214 89% 48%;
   --brand-hover: 214 89% 41%;
+  /* Brand blue as text, per ground. Named once so a scene or world that
+     needs the other ground's value references it instead of retyping it. */
+  --brand-text-on-light: 214 90% 43%;
+  --brand-text-on-dark: 214 95% 64%;
+  --brand-text: var(--brand-text-on-light);
   --brand-soft: hsl(var(--brand) / 0.1);
   --brand-foreground: var(--n-0);
+  --selection-accent: var(--brand);
+
+  /* ── Surfaces and text ─────────────────────────────────────────── */
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --card: 0 0% 100%;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --surface: 0 0% 94%;
+  --surface-2: var(--n-2);
+  --primary: var(--foreground);
+  --primary-foreground: var(--n-0);
+  --secondary: 0 0% 94%;
+  --secondary-foreground: 0 0% 25%;
+  --muted: var(--n-2);
+  --muted-foreground: 0 0% 40%;
+  --subtle-foreground: var(--muted-foreground);
   --accent: var(--brand);
   --accent-foreground: var(--brand-foreground);
-  --border: 222 32% 6% / 0.1;
-  --border-subtle: 222 32% 6% / 0.06;
-  --border-mid: 222 32% 6% / 0.16;
-  --border-strong: 222 32% 6% / 0.28;
-  --input: 0 0% 100%;
+  --input: var(--card);
   --ring: var(--brand);
-  --destructive: 0 65% 51%;
-  --danger: var(--destructive);
+
+  /* ── Edges: ink at fixed alphas ────────────────────────────────── */
+  --border: var(--n-8) / 0.1;
+  --border-mid: var(--n-8) / 0.18;
+  --border-strong: var(--n-8) / 0.28;
+
+  /* Layering scale for text and hairlines on a ground you do not know
+     (design.md §3.7). */
+  --s-high: hsl(var(--n-8) / 0.9);
+  --s-mid: hsl(var(--n-8) / 0.72);
+  --s-low: hsl(var(--n-8) / 0.52);
+  --s-muted: hsl(var(--n-8) / 0.4);
+  --s-surface: hsl(var(--n-8) / 0.04);
+  --s-border: hsl(var(--n-8) / 0.1);
+  --s-border-hover: hsl(var(--n-8) / 0.18);
+  --s-high-soft: hsl(var(--n-8) / 0.03);
+  --border-subtle: var(--s-border);
+
+  /* ── Semantic (design.md §3.5) ─────────────────────────────────── */
   --success: 162 95% 31%;
   --warning: 38 96% 40%;
+  --danger: 0 65% 51%;
+  --destructive-foreground: var(--n-0);
   --info: var(--brand);
-  --neutral: 220 10% 41%;
+  --neutral: var(--muted-foreground);
   --progress: 258 68% 54%;
-  --elevation-card: 0 1px 2px hsl(222 32% 6% / 0.05), 0 10px 28px -20px hsl(222 32% 6% / 0.22);
-  --elevation-card-lg: 0 2px 4px hsl(222 32% 6% / 0.04), 0 24px 48px -24px hsl(222 32% 6% / 0.24);
-  --elevation-overlay: 0 2px 4px hsl(222 32% 6% / 0.05), 0 32px 64px -28px hsl(222 32% 6% / 0.3);
+  --messaging-whatsapp: 142 70% 28%;
+
+  /* ── Charts ────────────────────────────────────────────────────── */
+  --chart-1: 231.4 60.7% 57.1%;
+  --chart-2: 28 88.3% 40.4%;
+  --chart-3: 177.1 83.7% 33.7%;
+  --chart-4: 315.3 45.6% 40.4%;
+  --chart-5: 77.6 75.2% 28.4%;
+  --chart-6: 257.3 72.5% 70%;
+
+  /* ── Elevation ─────────────────────────────────────────────────── */
+  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
+  --elevation-card-lg: 0 2px 4px hsl(0 0% 0% / 0.03), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
+  --elev-1: 0 1px 2px hsl(var(--n-8) / 0.05);
+  --elev-2: 0 4px 12px -2px hsl(var(--n-8) / 0.1), 0 2px 4px -2px hsl(var(--n-8) / 0.06);
 }
 
 .dark {
   color-scheme: dark;
-  --background: 222 22% 9%;
-  --foreground: 0 0% 94%;
-  --surface: 222 20% 12%;
-  --surface-subtle: 222 18% 14%;
-  --surface-elevated: 222 20% 11%;
-  --card: 222 20% 11%;
-  --card-foreground: var(--foreground);
-  --popover: 222 20% 13%;
-  --popover-foreground: var(--foreground);
-  --primary: var(--foreground);
-  --primary-foreground: 222 22% 9%;
-  --secondary: 222 18% 16%;
-  --secondary-foreground: var(--foreground);
-  --muted: 222 18% 16%;
-  --muted-foreground: 220 10% 66%;
-  --subtle-foreground: 220 9% 57%;
+
+  --brand-text: var(--brand-text-on-dark);
   --brand-soft: hsl(var(--brand) / 0.14);
+
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --card: 0 0% 9%;
+  --surface: 0 0% 11%;
+  --surface-2: 0 0% 14%;
+  --primary-foreground: var(--background);
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 58%;
+  --input: 0 0% 100% / 0.06;
+
   --border: 0 0% 100% / 0.08;
-  --border-subtle: 0 0% 100% / 0.05;
   --border-mid: 0 0% 100% / 0.14;
   --border-strong: 0 0% 100% / 0.26;
-  --input: 0 0% 100% / 0.05;
-  --destructive: 0 74% 68%;
-  --danger: var(--destructive);
+
+  --s-high: hsl(var(--n-0) / 0.9);
+  --s-mid: hsl(var(--n-0) / 0.72);
+  --s-low: hsl(var(--n-0) / 0.52);
+  --s-muted: hsl(var(--n-0) / 0.4);
+  --s-surface: hsl(var(--n-0) / 0.05);
+  --s-border: hsl(var(--n-0) / 0.1);
+  --s-border-hover: hsl(var(--n-0) / 0.18);
+  --s-high-soft: hsl(var(--n-0) / 0.04);
+
   --success: 162 60% 50%;
   --warning: 36 84% 60%;
-  --info: var(--brand);
-  --neutral: 220 9% 60%;
+  --danger: 0 74% 68%;
+  /* The dark red lifts to 68% lightness, so a label on it flips to the dark
+     ground to keep AA. */
+  --destructive-foreground: var(--background);
   --progress: 258 76% 72%;
-  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.55);
+  --messaging-whatsapp: 142 70% 49%;
+
+  --chart-1: 232.8 66.7% 65.9%;
+  --chart-2: 26.8 72.4% 45.5%;
+  --chart-3: 176.6 75.7% 37.1%;
+  --chart-4: 315.3 37.6% 49%;
+  --chart-5: 76.7 64.2% 37.3%;
+  --chart-6: 256.2 61.2% 66.7%;
+
+  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
   --elevation-card-lg: 0 2px 6px hsl(0 0% 0% / 0.35), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
-  --elevation-overlay: 0 2px 6px hsl(0 0% 0% / 0.35), 0 36px 72px -28px hsl(0 0% 0% / 0.78);
+  --elev-1: 0 1px 2px hsl(0 0% 0% / 0.4);
+  --elev-2: 0 8px 24px -4px hsl(0 0% 0% / 0.5), 0 2px 6px -2px hsl(0 0% 0% / 0.35);
 }
 
 @layer base {
@@ -205,6 +276,21 @@
   button {
     font: inherit;
     letter-spacing: inherit;
+  }
+}
+
+/* Theme switch: every color fades together (ThemeTransition sets the class
+   for the length of one fade). Colors only — nothing moves. */
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-fade,
+  html.theme-fade *,
+  html.theme-fade *::before,
+  html.theme-fade *::after {
+    transition-property: background-color, background-image, color, border-color, outline-color,
+      text-decoration-color, fill, stroke, box-shadow, caret-color !important;
+    transition-duration: var(--duration-theme) !important;
+    transition-timing-function: var(--ease-smooth) !important;
+    transition-delay: 0s !important;
   }
 }
 

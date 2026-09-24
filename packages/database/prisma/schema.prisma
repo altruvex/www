@@ -20,12 +20,11 @@ enum UserRole {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  name         String?
-  image        String?
-  passwordHash String
-  role         UserRole @default(USER)
+  id    String   @id @default(uuid())
+  email String   @unique
+  name  String?
+  image String?
+  role  UserRole @default(USER)
 
   emailVerified Boolean   @default(false)
   verifiedAt    DateTime?
@@ -33,6 +32,9 @@ model User {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
+
+  /// Better Auth two-factor plugin. Set true only after a TOTP code verifies.
+  twoFactorEnabled Boolean? @default(false)
 
   contactSubmissions ContactSubmission[]
   assignedContacts   ContactSubmission[] @relation("AssignedTo")
@@ -45,6 +47,7 @@ model User {
   ownedIncidents     Incident[]          @relation("IncidentOwner")
   incidentUpdates    IncidentUpdate[]
   assignedTasks      ProjectTask[]       @relation("TaskAssignee")
+  twoFactors         TwoFactor[]
 
   @@index([email])
   @@index([role])
@@ -90,6 +93,37 @@ model Account {
   @@unique([providerId, accountId])
   @@index([userId])
   @@map("accounts")
+}
+
+/// Better Auth two-factor plugin (TOTP + backup codes). `secret` and
+/// `backupCodes` are encrypted with BETTER_AUTH_SECRET by the plugin before
+/// they reach this table; never select them into a response.
+model TwoFactor {
+  id                      String    @id @default(uuid())
+  secret                  String
+  backupCodes             String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                  String
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
+
+  @@index([secret])
+  @@index([userId])
+  @@map("two_factors")
+}
+
+/// Better Auth's own rate limiter (`rateLimit.storage: "database"`). Kept in
+/// the database rather than in memory because every serverless instance would
+/// otherwise count sign-in attempts separately. Distinct from
+/// RateLimitBucket, which the application's public endpoints use.
+model AuthRateLimit {
+  id          String @id @default(uuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("auth_rate_limits")
 }
 
 model Verification {
@@ -284,6 +318,8 @@ enum NotificationType {
   NEW_MEETING
   STATUS_CHANGE
   ASSIGNMENT
+  /// A client service (domain, hosting, …) crossed an expiry threshold.
+  RENEWAL_DUE
 }
 
 model Notification {
@@ -300,8 +336,14 @@ model Notification {
   read   Boolean   @default(false)
   readAt DateTime?
 
+  /// Set by writers that must notify once per fact rather than once per run —
+  /// the renewal sweep keys it on service + expiry date + threshold, so a
+  /// sweep that runs every hour still writes one "expires in 7 days" line.
+  dedupeKey String?
+
   createdAt DateTime @default(now())
 
+  @@unique([userId, dedupeKey])
   @@index([userId, read])
   @@index([createdAt])
   @@map("notifications")
@@ -391,6 +433,7 @@ model Client {
   emails        EmailMessage[]
   subscriptions MaintenanceSubscription[]
   products      Product[]
+  services      ClientService[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -458,6 +501,7 @@ model Proposal {
   updatedAt DateTime @updatedAt
 
   contract Contract?
+  services ClientService[]
 
   @@index([clientId])
   @@index([status])
@@ -493,6 +537,11 @@ enum ContractStatus {
   EXPIRED
 }
 
+enum SignVerificationChannel {
+  WHATSAPP
+  EMAIL
+}
+
 enum SignatureMethod {
   CLICK_TO_SIGN
   UPLOADED_PDF
@@ -506,7 +555,10 @@ model Contract {
   client     Client   @relation(fields: [clientId], references: [id])
   clientId   String
 
-  signToken String? @unique
+  signToken          String?   @unique
+  /// After this instant the sign link refuses to sign. Set at creation and
+  /// renewed when the contract is sent; null only on rows that predate it.
+  signTokenExpiresAt DateTime?
 
   fileUrl       String?
   signedFileUrl String?
@@ -516,6 +568,24 @@ model Contract {
   signedAt        DateTime?
   signedByName    String?
   signedIp        String?
+
+  /// The person allowed to sign. Null falls back to the client record's
+  /// contact, so a contract always has someone a code can be sent to.
+  signerName  String?
+  signerPhone String?
+  signerEmail String?
+
+  /// One-time code a signer must enter before the link accepts a signature.
+  /// Only the SHA-256 is stored, so nobody reading the row can sign with it.
+  signCodeHash      String?
+  signCodeExpiresAt DateTime?
+  signCodeSentAt    DateTime?
+  signCodeAttempts  Int                      @default(0)
+  signCodeChannel   SignVerificationChannel?
+
+  /// Where the code that authorised the signature was delivered.
+  signerVerifiedVia SignVerificationChannel?
+  signerVerifiedTo  String?
 
   onboardingMessageSentAt DateTime?
 
@@ -565,9 +635,16 @@ model Project {
   targetLaunchDate DateTime?
   actualLaunchDate DateTime?
 
-  payments Payment[]
-  products Product[]
-  tasks    ProjectTask[]
+  /// When the engagement was closed. Set only by the close-project flow and
+  /// cleared when the project is moved back out of COMPLETED, so a COMPLETED
+  /// row without it predates the flow rather than contradicting it.
+  completedAt DateTime?
+
+  payments       Payment[]
+  products       Product[]
+  tasks          ProjectTask[]
+  changeRequests ChangeRequest[]
+  services       ClientService[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -581,6 +658,11 @@ enum PaymentMilestone {
   DEPOSIT_50
   MILESTONE_30
   FINAL_20
+  /// Billed on delivery of a ChangeRequest — work outside the original contract.
+  CHANGE_REQUEST
+  /// One term of a ClientService (domain, hosting…) — opened when the service
+  /// is registered without a first term in the fee, and on every renewal.
+  SERVICE_RENEWAL
   OTHER
 }
 
@@ -605,12 +687,108 @@ model Payment {
   method    String?
   reference String?
 
+  /// Set when this payment bills a delivered change request.
+  changeRequest ChangeRequest?
+
+  /// Set when this payment bills one term of a client service. Many per
+  /// service — one per term. Survives the service being deleted.
+  service   ClientService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  serviceId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
   @@index([status])
+  @@index([serviceId])
   @@map("payments")
+}
+
+/// Where a change request is in its life. Transitions are enforced in
+/// apps/admin/lib/change-requests.ts, not by the database.
+enum ChangeRequestStatus {
+  REQUESTED
+  QUOTED
+  APPROVED
+  IN_PROGRESS
+  DELIVERED
+  DECLINED
+  CANCELLED
+}
+
+/// How the work is charged. WARRANTY is free and only valid inside the
+/// post-launch warranty window.
+enum ChangeRequestPricing {
+  HOURLY
+  FIXED
+  WARRANTY
+}
+
+/// A one-off modification to a project the client pays for separately — the
+/// path for a client with no maintenance retainer. It hangs off the Project
+/// (not a subscription, not a new contract), so a small edit does not need a
+/// new proposal → contract → project chain, and a closed project can still
+/// take one without being reopened.
+model ChangeRequest {
+  id String @id @default(uuid())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  title  String
+  detail String?
+
+  status  ChangeRequestStatus   @default(REQUESTED)
+  pricing ChangeRequestPricing?
+
+  /// Hours are stored as whole minutes so a quarter hour stays exact.
+  estimatedMinutes Int?
+  actualMinutes    Int?
+
+  /// The hourly rate at the moment of quoting. Snapshotted so a later edit on
+  /// /pricing cannot re-price work the client already agreed to.
+  hourlyRate Int?
+
+  /// What the client agreed to. Currency is the project's (payment → project
+  /// → contract → proposal), exactly as for Payment.
+  quotedAmount Int?
+  /// What was billed on delivery. For HOURLY it follows the actual hours.
+  billedAmount Int?
+
+  /// The client's link to review and answer the quote (`/quote/[token]`).
+  /// Unguessable, scoped to this one request, and kept across re-quotes so a
+  /// link already in the client's inbox keeps showing the current number.
+  quoteToken     String?   @unique
+  /// When the CURRENT quote was sent. A re-quote clears it: the link then
+  /// refuses an answer until the new number has actually been sent.
+  quoteSentAt    DateTime?
+  /// "email" or "whatsapp".
+  quoteSentVia   String?
+  quoteExpiresAt DateTime?
+  /// First time the client opened the sent quote. Evidence, not a guess.
+  quoteViewedAt  DateTime?
+  /// Who answered on the quote page, and anything they wrote.
+  respondedByName    String?
+  clientResponseNote String?
+
+  requestedAt DateTime  @default(now())
+  quotedAt    DateTime?
+  approvedAt  DateTime?
+  startedAt   DateTime?
+  deliveredAt DateTime?
+  closedAt    DateTime?
+
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  paymentId String?  @unique
+
+  createdBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+  @@map("change_requests")
 }
 
 enum WhatsAppDirection {
@@ -651,6 +829,20 @@ model WhatsAppMessage {
   @@index([clientId])
   @@index([waMessageId])
   @@map("whatsapp_messages")
+}
+
+/// One row per webhook delivery that was accepted. A signed delivery replayed
+/// later carries the same provider id, hits the unique index, and is refused
+/// instead of rewriting state that has since moved on.
+model WebhookDelivery {
+  id         String   @id @default(uuid())
+  provider   String
+  deliveryId String
+  receivedAt DateTime @default(now())
+
+  @@unique([provider, deliveryId])
+  @@index([receivedAt])
+  @@map("webhook_deliveries")
 }
 
 model RateLimitBucket {
@@ -960,8 +1152,8 @@ model ActivityEvent {
   /// Survives actor deletion. "Ali", "CI (github-actions)", "client portal".
   actorLabel String
 
-  entityType String
-  entityId   String
+  entityType  String
+  entityId    String
   /// Human-readable at the time of the event, so the feed stays legible even
   /// after the entity is renamed or removed.
   entityLabel String?
@@ -1028,8 +1220,8 @@ enum DeployEnvironment {
 model Product {
   id String @id @default(uuid())
 
-  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
   /// Optional: a product can outlive the project that built it, and can exist
   /// before any contract does.
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
@@ -1051,14 +1243,15 @@ model Product {
 
   /// SHA-256 of the ingest bearer token. The token itself is shown once at
   /// creation and never stored — the UI has nothing to leak.
-  ingestTokenHash String?   @unique
-  ingestTokenLast4 String?
+  ingestTokenHash     String?   @unique
+  ingestTokenLast4    String?
   ingestTokenIssuedAt DateTime?
 
   builds      Build[]
   deployments Deployment[]
   logs        LogEntry[]
   incidents   Incident[]
+  services    ClientService[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1264,9 +1457,9 @@ model Incident {
   owner   User?   @relation("IncidentOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   ownerId String?
 
-  detectedAt   DateTime  @default(now())
+  detectedAt     DateTime  @default(now())
   acknowledgedAt DateTime?
-  resolvedAt   DateTime?
+  resolvedAt     DateTime?
 
   /// Written after the fact. Absent on an unresolved incident.
   resolution String?
@@ -1387,7 +1580,7 @@ model EmailMessage {
   providerMessageId String? @unique
   /// Which transport sent it, because one client's history can span a move
   /// from one to the other.
-  transport String
+  transport         String
 
   toAddress String
   subject   String
@@ -1407,4 +1600,110 @@ model EmailMessage {
   @@index([clientId])
   @@index([providerMessageId])
   @@map("email_messages")
+}
+
+// ---------------------------------------------------------------------------
+// Client services: domains, hosting, business email and anything else a client
+// holds through Altruvex that expires
+//
+// A project ends; the domain it launched on renews every year. Until this
+// existed that renewal lived in someone's memory, and the first sign it was
+// forgotten would have been the client's site going dark.
+//
+// `price` is what the CLIENT pays per term and is entered per service, not
+// resolved from @repo/pricing-schema: a registrar's price for one TLD is a fact
+// about that one domain, not a published tier. `cost` is what Altruvex pays the
+// supplier — internal margin data, never rendered on a client surface.
+//
+// Stored status is what an operator decided (PENDING until it is actually
+// registered, ACTIVE, CANCELLED). Whether an active service is "expiring" or
+// "expired" is derived from `expiresAt` and the clock in
+// apps/admin/lib/service-lifecycle.ts — the same rule the retainers follow, so
+// the renewals screen is correct on a system whose cron has not run.
+//
+// Never store a registrar or hosting password here. `reference` is an order or
+// account id, the thing a support ticket quotes.
+// ---------------------------------------------------------------------------
+
+enum ClientServiceKind {
+  DOMAIN
+  HOSTING
+  BUSINESS_EMAIL
+  SSL_CERTIFICATE
+  SOFTWARE_LICENSE
+  OTHER
+}
+
+enum ClientServiceStatus {
+  /// Agreed (usually through a signed proposal) but not yet registered, so it
+  /// has no real expiry date and raises no renewal alert.
+  PENDING
+  ACTIVE
+  CANCELLED
+}
+
+model ClientService {
+  id String @id @default(uuid())
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
+  /// The engagement it was sold with. Optional: a service outlives its project
+  /// and can be added for a client who never had one.
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+  /// The site or app it serves, when that product is tracked.
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId String?
+  /// The proposal whose accepted terms created it. Null for one added by hand.
+  proposal   Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  proposalId String?
+
+  kind     ClientServiceKind
+  /// "newlight.com", "Vercel Pro", "Google Workspace — 5 seats".
+  name     String
+  provider String?
+  /// Registrar order id or account handle. Never a credential.
+  reference String?
+
+  status ClientServiceStatus @default(PENDING)
+
+  currency String @default("EGP")
+  /// What the client pays per term.
+  price    Int
+  /// What Altruvex pays the supplier per term. Internal only.
+  cost     Int?
+  /// Length of one billing term. 12 for an annual domain, 1 for monthly hosting.
+  termMonths Int @default(12)
+  /// The first term is covered by the project fee (the contract's "Year 1
+  /// included"); billing starts at the first renewal.
+  firstTermIncluded Boolean @default(false)
+  /// Renews at the provider without anyone acting. Alerts still fire — a
+  /// renewal the provider charges is still one the client owes.
+  autoRenew Boolean @default(false)
+
+  startedAt     DateTime?
+  /// The renewal date. Required once ACTIVE; null only while PENDING.
+  expiresAt     DateTime?
+  lastRenewedAt DateTime?
+  cancelledAt   DateTime?
+
+  /// The expiry date the client was last reminded about, and when. Compared
+  /// with `expiresAt` rather than reset on renewal: "reminded this cycle" is
+  /// `reminderSentFor == expiresAt`, so a renewal re-arms it without a write.
+  reminderSentFor DateTime?
+  reminderSentAt  DateTime?
+
+  /// One payment per billed term.
+  payments Payment[]
+
+  notes String?
+
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([projectId])
+  @@index([status, expiresAt])
+  @@map("client_services")
 }

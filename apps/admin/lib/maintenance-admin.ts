@@ -23,15 +23,6 @@ import {
   type RenewalUrgency,
 } from "@/lib/subscription-lifecycle";
 
-/**
- * Admin view of maintenance retainers.
- *
- * The client portal is read-and-submit; this is where the work is actually
- * moved. Cap usage is computed exactly as the portal computes it, from the same
- * cycle logic and the same resolved plan, so the operator and the client are
- * never looking at two different counts of the same thing.
- */
-
 export interface AdminRequest {
   readonly id: string;
   readonly title: string;

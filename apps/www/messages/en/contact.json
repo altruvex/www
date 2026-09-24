@@ -1,0 +1,26 @@
+{
+  "email": "Email",
+  "emailValue": "hello@altruvex.com",
+  "form": {
+    "message": "Message",
+    "messagePlaceholder": "Describe your project - what you are building, what is broken, or what decision you need clarity on.",
+    "name": "Name",
+    "namePlaceholder": "Your name",
+    "phone": "Phone Number",
+    "phonePlaceholder": "01XXXXXXXXX",
+    "riskReversal": "Free 30-min call · No commitment · Reply within 2 business hours",
+    "submit": "Send Message",
+    "submitting": "Sending...",
+    "success": "Received. We will reply within 24 hours."
+  },
+  "location": "Location",
+  "social": {
+    "dribbble": "Dribbble",
+    "instagram": "Instagram",
+    "linkedin": "LinkedIn",
+    "twitter": "Twitter"
+  },
+  "subtitle": "Start the conversation",
+  "title": "Let's build",
+  "title2": "something that works."
+}

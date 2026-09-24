@@ -46,6 +46,43 @@ export function contractDraft(clientName: string | null, link: string): EmailDra
 }
 
 /**
+ * A change-request quote. The figure and the terms are passed in already
+ * formatted — this file holds wording, never a price — and the hourly line says
+ * plainly that the bill follows the hours actually spent, so the number a
+ * client approves is never read as a cap it is not.
+ */
+export function changeRequestQuoteDraft(input: {
+  clientName: string | null;
+  title: string;
+  amount: string;
+  /** e.g. "3 h estimated at EGP 800 / hour", or null for a fixed price. */
+  hourlyTerms: string | null;
+  validUntil: string | null;
+  link: string;
+}): EmailDraft {
+  return {
+    subject: `Quote: ${input.title}`,
+    body: [
+      ...sign(input.clientName || "there"),
+      "Here is the quote for the change you asked for.",
+      "",
+      input.title,
+      input.hourlyTerms
+        ? `${input.amount} — ${input.hourlyTerms}, billed on the hours actually spent.`
+        : `${input.amount} — fixed price.`,
+      "",
+      "Review and approve it here:",
+      input.link,
+      "",
+      ...(input.validUntil ? [`The quote is valid until ${input.validUntil}.`] : []),
+      "Reply to this message with any questions.",
+      "",
+      "Altruvex",
+    ].join("\n"),
+  };
+}
+
+/**
  * Guarantees the document is actually in the mail.
  *
  * The body is editable, which means it is deletable. A proposal email whose
@@ -59,4 +96,38 @@ export function contractDraft(clientName: string | null, link: string): EmailDra
 export function ensureLink(body: string, link: string): string {
   if (body.includes(link)) return body;
   return `${body.trimEnd()}\n\n${link}\n`;
+}
+
+/**
+ * The renewal notice the contract promises ("Altruvex notifies the Client
+ * before each renewal date").
+ *
+ * Figures arrive formatted, like the change-request quote — this file holds
+ * wording, never a price. It says what renews, when, for how much, and what
+ * the client has to do if they do NOT want it: silence is the renewal, and a
+ * notice that hides the way out is not a notice.
+ */
+export function serviceRenewalDraft(input: {
+  clientName: string | null;
+  serviceName: string;
+  kindLabel: string;
+  /** "10 October 2026" */
+  expires: string;
+  /** "EGP 950 / year" */
+  price: string;
+}): EmailDraft {
+  return {
+    subject: `${input.serviceName} renews on ${input.expires}`,
+    body: [
+      ...sign(input.clientName || "there"),
+      `Your ${input.kindLabel.toLowerCase()} ${input.serviceName} is due for renewal on ${input.expires}.`,
+      "",
+      `We will renew it for the next term at ${input.price}, and send the invoice for that term.`,
+      "",
+      "Nothing is needed from you to keep it running. If you do not want to renew, reply to this",
+      `message before ${input.expires} and we will let it lapse instead.`,
+      "",
+      "Altruvex",
+    ].join("\n"),
+  };
 }

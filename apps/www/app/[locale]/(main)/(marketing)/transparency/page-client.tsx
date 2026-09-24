@@ -1,15 +1,21 @@
 "use client";
 
 import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
-import { bodyMarks } from "@/components/ui/rich-text";
-import { Container } from "@/components/shared/container";
 import { TransparencyChapter } from "@/components/sections/transparency-chapter";
 import { TransparencyEstimator } from "@/components/sections/transparency-estimator";
+import { Container } from "@/components/shared/container";
+import { DirectionalLink } from "@/components/shared/directional-link";
+import { FaqList } from "@/components/shared/faq-list";
+import { bodyMarks } from "@/components/ui/rich-text";
 import type { ProjectType } from "@/hooks/use-transparency";
-import { useSectionCardGrid } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/utils/number";
+import {
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionElement,
+} from "@/lib/motion";
 import type { AddonView, TermsView } from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
+import { getCommercialCta } from "@/lib/config/commercial";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 const PROJECT_TYPES = ["website", "webapp", "ecommerce", "pwa"] as const;
@@ -25,8 +31,11 @@ export default function TransparencyPageClient({
 
   const initialTier = searchParams.get("tier");
   const rawProjectType = searchParams.get("projectType") ?? "";
+
   const initialProjectType = (
-    PROJECT_TYPES.includes(rawProjectType as (typeof PROJECT_TYPES)[number])
+    PROJECT_TYPES.includes(
+      rawProjectType as (typeof PROJECT_TYPES)[number],
+    )
       ? rawProjectType
       : null
   ) as ProjectType;
@@ -38,18 +47,14 @@ export default function TransparencyPageClient({
         initialTier={initialTier}
         initialProjectType={initialProjectType}
       />
+
       <CommercialTermsSection terms={terms} addons={addons} />
+
       <TransparencyFaqSection />
     </>
   );
 }
 
-/**
- * Presentation: a hairline cell grid, not a stack of rows. Four terms of equal
- * standing are peers, and a grid says peer where a list says sequence. The
- * pass-through ledger below it keeps the tabular form its numbers need, inside
- * a frame that survives a phone.
- */
 function CommercialTermsSection({
   terms,
   addons,
@@ -57,86 +62,250 @@ function CommercialTermsSection({
   terms: TermsView;
   addons: readonly AddonView[];
 }) {
-  const t2 = useTranslations("transparency");
+  const t = useTranslations("transparency");
 
   const cellsRef = useSectionCardGrid<HTMLDListElement>({
     selector: "[data-term]",
   });
 
   const rows = [
-    { key: "vat", label: terms.vatLabel, value: terms.vatNote },
-    { key: "revision", label: terms.revisionLabel, value: terms.revisionNote },
-    { key: "usd", label: terms.usdLabel, value: terms.usdNote },
-    { key: "addons", label: terms.addonLabel, value: terms.addonNote },
+    {
+      key: "vat",
+      label: terms.vatLabel,
+      value: terms.vatNote,
+    },
+    {
+      key: "revision",
+      label: terms.revisionLabel,
+      value: terms.revisionNote,
+    },
+    {
+      key: "usd",
+      label: terms.usdLabel,
+      value: terms.usdNote,
+    },
+    {
+      key: "addons",
+      label: terms.addonLabel,
+      value: terms.addonNote,
+    },
   ];
 
   return (
     <section
       aria-labelledby="transparency-terms-heading"
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="border-t border-border-subtle py-24 sm:py-28 lg:py-36"
     >
       <Container>
         <TransparencyChapter
           index={1}
           titleId="transparency-terms-heading"
-          eyebrow={t2("terms.title")}
-          title={t2("terms.subtitle")}
+          eyebrow={t("terms.title")}
+          title={t("terms.subtitle")}
         />
-
-        {/* gap-px over a border-coloured ground draws the hairlines, so the
-            grid stays one object at every breakpoint instead of collapsing
-            into four detached cards. */}
         <dl
           ref={cellsRef}
-          className="mt-14 grid list-none gap-px overflow-hidden rounded-lg border border-border bg-border lg:mt-20 sm:grid-cols-2"
+          className="
+            mt-12
+            grid
+            overflow-hidden
+            rounded-panel-lg
+            border
+            border-border-subtle
+            bg-black/2.5
+            sm:grid-cols-2
+            lg:mt-16
+            dark:bg-white/4.5
+          "
         >
           {rows.map((row) => (
             <div
               key={row.key}
               data-term
-              className="bg-background p-7 sm:p-8 lg:p-10"
+              className="
+                border-b
+                border-border-subtle
+                bg-background
+                p-7
+                last:border-b-0
+                sm:p-8
+                sm:nth-[2n]:border-s-0
+                sm:nth-last-[2]:border-b-0
+                lg:p-10
+              "
             >
-              <dt className="text-[clamp(1.0625rem,1.15vw,1.1875rem)] font-medium leading-snug text-foreground">
+              <dt
+                className="
+                  text-[1.0625rem]
+                  font-semibold
+                  leading-[1.35]
+                  tracking-[-0.015em]
+                  text-foreground
+                  sm:text-[1.125rem]
+                "
+              >
                 {row.label}
               </dt>
-              <dd className="mt-4 max-w-[52ch] text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-muted-foreground">
+              <dd
+                className="
+                  mt-3
+                  max-w-[52ch]
+                  text-[0.9375rem]
+                  leading-[1.6]
+                  text-muted-foreground
+                  sm:text-[1rem]
+                "
+              >
                 {row.value}
               </dd>
             </div>
           ))}
         </dl>
-
         {addons.length > 0 && (
-          <div className="mt-5 overflow-hidden rounded-lg border border-border lg:mt-7">
+          <div
+            className="
+              mt-6
+              overflow-hidden
+              rounded-panel-lg
+              border
+              border-border-subtle
+              bg-background
+              lg:mt-8
+            "
+          >
             <div className="overflow-x-auto">
-              <table className="w-full min-w-140 border-collapse text-start">
+              <table className="w-full min-w-160 border-collapse text-start">
                 <thead>
-                  <tr className="border-b border-border bg-surface/60">
-                    <th scope="col" className="px-7 py-4 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-10">
-                      {t2("terms.itemColumn")}
+                  <tr className="border-b border-border-subtle">
+                    <th
+                      scope="col"
+                      className="
+                        px-6
+                        py-4
+                        text-start
+                        text-[0.8125rem]
+                        font-medium
+                        text-muted-foreground
+                        sm:px-8
+                        lg:px-10
+                      "
+                    >
+                      {t("terms.itemColumn")}
                     </th>
-                    <th scope="col" className="px-7 py-4 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-10">
+                    <th
+                      scope="col"
+                      className="
+                        px-6
+                        py-4
+                        text-start
+                        text-[0.8125rem]
+                        font-medium
+                        text-muted-foreground
+                        sm:px-8
+                        lg:px-10
+                      "
+                    >
                       {terms.costBasisLabel}
                     </th>
-                    <th scope="col" className="px-7 py-4 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-10">
+                    <th
+                      scope="col"
+                      className="
+                        px-6
+                        py-4
+                        text-start
+                        text-[0.8125rem]
+                        font-medium
+                        text-muted-foreground
+                        sm:px-8
+                        lg:px-10
+                      "
+                    >
                       {terms.markupLabel}
                     </th>
-                    <th scope="col" className="px-7 py-4 text-start text-xs font-medium uppercase tracking-wider text-muted-foreground lg:px-10">
+                    <th
+                      scope="col"
+                      className="
+                        px-6
+                        py-4
+                        text-start
+                        text-[0.8125rem]
+                        font-medium
+                        text-muted-foreground
+                        sm:px-8
+                        lg:px-10
+                      "
+                    >
                       {terms.totalLabel}
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {addons.map((addon) => (
-                    <tr key={addon.id} className="border-b border-border last:border-b-0">
-                      <td className="px-7 py-5 text-sm text-foreground lg:px-10">{addon.name}</td>
-                      <td className="px-7 py-5 text-sm tabular-nums text-muted-foreground lg:px-10 ltr:font-mono">
+                    <tr
+                      key={addon.id}
+                      className="
+                        border-b
+                        border-border-subtle
+                        transition-colors
+                        last:border-b-0
+                        hover:bg-black/[0.018]
+                        dark:hover:bg-white/2.5
+                      "
+                    >
+                      <td
+                        className="
+                          px-6
+                          py-5
+                          text-[0.9375rem]
+                          font-medium
+                          text-foreground
+                          sm:px-8
+                          lg:px-10
+                        "
+                      >
+                        {addon.name}
+                      </td>
+                      <td
+                        className="
+                          px-6
+                          py-5
+                          text-[0.875rem]
+                          tabular-nums
+                          text-muted-foreground
+                          sm:px-8
+                          lg:px-10
+                          ltr:font-mono
+                        "
+                      >
                         {addon.costBasisLabel ?? addon.pendingLabel}
                       </td>
-                      <td className="px-7 py-5 text-sm tabular-nums text-muted-foreground lg:px-10 ltr:font-mono">
+                      <td
+                        className="
+                          px-6
+                          py-5
+                          text-[0.875rem]
+                          tabular-nums
+                          text-muted-foreground
+                          sm:px-8
+                          lg:px-10
+                          ltr:font-mono
+                        "
+                      >
                         {addon.markupLabel ?? "—"}
                       </td>
-                      <td className="px-7 py-5 text-sm tabular-nums text-foreground lg:px-10 ltr:font-mono">
+                      <td
+                        className="
+                          px-6
+                          py-5
+                          text-[0.875rem]
+                          font-medium
+                          tabular-nums
+                          text-foreground
+                          sm:px-8
+                          lg:px-10
+                          ltr:font-mono
+                        "
+                      >
                         {addon.totalLabel ?? "—"}
                       </td>
                     </tr>
@@ -153,26 +322,29 @@ function CommercialTermsSection({
 
 function TransparencyFaqSection() {
   const t = useTranslations("transparency");
-  const locale = useLocale();
-  // One answer publishes the post-launch warranty window. It is a rich-text
-  // message, so the figure arrives as an ICU value rather than through
-  // `useFillPricingTokens`, but it is the same resolved term either way.
+  const tFaq = useTranslations("faq");
+  const tCTAs = useTranslations("commercial.ctas");
   const { warrantyDays } = usePricingTokens();
 
-  const itemsRef = useSectionCardGrid<HTMLDListElement>({
-    selector: "[data-faq]",
-  });
+  const noteRef = useSectionElement<HTMLDivElement>();
+  const listRef = useSectionDescription<HTMLDivElement>();
 
+  // Same FAQ device as /faq and every other page: one collapsing list, so a
+  // visitor who has opened a question anywhere on the site knows this one.
+  // The chapter header stays, because this page is read as numbered chapters.
   const items = ["1", "2", "3", "4"].map((key) => ({
-    answer: t.rich(`faq.a${key}`, { ...bodyMarks, warrantyDays }),
+    id: key,
     question: t(`faq.q${key}`),
-    value: key,
+    answer: t.rich(`faq.a${key}`, {
+      ...bodyMarks,
+      warrantyDays,
+    }),
   }));
 
   return (
     <section
       aria-labelledby="transparency-faq-heading"
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="border-t border-border-subtle py-24 sm:py-28 lg:py-36"
     >
       <Container>
         <TransparencyChapter
@@ -182,37 +354,37 @@ function TransparencyFaqSection() {
           title={t("faq.subtitle")}
         />
 
-        {/* Four questions, all answered in the open.
-            An accordion is for compressing a long list; with four items it
-            only buys a click and costs the answer. On the page whose whole
-            claim is that nothing is withheld, collapsing the answers was the
-            wrong affordance — and `faq-section` on the homepage already owns
-            the accordion device.
+        <div className="mt-12 grid gap-10 lg:mt-16 lg:grid-cols-12 lg:gap-x-16">
+          <div
+            ref={noteRef}
+            className="lg:sticky lg:top-28 lg:col-span-3 lg:self-start"
+          >
+            <p className="max-w-[32ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+              {t("faq.more")}
+            </p>
+            <DirectionalLink
+              href="/faq"
+              className="mt-4 inline-flex min-h-6 items-center text-sm text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
+            >
+              {tFaq("allQuestions")}
+            </DirectionalLink>
+            {/* The estimator above is this page's conversion; this is the way
+                out for a visitor who read to the end and would rather talk. */}
+            <DirectionalLink
+              href={getCommercialCta("technicalCall").href}
+              className="mt-2 flex min-h-6 w-fit items-center text-sm text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
+            >
+              {tCTAs("technicalCall")}
+            </DirectionalLink>
+          </div>
 
-            Open answers in two columns, each opening on its own rule: the
-            terms above are a closed grid of facts, so the questions read as
-            the page's open half rather than a second table of the same shape. */}
-        <dl
-          ref={itemsRef}
-          className="mt-14 grid list-none gap-x-16 gap-y-10 lg:mt-20 md:grid-cols-2 lg:gap-y-14"
-        >
-          {items.map((item, index) => (
-            <div key={item.value} data-faq className="border-t border-border pt-7">
-              <span
-                aria-hidden
-                className="eyebrow block text-[11px] leading-none tabular-nums text-local-accent-text ltr:font-mono"
-              >
-                {localizeNumbers(String(index + 1).padStart(2, "0"), locale)}
-              </span>
-              <dt className="mt-5 text-[clamp(1.125rem,1.35vw,1.3125rem)] font-medium leading-snug text-balance text-foreground">
-                {item.question}
-              </dt>
-              <dd className="mt-4 max-w-[58ch] text-[clamp(0.9375rem,0.98vw,1rem)] leading-relaxed text-muted-foreground">
-                {item.answer}
-              </dd>
-            </div>
-          ))}
-        </dl>
+          <div
+            ref={listRef}
+            className="lg:col-span-8 lg:col-start-5"
+          >
+            <FaqList items={items} />
+          </div>
+        </div>
       </Container>
     </section>
   );

@@ -6,6 +6,7 @@ import { prisma } from "@repo/database";
 import {
   environmentSchema,
   MAX_LOG_BATCH,
+  MAX_LOG_METADATA_BYTES,
   MAX_LOG_MESSAGE_LENGTH,
   readIngestJson,
   withIngestToken,
@@ -39,7 +40,15 @@ const entrySchema = z.object({
   /** Optional links, resolved by the CI system's own ids. */
   buildExternalId: z.string().max(200).optional(),
   deploymentExternalId: z.string().max(200).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  // Free-form, and the only field on a log line with no natural ceiling. A
+  // batch of 500 entries each carrying a megabyte of JSON is a storage bill,
+  // not telemetry.
+  metadata: z
+    .record(z.string(), z.unknown())
+    .refine((value) => JSON.stringify(value).length <= MAX_LOG_METADATA_BYTES, {
+      message: `metadata must serialise to at most ${MAX_LOG_METADATA_BYTES} characters`,
+    })
+    .optional(),
 });
 
 const bodySchema = z.object({

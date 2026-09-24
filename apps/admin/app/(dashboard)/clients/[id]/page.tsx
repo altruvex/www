@@ -8,6 +8,7 @@ import {
   FileText,
   Mail,
   MessageCircle,
+  Pencil,
   Phone,
   Plus,
 } from "lucide-react";
@@ -21,10 +22,15 @@ import { EmptyInline } from "@/components/os/empty-state";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar } from "@repo/ui";
 import { deriveClientStage } from "@/lib/dashboard-data";
+import { documentUrl } from "@/lib/storage";
 import { buildActivity } from "@/lib/activity";
 import { statusOf } from "@/lib/status";
 import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
-import { StatusMenu, LifecycleButton, MarkSignedButton } from "./client-actions";
+import { StatusMenu, LifecycleButton } from "./client-actions";
+import { ManualStatusMenu } from "@/components/os/manual-status";
+import { ServicesList } from "@/components/os/services/services-list";
+import { listServices } from "@/lib/client-services";
+import { emailTransport } from "@/lib/email";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +40,7 @@ const TABS = [
   { id: "proposals", label: "Proposals" },
   { id: "contracts", label: "Contracts" },
   { id: "projects", label: "Projects" },
+  { id: "services", label: "Services" },
   { id: "communication", label: "Communication" },
   { id: "documents", label: "Documents" },
   { id: "activity", label: "Activity" },
@@ -61,7 +68,7 @@ export default async function ClientDetailPage({
         },
       },
       transparencyLead: true,
-      proposals: { orderBy: { createdAt: "desc" } },
+      proposals: { orderBy: { createdAt: "desc" }, include: { contract: { select: { id: true } } } },
       contracts: { orderBy: { createdAt: "desc" } },
       projects: {
         include: {
@@ -96,7 +103,7 @@ export default async function ClientDetailPage({
     meetings: client.contactSubmission?.meetings ?? [],
   });
 
-  const documents = [
+  const storedDocuments = [
     ...client.proposals.flatMap((p) =>
       [
         p.fileUrl && { kind: "Proposal deck", url: p.fileUrl, at: p.createdAt, ref: `/proposals/${p.id}` },
@@ -116,6 +123,28 @@ export default async function ClientDetailPage({
     ),
   ] as { kind: string; url: string; at: Date; ref: string }[];
 
+  // Signed-on-read when the bucket is private; unchanged when it is public.
+  const documents = await Promise.all(
+    storedDocuments.map(async (doc) => ({ ...doc, url: (await documentUrl(doc.url)) ?? doc.url })),
+  );
+
+  const proposalPdfUrls = new Map(
+    await Promise.all(
+      client.proposals.map(
+        async (p) => [p.id, await documentUrl(p.pdfUrl)] as const,
+      ),
+    ),
+  );
+
+  const [services, clientProducts] = await Promise.all([
+    listServices({ clientId: client.id }),
+    prisma.product.findMany({
+      where: { clientId: client.id },
+      select: { id: true, name: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
   const tabs = TABS.map((t) => ({
     ...t,
     count:
@@ -129,7 +158,9 @@ export default async function ClientDetailPage({
               ? client.messages.length
               : t.id === "documents"
                 ? documents.length
-                : undefined,
+                : t.id === "services"
+                  ? services.length
+                  : undefined,
   }));
 
   return (
@@ -165,12 +196,17 @@ export default async function ClientDetailPage({
                 Message
               </Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link href={`/clients/${client.id}/edit`}>
+                <Pencil className="size-3.5" />
+                Edit
+              </Link>
+            </Button>
             <DeleteRecordButton
               entity="client"
               id={client.id}
               label={client.company || client.name || client.phone}
               redirectTo="/clients"
-              variant="ghost"
             />
             <Button asChild variant="brand">
               <Link href={`/clients/${client.id}/new-proposal`}>
@@ -362,7 +398,10 @@ export default async function ClientDetailPage({
                           variant="brand"
                         />
                       )}
-                      {proposal.status === "ACCEPTED" && (
+                      {!proposal.contract && (
+                        <ManualStatusMenu entity="proposal" id={proposal.id} status={proposal.status} />
+                      )}
+                      {proposal.status === "ACCEPTED" && !proposal.contract && (
                         <LifecycleButton
                           label="Generate contract"
                           busyLabel="Generating…"
@@ -370,9 +409,9 @@ export default async function ClientDetailPage({
                           body={{ proposalId: proposal.id }}
                         />
                       )}
-                      {proposal.pdfUrl && (
+                      {proposalPdfUrls.get(proposal.id) && (
                         <Button asChild variant="outline">
-                          <a href={proposal.pdfUrl} target="_blank" rel="noreferrer">
+                          <a href={proposalPdfUrls.get(proposal.id)!} target="_blank" rel="noreferrer">
                             <Download className="size-3.5" />
                             PDF
                           </a>
@@ -417,7 +456,9 @@ export default async function ClientDetailPage({
                           variant="brand"
                         />
                       )}
-                      {contract.status === "SENT" && <MarkSignedButton contractId={contract.id} />}
+                      {contract.status !== "SIGNED" && (
+                        <ManualStatusMenu entity="contract" id={contract.id} status={contract.status} />
+                      )}
                       {contract.signToken && (
                         <Button asChild variant="outline">
                           <a href={`/sign/${contract.signToken}`} target="_blank" rel="noreferrer">
@@ -523,6 +564,22 @@ export default async function ClientDetailPage({
               </ul>
             )}
           </Panel>
+        )}
+
+        {tab === "services" && (
+          <ServicesList
+            title="Services"
+            description="Everything this client holds through Altruvex that has to be renewed"
+            services={services}
+            showProject
+            emailConfigured={emailTransport() !== "none"}
+            createScope={{
+              clientId: client.id,
+              projects: client.projects.map((p) => ({ id: p.id, name: p.name })),
+              products: clientProducts,
+              currency: client.projects[0]?.contract.proposal.currency ?? "EGP",
+            }}
+          />
         )}
 
         {tab === "documents" && (

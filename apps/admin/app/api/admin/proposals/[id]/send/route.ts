@@ -7,12 +7,8 @@ import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
 import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
 import { ensureLink, proposalDraft } from "@/lib/email-templates";
 import { readOptionalDraft } from "@/lib/read-draft";
-
-function toAbsoluteUrl(url: string, request: NextRequest): string {
-  if (/^https?:\/\//.test(url)) return url;
-  const base = process.env.BETTER_AUTH_URL || request.nextUrl.origin;
-  return `${base.replace(/\/$/, "")}${url}`;
-}
+import { SHARED_URL_TTL_SECONDS, documentUrl } from "@/lib/storage";
+import { toAbsoluteUrl } from "@/lib/public-url";
 
 export async function POST(
   request: NextRequest,
@@ -41,7 +37,7 @@ export async function POST(
       );
     }
 
-    const docUrl = proposal.pdfUrl ?? proposal.fileUrl;
+    const docUrl = await documentUrl(proposal.pdfUrl ?? proposal.fileUrl, SHARED_URL_TTL_SECONDS);
     if (!docUrl) {
       return NextResponse.json(
         { success: false, message: "Proposal has no generated file to send" },

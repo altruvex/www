@@ -67,10 +67,10 @@ export async function GET() {
     <lastBuildDate>${formatRssDate(latestDate)}</lastBuildDate>
     <atom:link href="${escapeXml(feedUrl)}" rel="self" type="application/rss+xml" />
 ${items
-  .map((article) => {
-    const url = getLocalizedUrl(article.locale, `/writing/${article.slug}`);
+      .map((article) => {
+        const url = getLocalizedUrl(article.locale, `/writing/${article.slug}`);
 
-    return `    <item>
+        return `    <item>
       <title>${escapeXml(article.frontmatter.title)}</title>
       <link>${escapeXml(url)}</link>
       <guid isPermaLink="true">${escapeXml(url)}</guid>
@@ -79,11 +79,11 @@ ${items
       <dc:creator>${escapeXml(article.frontmatter.author.trim() || SITE_CONFIG.name)}</dc:creator>
       <dc:language>${article.locale}</dc:language>
 ${article.frontmatter.tags
-  .map((tag) => `      <category>${escapeXml(tag)}</category>`)
-  .join("\n")}
+            .map((tag) => `      <category>${escapeXml(tag)}</category>`)
+            .join("\n")}
     </item>`;
-  })
-  .join("\n")}
+      })
+      .join("\n")}
   </channel>
 </rss>`;
 

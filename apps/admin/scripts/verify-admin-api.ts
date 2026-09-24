@@ -35,7 +35,6 @@ const user = await prisma.user.create({
   data: {
     email: `verify-${suffix}@altruvex.test`,
     name: "Verify Operator",
-    passwordHash: "not-a-real-hash",
     role: "ADMIN",
   },
 });

@@ -5,6 +5,7 @@ import { prisma } from "@repo/database";
 import { recordActivity, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 import { buildContractDocx } from "@/lib/contract-builder";
+import { signLinkExpiry } from "@/lib/sign-window";
 import { upload } from "@/lib/storage";
 
 export async function GET(request: NextRequest) {
@@ -19,9 +20,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
+    // `omit` rather than a hand-written `select`: a column added to Contract
+    // later is returned by default, and only the ones named here — the sign
+    // link and its one-time code — have to be remembered as secrets.
     const contracts = await prisma.contract.findMany({
       where: clientId ? { clientId } : undefined,
       orderBy: { createdAt: "desc" },
+      omit: { signToken: true, signCodeHash: true },
     });
 
     return NextResponse.json({ success: true, contracts });
@@ -77,6 +82,7 @@ export async function POST(request: NextRequest) {
         proposalId: proposal.id,
         clientId: proposal.clientId,
         signToken: randomBytes(24).toString("hex"),
+        signTokenExpiresAt: signLinkExpiry(),
       },
     });
 

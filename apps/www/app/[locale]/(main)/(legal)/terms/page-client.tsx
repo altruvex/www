@@ -23,7 +23,15 @@ export default function TermsPageClient({ formattedDate }: TermsPageClientProps)
   const fillTokens = useFillPricingTokens();
 
   return (
-    <LegalPageLayout namespace="terms" formattedDate={formattedDate} accentClass="accent-world-orange">
+    <LegalPageLayout
+      namespace="terms"
+      formattedDate={formattedDate}
+      accentClass="accent-world-orange"
+      contents={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((number) => ({
+        number,
+        title: t(`sections.${number}.title`),
+      }))}
+    >
       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((num) => (
         <LegalSection key={num} number={num} title={t(`sections.${num}.title`)}>
           <LegalProse content={fillTokens(t.raw(`sections.${num}.description`))} />
@@ -31,6 +39,7 @@ export default function TermsPageClient({ formattedDate }: TermsPageClientProps)
       ))}
 
       <LegalContactSection
+        number={12}
         title={t("sections.12.title")}
         description={t("sections.12.description")}
         email={SITE_CONFIG.email}

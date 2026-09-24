@@ -132,7 +132,7 @@ function CustomCursor() {
       <div
         ref={outerRef}
         aria-hidden
-        className="pointer-events-none fixed left-0 top-0 rounded-full liquid-glass transition-transform duration-300 ease-out"
+        className="pointer-events-none fixed left-0 top-0 rounded-full liquid-glass transition-transform duration-(--motion-drawer) ease-default"
         style={{
           width: CURSOR_SIZE.outer,
           height: CURSOR_SIZE.outer,

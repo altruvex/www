@@ -37,7 +37,6 @@ export type BreadcrumbItem = {
 type ServiceSchemaKey =
   | "serviceConsulting"
   | "serviceDevelopment"
-  | "serviceEcommerce"
   | "serviceInterfaceDesign"
   | "serviceMaintenance";
 
@@ -77,12 +76,12 @@ const SERVICE_DEFINITIONS: Record<
 > = {
   serviceConsulting: {
     audience: {
-      ar: "للشركات التي تحتاج تدقيقاً تقنياً وخارطة قرار قبل إعادة البناء أو التوسع.",
-      en: "For teams that need a technical audit and decision-ready roadmap before a rebuild or scale move.",
+      ar: "للفرق التي تحتاج استشارات تقنية قبل إعادة البناء أو التوسع - تدقيقاً للنظام وخارطة قرار جاهزة للتنفيذ.",
+      en: "For teams that need technical consulting before a rebuild or scale move - an audit of the system and a decision-ready roadmap.",
     },
     name: {
-      ar: "الاستشارات والتدقيقات التقنية",
-      en: "Technical Consulting & Web Audits",
+      ar: "الاستشارات التقنية",
+      en: "Technical Consulting",
     },
     serviceType: {
       ar: "استشارات تطوير مواقع ويب مخصصة",
@@ -91,58 +90,44 @@ const SERVICE_DEFINITIONS: Record<
   },
   serviceDevelopment: {
     audience: {
-      ar: "للبوابات ولوحات التحكم والمنتجات التي تحتاج تطوير Next.js قابلة للتوسع وثنائية اللغة.",
-      en: "For portals, dashboards, and product builds that need scalable bilingual Next.js engineering.",
+      ar: "للفرق التي تحتاج تطويراً مخصصاً لبوابة أو لوحة تحكم أو منتج - هندسة Next.js ثنائية اللغة وقابلة للتوسع.",
+      en: "For teams that need custom development of a portal, dashboard, or product - scalable, bilingual Next.js engineering.",
     },
     name: {
-      ar: "تطوير Next.js وبناء المنتجات",
-      en: "Next.js Development & Product Engineering",
+      ar: "التطوير المخصص",
+      en: "Custom Development",
     },
     serviceType: {
-      ar: "وكالة تطوير Next.js",
-      en: "Next.js development agency",
+      ar: "تطوير Next.js مخصص للبوابات والمنتجات",
+      en: "Custom Next.js development for portals and products",
     },
   },
   serviceInterfaceDesign: {
     audience: {
-      ar: "للشركات التي تحتاج واجهات تحويلية وأنظمة مكونات جاهزة للتنفيذ عبر العربية والإنجليزية.",
-      en: "For teams that need conversion-focused interfaces and implementation-ready systems in Arabic and English.",
+      ar: "للفرق التي تحتاج تصميم واجهات يحوّل الزوار - شاشات مبنية للتحويل ونظام مكونات جاهز للتنفيذ بالعربية والإنجليزية.",
+      en: "For teams that need interface design that converts - conversion-focused screens and an implementation-ready component system in Arabic and English.",
     },
     name: {
-      ar: "تصميم واجهات المواقع وأنظمة التصميم",
-      en: "UI Engineering & Interface Systems",
+      ar: "تصميم الواجهات",
+      en: "Interface Design",
     },
     serviceType: {
-      ar: "خدمات تطوير واجهات مخصصة",
-      en: "Custom UI engineering services",
+      ar: "تصميم وهندسة واجهات المواقع",
+      en: "Interface design and UI engineering",
     },
   },
   serviceMaintenance: {
     audience: {
-      ar: "للأنظمة الحية التي تحتاج إصدارات مستمرة ومراقبة وأداءً مستقراً بعد الإطلاق.",
-      en: "For live systems that need structured releases, monitoring, and reliable post-launch support.",
+      ar: "للفرق التي تحتاج صيانة ودعماً لموقع يعمل بالفعل - إصدارات منظمة ومراقبة وأداءً مستقراً بعد الإطلاق.",
+      en: "For teams that need maintenance and support for a live website - structured releases, monitoring, and reliable post-launch care.",
     },
     name: {
-      ar: "الصيانة المستمرة ودعم الأنظمة",
-      en: "Ongoing Maintenance & System Support",
+      ar: "الصيانة والدعم",
+      en: "Maintenance & Support",
     },
     serviceType: {
       ar: "صيانة الأنظمة المخصصة",
       en: "Website maintenance for custom systems",
-    },
-  },
-  serviceEcommerce: {
-    audience: {
-      ar: "للعلامات التي تبيع منتجات فاخرة وتحتاج متجراً مخصصاً ثنائي اللغة بمخزون موثوق.",
-      en: "For retail brands that need a bilingual custom store with trustworthy inventory and checkout.",
-    },
-    name: {
-      ar: "هندسة التجارة الإلكترونية المخصصة",
-      en: "Custom E-Commerce Engineering",
-    },
-    serviceType: {
-      ar: "تطوير متاجر إلكترونية مخصصة",
-      en: "Custom ecommerce development",
     },
   },
 };
@@ -259,11 +244,11 @@ function buildLocalBusinessSchema(locale: SupportedLocale): JsonLdSchema {
     image: getLocalizedUrl(locale, "/opengraph-image"),
     knowsAbout: KNOWS_ABOUT,
     makesOffer: [
-      "Custom web development",
-      "Next.js development",
-      "Technical consulting",
+      "Interface Design",
+      "Custom Development",
+      "Technical Consulting",
+      "Maintenance & Support",
       "Custom ecommerce development",
-      "Website maintenance",
     ],
     name: SITE_CONFIG.name,
     openingHoursSpecification: [
@@ -692,7 +677,6 @@ function buildStaticBreadcrumbs(
   if (
     pageKey === "serviceConsulting" ||
     pageKey === "serviceDevelopment" ||
-    pageKey === "serviceEcommerce" ||
     pageKey === "serviceInterfaceDesign" ||
     pageKey === "serviceMaintenance"
   ) {
@@ -740,13 +724,6 @@ function buildArticleBreadcrumbs(
   ];
 }
 
-/** Shared by JSON-LD BreadcrumbList builders and the visible <Breadcrumbs> UI component. */
-export function getPageBreadcrumbTrail(
-  locale: string,
-  pageKey: RouteMetaKey,
-): BreadcrumbItem[] {
-  return buildStaticBreadcrumbs(normalizeLocale(locale), pageKey);
-}
 
 export function getCaseStudyBreadcrumbTrail(
   locale: string,
@@ -813,18 +790,17 @@ export function buildPageSchemas(
 
   if (pageKey === "services") {
     schemas.push(
+      // Same order as the /services index rows (services-index/data.ts).
+      SCHEMAS.service(loc, "serviceInterfaceDesign"),
       SCHEMAS.service(loc, "serviceDevelopment"),
       SCHEMAS.service(loc, "serviceConsulting"),
-      SCHEMAS.service(loc, "serviceInterfaceDesign"),
       SCHEMAS.service(loc, "serviceMaintenance"),
-      SCHEMAS.service(loc, "serviceEcommerce"),
     );
   }
 
   if (
     pageKey === "serviceConsulting" ||
     pageKey === "serviceDevelopment" ||
-    pageKey === "serviceEcommerce" ||
     pageKey === "serviceInterfaceDesign" ||
     pageKey === "serviceMaintenance"
   ) {

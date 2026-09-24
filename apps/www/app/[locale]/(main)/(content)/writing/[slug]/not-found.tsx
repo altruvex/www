@@ -24,7 +24,7 @@ export default function ArticleNotFound() {
           </p>
           <Link
             href="/writing"
-            className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+            className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
           >
             <ArrowIcon direction="back" className="h-3.5 w-3.5" />
             {tWriting("backLink")}

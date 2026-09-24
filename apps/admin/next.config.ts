@@ -7,45 +7,36 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: isDev,
   register: true,
+  /**
+   * Static assets only.
+   *
+   * This previously cached every response it saw (`/^https?.*!/`,
+   * NetworkFirst, 200 entries). In an app whose pages and JSON are client
+   * records, contracts and payments, that left the last two hundred responses
+   * readable in Cache Storage after sign-out, on whatever machine was used.
+   * Hashed build output is safe to keep; nothing else is.
+   */
   workboxOptions: {
     runtimeCaching: [
       {
-        urlPattern: /^https?.*/,
-        handler: "NetworkFirst",
+        urlPattern: /\/_next\/static\/.*/i,
+        handler: "CacheFirst",
         options: {
-          cacheName: "offlineCache",
-          expiration: {
-            maxEntries: 200,
-          },
+          cacheName: "static-assets",
+          expiration: { maxEntries: 64, maxAgeSeconds: 30 * 24 * 60 * 60 },
+        },
+      },
+      {
+        urlPattern: /\.(?:woff|woff2|ttf|otf)$/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "font-cache",
+          expiration: { maxEntries: 20, maxAgeSeconds: 365 * 24 * 60 * 60 },
         },
       },
     ],
   },
 });
-
-/**
- * Content-Security-Policy for the admin app.
- * React's dev build needs eval() for debugging features (call-stack
- * reconstruction), and Turbopack HMR connects over a websocket, so both are
- * allowed in development only.
- */
-function buildContentSecurityPolicy(): string {
-  const scriptSrc = ["'self'", "'unsafe-inline'", ...(isDev ? ["'unsafe-eval'"] : [])];
-  const connectSrc = ["'self'", ...(isDev ? ["ws:", "wss:"] : [])];
-
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSrc.join(" ")}`,
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
-    "font-src 'self'",
-    `connect-src ${connectSrc.join(" ")}`,
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "object-src 'none'",
-  ].join("; ");
-}
 
 const nextConfig: NextConfig = {
   turbopack: {},
@@ -82,10 +73,9 @@ const nextConfig: NextConfig = {
             key: "X-DNS-Prefetch-Control",
             value: "on",
           },
-          {
-            key: "Content-Security-Policy",
-            value: buildContentSecurityPolicy(),
-          },
+          // Content-Security-Policy is set per request in proxy.ts, where the
+          // nonce is generated. A second static header here would be enforced
+          // alongside it and the two would fight.
         ],
       },
       {

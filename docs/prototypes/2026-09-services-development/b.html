@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · The Stack — Custom Development</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#04060A;--line:rgba(255,255,255,.14);--blue:#2F7BFF;--brand:#0E63DB;--mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:Outfit,sans-serif;font-weight:400;letter-spacing:-.035em;line-height:1}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.03em}
+a{color:inherit;text-decoration:none}
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(4,6,10,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.nav b{font-family:Outfit;font-weight:500;letter-spacing:.02em}
+.nav div{display:flex;gap:6px;font-size:13px}
+.nav div a{padding:6px 12px;border:1px solid var(--line);border-radius:6px;color:#cbd5e1}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 18px;border-radius:6px;font-size:14px;font-weight:500}
+.btn.b{background:var(--brand)}
+.btn.w{background:#fff;color:#04060A}
+
+.hero{position:relative;height:100svh;min-height:700px;display:grid;place-items:center;text-align:center;overflow:hidden}
+.hero .bg{position:absolute;inset:-10%;background:url(img/s2.jpg) center/cover;opacity:.9}
+.hero .bg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(4,6,10,.2),rgba(4,6,10,.92) 70%)}
+.hero .in{position:relative;z-index:1;padding:0 24px}
+.hero h1{font-size:clamp(48px,7.4vw,124px);max-width:13ch;margin:0 auto}
+.hero p{margin:26px auto 36px;color:#cbd5e1;font-size:17px;max-width:46ch;line-height:1.5}
+.hero .btns{display:flex;gap:10px;justify-content:center}
+
+.strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:34px 28px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+.strip span{font-family:Outfit;font-size:20px;color:#8b93a3}
+.strip .mono{color:#6b7280}
+
+.say{padding:24vh 28px}
+.say p.big{font-family:Outfit;font-size:clamp(40px,5.6vw,92px);letter-spacing:-.04em;line-height:1.02;max-width:17ch}
+.say p.big .w{color:#2a2f3a}
+.say .tag{display:inline-block;margin-bottom:28px;padding:4px 8px;border:1px solid var(--line);border-radius:4px}
+
+.stack{position:relative;height:420vh}
+.stack .pin{position:sticky;top:0;height:100svh;overflow:hidden}
+.stack .bg{position:absolute;inset:0;background:url(img/glass.jpg) center/cover;opacity:.12}
+.stack h2{position:absolute;top:13vh;left:0;right:0;text-align:center;font-size:clamp(40px,5vw,80px);max-width:16ch;margin:0 auto}
+.spine{position:absolute;left:50%;top:32vh;bottom:8vh;width:0;border-left:1px dashed rgba(255,255,255,.28)}
+.spine .fill{position:absolute;left:-1px;top:0;width:1px;background:var(--blue);height:0}
+.spine .dot{position:absolute;left:-7px;width:13px;height:13px;background:#fff;border-radius:2px;top:0;box-shadow:0 0 30px 6px rgba(47,123,255,.8)}
+.node{position:absolute;width:min(380px,40vw);border:1px solid var(--line);background:rgba(8,11,18,.85);backdrop-filter:blur(6px);border-radius:8px;padding:18px 18px 16px;opacity:0}
+.node .h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.node .h span.i{border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+.node h3{font-size:22px}
+.node p{color:#9aa3b2;font-size:14px;line-height:1.55}
+.node.l{right:calc(50% + 40px)}
+.node.r{left:calc(50% + 40px)}
+.node.you{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 30px 80px -20px rgba(47,123,255,.6)}
+
+.rules{background:#F4F5F7;color:#04060A;padding:22vh 28px}
+.rules h2{font-size:clamp(40px,5vw,80px);max-width:18ch;margin-bottom:10vh}
+.rule{display:grid;grid-template-columns:120px 1fr 56px;align-items:center;border-top:1px solid #d7dae0;padding:26px 0}
+.rule:last-child{border-bottom:1px solid #d7dae0}
+.rule h3{font-size:clamp(28px,3.4vw,52px);font-weight:400}
+.rule .ic{width:48px;height:48px;border-radius:6px;background:var(--brand);display:grid;place-items:center;color:#fff;font-size:20px}
+.rule .mono{color:#6b7280}
+
+.proof{padding:22vh 28px;display:grid;grid-template-columns:1fr 1.3fr;gap:5vw;align-items:center}
+.proof h2{font-size:clamp(36px,4vw,64px);margin:18px 0 40px}
+.kv{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+.kv div{padding:22px 0;border-bottom:1px solid var(--line)}
+.kv b{display:block;font-family:Outfit;font-weight:400;font-size:clamp(48px,5vw,80px);letter-spacing:-.04em}
+.kv span{color:#9aa3b2;font-size:13px}
+.shot{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.shot img{display:block;width:100%}
+
+.cta{position:relative;padding:26vh 28px 18vh;text-align:center;overflow:hidden}
+.cta .bg{position:absolute;inset:0;background:url(img/streak.jpg) center/cover;opacity:.7}
+.cta .in{position:relative}
+.cta h2{font-size:clamp(48px,7vw,120px);max-width:14ch;margin:0 auto 40px}
+
+.switch{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.1);backdrop-filter:blur(8px);font:500 12px Inter;border:1px solid var(--line)}
+.switch a{padding:8px 14px;border-radius:999px;color:#cbd5e1}
+.switch a.on{background:#fff;color:#04060A}
+@media(max-width:800px){.node{width:78vw}.node.l,.node.r{left:10vw;right:auto}.spine{left:6vw}.proof{grid-template-columns:1fr}.rule{grid-template-columns:48px 1fr 48px}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div><a>Services</a><a>Work</a><a>Pricing</a><a>Standards</a></div><a class="btn b" style="padding:8px 14px">Get an estimate</a></nav>
+
+<section class="hero">
+  <div class="bg" id="heroBg"></div>
+  <div class="in">
+    <h1 id="h1">Don't trust the agency. Own the repository.</h1>
+    <p>Custom dashboards, portals and operational systems — engineered for your team and handed over in your name.</p>
+    <div class="btns"><a class="btn b">Request a scope →</a><a class="btn w">See a real build</a></div>
+  </div>
+</section>
+
+<div class="strip"><span class="mono">Built on open, portable tools</span><span>Next.js</span><span>TypeScript</span><span>PostgreSQL</span><span>Prisma</span><span>Tailwind</span><span>Vercel</span></div>
+
+<section class="say">
+  <span class="tag mono">Custom development</span>
+  <p class="big" id="say">A rushed build is paid for twice. We define the system first, then write code that the next engineer can read without us.</p>
+</section>
+
+<section class="stack" id="stack">
+  <div class="pin">
+    <div class="bg"></div>
+    <h2>The stack your business runs on.</h2>
+    <div class="spine" id="spine"><div class="fill" id="fill"></div><div class="dot" id="dot"></div></div>
+    <div class="node l" data-at="0"><div class="h"><span class="i mono">01</span><h3>Interface</h3></div><p>Screens designed around the work your team repeats — in Arabic and English.</p></div>
+    <div class="node r" data-at="1"><div class="h"><span class="i mono">02</span><h3>Application</h3></div><p>Business rules written once, typed end to end, tested where they can break.</p></div>
+    <div class="node l" data-at="2"><div class="h"><span class="i mono">03</span><h3>Data</h3></div><p>A schema with its full migration history. Rebuildable from zero on any database.</p></div>
+    <div class="node r" data-at="3"><div class="h"><span class="i mono">04</span><h3>Infrastructure</h3></div><p>Deployments, monitoring and backups — documented, not remembered.</p></div>
+    <div class="node l you" data-at="4"><div class="h"><span class="i mono">05</span><h3>Your account</h3></div><p>Every layer above lives here. Not in ours.</p></div>
+  </div>
+</section>
+
+<section class="rules">
+  <h2>Four rules we don't bend.</h2>
+  <div class="rule"><span class="mono">RULE 01</span><h3>One number, in writing.</h3><span class="ic">≡</span></div>
+  <div class="rule"><span class="mono">RULE 02</span><h3>Code in your repository.</h3><span class="ic">⌥</span></div>
+  <div class="rule"><span class="mono">RULE 03</span><h3>Bilingual by construction.</h3><span class="ic">ع</span></div>
+  <div class="rule"><span class="mono">RULE 04</span><h3>Checks on every change.</h3><span class="ic">✓</span></div>
+</section>
+
+<section class="proof">
+  <div><span class="mono" style="color:#6b7280">Proof · altruvex.com</span><h2>We built the site you are reading the same way.</h2>
+    <div class="kv"><div><b>&lt;1s</b><span>Mobile time to interactive</span></div><div><b>&lt;16ms</b><span>English ↔ Arabic switch</span></div></div></div>
+  <div class="shot" id="shot"><img src="img/pricing.jpg" alt=""></div>
+</section>
+
+<section class="cta">
+  <div class="bg"></div>
+  <div class="in"><h2>Build the system you will own.</h2><a class="btn b">Request a scope →</a></div>
+</section>
+
+<div class="switch"><a href="a.html">A · Blue</a><a href="b.html" class="on">B · Stack</a><a href="c.html">C · Studio</a></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const say = document.getElementById("say");
+say.innerHTML = say.textContent.split(" ").map(w => `<span class="w">${w}</span>`).join(" ");
+const nodes = gsap.utils.toArray(".node");
+function layout(){
+  const sp = document.getElementById("spine").getBoundingClientRect();
+  const pin = document.querySelector(".stack .pin").getBoundingClientRect();
+  nodes.forEach((n,i)=>{ n.style.top = (sp.top - pin.top + (sp.height) * (i/(nodes.length-1)) - 40) + "px"; });
+}
+layout(); addEventListener("resize", layout);
+if (!reduce) {
+  gsap.from("#h1", { y: 40, opacity: 0, duration: 1.4, ease: "expo.out" });
+  gsap.to("#heroBg", { scale: 1.2, rotate: 4, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+  gsap.to("#say .w", { color: "#ffffff", stagger: .05, ease: "none", scrollTrigger: { trigger: ".say", start: "top 70%", end: "bottom 60%", scrub: true } });
+  const tl = gsap.timeline({ scrollTrigger: { trigger: "#stack", start: "top top", end: "bottom bottom", scrub: .6 } });
+  tl.to("#fill", { height: "100%", ease: "none", duration: 1 }, 0).to("#dot", { top: "100%", ease: "none", duration: 1 }, 0);
+  nodes.forEach((n,i)=> tl.fromTo(n, { opacity: 0, x: n.classList.contains("l") ? -40 : 40 }, { opacity: 1, x: 0, duration: .12 }, i/(nodes.length-1) - .04));
+  gsap.utils.toArray(".rule").forEach(r => gsap.from(r, { y: 50, opacity: 0, duration: 1, ease: "expo.out", scrollTrigger: { trigger: r, start: "top 88%" } }));
+  gsap.fromTo("#shot", { y: 100, rotateX: 18, transformPerspective: 1200 }, { y: 0, rotateX: 0, ease: "none", scrollTrigger: { trigger: ".proof", start: "top bottom", end: "center center", scrub: true } });
+} else { nodes.forEach(n => n.style.opacity = 1); document.querySelectorAll("#say .w").forEach(w => w.style.color = "#fff"); }
+</script>
+</body>
+</html>

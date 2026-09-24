@@ -27,7 +27,7 @@ export function Breadcrumbs({ className, items }: BreadcrumbsProps) {
               ) : (
                 <Link
                   href={item.path}
-                  className="transition-all duration-300 hover:text-foreground"
+                  className="transition-all duration-(--motion-drawer) hover:text-foreground"
                 >
                   {item.name}
                 </Link>

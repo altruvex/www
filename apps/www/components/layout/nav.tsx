@@ -1,7 +1,9 @@
 "use client";
 
+import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
 import { ThemeChanger } from "@/components/shared/theme-changer";
+import { Num } from "@/components/ui/num";
 import { Link, usePathname } from "@/i18n/navigation";
 import { getLenis } from "@/lib/motion/lenis-instance";
 import { ScrollTrigger } from "@/lib/utils/gsap";
@@ -14,9 +16,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@repo/ui/www";
-import { Calendar } from "lucide-react";
+import { Calendar, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LanguageSwitcherBase } from "../base/language-switcher-base";
 import { AltruvexLogo } from "../shared/altruvex-logo";
 
@@ -24,9 +26,18 @@ const NAV_ITEMS = [
   { key: "work", href: "/work" },
   { key: "services", href: "/services" },
   { key: "pricing", href: "/pricing" },
+  { key: "about", href: "/about" },
   { key: "contact", href: "/contact" },
-  { key: "transparency", href: "/transparency" },
-];
+] as const;
+
+const CTA_HREF = "/transparency";
+
+const focusRing =
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
+
+function isCurrent(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function Nav() {
   const t = useTranslations("nav");
@@ -36,30 +47,26 @@ export function Nav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavInverted, setIsNavInverted] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
 
   const dir = locale === "ar" ? "rtl" : "ltr";
 
-  // Scroll state via ScrollTrigger, not a raw `scroll` listener: trigger
-  // positions are measured once per refresh (the smooth-scroll provider
-  // refreshes on body-height changes), so a scroll update costs one cached
-  // scrollY read — never a getBoundingClientRect. Both flags are re-derived
-  // on every update rather than in onToggle (ScrollTrigger suppresses toggle
-  // callbacks while a refresh is in flight); React bails out of identical
-  // setState calls, so it re-renders only at the actual threshold crossings.
   useEffect(() => {
-    const servicesWrapper = document.getElementById("services-wrapper");
-    const inverted = servicesWrapper
-      ? ScrollTrigger.create({
-          trigger: servicesWrapper,
-          // Header is 64px tall: inverted while the section overlaps it.
-          start: "top 64px",
-          end: "bottom top",
-        })
-      : null;
+    let inverted: ScrollTrigger[] = [];
+    let observer: MutationObserver | null = null;
 
     const sync = (self: ScrollTrigger) => {
       setIsScrolled(self.scroll() > 20);
-      setIsNavInverted(inverted?.isActive ?? false);
+      /* An island locked dark needs no inverted bar in the dark theme — the
+         bar is already dark there, and inverting it would turn it light. */
+      const dark = document.documentElement.classList.contains("dark");
+      setIsNavInverted(
+        inverted.some(
+          (trigger) =>
+            trigger.isActive &&
+            !(dark && (trigger.trigger as HTMLElement | undefined)?.dataset.sceneLock === "dark"),
+        ),
+      );
     };
     const page = ScrollTrigger.create({
       start: 0,
@@ -67,18 +74,45 @@ export function Nav() {
       onUpdate: sync,
       onRefresh: sync,
     });
-    // Settle: ScrollTrigger fires this once when scrolling stops, outside the
-    // per-trigger callback gating, so a jump that landed during a refresh
-    // still ends in the right state.
     const settle = () => sync(page);
     ScrollTrigger.addEventListener("scrollEnd", settle);
 
+    /* The bar inverts over any dark island that asks for it: the homepage's
+       services wrapper, and every element marked `data-nav-invert` (the
+       /services/development studio sections). One trigger per island, and
+       the bar is inverted while any of them sits under its midline. */
+    const attach = () => {
+      const islands = [
+        document.getElementById("services-wrapper"),
+        ...Array.from(document.querySelectorAll<HTMLElement>("[data-nav-invert]")),
+      ].filter((el): el is HTMLElement => el !== null);
+      if (islands.length === 0) return false;
+      const midline = () => (headerRef.current?.offsetHeight ?? 64) / 2;
+      inverted = islands.map((island) =>
+        ScrollTrigger.create({
+          trigger: island,
+          start: () => `top ${midline()}px`,
+          end: () => `bottom ${midline()}px`,
+          refreshPriority: -1,
+          onToggle: settle,
+        }),
+      );
+      settle();
+      return true;
+    };
+    if (!attach()) {
+      observer = new MutationObserver(() => {
+        if (attach()) observer?.disconnect();
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+    }
+
     return () => {
+      observer?.disconnect();
       ScrollTrigger.removeEventListener("scrollEnd", settle);
       page.kill();
-      inverted?.kill();
+      inverted.forEach((trigger) => trigger.kill());
     };
-    // pathname: the services wrapper is page content and changes per route.
   }, [pathname]);
 
   useEffect(() => {
@@ -93,194 +127,204 @@ export function Nav() {
 
   return (
     <header
+      ref={headerRef}
       dir={dir}
       data-scene={isNavInverted && !isMobileMenuOpen ? "inverted" : undefined}
       className={cn(
-        "fixed top-0 w-full transition-all duration-300",
+        "fixed top-0 w-full transition-[background-color,border-color,box-shadow] duration-(--motion-drawer) ease-smooth",
         isMobileMenuOpen
-          ? "z-60 bg-transparent"
-          : cn("z-40", isScrolled ? "liquid-glass" : "bg-transparent"),
+          ? "z-60 border-b border-transparent bg-transparent"
+          : cn(
+              "z-40",
+              isScrolled
+                ? "liquid-glass-nav"
+                : "border-b border-transparent bg-transparent",
+            ),
       )}
     >
       <Container>
-        <div className="flex md:h-16 h-14 items-center">
-          {/* تم تعديل هذا الجزء فقط لحل مشكلة المحاذاة */}
-          <div className="hidden lg:flex w-full items-center justify-between gap-8">
-            <div className="flex flex-1 justify-start">
-              <Link href="/" className="flex items-baseline gap-1 group">
-                <AltruvexLogo size="md" variant="full" />
-              </Link>
-            </div>
-
-            <nav className="flex items-center justify-center gap-1">
+        <div className="hidden h-16 w-full grid-cols-[1fr_auto_1fr] items-center gap-6 lg:grid">
+          <Link
+            href="/"
+            className={cn("group justify-self-start rounded-ctl-sm", focusRing)}
+          >
+            <AltruvexLogo size="md" variant="full" />
+          </Link>
+          <nav aria-label={t("primaryLabel")}>
+            <ul className="flex items-center gap-1">
               {NAV_ITEMS.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  pathname.startsWith(`${item.href}/`);
+                const active = isCurrent(pathname, item.href);
                 return (
-                  <Link
-                    key={item.key}
-                    href={item.href}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "relative rounded-md px-3 py-2 font-mono text-sm font-medium uppercase leading-normal tracking-wider text-nowrap transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                      "after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-brand after:origin-center after:transition-transform after:duration-300 motion-reduce:after:transition-none",
-                      isActive
-                        ? "text-brand-text after:scale-x-100"
-                        : "transition-all text-primary/65 hover:text-foreground after:bg-foreground/25 after:scale-x-0 hover:after:scale-x-100",
-                    )}
-                  >
-                    {t(item.key)}
-                  </Link>
+                  <li key={item.key}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "relative flex h-10 items-center rounded-ctl-sm px-3.5 text-sm font-medium text-nowrap transition-colors duration-(--motion-instant) ease-smooth",
+                        "after:pointer-events-none after:absolute after:inset-x-0 after:bottom-1 after:mx-auto after:h-0.5 after:w-4 after:rounded-full after:transition-[transform,background-color] after:duration-(--motion-instant) after:ease-smooth",
+                        focusRing,
+                        active
+                          ? "text-foreground after:scale-x-100 after:bg-brand"
+                          : "text-foreground/70 after:scale-x-0 after:bg-foreground/30 hover:text-foreground hover:after:scale-x-100",
+                      )}
+                    >
+                      {t(item.key)}
+                    </Link>
+                  </li>
                 );
               })}
-            </nav>
-
-            <div className="flex flex-1 items-center gap-2 justify-end text-nowrap">
-              <LanguageSwitcherBase variant="default" />
-              <NavDivider />
-              <ThemeChanger />
-              <NavDivider />
-              <Link
-                href="/transparency"
-                className={cn(
-                  "inline-flex h-11 items-center justify-center rounded-lg px-5 text-sm font-medium transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-                  isNavInverted
-                    ? "transition-all bg-foreground text-primary-foreground hover:bg-foreground/90"
-                    : "transition-all bg-foreground text-background hover:bg-foreground/90",
-                )}
-              >
-                {t("getStarted")}
-              </Link>
-            </div>
+            </ul>
+          </nav>
+          <div className="flex items-center justify-self-end gap-1 text-nowrap">
+            <LanguageSwitcherBase variant="inline" />
+            <ThemeChanger />
+            <span
+              aria-hidden
+              className="mx-2 h-4 w-px bg-border-mid transition-colors duration-(--motion-drawer)"
+            />
+            <MagneticButton asChild variant="primary" size="sm">
+              <Link href={CTA_HREF}>{t("getStarted")}</Link>
+            </MagneticButton>
           </div>
-          {/* نهاية الجزء المعدل */}
-
-          <div className="flex lg:hidden w-full items-center justify-between">
-            <Link href="/" className="flex items-baseline gap-1 group z-50">
-              <AltruvexLogo size="md" variant="full" />
-            </Link>
-            <div className="h-full flex items-center justify-center">
-              <Drawer
-                open={isMobileMenuOpen}
-                onOpenChange={setIsMobileMenuOpen}
+        </div>
+        <div className="flex h-14 w-full items-center justify-between lg:hidden">
+          <Link
+            href="/"
+            onClick={closeMobileMenu}
+            className={cn("group relative z-50 rounded-ctl-sm", focusRing)}
+          >
+            <AltruvexLogo size="md" variant="full" />
+          </Link>
+          <Drawer open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <DrawerTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "relative z-50 -me-2.5 flex size-11 items-center justify-center rounded-full text-foreground",
+                  focusRing,
+                )}
+                aria-label={isMobileMenuOpen ? t("closeMenu") : t("openMenu")}
               >
-                <DrawerTrigger asChild>
-                  <button
-                    type="button"
-                    className="relative z-50 flex h-11 w-11 items-center justify-center focus-visible:outline-none"
-                    aria-label={
-                      isMobileMenuOpen ? t("closeMenu") : t("openMenu")
-                    }
-                  >
-                    <span
-                      className={cn(
-                        "absolute h-0.5 w-10 rounded-full transition-transform duration-300 ease-out bg-foreground",
-                        isMobileMenuOpen
-                          ? "rotate-45 translate-y-0"
-                          : "-translate-y-1.5",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "absolute h-0.5 w-10 rounded-full transition-transform duration-300 ease-out bg-foreground",
-                        isMobileMenuOpen
-                          ? "-rotate-45 translate-y-0"
-                          : "translate-y-1.5",
-                      )}
-                    />
-                  </button>
-                </DrawerTrigger>
-                <DrawerContent
-                  dir={dir}
-                  data-lenis-prevent
-                  className="liquid-glass-panel h-[85svh] border-foreground/10 px-6 outline-none sm:px-8 lg:hidden"
-                >
-                  <DrawerHeader className="sr-only">
-                    <DrawerTitle>{t("menuTitle")}</DrawerTitle>
-                    <DrawerDescription>
-                      {t("menuDescription")}
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <div
-                    dir={dir}
-                    className="min-h-0 flex-1 overflow-y-auto py-2 scrollbar-none [&::-webkit-scrollbar]:hidden"
-                  >
-                    <div className="flex min-h-full flex-col">
-                      <nav className="flex flex-col space-y-2 mb-12">
-                        {NAV_ITEMS.map((item) => {
-                          const isActive =
-                            pathname === item.href ||
-                            pathname.startsWith(`${item.href}/`);
-                          return (
-                            <Link
-                              key={item.key}
-                              href={item.href}
-                              onClick={closeMobileMenu}
-                              aria-current={isActive ? "page" : undefined}
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute h-[1.5px] w-5.5 rounded-full bg-current transition-transform duration-(--motion-drawer) ease-smooth",
+                    isMobileMenuOpen ? "rotate-45" : "translate-y-[-3.5px]",
+                  )}
+                />
+                <span
+                  aria-hidden
+                  className={cn(
+                    "absolute h-[1.5px] w-5.5 rounded-full bg-current transition-transform duration-(--motion-drawer) ease-smooth",
+                    isMobileMenuOpen ? "-rotate-45" : "translate-y-[3.5px]",
+                  )}
+                />
+              </button>
+            </DrawerTrigger>
+            <DrawerContent
+              dir={dir}
+              data-lenis-prevent
+              className="border-border-subtle bg-background outline-none data-[vaul-drawer-direction=bottom]:max-h-[88svh] lg:hidden"
+            >
+              <DrawerHeader className="sr-only">
+                <DrawerTitle>{t("menuTitle")}</DrawerTitle>
+                <DrawerDescription>{t("menuDescription")}</DrawerDescription>
+              </DrawerHeader>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] scrollbar-none sm:px-8 [&::-webkit-scrollbar]:hidden">
+                <nav aria-label={t("primaryLabel")}>
+                  <ol className="border-t border-border-subtle">
+                    {NAV_ITEMS.map((item, idx) => {
+                      const active = isCurrent(pathname, item.href);
+                      return (
+                        <li key={item.key} className="border-b border-border-subtle">
+                          <Link
+                            href={item.href}
+                            onClick={closeMobileMenu}
+                            aria-current={active ? "page" : undefined}
+                            className={cn(
+                              "group flex min-h-16 items-center gap-4 rounded-ctl-sm py-3",
+                              focusRing,
+                            )}
+                          >
+                            <span
+                              aria-hidden
                               className={cn(
-                                "flex w-full items-center rounded-md border-s-2 px-4 py-4 transition-colors duration-200",
-                                isActive
-                                  ? "bg-brand/10 text-brand-text border-brand"
-                                  : "border-transparent text-foreground/70 hover:bg-foreground/5 hover:text-foreground",
+                                "w-7 shrink-0 text-sm tabular-nums ltr:font-mono",
+                                active
+                                  ? "text-brand-text"
+                                  : "text-foreground/55",
                               )}
                             >
-                              <span className="font-sans text-xl font-medium tracking-tight text-start">
-                                {t(item.key)}
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </nav>
-                      <div className="space-y-6 mt-auto pb-6">
-                        <div className="h-px w-full bg-foreground/10" />
-                        <div className="grid grid-cols-2 gap-4">
-                          <Link
-                            href="/transparency"
-                            className="inline-flex h-11 items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
-                            onClick={closeMobileMenu}
-                          >
-                            {t("getStarted")}
-                          </Link>
-                          <Link
-                            href="/schedule"
-                            className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-foreground/10 px-4 text-sm font-medium text-foreground"
-                            onClick={closeMobileMenu}
-                          >
-                            <Calendar className="h-4 w-4" />
-                            {t("schedule")}
-                          </Link>
-                        </div>
-                        <div className="h-px w-full bg-foreground/10" />
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
-                            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                              {t("language")}
+                              <Num value={idx + 1} pad={2} />
                             </span>
-                            <LanguageSwitcherBase variant="toggle" />
-                          </div>
-                          <div className="flex items-center justify-between rounded-md bg-foreground/5 px-4 py-3">
-                            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
-                              {t("theme")}
+                            <span
+                              className={cn(
+                                "flex-1 font-sans text-2xl font-semibold tracking-tight transition-colors duration-(--motion-instant) ease-smooth",
+                                active
+                                  ? "text-foreground"
+                                  : "text-foreground/75 group-hover:text-foreground",
+                              )}
+                            >
+                              {t(item.key)}
                             </span>
-                            <ThemeChanger />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                            <ChevronRight
+                              aria-hidden
+                              className="size-5 shrink-0 text-foreground/35 transition-transform duration-(--motion-instant) ease-smooth group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                            />
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </nav>
+                <div className="mt-8 grid gap-3">
+                  <MagneticButton
+                    asChild
+                    variant="primary"
+                    size="lg"
+                    className="h-12 w-full leading-none"
+                  >
+                    <Link href={CTA_HREF} onClick={closeMobileMenu}>
+                      {t("getStarted")}
+                    </Link>
+                  </MagneticButton>
+                  <MagneticButton
+                    asChild
+                    variant="secondary"
+                    size="lg"
+                    className="h-12 w-full gap-2 leading-none"
+                  >
+                    <Link href="/schedule" onClick={closeMobileMenu}>
+                      <Calendar className="size-4" aria-hidden />
+                      {t("schedule")}
+                    </Link>
+                  </MagneticButton>
+                </div>
+                <div className="mt-6 grid gap-5 border-t border-border-subtle pt-6">
+                  <div className="grid gap-2">
+                    <span className="text-sm font-medium text-foreground/70">
+                      {t("language")}
+                    </span>
+                    <LanguageSwitcherBase
+                      variant="segmented"
+                      className="w-full [&>button]:flex-1"
+                    />
                   </div>
-                </DrawerContent>
-              </Drawer>
-            </div>
-          </div>
+                  <div className="grid gap-2">
+                    <span className="text-sm font-medium text-foreground/70">
+                      {t("theme")}
+                    </span>
+                    <ThemeChanger
+                      variant="segmented"
+                      className="w-full [&>button]:flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
       </Container>
     </header>
-  );
-}
-
-function NavDivider() {
-  return (
-    <div className="h-4 w-px mx-1 bg-border-mid transition-colors duration-300" />
   );
 }

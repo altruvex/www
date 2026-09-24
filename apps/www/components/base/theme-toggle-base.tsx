@@ -2,52 +2,101 @@
 
 import { motion, usePress } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
+import { SegmentedControl } from "./segmented-control";
 
-export function ThemeToggle() {
-  const { setTheme, resolvedTheme } = useTheme();
+type ThemeChoice = "light" | "dark" | "system";
+
+function isThemeChoice(value: string | undefined): value is ThemeChoice {
+  return value === "light" || value === "dark" || value === "system";
+}
+
+interface ThemeToggleProps {
+  /**
+   * `icon` — flips between light and dark (the header bar).
+   * `segmented` — light, dark or follow the system (the drawer).
+   */
+  variant?: "icon" | "segmented";
+  className?: string;
+}
+
+export function ThemeToggle({ variant = "icon", className }: ThemeToggleProps) {
+  const t = useTranslations("nav");
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  // The theme is only known on the client; until then nothing may claim a
+  // value, or the server HTML and the first client render disagree.
   const mounted = useSyncExternalStore(
     () => () => undefined,
     () => true,
     () => false,
   );
-
-  // Tactile press: the toggle is a physical switch — the press confirms the
-  // input registered before the theme visibly flips. Single button element
-  // (no placeholder swap) so the hook's listeners survive the mounted flip.
   const pressRef = usePress<HTMLButtonElement>(motion.pressIcon());
 
-  const ready = mounted && !!resolvedTheme;
-  const isLight = resolvedTheme === "light";
+  if (variant === "segmented") {
+    return (
+      <SegmentedControl
+        label={t("theme")}
+        value={mounted && isThemeChoice(theme) ? theme : undefined}
+        onChange={setTheme}
+        disabled={!mounted}
+        className={className}
+        options={[
+          { value: "light", label: t("themeLight"), icon: <Sun aria-hidden /> },
+          { value: "dark", label: t("themeDark"), icon: <Moon aria-hidden /> },
+          {
+            value: "system",
+            label: t("themeSystem"),
+            icon: <Monitor aria-hidden />,
+          },
+        ]}
+      />
+    );
+  }
 
-  const toggleTheme = () => {
-    setTheme(isLight ? "dark" : "light");
-  };
+  const ready = mounted && !!resolvedTheme;
+  const isDark = resolvedTheme === "dark";
+  const label = isDark ? t("switchToLight") : t("switchToDark");
+
+  // Both glyphs stay mounted and cross over — the icon shows where a press
+  // goes, so the swap itself is the confirmation that it went there.
+  const glyph =
+    "absolute size-4.5 transition-[opacity,transform] duration-(--motion-drawer) ease-smooth";
 
   return (
     <button
       ref={pressRef}
       type="button"
-      onClick={ready ? toggleTheme : undefined}
+      onClick={ready ? () => setTheme(isDark ? "light" : "dark") : undefined}
       disabled={!ready}
+      aria-label={ready ? label : t("theme")}
+      title={ready ? label : undefined}
       className={cn(
-        "group flex h-11 w-11 items-center justify-center rounded-ctl-lg text-foreground transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-        ready && "hover:text-foreground/80",
+        "relative flex size-11 items-center justify-center rounded-ctl-lg text-foreground/70 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        className,
       )}
-      aria-label={
-        ready
-          ? `Switch to ${isLight ? "dark" : "light"} mode`
-          : "Toggle theme"
-      }
     >
-      {ready && isLight ? (
-        <Moon className="h-5 w-5" />
-      ) : (
-        <Sun className="h-5 w-5" />
-      )}
-      <span className="sr-only">Toggle theme</span>
+      <Moon
+        aria-hidden
+        className={cn(
+          glyph,
+          ready && !isDark
+            ? "rotate-0 scale-100 opacity-100"
+            : "-rotate-90 scale-75 opacity-0",
+        )}
+      />
+      <Sun
+        aria-hidden
+        className={cn(
+          glyph,
+          ready && isDark
+            ? "rotate-0 scale-100 opacity-100"
+            : "rotate-90 scale-75 opacity-0",
+        )}
+      />
     </button>
   );
 }

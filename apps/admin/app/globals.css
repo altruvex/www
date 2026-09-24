@@ -5,93 +5,21 @@
 @source "../components/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../lib/**/*.{js,jsx,ts,tsx}";
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-surface: hsl(var(--surface));
-  --color-surface-2: hsl(var(--surface-2));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-subtle-foreground: hsl(var(--subtle-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-brand: hsl(var(--brand));
-  --color-brand-hover: hsl(var(--brand-hover));
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-foreground: hsl(var(--brand-foreground));
-
-  --color-border: hsl(var(--border));
-  --color-border-mid: hsl(var(--border-mid));
-  --color-border-strong: hsl(var(--border-strong));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-
-  --color-neutral: hsl(var(--status-neutral));
-  --color-info: hsl(var(--status-info));
-  --color-success: hsl(var(--status-success));
-  --color-warning: hsl(var(--status-warning));
-  --color-danger: hsl(var(--status-danger));
-  --color-error: hsl(var(--status-danger));
-  --color-destructive: hsl(var(--status-danger));
-  --color-progress: hsl(var(--status-progress));
-
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-chart-6: var(--chart-6);
-
-  --color-n-0: hsl(var(--n-0));
-  --color-n-1: hsl(var(--n-1));
-  --color-n-2: hsl(var(--n-2));
-  --color-n-3: hsl(var(--n-3));
-  --color-n-4: hsl(var(--n-4));
-  --color-n-5: hsl(var(--n-5));
-  --color-n-6: hsl(var(--n-6));
-  --color-n-7: hsl(var(--n-7));
-  --color-n-8: hsl(var(--n-8));
-
+  /* The palette is packages/ui/src/styles/tokens.css. Only what exists in
+     the admin alone is declared here. */
   --color-sidebar: hsl(var(--sidebar));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
-  --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
-  --color-selection-accent: hsl(var(--selection-accent));
 
-  --font-sans: var(--font-outfit);
-  --font-body: var(--font-inter);
-  --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
-
-  --text-micro: 0.6875rem;
-  --text-meta: 0.75rem;
+  /* Admin runs a denser type scale than the site: base is 13px. */
   --text-base: 0.8125rem;
-  --text-md: 0.875rem;
   --text-lg: 1rem;
   --text-xl: 1.25rem;
   --text-metric: 1.75rem;
 
-  --radius-xs: calc(var(--radius) - 8px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 6px);
-  --radius-xl: calc(var(--radius) + 12px);
-  --radius-2xl: calc(var(--radius) + 18px);
-
   --animate-palette-in: palette-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --animate-panel-in: panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-dock-in: dock-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-shimmer: shimmer 1.4s linear infinite;
 }
@@ -99,9 +27,6 @@
 :root {
   --dur-state: 120ms;
   --dur-panel: 180ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  --radius: 1rem;
 
   --control-h-sm: 28px;
   --control-h: 32px;
@@ -113,159 +38,30 @@
   --control-h-icon-lg: var(--control-h-lg);
 
   --row-h: 40px;
-  --row-px: 0.75rem;
   --sidebar-w: 232px;
   --sidebar-w-collapsed: 56px;
   --topbar-h: 48px;
 
-  --n-0: 0 0% 98%;
-  --n-1: 0 0% 96%;
-  --n-2: 0 0% 91%;
-  --n-3: 0 0% 84%;
-  --n-4: 0 0% 65%;
-  --n-5: 0 0% 45%;
-  --n-6: 0 0% 32%;
-  --n-7: 0 0% 18%;
-  --n-8: 0 0% 6%;
+  /* The sidebar is the page ground; its hover/active state is the muted fill. */
+  --sidebar: var(--background);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
 
-  --brand: 214 89% 48%;
-  --brand-hover: 214 89% 41%;
-  --brand-soft: hsl(var(--brand) / 0.1);
-  --brand-foreground: var(--n-0);
-
-  --status-neutral: 220 10% 41%;
-  --status-info: 214 89% 48%;
-  --status-success: 162 95% 31%;
-  --status-warning: 38 96% 40%;
-  --status-danger: 0 65% 51%;
-  --status-progress: 258 68% 54%;
-
-  --chart-1: #4F62D4;
-  --chart-2: #C2610C;
-  --chart-3: #0E9E97;
-  --chart-4: #96387E;
-  --chart-5: #5F7F12;
-  --chart-6: #9B7BEA;
-
-  --background: var(--n-0);
-  --foreground: var(--n-8);
-  --surface: var(--n-1);
-  --surface-2: var(--n-2);
-  --card: 0 0% 100%;
-  --card-foreground: var(--n-8);
-  --popover: 0 0% 100%;
-  --popover-foreground: var(--n-8);
-  --primary: var(--n-8);
-  --primary-foreground: var(--n-0);
-  --secondary: var(--n-1);
-  --secondary-foreground: 0 0% 25%;
-  --muted: var(--n-2);
-  --muted-foreground: 0 0% 40%;
-  --subtle-foreground: 0 0% 42%;
-  --accent: var(--brand);
-  --accent-foreground: var(--brand-foreground);
-
-  --border: 0 0% 6% / 0.1;
-  --border-mid: 0 0% 6% / 0.18;
-  --border-strong: 0 0% 6% / 0.28;
-  --input: 0 0% 100%;
-  --ring: var(--brand);
-
-  --sidebar: 220 24% 98%;
-  --sidebar-foreground: var(--n-8);
-  --sidebar-accent: 220 18% 93%;
-  --sidebar-accent-foreground: var(--n-8);
-  --sidebar-border: 222 32% 6% / 0.09;
-
-  --messaging-whatsapp: 142 62% 34%;
-  --selection-accent: 226 60% 56%;
-
-  --elev-1: 0 1px 2px hsl(222 32% 6% / 0.05);
-  --elev-2: 0 4px 12px -2px hsl(222 32% 6% / 0.1), 0 2px 4px -2px hsl(222 32% 6% / 0.06);
-
-  --glass-background: linear-gradient(135deg, hsl(0 0% 100% / 0.72), hsl(220 24% 98% / 0.46));
-  --glass-background-strong: linear-gradient(180deg, hsl(0 0% 100% / 0.9), hsl(220 20% 97% / 0.78));
-  --glass-background-flat: linear-gradient(135deg, hsl(0 0% 100% / 0.62), hsl(220 18% 96% / 0.42));
-  --glass-border: hsl(222 32% 6% / 0.09);
-  --glass-border-strong: hsl(222 32% 6% / 0.12);
-  --glass-highlight: hsl(0 0% 100% / 0.7);
-  --glass-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 28px -24px hsl(222 32% 6% / 0.32);
-  --glass-shadow-flat: inset 0 1px 0 hsl(0 0% 100% / 0.62);
   --glass-blur: blur(8px) saturate(118%);
   --glass-blur-soft: blur(6px) saturate(110%);
-
-  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
 }
 
 :root[data-density="compact"] {
   --row-h: 32px;
-  --row-px: 0.625rem;
 }
 :root[data-density="relaxed"] {
   --row-h: 48px;
-  --row-px: 1rem;
 }
 
+/* In dark the sidebar sits one step above the ground, on the card tone. */
 .dark {
-  --background: 0 0% 7%;
-  --foreground: 0 0% 94%;
-  --surface: 0 0% 11%;
-  --surface-2: 0 0% 14%;
-  --card: 0 0% 9%;
-  --card-foreground: 0 0% 94%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 94%;
-  --primary: 0 0% 94%;
-  --primary-foreground: 0 0% 7%;
-  --secondary: 0 0% 14%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 58%;
-  --subtle-foreground: 0 0% 58%;
-
-  --status-neutral: 220 9% 60%;
-  --status-info: var(--brand);
-  --status-success: 162 60% 50%;
-  --status-warning: 36 84% 60%;
-  --status-danger: 0 74% 68%;
-  --status-progress: 258 76% 72%;
-
-  --chart-1: #6E7CE2;
-  --chart-2: #C86B20;
-  --chart-3: #17A69E;
-  --chart-4: #AC4E94;
-  --chart-5: #7A9C22;
-  --chart-6: #9276DE;
-
-  --brand-soft: hsl(var(--brand) / 0.14);
-
-  --border: 0 0% 100% / 0.08;
-  --border-mid: 0 0% 100% / 0.14;
-  --border-strong: 0 0% 100% / 0.26;
-  --input: 0 0% 100% / 0.06;
-
-  --sidebar: 222 22% 10%;
-  --sidebar-foreground: 220 20% 92%;
-  --sidebar-accent: 222 18% 16%;
-  --sidebar-accent-foreground: 220 20% 92%;
-  --sidebar-border: 0 0% 100% / 0.07;
-
-  --messaging-whatsapp: 142 55% 55%;
-  --selection-accent: 226 74% 66%;
-
-  --elev-1: 0 1px 2px hsl(0 0% 0% / 0.4);
-  --elev-2: 0 8px 24px -4px hsl(0 0% 0% / 0.5), 0 2px 6px -2px hsl(0 0% 0% / 0.35);
-
-  --glass-background: linear-gradient(135deg, hsl(0 0% 100% / 0.12), hsl(0 0% 100% / 0.035));
-  --glass-background-strong: linear-gradient(180deg, hsl(var(--card) / 0.84), hsl(var(--surface) / 0.64));
-  --glass-background-flat: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.03));
-  --glass-border: hsl(0 0% 100% / 0.08);
-  --glass-border-strong: hsl(0 0% 100% / 0.11);
-  --glass-highlight: hsl(0 0% 100% / 0.12);
-  --glass-shadow: inset 0 1px 0 var(--glass-highlight), 0 16px 34px -24px hsl(0 0% 0% / 0.7);
-  --glass-shadow-flat: inset 0 1px 0 hsl(0 0% 100% / 0.1);
+  --sidebar: var(--card);
 }
 
 @layer base {
@@ -282,7 +78,7 @@
   }
 
   ::selection {
-    background-color: hsl(var(--selection-accent) / 0.22);
+    background-color: hsl(var(--selection-accent) / 0.14);
     color: hsl(var(--foreground));
   }
 
@@ -341,8 +137,6 @@
     font-feature-settings: "tnum" 1;
   }
 
-  input, textarea, select, button { font: inherit; letter-spacing: inherit; }
-
   [hidden] { display: none !important; }
 }
 
@@ -373,7 +167,7 @@
 
   .plane {
     background: var(--glass-background-strong);
-    border: 1px solid var(--glass-border-strong);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     box-shadow: var(--glass-shadow-flat);
     -webkit-backdrop-filter: var(--glass-blur-soft);
@@ -389,13 +183,13 @@
      blur to hold the text legible instead. */
   .dock-glass {
     background:
-      linear-gradient(180deg, hsl(0 0% 100% / 0.58), hsl(220 24% 98% / 0.38));
-    border: 1px solid var(--glass-border-strong);
+      linear-gradient(180deg, hsl(var(--card) / 0.58), hsl(var(--background) / 0.38));
+    border: 1px solid var(--glass-border);
     box-shadow:
       inset 0 1px 0 var(--glass-highlight),
-      inset 0 -1px 1px hsl(222 32% 6% / 0.04),
-      0 18px 40px -18px hsl(222 32% 6% / 0.42),
-      0 2px 8px -5px hsl(222 32% 6% / 0.2);
+      inset 0 -1px 1px hsl(var(--n-8) / 0.04),
+      0 18px 40px -18px hsl(var(--n-8) / 0.42),
+      0 2px 8px -5px hsl(var(--n-8) / 0.2);
     /* Not var(--glass-blur): 8px cannot carry a floating surface. The
        saturation lift is what keeps a status pill scrolling underneath from
        greying the dock out. */
@@ -406,7 +200,7 @@
   .dark .dock-glass {
     background:
       linear-gradient(180deg, hsl(0 0% 100% / 0.11), hsl(0 0% 100% / 0.045));
-    border-color: hsl(0 0% 100% / 0.14);
+    border-color: hsl(var(--border-mid));
     box-shadow:
       inset 0 1px 0 hsl(0 0% 100% / 0.16),
       0 24px 48px -20px hsl(0 0% 0% / 0.82),
@@ -433,10 +227,6 @@
   from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
-@keyframes panel-in {
-  from { opacity: 0; transform: translateX(8px); }
-  to { opacity: 1; transform: translateX(0); }
-}
 @keyframes dock-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -446,10 +236,3 @@
   to { background-position: 200% 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}

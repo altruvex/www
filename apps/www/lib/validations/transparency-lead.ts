@@ -1,3 +1,10 @@
+import {
+  BRAND_IDENTITY_IDS,
+  COMPLEXITY_IDS,
+  CONTENT_READINESS_IDS,
+  SERVICE_IDS,
+  TIMELINE_IDS,
+} from "@repo/pricing-schema";
 import { z } from "zod";
 
 import { normalizeNumeralsToEnglish } from "../utils/number";
@@ -46,14 +53,19 @@ export const createTransparencyLeadSchema = (t: ValidationTranslator) =>
       z.email(t("transparency-lead.email")).max(160).optional(),
     ),
     company: optionalText(160),
-    projectType: z.string().min(1, t("transparency-lead.projectType")),
-    complexity: z.string().min(1, t("transparency-lead.complexity")),
-    timeline: z.string().min(1, t("transparency-lead.timeline")),
+    // Ids from @repo/pricing-schema, not free text: they select a price cell,
+    // and the server recomputes the estimate from them (see the route).
+    projectType: z.enum(SERVICE_IDS, { error: t("transparency-lead.projectType") }),
+    complexity: z.enum(COMPLEXITY_IDS, { error: t("transparency-lead.complexity") }),
+    timeline: z.enum(TIMELINE_IDS, { error: t("transparency-lead.timeline") }),
     // The two answers the estimator has always asked for and never kept.
-    brandIdentity: optionalText(40),
-    contentReadiness: optionalText(40),
-    priceMin: z.number().int().min(0),
-    priceMax: z.number().int().min(0),
-    weeksMin: z.number().int().min(0),
-    weeksMax: z.number().int().min(0),
+    brandIdentity: z.enum(BRAND_IDENTITY_IDS).optional(),
+    contentReadiness: z.enum(CONTENT_READINESS_IDS).optional(),
+    // Accepted so an older client keeps working, and then ignored: the figures
+    // stored on the lead are recomputed server-side from the answers above.
+    // A number the visitor's browser chose is not an estimate this studio made.
+    priceMin: z.number().int().min(0).optional(),
+    priceMax: z.number().int().min(0).optional(),
+    weeksMin: z.number().int().min(0).optional(),
+    weeksMax: z.number().int().min(0).optional(),
   });

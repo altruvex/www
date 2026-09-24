@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { clientIpFromHeaders, enforceRateLimit, prisma } from "@repo/database";
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +7,29 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
+
+    // Public by design — the caller holds only the link — so the read is
+    // limited per IP and per token, the same shape the client portal and the
+    // sign link already use. Without it the one endpoint that returns a
+    // client's payment schedule answers as fast as anyone can ask.
+    for (const [route, identifier, limit] of [
+      ["portal_read_ip", clientIpFromHeaders(request.headers), 60],
+      ["portal_read_token", token, 120],
+    ] as const) {
+      const rl = await enforceRateLimit({
+        scope: "public_api",
+        route,
+        identifier,
+        limit,
+        windowSeconds: 60,
+      });
+      if (!rl.ok) {
+        return NextResponse.json(
+          { success: false, message: "Too many requests. Please try again shortly." },
+          { status: 429, headers: { "Retry-After": String(rl.retryAfterSeconds) } },
+        );
+      }
+    }
 
     const project = await prisma.project.findUnique({
       where: { portalToken: token },

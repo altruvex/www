@@ -5,8 +5,8 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { DatePicker, Input, Label, TimePicker } from "@repo/ui/www";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Accent } from "@/components/ui/emphasis";
-import { usePathname, useRouter } from "@/i18n/navigation";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { useRouter } from "@/i18n/navigation";
+import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { cn } from "@/lib/utils/utils";
 import {
   AlertCircle,
@@ -15,17 +15,18 @@ import {
   Clock,
   Phone,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 export default function SchedulePage() {
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("schedule");
-  const locale = pathname.split("/")[1] || "en";
+  // next-intl's usePathname strips the locale prefix, so reading the locale
+  // off the path sent "schedule" to the API and every booking fell back to en.
+  const locale = useLocale();
 
   const [formData, setFormData] = useState({
     name: searchParams.get("name") || "",
@@ -38,10 +39,6 @@ export default function SchedulePage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const backRef = useSectionEyebrow<HTMLDivElement>();
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const subtitleRef = useSectionDescription();
 
   const handleInputChange = (
     field: string,
@@ -72,7 +69,16 @@ export default function SchedulePage() {
       max.setMonth(max.getMonth() + 3);
       if (formData.date > max) e.date = t("form.date.errorFuture");
     }
-    if (!formData.time) e.time = t("form.time.error");
+    if (!formData.time) {
+      e.time = t("form.time.error");
+    } else if (formData.date && !e.date) {
+      // The date check is by day, so today with an hour already gone got
+      // through here and was refused by the server after submit.
+      const [h, m] = formData.time.split(":").map(Number);
+      const at = new Date(formData.date);
+      at.setHours(h, m, 0, 0);
+      if (at < new Date()) e.time = t("form.time.errorPast");
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -115,41 +121,41 @@ export default function SchedulePage() {
 
   return (
     <>
-      <section className="accent-world-orange flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
+      <section className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom) lg:min-h-dvh">
         <Container>
-          <div className="mx-auto max-w-2xl">
-            <div className="mb-10 text-center flex flex-col items-center">
-              <div ref={backRef} className="w-full flex justify-start mb-8">
-                <button
-                  onClick={() => router.back()}
-                  className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow mb-10"
-                >
-                  <ArrowIcon direction="back" className="h-3.5 w-3.5" />
-                  {t("back")}
-                </button>
-              </div>
-              <div className="mb-12">
-                <Eyebrow ref={eyebrowRef} className="mb-4 block">
-                  {t("eyebrow")}
-                </Eyebrow>
-                <h1
-                  ref={titleRef}
-                  className="font-sans font-normal text-primary leading-[1.03] mb-4"
-                  style={{
-                    fontSize: "clamp(36px, 5vw, 64px)",
-                    letterSpacing: "-0.025em",
-                  }}
-                >
-                  {t("title")} <Accent gradient="ember">{t("titleAccent")}</Accent>
-                </h1>
-                <p
-                  ref={subtitleRef}
-                  className="font-mono text-sm leading-normal tracking-wider text-primary/70"
-                >
+          <HeroReveal delay={0.1} className="mb-10">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="eyebrow inline-flex items-center gap-2 text-muted-foreground transition-colors duration-(--motion-drawer) hover:text-foreground"
+            >
+              <ArrowIcon direction="back" className="h-3.5 w-3.5" />
+              {t("back")}
+            </button>
+          </HeroReveal>
+          {/* The homepage hero's stack in the start columns, the form in the
+              end columns under the same 2px ink rule /contact opens its letter
+              with. The back link sits above both, so the rule starts on the
+              eyebrow's line. */}
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-16">
+            <div className="lg:col-span-5">
+              <HeroReveal delay={0.2} className="mb-6">
+                <Eyebrow>{t("eyebrow")}</Eyebrow>
+              </HeroReveal>
+              <HeroHeadline
+                as="h1"
+                className="mb-7 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+              >
+                <span className="block">{t("title")}</span>
+                <Accent gradient="ember">{t("titleAccent")}</Accent>
+              </HeroHeadline>
+              <HeroReveal delay={0.5}>
+                <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                   {t.rich("subtitle", bodyMarks)}
                 </p>
-              </div>
-              <div className="h-px w-full bg-foreground/8 mb-10" />
+              </HeroReveal>
+            </div>
+            <HeroReveal delay={0.65} className="border-t-2 border-foreground pt-8 lg:col-span-7">
               <form onSubmit={onSubmit} className="space-y-7" noValidate>
                 <div className="form-field">
                   <Label htmlFor="schedule-name" className="mb-2 block text-muted-foreground eyebrow">
@@ -206,6 +212,7 @@ export default function SchedulePage() {
                       onDateChange={(date) => handleInputChange("date", date)}
                       disabled={isSubmitting}
                       placeholder={t("form.date.placeholder")}
+                      locale={locale}
                       minDate={new Date()}
                       maxDate={(() => {
                         const d = new Date();
@@ -225,6 +232,9 @@ export default function SchedulePage() {
                     <TimePicker
                       value={formData.time}
                       onChange={(time) => handleInputChange("time", time)}
+                      hourPlaceholder={t("form.time.hourPlaceholder")}
+                      minutePlaceholder={t("form.time.minutePlaceholder")}
+                      locale={locale}
                       disabled={isSubmitting}
                       className={cn(errors.time && "border-destructive")}
                     />
@@ -244,11 +254,11 @@ export default function SchedulePage() {
                   >
                     {isSubmitting ? t("submit.submitting") : t("submit.button")}
                   </MagneticButton>
-                  <p className="mt-1.5 text-muted-foreground eyebrow text-center">
+                  <p className="mt-1.5 text-muted-foreground eyebrow">
                     {t("form.riskReversal")}
                   </p>
                   {submitSuccess && (
-                    <div className="p-4 rounded-lg bg-success/8 border border-success/15">
+                    <div className="p-4 rounded-panel-sm bg-success/8 border border-success/15">
                       <p className="text-center font-mono leading-normal tracking-wider text-sm text-primary flex items-center justify-center gap-2">
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         {t("submit.success")}
@@ -256,7 +266,7 @@ export default function SchedulePage() {
                     </div>
                   )}
                   {submitError && (
-                    <div className="p-4 rounded-lg bg-destructive/8 border border-destructive/15">
+                    <div className="p-4 rounded-panel-sm bg-destructive/8 border border-destructive/15">
                       <p className="text-center font-mono leading-normal tracking-wider text-sm text-primary flex items-center justify-center gap-2">
                         <AlertCircle className="h-4 w-4 text-destructive" />
                         {submitError}
@@ -265,7 +275,7 @@ export default function SchedulePage() {
                   )}
                 </div>
               </form>
-            </div>
+            </HeroReveal>
           </div>
         </Container>
       </section>

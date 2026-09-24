@@ -25,6 +25,11 @@ async function callGraphApi(body: unknown): Promise<GraphApiResponse> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      // Node's fetch has no default timeout. This call runs inline in the
+      // proposal and contract send routes, so a Graph endpoint that accepts
+      // the connection and then says nothing would hold an operator's request
+      // open until the platform kills it.
+      signal: AbortSignal.timeout(10_000),
     },
   );
 
@@ -47,6 +52,10 @@ interface SendTemplateMessageInput {
   phone: string;
   templateName: string;
   bodyParams: string[];
+  /** Parameter for the template's first URL/copy-code button (authentication templates). */
+  buttonParam?: string;
+  /** What the message history stores instead of the params — for anything secret. */
+  recordBody?: string;
   languageCode?: string;
   relatedProposalId?: string;
   relatedContractId?: string;
@@ -67,7 +76,7 @@ export async function sendTemplateMessage(
       direction: "OUTBOUND",
       status: "QUEUED",
       templateName: input.templateName,
-      body: input.bodyParams.join(" | "),
+      body: input.recordBody ?? input.bodyParams.join(" | "),
       relatedProposalId: input.relatedProposalId,
       relatedContractId: input.relatedContractId,
     },
@@ -81,16 +90,30 @@ export async function sendTemplateMessage(
       template: {
         name: input.templateName,
         language: { code: input.languageCode ?? "en_US" },
-        ...(input.bodyParams.length
+        ...(input.bodyParams.length || input.buttonParam
           ? {
               components: [
-                {
-                  type: "body",
-                  parameters: input.bodyParams.map((text) => ({
-                    type: "text",
-                    text,
-                  })),
-                },
+                ...(input.bodyParams.length
+                  ? [
+                      {
+                        type: "body",
+                        parameters: input.bodyParams.map((text) => ({
+                          type: "text",
+                          text,
+                        })),
+                      },
+                    ]
+                  : []),
+                ...(input.buttonParam
+                  ? [
+                      {
+                        type: "button",
+                        sub_type: "url",
+                        index: "0",
+                        parameters: [{ type: "text", text: input.buttonParam }],
+                      },
+                    ]
+                  : []),
               ],
             }
           : {}),

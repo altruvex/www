@@ -156,9 +156,9 @@ export function GithubPanel({
             {repositoryUrl && (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="destructive-ghost"
                 disabled={saving}
-                className="ml-auto"
+                className="ms-auto"
                 onClick={() => save(null)}
               >
                 Unlink

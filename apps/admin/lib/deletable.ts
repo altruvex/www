@@ -106,6 +106,7 @@ export const DELETABLES: Record<string, Deletable> = {
               messages: true,
               subscriptions: true,
               products: true,
+              services: true,
             },
           },
         },
@@ -146,6 +147,7 @@ export const DELETABLES: Record<string, Deletable> = {
           ["Delivery tasks", tasks],
           ["Products", row._count.products],
           ["Maintenance subscriptions", row._count.subscriptions],
+          ["Services (domains, hosting…)", row._count.services],
           ["WhatsApp messages", row._count.messages],
         ),
         block:
@@ -188,6 +190,7 @@ export const DELETABLES: Record<string, Deletable> = {
         await tx.contract.deleteMany({ where: { clientId: id } });
         await tx.proposal.deleteMany({ where: { clientId: id } });
         await tx.whatsAppMessage.deleteMany({ where: { clientId: id } });
+        // Services cascade with the client row itself.
         // Subscriptions cascade their requests.
         await tx.maintenanceSubscription.deleteMany({
           where: { clientId: id },
@@ -515,7 +518,9 @@ export const DELETABLES: Record<string, Deletable> = {
           liveUrl: true,
           targetLaunchDate: true,
           createdAt: true,
-          _count: { select: { payments: true, tasks: true, products: true } },
+          _count: {
+            select: { payments: true, tasks: true, products: true, changeRequests: true, services: true },
+          },
         },
       });
       if (!row) return null;
@@ -529,6 +534,7 @@ export const DELETABLES: Record<string, Deletable> = {
         impact: impacts(
           ["Payments", row._count.payments],
           ["Delivery tasks", row._count.tasks],
+          ["Change requests", row._count.changeRequests],
         ),
         block:
           paidPayments > 0
@@ -545,18 +551,25 @@ export const DELETABLES: Record<string, Deletable> = {
           targetLaunchDate: row.targetLaunchDate,
           createdAt: row.createdAt,
         },
-        notes:
-          row._count.products > 0
+        notes: [
+          ...(row._count.products > 0
             ? [
                 `${row._count.products} product${row._count.products === 1 ? "" : "s"} stay${row._count.products === 1 ? "s" : ""} operated — a product outlives the project that built it.`,
               ]
-            : [],
+            : []),
+          // A domain does not stop expiring because the engagement record went.
+          ...(row._count.services > 0
+            ? [
+                `${row._count.services} service${row._count.services === 1 ? "" : "s"} (domain, hosting…) stay${row._count.services === 1 ? "s" : ""} on the client and keep${row._count.services === 1 ? "s" : ""} raising renewal alerts.`,
+              ]
+            : []),
+        ],
       };
     },
     async remove(id) {
       await prisma.$transaction(async (tx) => {
         await tx.payment.deleteMany({ where: { projectId: id } });
-        // Tasks cascade; products fall back to no project.
+        // Tasks and change requests cascade; products fall back to no project.
         await tx.project.delete({ where: { id } });
       });
     },
@@ -1067,6 +1080,71 @@ export const DELETABLES: Record<string, Deletable> = {
     },
     async remove(id) {
       await prisma.contactNote.delete({ where: { id } });
+    },
+  },
+
+  /* -------------------------------------------------------- client service */
+  clientService: {
+    subject: "client",
+    noun: "service",
+    plural: "services",
+    revalidate: ["/services", "/clients", "/projects", "/notifications"],
+    async plan(id) {
+      const row = await prisma.clientService.findUnique({
+        where: { id },
+        select: {
+          kind: true,
+          name: true,
+          provider: true,
+          status: true,
+          price: true,
+          currency: true,
+          termMonths: true,
+          expiresAt: true,
+          proposalId: true,
+          client: { select: { name: true, company: true } },
+          _count: { select: { payments: true } },
+        },
+      });
+      if (!row) return null;
+      return {
+        entity: "clientService",
+        id,
+        label: `${row.name} · ${row.client.company || row.client.name || "Client"}`,
+        impact: [],
+        block:
+          row.status === "ACTIVE"
+            ? {
+                reason:
+                  "This service is running at the provider. Deleting it stops its renewal alerts and removes it from the client's history. Cancel it instead — a cancelled service keeps its record.",
+                hard: false,
+              }
+            : null,
+        snapshot: {
+          kind: row.kind,
+          name: row.name,
+          provider: row.provider,
+          status: row.status,
+          price: row.price,
+          currency: row.currency,
+          termMonths: row.termMonths,
+          expiresAt: row.expiresAt,
+          proposalId: row.proposalId,
+          client: row.client.company || row.client.name,
+        },
+        notes: [
+          ...(row.proposalId
+            ? ["The accepted proposal still lists it — deleting the row does not change a signed document."]
+            : []),
+          // Payments are records of money owed; they outlive the service row.
+          ...(row._count.payments > 0
+            ? [`${row._count.payments} payment${row._count.payments === 1 ? "" : "s"} for its terms stay${row._count.payments === 1 ? "s" : ""} on the project.`]
+            : []),
+        ],
+      };
+    },
+    async remove(id) {
+      await prisma.clientService.delete({ where: { id } });
     },
   },
 

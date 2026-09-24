@@ -152,14 +152,10 @@ export function SelectionDock({ count, noun = "row", actions, onClear }: Selecti
             <Button
               key={action.label}
               size="sm"
-              variant="ghost"
+              variant={action.destructive ? "destructive-ghost" : "ghost"}
               loading={running === action.label}
               disabled={busy && running !== action.label}
               onClick={() => void run(action)}
-              className={cn(
-                action.destructive &&
-                  "text-danger hover:bg-danger/10 hover:text-danger active:bg-danger/15",
-              )}
             >
               {action.icon && running !== action.label && <action.icon className="size-3.5" />}
               {action.label}

@@ -24,7 +24,10 @@ import {
   discountAmount,
   investmentTotal,
   proposalContentSchema,
+  type ProposalService,
 } from "./proposal-schema";
+import { CONTRACT_COLORS } from "./document-colors";
+import { termLabel } from "./service-lifecycle";
 import { applyVat, COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
 
 // ---- Locked layout (ported from ~/.claude/skills/altruvex-contract Step 5) ----
@@ -67,7 +70,7 @@ function subtitle(text: string): Paragraph {
     alignment: AlignmentType.CENTER,
     spacing: { after: 240 },
     children: [
-      new TextRun({ text, font: FONT_BODY, size: SIZE_BODY, color: "666666" }),
+      new TextRun({ text, font: FONT_BODY, size: SIZE_BODY, color: CONTRACT_COLORS.body }),
     ],
   });
 }
@@ -83,7 +86,7 @@ function draftBanner(): Paragraph {
         italics: true,
         font: FONT_BODY,
         size: SIZE_SMALL,
-        color: "B45309",
+        color: CONTRACT_COLORS.notice,
       }),
     ],
   });
@@ -119,10 +122,10 @@ function cell(text: string, opts: { bold?: boolean; align?: (typeof AlignmentTyp
   return new TableCell({
     width: { size: 25, type: WidthType.PERCENTAGE },
     borders: {
-      top: { style: BorderStyle.SINGLE, size: 2, color: "E8E8E8" },
-      bottom: { style: BorderStyle.SINGLE, size: 2, color: "E8E8E8" },
-      left: { style: BorderStyle.SINGLE, size: 2, color: "E8E8E8" },
-      right: { style: BorderStyle.SINGLE, size: 2, color: "E8E8E8" },
+      top: { style: BorderStyle.SINGLE, size: 2, color: CONTRACT_COLORS.rule },
+      bottom: { style: BorderStyle.SINGLE, size: 2, color: CONTRACT_COLORS.rule },
+      left: { style: BorderStyle.SINGLE, size: 2, color: CONTRACT_COLORS.rule },
+      right: { style: BorderStyle.SINGLE, size: 2, color: CONTRACT_COLORS.rule },
     },
     margins: { top: 80, bottom: 80, left: 120, right: 120 },
     children: [
@@ -200,6 +203,35 @@ function paymentTable(proposal: Proposal): Table {
   });
 }
 
+function servicesTable(services: ProposalService[], currency: string): Table {
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [
+      new TableRow({
+        children: [
+          cell("SERVICE", { bold: true }),
+          cell("TERM", { bold: true }),
+          cell("FIRST TERM", { bold: true }),
+          cell("PRICE PER TERM", { bold: true, align: AlignmentType.RIGHT }),
+        ],
+      }),
+      ...services.map(
+        (service) =>
+          new TableRow({
+            children: [
+              cell(service.provider ? `${service.name} (${service.provider})` : service.name),
+              cell(termLabel(service.termMonths)),
+              cell(
+                service.firstTermIncluded ? "Included in the project fee" : "Billed at the price shown",
+              ),
+              cell(formatCurrency(service.price, currency), { align: AlignmentType.RIGHT }),
+            ],
+          }),
+      ),
+    ],
+  });
+}
+
 export async function buildContractDocx(
   contract: ContractWithRelations,
 ): Promise<Buffer> {
@@ -223,6 +255,17 @@ export async function buildContractDocx(
   const discountLabel = parsedContent.success
     ? parsedContent.data.discount.label.trim() || "discount"
     : "discount";
+  // A credited audit fee is not a negotiated discount, and the agreement says
+  // so in its own words: the client paid for the audit, the published rule is
+  // that the fee comes off the build, and both halves of that rule are what
+  // they read before they bought it. A generic "a discount has been applied"
+  // line would leave the signed document silent about the term that made the
+  // audit worth buying.
+  const isAuditCredit =
+    parsedContent.success && parsedContent.data.discount.kind === "audit-credit";
+  // Printed only when the accepted proposal listed some. A contract generated
+  // from a proposal that predates services is word-for-word what it was.
+  const services = parsedContent.success ? parsedContent.data.services : [];
   const modules = getSolutionModules(proposal.projectType as ServiceId);
   const effectiveDate = new Date(contract.createdAt).toLocaleDateString("en-US", {
     month: "long",
@@ -254,14 +297,24 @@ export async function buildContractDocx(
     ...(reduction > 0
       ? [
           body(
-            `List price: ${formatCurrency(listPrice, proposal.currency)} (excl. VAT). A ${discountLabel} of ${formatCurrency(reduction, proposal.currency)} has been applied to this engagement. The discount is specific to this agreement and does not carry to any subsequent scope, change order, or renewal.`,
+            isAuditCredit
+              ? `List price: ${formatCurrency(listPrice, proposal.currency)} (excl. VAT). The Client has completed a Technical Audit with Altruvex, and the fee paid for it — ${formatCurrency(reduction, proposal.currency)} — is credited against the price of this engagement, reducing the fee below. The credit applies once, to this engagement; had the Client not proceeded to build with Altruvex, the audit findings and roadmap would have remained theirs and the fee would have stood. It does not carry to any subsequent scope, change order, or renewal.`
+              : `List price: ${formatCurrency(listPrice, proposal.currency)} (excl. VAT). A ${discountLabel} of ${formatCurrency(reduction, proposal.currency)} has been applied to this engagement. The discount is specific to this agreement and does not carry to any subsequent scope, change order, or renewal.`,
           ),
         ]
       : []),
     body(
-      `Total project fee: ${formatCurrency(proposal.totalPrice, proposal.currency)} (excl. VAT)${reduction > 0 ? ", after the discount above" : ""}. VAT at ${Math.round(COMMERCIAL_TERMS.vatRate * 100)}%: ${formatCurrency(vatAmount, proposal.currency)}. Total incl. VAT: ${formatCurrency(grandTotal, proposal.currency)}.`,
+      `Total project fee: ${formatCurrency(proposal.totalPrice, proposal.currency)} (excl. VAT)${reduction > 0 ? (isAuditCredit ? ", after the credit above" : ", after the discount above") : ""}. VAT at ${Math.round(COMMERCIAL_TERMS.vatRate * 100)}%: ${formatCurrency(vatAmount, proposal.currency)}. Total incl. VAT: ${formatCurrency(grandTotal, proposal.currency)}.`,
     ),
     paymentTable(proposal),
+    ...(services.length > 0
+      ? [
+          body(
+            "Recurring services. The following third-party services are provided through Altruvex and billed separately from the project fee above. They are not part of the milestone payments and are not reduced by any discount. Each renews for the term shown at the price shown; Altruvex notifies the Client before each renewal date, and either party may end a service by written notice given before that date.",
+          ),
+          servicesTable(services, proposal.currency),
+        ]
+      : []),
     body(
       "No work begins before the commencement deposit clears — no exceptions. The deposit is non-refundable once work has begun. Invoices are due within 7 days of issue; late payments accrue interest at 1.5% per month. Work pauses on outstanding invoices, and paused time extends the delivery timeline day-for-day. Third-party fees (payment gateways, hosting beyond the included Year 1 base, SMS/email credits) are billed separately when used.",
     ),
@@ -357,7 +410,7 @@ export async function buildContractDocx(
                     text: draftFooterText(),
                     font: FONT_MONO,
                     size: SIZE_SMALL,
-                    color: "999999",
+                    color: CONTRACT_COLORS.footer,
                   }),
                 ],
               }),

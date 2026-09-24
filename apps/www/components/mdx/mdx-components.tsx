@@ -106,12 +106,12 @@ export const mdxComponents: MDXComponents = {
         decoding="async"
         fetchPriority="low"
         quality={75}
-        className="my-8 h-auto w-full max-w-3xl rounded-lg"
+        className="my-8 h-auto w-full max-w-3xl rounded-panel-sm"
       />
     );
   },
   blockquote: ({ children }) => (
-    <blockquote className="my-6 border-l-4 border-primary pl-6 italic text-primary/75">
+    <blockquote className="my-6 border-s-2 border-primary ps-6 italic text-primary/75">
       {children}
     </blockquote>
   ),
@@ -119,7 +119,7 @@ export const mdxComponents: MDXComponents = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm leading-normal tracking-wider text-sm">
+        <code className="rounded-ctl-xs bg-muted px-1.5 py-0.5 font-mono text-sm leading-normal tracking-wider text-sm">
           {children}
         </code>
       );

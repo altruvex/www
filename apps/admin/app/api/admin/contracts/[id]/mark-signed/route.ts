@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { publicBaseUrl } from "@/lib/public-url";
 import { prisma } from "@repo/database";
 import { requireAdminSession } from "@/lib/require-admin";
 import { handleContractSigned } from "@/lib/contract-signing";
@@ -41,7 +42,7 @@ export async function POST(
       signedByName,
       signedIp: null,
       signatureMethod: "UPLOADED_PDF",
-      baseUrl: process.env.BETTER_AUTH_URL || request.nextUrl.origin,
+      baseUrl: publicBaseUrl(request),
     });
 
     return NextResponse.json({ success: true, contract: updated });

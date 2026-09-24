@@ -61,7 +61,7 @@ export function AuditLeadCapture({
   return (
     <section
       className={cn(
-        "rounded-xl border border-foreground/8 bg-foreground/2 p-8",
+        "rounded-panel-sm border border-border-subtle bg-foreground/2 p-8",
         className,
       )}
     >
@@ -93,7 +93,7 @@ export function AuditLeadCapture({
             ].map(({ key }) => (
               <div
                 key={key}
-                className="rounded-lg border border-foreground/8 bg-background/40 px-3 py-2.5 text-center"
+                className="rounded-panel-sm border border-border-subtle bg-background/40 px-3 py-2.5 text-center"
               >
                 <p className="text-xs font-medium text-foreground/70">
                   {t(`stats.${key}`)}
@@ -108,7 +108,7 @@ export function AuditLeadCapture({
             <div className="flex-1">
               <div
                 className={cn(
-                  "flex items-center border-b border-border pb-2 gap-2",
+                  "flex items-center border-b border-border-subtle pb-2 gap-2",
                   error && "border-destructive",
                 )}
               >

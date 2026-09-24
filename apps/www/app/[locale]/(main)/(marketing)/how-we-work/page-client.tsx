@@ -1,314 +1,338 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { MagneticButton } from "@/components/magnetic-button";
+import { ArrowIcon } from "@/components/shared/directional-link";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Accent, Highlight } from "@/components/ui/emphasis";
-import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
-import { useSectionCardGrid, useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { useTranslations } from "next-intl";
+import { getCommercialCta } from "@/lib/config/commercial";
+import {
+  MOTION,
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
+import { useProcessPhases } from "@/lib/use-process-phases";
+import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
+import { localizeNumbers, normalizeNumeralsToEnglish } from "@/lib/utils/number";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef } from "react";
+import { CHECK_COUNT } from "../standards/pass-line";
 
 export default function HowWeWorkPage() {
-  const tApproach = useTranslations("approach.hero");
-  const tProcessHero = useTranslations("process.hero");
-  const tPhases = useTranslations("process.phases");
-  const tStandards = useTranslations("standards.hero");
-  const tNav = useTranslations("nav");
-  const t = useTranslations("how-we-work");
+  return (
+    <div className="accent-world-green relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
+      <OpeningSection />
+      <ErrorBoundary>
+        <AgreementSection />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <MapSection />
+      </ErrorBoundary>
+      <ClosingSection />
+    </div>
+  );
+}
 
-  const phases = [
-    "discovery",
-    "wireframe",
-    "design",
-    "development",
-    "launch",
-  ] as const;
-
-  const heroEyebrowRef = useSectionEyebrow();
-  const heroTitleRef = useSectionTitle();
-  const heroDescRef = useSectionDescription();
-
-  const archEyebrowRef = useSectionEyebrow();
-  const archTitleRef = useSectionTitle();
-  const archBodyRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".arch-p",
-  });
-
-  const processEyebrowRef = useSectionEyebrow();
-  const processTitleRef = useSectionTitle();
-  const processDescRef = useSectionDescription();
-  const phaseCardsRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".phase-card",
-  });
-
-  const standardsEyebrowRef = useSectionEyebrow();
-  const standardsTitleRef = useSectionTitle();
-  const standardsBodyRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".standards-p",
-  });
-  const standardsCardsRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".standard-card",
-  });
-  const standardsLinkRef = useSectionElement();
-
-  const ctaEyebrowRef = useSectionEyebrow();
-  const ctaTitleRef = useSectionTitle();
-  const ctaDescRef = useSectionDescription();
-  const ctaButtonsRef = useSectionElement();
+function OpeningSection() {
+  const t = useTranslations("how-we-work.hero");
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
 
   return (
-    <>
-      <main className="pt-(--section-y-top) pb-(--section-y-bottom)">
-        <Container>
-          <section className="accent-world-green py-16 md:py-24">
-            <Eyebrow ref={heroEyebrowRef} className="mb-6 block">
-              {tNav("how-we-work")}
+    <section
+      aria-labelledby="how-we-work-heading"
+      className="pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <SectionHeading
+          titleAs="h1"
+          titleId="how-we-work-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={t("title")}
+          secondTitle={t("titleItalic")}
+          description={t("description")}
+          classes={{
+            titleWrapper: "space-y-6",
+            title:
+              "max-w-[20ch] text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+            description:
+              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+          }}
+        />
+      </Container>
+    </section>
+  );
+}
+
+const CLAUSES = ["who", "updates", "progress", "changes", "warranty", "ownership"] as const;
+type Clause = (typeof CLAUSES)[number];
+
+/**
+ * CLAIM: everything that recurs during a project is settled before it starts.
+ * PROOF: artifact - the working agreement itself, six clauses whose answers
+ * are written into the blanks. Every answer is read from a source that
+ * already binds the studio: the founder record, the published revision rate
+ * and warranty (pricing tokens, so an admin edit reaches this page), and the
+ * deliverables /process already promises.
+ * DEVICE: a form filled in - each answer sits on its own blank line in the
+ * margin column, the question and its terms beside it.
+ *
+ * Signature: when the agreement reaches the reading line, the answers are
+ * written into their blanks in reading order. The markup is the filled form;
+ * reduced motion renders it untouched.
+ */
+function AgreementSection() {
+  const t = useTranslations("how-we-work.agreement");
+  const locale = useLocale();
+  const tFounder = useTranslations("about.founder");
+  const tokens = usePricingTokens();
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const listRef = useRef<HTMLOListElement>(null);
+
+  const warrantyDays = Number(normalizeNumeralsToEnglish(tokens.warrantyDays ?? ""));
+
+  const value = (clause: Clause): string => {
+    switch (clause) {
+      case "who":
+        return tFounder("name");
+      case "warranty":
+        return t("clauses.warranty.value", {
+          n: tokens.warrantyDays ?? "",
+          count: Number.isFinite(warrantyDays) ? warrantyDays : 0,
+        });
+      default:
+        return t(`clauses.${clause}.value`);
+    }
+  };
+
+  const note = (clause: Clause): string => {
+    switch (clause) {
+      case "who":
+        return t("clauses.who.note", { role: tFounder("role") });
+      case "changes":
+        return t("clauses.changes.note", { revisionRate: tokens.revisionRate ?? "" });
+      default:
+        return t(`clauses.${clause}.note`);
+    }
+  };
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const rtl = document.documentElement.dir === "rtl";
+        const hidden = rtl ? "inset(0 0 0 100%)" : "inset(0 100% 0 0)";
+        const answers = list.querySelectorAll("[data-answer]");
+
+        gsap.set(answers, { clipPath: hidden });
+        const tween = gsap.to(answers, {
+          clipPath: "inset(0 0% 0 0%)",
+          duration: MOTION.duration.base,
+          ease: MOTION.ease.smooth,
+          stagger: MOTION.stagger.loose,
+          paused: true,
+        });
+
+        const trigger = ScrollTrigger.create({
+          trigger: list,
+          start: MOTION.trigger.inView,
+          once: true,
+          onEnter: () => tween.play(),
+        });
+
+        return () => {
+          trigger.kill();
+          tween.kill();
+        };
+      });
+    }, list);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section
+      aria-labelledby="agreement-heading"
+      className="border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <SectionHeading
+          titleId="agreement-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={t("title")}
+          secondTitle={t("titleItalic")}
+          description={t("description")}
+          classes={{ title: "max-w-[22ch]", description: "lg:max-w-[26rem]" }}
+        />
+
+        <figure
+          aria-labelledby="agreement-label"
+          className="mt-14 border-t-2 border-foreground lg:mt-20"
+        >
+          <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pt-4 pb-2">
+            <Eyebrow id="agreement-label" className="m-0" tone="foreground">
+              {t("label", {
+                n: localizeNumbers(String(CLAUSES.length), locale),
+                count: CLAUSES.length,
+              })}
             </Eyebrow>
-            <h1
-              ref={heroTitleRef}
-              className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none"
-            >
-              {tProcessHero("title")}
-              <br />
-              <Highlight>{t("hero.italic")}</Highlight>
-            </h1>
-            <div
-              ref={heroDescRef}
-              className="grid md:grid-cols-[80px_1fr] gap-8 items-start"
-            >
-              <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />
-              <div className="space-y-4">
-                <p className="text-base text-primary/60 leading-relaxed">
-                  {tApproach("description")}
-                </p>
-                <p className="text-base text-primary/60 leading-relaxed">
-                  {tProcessHero("description")}
-                </p>
-              </div>
-            </div>
-          </section>
-          <div className="h-px w-full bg-foreground/8" />
-          <section className="accent-world-green py-16 md:py-20">
-            <Eyebrow ref={archEyebrowRef} className="mb-4 block">
-              {t("architecture.eyebrow")}
-            </Eyebrow>
-            <h2
-              ref={archTitleRef}
-              className="font-sans font-normal text-primary leading-[1.05] mb-10"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("architecture.title")} <Highlight>{t("architecture.titleItalic")}</Highlight>
-            </h2>
-            <div
-              ref={archBodyRef}
-              className="grid md:grid-cols-2 gap-8 max-w-3xl"
-            >
-              <p className="arch-p text-base text-primary/60 leading-relaxed">
-                {t.rich("architecture.p1", bodyMarks)}
-              </p>
-              <p className="arch-p text-base text-primary/60 leading-relaxed">
-                {t.rich("architecture.p2", bodyMarks)}
-              </p>
-            </div>
-          </section>
-          <div className="h-px w-full bg-foreground/8" />
-          <section className="accent-world-green py-16 md:py-20">
-            <div className="mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              <div>
-                <Eyebrow ref={processEyebrowRef} className="mb-4 block">
-                  {t("phasedProcess.eyebrow")}
-                </Eyebrow>
-                <h2
-                  ref={processTitleRef}
-                  className="font-sans font-normal text-primary leading-[1.05] mb-4"
-                  style={{
-                    fontSize: "clamp(28px, 4.5vw, 52px)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {t("phasedProcess.title")}
-                </h2>
-                <p
-                  ref={processDescRef}
-                  className="text-base text-primary/60 leading-relaxed max-w-[44ch]"
-                >
-                  {t("phasedProcess.description")}
-                </p>
-              </div>
-              <p className="font-mono text-sm leading-normal tracking-wider text-muted-foreground uppercase shrink-0">
-                {tPhases("deliverables")} · {tPhases("timeline")}
-              </p>
-            </div>
-            <div ref={phaseCardsRef} className="grid gap-4 md:grid-cols-2">
-              {phases.map((key, i) => (
-                <article
-                  key={key}
-                  className="phase-card group border border-foreground/8 rounded-lg bg-foreground/2 p-6 md:p-8 hover:bg-foreground/4 transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <span
-                      className="font-mono text-sm leading-normal tracking-wider font-light text-primary/20 select-none"
-                      style={{
-                        fontSize: "clamp(40px, 5vw, 56px)",
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      <Num value={i + 1} pad={2} />
-                    </span>
-                    <Eyebrow className="pt-1">
-                      {tPhases(`${key}.timeline`)}
-                    </Eyebrow>
-                  </div>
-                  <h3
-                    className="font-sans font-medium text-primary mb-2 group-hover:text-primary/80 transition-all duration-300"
-                    style={{
-                      fontSize: "clamp(16px, 1.8vw, 20px)",
-                      letterSpacing: "-0.015em",
-                    }}
-                  >
-                    {tPhases(`${key}.title`)}
-                  </h3>
-                  <p className="text-base text-primary/60 leading-relaxed mb-4">
-                    {tPhases(`${key}.description`)}
-                  </p>
-                  <p className="font-mono text-sm leading-normal tracking-wider text-primary/35 uppercase">
-                    {tPhases(`${key}.deliverables`)}
-                  </p>
-                </article>
-              ))}
-            </div>
-            <p className="mt-8 text-base text-primary/60 leading-relaxed">
-              {t.rich("phasedProcess.footer", bodyMarks)}
-            </p>
-          </section>
-          <div className="h-px w-full bg-foreground/8" />
-          <section className="accent-world-green py-16 md:py-20">
-            <Eyebrow ref={standardsEyebrowRef} className="mb-4 block">
-              {t("standards.eyebrow")}
-            </Eyebrow>
-            <h2
-              ref={standardsTitleRef}
-              className="font-sans font-normal text-primary leading-[1.05] mb-8"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("standards.title")}
-            </h2>
-            <div
-              ref={standardsBodyRef}
-              className="grid md:grid-cols-2 gap-6 max-w-3xl mb-6"
-            >
-              <p className="standards-p text-base text-primary/60 leading-relaxed">
-                {tStandards("description")}
-              </p>
-              <p className="standards-p text-base text-primary/60 leading-relaxed">
-                {t.rich("standards.description", bodyMarks)}
-              </p>
-            </div>
-            <div
-              ref={standardsCardsRef}
-              className="grid gap-4 md:grid-cols-3 mb-8"
-            >
-              {[
-                {
-                  key: "performance",
-                  label: t("standards.performance.label"),
-                  desc: t.rich("standards.performance.description", bodyMarks),
-                },
-                {
-                  key: "accessibility",
-                  label: t("standards.accessibility.label"),
-                  desc: t.rich("standards.accessibility.description", bodyMarks),
-                },
-                {
-                  key: "codeQuality",
-                  label: t("standards.codeQuality.label"),
-                  desc: t("standards.codeQuality.description"),
-                },
-              ].map(({ key, label, desc }) => (
-                <div
-                  key={key}
-                  className="standard-card border border-foreground/8 rounded-lg bg-foreground/2 p-5"
-                >
-                  <Eyebrow className="mb-3">{label}</Eyebrow>
-                  <p className="text-base text-primary/60 leading-relaxed">
-                    {desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div ref={standardsLinkRef}>
+            <span className="text-sm text-muted-foreground">{t("caption")}</span>
+          </figcaption>
+
+          <ol ref={listRef}>
+            {CLAUSES.map((clause, index) => (
+              <Row
+                key={clause}
+                index={index}
+                question={t(`clauses.${clause}.question`)}
+                answer={value(clause)}
+                note={note(clause)}
+              />
+            ))}
+          </ol>
+        </figure>
+      </Container>
+    </section>
+  );
+}
+
+function Row({
+  index,
+  question,
+  answer,
+  note,
+}: {
+  index: number;
+  question: string;
+  answer: string;
+  note: string;
+}) {
+  const locale = useLocale();
+
+  return (
+    <li className="grid gap-x-10 gap-y-3 border-b border-border-subtle py-7 md:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1.15fr)] md:py-9">
+      <span className="font-mono text-xs text-local-accent-text tabular-nums md:pt-1.5">
+        {localizeNumbers(String(index + 1).padStart(2, "0"), locale)}
+      </span>
+      <div>
+        <h3 className="text-lg leading-snug text-foreground md:text-xl">{question}</h3>
+        <p className="mt-2 max-w-[48ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+          {note}
+        </p>
+      </div>
+      {/* The blank the answer is written into. */}
+      <p className="self-start border-b border-foreground/45 pb-2">
+        <span
+          data-answer
+          className="block text-[clamp(1.375rem,2.2vw,1.875rem)] leading-tight font-light tracking-[-0.015em] text-foreground rtl:tracking-normal"
+        >
+          {answer}
+        </span>
+      </p>
+    </li>
+  );
+}
+
+const ROUTES = [
+  { key: "approach", href: "/approach" },
+  { key: "process", href: "/process" },
+  { key: "standards", href: "/standards" },
+] as const;
+
+/**
+ * The page's three children, each with the one figure it is built around,
+ * read from the same data the child renders - so the hub cannot quote a
+ * number its own page has since changed.
+ */
+function MapSection() {
+  const t = useTranslations("how-we-work.map");
+  const tApproach = useTranslations("approach.hero.order");
+  const locale = useLocale();
+  const phases = useProcessPhases();
+  const listRef = useSectionCardGrid<HTMLUListElement>({ selector: "[data-route]" });
+  const num = (n: number) => localizeNumbers(String(n), locale);
+
+  const layers = Object.keys(tApproach.raw("items") as Record<string, string>).length;
+  const minDays = phases.reduce((sum, phase) => sum + phase.min, 0);
+  const maxDays = phases.reduce((sum, phase) => sum + phase.max, 0);
+
+  const figure = {
+    approach: t("approach.figure", { n: num(layers), count: layers }),
+    process: t("process.figure", {
+      phases: num(phases.length),
+      phasesCount: phases.length,
+      min: num(minDays),
+      max: num(maxDays),
+    }),
+    standards: t("standards.figure", {
+      checks: num(CHECK_COUNT),
+      checksCount: CHECK_COUNT,
+    }),
+  };
+
+  return (
+    <section
+      aria-labelledby="map-heading"
+      className="border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <h2 id="map-heading" className="eyebrow text-muted-foreground">
+          {t("eyebrow")}
+        </h2>
+        <ul ref={listRef} className="mt-6 border-t border-border-subtle">
+          {ROUTES.map(({ key, href }) => (
+            <li key={key} data-route className="border-b border-border-subtle">
               <Link
-                href="/standards"
-                className="group inline-flex items-center gap-3 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+                href={href}
+                className="group grid items-baseline gap-x-8 gap-y-1.5 py-7 focus-visible:rounded-ctl-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:grid-cols-[12rem_minmax(0,1fr)_minmax(0,1.2fr)_auto]"
               >
-                <span className="border-b border-transparent group-hover:border-foreground/30 transition-all duration-300 pb-0.5">
-                  {t("standards.link")}
+                <span className="text-xl font-medium leading-tight tracking-[-0.015em] text-foreground rtl:tracking-normal">
+                  {t(`${key}.label`)}
                 </span>
-                <ArrowIcon className="h-3.5 w-3.5" />
+                <span className="text-[0.9375rem] font-medium text-local-accent-text tabular-nums">
+                  {figure[key]}
+                </span>
+                <span className="text-[0.9375rem] leading-snug text-muted-foreground transition-colors duration-(--motion-instant) group-hover:text-foreground">
+                  {t(`${key}.line`)}
+                </span>
+                <ArrowIcon className="hidden h-4 w-4 text-foreground transition-transform duration-(--motion-instant) group-hover:translate-x-1 rtl:group-hover:-translate-x-1 md:block" />
               </Link>
-            </div>
-          </section>
-          <div className="h-px w-full bg-foreground/8" />
-          <section
-            className="accent-world-orange py-16 md:py-24"
-          >
-            <div className="grid md:grid-cols-[1fr_360px] gap-12 items-start">
-              <div>
-                <Eyebrow ref={ctaEyebrowRef} tone="accent" className="mb-4 block">
-                  {t("cta.eyebrow")}
-                </Eyebrow>
-                <h2
-                  ref={ctaTitleRef}
-                  className="font-sans font-normal text-primary leading-[1.05] mb-4"
-                  style={{
-                    fontSize: "clamp(28px, 4.5vw, 52px)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {t("cta.title")}
-                  <br />
-                  <Accent gradient="ember">{t("cta.titleAccent")}</Accent>
-                </h2>
-                <p
-                  ref={ctaDescRef}
-                  className="text-base text-primary/60 leading-relaxed max-w-[44ch]"
-                >
-                  {t("cta.description")}
-                </p>
-              </div>
-              <div ref={ctaButtonsRef} className="flex flex-col gap-3">
-                <Link href="/schedule">
-                  <MagneticButton
-                    size="lg"
-                    variant="accent"
-                    className="w-full justify-center"
-                  >
-                    {t("cta.schedule")}
-                  </MagneticButton>
-                </Link>
-                <Link href="/work">
-                  <MagneticButton
-                    size="lg"
-                    variant="secondary"
-                    className="w-full justify-center"
-                  >
-                    {t("cta.work")}
-                  </MagneticButton>
-                </Link>
-              </div>
-            </div>
-          </section>
-        </Container>
-      </main>
-    </>
+            </li>
+          ))}
+        </ul>
+      </Container>
+    </section>
+  );
+}
+
+function ClosingSection() {
+  const t = useTranslations("how-we-work.cta");
+
+  return (
+    <SectionEndCta
+      eyebrow={t("eyebrow")}
+      title={t("title")}
+      titleAccent={t("titleAccent")}
+      body={t("description")}
+      primary={{ href: getCommercialCta("technicalCall").href, label: t("schedule") }}
+      secondary={{ href: getCommercialCta("realBuild").href, label: t("work") }}
+    />
   );
 }

@@ -32,6 +32,8 @@ const MILESTONE_LABELS: Record<string, string> = {
   DEPOSIT_50: "First Payment (50%)",
   MILESTONE_30: "Second Payment (30%)",
   FINAL_20: "Final Payment (20%)",
+  CHANGE_REQUEST: "Change Request",
+  SERVICE_RENEWAL: "Service Renewal",
   OTHER: "Custom Milestone",
 };
 
@@ -152,7 +154,7 @@ export default function ClientPortalPage() {
           </div>
           <button
             onClick={copyPortalLink}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
             title="Bookmark or Copy Link"
           >
             {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}

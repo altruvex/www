@@ -141,7 +141,7 @@ export function IngestTokenPanel({
         </Button>
         {last4 && (
           <Button
-            variant="ghost"
+            variant="destructive-ghost"
             size="sm"
             disabled={pending !== null}
             onClick={() => run("revoke-token")}

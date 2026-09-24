@@ -151,6 +151,12 @@ async function sendViaSmtp(email: OutboundEmail): Promise<EmailResult> {
     // being one more thing to configure wrongly.
     secure: port === 465,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
+    // Nodemailer's defaults are minutes long (two for the connection, ten for
+    // the socket). A send is something a person is waiting on, and a mail host
+    // that stops answering should fail while they are still looking at it.
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   try {

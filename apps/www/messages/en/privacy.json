@@ -1,0 +1,92 @@
+{
+  "title": "Privacy Policy",
+  "contents": "Contents",
+  "lastUpdated": "Last updated:",
+  "summary": {
+    "eyebrow": "In short",
+    "items": [
+      {
+        "section": 3,
+        "text": "We do not sell, trade, or transfer your personal information."
+      },
+      {
+        "section": 3,
+        "text": "We do not use your data to train AI models."
+      },
+      {
+        "section": 5,
+        "text": "No advertising trackers by default - no Google Analytics, no Facebook Pixel."
+      },
+      {
+        "section": 4,
+        "text": "You can ask to see, correct, or delete your data."
+      },
+      {
+        "section": 6,
+        "text": "On a custom project, the source code and the databases are yours."
+      },
+      {
+        "section": 8,
+        "text": "Every tool that processes your data is named."
+      }
+    ],
+    "note": "A summary to take you to the right clause - the numbered sections below are the policy.",
+    "sectionLabel": "Section {number}"
+  },
+  "hero": {
+    "eyebrow": "Legal",
+    "description": "How we collect, use, store, and protect your data across our SaaS products and custom project engagements."
+  },
+  "sections": {
+    "1": {
+      "title": "1. Information We Collect",
+      "description": "Altruvex operates both SaaS products and custom project engagements. Depending on how you use our services, we may collect:",
+      "contactLabel": "Account & Contact:",
+      "contactValue": "Name, email address, phone number, company name, and account credentials for SaaS products",
+      "projectLabel": "Project & Service Details:",
+      "projectValue": "Service interest, subscription plan, project scope, timeline, and complexity level",
+      "techLabel": "Technical & Usage Data:",
+      "techValue": "IP address (security and rate limiting), browser type, device information, and product usage logs for SaaS features"
+    },
+    "2": {
+      "title": "2. How We Use Your Information",
+      "description": "We use the information we collect for these specific purposes only:",
+      "item1": "Provide, operate, and improve our SaaS products (accounts, billing, support, and core features)",
+      "item2": "Respond to inquiries, provide estimates, and deliver custom project engagements",
+      "item3": "Improve our website, products, and user experience",
+      "item4": "Protect against spam, abuse, and unauthorized access (rate limiting, authentication, validation)"
+    },
+    "3": {
+      "title": "3. Data Storage & Security",
+      "description": "Your data is stored securely and we're explicit about how:\n\n• **Database**: PostgreSQL with SSL encryption for all data in transit and at rest\n• **Hosting**: Vercel for application layer, with DDoS protection and automatic backups\n• **Backups**: Daily automated backups, retained for 30 days\n• **Access Control**: Encrypted environment variables; only essential team members have database access\n• **SaaS Data**: Account and product data is retained while your subscription is active, plus a reasonable period after cancellation for billing and legal compliance\n• **Project Data**: Contact and project information kept for 2 years after last contact unless a longer retention period is required by contract\n\nWe do not sell, trade, or transfer your personal information to third parties. We also do not use your data to train AI models or for marketing beyond direct service communication."
+    },
+    "4": {
+      "title": "4. Your Rights",
+      "description": "You have explicit control over your data:",
+      "item1": "Request access to your personal data (we'll provide a data export within 5 business days)",
+      "item2": "Request correction or deletion of your data (with exceptions for legal/compliance records)",
+      "item3": "Withdraw consent at any time (you can opt out of non-essential communications)",
+      "item4": "Lodge a complaint with the Egyptian Data Protection Authority or relevant data protection authority in your jurisdiction"
+    },
+    "5": {
+      "title": "5. Cookies & Tracking",
+      "description": "We use minimal tracking:\n\n• **Essential Cookies**: Site and product functionality (language preference, authentication sessions, security tokens)\n• **No Third-Party Advertising Trackers**: We don't use Google Analytics, Facebook Pixel, or similar ad platforms by default\n• **No User Profiling for Ads**: We don't build behavioral profiles or sell data to advertisers\n\nIf we implement optional analytics in the future, we will use privacy-first tools (like Fathom or Plausible) and provide explicit opt-in consent where required."
+    },
+    "6": {
+      "title": "6. SaaS Accounts & Custom Project Data",
+      "description": "**For SaaS products:**\n\n• You retain ownership of the content and business data you upload or generate in the product\n• Altruvex owns the platform, software, and underlying infrastructure\n• When you cancel, you can export your data within the period stated in your plan or agreement\n• We delete or anonymize account data after the applicable retention period, unless law requires otherwise\n\n**For custom projects:**\n\n• **Code Ownership**: You own 100% of the custom source code delivered under your project agreement\n• **Database Ownership**: Your databases and data within them are yours; we provide export formats and migration documentation\n• **Compliance**: We support GDPR/CCPA requirements during the build; ongoing compliance transfers to you after handoff\n• **No Lock-In**: If you switch providers, we provide documentation so another team can take over"
+    },
+    "7": {
+      "title": "7. Payment & Security",
+      "description": "For SaaS subscriptions and custom project payments:\n\n• We use Stripe or Egyptian bank transfers (we never store full card details directly)\n• Payment information is processed securely through PCI-DSS compliant systems\n• We send invoices and receipts to your email; we don't retain full payment card details\n• Subscription billing may renew automatically according to your selected plan unless cancelled\n• For local Egyptian payments, we work with authorized payment processors that comply with CBE regulations"
+    },
+    "8": {
+      "title": "8. Data Processing & Subprocessors",
+      "description": "We use these specific tools (not vague 'partners'):\n\n**Infrastructure**: Vercel (US), PostgreSQL hosting (EU or Egypt-region if requested)\n**Email**: SendGrid for transactional emails only\n**Payment Processing**: Stripe (US), Fawry (Egypt), Vodafone Cash (Egypt)\n**Code Hosting**: GitHub (Microsoft)\n**Monitoring**: Sentry for error tracking (EU servers, no personal data)\n**Communication**: Slack (internal only; we don't share your data)\n\nEach of these services has signed Data Processing Agreements where applicable. You can request our DPA template anytime."
+    },
+    "9": {
+      "title": "9. Contact Us",
+      "description": "For privacy questions, data access requests, or deletion requests, contact us at:"
+    }
+  }
+}

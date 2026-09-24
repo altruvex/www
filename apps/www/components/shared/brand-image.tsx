@@ -10,7 +10,7 @@ import { useState } from "react";
  * never broken by a missing asset. All imagery is abstract/technical, so it is
  * decorative by default (empty alt + aria-hidden) and carries no semantic weight.
  */
-export type BrandSlot =
+type BrandSlot =
   | "about"
   | "process"
   | "proof"

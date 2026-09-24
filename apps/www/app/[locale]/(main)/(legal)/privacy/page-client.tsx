@@ -4,10 +4,12 @@ import {
   LegalContactSection,
   LegalPageLayout,
   LegalSection,
+  LegalSummary,
 } from "@/components/legal/legal-page-layout";
 import { LegalDetails, LegalList, LegalProse } from "@/components/legal/legal-prose";
 import { SITE_CONFIG } from "@/lib/metadata";
-import { useTranslations } from "next-intl";
+import { localizeNumbers } from "@/lib/utils/number";
+import { useLocale, useTranslations } from "next-intl";
 
 type PrivacyPageClientProps = {
   formattedDate: string;
@@ -15,6 +17,7 @@ type PrivacyPageClientProps = {
 
 export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientProps) {
   const t = useTranslations("privacy");
+  const locale = useLocale();
 
   const sectionTwoItems = [
     t("sections.2.item1"),
@@ -37,7 +40,24 @@ export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientPr
   ];
 
   return (
-    <LegalPageLayout namespace="privacy" formattedDate={formattedDate}>
+    <LegalPageLayout
+      namespace="privacy"
+      formattedDate={formattedDate}
+      contents={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => ({
+        number,
+        title: t(`sections.${number}.title`),
+      }))}
+      summary={
+        <LegalSummary
+          eyebrow={t("summary.eyebrow")}
+          items={t.raw("summary.items") as Array<{ section: number; text: string }>}
+          note={t("summary.note")}
+          sectionLabel={(number) =>
+            t("summary.sectionLabel", { number: localizeNumbers(String(number), locale) })
+          }
+        />
+      }
+    >
       <LegalSection number={1} title={t("sections.1.title")}>
         <LegalProse content={t("sections.1.description")} />
         <LegalDetails details={sectionOneDetails} />
@@ -64,6 +84,7 @@ export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientPr
       ))}
 
       <LegalContactSection
+        number={9}
         title={t("sections.9.title")}
         description={t("sections.9.description")}
         email={SITE_CONFIG.email}

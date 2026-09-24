@@ -1,8 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "./lib/auth";
+import { NONCE_HEADER, contentSecurityPolicy } from "./lib/csp";
 
 const ADMIN_ROLES = new Set(["ADMIN", "SUPERADMIN"]);
+
+/**
+ * Passes the nonce forward on the request (Next reads the CSP header there and
+ * stamps its own scripts with it) and sets the policy on the response.
+ */
+function withCsp(request: NextRequest, response: NextResponse): NextResponse {
+  const nonce = crypto.randomUUID().replace(/-/g, "");
+  const policy = contentSecurityPolicy(nonce, process.env.NODE_ENV === "development");
+
+  request.headers.set(NONCE_HEADER, nonce);
+  request.headers.set("content-security-policy", policy);
+  response.headers.set("content-security-policy", policy);
+  response.headers.set(NONCE_HEADER, nonce);
+  return response;
+}
 
 export default async function proxy(request: NextRequest) {
   const publicPaths = ["/login", "/offline"];
@@ -13,6 +29,9 @@ export default async function proxy(request: NextRequest) {
     "/api/auth/",
     "/sign/",
     "/api/sign/",
+    // A change-request quote the client reviews and answers.
+    "/quote/",
+    "/api/quote/",
     "/portal/",
     "/api/portal/",
     "/client-portal/",
@@ -22,6 +41,9 @@ export default async function proxy(request: NextRequest) {
     // cannot pass. Authenticity is the token check in lib/ingest-auth.ts —
     // which is scoped to exactly one product and grants no read access.
     "/api/ingest/",
+    // Scheduled jobs. The scheduler holds a bearer secret, never a session;
+    // each route under here checks CRON_SECRET itself and fails closed.
+    "/api/cron/",
   ];
   const isPublicPath =
     publicPaths.some((path) => request.nextUrl.pathname === path) ||
@@ -32,7 +54,10 @@ export default async function proxy(request: NextRequest) {
     request.nextUrl.pathname === "/api/whatsapp/webhook";
 
   if (isPublicPath) {
-    return NextResponse.next();
+    return withCsp(
+      request,
+      NextResponse.next({ request: { headers: request.headers } }),
+    );
   }
 
   const session = await auth.api.getSession({ headers: request.headers });
@@ -43,7 +68,7 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  return withCsp(request, NextResponse.next({ request: { headers: request.headers } }));
 }
 
 // What this gate lets through unauthenticated is named file by file, never by

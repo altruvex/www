@@ -12,6 +12,7 @@ import {
 import { getTranslations } from "next-intl/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
+import { tooManyRequests } from "@/lib/server/too-many-requests";
 
 const SERVICE_TYPE_MAP: Record<
   NonNullable<Prisma.ContactSubmissionCreateInput["serviceInterest"]>,
@@ -44,6 +45,13 @@ const BUDGET_RANGE_MAP: Record<
   OVER_50K: BudgetRange.OVER_50K,
 };
 
+/** UTM values are analytics labels: a short string or nothing at all. */
+function boundedAttribution(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 100) : undefined;
+}
+
 export async function handleContactSubmission(request: NextRequest) {
   try {
     if (!isTrustedOrigin(request)) {
@@ -60,16 +68,7 @@ export async function handleContactSubmission(request: NextRequest) {
       windowSeconds: 10 * 60,
     });
     if (!rl.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: { "Retry-After": rl.retryAfterSeconds.toString() },
-        },
-      );
+      return tooManyRequests(request, rl.retryAfterSeconds);
     }
 
     const body = await request.json();
@@ -125,13 +124,15 @@ export async function handleContactSubmission(request: NextRequest) {
         ? PROJECT_TIMELINE_MAP[projectTimelineKey]
         : undefined,
       budget: budgetKey ? BUDGET_RANGE_MAP[budgetKey] : undefined,
-      locale: body.locale || "en",
+      locale,
       userAgent,
       ipAddress,
       referrer: referer,
-      utmSource: body.utmSource,
-      utmMedium: body.utmMedium,
-      utmCampaign: body.utmCampaign,
+      // Attribution is attacker-supplied like everything else on a public
+      // form, so it is bounded here rather than copied off the request body.
+      utmSource: boundedAttribution(body.utmSource),
+      utmMedium: boundedAttribution(body.utmMedium),
+      utmCampaign: boundedAttribution(body.utmCampaign),
       priority:
         validatedData.projectTimeline === "immediate"
           ? "URGENT"

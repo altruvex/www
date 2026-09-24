@@ -51,6 +51,12 @@ export const MOTION = {
     strong: "cubic-bezier(0.23, 1, 0.32, 1)",
     /** Exits may accelerate. */
     exit: "cubic-bezier(0.55, 0, 1, 0.45)",
+    /** Hero headline arrival (GSAP-native quartic-out; no CSS twin). */
+    display: "power4.out",
+    /** Opacity-only crossfade in / out: reduced-motion paths and overlay
+        backdrops, where there is no travel for a stronger curve to shape. */
+    fade: "power1.out",
+    fadeOut: "power1.in",
   },
 
   /** Durations (seconds). Scale, not use-site names. */
@@ -72,6 +78,11 @@ export const MOTION = {
     slow: 1.0,
     /** Hero headline (word stagger on top). */
     display: 1.1,
+    /** A large media block opening from an inset (useMediaSettle). */
+    settle: 1.4,
+    /** A one-shot demonstration the visitor watches play (the maintenance
+        month sweep). The only duration above the reveal scale. */
+    sweep: 2.6,
   },
 
   /**
@@ -115,6 +126,11 @@ export const MOTION = {
     /** Hero headline words. */
     display: 0.07,
     loose: 0.08,
+    /** Between marks on an annotated document (the consulting brief):
+        slow enough to read each mark land before the next. */
+    annotate: 0.15,
+    /** Deliberate one-by-one sequence (the /approach refusals). */
+    sequence: 0.22,
   },
 
   /** ScrollTrigger start positions. */
@@ -122,10 +138,19 @@ export const MOTION = {
     default: "top bottom",
     late: "top 85%",
     latest: "top 75%",
+    /** Early: fires as the block's top clears the bottom tenth. */
+    early: "top 90%",
     /** Hero: fires even slightly below the fold. */
     hero: "top 95%",
     /** Above-the-fold counters: fire immediately. */
     immediate: "top 110%",
+    /**
+     * A one-shot demonstration the visitor should watch happen (the
+     * maintenance month sweep): waits until the thing is well inside the
+     * viewport, not merely peeking in, so it cannot play out unseen below
+     * the fold or while the page is still settling.
+     */
+    inView: "top 60%",
   },
 
   /** Parallax speeds (fraction of viewport travel) and scrub lag. */
@@ -137,6 +162,33 @@ export const MOTION = {
     scrub: 1.5,
     /** Multiplier from `speed` to percent travel. */
     travelScale: 20,
+  },
+
+  /**
+   * Scroll-owned motion: scrubbed reads, tracks and assemblies, and the glide
+   * a programmatic jump takes (scrollToY). One place, so every scrubbed
+   * sequence on the site keeps the same catch-up feel.
+   */
+  scroll: {
+    /** Seconds a programmatic scroll glides through Lenis. */
+    glide: 1.1,
+    /** Word-by-word read: starts as the block enters, done well before it leaves. */
+    readStart: "top 78%",
+    readEnd: "bottom 45%",
+    /** Scrub catch-up (seconds a scrubbed timeline lags the scroll), by
+        role — every `scrub: n` on the site is one of these. */
+    scrub: {
+      /** Diagrams that should track the finger almost exactly. */
+      tight: 0.3,
+      /** Kinetic tracks. */
+      track: 0.5,
+      /** Pieces assembling. */
+      assemble: 0.6,
+      /** Pinned stages and staircases. */
+      stage: 0.9,
+      /** Pinned tracks and media that should feel weighted. */
+      pin: 1,
+    },
   },
 
   /**
@@ -208,10 +260,7 @@ export const MOTION = {
 } as const;
 
 export type MotionEase = keyof typeof MOTION.ease;
-export type MotionDuration = keyof typeof MOTION.duration;
 export type MotionSpring = keyof typeof MOTION.spring;
-export type MotionDistance = keyof typeof MOTION.distance;
-export type MotionStagger = keyof typeof MOTION.stagger;
 export type MotionTrigger = keyof typeof MOTION.trigger;
 
 export const resolveEase = (ease: string | MotionEase): string =>
@@ -223,6 +272,3 @@ export const resolveTrigger = (trigger: string | MotionTrigger): string =>
 export const resolveSpring = (spring: SpringConfig | MotionSpring): SpringConfig =>
   typeof spring === "string" ? MOTION.spring[spring] : spring;
 
-/** Back-compat aliases. Prefer `MOTION.text` / `MOTION.section`. */
-export const DEFAULTS = MOTION.text;
-export const SECTION_DELAYS = MOTION.section;

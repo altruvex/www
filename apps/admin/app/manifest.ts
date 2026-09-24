@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { css, PALETTE } from "@repo/ui/palette";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -55,8 +56,8 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
     ],
-    theme_color: "#4a6ed4",
-    background_color: "#faf9fc",
+    theme_color: css(PALETTE.light.brand),
+    background_color: css(PALETTE.light["n-0"]),
     display: "standalone",
   };
 }

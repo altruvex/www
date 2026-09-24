@@ -8,7 +8,8 @@ export function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-sm bg-surface-2",
+        "relative overflow-hidden rounded-sm bg-surface-2",
+        "bg-[length:200%_100%] bg-[linear-gradient(90deg,transparent,hsl(var(--n-0)/0.4),transparent)] animate-shimmer",
         className,
       )}
       {...props}

@@ -9,6 +9,7 @@ import { getPublicPricing } from "@/lib/server/pricing";
 import {
   deliveryCeilingLabel,
   minimumEngagementLabel,
+  priceMatrixView,
   tierViews,
   type Locale,
 } from "@repo/pricing-schema";
@@ -59,8 +60,9 @@ export default async function PricingPage({
       />
       <PageClient
         tiers={tiers}
+        matrix={priceMatrixView(locale as Locale, pricing)}
         floorLabel={minimumEngagementLabel(locale as Locale, pricing)}
-        ceilingLabel={deliveryCeilingLabel(locale as Locale)}
+        ceilingLabel={deliveryCeilingLabel(locale as Locale, pricing)}
       />
     </>
   );

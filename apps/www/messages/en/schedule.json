@@ -1,0 +1,105 @@
+{
+  "back": "Back",
+  "eyebrow": "14 - Technical Call",
+  "form": {
+    "date": {
+      "errorFuture": "Date must be within the next 3 months",
+      "errorPast": "Date must be today or in the future",
+      "errorRequired": "Please select a date",
+      "label": "Preferred Date",
+      "placeholder": "Select a date"
+    },
+    "message": {
+      "label": "Message (Optional)",
+      "placeholder": "Tell us about your project - what you are building, what is not working, or what decision you need clarity on."
+    },
+    "name": {
+      "error": "Name must be at least 2 characters",
+      "label": "Name",
+      "placeholder": "Your name"
+    },
+    "phone": {
+      "error": "Please enter a valid phone number",
+      "label": "Phone Number",
+      "placeholder": "01X XXXX XXXX"
+    },
+    "riskReversal": "Free 30-min call · No commitment · Direct founder access",
+    "time": {
+      "availableHours": "Available: 9:00 AM – 6:00 PM (15-minute intervals)",
+      "error": "Please select a time",
+      "errorPast": "That time has already passed today. Pick a later time.",
+      "label": "Preferred Time",
+      "placeholder": "Select a time",
+      "hourPlaceholder": "Hour",
+      "minutePlaceholder": "Min"
+    }
+  },
+  "seo": {
+    "body": "A discovery call is not a sales script. It is a focused technical conversation for founders, operators, and teams that need to understand whether a custom website, portal, ecommerce platform, or internal web system is the right next move.",
+    "eyebrow": "Before you choose a time",
+    "faq": {
+      "items": [
+        {
+          "a": "No. The first call is free and exists to understand the project, risks, and decision you need to make. If the scope is not a fit, we will say that clearly.",
+          "q": "Is the first technical call paid?"
+        },
+        {
+          "a": "Bring the business goal, the current website or system if one exists, the main user journeys, and any deadlines or budget constraints. A rough brief is enough.",
+          "q": "What should I prepare before the call?"
+        },
+        {
+          "a": "Most discovery calls take around 30 minutes. Complex rebuilds or systems with integrations may need a follow-up architecture session before a final proposal.",
+          "q": "How long does the call take?"
+        },
+        {
+          "a": "After the call, we outline the recommended next step: a technical audit, a scoped proposal, a transparency estimate, or a decision not to build yet.",
+          "q": "What happens after I book?"
+        }
+      ],
+      "title": "Schedule call questions"
+    },
+    "sections": [
+      {
+        "body": "We use the call to separate assumptions from real requirements. That means understanding the users, workflows, integrations, content, performance expectations, and operational constraints before recommending a build path.",
+        "points": [
+          "Project type and business goal",
+          "Current technical constraints",
+          "Key integrations and workflows",
+          "Timeline, launch pressure, and risk"
+        ],
+        "title": "What we clarify on the call"
+      },
+      {
+        "body": "This call is useful when the project is serious enough that a generic quote would be misleading. It is especially valuable for bilingual websites, custom Next.js builds, ecommerce systems, dashboards, portals, and rebuild decisions.",
+        "points": [
+          "Founder-led companies planning a rebuild",
+          "Teams comparing custom development options",
+          "Businesses with Arabic and English requirements",
+          "Operators who need ownership of the code"
+        ],
+        "title": "Who should schedule"
+      },
+      {
+        "body": "The outcome should be practical. You should leave with a clearer technical direction, a sense of whether Altruvex is the right partner, and a next step that matches the actual complexity of the work.",
+        "points": [
+          "Recommended delivery path",
+          "Likely scope and unknowns",
+          "Whether an audit is needed first",
+          "A realistic proposal or estimate route"
+        ],
+        "title": "What you get after the call"
+      }
+    ],
+    "title": "A technical call with a clear purpose"
+  },
+  "submit": {
+    "button": "Confirm Meeting",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorNetwork": "Network error. Check your connection and try again.",
+    "submitting": "Scheduling...",
+    "success": "Booked. Check your inbox for the confirmation."
+  },
+  "subtitle": "The right move when the project is real, the stakes are meaningful, and you need <strong>a clearer technical path before committing.</strong>",
+  "title": "Use the call to",
+  "titleAccent": "pressure-test the scope live."
+}

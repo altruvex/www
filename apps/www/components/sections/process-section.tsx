@@ -1,121 +1,278 @@
 "use client";
 
-import { useLoading } from "@/components/providers/loading-provider";
-import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { SurfaceCard } from "@repo/ui";
 import {
+  MOTION,
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { getConstrainedDevice } from "@/lib/motion/config";
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
-import { gsap, ScrollTrigger } from "@/lib/utils/gsap";
-import { splitHeadline } from "@/lib/utils/utils";
+import { gsap } from "@/lib/utils/gsap";
+import { cn, splitHeadline } from "@/lib/utils/utils";
+import { BUILD_PHASE, phaseName, type PhaseLength } from "@/lib/process-phases";
+import { usePhaseLength, useProcessPhases } from "@/lib/use-process-phases";
 import { useTranslations } from "next-intl";
-import { memo, useRef } from "react";
+import { memo, useMemo, useRef } from "react";
 import { SectionHeading } from "./section-heading";
 
-const STEPS = [
-  { key: "step1", pct: "8.5%" },
-  { key: "step2", pct: "11.9%" },
-  { key: "step3", pct: "71.1%" },
-  { key: "step4", pct: "8.5%" },
-] as const;
+interface PlacedPhase extends PhaseLength {
+  /** Working days at the long end of the range. */
+  days: number;
+  /** Working day the phase starts on, counted from zero. */
+  startDay: number;
+  /** Offset and width as percentages of the whole calendar. */
+  start: number;
+  width: number;
+}
 
-const BUILD_SEQUENCE = [
-  "buildSequence.implementation",
-  "buildSequence.integration",
-  "buildSequence.validation",
-  "buildSequence.refinement",
-] as const;
+interface Calendar {
+  placed: PlacedPhase[];
+  total: number;
+  /** Day 0, every phase boundary, and the last day. */
+  boundaries: number[];
+}
 
-// Each stuck card rests a little lower than the one before it, so a sliver of
-// every prior card stays visible above the next - the "peek" that reads as a
-// physical stack instead of a hard cut.
-const STACK_TOP_BASE = 96;
-const STACK_TOP_STEP = 24;
+/**
+ * Lays the phases end to end at their longest case. The lengths come from
+ * `lib/process-phases.ts`, which splits the price matrix's delivery window,
+ * so the ruler's last day is the longest engagement a price cell promises.
+ */
+function placePhases(phases: readonly PhaseLength[]): Calendar {
+  const total = phases.reduce((sum, phase) => sum + phase.max, 0);
+  const placed = phases.reduce<PlacedPhase[]>((list, phase) => {
+    const previous = list.at(-1);
+    const startDay = previous ? previous.startDay + previous.days : 0;
+    list.push({
+      ...phase,
+      days: phase.max,
+      startDay,
+      start: (startDay / total) * 100,
+      width: (phase.max / total) * 100,
+    });
+    return list;
+  }, []);
+  return {
+    placed,
+    total,
+    boundaries: [0, ...placed.map((phase) => phase.startDay + phase.days)],
+  };
+}
 
+const pct = (value: number): string => `${value}%`;
+
+/**
+ * The calendar for one phase, drawn to the same scale on every row: the
+ * phases already behind it as a faint trace, this phase solid, and nothing
+ * ahead of it. Read top to bottom, the five rows are a Gantt chart — and the
+ * development bar is most of the line before a word of it has been read.
+ */
+function PhaseTrack({
+  phase,
+  index,
+  calendar,
+}: {
+  phase: PlacedPhase;
+  index: number;
+  calendar: Calendar;
+}) {
+  const { placed, total, boundaries } = calendar;
+  const isBuild = phase.key === BUILD_PHASE;
+
+  return (
+    <div aria-hidden className="relative h-6">
+      {/* The calendar still ahead is a dotted thread, not a wall: the eye reads it as "not yet". */}
+      <span
+        style={{ insetInlineStart: pct(phase.start + phase.width) }}
+        className="absolute end-0 top-1/2 -translate-y-1/2 border-t-2 border-dotted border-s-border-hover"
+      />
+      {/* Sign-offs are beads on the thread — a handoff is a point, not a cut. */}
+      {boundaries.map((day, i) => {
+        const end = i === 0 || i === boundaries.length - 1;
+        return (
+          <span
+            key={day}
+            style={{ insetInlineStart: pct((day / total) * 100) }}
+            className={cn(
+              "absolute top-1/2 -translate-y-1/2 rounded-full bg-background ring-2 ring-s-border-hover ltr:-translate-x-1/2 rtl:translate-x-1/2",
+              end ? "size-2.5" : "size-1.5",
+            )}
+          />
+        );
+      })}
+      {placed.slice(0, index).map((done) => (
+        <span
+          key={done.key}
+          style={{
+            insetInlineStart: `calc(${pct(done.start)} + 2px)`,
+            width: `calc(${pct(done.width)} - 4px)`,
+          }}
+          className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-s-border-hover"
+        />
+      ))}
+      {/* The clip is static so the pill keeps its radius; only the fill is drawn. */}
+      <span
+        style={{
+          insetInlineStart: `calc(${pct(phase.start)} + 2px)`,
+          width: `calc(${pct(phase.width)} - 4px)`,
+        }}
+        className={cn(
+          "absolute top-1/2 h-3 -translate-y-1/2 overflow-clip rounded-full",
+          isBuild &&
+            "shadow-[0_0_0_5px_color-mix(in_oklab,var(--local-accent)_14%,transparent)]",
+        )}
+      >
+        <span
+          data-phase-bar
+          className={cn(
+            "block size-full origin-left rtl:origin-right",
+            isBuild ? "bg-local-accent" : "bg-s-high",
+          )}
+        />
+      </span>
+    </div>
+  );
+}
+
+const PhaseRow = memo(function PhaseRow({
+  phase,
+  index,
+  calendar,
+}: {
+  phase: PlacedPhase;
+  index: number;
+  calendar: Calendar;
+}) {
+  const t = useTranslations("process");
+  const length = usePhaseLength();
+  const rowRef = useRef<HTMLLIElement>(null);
+  const isBuild = phase.key === BUILD_PHASE;
+  const { total } = calendar;
+  const deliverables = t(`phases.${phase.key}.deliverables`).split(" | ");
+
+  // One moment per row, and it is the claim itself: the bar is drawn in a
+  // time proportional to the days it stands for, so development takes
+  // far longer to draw than the discovery session did. Linear, because a calendar
+  // does not ease. The markup ships the finished bar, so reduced motion and
+  // no JS read the same scale with nothing moving.
+  useIsomorphicLayoutEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const bar = row.querySelector("[data-phase-bar]");
+        if (!bar) return;
+
+        gsap.fromTo(
+          bar,
+          { scaleX: 0 },
+          {
+            scaleX: 1,
+            duration: MOTION.duration.drawer + (phase.days / total) * 2 * MOTION.duration.slow,
+            ease: "none",
+            scrollTrigger: {
+              trigger: row,
+              start: MOTION.trigger.inView,
+              once: true,
+            },
+          },
+        );
+      });
+    }, row);
+
+    return () => ctx.revert();
+  }, [phase.days, total]);
+
+  return (
+    <li
+      ref={rowRef}
+      className={cn(
+        "grid gap-y-6 lg:grid-cols-12 lg:gap-x-8",
+        isBuild ? "pb-16 lg:pb-24" : "pb-12 lg:pb-16",
+      )}
+    >
+      <div className="lg:col-span-12">
+        <PhaseTrack phase={phase} index={index} calendar={calendar} />
+      </div>
+
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-3 lg:flex-col lg:gap-y-3">
+        <div className="flex items-baseline gap-3">
+          <span className="font-mono text-sm text-local-accent-text">
+            <Num value={index + 1} pad={2} />
+          </span>
+          <Eyebrow className="text-s-mid">
+            {phaseName(t(`phases.${phase.key}.title`))}
+          </Eyebrow>
+        </div>
+        <p className="text-[0.9375rem] font-medium text-s-high">
+          {length(phase)}
+        </p>
+        {isBuild ? (
+          <p className="w-full text-[0.9375rem] text-local-accent-text">
+            {t.rich("share", {
+              pct: () => (
+                <Num value={`${Math.round((phase.days / total) * 100)}%`} />
+              ),
+            })}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="lg:col-span-6">
+        <h3
+          className={cn(
+            "max-w-[22ch] font-medium text-s-high",
+            isBuild
+              ? "text-3xl leading-[1.1] tracking-[-0.03em] lg:text-[2.5rem]"
+              : "text-2xl leading-[1.15] tracking-[-0.02em] lg:text-[1.75rem]",
+          )}
+        >
+          {t(`phases.${phase.key}.headline`)}
+        </h3>
+        <p className="mt-4 max-w-[60ch] text-[0.9375rem] leading-[1.7] text-s-mid lg:text-base">
+          {t(`phases.${phase.key}.description`)}
+        </p>
+      </div>
+
+      <div className="lg:col-span-3">
+        <Eyebrow className="text-s-mid">{t("meta.deliverables")}</Eyebrow>
+        <ul className="mt-3 space-y-1.5">
+          {deliverables.map((item) => (
+            <li key={item} className="text-[0.9375rem] leading-snug text-s-high">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </li>
+  );
+});
+
+/**
+ * "Clear phases" argued by proportion rather than by numbering: five rows on
+ * one working-day scale, so the short discovery, wireframe and design phases and
+ * the long build are seen at their real sizes. The scale is stated above the
+ * rows — the drawing is only honest if the reader knows what it measures.
+ */
 export const ProcessSection = memo(function ProcessSection() {
   const t = useTranslations("process");
-  const { isInitialLoadComplete } = useLoading();
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const subtitleRef = useSectionDescription<HTMLParagraphElement>();
   const footerRef = useSectionElement();
-  const stackRef = useRef<HTMLOListElement>(null);
 
-  useIsomorphicLayoutEffect(() => {
-    const stack = stackRef.current;
-    if (!stack || !isInitialLoadComplete) return;
-
-    const cards = Array.from(
-      stack.querySelectorAll<HTMLElement>("[data-stack-card]"),
-    );
-    if (cards.length < 2) return;
-
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-
-      mm.add(
-        "(prefers-reduced-motion: no-preference) and (min-width: 1024px)",
-        () => {
-          if (getConstrainedDevice()) return;
-
-          // Depth-proportional rest scale: the card at the bottom of the stack
-          // ends smallest, each one above it slightly larger. A single shared
-          // scale makes four cards read as four identical shrinks rather than
-          // as one deck receding.
-          const scaleFor = gsap.utils.mapRange(
-            0,
-            Math.max(cards.length - 2, 1),
-            0.94,
-            0.985,
-          );
-
-          cards.forEach((card, index) => {
-            if (index === cards.length - 1) return;
-            const nextCard = cards[index + 1];
-            const surface = card.querySelector<HTMLElement>(
-              "[data-stack-surface]",
-            );
-            const veil = card.querySelector<HTMLElement>("[data-stack-veil]");
-            if (!surface) return;
-            gsap.set(surface, {
-              transformOrigin: "center top",
-              transformPerspective: 1200,
-              willChange: "transform",
-            });
-
-            const line = `top top+=${STACK_TOP_BASE + index * STACK_TOP_STEP}`;
-            const tl = gsap.timeline({ paused: true });
-            tl.to(
-              surface,
-              { scale: scaleFor(index), rotationX: -4, ease: "none" },
-              0,
-            );
-            if (veil) tl.to(veil, { opacity: 1, ease: "none" }, 0);
-
-            ScrollTrigger.create({
-              trigger: card,
-              start: line,
-              endTrigger: nextCard,
-              end: line,
-              scrub: 0.3,
-              invalidateOnRefresh: true,
-              animation: tl,
-            });
-          });
-        },
-      );
-    }, stack);
-
-    return () => ctx.revert();
-  }, [isInitialLoadComplete]);
+  const { first, second } = splitHeadline(t("title"));
+  const phases = useProcessPhases();
+  const calendar = useMemo(() => placePhases(phases), [phases]);
+  const { placed, total, boundaries } = calendar;
 
   return (
     <section
@@ -131,99 +288,50 @@ export const ProcessSection = memo(function ProcessSection() {
           titleRef={titleRef}
           descriptionRef={subtitleRef}
           eyebrow={t("eyebrow")}
-          firstTitle={splitHeadline(t("title")).first}
-          secondTitle={splitHeadline(t("title")).second}
+          firstTitle={first}
+          secondTitle={second}
           description={t.rich("subtitle", bodyMarks)}
-          className="mb-14 lg:mb-24"
+          className="mb-14 lg:mb-20"
         />
-        <ol ref={stackRef} className="flex list-none flex-col gap-4 lg:gap-6">
-          {STEPS.map((step, index) => (
-            <li
-              key={step.key}
-              data-stack-card
-              className="group lg:sticky"
-              style={{
-                top: STACK_TOP_BASE + index * STACK_TOP_STEP,
-                zIndex: index + 1,
-              }}
-            >
-              <div data-stack-surface>
-                <SurfaceCard className="relative overflow-hidden rounded-lg border border-s-border-hover bg-card p-0 shadow-card-lg transition-colors duration-500 hover:border-local-accent/30 lg:shadow-2xl">
-                  <div
-                    data-stack-veil
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-black/45 opacity-0"
-                  />
-                  <div className="grid min-h-112 lg:grid-cols-12">
-                    <div className="relative flex flex-col justify-between gap-10 border-b border-border/70 p-7 md:p-8 lg:col-span-3 lg:border-b-0 lg:border-e lg:p-10">
-                      <div>
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="font-mono text-xs font-medium tracking-wide text-local-accent-text uppercase">
-                            {t(`steps.${step.key}.tag`)}
-                          </span>
-                          <span className="font-mono text-xs font-medium tabular-nums text-s-mid">
-                            <Num value={step.pct} />
-                          </span>
-                        </div>
-                        <div className="mt-8 flex items-end gap-2">
-                          <span className="font-outfit text-6xl font-medium leading-none tracking-[-0.06em] text-s-high md:text-7xl">
-                            <Num value={index + 1} pad={2} />
-                          </span>
-                          <span
-                            aria-hidden
-                            className="mb-1.5 text-sm text-s-muted/40"
-                          >
-                            /
-                          </span>
-                        </div>
-                      </div>
-                      <div>
-                        <div
-                          aria-hidden
-                          className="mb-3 h-px w-10 bg-local-accent/50"
-                        />
-                        <span className="block font-mono text-[10px] font-medium tracking-[0.16em] text-s-mid uppercase">
-                          {t("meta.timeline")}
-                        </span>
-                        <p className="mt-2 text-sm leading-relaxed text-s-high">
-                          {t(`steps.${step.key}.timeline`)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="relative flex flex-col p-7 md:p-10 lg:col-span-9 lg:p-12 xl:p-14">
-                      <div className="max-w-3xl">
-                        <h3 className="max-w-[15ch] text-[clamp(2rem,3.5vw,3.5rem)] font-medium leading-[1.02] tracking-[-0.045em] text-s-high">
-                          {t(`steps.${step.key}.title`)}
-                        </h3>
-                        <p className="mt-7 max-w-[62ch] text-[clamp(1.0625rem,1.2vw,1.1875rem)] leading-[1.75] text-s-mid">
-                          {t.rich(`steps.${step.key}.description`, bodyMarks)}
-                        </p>
-                      </div>
-                      {index === 2 ? (
-                        <div className="mt-10 lg:mt-12">
-                          <BuildSequence />
-                        </div>
-                      ) : null}
-                      <div className="mt-auto pt-12">
-                        <div className="flex flex-col gap-5 border-t border-border/70 pt-6 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <span className="block font-mono text-[10px] font-medium tracking-[0.16em] text-s-mid uppercase">
-                              {t("meta.deliverables") || "Output"}
-                            </span>
-                          </div>
-                          <span className="max-w-[48ch] text-sm leading-relaxed text-s-high sm:text-end">
-                            {t(`steps.${step.key}.deliverables`)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </SurfaceCard>
-              </div>
-            </li>
-          ))}
-        </ol>
-        <div ref={footerRef} className="mt-16 lg:mt-20">
+
+        <div>
+          <Eyebrow className="pb-4 text-s-mid">{t("scale.label")}</Eyebrow>
+          <div aria-hidden className="relative mb-2 h-5">
+            {boundaries.map((day, i) => {
+              const last = i === boundaries.length - 1;
+              return (
+                <span
+                  key={day}
+                  style={{ insetInlineStart: pct((day / total) * 100) }}
+                  className={cn(
+                    "absolute top-0 font-mono text-xs whitespace-nowrap tabular-nums text-s-mid",
+                    last && "ltr:-translate-x-full rtl:translate-x-full",
+                    i > 0 &&
+                      !last &&
+                      "hidden ltr:-translate-x-1/2 rtl:translate-x-1/2 md:block",
+                  )}
+                >
+                  {last ? (
+                    t.rich("scale.days", {
+                      n: () => <Num value={day} />,
+                      count: day,
+                    })
+                  ) : (
+                    <Num value={day} />
+                  )}
+                </span>
+              );
+            })}
+          </div>
+
+          <ol>
+            {placed.map((phase, index) => (
+              <PhaseRow key={phase.key} phase={phase} index={index} calendar={calendar} />
+            ))}
+          </ol>
+        </div>
+
+        <div ref={footerRef} className="mt-12 lg:mt-16">
           <p className="max-w-[52ch] text-[clamp(1.0625rem,1.5vw,1.25rem)] text-s-high">
             {t("footer")}
           </p>
@@ -233,22 +341,3 @@ export const ProcessSection = memo(function ProcessSection() {
   );
 });
 
-function BuildSequence() {
-  const t = useTranslations("process");
-
-  return (
-    <div className="flex flex-col gap-3 lg:gap-4">
-      {BUILD_SEQUENCE.map((key, i) => (
-        <div
-          key={key}
-          className="flex items-baseline gap-4 text-[11px] font-medium tracking-[0.12em] uppercase ltr:font-mono"
-        >
-          <span className="text-s-mid tabular-nums">
-            <Num value={i + 1} pad={2} />
-          </span>
-          <span className="text-s-high/90">{t(key)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}

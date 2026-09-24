@@ -1,16 +1,19 @@
 "use client";
+
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Highlight } from "@/components/ui/emphasis";
-import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
-import { MOTION, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import {
-  techAccentHsl,
-  techAccentHsla,
-  type TechAccentId,
-} from "@/lib/config/tech-accents";
+  MOTION,
+  useSectionDescription,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
+import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
+import { localizeNumbers } from "@/lib/utils/number";
+import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SectionHeading } from "./section-heading";
 
 interface TechNode {
   id: string;
@@ -18,9 +21,7 @@ interface TechNode {
   category: string;
   x: number;
   y: number;
-  r: number;
   primary?: boolean;
-  accentId: TechAccentId;
 }
 
 interface Connection {
@@ -36,82 +37,22 @@ const NODES: TechNode[] = [
     category: "Framework",
     x: 350,
     y: 220,
-    r: 30,
     primary: true,
-    accentId: "nextjs",
   },
-  {
-    id: "react",
-    name: "React",
-    category: "UI Library",
-    x: 160,
-    y: 155,
-    r: 21,
-    accentId: "react",
-  },
-  {
-    id: "typescript",
-    name: "TypeScript",
-    category: "Language",
-    x: 350,
-    y: 55,
-    r: 21,
-    accentId: "typescript",
-  },
-  {
-    id: "nodejs",
-    name: "Node.js",
-    category: "Runtime",
-    x: 540,
-    y: 155,
-    r: 21,
-    accentId: "nodejs",
-  },
+  { id: "react", name: "React", category: "UI Library", x: 160, y: 155 },
+  { id: "typescript", name: "TypeScript", category: "Language", x: 350, y: 55 },
+  { id: "nodejs", name: "Node.js", category: "Runtime", x: 540, y: 155 },
   {
     id: "postgresql",
     name: "PostgreSQL",
     category: "Database",
     x: 490,
     y: 365,
-    r: 21,
-    accentId: "postgresql",
   },
-  {
-    id: "prisma",
-    name: "Prisma",
-    category: "ORM",
-    x: 285,
-    y: 385,
-    r: 21,
-    accentId: "prisma",
-  },
-  {
-    id: "tailwind",
-    name: "Tailwind",
-    category: "Styling",
-    x: 130,
-    y: 320,
-    r: 21,
-    accentId: "tailwind",
-  },
-  {
-    id: "vercel",
-    name: "Vercel",
-    category: "Deployment",
-    x: 585,
-    y: 305,
-    r: 21,
-    accentId: "vercel",
-  },
-  {
-    id: "vps",
-    name: "VPS Server",
-    category: "Server",
-    x: 640,
-    y: 180,
-    r: 21,
-    accentId: "vps",
-  },
+  { id: "prisma", name: "Prisma", category: "ORM", x: 285, y: 385 },
+  { id: "tailwind", name: "Tailwind", category: "Styling", x: 130, y: 320 },
+  { id: "vercel", name: "Vercel", category: "Deployment", x: 585, y: 305 },
+  { id: "vps", name: "VPS Server", category: "Server", x: 640, y: 180 },
 ];
 
 const CONNECTIONS: Connection[] = [
@@ -129,7 +70,9 @@ const CONNECTIONS: Connection[] = [
 
 const NODE_W = 90;
 const NODE_H = 34;
-const NODE_RX = 3;
+const NODE_RX = 8;
+const VIEW_W = 700;
+const VIEW_H = 462;
 
 function getConnectedIds(nodeId: string): Set<string> {
   const ids = new Set<string>();
@@ -148,499 +91,355 @@ export function TechDNASection() {
 
   const sectionRef = useRef<HTMLElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const animated = useRef(false);
 
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [detailKey, setDetailKey] = useState(0);
 
-  const titleRef = useSectionEyebrow<HTMLDivElement>();
-  const headingRef = useSectionTitle();
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription<HTMLParagraphElement>();
 
   const activeNode = activeId
     ? (NODES.find((n) => n.id === activeId) ?? null)
     : null;
   const connectedIds = activeId ? getConnectedIds(activeId) : new Set<string>();
 
+  const highlights: string[] = (() => {
+    if (!activeNode) return [];
+    const raw: unknown = t.raw(`techStack.nodes.${activeNode.id}.highlights`);
+    return Array.isArray(raw)
+      ? raw.filter((h): h is string => typeof h === "string")
+      : [];
+  })();
+
   useEffect(() => {
-    if (!sectionRef.current || !svgRef.current || animated.current) return;
+    const section = sectionRef.current;
+    const svg = svgRef.current;
+    if (!section || !svg) return;
 
-    const lines =
-      svgRef.current.querySelectorAll<SVGLineElement>("[data-conn]");
-    const nodeGrps =
-      svgRef.current.querySelectorAll<SVGGElement>("[data-node]");
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
 
-    lines.forEach((line) => {
-      const x1 = parseFloat(line.getAttribute("x1") ?? "0");
-      const y1 = parseFloat(line.getAttribute("y1") ?? "0");
-      const x2 = parseFloat(line.getAttribute("x2") ?? "0");
-      const y2 = parseFloat(line.getAttribute("y2") ?? "0");
-      const len = Math.hypot(x2 - x1, y2 - y1);
-      gsap.set(line, {
-        strokeDasharray: len,
-        strokeDashoffset: len,
-        opacity: 0,
-      });
-    });
-    gsap.set(nodeGrps, { opacity: 0, y: 5 });
+      /* Reduced motion renders the finished diagram: nothing is hidden
+         up front, so there is nothing to wait for. */
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const lines = svg.querySelectorAll<SVGLineElement>("[data-conn]");
+        const nodes = svg.querySelectorAll<SVGGElement>("[data-node]");
 
-    const st = ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: "top 72%",
-      once: true,
-      onEnter: () => {
-        animated.current = true;
-        const tl = gsap.timeline({ defaults: { ease: MOTION.ease.smooth } });
+        lines.forEach((line) => {
+          const len = Math.hypot(
+            Number(line.getAttribute("x2")) - Number(line.getAttribute("x1")),
+            Number(line.getAttribute("y2")) - Number(line.getAttribute("y1")),
+          );
+          gsap.set(line, { strokeDasharray: len, strokeDashoffset: len });
+        });
+        gsap.set(nodes, { opacity: 0, y: 5 });
 
-        tl.to(lines, {
-          strokeDashoffset: 0,
-          opacity: 1,
-          duration: 0.85,
-          stagger: 0.06,
-          onComplete: () => {
-            svgRef.current
-              ?.querySelectorAll<SVGLineElement>("[data-dashed]")
-              .forEach((el) => gsap.set(el, { strokeDasharray: "4 6" }));
+        ScrollTrigger.create({
+          trigger: section,
+          start: MOTION.trigger.latest,
+          once: true,
+          onEnter: () => {
+            gsap
+              .timeline({ defaults: { ease: MOTION.ease.smooth } })
+              .to(lines, {
+                strokeDashoffset: 0,
+                duration: MOTION.duration.text,
+                stagger: MOTION.stagger.base,
+                onComplete: () => {
+                  svg
+                    .querySelectorAll("[data-dashed]")
+                    .forEach((el) => gsap.set(el, { strokeDasharray: "4 6" }));
+                },
+              })
+              .to(
+                nodes,
+                { opacity: 1, y: 0, duration: MOTION.duration.fast, stagger: MOTION.stagger.tight },
+                "-=0.5",
+              );
           },
         });
-        tl.to(
-          nodeGrps,
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.35,
-            stagger: 0.04,
-            ease: "power2.out",
-          },
-          "-=0.5",
-        );
-      },
-    });
+      });
+    }, section);
 
-    return () => st.kill();
+    return () => ctx.revert();
   }, []);
 
-  // Use a functional update to prevent animation re-triggers on the same node
-  const enter = useCallback((id: string) => {
-    setActiveId((prev) => {
-      if (prev !== id) {
-        setDetailKey((k) => k + 1);
-      }
-      return id;
-    });
-  }, []);
-
+  const enter = useCallback((id: string) => setActiveId(id), []);
   const clearSelection = useCallback(() => setActiveId(null), []);
 
   const getNodeOpacity = (id: string): number => {
-    if (!activeId) return 1;
-    if (id === activeId) return 1;
-    if (connectedIds.has(id)) return 0.8;
-    return 0.12;
+    if (!activeId || id === activeId) return 1;
+    return connectedIds.has(id) ? 0.85 : 0.2;
   };
 
-  const getConnStroke = (conn: Connection): string => {
-    if (!activeId) return "hsl(var(--foreground))";
-    if (conn.from === activeId || conn.to === activeId) {
-      return (
-        (() => {
-          const from = NODES.find((n) => n.id === conn.from);
-          return from ? techAccentHsl(from.accentId) : "hsl(var(--foreground))";
-        })()
-      );
-    }
-    return "hsl(var(--foreground))";
-  };
+  const isRelated = (conn: Connection) =>
+    conn.from === activeId || conn.to === activeId;
 
   const getConnOpacity = (conn: Connection): number => {
-    if (!activeId) return 0.1;
-    if (conn.from === activeId || conn.to === activeId) return 0.65;
-    return 0.04;
+    if (!activeId) return 0.18;
+    return isRelated(conn) ? 0.75 : 0.06;
   };
 
   const getConnWidth = (conn: Connection): number => {
-    if (!activeId) return 0.6;
-    if (conn.from === activeId || conn.to === activeId) return 1.25;
-    return 0.4;
+    if (!activeId) return 0.75;
+    return isRelated(conn) ? 1.25 : 0.5;
   };
+
+  /* The popover opens on the side of the node that has room: below for the
+     upper half of the diagram, above for the lower half — so it never leaves
+     the diagram, including inside the mobile horizontal scroller. */
+  const popover = activeNode
+    ? (() => {
+        const above = activeNode.y > VIEW_H / 2;
+        const edge = activeNode.y + (above ? -NODE_H / 2 : NODE_H / 2);
+        return {
+          above,
+          left: (getX(activeNode.x) / VIEW_W) * 100,
+          top: (edge / VIEW_H) * 100,
+        };
+      })()
+    : null;
 
   return (
     <section
       ref={sectionRef}
       id="tech-dna"
       aria-labelledby="tech-dna-heading"
-      className="pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+      className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div ref={titleRef} className="mb-16">
-          <Eyebrow className="mb-4 block">{t("techStack.eyebrow")}</Eyebrow>
-          <div className="flex items-end justify-between gap-8 flex-wrap">
-            <h2
-              ref={headingRef}
-              id="tech-dna-heading"
-              className="font-sans font-normal text-foreground leading-[1.05]"
-              style={{
-                fontSize: "clamp(28px, 4.5vw, 52px)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              {t("techStack.title")}
-              <br />
-              <Highlight>{t("techStack.titleItalic")}</Highlight>
-            </h2>
-            <p className="font-mono leading-normal tracking-wider text-sm text-primary/35 max-w-[32ch] hidden lg:block">
-              {t("techStack.subtitle")}
-            </p>
-          </div>
-        </div>
-        <div className="relative mt-12 md:mt-0">
-          <div className="relative overflow-x-auto md:overflow-visible -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide cursor-grab active:cursor-grabbing group/scroll">
-            <div className="min-w-[680px] md:min-w-0 relative">
-              <div
-                aria-hidden
-                className="absolute inset-0 pointer-events-none rounded-lg"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle, hsl(var(--foreground)) 1px, transparent 1px)",
-                  backgroundSize: "28px 28px",
-                  opacity: 0.04,
-                }}
-              />
-              <div className="relative" style={{ paddingBottom: "66%" }}>
-                <svg
-                  ref={svgRef}
-                  viewBox="0 0 700 462"
-                  width="100%"
-                  height="100%"
-                  className="absolute inset-0 cursor-default"
-                  style={{
-                    overflow: "visible",
-                    color: "hsl(var(--foreground))",
-                  }}
-                  role="img"
-                  aria-label={t("techStack.diagramLabel")}
-                  onClick={clearSelection}
-                >
-                  <g>
-                    {CONNECTIONS.map((conn, i) => {
-                      const a = NODES.find((n) => n.id === conn.from)!;
-                      const b = NODES.find((n) => n.id === conn.to)!;
-                      return (
-                        <line
-                          key={i}
-                          data-conn
-                          {...(conn.dashed ? { "data-dashed": "" } : {})}
-                          x1={getX(a.x)}
-                          y1={a.y}
-                          x2={getX(b.x)}
-                          y2={b.y}
-                          stroke={getConnStroke(conn)}
-                          strokeWidth={getConnWidth(conn)}
-                          strokeDasharray={conn.dashed ? "4 6" : undefined}
-                          style={{
-                            opacity: getConnOpacity(conn),
-                            transition:
-                              "opacity 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease",
-                          }}
-                        />
-                      );
-                    })}
-                  </g>
-                  <g>
-                    {NODES.map((node) => {
-                      const isActive = node.id === activeId;
-                      const isPrimary = !!node.primary;
-                      const w = isPrimary ? NODE_W * 1.14 : NODE_W;
-                      const nx = getX(node.x);
-                      const bx = nx - w / 2;
-                      const by = node.y - NODE_H / 2;
+        <SectionHeading
+          titleId="tech-dna-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("techStack.eyebrow")}
+          firstTitle={t("techStack.title")}
+          secondTitle={t("techStack.titleItalic")}
+          description={t("techStack.subtitle")}
+          className="mb-10 md:mb-14"
+        />
 
-                      return (
-                        <g
-                          key={node.id}
-                          data-node
-                          style={{
-                            cursor: "pointer",
-                            opacity: getNodeOpacity(node.id),
-                            transition: "opacity 0.2s ease",
-                          }}
-                          onMouseEnter={() => enter(node.id)}
-                          onFocus={() => enter(node.id)}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            enter(node.id);
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`${node.name} - ${t(`techStack.categories.${node.category}`)}`}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              if (isActive) {
-                                clearSelection();
-                              } else {
-                                enter(node.id);
-                              }
-                            } else if (e.key === "Escape") {
-                              clearSelection();
-                            }
-                          }}
-                        >
-                          <rect
-                            x={bx}
-                            y={by}
-                            width={w}
-                            height={NODE_H}
-                            rx={NODE_RX}
-                            fill={
-                              isActive
-                                ? techAccentHsla(node.accentId, 0.05)
-                                : "hsl(var(--background))"
-                            }
-                            stroke={
-                              isActive
-                                ? techAccentHsl(node.accentId)
-                                : "hsl(var(--foreground))"
-                            }
-                            strokeWidth={isActive ? 1 : 0.5}
-                            strokeOpacity={isActive ? 0.6 : 0.16}
-                            style={{
-                              transition:
-                                "fill 0.2s ease, stroke 0.2s ease, stroke-opacity 0.2s ease",
-                            }}
-                          />
-                          {isActive && (
-                            <rect
-                              x={bx}
-                              y={by}
-                              width={2}
-                              height={NODE_H}
-                              rx={NODE_RX}
-                              fill={techAccentHsl(node.accentId)}
-                              opacity={0.75}
-                            />
-                          )}
-                          <circle
-                            cx={bx + (isRtl ? 7 : w - 7)}
-                            cy={by + 7}
-                            r={2}
-                            fill={techAccentHsl(node.accentId)}
-                            opacity={isActive ? 0.9 : 0.3}
-                            style={{ transition: "opacity 0.2s ease" }}
-                          />
-                          <text
-                            x={nx}
-                            y={node.y - 4}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            style={{
-                              fill: "hsl(var(--foreground))",
-                              fontSize: isPrimary ? "11px" : "10px",
-                              fontFamily:
-                                "var(--font-mono, ui-monospace, monospace)",
-                              fontWeight: isActive ? "600" : "400",
-                              opacity: isActive ? 1 : 0.7,
-                              transition: "opacity 0.2s ease",
-                              userSelect: "none",
-                              pointerEvents: "none",
-                            }}
-                          >
-                            {node.name}
-                          </text>
-                          <text
-                            x={nx}
-                            y={node.y + 8}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            style={{
-                              fill: isActive
-                                ? techAccentHsl(node.accentId)
-                                : "hsl(var(--foreground))",
-                              fontSize: "7px",
-                              fontFamily: "var(--font-mono, ui-monospace, monospace)",
-                              letterSpacing: "0.12em",
-                              opacity: isActive ? 0.85 : 0.25,
-                              transition: "fill 0.2s ease, opacity 0.2s ease",
-                              userSelect: "none",
-                              pointerEvents: "none",
-                            }}
-                          >
-                            {t(
-                              `techStack.categories.${node.category}`,
-                            ).toUpperCase()}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </g>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="md:hidden flex items-center justify-center gap-3 mt-4 pointer-events-none transition-all group-hover/scroll:opacity-5">
-            <div className="h-px flex-1 bg-border" />
-            <Eyebrow className="whitespace-nowrap">{t("techStack.dragHint")}</Eyebrow>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="mt-8 md:mt-0 min-h-[160px] md:min-h-[116px] relative">
-            <div
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-              style={{
-                opacity: activeNode ? 0 : 1,
-                transition: "opacity 0.18s ease",
-              }}
+        <div className="scrollbar-hide -mx-6 overflow-x-auto px-6 sm:-mx-8 sm:px-8 md:mx-0 md:overflow-visible md:px-0">
+          {/* aspect-ratio, not padding-bottom: a padding percentage resolves
+              against the scroller's width, so on mobile the 680px-wide
+              diagram got a 327px-based height and rendered at half size. */}
+          <div
+            className="relative aspect-[700/462] min-w-[680px] md:min-w-0"
+            onMouseLeave={clearSelection}
+          >
+            {/* role="group", not "img": an img role makes its children
+                presentational, which hid every node button from AT. */}
+            <svg
+              ref={svgRef}
+              viewBox="0 0 700 462"
+              className="absolute inset-0 h-full w-full overflow-visible text-foreground"
+              role="group"
+              aria-label={t("techStack.diagramLabel")}
+              onClick={clearSelection}
             >
-              <p className="font-mono text-sm leading-normal tracking-wider md:text-sm uppercase text-muted-foreground text-center px-6">
-                {t("techStack.inspect")}
-              </p>
-            </div>
-            <div
-              key={detailKey}
-              style={{
-                opacity: activeNode ? 1 : 0,
-                pointerEvents: activeNode ? "auto" : "none",
-                animation: activeNode
-                  ? "detailIn 0.22s ease forwards"
-                  : undefined,
-              }}
-            >
-              {activeNode && (
-                <div
-                  className="h-full rounded-xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:gap-10 border shadow-sm bg-surface overflow-hidden relative group"
-                  style={{
-                    borderColor: techAccentHsla(activeNode.accentId, 0.15),
-                  }}
-                >
-                  <button
-                    onClick={clearSelection}
-                    className="absolute top-3 right-3 rtl:right-auto rtl:left-3 p-2 rounded-full text-primary/40 hover:text-primary hover:bg-foreground/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring z-20"
-                    aria-label="Close"
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
+              <g>
+                {CONNECTIONS.map((conn) => {
+                  const a = NODES.find((n) => n.id === conn.from)!;
+                  const b = NODES.find((n) => n.id === conn.to)!;
+                  return (
+                    <line
+                      key={`${conn.from}-${conn.to}`}
+                      data-conn
+                      {...(conn.dashed ? { "data-dashed": "" } : {})}
+                      x1={getX(a.x)}
+                      y1={a.y}
+                      x2={getX(b.x)}
+                      y2={b.y}
+                      stroke="currentColor"
+                      strokeWidth={getConnWidth(conn)}
+                      strokeDasharray={conn.dashed ? "4 6" : undefined}
+                      style={{
+                        opacity: getConnOpacity(conn),
+                        transition: "opacity 0.2s ease, stroke-width 0.2s ease",
+                      }}
+                    />
+                  );
+                })}
+              </g>
+              <g>
+                {NODES.map((node) => {
+                  const isActive = node.id === activeId;
+                  const w = node.primary ? NODE_W * 1.14 : NODE_W;
+                  const nx = getX(node.x);
+                  const category = t(`techStack.categories.${node.category}`);
+
+                  return (
+                    <g
+                      key={node.id}
+                      data-node
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isActive}
+                      aria-label={`${node.name} - ${category}`}
+                      className={cn(
+                        "cursor-pointer outline-none",
+                        /* The rect below strokes with currentColor, so lighting
+                           the group is all it takes for the selected node to
+                           wear the page's world. Weight and fill already carry
+                           the state, so colour is never the only signal. */
+                        isActive && "text-local-accent",
+                      )}
+                      style={{
+                        opacity: getNodeOpacity(node.id),
+                        transition: "opacity 0.2s ease",
+                      }}
+                      onMouseEnter={() => enter(node.id)}
+                      onFocus={() => enter(node.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        enter(node.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          if (isActive) clearSelection();
+                          else enter(node.id);
+                        } else if (e.key === "Escape") {
+                          clearSelection();
+                        }
+                      }}
                     >
-                      <path
-                        d="M11 1L1 11M1 1L11 11"
+                      <rect
+                        x={nx - w / 2}
+                        y={node.y - NODE_H / 2}
+                        width={w}
+                        height={NODE_H}
+                        rx={NODE_RX}
+                        className={cn(
+                          "transition-[stroke-opacity,stroke-width] duration-(--motion-instant)",
+                          isActive ? "fill-card" : "fill-background",
+                        )}
                         stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        strokeWidth={isActive ? 1.25 : 0.75}
+                        strokeOpacity={isActive ? 0.9 : 0.25}
                       />
-                    </svg>
-                  </button>
-
-                  <div
-                    style={{
-                      alignSelf: "stretch",
-                      background: techAccentHsl(activeNode.accentId),
-                      borderRadius: "var(--radius-xs)",
-                      opacity: 0.65,
-                    }}
-                  />
-                  <div className="flex-1 flex flex-col justify-center relative z-10">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3
-                        className="font-mono text-sm leading-normal tracking-wider font-semibold text-primary"
+                      <text
+                        x={nx}
+                        y={node.y - 4}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="pointer-events-none select-none fill-foreground font-mono"
                         style={{
-                          fontSize: "clamp(14px, 1.5vw, 16px)",
-                          letterSpacing: "-0.01em",
+                          fontSize: node.primary ? 11.5 : 10.5,
+                          fontWeight: isActive ? 600 : 400,
                         }}
                       >
+                        {node.name}
+                      </text>
+                      <text
+                        x={nx}
+                        y={node.y + 8}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className={cn(
+                          "pointer-events-none select-none fill-muted-foreground",
+                          isRtl ? "font-sans" : "font-mono uppercase",
+                        )}
+                        style={{
+                          fontSize: 7.5,
+                          letterSpacing: isRtl ? 0 : "0.12em",
+                        }}
+                      >
+                        {category}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+            </svg>
+
+            <div
+              aria-live="polite"
+              className="pointer-events-none absolute inset-0"
+            >
+              {activeNode && popover ? (
+                <div
+                  className="absolute z-10 w-80 max-w-full"
+                  style={{
+                    left: `clamp(0px, calc(${popover.left}% - 10rem), calc(100% - 20rem))`,
+                    top: `calc(${popover.top}% ${popover.above ? "-" : "+"} 10px)`,
+                    transform: popover.above ? "translateY(-100%)" : undefined,
+                  }}
+                >
+                  <div
+                    key={activeNode.id}
+                    className={cn(
+                      "liquid-glass pointer-events-auto rounded-panel-md p-4",
+                      popover.above ? "td-pop-up" : "td-pop-down",
+                    )}
+                  >
+                    <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                      <h3 className="text-base font-medium leading-snug text-foreground">
                         {activeNode.name}
                       </h3>
-                      <span
-                        className="font-mono text-sm leading-normal tracking-wider uppercase"
-                        style={{
-                          fontSize: 8,
-                          letterSpacing: "0.2em",
-                          padding: "2px 8px",
-                          borderRadius: "var(--radius-xs)",
-                          color: techAccentHsl(activeNode.accentId),
-                          border: `1px solid ${techAccentHsla(
-                            activeNode.accentId,
-                            0.2,
-                          )}`,
-                        }}
-                      >
+                      <Eyebrow className="m-0 text-micro">
                         {t(`techStack.categories.${activeNode.category}`)}
-                      </span>
+                      </Eyebrow>
                     </div>
-                    <p
-                      className="text-sm leading-relaxed text-primary/60 md:text-primary/75"
-                      style={{ maxWidth: "54ch" }}
-                    >
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
                       {t(`techStack.nodes.${activeNode.id}.description`)}
                     </p>
-                  </div>
-                  <div className="flex flex-col gap-1.5 shrink-0">
-                    {(() => {
-                      try {
-                        const rawHighlights = t.raw(
-                          `techStack.nodes.${activeNode.id}.highlights`,
-                        );
-                        const highlights = Array.isArray(rawHighlights)
-                          ? rawHighlights
-                          : [];
-                        return highlights.map((h, i) => (
-                          <span
+                    {highlights.length > 0 ? (
+                      <ul className="mt-3 flex flex-wrap gap-1.5">
+                        {highlights.map((h) => (
+                          <li
                             key={h}
-                            className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/38 border border-foreground/8 bg-foreground/2 rounded-lg whitespace-nowrap"
-                            style={{
-                              fontSize: 9,
-                              letterSpacing: "0.13em",
-                              padding: "4px 10px",
-                              animation: `chipIn 0.2s ease ${i * 0.055}s both`,
-                            }}
+                            dir="ltr"
+                            className="rounded-ctl-xs border border-border-subtle/70 px-2 py-0.5 font-mono text-micro text-foreground/80"
                           >
                             {h}
-                          </span>
-                        ));
-                      } catch {
-                        return null;
-                      }
-                    })()}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>
-        <div className="mt-8 border-t border-foreground/8 pt-4 flex items-center gap-4">
-          <span className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/20">
-            {t("techStack.footer")}
-          </span>
-          <div className="flex-1 h-px bg-foreground/4" />
+
+        <div aria-hidden className="mt-4 flex items-center gap-3 md:hidden">
+          <div className="h-px flex-1 bg-border-subtle" />
+          <Eyebrow className="m-0 whitespace-nowrap">
+            {t("techStack.dragHint")}
+          </Eyebrow>
+          <div className="h-px flex-1 bg-border-subtle" />
+        </div>
+
+        <p
+          className={cn(
+            "mt-6 text-center text-sm text-muted-foreground transition-opacity duration-(--motion-instant)",
+            activeNode ? "opacity-0" : "opacity-100",
+          )}
+        >
+          {t("techStack.inspect")}
+        </p>
+
+        <div className="mt-10 flex items-center gap-4">
+          <Eyebrow className="m-0">
+            {t("techStack.footer", {
+              count: localizeNumbers(String(NODES.length), locale),
+            })}
+          </Eyebrow>
+          <div aria-hidden className="h-px flex-1 bg-border-subtle/60" />
         </div>
       </Container>
       <style>{`
-                .scrollbar-hide::-webkit-scrollbar {
-                    display: none;
-                }
-                .scrollbar-hide {
-                    -ms-overflow-style: none;
-                    scrollbar-width: none;
-                }
-                @keyframes detailIn {
-                    from { opacity: 0.2; transform: translateY(4px); }
-                    to   { opacity: 1;   transform: translateY(0); }
-                }
-                @keyframes chipIn {
-                    from { opacity: 0; transform: translateX(5px); }
-                    to   { opacity: 1; transform: translateX(0); }
-                }
-                @media (prefers-reduced-motion: reduce) {
-                    *, *::before, *::after {
-                        animation-duration: 0.01ms !important;
-                        animation-iteration-count: 1 !important;
-                        transition-duration: 0.01ms !important;
-                    }
-                }
-            `}</style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes td-pop-up { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
+        @keyframes td-pop-down { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
+        .td-pop-up { transform-origin: bottom center; animation: td-pop-up 0.22s var(--ease-strong) both; }
+        .td-pop-down { transform-origin: top center; animation: td-pop-down 0.22s var(--ease-strong) both; }
+        @media (prefers-reduced-motion: reduce) { .td-pop-up, .td-pop-down { animation: none; } }
+      `}</style>
     </section>
   );
 }

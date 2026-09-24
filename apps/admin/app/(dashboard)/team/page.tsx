@@ -115,7 +115,6 @@ export default async function TeamPage() {
                     entity="user"
                     id={user.id}
                     label={user.name ?? user.email}
-                    variant="ghost"
                     size="icon-sm"
                   >
                     {null}

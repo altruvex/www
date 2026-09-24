@@ -1,0 +1,42 @@
+{
+  "eyebrow": "The Industry Problem",
+  "title": "Most businesses aren't getting engineering.",
+  "subtitle": "The Egyptian and Arab web market is saturated with agencies that charge custom rates for commodity output. Read each line across: on one side is what was promised, on the other is what was delivered.",
+  "items": [
+    {
+      "number": "01",
+      "pitch": "“A custom website, designed around your brand.”",
+      "delivery": "A $60 theme with the logo swapped in.",
+      "evidence": "Indistinguishable from competitors running the same theme"
+    },
+    {
+      "number": "02",
+      "pitch": "“Fast, modern, fully optimised.”",
+      "delivery": "Seven seconds to first paint in production.",
+      "evidence": "Average agency site: 6.8s load time"
+    },
+    {
+      "number": "03",
+      "pitch": "“Full handover on launch day.”",
+      "delivery": "A login and a zip file. No docs, no architecture, no history.",
+      "evidence": "You own the domain. They own the knowledge."
+    },
+    {
+      "number": "04",
+      "pitch": "“Built to grow with you.”",
+      "delivery": "Built to survive the approval meeting.",
+      "evidence": "Every new feature costs more than the last"
+    },
+    {
+      "number": "05",
+      "pitch": "“A dedicated technical lead on your account.”",
+      "delivery": "A coordinator relaying messages to an offshore team.",
+      "evidence": "Two weeks added to every timeline, no answer to any technical question"
+    }
+  ],
+  "closingPre": "Altruvex is built to be the answer to",
+  "closingHighlight": "every problem above.",
+  "trackPitch": "What you were sold",
+  "trackDelivery": "What you actually own",
+  "titleItalic": "They're getting templates."
+}

@@ -8,7 +8,7 @@ interface QuoteProps {
 
 export function Quote({ author, role, children }: QuoteProps) {
   return (
-    <figure className="my-8 ltr:border-l-2 rtl:border-r-2 border-local-accent ltr:pl-6 rtl:pr-6">
+    <figure className="my-8 border-s-2 border-local-accent ps-6">
       <blockquote className="mb-4">
         <Highlight className="text-xl text-foreground/80">
           {children}

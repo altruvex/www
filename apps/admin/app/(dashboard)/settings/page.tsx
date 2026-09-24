@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@repo/database";
 import { getCompanySettings } from "@/lib/company-settings";
+import { mfaRequired } from "@/lib/mfa";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -266,7 +267,14 @@ export default async function SettingsPage({
                   { label: "Auth", value: "Better Auth, email + password" },
                   { label: "Sign-up", value: "Disabled — accounts are seeded" },
                   { label: "Session life", value: "7 days" },
-                  { label: "2FA", value: "Not enabled" },
+                  {
+                    label: "2FA",
+                    value: (
+                      <Link href="/security" className="underline underline-offset-2">
+                        {mfaRequired() ? "Required — manage" : "Optional — set up or manage"}
+                      </Link>
+                    ),
+                  },
                   { label: "Users", value: String(users) },
                   { label: "CSP", value: "Enforced, no external script origins" },
                   { label: "Frame options", value: "DENY" },

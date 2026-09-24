@@ -49,6 +49,7 @@ const ENTITY_PATH: Record<string, (id: string) => string> = {
   build: () => "/deployments?tab=builds",
   task: () => "/tasks",
   meeting: () => "/calendar",
+  client_service: () => "/services",
 };
 
 export function entityUrl(entityType: string, entityId: string): string | null {
@@ -74,9 +75,12 @@ export function entityUrl(entityType: string, entityId: string): string | null {
 export const NOTIFIED_ACTIONS: Record<string, string> = {
   "client.created": ":wave:",
   "proposal.sent": ":outbox_tray:",
+  "proposal.accepted": ":white_check_mark:",
   "contract.sent": ":pencil:",
   "contract.signed": ":handshake:",
   "project.created": ":rocket:",
+  "project.completed": ":checkered_flag:",
+  "change_request.approved": ":memo:",
   "payment.status_changed": ":moneybag:",
   "subscription.created": ":repeat:",
   "subscription.cancelled": ":wastebasket:",
@@ -84,6 +88,9 @@ export const NOTIFIED_ACTIONS: Record<string, string> = {
   "build.failed": ":red_circle:",
   "deployment.failed": ":red_circle:",
   "deployment.rolled_back": ":rewind:",
+  // Raised by the renewal sweep, once per service per threshold per cycle —
+  // a domain that lapses takes the client's site and mail down with it.
+  "service.renewal_due": ":hourglass_flowing_sand:",
 };
 
 /** Deletions all read the same way and all deserve a line in the channel. */

@@ -1,3 +1,4 @@
+import { calculateEstimate } from "@repo/pricing-schema";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { createTransparencyLeadSchema } from "@/lib/validations/transparency-lead";
@@ -6,6 +7,7 @@ import { randomBytes } from "node:crypto";
 import { getTranslations } from "next-intl/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
+import { tooManyRequests } from "@/lib/server/too-many-requests";
 
 /**
  * Human-quotable estimate reference.
@@ -78,20 +80,24 @@ export async function POST(request: NextRequest) {
       windowSeconds: 60 * 60,
     });
     if (!rl.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: { "Retry-After": rl.retryAfterSeconds.toString() },
-        },
-      );
+      // The body was read above, so its locale is known here.
+      return tooManyRequests(request, rl.retryAfterSeconds, locale);
     }
 
     const validatedData = transparencyLeadSchema.parse(body);
     const attribution = readAttribution(request);
+
+    // Recomputed from the answers rather than taken from the request. The
+    // browser sends what it displayed, and an operator later quotes this row
+    // back to the client — so the figure has to be one this codebase produced,
+    // through the same engine the estimator itself renders.
+    const estimate = calculateEstimate({
+      serviceId: validatedData.projectType,
+      complexityId: validatedData.complexity,
+      timeline: validatedData.timeline,
+      brandIdentity: validatedData.brandIdentity,
+      contentReadiness: validatedData.contentReadiness,
+    });
 
     // The reference is random rather than sequential, so a collision is
     // possible and cheap to retry. Three attempts over a 26^6 space is far
@@ -112,10 +118,10 @@ export async function POST(request: NextRequest) {
             timeline: validatedData.timeline,
             brandIdentity: validatedData.brandIdentity,
             contentReadiness: validatedData.contentReadiness,
-            priceMin: validatedData.priceMin,
-            priceMax: validatedData.priceMax,
-            weeksMin: validatedData.weeksMin,
-            weeksMax: validatedData.weeksMax,
+            priceMin: estimate.minPrice,
+            priceMax: estimate.maxPrice,
+            weeksMin: estimate.minWeeks,
+            weeksMax: estimate.maxWeeks,
             locale,
             ...attribution,
           },

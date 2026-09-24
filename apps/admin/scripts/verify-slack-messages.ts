@@ -47,6 +47,8 @@ for (const action of [
   "build.failed",
   "client.created",
   "payment.status_changed",
+  "project.completed",
+  "change_request.approved",
 ]) {
   check(shouldNotify(action), `${action} reaches the channel`);
 }
@@ -59,6 +61,8 @@ for (const action of [
   "product.token_rotated",
   "settings.company_profile_updated",
   "meeting.status_changed",
+  "change_request.quoted",
+  "change_request.started",
 ]) {
   check(!shouldNotify(action), `${action} does not — the channel is not the audit log`);
 }

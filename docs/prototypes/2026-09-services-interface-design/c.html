@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · Anatomy — Interface Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.hero{padding:150px 0 60px}
+.hero .g{display:grid;grid-template-columns:1.3fr 1fr;gap:56px;align-items:end}
+.hero h1{font-size:clamp(52px,7.4vw,128px);line-height:.98}
+.hero p{color:var(--muted);line-height:1.65;font-size:17px;max-width:46ch}
+.hero .btns{display:flex;gap:10px;margin-top:26px}
+
+.world{background:var(--accent);padding:10vh 0 0;overflow:hidden;border-radius:var(--r-lg) var(--r-lg) 0 0;margin:0 16px}
+.world .frame{width:min(1100px,86vw);margin:0 auto;border-radius:var(--r-sm) var(--r-sm) 0 0;border-bottom:0;box-shadow:0 -20px 80px -20px rgba(0,0,0,.35)}
+
+.anat{position:relative;height:360vh}
+.anat .pin{position:sticky;top:0;height:100svh;display:grid;grid-template-columns:360px 1fr;gap:56px;align-items:center}
+.anat h2{font-size:clamp(36px,3.6vw,58px);margin:16px 0 28px}
+.list{display:grid;gap:4px}
+.li{display:grid;grid-template-columns:40px 1fr;gap:10px;padding:12px 0;border-top:1px solid var(--line);opacity:.35;transition:opacity var(--m-fast) var(--ease-smooth)}
+.li.on{opacity:1}
+.li b{font-family:"Geist Mono";font-weight:400;font-size:12px;color:var(--accent);padding-top:4px}
+.li span{font-family:Outfit;font-size:20px;letter-spacing:-.02em}
+.li small{display:block;color:var(--muted);font:14px/1.5 Inter;margin-top:4px}
+.stage{position:relative}
+.box{position:absolute;border:2px solid var(--accent);border-radius:10px;background:var(--accent-soft);opacity:0;transform:scale(.96);transition:opacity var(--m-fast) var(--ease-smooth),transform var(--m-fast) var(--ease-strong)}
+.box.on{opacity:1;transform:none}
+.box i{position:absolute;top:-12px;left:-12px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--accent-fg);font:600 12px Inter;display:grid;place-items:center;font-style:normal}
+
+.modes{padding:18vh 0;text-align:center}
+.modes h2{font-size:clamp(40px,4.6vw,76px);max-width:16ch;margin:16px auto 30px}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line);margin-bottom:36px}
+.seg button{border:0;background:none;padding:10px 18px;border-radius:999px;font:500 14px Inter;color:var(--muted);cursor:pointer;transition:background var(--m-drawer) var(--ease-smooth),color var(--m-drawer)}
+.seg button.on{background:var(--card);color:var(--fg);box-shadow:0 2px 8px -2px rgba(0,0,0,.15)}
+.modes .frame{width:min(1100px,100%);margin:0 auto;position:relative}
+.modes .frame img{transition:opacity var(--m-fast) var(--ease-smooth)}
+.modes .frame img+img{position:absolute;left:0;top:28px}
+
+.rows{padding:6vh 0 18vh}
+.prow{display:grid;grid-template-columns:1fr 1.2fr;gap:48px;border-top:1px solid var(--line);padding:30px 0}
+.prow:last-child{border-bottom:1px solid var(--line)}
+.prow h3{font-size:clamp(26px,2.6vw,40px);font-weight:400}
+.prow p{color:var(--muted);line-height:1.6;max-width:52ch}
+
+.close{background:#171717;color:#f0f0f0;padding:22vh 0 12vh}
+.close h2{font-size:clamp(56px,9vw,150px);max-width:13ch;font-weight:400;margin-top:28px}
+.close .row{margin-top:10vh;border-top:1px solid rgba(255,255,255,.1);padding-top:28px;display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+.close p{color:#999;max-width:44ch;line-height:1.6}
+.close .pill.s{border-color:rgba(255,255,255,.4);color:#f0f0f0}
+@media(max-width:900px){.hero .g,.anat .pin,.prow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div class="l"><a>Work</a><a class="on">Services</a><a>Pricing</a><a>About</a><a>Contact</a></div><a class="pill sm">Get an Estimate</a></nav>
+
+<section class="hero wrap">
+  <div class="g">
+    <div><p class="eyebrow a"><span class="tick"></span>Interface design</p><h1 style="margin-top:22px">Interface Design <em class="w">built to convert.</em></h1></div>
+    <div><p>We translate your offer into sharper hierarchy, clearer messaging and one direct path — so the site qualifies buyers before your team picks up the phone.</p><div class="btns"><a class="pill p">Request a Scope →</a><a class="pill s">See a Real Build →</a></div></div>
+  </div>
+</section>
+<div class="world" id="world"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt=""></div></div>
+
+<section class="anat" id="anat">
+  <div class="pin wrap">
+    <div>
+      <p class="eyebrow">01 — Anatomy of a screen</p>
+      <h2>Five decisions in <em class="w">one screen.</em></h2>
+      <div class="list">
+        <div class="li"><b>01</b><div><span>One idea leads</span><small>The headline carries the offer in eight words.</small></div></div>
+        <div class="li"><b>02</b><div><span>Proof before persuasion</span><small>Measured numbers sit where a claim would.</small></div></div>
+        <div class="li"><b>03</b><div><span>One primary action</span><small>A single filled button; everything else is secondary.</small></div></div>
+        <div class="li"><b>04</b><div><span>Contrast, measured</span><small>Every text pair checked against WCAG AA.</small></div></div>
+        <div class="li"><b>05</b><div><span>Quiet navigation</span><small>The bar informs; it never competes with the page.</small></div></div>
+      </div>
+    </div>
+    <div class="stage frame" id="stage"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt="">
+      <div class="box" style="left:2%;top:25%;width:46%;height:32%"><i>1</i></div>
+      <div class="box" style="left:2%;top:74%;width:96%;height:22%"><i>2</i></div>
+      <div class="box" style="left:2%;top:60%;width:16%;height:8%"><i>3</i></div>
+      <div class="box" style="left:50%;top:35%;width:30%;height:22%"><i>4</i></div>
+      <div class="box" style="left:1%;top:5%;width:98%;height:9%"><i>5</i></div>
+    </div>
+  </div>
+</section>
+
+<section class="modes band">
+  <div class="wrap">
+    <p class="eyebrow">02 — One system, every direction</p>
+    <h2>Light, dark, English, <em class="w">Arabic.</em></h2>
+    <div class="seg" id="seg"><button class="on" data-i="0">Light</button><button data-i="1">Dark</button><button data-i="2">العربية</button></div>
+    <div class="frame" id="modes"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt=""><img src="img/home-dark.jpg" alt="" style="opacity:0"><img src="img/home-ar.jpg" alt="" style="opacity:0"></div>
+  </div>
+</section>
+
+<section class="rows wrap">
+  <p class="eyebrow" style="margin:10vh 0 24px">03 — What the work covers</p>
+  <div class="prow"><h3>Conversion layouts</h3><p>Every page structure guides the visitor toward a specific action — not just presents information and hopes they decide.</p></div>
+  <div class="prow"><h3>User flow engineering</h3><p>We map journeys before designing screens, so every decision is grounded in how people actually navigate.</p></div>
+  <div class="prow"><h3>Identity system alignment</h3><p>Your identity extended into a consistent system — not a snapshot that drifts six months after launch.</p></div>
+  <div class="prow"><h3>Performance-aware design</h3><p>No bloated assets or motion for its own sake. Every decision measured by its impact on load time.</p></div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <p class="eyebrow a"><span class="tick"></span>Next step</p>
+    <h2>Need an interface that <em class="w">converts?</em></h2>
+    <div class="row"><p>We review your current design, find what suppresses conversion and map the next step — in a free 30-minute call.</p><div style="display:flex;gap:10px"><a class="pill p">Request a Scope →</a><a class="pill s">Book the call →</a></div></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="switch.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+gsap.from(".hero h1", { y: 40, opacity: 0, duration: 1.1, ease: "power4.out" });
+if (!reduce) gsap.fromTo("#world .frame", { y: 120, scale: .92 }, { y: 0, scale: 1, ease: "none", scrollTrigger: { trigger: "#world", start: "top bottom", end: "top 20%", scrub: .6 } });
+const boxes = gsap.utils.toArray(".box"), items = gsap.utils.toArray(".li");
+ScrollTrigger.create({ trigger: "#anat", start: "top top", end: "bottom bottom", onUpdate: s => {
+  const n = Math.floor(s.progress * 5.999);
+  boxes.forEach((b, i) => b.classList.toggle("on", i === n));
+  items.forEach((b, i) => b.classList.toggle("on", i <= n));
+}});
+const imgs = document.querySelectorAll("#modes img");
+document.querySelectorAll("#seg button").forEach(btn => btn.onclick = () => {
+  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x === btn));
+  imgs.forEach((im, i) => im.style.opacity = i == btn.dataset.i ? 1 : 0);
+});
+gsap.utils.toArray(".prow").forEach(r => gsap.from(r, { y: 30, opacity: 0, duration: .7, ease: "power3.out", scrollTrigger: { trigger: r, start: "top 90%" } }));
+</script>
+</body>
+</html>

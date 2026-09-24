@@ -1,9 +1,11 @@
 export type CommercialCtaKey =
+  | "describeTheBuild"
   | "projectRange"
   | "realBuild"
   | "technicalCall"
   | "technicalAudit"
   | "architecture"
+  | "maintenanceEnquiry"
   | "maintenancePlans"
   | "pricingEssential"
   | "pricingProfessional"
@@ -15,11 +17,16 @@ type CommercialCtaDefinition = {
 };
 
 const COMMERCIAL_CTAS: Record<CommercialCtaKey, CommercialCtaDefinition> = {
+  /* The one primary the site opens with a blank page rather than a calendar:
+     it asks what is being built instead of asking for a slot. */
+  describeTheBuild: { href: "/contact" },
   projectRange: { href: "/transparency" },
   realBuild: { href: "/work" },
   technicalCall: { href: "/schedule" },
   technicalAudit: { href: "/contact?service=consulting&package=audit" },
   architecture: { href: "/contact?service=development&track=architecture" },
+  /* The contact form reads `service` and preselects maintenance. */
+  maintenanceEnquiry: { href: "/contact?service=maintenance" },
   maintenancePlans: { href: "/services/maintenance#pricing" },
   pricingEssential: { href: "/transparency?tier=essential" },
   pricingProfessional: { href: "/transparency?tier=professional" },
@@ -30,29 +37,6 @@ const COMMERCIAL_CTAS: Record<CommercialCtaKey, CommercialCtaDefinition> = {
 export function getCommercialCta(key: CommercialCtaKey) {
   return COMMERCIAL_CTAS[key];
 }
-
-export const HOMEPAGE_OFFERS = [
-  {
-    id: "website",
-    detailHref: "/services/interface-design",
-    ctaKey: "projectRange" as const,
-  },
-  {
-    id: "portal",
-    detailHref: "/services/development",
-    ctaKey: "architecture" as const,
-  },
-  {
-    id: "audit",
-    detailHref: "/services/consulting",
-    ctaKey: "technicalAudit" as const,
-  },
-  {
-    id: "maintenance",
-    detailHref: "/services/maintenance",
-    ctaKey: "maintenancePlans" as const,
-  },
-];
 
 export const HOMEPAGE_SUPPORTING_CASE_STUDIES = [
   "newlight-lighting-store",

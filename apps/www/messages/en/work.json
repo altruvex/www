@@ -1,0 +1,53 @@
+{
+  "description": "<strong>Production builds you can inspect today</strong> - <dim>plus how we engineered this site as a live reference</dim>.",
+  "eyebrow": "04 - Selected Work",
+  "intro": {
+    "paragraph1": "<strong>Real builds in production</strong> means exactly that - sites with live traffic, real checkout flows, and real customers, not staging environments dressed up for a portfolio. Every project below shipped to a paying client and is still running today, which means the architecture had to survive contact with actual usage, not just a design review.",
+    "paragraph2": "Each case study breaks down the same way: the challenge we were actually solving, the approach and tech stack we chose and why, and the measurable results after launch. <dim>Open the live site alongside the write-up</dim> - inspect the network tab, check the Lighthouse score yourself - then read why we built it that way."
+  },
+  "labels": {
+    "approach": "Our approach",
+    "backLink": "Back to all work",
+    "caseStudy": "Case study",
+    "challenge": "The challenge",
+    "clientPersp": "Client perspective",
+    "footer": "Built on performance",
+    "integrity": "Integrity above all",
+    "liveProof": "Live proof",
+    "liveProofBody": "Two production builds are live today - inspect the sites, then read the case studies for scope and architecture.",
+    "liveSite": "Live site",
+    "notFoundBody": "The case study you are looking for does not exist or is not yet published.",
+    "notFoundTitle": "Case study not found",
+    "readCaseStudyWith": "Read the case study: {name}",
+    "results": "Results",
+    "techStack": "Tech stack",
+    "viewCaseStudy": "Read the Case Study",
+    "visitProj": "Visit project"
+  },
+  "projects": {
+    "project1": {
+      "category": "Web Engineering",
+      "link": "/work/altruvex-site",
+      "title": "Altruvex.com - The Site Itself Had to Be the Proof",
+      "year": "2025"
+    },
+    "project2": {
+      "category": "E-Commerce Store",
+      "link": "/work/newlight-lighting-store",
+      "title": "NewLight Lighting Store",
+      "year": "2024"
+    },
+    "project3": {
+      "category": "E-Commerce",
+      "link": "/work/art-lighting-store",
+      "title": "Art Lighting Store",
+      "year": "2024"
+    }
+  },
+  "projectsLabel": "Projects",
+  "selectedWork": "Selected work",
+  "subtitle": "Performance data, technical decisions, and what shifted after launch - not screenshots.",
+  "title": "Real builds.",
+  "titleItalic": "In production.",
+  "viewCaseStudy": "Read the Case Study"
+}

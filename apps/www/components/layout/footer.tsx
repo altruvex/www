@@ -33,7 +33,6 @@ export const Footer = memo(function Footer() {
       { href: "/services/development", label: t("development") },
       { href: "/services/consulting", label: t("consulting") },
       { href: "/services/maintenance", label: t("maintenance") },
-      { href: "/services/ecommerce", label: t("ecommerce") },
     ],
     [t],
   );
@@ -78,7 +77,7 @@ export const Footer = memo(function Footer() {
   const whatsappUrl = getWhatsAppUrl();
 
   return (
-    <footer className="relative w-full overflow-hidden border-t border-border bg-background">
+    <footer className="relative w-full overflow-hidden border-t border-border-subtle bg-background">
       <Container className="py-12 md:py-20">
         <div
           ref={beat0Ref}
@@ -101,7 +100,7 @@ export const Footer = memo(function Footer() {
                       <li key={label}>
                         <Link
                           href={href}
-                          className="text-sm font-medium leading-snug text-muted-foreground transition-all duration-200 hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
+                          className="text-sm font-medium leading-snug text-muted-foreground transition-all duration-(--motion-instant) hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
                         >
                           {label}
                         </Link>
@@ -127,7 +126,7 @@ export const Footer = memo(function Footer() {
             <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-medium">
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
+                className="text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
               >
                 {t("emailLabel")}: <bdi className="text-foreground">{SITE_CONFIG.email}</bdi>
               </a>
@@ -135,7 +134,7 @@ export const Footer = memo(function Footer() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground transition-all duration-200 hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
+                className="text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
               >
                 {t("whatsappLabel")}: <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
               </a>
@@ -144,10 +143,14 @@ export const Footer = memo(function Footer() {
         </div>
         <div
           ref={beat2Ref}
-          className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8"
+          className="flex flex-col gap-4 border-t border-border-subtle pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8"
         >
-          <div className="order-2 flex items-center gap-3 sm:order-1 opacity-70 transition-all hover:opacity-100">
-            <AltruvexLogo size="sm" variant="icon" />
+          {/* The fade sits on the mark only: on the whole row it multiplied
+              the muted copyright text down to 2.98:1, below AA. */}
+          <div className="group order-2 flex items-center gap-3 sm:order-1">
+            <span className="opacity-70 transition-opacity group-hover:opacity-100">
+              <AltruvexLogo size="sm" variant="icon" />
+            </span>
             <Eyebrow className="text-sm">
               {t("copyright", { year: localizedYear })}
             </Eyebrow>
@@ -158,7 +161,7 @@ export const Footer = memo(function Footer() {
                 <li key={label}>
                   <Link
                     href={href}
-                    className="eyebrow text-sm text-muted-foreground transition-all duration-200 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                    className="eyebrow text-sm text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm"
                   >
                     {label}
                   </Link>
@@ -170,4 +173,4 @@ export const Footer = memo(function Footer() {
       </Container>
     </footer>
   );
-});
+})

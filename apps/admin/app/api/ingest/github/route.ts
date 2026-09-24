@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma, type Product } from "@repo/database";
 
 import { integrationActor } from "@/lib/activity-log";
+import { claimDelivery } from "@/lib/webhook-delivery";
 import {
   GITHUB_DELIVERY_HEADER,
   GITHUB_EVENT_HEADER,
@@ -100,6 +101,12 @@ export async function POST(request: Request) {
 
   if (event === "ping") {
     return ok({ message: "Altruvex OS is listening." });
+  }
+
+  // Signed, but not necessarily new. A replayed delivery is answered 200 and
+  // applied nothing — GitHub retries on timeout, and a retry is not an error.
+  if (!(await claimDelivery("github", delivery))) {
+    return ok({ delivery, ignored: true, reason: "delivery already processed" });
   }
 
   let payload: unknown;

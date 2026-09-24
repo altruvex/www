@@ -7,12 +7,8 @@ import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
 import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
 import { contractDraft, ensureLink } from "@/lib/email-templates";
 import { readOptionalDraft } from "@/lib/read-draft";
-
-function toAbsoluteUrl(url: string, request: NextRequest): string {
-  if (/^https?:\/\//.test(url)) return url;
-  const base = process.env.BETTER_AUTH_URL || request.nextUrl.origin;
-  return `${base.replace(/\/$/, "")}${url}`;
-}
+import { toAbsoluteUrl } from "@/lib/public-url";
+import { signLinkExpiry } from "@/lib/sign-window";
 
 export async function POST(
   request: NextRequest,
@@ -73,7 +69,7 @@ export async function POST(
 
         const updated = await prisma.contract.update({
           where: { id: contract.id },
-          data: { status: "SENT" },
+          data: { status: "SENT", signTokenExpiresAt: signLinkExpiry() },
         });
 
         await recordChange({
@@ -121,7 +117,7 @@ export async function POST(
 
       const updated = await prisma.contract.update({
         where: { id: contract.id },
-        data: { status: "SENT" },
+        data: { status: "SENT", signTokenExpiresAt: signLinkExpiry() },
       });
 
       await recordChange({

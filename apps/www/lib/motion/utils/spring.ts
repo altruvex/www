@@ -17,7 +17,7 @@ import type { SpringConfig } from "../tokens";
  * GSAP's transform cache (composes with other tweens on the same element,
  * no per-frame allocation).
  */
-export interface Spring {
+interface Spring {
   /** Retarget, preserving current position + velocity. */
   set(target: number): void;
   /** Teleport to a value with zero velocity (no animation). */

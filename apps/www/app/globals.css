@@ -1,294 +1,90 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@repo/ui/styles";
-@source "../app*.{js,jsx,ts,tsx,mdx}";
-@source "../components*.{js,jsx,ts,tsx,mdx}";
-@source "../lib*.{js,jsx,ts,tsx}";
+@source "../app/**/*.{js,jsx,ts,tsx,mdx}";
+@source "../components/**/*.{js,jsx,ts,tsx,mdx}";
+@source "../lib/**/*.{js,jsx,ts,tsx}";
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-success: hsl(var(--success));
-  --color-warning: hsl(var(--warning));
-  --color-error: hsl(var(--error));
-  --color-border: hsl(var(--border));
-  --color-border-mid: hsl(var(--border-mid));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-focus-ring: hsl(var(--focus-ring));
-  --color-surface: hsl(var(--surface));
-
-  --color-brand: hsl(var(--brand));
-  --color-brand-hover: hsl(var(--brand-hover));
-  --color-brand-text: hsl(var(--brand-text));
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-foreground: hsl(var(--brand-foreground));
-
-  --color-s-high: var(--s-high);
-  --color-s-mid: var(--s-mid);
-  --color-s-low: var(--s-low);
-  --color-s-muted: var(--s-muted);
-  --color-s-surface: var(--s-surface);
-  --color-s-border: var(--s-border);
-  --color-s-border-hover: var(--s-border-hover);
-  --color-s-high-soft: var(--s-high-soft);
-
-  --color-n-0: hsl(var(--n-0));
-  --color-n-1: hsl(var(--n-1));
-  --color-n-2: hsl(var(--n-2));
-  --color-n-3: hsl(var(--n-3));
-  --color-n-4: hsl(var(--n-4));
-  --color-n-5: hsl(var(--n-5));
-  --color-n-6: hsl(var(--n-6));
-  --color-n-7: hsl(var(--n-7));
-  --color-n-8: hsl(var(--n-8));
-
+  /* The palette is packages/ui/src/styles/tokens.css. Only what exists on
+     the site alone is declared here: scenes, color worlds, gradients. */
+  --color-inverted-bg: hsl(var(--inverted-bg));
   --color-local-accent: var(--local-accent);
   --color-local-accent-fg: var(--local-accent-fg);
   --color-local-accent-soft: var(--local-accent-soft);
   --color-local-accent-text: var(--local-accent-text);
 
-  --color-logo-wordmark: hsl(var(--logo-wordmark));
-  --color-logo-tagline: hsl(var(--logo-tagline));
-  --color-inverted-bg: hsl(var(--inverted-bg));
-  --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
-  --color-messaging-whatsapp-fg: hsl(var(--messaging-whatsapp-fg));
-  --color-selection-accent: hsl(var(--selection-accent));
-  --color-text-inverse: hsl(var(--text-inverse));
-
-  --shadow-card: var(--elevation-card);
-  --shadow-card-lg: var(--elevation-card-lg);
-  --shadow-overlay: var(--elevation-overlay);
-  --shadow-glow-sm: var(--elevation-glow-sm);
-  --shadow-glow: var(--elevation-glow);
-
-  --font-sans: var(--font-outfit);
-  --font-body: var(--font-inter);
-  --font-mono:
-    var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
   --font-serif: Georgia, "Times New Roman", serif;
 
-  --radius-xs: calc(var(--radius) - 8px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 6px);
-  --radius-xl: calc(var(--radius) + 12px);
-  --radius-2xl: calc(var(--radius) + 18px);
   --radius-3xl: calc(var(--radius) + 24px);
 
-  --radius-ctl-sm: calc(var(--radius) - 4px);
-  --radius-ctl: var(--radius);
-  --radius-ctl-lg: calc(var(--radius) + 2px);
-  --radius-ctl-xl: calc(var(--radius) + 4px);
-  --radius-surface: var(--radius-lg);
-  --radius-overlay: var(--radius-xl);
-  --radius-section: var(--radius-2xl);
-  --radius-nested: var(--radius-sm);
+  /* Control family — keyed to control HEIGHT (design.md §6.1). ctl-xs is for
+     elements under 24px tall (keys, inline code, tags, glyphs). */
+  --radius-ctl-xs: calc(var(--radius) - 12px);
 
-  --animate-slide-down: slide-down 1.8s var(--ease-smooth) infinite;
-  --animate-ripple: ripple 0.6s ease-out forwards;
-  --animate-services-rail: services-rail-slide 0.8s var(--ease-strong) forwards;
-  --animate-step-in: step-in 0.35s var(--ease-default) both;
+  /* Panel family — Container (A) and Grid (C) outer edges, keyed to ROLE:
+     card → sm, overlay/popover → md, large block/tile → lg. Kept apart from
+     the ctl-* family on purpose. Concentric rule, where a child sits in the
+     corner and padding < radius: inner = outer − padding. */
+  --radius-panel-sm: calc(var(--radius) + 6px);
+  --radius-panel-md: calc(var(--radius) + 12px);
+  --radius-panel-lg: calc(var(--radius) + 18px);
+  /* The one inset that occurs: a panel-sm padded 1rem. */
+  --radius-panel-inset: calc(var(--radius-panel-sm) - 1rem);
+
   --animate-text-gradient: text-gradient 6s linear infinite;
   --animate-brand-kenburns: brand-kenburns 24s var(--ease-smooth) forwards;
-  --animate-edge-sweep: edge-sweep 1.15s var(--ease-strong) both;
+  --animate-edge-sweep: edge-sweep var(--motion-display) var(--ease-strong) both;
 
-  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* A bare `transition` takes the house hover timing, not Tailwind's 150ms. */
+  --default-transition-duration: var(--motion-hover);
+  --default-transition-timing-function: var(--ease-default);
 }
 
 :root {
-  color-scheme: light;
-
-  --duration-instant: 120ms;
+  --motion-hover: 150ms;
+  --motion-instant: 200ms;
+  --motion-drawer: 300ms;
+  --motion-fast: 400ms;
+  --motion-base: 700ms;
+  --motion-display: 1100ms;
   --radius: 1rem;
-
-  --measure-prose: 66ch;
-  --measure-narrow: 45ch;
-  --measure-wide: 75ch;
-
   --text-body-base: clamp(17px, 1.05vw, 18px);
-  --text-label: 12px;
-  --text-caption: 11px;
   --leading-body: 1.75;
-
-  --font-inter:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-outfit:
-    "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-geist-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
   --font-vazirmatn: "Vazirmatn", sans-serif;
-
   --section-y-top: clamp(5rem, 10vh, 8rem);
   --section-y-bottom: clamp(5rem, 14vh, 10rem);
 
-  --n-0: 0 0% 98%;
-  --n-1: 0 0% 96%;
-  --n-2: 0 0% 91%;
-  --n-3: 0 0% 84%;
-  --n-4: 0 0% 65%;
-  --n-5: 0 0% 45%;
-  --n-6: 0 0% 32%;
-  --n-7: 0 0% 18%;
-  --n-8: 0 0% 6%;
-
-  --background: var(--n-0);
-  --foreground: var(--n-8);
+  /* The ground an inverted scene paints (flips to paper in dark, below). */
   --inverted-bg: 0 0% 9%;
 
-  --surface: 0 0% 94%;
-  --card: 0 0% 100%;
-  --card-foreground: var(--n-8);
-  --popover: 0 0% 100%;
-  --popover-foreground: var(--n-8);
-
-  --primary: var(--n-8);
-  --primary-foreground: var(--n-0);
-  --secondary: 0 0% 94%;
-  --secondary-foreground: 0 0% 25%;
-  --muted: 0 0% 91%;
-  --muted-foreground: 0 0% 40%;
-
-  --brand: 214 89% 48%;
-  --brand-hover: 214 89% 41%;
-  --brand-text: 214 90% 43%;
-  --brand-soft: hsl(var(--brand) / 0.07);
-  --brand-foreground: 0 0% 98%;
-
-  --accent: var(--brand);
-  --accent-foreground: var(--brand-foreground);
-
+  /* A section's color world. With no accent-world-* class it is the brand. */
   --local-accent: hsl(var(--brand));
   --local-accent-fg: hsl(var(--brand-foreground));
   --local-accent-soft: var(--brand-soft);
   --local-accent-text: hsl(var(--brand-text));
-
-  --success: 162 95% 31%;
-  --warning: 38 96% 40%;
-  --error: 0 65% 51%;
-  --destructive: var(--error);
-
-  --border: 0 0% 6% / 0.1;
-  --border-mid: 0 0% 6% / 0.18;
-  --input: 0 0% 94%;
-  --ring: var(--brand);
-  --focus-ring: var(--ring);
-
-  --s-high: hsl(0 0% 6% / 0.9);
-  --s-mid: hsl(0 0% 6% / 0.72);
-  --s-low: hsl(0 0% 6% / 0.52);
-  --s-muted: hsl(0 0% 6% / 0.4);
-  --s-surface: hsl(0 0% 6% / 0.04);
-  --s-border: hsl(0 0% 6% / 0.1);
-  --s-border-hover: hsl(0 0% 6% / 0.18);
-  --s-high-soft: hsl(0 0% 6% / 0.03);
-
-  --tech-accent-nextjs: 239 84% 74%;
-  --tech-accent-react: 187 85% 53%;
-  --tech-accent-typescript: 217 91% 60%;
-  --tech-accent-nodejs: 142 69% 58%;
-  --tech-accent-postgresql: 213 94% 68%;
-  --tech-accent-prisma: 258 90% 76%;
-  --tech-accent-tailwind: 187 85% 53%;
-  --tech-accent-vercel: 240 5% 90%;
-  --tech-accent-vps: 215 16% 65%;
-
-  --logo-wordmark: var(--n-8);
-  --logo-tagline: 0 0% 40%;
-  --selection-accent: var(--brand);
-  --messaging-whatsapp: 142 70% 28%;
-  --messaging-whatsapp-fg: 0 0% 98%;
-  --text-inverse: var(--n-0);
-
-  --elevation-card:
-    0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
-
-  --elevation-card-lg:
-    0 2px 4px hsl(0 0% 0% / 0.03), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
-
-  --elevation-overlay:
-    0 2px 4px hsl(0 0% 0% / 0.02), 0 32px 64px -28px hsl(0 0% 0% / 0.22);
-
-  --elevation-glow-sm: 0 0 8px hsl(var(--brand) / 0.28);
-  --elevation-glow: 0 0 24px hsl(var(--brand) / 0.32);
 }
 
 .dark {
-  color-scheme: dark;
+  --inverted-bg: var(--n-0);
+}
 
-  --background: 0 0% 7%;
-  --foreground: 0 0% 94%;
-  --inverted-bg: 0 0% 98%;
-
-  --surface: 0 0% 11%;
-  --card: 0 0% 9%;
-  --card-foreground: 0 0% 94%;
-  --popover: 0 0% 9%;
-  --popover-foreground: 0 0% 94%;
-
-  --primary: 0 0% 94%;
-  --primary-foreground: 0 0% 7%;
-  --secondary: 0 0% 14%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 58%;
-
-  --border: 0 0% 100% / 0.08;
-  --border-mid: 0 0% 100% / 0.14;
-  --input: 0 0% 100% / 0.06;
-  --ring: var(--brand);
-
-  --brand-text: 214 95% 64%;
-  --logo-wordmark: 0 0% 94%;
-  --logo-tagline: 0 0% 58%;
-
-  --s-high: hsl(0 0% 98% / 0.9);
-  --s-mid: hsl(0 0% 98% / 0.72);
-  --s-low: hsl(0 0% 98% / 0.52);
-  --s-muted: hsl(0 0% 98% / 0.4);
-  --s-surface: hsl(0 0% 98% / 0.05);
-  --s-border: hsl(0 0% 98% / 0.1);
-  --s-border-hover: hsl(0 0% 98% / 0.18);
-  --s-high-soft: hsl(0 0% 98% / 0.04);
-
-  --messaging-whatsapp: 142 70% 49%;
-  --messaging-whatsapp-fg: 0 0% 12%;
-
-  --elevation-card:
-    0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
-
-  --elevation-card-lg:
-    0 2px 6px hsl(0 0% 0% / 0.35), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
-
-  --elevation-overlay:
-    0 2px 6px hsl(0 0% 0% / 0.3), 0 36px 72px -28px hsl(0 0% 0% / 0.75);
+[data-scene="inverted"]:not(header) {
+  background-color: hsl(var(--inverted-bg));
 }
 
 [data-scene="inverted"] {
-  background-color: hsl(var(--inverted-bg));
+  color-scheme: dark;
+
+  --background: var(--inverted-bg);
 
   --foreground: 0 0% 94%;
   --primary: 0 0% 94%;
   --primary-foreground: 0 0% 7%;
-  --brand-text: 214 95% 64%;
+  --brand-text: var(--brand-text-on-dark);
 
   --card: 0 0% 12%;
   --card-foreground: 0 0% 94%;
@@ -310,20 +106,23 @@
   --s-muted: hsl(0 0% 100% / 0.22);
   --s-surface: hsl(0 0% 100% / 0.04);
   --s-border: hsl(0 0% 100% / 0.08);
+  --border-subtle: var(--s-border);
   --s-border-hover: hsl(0 0% 100% / 0.16);
   --s-high-soft: hsl(0 0% 100% / 0.025);
 }
 
-.dark [data-scene="inverted"]:not(header):not(#services-wrapper) {
-  --foreground: 0 0% 6%;
-  --primary: 0 0% 6%;
-  --primary-foreground: 0 0% 98%;
-  --brand-text: 214 90% 43%;
+.dark [data-scene="inverted"]:not(header):not(#services-wrapper):not([data-scene-lock="dark"]) {
+  color-scheme: light;
+
+  --foreground: var(--n-8);
+  --primary: var(--n-8);
+  --primary-foreground: var(--n-0);
+  --brand-text: var(--brand-text-on-light);
 
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 6%;
+  --card-foreground: var(--n-8);
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 6%;
+  --popover-foreground: var(--n-8);
   --surface: 0 0% 94%;
   --secondary: 0 0% 94%;
   --secondary-foreground: 0 0% 25%;
@@ -331,69 +130,156 @@
   --muted-foreground: 0 0% 40%;
   --input: 0 0% 94%;
 
-  --border: 0 0% 6% / 0.12;
-  --border-mid: 0 0% 6% / 0.2;
+  --border: var(--n-8) / 0.12;
+  --border-mid: var(--n-8) / 0.2;
 
-  --s-high: hsl(0 0% 6% / 0.9);
-  --s-mid: hsl(0 0% 6% / 0.72);
-  --s-low: hsl(0 0% 6% / 0.52);
-  --s-muted: hsl(0 0% 6% / 0.4);
-  --s-surface: hsl(0 0% 6% / 0.04);
-  --s-border: hsl(0 0% 6% / 0.1);
-  --s-border-hover: hsl(0 0% 6% / 0.18);
-  --s-high-soft: hsl(0 0% 6% / 0.03);
+  --s-high: hsl(var(--n-8) / 0.9);
+  --s-mid: hsl(var(--n-8) / 0.72);
+  --s-low: hsl(var(--n-8) / 0.52);
+  --s-muted: hsl(var(--n-8) / 0.4);
+  --s-surface: hsl(var(--n-8) / 0.04);
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --s-border-hover: hsl(var(--n-8) / 0.18);
+  --s-high-soft: hsl(var(--n-8) / 0.03);
+}
+#services-wrapper[data-scene="inverted"],
+header[data-scene="inverted"] {
+  color-scheme: dark;
+
+  --inverted-bg: 0 0% 9%;
+  --background: 0 0% 9%;
+  --foreground: 0 0% 95%;
+  --primary: 0 0% 95%;
+  --primary-foreground: 0 0% 8%;
+  --brand-text: var(--brand-text-on-dark);
+
+  --card: 0 0% 14%;
+  --card-foreground: 0 0% 95%;
+  --popover: 0 0% 14%;
+  --popover-foreground: 0 0% 95%;
+  --surface: 0 0% 13%;
+  --secondary: 0 0% 16%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 18%;
+  --muted-foreground: 0 0% 62%;
+  --input: 0 0% 100% / 0.08;
+
+  --border: 0 0% 100% / 0.12;
+  --border-mid: 0 0% 100% / 0.18;
+
+  --s-high: hsl(0 0% 100% / 0.92);
+  --s-mid: hsl(0 0% 100% / 0.6);
+  --s-low: hsl(0 0% 100% / 0.4);
+  --s-muted: hsl(0 0% 100% / 0.26);
+  --s-surface: hsl(0 0% 100% / 0.05);
+  --s-border: hsl(0 0% 100% / 0.1);
+  --border-subtle: var(--s-border);
+  --s-border-hover: hsl(0 0% 100% / 0.2);
+  --s-high-soft: hsl(0 0% 100% / 0.035);
+
+  --local-accent: hsl(var(--brand));
+  --local-accent-text: hsl(var(--brand-text-on-dark));
+  --local-accent-fg: hsl(0 0% 7%);
+  --local-accent-soft: hsl(var(--brand) / 0.12);
+  --ring: var(--brand);
+
+  /* Scene reads dark here, so liquid glass panels inside it use the dark
+     glass tokens regardless of the site's own light/dark theme. */
+  --glass-background: hsl(0 0% 10% / 0.65);
+  --glass-background-strong: hsl(0 0% 12% / 0.75);
+  --glass-background-flat: hsl(0 0% 8% / 0.5);
+  --glass-border: hsl(0 0% 100% / 0.12);
+  --glass-highlight: hsl(0 0% 100% / 0.1);
+  --glass-shadow: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
 }
 
-#services-wrapper[data-scene="inverted"] {
-  background-color: hsl(217 46% 14%);
-
-  --inverted-bg: 217 42% 12%;
-  --foreground: 210 32% 95%;
-  --primary: 210 32% 95%;
-  --primary-foreground: 217 46% 14%;
-  --brand-text: 205 90% 74%;
-
-  --card: 217 40% 16%;
-  --card-foreground: 210 32% 95%;
-  --popover: 217 40% 16%;
-  --popover-foreground: 210 32% 95%;
-  --surface: 217 36% 18%;
-  --secondary: 217 30% 22%;
-  --secondary-foreground: 210 24% 90%;
-  --muted: 217 26% 25%;
-  --muted-foreground: 210 20% 76%;
-  --input: 210 30% 90% / 0.08;
-
-  --border: 210 30% 88% / 0.14;
-  --border-mid: 210 30% 88% / 0.22;
-
-  --s-high: hsl(210 35% 97% / 0.94);
-  --s-mid: hsl(212 24% 86% / 0.66);
-  --s-low: hsl(213 20% 80% / 0.46);
-  --s-muted: hsl(213 16% 76% / 0.3);
-  --s-surface: hsl(213 30% 88% / 0.06);
-  --s-border: hsl(210 26% 82% / 0.13);
-  --s-border-hover: hsl(213 30% 88% / 0.26);
-  --s-high-soft: hsl(213 30% 90% / 0.04);
-
-  --local-accent: hsl(205 92% 66%);
-  --local-accent-text: hsl(205 92% 74%);
-  --local-accent-fg: hsl(217 50% 13%);
-  --local-accent-soft: hsl(205 92% 66% / 0.12);
-  --ring: 205 92% 66%;
+/* An island locked dark stays dark in both themes (the /services/development
+   close). In the dark theme the root's --inverted-bg is the bright value, so
+   the island restores the dark ground it paints from; every other token it
+   uses comes from the base [data-scene="inverted"] block, which the flip rule
+   above now skips for it. */
+.dark [data-scene="inverted"][data-scene-lock="dark"] {
+  --inverted-bg: 0 0% 9%;
 }
 
-#services-wrapper[data-scene="inverted"] .accent-world-orange {
-  --local-accent: hsl(30 95% 65%);
-  --local-accent-text: hsl(30 95% 72%);
-  --local-accent-fg: hsl(24 90% 12%);
-  --local-accent-soft: hsl(30 95% 65% / 0.14);
+/* The site is already dark, so this scene inverts the other way: a bright
+   scene, and glass panels switch to the light glass tokens to match it. */
+.dark #services-wrapper[data-scene="inverted"],
+.dark header[data-scene="inverted"] {
+  color-scheme: light;
+
+  --inverted-bg: 0 0% 97%;
+  --background: 0 0% 97%;
+  --foreground: var(--n-8);
+  --primary: var(--n-8);
+  --primary-foreground: var(--n-0);
+  --brand-text: var(--brand-text-on-light);
+
+  --card: 0 0% 100%;
+  --card-foreground: var(--n-8);
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--n-8);
+  --surface: 0 0% 94%;
+  --secondary: 0 0% 92%;
+  --secondary-foreground: 0 0% 25%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 40%;
+  --input: 0 0% 94%;
+
+  --border: var(--n-8) / 0.1;
+  --border-mid: var(--n-8) / 0.18;
+
+  --s-high: hsl(var(--n-8) / 0.9);
+  --s-mid: hsl(var(--n-8) / 0.72);
+  --s-low: hsl(var(--n-8) / 0.52);
+  --s-muted: hsl(var(--n-8) / 0.4);
+  --s-surface: hsl(var(--n-8) / 0.04);
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --s-border-hover: hsl(var(--n-8) / 0.18);
+  --s-high-soft: hsl(var(--n-8) / 0.03);
+
+  --local-accent: hsl(var(--brand));
+  --local-accent-text: hsl(var(--brand-text-on-light));
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(var(--brand) / 0.08);
+  --ring: var(--brand);
+
+  --glass-background: hsl(0 0% 100% / 0.75);
+  --glass-background-strong: hsl(0 0% 100% / 0.85);
+  --glass-background-flat: hsl(0 0% 100% / 0.6);
+  --glass-border: hsl(0 0% 0% / 0.08);
+  --glass-highlight: hsl(0 0% 100% / 0.6);
+  --glass-shadow: 0 4px 24px -8px hsl(0 0% 0% / 0.08);
+}
+
+/* ── Color worlds ──────────────────────────────────────────────────────
+   A section scopes its accent with accent-world-{blue|orange|green|violet|cyan}.
+   Blue/orange/green carry a job site-wide (brand / action / proof); violet
+   and cyan carry a discipline and appear on /services only (violet =
+   interface design, cyan = consulting). Values are measured, not picked:
+   --local-accent clears AA both as text on the page background and as a
+   fill under --local-accent-fg, in light and dark. */
+
+.accent-world-blue {
+  --local-accent: hsl(var(--brand-text-on-light));
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(var(--brand-text-on-light) / 0.07);
+}
+
+.dark .accent-world-blue {
+  --local-accent: hsl(var(--brand));
+  --local-accent-text: hsl(var(--brand-text-on-dark));
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(var(--brand) / 0.1);
 }
 
 .accent-world-orange {
   --local-accent: hsl(27 90% 35%);
   --local-accent-text: var(--local-accent);
-  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-fg: hsl(var(--n-0));
   --local-accent-soft: hsl(27 90% 35% / 0.08);
 }
 
@@ -404,10 +290,17 @@
   --local-accent-soft: hsl(27 78% 61% / 0.1);
 }
 
+#services-wrapper[data-scene="inverted"] .accent-world-orange {
+  --local-accent: hsl(30 95% 65%);
+  --local-accent-text: hsl(30 95% 72%);
+  --local-accent-fg: hsl(24 90% 12%);
+  --local-accent-soft: hsl(30 95% 65% / 0.14);
+}
+
 .accent-world-green {
   --local-accent: hsl(158 64% 30%);
   --local-accent-text: var(--local-accent);
-  --local-accent-fg: hsl(0 0% 98%);
+  --local-accent-fg: hsl(var(--n-0));
   --local-accent-soft: hsl(158 64% 30% / 0.08);
 }
 
@@ -418,80 +311,140 @@
   --local-accent-soft: hsl(158 36% 49% / 0.1);
 }
 
-.accent-world-blue {
-  --local-accent: hsl(214 90% 43%);
+.accent-world-violet {
+  --local-accent: hsl(272 72% 55%);
   --local-accent-text: var(--local-accent);
-  --local-accent-fg: hsl(0 0% 98%);
-  --local-accent-soft: hsl(214 90% 43% / 0.07);
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(272 72% 55% / 0.08);
 }
 
-.dark .accent-world-blue {
-  --local-accent: hsl(214 89% 48%);
-  --local-accent-text: hsl(214 95% 64%);
-  --local-accent-fg: hsl(0 0% 98%);
-  --local-accent-soft: hsl(214 89% 48% / 0.1);
+.dark .accent-world-violet {
+  --local-accent: hsl(268 88% 74%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(268 88% 74% / 0.1);
 }
 
-/* World-native gradient. `<Accent gradient="world">` / `<SectionHeading accent="world">`
-   read these, so a coloured heading always wears the world of the section it sits in
-   (blue = brand, orange = ember, green = forest). Explicit gradient names stay available
-   for the documented alternates - see docs/section-heading-emphasis.md. */
+.accent-world-cyan {
+  --local-accent: hsl(194 88% 31%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(194 88% 31% / 0.08);
+}
+
+.dark .accent-world-cyan {
+  --local-accent: hsl(190 80% 44%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(190 80% 44% / 0.1);
+}
+
+/* An inverted island (a dark panel inside a light page) needs the dark accent,
+   or the hairline it draws disappears into the panel. Both nesting orders are
+   listed because both occur: the island can sit inside the world (consulting's
+   audit panel) or carry the world itself. Only the discipline worlds are
+   here - blue, orange and green predate this and keep whatever their own
+   sections already resolved, so nothing that ships today moves. */
+[data-scene="inverted"] .accent-world-violet,
+.accent-world-violet [data-scene="inverted"] {
+  --local-accent: hsl(268 88% 74%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(268 88% 74% / 0.14);
+}
+
+[data-scene="inverted"] .accent-world-cyan,
+.accent-world-cyan [data-scene="inverted"] {
+  --local-accent: hsl(190 80% 52%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(190 80% 52% / 0.14);
+}
+
+/* ── Gradient accents (design.md §3.4) ────────────────────────────────
+   Emphasis text paints from --grad-from → --grad-via → --grad-to. A named
+   gradient (`accent-iris`, `<Mark gradient="ember">`) sets them on the text
+   itself. A world section sets them on the section, so `<Accent
+   gradient="world">` inherits the gradient of the world it sits in: the blue
+   world IS the brand gradient, orange IS ember, green IS forest — one
+   definition each, not a copy per world. Outside any world, the root carries
+   the brand gradient. */
+
+:root,
+.accent-brand,
 .accent-world-blue {
-  --world-grad-from: hsl(214 90% 44%);
-  --world-grad-via: hsl(224 84% 50%);
-  --world-grad-to: hsl(236 80% 56%);
-}
-
-.dark .accent-world-blue,
-[data-scene="inverted"] .accent-world-blue {
-  --world-grad-from: hsl(210 95% 62%);
-  --world-grad-via: hsl(222 92% 66%);
-  --world-grad-to: hsl(234 88% 70%);
-}
-
-.accent-world-orange {
-  --world-grad-from: hsl(36 94% 46%);
-  --world-grad-via: hsl(24 92% 48%);
-  --world-grad-to: hsl(12 88% 50%);
-}
-
-.dark .accent-world-orange,
-[data-scene="inverted"] .accent-world-orange {
-  --world-grad-from: hsl(40 96% 60%);
-  --world-grad-via: hsl(26 96% 60%);
-  --world-grad-to: hsl(14 92% 60%);
-}
-
-.accent-world-green {
-  --world-grad-from: hsl(162 70% 34%);
-  --world-grad-via: hsl(152 62% 38%);
-  --world-grad-to: hsl(168 72% 36%);
-}
-
-.dark .accent-world-green,
-[data-scene="inverted"] .accent-world-green {
-  --world-grad-from: hsl(156 54% 52%);
-  --world-grad-via: hsl(148 46% 54%);
-  --world-grad-to: hsl(170 58% 50%);
-}
-
-.accent-world {
-  --grad-from: var(--world-grad-from, hsl(214 90% 44%));
-  --grad-via: var(--world-grad-via, hsl(224 84% 50%));
-  --grad-to: var(--world-grad-to, hsl(236 80% 56%));
-}
-
-.accent-brand {
   --grad-from: hsl(214 90% 44%);
   --grad-via: hsl(224 84% 50%);
   --grad-to: hsl(236 80% 56%);
 }
 
 .dark .accent-brand,
-[data-scene="inverted"] .accent-brand {
+[data-scene="inverted"] .accent-brand,
+.dark .accent-world-blue,
+[data-scene="inverted"] .accent-world-blue {
   --grad-from: hsl(210 95% 62%);
   --grad-via: hsl(222 92% 66%);
   --grad-to: hsl(234 88% 70%);
+}
+
+.accent-ember,
+.accent-world-orange {
+  --grad-from: hsl(36 94% 46%);
+  --grad-via: hsl(24 92% 48%);
+  --grad-to: hsl(12 88% 50%);
+}
+
+.dark .accent-ember,
+[data-scene="inverted"] .accent-ember,
+.dark .accent-world-orange,
+[data-scene="inverted"] .accent-world-orange {
+  --grad-from: hsl(40 96% 60%);
+  --grad-via: hsl(26 96% 60%);
+  --grad-to: hsl(14 92% 60%);
+}
+
+.accent-forest,
+.accent-world-green {
+  --grad-from: hsl(162 70% 34%);
+  --grad-via: hsl(152 62% 38%);
+  --grad-to: hsl(168 72% 36%);
+}
+
+.dark .accent-forest,
+[data-scene="inverted"] .accent-forest,
+.dark .accent-world-green,
+[data-scene="inverted"] .accent-world-green {
+  --grad-from: hsl(156 54% 52%);
+  --grad-via: hsl(148 46% 54%);
+  --grad-to: hsl(170 58% 50%);
+}
+
+.accent-world-violet {
+  --grad-from: hsl(262 78% 52%);
+  --grad-via: hsl(272 74% 55%);
+  --grad-to: hsl(284 68% 53%);
+}
+
+.dark .accent-world-violet,
+[data-scene="inverted"] .accent-world-violet,
+.accent-world-violet [data-scene="inverted"] {
+  --grad-from: hsl(260 92% 72%);
+  --grad-via: hsl(270 90% 74%);
+  --grad-to: hsl(282 84% 74%);
+}
+
+.accent-world-cyan {
+  --grad-from: hsl(186 92% 27%);
+  --grad-via: hsl(194 88% 30%);
+  --grad-to: hsl(202 84% 34%);
+}
+
+.dark .accent-world-cyan,
+[data-scene="inverted"] .accent-world-cyan,
+.accent-world-cyan [data-scene="inverted"] {
+  --grad-from: hsl(184 78% 46%);
+  --grad-via: hsl(192 80% 48%);
+  --grad-to: hsl(202 84% 54%);
 }
 
 .accent-iris {
@@ -520,19 +473,6 @@
   --grad-to: hsl(220 90% 66%);
 }
 
-.accent-ember {
-  --grad-from: hsl(36 94% 46%);
-  --grad-via: hsl(24 92% 48%);
-  --grad-to: hsl(12 88% 50%);
-}
-
-.dark .accent-ember,
-[data-scene="inverted"] .accent-ember {
-  --grad-from: hsl(40 96% 60%);
-  --grad-via: hsl(26 96% 60%);
-  --grad-to: hsl(14 92% 60%);
-}
-
 .accent-sunset {
   --grad-from: hsl(30 94% 48%);
   --grad-via: hsl(10 86% 54%);
@@ -544,19 +484,6 @@
   --grad-from: hsl(34 96% 62%);
   --grad-via: hsl(12 92% 64%);
   --grad-to: hsl(342 88% 68%);
-}
-
-.accent-forest {
-  --grad-from: hsl(162 70% 34%);
-  --grad-via: hsl(152 62% 38%);
-  --grad-to: hsl(168 72% 36%);
-}
-
-.dark .accent-forest,
-[data-scene="inverted"] .accent-forest {
-  --grad-from: hsl(156 54% 52%);
-  --grad-via: hsl(148 46% 54%);
-  --grad-to: hsl(170 58% 50%);
 }
 
 .accent-aurora {
@@ -625,9 +552,7 @@
 }
 
 .accent-glow {
-  filter: drop-shadow(
-    0 0 18px color-mix(in oklch, var(--grad-via) 42%, transparent)
-  );
+  filter: drop-shadow(0 0 18px color-mix(in oklch, var(--grad-via) 42%, transparent));
 }
 
 [data-accent-grad] .m-word,
@@ -640,17 +565,10 @@
   -webkit-text-fill-color: transparent;
 }
 
-header[data-scene="inverted"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.12) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.2),
-    0 8px 32px rgba(0, 0, 0, 0.4) !important;
+[data-accent-italic] .m-word,
+[data-accent-italic] .m-char {
+  padding-inline-end: 0.1em;
+  margin-inline-end: -0.1em;
 }
 
 @layer base {
@@ -671,7 +589,7 @@ header[data-scene="inverted"] {
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-mid) transparent;
+    scrollbar-color: hsl(var(--border-mid)) transparent;
   }
 
   *:focus-visible {
@@ -701,21 +619,13 @@ header[data-scene="inverted"] {
     -moz-osx-font-smoothing: grayscale;
   }
 
-  .dark body {
-    background-image: radial-gradient(
-      ellipse 60% 30% at 50% 0%,
-      hsl(var(--brand) / 0.06),
-      transparent
-    );
-  }
-
   main {
     opacity: 1;
     visibility: visible;
   }
 
   [data-initial-load="complete"] main {
-    transition: opacity 0.35s var(--ease-smooth);
+    transition: opacity var(--motion-drawer) var(--ease-smooth);
   }
 
   [data-watermark]::after {
@@ -807,15 +717,6 @@ html.lenis body {
 }
 
 @layer components {
-  .display {
-    font-family: var(--font-outfit), sans-serif;
-    font-size: clamp(3rem, 6vw, 5.5rem);
-    line-height: 1;
-    letter-spacing: -0.04em;
-    font-weight: 700;
-    text-wrap: balance;
-  }
-
   .eyebrow {
     font-family:
       var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
@@ -825,20 +726,6 @@ html.lenis body {
     text-transform: uppercase;
   }
 
-  .label {
-    font-size: var(--text-label);
-    line-height: 1.4;
-    font-weight: 500;
-    letter-spacing: 0.01em;
-  }
-
-  .caption {
-    font-size: var(--text-caption);
-    line-height: 1.5;
-    font-weight: 400;
-    color: hsl(var(--muted-foreground));
-  }
-
   .section-title {
     font-size: clamp(28px, 4.5vw, 52px);
     line-height: 1.08;
@@ -846,37 +733,14 @@ html.lenis body {
     text-wrap: balance;
   }
 
-  [dir="rtl"] .display,
   [dir="rtl"] .eyebrow {
     font-family: var(--font-vazirmatn), sans-serif;
     letter-spacing: 0;
-  }
-
-  [dir="rtl"] .eyebrow {
     text-transform: none;
   }
 }
 
 @layer utilities {
-  .paused {
-    animation-play-state: paused;
-  }
-
-  .running {
-    animation-play-state: running;
-  }
-
-  .grain-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.03;
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
-  }
-
   *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -887,69 +751,25 @@ html.lenis body {
   }
 
   *::-webkit-scrollbar-thumb {
-    background: var(--border-mid);
+    background: hsl(var(--border-mid));
     border-radius: 9999px;
   }
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .grain-overlay {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-@keyframes slide-down {
-  0% {
-    transform: translateY(-100%);
-  }
-
+@keyframes instrumentProgress {
+  0%,
   100% {
-    transform: translateY(200%);
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: translate(-50%, -50%) scale(0.01);
-    opacity: 0.3;
-  }
-
-  100% {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-120%);
     opacity: 0;
   }
-}
 
-@keyframes services-rail-slide {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes step-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
+  35% {
     opacity: 1;
-    transform: translateY(0);
+  }
+
+  70% {
+    transform: translateX(220%);
+    opacity: 0;
   }
 }
 
@@ -963,11 +783,6 @@ html.lenis body {
   }
 }
 
-/* One-shot highlight travelling along a rule, used to mark the moment a panel
-   settles. Decorative: it states nothing the panel does not already say, and
-   the global reduced-motion rule collapses it to a single frame. Mirror it for
-   RTL at the call site (`rtl:-scale-x-100`) so it travels inline-start to
-   inline-end in both directions. */
 @keyframes edge-sweep {
   from {
     opacity: 0;

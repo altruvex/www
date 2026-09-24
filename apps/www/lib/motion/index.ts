@@ -1,11 +1,7 @@
 export { useBatch } from "@/lib/motion/hooks/use-batch";
 export type { BatchConfig } from "@/lib/motion/hooks/use-batch";
-export { useCounter } from "@/lib/motion/hooks/use-counter";
-export type { CounterConfig } from "@/lib/motion/hooks/use-counter";
 export { useMagnetic } from "@/lib/motion/hooks/use-magnetic";
 export type { MagneticConfig } from "@/lib/motion/hooks/use-magnetic";
-export { useParallax } from "@/lib/motion/hooks/use-parallax";
-export type { ParallaxConfig } from "@/lib/motion/hooks/use-parallax";
 export { usePress } from "@/lib/motion/hooks/use-press";
 export type { PressConfig } from "@/lib/motion/hooks/use-press";
 export { useReveal } from "@/lib/motion/hooks/use-reveal";
@@ -20,23 +16,28 @@ export {
   useSectionEyebrow,
   useSectionTitle
 } from "@/lib/motion/hooks/use-section-motion";
+export {
+  splitWords,
+  useKineticTrack,
+  useMediaSettle,
+  useRunwayProgress,
+  useScrollRise,
+  useTileAssemble,
+  useWordRead,
+} from "@/lib/motion/hooks/use-scroll-scene";
+export { useFollowPointer } from "@/lib/motion/hooks/use-follow-pointer";
 export { useText } from "@/lib/motion/hooks/use-text";
 export type { TextConfig } from "@/lib/motion/hooks/use-text";
 export { useTilt } from "@/lib/motion/hooks/use-tilt";
 export type { TiltConfig } from "@/lib/motion/hooks/use-tilt";
-export { DEFAULTS, MOTION, SECTION_DELAYS, resolveEase, resolveSpring, resolveTrigger } from "./tokens";
-export type {
-  MotionDistance,
-  MotionDuration,
-  MotionEase,
-  MotionSpring,
-  MotionStagger,
-  MotionTrigger,
-  SpringConfig
-} from "./tokens";
+export { MOTION, resolveEase, resolveSpring, resolveTrigger } from "./tokens";
+export type { MotionEase, MotionSpring, MotionTrigger, SpringConfig } from "./tokens";
 export { createSpring } from "./utils/spring";
-export type { Spring } from "./utils/spring";
 export { readMotionEnv } from "./utils/env";
-export type { MotionEnv } from "./utils/env";
-export { readDirection } from "./utils/direction";
+export { inlineSign, readDirection } from "./utils/direction";
+export { progressIn, riseHoldLeave, smoothstep } from "./utils/scrub";
+export { scrollToY } from "./utils/scroll";
 export { motion } from "./utils/presets";
+export { playSectionHeading } from "./utils/section-replay";
+export { REDUCED_FADE } from "./utils/env";
+export { whenMotionReady } from "./utils/ready";

@@ -1,6 +1,7 @@
 "use client";
 
 import { setLenis } from "@/lib/motion/lenis-instance";
+import { checkCssMotionTokens } from "@/lib/motion/utils/css-tokens";
 import type Lenis from "lenis";
 import { useEffect } from "react";
 
@@ -16,6 +17,10 @@ export function SmoothScrollProvider({
 }: {
   children?: React.ReactNode;
 }) {
+  useEffect(() => {
+    checkCssMotionTokens();
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     let gsapRef: typeof import("@/lib/utils/gsap") | null = null;

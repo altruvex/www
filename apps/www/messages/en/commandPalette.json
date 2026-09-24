@@ -1,0 +1,21 @@
+{
+  "title": "Command palette",
+  "placeholder": "Search pages, services, actions…",
+  "empty": "No results. Try a different term.",
+  "hint": "Navigate the whole site from here",
+  "groups": {
+    "actions": "Quick actions",
+    "pages": "Pages",
+    "services": "Services"
+  },
+  "actions": {
+    "themeDark": "Switch to dark mode",
+    "themeLight": "Switch to light mode",
+    "schedule": "Schedule a technical call",
+    "copyEmail": "Copy email address",
+    "copied": "Copied to clipboard"
+  },
+  "pages": {
+    "home": "Home"
+  }
+}

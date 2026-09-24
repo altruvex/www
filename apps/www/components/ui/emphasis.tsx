@@ -66,9 +66,24 @@ export interface AccentProps extends ComponentPropsWithoutRef<"span"> {
 
 const HIGHLIGHT_TONES = {
   muted: "text-muted-foreground",
-  soft: "text-foreground/45",
+  // Solid in RTL: the motion splitter wraps each Arabic word in its own span
+  // (lib/motion/utils/splite.ts) to animate word-by-word, and cursive Arabic
+  // shaping doesn't survive that split cleanly — adjacent word spans can get
+  // slightly overlapping glyph boxes. Two overlapping *translucent* fills
+  // compound their alpha and read as a darker, doubled ghost at the seam; a
+  // solid fill can't compound. `--muted-foreground` is the same token the
+  // sibling description text already renders at, so the dimmed line stays
+  // legible instead of merely matching its LTR alpha value.
+  soft: "text-foreground/45 rtl:text-muted-foreground",
   surface: "text-s-mid",
   contrast: "text-foreground",
+  /* The serif-italic clause wearing its section's world gradient instead of a
+     dimmed ink. Only meaningful inside an `accent-world-*` wrapper; it keeps
+     the italic face on purpose, so the site's composed voice survives and only
+     the colour changes. `box-decoration-break: clone` gives each wrapped line
+     the whole gradient rather than one line starting mid-sweep. */
+  world:
+    "accent-world bg-clip-text text-transparent from-(--grad-from) via-(--grad-via) to-(--grad-to) bg-linear-to-r rtl:bg-linear-to-l [box-decoration-break:clone] [-webkit-box-decoration-break:clone] pe-[0.08em]",
 } as const;
 
 export type HighlightTone = keyof typeof HIGHLIGHT_TONES;
@@ -82,6 +97,10 @@ export const Highlight = forwardRef<HTMLElement, HighlightProps>(
     return (
       <em
         ref={ref}
+        // The text splitter keys on this attribute to repaint the gradient per
+        // word (lib/motion/utils/splite.ts); without it a split clause would
+        // tear into transparent fragments.
+        {...(tone === "world" ? { "data-accent-grad": "", "data-accent-italic": "" } : {})}
         className={cn(
           "font-serif italic font-light",
           HIGHLIGHT_TONES[tone],

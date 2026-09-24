@@ -13,10 +13,13 @@
     "./www": "./src/www/index.ts",
     "./styles": "./src/styles/globals.css",
     "./styles/tokens": "./src/styles/tokens.css",
-    "./styles/liquid-glass": "./src/styles/liquid-glass.css"
+    "./styles/liquid-glass": "./src/styles/liquid-glass.css",
+    "./palette": "./src/palette.ts",
+    "./theme-transition": "./src/theme-transition.tsx"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "verify:palette": "bun scripts/verify-palette.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

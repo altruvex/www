@@ -13,25 +13,13 @@ interface SectionHeadingProps {
   descriptionRef?: RefObject<HTMLElement | null>;
   className?: string;
   theme?: "default" | "surface";
-  /**
-   * How the second title line is emphasised.
-   *
-   * - omitted → `<Highlight>`: dimmed serif-italic (bold sans in RTL). The
-   *   default. Use for craft, method, restraint, philosophy, identity - and
-   *   for ANY negative / loss / risk framing ("a gamble.", "compounds in cost.").
-   * - `"world"` → `<Accent>` in the enclosing `accent-world-*` gradient. Use
-   *   for outcome, value-prop, proof and conversion phrases ("no hidden costs.",
-   *   "scope your build?"). Requires an `accent-world-*` ancestor.
-   * - a named gradient → only the documented alternates (`HEADING_ACCENTS`):
-   *   same-world second Accent on one page, or the page hero's `iris`.
-   *
-   * Budget: ≤ 2 Accents per page (homepage exempt), never two of the same
-   * world back-to-back. `theme="surface"` sections have no world → no accent.
-   * Rules: docs/section-heading-emphasis.md
-   */
   accent?: HeadingAccent;
   accentDirection?: GradientDirection;
   accentAnimate?: boolean | AccentAnimation;
+  /** Keep the serif-italic second clause but paint it in the section's world
+      gradient instead of dimmed ink. Ignored when `accent` is set, and on
+      `theme="surface"`, which has no world to wear. */
+  italicWorld?: boolean;
   secondTitleBreak?: boolean;
   titleId?: string;
   titleAs?: "h1" | "h2" | "h3";
@@ -59,6 +47,7 @@ export function SectionHeading({
   accent,
   accentDirection = "r",
   accentAnimate = false,
+  italicWorld = false,
   secondTitleBreak = true,
   titleId,
   titleAs = "h2",
@@ -139,10 +128,14 @@ export function SectionHeading({
                 </Accent>
               ) : (
                 <Highlight
+                  tone={
+                    italicWorld && !isSurface
+                      ? "world"
+                      : isSurface
+                        ? "surface"
+                        : "soft"
+                  }
                   className={cn(
-                    isSurface
-                      ? "text-s-mid"
-                      : "text-foreground/45",
                     secondTitleBreak &&
                     "mt-2 block md:mt-0 md:inline",
                     classes?.secondTitle,

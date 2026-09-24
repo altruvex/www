@@ -148,7 +148,6 @@ export default async function ProductPage({
               id={product.id}
               label={product.name}
               redirectTo="/products"
-              variant="ghost"
             />
           </>
         }

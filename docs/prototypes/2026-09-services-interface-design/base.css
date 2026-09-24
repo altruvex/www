@@ -1,0 +1,41 @@
+/* Altruvex house tokens (from apps/www/app/globals.css) — Interface Design world = violet. */
+:root{
+  --bg:#fff;--fg:#1b1b1d;--surface:#f0f0f0;--card:#fff;--muted:#666;--muted-2:#e6e6e8;--line:rgba(0,0,0,.08);
+  --brand:hsl(214 89% 48%);--accent:hsl(272 72% 55%);--accent-fg:#fafafa;--accent-soft:hsl(272 72% 55% / .08);
+  --glass:rgba(251,251,253,.78);
+  --r-sm:22px;--r-md:28px;--r-lg:34px;
+  --ease-strong:cubic-bezier(.23,1,.32,1);--ease-smooth:cubic-bezier(.25,.46,.45,.94);
+  --m-hover:.15s;--m-drawer:.3s;--m-fast:.4s;--m-base:.7s;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--fg:#f0f0f0;--surface:#1c1c1c;--card:#1b1b1d;--muted:#999;--muted-2:#2b2b2b;--line:rgba(255,255,255,.08);--accent:hsl(268 88% 74%);--accent-fg:#1f1f1f;--accent-soft:hsl(268 88% 74% / .1);--glass:rgba(22,22,24,.72);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121212;--fg:#f0f0f0;--surface:#1c1c1c;--card:#1b1b1d;--muted:#999;--muted-2:#2b2b2b;--line:rgba(255,255,255,.08);--accent:hsl(268 88% 74%);--accent-fg:#1f1f1f;--accent-soft:hsl(268 88% 74% / .1);--glass:rgba(22,22,24,.72);color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:clip;transition:background var(--m-fast) var(--ease-smooth),color var(--m-fast) var(--ease-smooth)}
+h1,h2,h3{font-family:Outfit,sans-serif;font-weight:300;letter-spacing:-.035em;line-height:1}
+em.w{font-family:Georgia,serif;font-style:italic;font-weight:400;background:linear-gradient(90deg,var(--accent),color-mix(in oklch,var(--accent) 60%,var(--brand)));-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.06em}
+.eyebrow{font-family:"Geist Mono",ui-monospace,monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.eyebrow.a{color:var(--accent)}
+.tick{display:inline-block;width:20px;height:3px;border-radius:99px;background:var(--accent);vertical-align:middle;margin-right:10px}
+.wrap{max-width:1408px;margin:0 auto;padding:0 64px}
+@media(max-width:900px){.wrap{padding:0 24px}}
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 64px;background:var(--glass);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line)}
+.nav b{font-family:Outfit;font-weight:600;letter-spacing:.02em}
+.nav .l{display:flex;gap:26px;font-size:13px;color:var(--muted)}
+.nav .l .on{color:var(--fg)}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:12px 22px;font:500 14px Inter;border:1px solid transparent;cursor:pointer;transition:transform var(--m-hover) var(--ease-strong),background var(--m-hover)}
+.pill:hover{transform:translateY(-1px)}
+.pill.p{background:var(--accent);color:var(--accent-fg)}
+.pill.s{border-color:color-mix(in oklch,var(--fg) 40%,transparent);color:var(--fg)}
+.pill.sm{padding:8px 14px;font-size:13px}
+.nav .pill{background:var(--brand);color:#fff}
+.glass{background:var(--glass);backdrop-filter:blur(20px) saturate(180%);border:1px solid var(--line);border-radius:var(--r-sm)}
+.frame{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;background:var(--card);box-shadow:0 30px 60px -30px rgba(0,0,0,.25)}
+.frame .top{height:28px;display:flex;gap:6px;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);background:var(--surface)}
+.frame .top i{width:8px;height:8px;border-radius:50%;background:var(--muted-2)}
+.frame img{display:block;width:100%}
+.band{background:var(--surface)}
+.switch{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(20,20,22,.88);backdrop-filter:blur(8px);font:500 12px Inter}
+.switch a,.switch button{padding:8px 14px;border-radius:999px;color:#cbd5e1;background:none;border:0;font:inherit;cursor:pointer;text-decoration:none}
+.switch .on{background:#fff;color:#111}
+a{color:inherit;text-decoration:none}

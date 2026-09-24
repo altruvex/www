@@ -320,9 +320,8 @@ export function LogExplorer({
                           row action — the dialog says so before it happens. */}
                       <div className="flex justify-end">
                         <Button
-                          variant="ghost"
+                          variant="destructive-ghost"
                           size="sm"
-                          className="text-danger hover:text-danger"
                           onClick={() =>
                             del.request({ id: row.id, label: row.message.slice(0, 60) })
                           }

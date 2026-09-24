@@ -1,0 +1,57 @@
+{
+  "endCta": {
+    "eyebrow": "Next step",
+    "footnote": "Replies within 24 hours on business days.",
+    "pages": {
+      "about": {
+        "body": "No account manager sits between you and the engineering. The first call is with the founder, and it is about your system - not about us.",
+        "title": "Talk to the person",
+        "titleAccent": "who will build it."
+      },
+      "caseStudy": {
+        "body": "Same process, same standards, and the figures published after launch. Start with what you are building - the scope decides the rest.",
+        "nextLabel": "Next case study",
+        "title": "Want a build",
+        "titleAccent": "measured like this one?"
+      },
+      "faq": {
+        "body": "Send it with your scope. The answer comes from the engineer who would build it, within one business day - not from a sales script.",
+        "eyebrow": "Not answered here?",
+        "title": "Ask the question",
+        "titleAccent": "this page missed."
+      },
+      "maintenance": {
+        "body": "Send the site you run today. We check its stack and current state first, then recommend the plan that fits it - not the largest one.",
+        "title": "Already live?",
+        "titleAccent": "Keep it that way."
+      },
+      "pricing": {
+        "body": "Pick the scope that matches, adjust what is in it, and read the range before anyone talks to you. When the range works, book the call.",
+        "title": "The tier names the build.",
+        "titleAccent": "The estimator prices it."
+      },
+      "standards": {
+        "body": "The technical audit measures an existing build against the same four benchmarks and returns a written list of what fails and why - before any rebuild is on the table.",
+        "title": "Hold your current site",
+        "titleAccent": "to these numbers."
+      },
+      "work": {
+        "body": "Every record above started as a scope and a conversation. Describe what you are building and we will tell you plainly whether it belongs on this list.",
+        "nextLabel": "Your build",
+        "nextStatus": "Not yet recorded - waiting on a scope",
+        "title": "The next record",
+        "titleAccent": "could be yours."
+      },
+      "writing": {
+        "body": "When an article describes a problem you already have, the estimator turns it into a range in a few minutes - no call required.",
+        "title": "Reading is research.",
+        "titleAccent": "Scoping is the next step."
+      }
+    }
+  },
+  "legalContact": {
+    "label": "Questions about this document?",
+    "body": "Write to us and a person answers - not an auto-reply."
+  },
+  "step": "Step"
+}

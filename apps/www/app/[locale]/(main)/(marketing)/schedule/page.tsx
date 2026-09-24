@@ -1,7 +1,9 @@
+import { FaqSectionView } from "@/components/sections/faq-section";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
+import { plainFaqItems } from "@/lib/faq";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
@@ -38,6 +40,7 @@ export default async function SchedulePage({
   const { locale } = await params;
   const pricing = await getPublicPricing();
   const t = await getTranslations({ locale, namespace: "schedule.seo" });
+  const tFaq = await getTranslations({ locale, namespace: "faq" });
   const sections = t.raw("sections") as ScheduleSeoSection[];
   const faqItems = t.raw("faq.items") as ScheduleSeoFaq[];
   const faqEntries = faqItems.map((item) => ({
@@ -54,7 +57,7 @@ export default async function SchedulePage({
         ]}
       />
       <PageClient />
-      <section className="border-t border-foreground/8 bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
+      <section className="border-t border-border-subtle bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
           <div className="mx-auto max-w-5xl">
             <div className="grid gap-10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-16">
@@ -67,7 +70,7 @@ export default async function SchedulePage({
                   {t("body")}
                 </p>
               </div>
-              <div className="divide-y divide-foreground/8 border-y border-foreground/8">
+              <div className="divide-y divide-border-subtle border-y border-border-subtle">
                 {sections.map((section) => (
                   <article key={section.title} className="py-7 first:pt-0 last:pb-0">
                     <h3 className="font-sans text-2xl font-normal leading-snug text-primary">
@@ -91,26 +94,15 @@ export default async function SchedulePage({
                 ))}
               </div>
             </div>
-            <div className="mt-16 border-t border-foreground/8 pt-10">
-              <h2 className="font-sans text-3xl font-normal leading-tight text-primary">
-                {t("faq.title")}
-              </h2>
-              <div className="mt-8 grid gap-8 md:grid-cols-2">
-                {faqItems.map((item) => (
-                  <article key={item.q}>
-                    <h3 className="text-lg font-medium leading-snug text-primary">
-                      {item.q}
-                    </h3>
-                    <p className="mt-3 text-base leading-relaxed text-primary/65">
-                      {item.a}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
           </div>
         </Container>
       </section>
+      <FaqSectionView
+        eyebrow={tFaq("eyebrow")}
+        title={t("faq.title")}
+        items={plainFaqItems(faqItems)}
+        className="bg-background"
+      />
     </>
   );
 }

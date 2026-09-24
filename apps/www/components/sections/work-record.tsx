@@ -49,7 +49,7 @@ export const WorkRecord = memo(function WorkRecord({
     <li
       data-work-record
       className={cn(
-        "group grid gap-x-12 gap-y-8 border-t border-border py-10 md:py-12",
+        "group grid gap-x-12 gap-y-8 border-t border-border-subtle py-10 md:py-12",
         reverse
           ? "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]"
           : "md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]",
@@ -70,7 +70,7 @@ export const WorkRecord = memo(function WorkRecord({
         <h3 className="mt-4 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.2] tracking-[-0.02em] text-foreground">
           <Link
             href={`/work/${slug}`}
-            className="rounded-sm outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="rounded-ctl-sm outline-none transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             {name}
           </Link>
@@ -96,7 +96,7 @@ export const WorkRecord = memo(function WorkRecord({
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
           <Link
             href={`/work/${slug}`}
-            className="group inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-foreground outline-none transition-colors duration-300 ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+            className="group inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base text-foreground outline-none transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
           >
             {tW("labels.viewCaseStudy")}
             <ArrowIcon className="h-3.5 w-3.5" />
@@ -106,7 +106,7 @@ export const WorkRecord = memo(function WorkRecord({
               href={externalUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex min-h-6 items-center gap-2 rounded-sm text-base text-muted-foreground outline-none transition-colors duration-300 ease-smooth hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+              className="inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base text-muted-foreground outline-none transition-colors duration-(--motion-drawer) ease-smooth hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
             >
               {tW("labels.visitProj")}
               <span dir="ltr" className="ltr:font-mono">
@@ -118,7 +118,7 @@ export const WorkRecord = memo(function WorkRecord({
         </div>
       </div>
       {screenshot && (
-        <div className={cn("relative aspect-16/10 w-full overflow-hidden rounded-md border border-border bg-surface", reverse && "md:order-1")}>
+        <div className={cn("relative aspect-16/10 w-full overflow-hidden rounded-panel-sm border border-border-subtle bg-surface", reverse && "md:order-1")}>
           <Image
             src={`${screenshot}-light.png`}
             alt={`${name} — ${client}`}

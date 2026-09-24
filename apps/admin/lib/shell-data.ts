@@ -1,5 +1,7 @@
 import { prisma } from "@repo/database";
 import type { BadgeKey } from "@/lib/nav";
+import { SERVICE_SOON_DAYS } from "@/lib/service-lifecycle";
+import { DAY_MS } from "@/lib/subscription-lifecycle";
 
 /**
  * Sidebar counts. Every one of these is a "needs a human" count, never a total
@@ -21,6 +23,7 @@ export async function getShellBadges(): Promise<{
     overduePayments,
     openIncidents,
     unreadNotifications,
+    servicesDue,
   ] = await Promise.all([
     prisma.client.count({ where: { status: { in: ["NEW", "VIEWED"] } } }),
     prisma.proposal.count({ where: { status: { in: ["SENT", "DELIVERED", "READ", "VIEWED"] } } }),
@@ -42,6 +45,14 @@ export async function getShellBadges(): Promise<{
     // Open, not total: a resolved incident is history and needs nobody.
     prisma.incident.count({ where: { status: { not: "RESOLVED" } } }),
     prisma.notification.count({ where: { read: false } }),
+    // Inside the first alert threshold or already lapsed. Derived from the
+    // clock, so the badge is right whether or not the renewal sweep has run.
+    prisma.clientService.count({
+      where: {
+        status: "ACTIVE",
+        expiresAt: { lte: new Date(now.getTime() + SERVICE_SOON_DAYS * DAY_MS) },
+      },
+    }),
   ]);
 
   // Unanswered = the client spoke last. A badge showing "every message ever"
@@ -62,6 +73,7 @@ export async function getShellBadges(): Promise<{
       inbox: unanswered,
       payments: overduePayments,
       incidents: openIncidents,
+      renewals: servicesDue,
       actions: 0,
     },
     unread: unreadNotifications,

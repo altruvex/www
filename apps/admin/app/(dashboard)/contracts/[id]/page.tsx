@@ -12,13 +12,17 @@ import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
+import { documentUrl } from "@/lib/storage";
 import { statusOf } from "@/lib/status";
 import { discountAmount, investmentTotal, proposalContentSchema } from "@/lib/proposal-schema";
+import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { date, dateTime, money } from "@/lib/format";
-import { LifecycleButton, MarkSignedButton } from "@/app/(dashboard)/clients/[id]/client-actions";
+import { ManualOnboardingButton, ManualStatusMenu } from "@/components/os/manual-status";
 import { headers } from "next/headers";
 
 import { SendDocument } from "@/components/os/send-document";
+import { ContractSignerForm } from "@/components/os/contract-signer";
+import { effectiveSigner, maskEmail, maskPhone } from "@/lib/sign-verification";
 import { contractDraft } from "@/lib/email-templates";
 import { emailTransport } from "@/lib/email";
 import { Button } from "@repo/ui";
@@ -71,7 +75,24 @@ export default async function ContractDetailPage({
   const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
   const signUrl = contract.signToken ? `${scheme}://${host}/sign/${contract.signToken}` : "";
 
+  // Documents are signed-on-read when the bucket is private, so the link is
+  // built here rather than taken off the row.
+  const contractFileUrl = await documentUrl(contract.fileUrl);
+  const signedFileUrl = await documentUrl(contract.signedFileUrl);
+
   const clientName = contract.client.company || contract.client.name || "Unnamed client";
+  const signer = effectiveSigner(contract, contract.client);
+  const verifiedHint =
+    contract.signerVerifiedVia && contract.signerVerifiedTo
+      ? `${contract.signerVerifiedVia === "WHATSAPP" ? "WhatsApp" : "Email"} code to ${
+          contract.signerVerifiedVia === "WHATSAPP"
+            ? maskPhone(contract.signerVerifiedTo)
+            : maskEmail(contract.signerVerifiedTo)
+        }`
+      : null;
+  const nameDiffers =
+    Boolean(contract.signedByName && signer.name) &&
+    contract.signedByName!.trim().toLowerCase() !== signer.name!.trim().toLowerCase();
 
   // The contract's value is the proposal's NET total. The list price and the
   // discount that got the client here are read back off the proposal content,
@@ -146,9 +167,9 @@ export default async function ContractDetailPage({
         }
         actions={
           <>
-            {contract.fileUrl && (
+            {contractFileUrl && (
               <Button asChild variant="outline">
-                <a href={contract.fileUrl} target="_blank" rel="noreferrer">
+                <a href={contractFileUrl} target="_blank" rel="noreferrer">
                   <Download className="size-3.5" />
                   Document
                 </a>
@@ -167,13 +188,17 @@ export default async function ContractDetailPage({
                 )}
               />
             )}
-            {contract.status === "SENT" && <MarkSignedButton contractId={contract.id} />}
+            {contract.status !== "SIGNED" && (
+              <ManualStatusMenu entity="contract" id={contract.id} status={contract.status} />
+            )}
+            {contract.status === "SIGNED" && !contract.onboardingMessageSentAt && (
+              <ManualOnboardingButton contractId={contract.id} />
+            )}
             <DeleteRecordButton
               entity="contract"
               id={contract.id}
               label={`${contract.proposal.projectType} · ${contract.client.company ?? contract.client.name ?? "Client"}`}
               redirectTo="/contracts"
-              variant="ghost"
             />
           </>
         }
@@ -240,6 +265,11 @@ export default async function ContractDetailPage({
                       : "—",
                   },
                   { label: "Signed by", value: contract.signedByName ?? "—" },
+                  {
+                    label: "Verified",
+                    value: verifiedHint ?? "—",
+                    hint: "Where the one-time code that authorised the signature was sent",
+                  },
                   { label: "Signed at", value: contract.signedAt ? dateTime(contract.signedAt) : "—" },
                   {
                     label: "From IP",
@@ -254,6 +284,40 @@ export default async function ContractDetailPage({
               />
             </Panel>
 
+            <Panel
+              title="Authorised signer"
+              description={
+                contract.status === "SIGNED"
+                  ? "Who the link was restricted to"
+                  : "Only this person receives the code the link needs"
+              }
+            >
+              {contract.status === "SIGNED" ? (
+                <MetaList
+                  className="-mx-3"
+                  items={[
+                    { label: "Name", value: signer.name ?? "—" },
+                    { label: "WhatsApp", value: signer.phone ?? "—" },
+                    { label: "Email", value: signer.email ?? "—" },
+                  ]}
+                />
+              ) : (
+                <ContractSignerForm
+                  contractId={contract.id}
+                  initial={{
+                    signerName: contract.signerName ?? "",
+                    signerPhone: contract.signerPhone ?? "",
+                    signerEmail: contract.signerEmail ?? "",
+                  }}
+                  fallback={{
+                    name: contract.client.name,
+                    phone: contract.client.phone,
+                    email: contract.client.email,
+                  }}
+                />
+              )}
+            </Panel>
+
             {contract.signToken && (
               <Panel title="Client link" flush>
                 <QuickActions>
@@ -264,7 +328,8 @@ export default async function ContractDetailPage({
                     </a>
                   </Button>
                   <p className="text-meta text-subtle-foreground">
-                    Anyone with this link can sign. It is single-purpose and tied to this
+                    The link alone cannot sign: it asks for a one-time code sent to the
+                    authorised signer&apos;s WhatsApp or email. It is single-purpose and tied to this
                     contract only.
                   </p>
                 </QuickActions>
@@ -411,6 +476,14 @@ export default async function ContractDetailPage({
                 </p>
               )}
             </Panel>
+
+            {proposalContent.success && (
+              <ServiceTermsPanel
+                services={proposalContent.data.services}
+                currency={contract.proposal.currency}
+                liveHref={`/clients/${contract.clientId}?tab=services`}
+              />
+            )}
           </>
         )}
 
@@ -428,18 +501,31 @@ export default async function ContractDetailPage({
                       {dateTime(contract.signedAt)}
                       {contract.signedIp && ` from ${contract.signedIp}`}
                     </p>
+                    {verifiedHint && (
+                      <p className="mt-0.5 text-meta text-muted-foreground">
+                        Verified by a {verifiedHint}
+                      </p>
+                    )}
+                    {nameDiffers && (
+                      <p className="mt-1 text-meta text-warning">
+                        The typed name differs from the authorised signer ({signer.name}). The
+                        code still went only to that person&apos;s contact.
+                      </p>
+                    )}
                   </div>
                 </div>
                 <p className="max-w-prose text-base text-muted-foreground">
                   This is a click-to-sign record: the name, timestamp and originating IP
-                  captured at the moment the client confirmed. It is evidence of assent,
+                  captured at the moment the client confirmed. A link signature also required
+                  a one-time code, which proves control of the authorised signer&apos;s
+                  WhatsApp or mailbox — not their legal identity. It is evidence of assent,
                   not a cryptographic signature. A qualified e-signature provider can be
                   wired in behind the same status field without changing this screen —
                   see Integrations.
                 </p>
-                {contract.signedFileUrl && (
+                {signedFileUrl && (
                   <Button asChild variant="outline">
-                    <a href={contract.signedFileUrl} target="_blank" rel="noreferrer">
+                    <a href={signedFileUrl} target="_blank" rel="noreferrer">
                       <Download className="size-3.5" />
                       Signed copy
                     </a>

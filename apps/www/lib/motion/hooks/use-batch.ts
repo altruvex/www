@@ -182,7 +182,7 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
                     gsap.to(batch, {
                       ...from,
                       duration: duration * 0.6,
-                      ease: "power1.in",
+                      ease: MOTION.ease.fadeOut,
                       force3D: true,
                       overwrite: "auto",
                       onStart() {

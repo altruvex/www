@@ -6,7 +6,8 @@ import { RefObject, useRef } from "react";
 import { MOTION, MotionEase, MotionTrigger, resolveEase, resolveTrigger } from "../tokens";
 import { REDUCED_FADE, readMotionEnv } from "../utils/env";
 import { whenMotionReady } from "../utils/ready";
-import { alignAccentGradients, autoSplit } from "../utils/splite";
+import { alignAccentGradients } from "../utils/splite";
+import { splitText, textEnterVars } from "../utils/text-enter";
 
 export interface TextConfig {
   delay?: number;
@@ -40,6 +41,21 @@ const DEFAULTS: Required<TextConfig> = {
   blur: true,
   scrubExit: false,
 };
+
+/** A text config resolved against the hook's own defaults, as an entrance shape. */
+export function textShape(config: TextConfig = {}) {
+  return {
+    shape: {
+      duration: config.duration ?? DEFAULTS.duration,
+      stagger: config.stagger ?? DEFAULTS.stagger,
+      distance: config.distance ?? DEFAULTS.distance,
+      ease: config.ease ?? DEFAULTS.ease,
+      blur: config.blur ?? DEFAULTS.blur,
+      delay: config.delay ?? DEFAULTS.delay,
+    },
+    splitBy: config.splitBy ?? DEFAULTS.splitBy,
+  };
+}
 
 export function useText<T extends HTMLElement = HTMLHeadingElement>(
   config: TextConfig = {},
@@ -91,65 +107,29 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
               return;
             }
 
-            const env = readMotionEnv();
-            const constrained = env.constrained;
-            let targets: Element[];
-            let isRTL = false;
-            let scriptAllowsBlur = true;
+            const constrained = readMotionEnv().constrained;
 
-            const alreadySplit = el.hasAttribute("data-m-split");
+            // The split and the entrance itself live in `text-enter`, shared
+            // with surfaces that replay it on demand — one text animation for
+            // the whole site. This hook adds only the scroll trigger.
+            const split = splitText(el, splitBy);
+            const { targets, isRTL } = split;
+            const { from, to } = textEnterVars(split, {
+              duration,
+              stagger,
+              distance,
+              ease,
+              blur,
+              delay,
+            });
 
-            if (!alreadySplit) {
-              el.setAttribute("data-m-split", splitBy);
-              const result = autoSplit(el, splitBy);
-              targets = result.targets;
-              isRTL = result.isRTL;
-              scriptAllowsBlur = result.canBlur;
-            } else {
-              const splitType = el.getAttribute("data-m-split");
-              const selector =
-                splitType === "char" ? ".m-char" : splitType === "word" ? ".m-word" : ".m-line";
-              targets = Array.from(el.querySelectorAll(selector));
-              isRTL = targets.some((t) => (t as HTMLElement).dataset.script === "arabic");
-              scriptAllowsBlur = !isRTL;
-            }
-
-            if (!targets.length) targets = [el];
-
-            const canBlur =
-              blur &&
-              scriptAllowsBlur &&
-              env.fine &&
-              !constrained &&
-              targets.length <= MOTION.text.blurCap;
-
-            const effectiveStagger =
-              targets.length > 1
-                ? Math.min(stagger, MOTION.text.maxTotalStagger / targets.length)
-                : stagger;
-
-            const fromVars: gsap.TweenVars = {
-              opacity: 0,
-              y: distance,
-              willChange: "transform, opacity",
-            };
-            if (!constrained) fromVars.scale = 0.96;
-            if (canBlur) fromVars.filter = "blur(4px)";
-
-            gsap.set(targets, fromVars);
+            gsap.set(targets, from);
 
             const resolvedEasing = resolveEase(ease);
             const resolvedTriggering = resolveTrigger(trigger);
 
-            const animProps: gsap.TweenVars = {
-              opacity: 1,
-              y: 0,
-              duration,
-              stagger: { each: effectiveStagger, from: isRTL ? "end" : "start" },
-              delay,
-              ease: resolvedEasing,
-              force3D: true,
-              overwrite: "auto",
+            gsap.to(targets, {
+              ...to,
               scrollTrigger: {
                 trigger: el,
                 start: resolvedTriggering,
@@ -158,15 +138,7 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
                 toggleActions: once ? "play none none none" : "play none none reverse",
                 invalidateOnRefresh: true,
               },
-              onComplete() {
-                gsap.set(targets, { clearProps: "willChange,filter,transform" });
-              },
-            };
-
-            if (!constrained) animProps.scale = 1;
-            if (canBlur) animProps.filter = "blur(0px)";
-
-            gsap.to(targets, animProps);
+            });
 
             // ── Accent sweep ─────────────────────────────────────────────
             // `<Accent animate="sweep">` gradients wipe across the phrase
@@ -210,7 +182,7 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
                 // and inline boxes can't be transformed — opacity only there.
                 yPercent: isRTL ? 0 : -20,
                 opacity: 0,
-                ease: "power1.in",
+                ease: MOTION.ease.fadeOut,
                 overwrite: "auto",
                 force3D: true,
                 scrollTrigger: {

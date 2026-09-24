@@ -31,7 +31,7 @@ export function Callout({ type = "info", children }: CalloutProps) {
   const Icon = icons[type];
 
   return (
-    <div className={cn("my-6 flex gap-3 rounded-lg border p-4", styles[type])}>
+    <div className={cn("my-6 flex gap-3 rounded-panel-sm border p-4", styles[type])}>
       <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", iconStyles[type])} />
       <div className="flex-1 [&>p:last-child]:mb-0">{children}</div>
     </div>

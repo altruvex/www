@@ -1,0 +1,99 @@
+{
+  "altruvex-site": {
+    "client": "Internal / Altruvex",
+    "industry": "Custom Web Development",
+    "metrics": [
+      {
+        "label": "Mobile TTI",
+        "value": "< 1s"
+      },
+      {
+        "label": "RTL Switch",
+        "value": "< 16ms"
+      },
+      {
+        "label": "Pre-qualified leads",
+        "value": "Transparency-first"
+      }
+    ],
+    "name": "Altruvex.com - The Site Itself Had to Be the Proof",
+    "outcome": "Sub-1s mobile TTI, RTL switching in under 16ms with zero layout shift, and <strong>leads that arrive pre-qualified</strong> - with scope and investment already mapped before the first call begins.",
+    "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing enterprise credibility it had not yet earned.",
+    "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
+    "summary": "A multilingual proof build designed to demonstrate technical quality, native RTL design, and lead qualification before the first call.",
+    "techStack": [
+      "Next.js 16",
+      "TypeScript 6",
+      "Tailwind CSS v4",
+      "GSAP",
+      "Lenis",
+      "next-intl",
+      "Prisma",
+      "PostgreSQL",
+      "Vercel"
+    ],
+    "year": "2025"
+  },
+  "art-lighting-store": {
+    "client": "Art Lighting Store",
+    "industry": "Premium home lighting",
+    "metrics": [
+      {
+        "label": "Performance",
+        "value": "95+ Lighthouse"
+      },
+      {
+        "label": "Catalog",
+        "value": "High-res zoom"
+      },
+      {
+        "label": "Inventory",
+        "value": "Synced live"
+      }
+    ],
+    "name": "Art Lighting Store",
+    "outcome": "A production storefront with high-resolution product imagery, synchronized inventory, and a handoff the client team can operate <strong>without engineering support.</strong>",
+    "problem": "The client sold high-end fixtures where material and finish detail matter, but their existing platform compressed images aggressively and loaded slowly. Customers could not properly inspect finishes or scale, and inventory was fragmented across multiple systems - creating overselling risk.",
+    "solution": "We designed a custom Next.js storefront with an image pipeline tuned for high-resolution zoom without sacrificing load time. Inventory is synchronized via webhooks into a single source of truth, and pages are statically generated with targeted revalidation for fast, consistent delivery.",
+    "summary": "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
+    "techStack": [
+      "Next.js App Router",
+      "TypeScript",
+      "Tailwind CSS",
+      "PostgreSQL + Prisma",
+      "Image optimization pipeline"
+    ],
+    "year": "2024"
+  },
+  "newlight-lighting-store": {
+    "client": "NewLight",
+    "industry": "Lighting & E-Commerce",
+    "metrics": [
+      {
+        "label": "Launch",
+        "value": "Production live"
+      },
+      {
+        "label": "Languages",
+        "value": "Multilingual"
+      },
+      {
+        "label": "Commerce",
+        "value": "Full checkout"
+      }
+    ],
+    "name": "NewLight Lighting Store - Venturing into E-Commerce",
+    "outcome": "NewLight's first online store launched on custom architecture with multilingual journeys, payments, and <strong>a catalog the team can manage day to day.</strong>",
+    "problem": "As a leading lighting company, NewLight needed to transition their traditional showroom into a digital experience that allows customers to browse and buy easily while maintaining the brand's premium feel.",
+    "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a structured checkout flow, with full multilingual support across all devices.",
+    "summary": "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports multilingual buying on every device.",
+    "techStack": [
+      "Next.js App Router",
+      "next-intl (EN/AR)",
+      "Tailwind CSS",
+      "PWA",
+      "PostgreSQL + Prisma"
+    ],
+    "year": "2024"
+  }
+}

@@ -1,155 +1,101 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
+import { Link } from "@/i18n/navigation";
 import {
   useSectionCardGrid,
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { cn, splitHeadline } from "@/lib/utils/utils";
+import { splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { Fragment, memo, useEffect, useRef, useState } from "react";
+import { memo } from "react";
 import { SectionHeading } from "./section-heading";
 
-interface ServiceData {
-  key: "service1" | "service2" | "service3" | "service4";
-  index: string;
-}
+type ServiceKey = "service1" | "service3" | "service4";
 
-const SERVICES: ServiceData[] = [
-  { key: "service1", index: "01" },
-  { key: "service2", index: "02" },
-  { key: "service3", index: "03" },
-  { key: "service4", index: "04" },
-];
+// E-commerce (service2) was removed with its service page on 2026-09-13; the
+// remaining keys keep their names so the copy files did not have to be renamed.
+const SERVICES: readonly ServiceKey[] = ["service1", "service3", "service4"];
 
-const ServiceCard = memo(function ServiceCard({
-  service,
-  variant,
-}: {
-  service: ServiceData;
-  variant: "primary" | "supporting" | "anchor";
-}) {
-  const t = useTranslations("services");
-  const isPrimary = variant === "primary";
-  const isAnchor = variant === "anchor";
-
+/**
+ * The group label every register on the homepage uses (trust, ownership,
+ * work): eyebrow, count, then a hairline that runs to the edge.
+ */
+function RegisterDivider({ label, count }: { label: string; count: number }) {
   return (
-    <article
-      data-card
-      className={cn(
-        "group relative isolate flex flex-col justify-between overflow-hidden bg-muted/10 transition-colors duration-500 hover:bg-local-accent/2",
-        isPrimary && "min-h-[clamp(280px,30vw,400px)] p-[clamp(32px,4vw,56px)]",
-        isAnchor && "min-h-[clamp(220px,24vw,300px)] p-[clamp(28px,4vw,48px)]",
-        variant === "supporting" && "min-h-[clamp(200px,20vw,280px)] p-[clamp(24px,3vw,40px)]"
-      )}
-    >
-      <span
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -top-4 inset-e-0 z-0 select-none pe-[clamp(16px,2vw,32px)] font-mono leading-none font-bold tracking-[-0.04em] transition-all duration-500",
-          "text-s-muted/3 group-hover:-translate-x-2 group-hover:translate-y-2 group-hover:text-local-accent/6 rtl:group-hover:translate-x-2",
-          isPrimary ? "text-[clamp(120px,16vw,220px)]" : "text-[clamp(80px,12vw,140px)]"
-        )}
-      >
-        <Num value={service.index} />
+    <div className="flex items-baseline gap-4">
+      <Eyebrow className="m-0">{label}</Eyebrow>
+      <span className="text-sm tabular-nums text-muted-foreground ltr:font-mono">
+        <Num value={count} pad={2} />
       </span>
-      <div className="relative z-10 mb-10 flex items-baseline gap-3">
-        <span className="text-[11px] font-mono font-medium tracking-widest text-s-high/80 transition-colors duration-300 group-hover:text-local-accent">
-          <Num value={service.index} />
-        </span>
-        <span aria-hidden className="text-xs font-mono text-s-muted/40">/</span>
-        <span className="text-xs font-medium uppercase tracking-[0.15em] text-s-mid transition-colors duration-300 group-hover:text-s-high">
-          {t(`${service.key}.tag`)}
-        </span>
-      </div>
-      <div className={cn("relative z-10", isPrimary ? "max-w-[46ch]" : "max-w-[38ch]")}>
-        <h3
-          className={cn(
-            "font-medium tracking-[-0.02em] text-s-high transition-colors duration-300 group-hover:text-local-accent-text",
-            isPrimary
-              ? "mb-4 text-[clamp(1.5rem,2.5vw,2.25rem)] leading-[1.1]"
-              : isAnchor
-                ? "mb-4 text-[clamp(1.25rem,2vw,1.75rem)] leading-[1.15]"
-                : "mb-3 text-[clamp(1.15rem,1.5vw,1.35rem)] leading-[1.2]"
-          )}
-        >
-          {t(`${service.key}.title`)}
-        </h3>
-        <p
-          className={cn(
-            "text-s-mid leading-[1.65]",
-            isPrimary ? "text-[clamp(0.9375rem,1.1vw,1.0625rem)]" : "text-[0.9375rem]"
-          )}
-        >
-          {t.rich(`${service.key}.description`, bodyMarks)}
-        </p>
-      </div>
-    </article>
-  );
-});
-
-const ProcessRail = memo(function ProcessRail() {
-  const t = useTranslations("services");
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.1 },
-    );
-
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} className="mt-[clamp(56px,8vw,96px)] w-full">
-      <div className="flex flex-col md:flex-row md:items-start">
-        {SERVICES.map((service, i) => (
-          <Fragment key={service.key}>
-            <div className="group/rail flex shrink-0 flex-row items-center gap-4 md:flex-col md:items-start md:gap-3">
-              <span className="text-[11px] font-mono tracking-[0.2em] text-s-high/80 transition-colors duration-300 group-hover/rail:text-local-accent">
-                <Num value={service.index} />
-              </span>
-              <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-s-mid md:mt-0">
-                {t(`${service.key}.tag`)}
-              </span>
-            </div>
-            {i < SERVICES.length - 1 ? (
-              <div
-                style={{ animationDelay: `${i * 0.2}s` }}
-                className={cn(
-                  "paused my-3 ms-1.5 h-6 w-px origin-top bg-s-border/50 motion-reduce:animate-none!",
-                  "md:mx-6 md:mt-1.75 md:h-px md:flex-1 md:origin-left md:self-start rtl:md:origin-right",
-                  visible && "running animate-services-rail",
-                )}
-              />
-            ) : null}
-          </Fragment>
-        ))}
-      </div>
+      <div aria-hidden className="h-px flex-1 bg-border-subtle/60" />
     </div>
   );
+}
+
+const ServiceEntry = memo(function ServiceEntry({
+  serviceKey,
+  index,
+}: {
+  serviceKey: ServiceKey;
+  index: number;
+}) {
+  const t = useTranslations("services");
+
+  return (
+    <li data-register-row className="flex flex-col">
+      <div className="flex items-baseline gap-3">
+        <span
+          aria-hidden
+          className="shrink-0 text-sm tabular-nums text-muted-foreground ltr:font-mono"
+        >
+          <Num value={index + 1} pad={2} />
+        </span>
+        <Eyebrow className="m-0">{t(`${serviceKey}.tag`)}</Eyebrow>
+      </div>
+      <h3 className="mt-4 text-[clamp(1.375rem,1.7vw,1.75rem)] font-medium leading-snug text-foreground">
+        {t(`${serviceKey}.title`)}
+      </h3>
+      <p className="mt-3 max-w-[60ch] text-[clamp(0.9375rem,1vw,1.0625rem)] leading-relaxed text-muted-foreground">
+        {t.rich(`${serviceKey}.description`, bodyMarks)}
+      </p>
+      <ul className="mt-auto flex flex-wrap gap-2 pt-6">
+        {(["badge1", "badge2"] as const).map((badge) => (
+          <li
+            key={badge}
+            dir="auto"
+            className="rounded-full border border-border-subtle bg-surface px-2.5 py-1 text-micro leading-normal tracking-[0.06em] text-muted-foreground ltr:font-mono"
+          >
+            {t(`${serviceKey}.${badge}`)}
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
 });
 
+/**
+ * "Three disciplines. One delivery standard." as two registers: what varies,
+ * set in three columns, and what never varies, written once beneath them.
+ * The standard's wording is read from `servicesPage.chapters.plate`, the list
+ * /services prints, so the two pages cannot promise different things.
+ */
 export const ServicesSection = memo(function ServicesSection() {
   const t = useTranslations("services");
+  const tStandard = useTranslations("servicesPage.chapters.plate");
+  const standard: string[] = tStandard.raw("items");
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const subtitleRef = useSectionDescription<HTMLParagraphElement>();
-  const gridRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-card]" });
+  const registerRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-register-row]",
+  });
 
   const { first, second } = splitHeadline(t("title"));
 
@@ -170,22 +116,63 @@ export const ServicesSection = memo(function ServicesSection() {
           firstTitle={first}
           secondTitle={second}
           description={t("subtitle")}
-          className="mb-14 lg:mb-20"
+          className="mb-14 md:mb-20"
         />
-        <div
-          ref={gridRef}
-          className="grid grid-cols-1 gap-px overflow-hidden rounded-xl bg-s-border/60"
-        >
-          <ServiceCard service={SERVICES[0]} variant="primary" />
-          <div className="grid grid-cols-1 gap-px bg-s-border/60 md:grid-cols-2">
-            <ServiceCard service={SERVICES[1]} variant="supporting" />
-            <ServiceCard service={SERVICES[2]} variant="supporting" />
+
+        <div ref={registerRef}>
+          <RegisterDivider
+            label={t("disciplines.label")}
+            count={SERVICES.length}
+          />
+
+          <ol className="mt-10 grid list-none gap-y-12 md:mt-12 md:grid-cols-3 md:gap-x-10 lg:gap-x-12">
+            {SERVICES.map((serviceKey, index) => (
+              <ServiceEntry
+                key={serviceKey}
+                serviceKey={serviceKey}
+                index={index}
+              />
+            ))}
+          </ol>
+
+          <div className="mt-16 md:mt-20">
+            <RegisterDivider
+              label={t("standard.label")}
+              count={standard.length}
+            />
           </div>
-          <ServiceCard service={SERVICES[3]} variant="anchor" />
+
+          <ol className="mt-10 grid list-none gap-x-10 gap-y-8 sm:grid-cols-2 md:mt-12 lg:grid-cols-4 lg:gap-x-12">
+            {standard.map((item, index) => (
+              <li
+                key={item}
+                data-register-row
+                className="grid grid-cols-[2.75rem_minmax(0,1fr)] lg:grid-cols-1 lg:gap-y-3"
+              >
+                <span
+                  aria-hidden
+                  className="pt-0.5 text-sm tabular-nums text-muted-foreground ltr:font-mono"
+                >
+                  <Num value={index + 1} pad={2} />
+                </span>
+                <p className="text-[clamp(0.9375rem,1vw,1.0625rem)] leading-relaxed text-foreground">
+                  {item}
+                </p>
+              </li>
+            ))}
+          </ol>
         </div>
-        <ProcessRail />
-        <div className="mt-[clamp(32px,5vw,56px)]">
-          <Eyebrow className="text-s-muted">{t("footerText")}</Eyebrow>
+
+        <div className="mt-14 md:mt-16">
+          <Link
+            href="/services"
+            className="inline-flex min-h-6 items-center gap-2 text-[0.9375rem] text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
+          >
+            {t("explore")}
+            <span aria-hidden className="rtl:-scale-x-100">
+              →
+            </span>
+          </Link>
         </div>
       </Container>
     </section>

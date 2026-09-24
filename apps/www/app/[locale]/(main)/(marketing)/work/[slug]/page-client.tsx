@@ -7,7 +7,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { TiltCard } from "@/components/ui/tilt-card";
 import { Link } from "@/i18n/navigation";
-import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { CASE_STUDIES, getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { getTestimonialsForCaseStudy } from "@/lib/data/testimonials";
 import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
@@ -55,7 +55,7 @@ export default function WorkCaseStudyPageClient({
             </p>
             <Link
               href="/work"
-              className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+              className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
             >
               <ArrowIcon direction="back" motion="none" className="h-3.5 w-3.5" />
               {tLabels("backLink")}
@@ -102,11 +102,11 @@ export default function WorkCaseStudyPageClient({
             {metrics.map((metric) => (
               <div
                 key={metric.label}
-                className="group/metric relative overflow-hidden rounded-lg border border-s-border bg-card p-5 md:p-6 shadow-card transition-all duration-300 hover:border-s-border-hover"
+                className="group/metric relative overflow-hidden rounded-panel-sm border border-border-subtle bg-card p-5 md:p-6 shadow-card transition-all duration-(--motion-drawer) hover:border-s-border-hover"
               >
                 <div
                   aria-hidden
-                  className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-all duration-300 group-hover/metric:bg-local-accent"
+                  className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-all duration-(--motion-drawer) group-hover/metric:bg-local-accent"
                 />
                 <p className="font-sans font-light text-local-accent-text leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
                   {metric.value}
@@ -115,7 +115,7 @@ export default function WorkCaseStudyPageClient({
               </div>
             ))}
           </div>
-          <div className="h-px w-full bg-s-border mb-16" />
+          <div className="h-px w-full bg-border-subtle mb-16" />
           <div className="grid gap-12 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="space-y-12">
               {[
@@ -144,7 +144,7 @@ export default function WorkCaseStudyPageClient({
               ))}
             </div>
             <aside className="space-y-4">
-              <div className="rounded-lg border border-s-border bg-card p-5 shadow-card">
+              <div className="rounded-panel-sm border border-border-subtle bg-card p-5 shadow-card">
                 <h3 className="eyebrow text-s-low mb-4">
                   {tLabels("techStack")}
                 </h3>
@@ -161,7 +161,7 @@ export default function WorkCaseStudyPageClient({
                 </ul>
               </div>
               {externalUrl && (
-                <div className="rounded-lg border border-s-border bg-card p-5 shadow-card">
+                <div className="rounded-panel-sm border border-border-subtle bg-card p-5 shadow-card">
                   <h3 className="eyebrow text-s-low mb-4">
                     {tLabels("liveSite")}
                   </h3>
@@ -169,9 +169,9 @@ export default function WorkCaseStudyPageClient({
                     href={externalUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider uppercase text-s-mid hover:text-primary transition-all duration-300 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="group inline-flex items-center gap-2 font-mono text-sm leading-normal tracking-wider uppercase text-s-mid hover:text-primary transition-all duration-(--motion-drawer) rounded-ctl-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <span className="font-bold border-b border-s-border-hover group-hover:border-local-accent group-hover:text-local-accent-text transition-all duration-300 pb-0.5">
+                    <span className="font-bold border-b border-s-border-hover group-hover:border-local-accent group-hover:text-local-accent-text transition-all duration-(--motion-drawer) pb-0.5">
                       {tLabels("visitProj")}
                     </span>
                     <ArrowIcon className="h-5 w-5 group-hover:text-local-accent-text ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
@@ -182,7 +182,7 @@ export default function WorkCaseStudyPageClient({
                 // Testimonial spotlight: the one third-party voice on the page.
                 // Tilt communicates "this surface is featured — lean in."
                 <TiltCard subtle>
-                  <figure className="rounded-lg border border-s-border bg-card p-5 shadow-card">
+                  <figure className="rounded-panel-sm border border-border-subtle bg-card p-5 shadow-card">
                     <h3 className="eyebrow text-s-low mb-4">
                       {tLabels("clientPersp")}
                     </h3>
@@ -198,7 +198,7 @@ export default function WorkCaseStudyPageClient({
               <div className="pt-2">
                 <Link
                   href="/work"
-                  className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+                  className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
                 >
                   <ArrowIcon
                     direction="back"
@@ -212,7 +212,50 @@ export default function WorkCaseStudyPageClient({
         </div>
       </Container>
     </section>
-    <SectionEndCta variant="work" />
+    <CaseStudyEndCta slug={slug} />
     </>
+  );
+}
+
+/**
+ * A reader who finished one case study is offered two ways on: the build that
+ * would be measured the same way, or the next record. The old close offered
+ * "See a Real Build" on a page that already is one.
+ */
+function CaseStudyEndCta({ slug }: { slug: string }) {
+  const t = useTranslations("common.endCta.pages.caseStudy");
+  const tCS = useTranslations("caseStudies");
+
+  const position = CASE_STUDIES.findIndex((cs) => cs.slug === slug);
+  const next =
+    CASE_STUDIES.length > 1
+      ? CASE_STUDIES[(position + 1) % CASE_STUDIES.length]
+      : null;
+
+  return (
+    <SectionEndCta
+      title={t("title")}
+      titleAccent={t("titleAccent")}
+      body={t("body")}
+      primary="describeTheBuild"
+      secondary="technicalCall"
+      aside={
+        next && (
+          <Link
+            href={`/work/${next.slug}`}
+            className="group flex max-w-xl flex-col gap-2 border-t border-border-subtle pt-6 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+          >
+            <span className="eyebrow text-muted-foreground">{t("nextLabel")}</span>
+            <span className="inline-flex items-center gap-3 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.2] tracking-[-0.02em] text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-local-accent-text rtl:tracking-normal">
+              {tCS(`${next.slug}.name`)}
+              <ArrowIcon className="size-5 shrink-0 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+            </span>
+            <span className="text-sm text-muted-foreground">
+              {tCS(`${next.slug}.client`)} · {tCS(`${next.slug}.year`)}
+            </span>
+          </Link>
+        )
+      }
+    />
   );
 }

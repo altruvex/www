@@ -45,7 +45,10 @@ No unit-test runner is configured in either app. Correctness is pinned instead b
 scripts under `apps/admin/scripts`, run from `apps/admin`:
 
 ```bash
+bun run verify:security       # redirect allowlist, URL schemes, admin gate, sign window, MFA switch — needs no database
 bun run verify:lifecycle      # pure date/state-machine logic — needs no database
+bun run verify:services       # service renewals, alert keys, deck + contract output — needs no database
+bun run verify:change-requests # change-request transitions, billing, warranty, closure — needs no database
 bun run verify:engineering    # ingest endpoints end-to-end   — needs DATABASE_URL
 bun run verify:admin-api      # audit trail, tokens, subscriptions, tasks — needs DATABASE_URL
 bun run verify:maintenance    # portal/admin allowance agreement — needs DATABASE_URL
@@ -246,6 +249,25 @@ pushing anything that touches pricing.
 - That module is deliberately isomorphic (no `server-only`): admin, dashboard and client portal
   must all derive the same status for the same row.
 
+### Security
+
+The posture, and the reasoning behind each decision, is `SECURITY.md`
+("Hardening decisions"); the audit it came from is `SECURITY_AUDIT.md`, and the
+steps that live in a console rather than in code are `SECURITY_TODO.md`.
+
+The four rules most easily undone by accident:
+
+- **Authorization is decided twice.** `proxy.ts` refuses a non-admin, and
+  `app/(dashboard)/layout.tsx` decides again from the session. Never let a new
+  page-level surface rely on the proxy alone.
+- **Client-facing links come from `BETTER_AUTH_URL`** via `lib/public-url.ts`,
+  never from the request host. `lib/env.ts` requires it in production.
+- **A URL that will be rendered or followed is `httpUrl`** (`lib/http-url.ts`),
+  not `z.string().url()` — which accepts `javascript:`.
+- **The admin CSP carries a per-request nonce** generated in `proxy.ts`. An
+  inline `<script>` without it will not run; pass the nonce through as the root
+  layout does for next-themes.
+
 ### Honesty rule
 
 A screen may be empty, and a capability may be marked Planned (`components/os/planned.tsx`,
@@ -254,6 +276,86 @@ a mutation that persists nothing, no invented run counts, no mock rows that look
 previously broke this (`/tasks` synthesised tasks from project phases; `/automations` listed
 invented rules with fake run counts and a test-run button that executed nothing); both are now
 backed by real data or honestly labelled.
+
+### Change requests and closing a project
+
+- **A one-off change needs no retainer and no new contract.** `ChangeRequest` hangs off the
+  `Project`: requested → quoted → approved (recorded by hand, `manual: true`) → in progress →
+  delivered. Delivery opens a `CHANGE_REQUEST` payment in the same transaction; zero-amount and
+  warranty work open none. Rules: `lib/change-requests.ts` (isomorphic, pinned by
+  `verify:change-requests`); actions: `app/(dashboard)/_actions/change-requests.ts`.
+- **The hourly rate is the published revision rate** (`revisionHourlyRate` / `…Usd` by project
+  currency, override ?? default), snapshotted onto the row at quote time so a later /pricing edit
+  cannot re-price agreed work. A currency with no published rate quotes fixed only.
+- **Warranty is derived, never stored**: `actualLaunchDate + postLaunchWarrantyDays`, judged
+  against when the client *asked*. Free work outside the window is a fixed quote of zero, not
+  "warranty".
+- **COMPLETED is reached only through Close project**, which checks unpaid payments and open
+  change requests (soft blocks, OWNER override written into `project.completed`) and stamps
+  `completedAt`. `setProjectStatus` refuses COMPLETED and clears `completedAt` on reopen. Existing
+  COMPLETED rows were not backfilled — nobody recorded when they closed.
+- **A quote goes to the client like a proposal does**: the operator sets the price, picks email or
+  WhatsApp and may rewrite the wording (`sendChangeRequestQuote`; link re-appended server-side). The
+  client opens `/quote/[token]` (public, exempted in `proxy.ts`, rate limited) and approves with
+  their name or declines. The answer posts the figure they saw, so a quote revised while the page
+  was open is refused; a re-quote clears `quoteSentAt` and the link refuses answers until the new
+  number is sent. "Viewed" is posted by the page's script, never stamped on render — link
+  previewers and mail scanners fetch URLs with nobody behind them. WhatsApp here is free text, so
+  it only delivers inside Meta's 24-hour window.
+- These actions return `{ ok, message }` instead of throwing: production Next.js replaces a thrown
+  server-action message with a digest, and the refusal is the sentence the dialog needs.
+
+### Client services & renewals (domains, hosting, email)
+
+- **`ClientService` is anything a client holds through Altruvex that expires** — domain, hosting,
+  business email, SSL, licences. Belongs to a client; optionally to the project that sold it and
+  the product it serves. `price` is what the client pays per term and is entered per service (a
+  registrar's price for one domain is not a published tier); `cost` is internal and never reaches a
+  client surface. Never store a provider password — `reference` is an order/account id.
+- **Stored status is PENDING / ACTIVE / CANCELLED; "renewing soon", "expiring" and "expired" are
+  derived** from `expiresAt` and the clock in `lib/service-lifecycle.ts` (isomorphic, same rule as
+  retainers). PENDING has no dates and raises nothing — an invented expiry would alert against a day
+  that never existed. A renewal anchors to the old expiry, re-anchoring to today only when the new
+  date would still be in the past.
+- **Proposals carry services outside the fee.** `content.services` never enters `investmentTotal`,
+  `netTotal`, payments or the discount; the deck prints them under the payment split (and refuses to
+  generate if they would hit the footer), the contract adds a clause + table only when the list is
+  non-empty, and `handleContractSigned` opens each as a PENDING row in the project transaction.
+- **Alerts: derived screens first, pushes second.** The action centre, the sidebar badge and
+  `/services` read the clock and are right with no job running. `sweepServiceRenewals`
+  (`lib/client-services.ts`) writes `RENEWAL_DUE` notifications at 30/14/7/1/0 days and posts
+  `service.renewal_due` to Slack — idempotent through `Notification.dedupeKey` (service + expiry +
+  threshold, unique per user), so a renewal re-arms the thresholds. It runs from
+  `GET /api/cron/service-renewals` (Vercel cron in `apps/admin/vercel.json`, `CRON_SECRET`, fails
+  closed, exempt in `proxy.ts` under `/api/cron/`) and from the *Check renewals now* button.
+- **A term that starts opens its payment** (`termBilling`): registering a service whose first term is
+  not in the fee, and every renewal, create a PENDING `SERVICE_RENEWAL` payment (`Payment.serviceId`)
+  in the same transaction as the date moving. Only when the service is on a project AND priced in
+  that project's currency — a payment row has no currency of its own, so anything else is refused
+  with a reason, never billed in the wrong currency. Renewal is guarded on the expiry it read, so a
+  double click cannot add two years and two invoices.
+- **Client renewal reminders are sent by a person, never on a timer** (`/api/admin/services/[id]/remind`).
+  Email is sent and recorded as an `EmailMessage`; WhatsApp opens the operator's own phone via wa.me
+  (the Business API has no renewal template) and is recorded only as a manual record. "Reminded this
+  cycle" is `reminderSentFor == expiresAt`, so a renewal re-arms it without a write.
+- **Domain expiry can be read from the registry over RDAP** (`lib/rdap.ts`, rdap.org, no account).
+  It pre-fills or syncs; a registry that publishes nothing (.eg) says so and the typed date stands.
+- Covered by `bun run verify:services` (needs no database).
+
+### Manual records (what happened outside the system)
+
+- **Every automated step has a manual path beside it, never instead of it.** Proposals and
+  contracts carry a *Record manually* menu (`components/os/manual-status.tsx`) next to the
+  system send: sent outside the system, accepted/rejected, signed on paper, declined, expired,
+  back to draft; signed contracts also get *Record onboarding*. Routes:
+  `POST /api/admin/{proposals,contracts}/[id]/status`, `POST /api/admin/contracts/[id]/onboarding`.
+- **A manual record claims only what the operator knows.** It writes the status plus an audit
+  event with `metadata.manual = true`, the channel and an optional note — never an
+  `EmailMessage`/`WhatsAppMessage` row. `DELIVERED`/`READ`/`VIEWED` are transport evidence and
+  are not settable by hand.
+- **A hand-recorded signature goes through `handleContractSigned`**, so the project and payment
+  schedule open exactly once, and a signed contract cannot be moved by hand. A proposal that
+  already has a contract cannot be walked back. Declined/expired contracts refuse the sign link.
 
 
 ### Data model (`packages/database/prisma/schema.prisma`)

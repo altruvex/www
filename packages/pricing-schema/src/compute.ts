@@ -1,4 +1,9 @@
 import { ADDONS, type Addon } from "./addons";
+import {
+  CONSULTING_PACKAGES,
+  consultingCreditAmount,
+  type ConsultingPackage,
+} from "./consulting";
 import type { AddonId, ComplexityId, ServiceId } from "./ids";
 import {
   BRAND_FACTORS,
@@ -13,7 +18,7 @@ import {
   type TimelineId,
 } from "./modifiers";
 import { minimumEngagement, SERVICES } from "./services";
-import { MAX_DELIVERY_WEEKS, type Amount } from "./types";
+import { MAX_DELIVERY_WEEKS, type Amount, type Currency } from "./types";
 
 export interface EstimateInput {
   readonly serviceId: ServiceId;
@@ -152,4 +157,25 @@ export function applyVat(net: Amount): VatBreakdown {
 /** EGP → USD at the fixed, quarterly-reviewed rate. Rounded to the nearest 10. */
 export function egpToUsd(egp: Amount): Amount {
   return Math.round(egp / USD_EXCHANGE_RATE.egpPerUsd / 10) * 10;
+}
+
+/**
+ * A consulting package's build credit, in the currency the engagement is
+ * priced in.
+ *
+ * The audit's fee is published in EGP only, so a USD engagement credits the
+ * same money through `egpToUsd` — the one published conversion — rather than
+ * a second audit price nobody maintains. Returns null for a currency this
+ * package cannot be credited in, which is the signal to refuse the credit
+ * with a reason instead of applying a figure in the wrong money.
+ */
+export function consultingCreditIn(
+  currency: Currency,
+  pkg: ConsultingPackage = CONSULTING_PACKAGES["technical-audit"],
+): Amount | null {
+  const egp = consultingCreditAmount(pkg);
+  if (egp <= 0) return null;
+  if (currency === "EGP") return egp;
+  if (currency === "USD") return egpToUsd(egp);
+  return null;
 }

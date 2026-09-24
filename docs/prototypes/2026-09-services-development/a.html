@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A · Blue Department — Custom Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0E63DB;--deep:#1034C4;--ink:#0A0F1C;--paper:#EEF0F4;--white:#fff;--mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:auto}
+body{font-family:Inter,system-ui,sans-serif;background:var(--blue);color:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:Outfit,sans-serif;font-weight:300;letter-spacing:-.035em;line-height:.95}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+a{color:inherit;text-decoration:none}
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:18px 32px;mix-blend-mode:difference;color:#fff}
+.nav b{font-family:Outfit;font-weight:500;letter-spacing:.02em}
+.nav div{display:flex;gap:22px;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:10px;border-radius:999px;padding:12px 20px;font-size:14px;font-weight:500;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.pill:hover{transform:translateY(-2px)}
+.pill.w{background:#fff;color:var(--ink)}
+.pill.o{border:1px solid rgba(255,255,255,.5)}
+
+.hero{position:relative;height:100svh;min-height:680px;overflow:hidden;background:var(--blue)}
+.hero .bg{position:absolute;inset:0;background:url(img/s2.jpg) center/cover;opacity:.55;mix-blend-mode:screen}
+.hero .rule{position:absolute;left:32px;right:32px;top:30%;height:1px;background:rgba(255,255,255,.55)}
+.marq{position:absolute;top:calc(30% - clamp(90px,13vw,200px));white-space:nowrap;font-family:Outfit;font-weight:300;font-size:clamp(90px,13vw,200px);letter-spacing:-.05em;line-height:1}
+.marq span{display:inline-flex;align-items:center;gap:.25em;padding-right:.25em}
+.marq i{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:#fff}
+.hero .card{position:absolute;right:8%;top:40%;width:clamp(200px,20vw,300px);aspect-ratio:4/5;border-radius:6px;overflow:hidden;box-shadow:0 40px 80px -20px rgba(0,0,40,.6)}
+.hero .card img{width:100%;height:100%;object-fit:cover}
+.hero .foot{position:absolute;left:32px;right:32px;bottom:32px;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:end}
+.hero .foot p.lead{font-size:clamp(18px,1.6vw,24px);line-height:1.35;max-width:30ch}
+.hero .foot .r{justify-self:end;text-align:right}
+.hero .foot .r .mono{opacity:.75;line-height:1.8;margin-bottom:18px}
+
+.state{background:var(--paper);color:var(--ink);padding:22vh 32px 26vh}
+.state .mono{color:#6b7280;margin-bottom:28px}
+.state p.big{font-family:Outfit;font-weight:300;font-size:clamp(34px,4.2vw,68px);line-height:1.05;letter-spacing:-.03em;max-width:22ch;margin-left:34%}
+.state p.big .w{opacity:.14}
+
+.rows{background:var(--deep);position:relative;padding-bottom:10vh}
+.rows .head{padding:18vh 32px 8vh;display:flex;justify-content:space-between;align-items:end}
+.rows .head h2{font-size:clamp(48px,6vw,96px)}
+.row{position:sticky;background:var(--deep);border-top:1px solid rgba(255,255,255,.35);min-height:78vh;padding:0 32px}
+.row .bar{display:grid;grid-template-columns:160px 1fr;align-items:center;height:72px}
+.row .bar h3{font-size:clamp(28px,3vw,44px)}
+.row .body{display:grid;grid-template-columns:160px 1fr 1.1fr;gap:32px;padding:28px 0 48px}
+.row .body p{grid-column:2;font-family:var(--mono);font-size:13px;line-height:1.7;max-width:40ch;opacity:.85;align-self:end}
+.row .body figure{grid-column:3;aspect-ratio:16/10;border-radius:6px;overflow:hidden}
+.row .body figure img{width:100%;height:100%;object-fit:cover;object-position:top}
+
+.proof{background:var(--ink);padding:22vh 32px;position:relative;overflow:hidden}
+.proof .mono{opacity:.6}
+.proof h2{font-size:clamp(44px,5.2vw,84px);margin:22px 0 10vh;max-width:14ch}
+.proof .grid{display:grid;grid-template-columns:1fr 1.4fr;gap:6vw;align-items:center}
+.fig{border-top:1px solid rgba(255,255,255,.2);padding:28px 0}
+.fig b{display:block;font-family:Outfit;font-weight:300;font-size:clamp(72px,9vw,150px);letter-spacing:-.05em;line-height:1}
+.fig span{opacity:.6;font-size:14px}
+.browser{border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 60px 120px -30px rgba(14,99,219,.55);transform:perspective(1400px) rotateY(-14deg) rotateX(6deg)}
+.browser .top{height:30px;background:#eceef2;display:flex;gap:6px;align-items:center;padding:0 12px}
+.browser .top i{width:9px;height:9px;border-radius:50%;background:#c9ccd3}
+.browser img{display:block;width:100%}
+
+.hand{background:var(--paper);color:var(--ink);padding:20vh 32px;text-align:center;overflow:hidden}
+.hand .obj{width:min(46vw,560px);aspect-ratio:1;margin:0 auto 8vh;border-radius:14px;overflow:hidden;box-shadow:0 50px 100px -30px rgba(10,15,28,.45)}
+.hand .obj img{width:100%;height:100%;object-fit:cover}
+.hand h2{font-size:clamp(56px,8vw,140px)}
+.hand ul{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;margin-top:5vh;font-family:var(--mono);font-size:12px;color:#4b5563}
+.hand ul li::before{content:"✓ ";color:var(--blue)}
+
+.cta{background:var(--blue);padding:22vh 32px 16vh;position:relative;overflow:hidden}
+.cta h2{font-size:clamp(56px,8.5vw,150px);max-width:12ch}
+.cta .btns{display:flex;gap:12px;margin-top:6vh}
+.cta .mono{margin-top:14vh;opacity:.7}
+
+.switch{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(10,15,28,.85);backdrop-filter:blur(8px);font:500 12px Inter}
+.switch a{padding:8px 14px;border-radius:999px;color:#cbd5e1}
+.switch a.on{background:#fff;color:#0A0F1C}
+@media(max-width:800px){.hero .card{display:none}.hero .foot{grid-template-columns:1fr}.hero .foot .r{justify-self:start;text-align:left}.state p.big{margin-left:0}.row .body{grid-template-columns:1fr}.row .body p,.row .body figure{grid-column:1}.row .bar{grid-template-columns:56px 1fr}.proof .grid{grid-template-columns:1fr}.hand .obj{width:80vw}}
+@media (prefers-reduced-motion: reduce){.marq{transform:none!important}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div><a>Work</a><a>Services</a><a>Pricing</a><a>About</a></div><a class="mono">Get an estimate ●</a></nav>
+
+<section class="hero">
+  <div class="bg"></div>
+  <div class="marq" id="marq"><span>Custom Development <i></i></span><span>Built to scale <i></i></span><span>Custom Development <i></i></span><span>Built to scale <i></i></span></div>
+  <div class="rule"></div>
+  <figure class="card" id="heroCard"><img src="img/cube.jpg" alt=""></figure>
+  <div class="foot">
+    <p class="lead">Dashboards, portals and operational systems — built for how your team actually works, and handed over in your name.</p>
+    <div class="r"><p class="mono">02 · Product engineering<br>Fixed scope · fixed quote</p><a class="pill w">Request a scope →</a></div>
+  </div>
+</section>
+
+<section class="state">
+  <p class="mono">● The difference</p>
+  <p class="big" id="stateText">Most agencies hand you a login. We hand you the system — the code, the data and every decision behind it — engineered in your name from the first commit.</p>
+</section>
+
+<section class="rows">
+  <div class="head"><h2>How we build</h2><p class="mono">04 commitments</p></div>
+  <article class="row" style="top:64px"><div class="bar"><span class="mono">01</span><h3>One number, in writing.</h3></div><div class="body"><p>A fixed quote before any work starts. Scope changes are priced as change requests — never discovered on the invoice.</p><figure><img src="img/s4.jpg" alt=""></figure></div></article>
+  <article class="row" style="top:136px"><div class="bar"><span class="mono">02</span><h3>The repository is yours.</h3></div><div class="body"><p>Source, schema, migration history, deployment docs and the decision log — in a Git repository under your account.</p><figure><img src="img/wire.jpg" alt=""></figure></div></article>
+  <article class="row" style="top:208px"><div class="bar"><span class="mono">03</span><h3>Arabic and English, built as equals.</h3></div><div class="body"><p>Right-to-left is a layout direction we engineer, not a mirrored template. Both languages ship in the same release.</p><figure><img src="img/home-m.jpg" alt="" style="object-fit:contain;background:#e8ebf1"></figure></div></article>
+  <article class="row" style="top:280px"><div class="bar"><span class="mono">04</span><h3>Nothing ships unchecked.</h3></div><div class="body"><p>Every change passes the same checks before it deploys: types, tests, performance budgets. The standard is a line, not an adjective.</p><figure><img src="img/standards.jpg" alt=""></figure></div></article>
+</section>
+
+<section class="proof">
+  <p class="mono">● Proof</p>
+  <h2>The proof is the site you are on.</h2>
+  <div class="grid">
+    <div><div class="fig"><b>&lt;1s</b><span>Mobile time to interactive</span></div><div class="fig"><b>&lt;16ms</b><span>Switching English ↔ Arabic</span></div></div>
+    <div class="browser" id="browser"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt="Altruvex homepage"></div>
+  </div>
+</section>
+
+<section class="hand">
+  <figure class="obj" id="obj"><img src="img/glass.jpg" alt=""></figure>
+  <h2 id="handTitle">Handed over.<br>Yours.</h2>
+  <ul><li>Source code</li><li>Schema + migrations</li><li>Deployment docs</li><li>Secrets guide</li><li>Decision log</li><li>Runbook</li></ul>
+</section>
+
+<section class="cta">
+  <h2>Ready to build the system you will own?</h2>
+  <div class="btns"><a class="pill w">Request a scope →</a><a class="pill o">See a real build</a></div>
+  <p class="mono">Scope reply within one business day</p>
+</section>
+
+<div class="switch"><a href="a.html" class="on">A · Blue</a><a href="b.html">B · Stack</a><a href="c.html">C · Studio</a></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const st = document.getElementById("stateText");
+st.innerHTML = st.textContent.split(" ").map(w => `<span class="w">${w}</span>`).join(" ");
+if (!reduce) {
+  gsap.fromTo("#marq", { xPercent: 0 }, { xPercent: -50, ease: "none", repeat: -1, duration: 38 });
+  gsap.to("#marq", { x: -300, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+  gsap.from("#heroCard", { y: 120, rotate: 6, opacity: 0, duration: 1.4, ease: "expo.out", delay: .2 });
+  gsap.to("#heroCard", { y: -160, rotate: -4, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true } });
+  gsap.to("#stateText .w", { opacity: 1, stagger: .05, ease: "none", scrollTrigger: { trigger: ".state", start: "top 70%", end: "bottom 70%", scrub: true } });
+  gsap.utils.toArray(".row figure img").forEach(img => gsap.fromTo(img, { scale: 1.18 }, { scale: 1, ease: "none", scrollTrigger: { trigger: img, start: "top bottom", end: "top 30%", scrub: true } }));
+  gsap.fromTo("#browser", { rotateY: -24, rotateX: 12, y: 80 }, { rotateY: -6, rotateX: 2, y: 0, ease: "none", scrollTrigger: { trigger: ".proof", start: "top bottom", end: "center center", scrub: true } });
+  gsap.utils.toArray(".fig b").forEach(b => gsap.from(b, { yPercent: 60, opacity: 0, duration: 1.1, ease: "expo.out", scrollTrigger: { trigger: b, start: "top 85%" } }));
+  gsap.fromTo("#obj", { scale: .6, rotate: -18, borderRadius: "50%" }, { scale: 1, rotate: 0, borderRadius: "14px", ease: "none", scrollTrigger: { trigger: ".hand", start: "top bottom", end: "center center", scrub: true } });
+  gsap.from("#handTitle", { yPercent: 40, opacity: 0, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: "#handTitle", start: "top 85%" } });
+} else { document.querySelectorAll("#stateText .w").forEach(w => w.style.opacity = 1); }
+</script>
+</body>
+</html>

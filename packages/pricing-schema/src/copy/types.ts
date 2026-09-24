@@ -37,6 +37,23 @@ export interface MaintenanceCopy {
   readonly name: string;
   /** Descriptive bullets only — scope lines are templated, see below. */
   readonly features: readonly string[];
+  /**
+   * The same plan, answered against the same questions as every other plan,
+   * so a surface can lay the three side by side. Short phrases, one per
+   * question; the prose in `features` stays for places that list a plan
+   * on its own.
+   */
+  readonly compare: MaintenanceCompare;
+}
+
+export interface MaintenanceCompare {
+  /** Who the plan is for, in one line. */
+  readonly bestFor: string;
+  /** How often the system is checked. */
+  readonly cadence: string;
+  readonly monitoring: string;
+  readonly reporting: string;
+  readonly support: string;
 }
 
 /**
@@ -51,6 +68,8 @@ export interface MaintenanceTemplates {
   readonly requestCapPriority: string;
   readonly portal: string;
   readonly overage: string;
+  /** The overage rate alone, for a table cell: "{rate} EGP / hour". */
+  readonly overageShort: string;
   readonly customPrice: string;
   readonly perCycle: Readonly<Record<BillingCycle, string>>;
 }
@@ -68,6 +87,19 @@ export interface ConsultingCopy {
   readonly ctaLabel: string;
   readonly eyebrow: string;
   readonly includedLabel: string;
+  /**
+   * The credit rule, authored as its two halves rather than one sentence.
+   *
+   * A client reads a fee that forks: it comes off the build, or it buys the
+   * findings outright. Surfaces render the fork as two lines, so a single
+   * string would force every one of them to split it back apart — and the
+   * half that is easiest to drop in a layout is the one that costs the
+   * client money to lose.
+   */
+  readonly creditLabel: string;
+  /** Carries `{credit}` — the money that comes off the project price. */
+  readonly creditIfBuild: string;
+  readonly creditIfNot: string;
 }
 
 export interface AddonCopy {
@@ -95,8 +127,10 @@ export interface TermsCopy {
  *
  * A template, not a literal, for the same reason the maintenance scope lines
  * are: the weeks come from the service matrix, so a card cannot advertise a
- * window the estimator would not quote. `ceiling` states the published cap the
- * whole matrix fits inside.
+ * window the estimator would not quote. `ceiling` states both numbers a buyer
+ * meets: the matrix's own window ({windowMin}-{windowMax} weeks) and the cap
+ * ({ceiling}) that the estimator's conditions can stretch a quote to. Quoting
+ * the cap alone read as a contradiction beside a matrix that stops at 8.
  */
 export interface TierTemplates {
   readonly timelineLabel: string;

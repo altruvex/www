@@ -60,10 +60,7 @@ const ALLOW_FILES = [
 const ALLOW_MESSAGE_KEYS = new Set(["problem.items[0].delivery"]);
 
 /** Message catalogues may hold prose, but its figures must be `{token}`s. */
-const MESSAGE_FILES = [
-  "apps/www/messages/en.json",
-  "apps/www/messages/ar.json",
-];
+const MESSAGE_DIRS = ["apps/www/messages/en", "apps/www/messages/ar"];
 
 // `$` needs two digits: `$80` is a rate, `$1` is a regex backreference.
 const CURRENCY_ADJACENT =
@@ -109,7 +106,9 @@ function inspect(full) {
   const rel = relative(ROOT, full).split(sep).join("/");
   if (rel.startsWith(SCHEMA_DIR)) return;          // the one place prices live
   if (ALLOW_FILES.includes(rel)) return;
-  if (MESSAGE_FILES.includes(rel)) return inspectMessages(full, rel);
+  if (MESSAGE_DIRS.some((dir) => rel.startsWith(`${dir}/`))) {
+    return inspectMessages(full, rel);
+  }
 
   const lines = readFileSync(full, "utf8").split("\n");
   lines.forEach((raw, i) => {
@@ -136,6 +135,7 @@ function inspect(full) {
  * filled at render time from the schema.
  */
 function inspectMessages(full, rel) {
+  const namespace = rel.slice(rel.lastIndexOf("/") + 1).replace(/\.json$/, "");
   const flat = [];
   const walkJson = (node, path) => {
     if (typeof node === "string") flat.push([path, node]);
@@ -143,7 +143,7 @@ function inspectMessages(full, rel) {
     else if (node && typeof node === "object")
       for (const [k, v] of Object.entries(node)) walkJson(v, path ? `${path}.${k}` : k);
   };
-  walkJson(JSON.parse(readFileSync(full, "utf8")), "");
+  walkJson(JSON.parse(readFileSync(full, "utf8")), namespace);
 
   for (const [path, value] of flat) {
     if (ALLOW_MESSAGE_KEYS.has(path)) continue;

@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <Breadcrumbs items={getArticleBreadcrumbTrail(locale, article)} />
           <Link
             href="/writing"
-            className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow mb-12"
+            className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow mb-12"
           >
             <ArrowIcon
               direction="back"
@@ -135,7 +135,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {article.frontmatter.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="border border-foreground/8 bg-foreground/2 rounded-full px-3 py-1 eyebrow text-foreground/35"
+                    className="border border-border-subtle bg-foreground/2 rounded-full px-3 py-1 eyebrow text-foreground/35"
                   >
                     {tag}
                   </span>
@@ -149,7 +149,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             prose-p:text-primary/60 prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:text-primary/70
             prose-code:font-mono text-sm leading-normal tracking-wider prose-code:text-sm
-            prose-blockquote:border-foreground/8 prose-blockquote:text-primary/60
+            prose-blockquote:border-border-subtle prose-blockquote:text-primary/60
           "
             >
               <MDXRemote source={article.content} components={mdxComponents} />
@@ -160,11 +160,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             />
           </article>
           {ctaConfig && (
-            <section className="mt-16 border-t border-foreground/8 pt-10">
+            <section className="mt-16 border-t border-border-subtle pt-10">
               <Eyebrow className="mb-4 block">{t("nextStep")}</Eyebrow>
               <Link
                 href={ctaConfig.href}
-                className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+                className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
               >
                 {t(`ctas.${slug}`)}
                 <ArrowIcon className="h-3.5 w-3.5 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
@@ -172,7 +172,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </section>
           )}
           {related.length > 0 && (
-            <section className="mt-20 md:mt-32 border-t border-foreground/8 pt-12 md:pt-16">
+            <section className="mt-20 md:mt-32 border-t border-border-subtle pt-12 md:pt-16">
               <Eyebrow className="mb-4 block">{t("relatedArticles")}</Eyebrow>
               <h2
                 className="font-sans font-normal text-primary leading-[1.05] mb-10"
@@ -188,10 +188,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                   <Link
                     key={rel.slug}
                     href={`/writing/${rel.slug}`}
-                    className="group border border-foreground/8 rounded-lg bg-foreground/2 p-6 hover:bg-foreground/4 transition-all duration-300"
+                    className="group border border-border-subtle rounded-panel-sm bg-foreground/2 p-6 hover:bg-foreground/4 transition-all duration-(--motion-drawer)"
                   >
                     <h3
-                      className="font-sans font-medium text-primary mb-2 group-hover:text-primary/70 transition-all duration-300"
+                      className="font-sans font-medium text-primary mb-2 group-hover:text-primary/70 transition-all duration-(--motion-drawer)"
                       style={{
                         fontSize: "clamp(15px, 1.5vw, 18px)",
                         letterSpacing: "-0.01em",
@@ -207,10 +207,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               </div>
             </section>
           )}
-          <footer className="mb-20 mt-16 border-t border-foreground/8 pt-10">
+          <footer className="mb-20 mt-16 border-t border-border-subtle pt-10">
             <Link
               href="/writing"
-              className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-300 hover:text-foreground eyebrow"
+              className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
             >
               <ArrowIcon
                 direction="back"

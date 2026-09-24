@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Inter, Outfit } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@/lib/env";
 
+import { ThemeTransition } from "@repo/ui/theme-transition";
 import { ThemeProvider } from "@/components/theme-provider";
+import { NONCE_HEADER } from "@/lib/csp";
 import { Toaster } from "@repo/ui";
 
 const inter = Inter({
@@ -36,11 +39,16 @@ export const metadata: Metadata = {
     "The internal operating system of Altruvex: leads, proposals, contracts, delivery and finance in one place.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // next-themes writes an inline script to set the theme before paint. Under a
+  // nonce policy an inline script without the nonce does not run, and the app
+  // would render in the wrong theme until hydration.
+  const nonce = (await headers()).get(NONCE_HEADER) ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -50,8 +58,9 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
+          nonce={nonce}
         >
+          <ThemeTransition />
           {children}
           <Toaster />
         </ThemeProvider>

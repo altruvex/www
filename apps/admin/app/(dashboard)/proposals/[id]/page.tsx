@@ -12,14 +12,17 @@ import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
+import { documentUrl } from "@/lib/storage";
 import {
   discountAmount,
   investmentTotal,
   proposalContentSchema,
 } from "@/lib/proposal-schema";
+import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { statusOf } from "@/lib/status";
 import { date, dateTime, daysFromNow, money, when } from "@/lib/format";
 import { LifecycleButton } from "@/app/(dashboard)/clients/[id]/client-actions";
+import { ManualStatusMenu } from "@/components/os/manual-status";
 import { Button } from "@repo/ui";
 import { headers } from "next/headers";
 
@@ -66,7 +69,8 @@ export default async function ProposalDetailPage({
   // The draft the send screen opens with, built from the same template the
   // route falls back to — two copies of this wording would drift, and only a
   // client would ever notice.
-  const docUrl = proposal.pdfUrl ?? proposal.fileUrl;
+  const docUrl = await documentUrl(proposal.pdfUrl ?? proposal.fileUrl);
+  const pdfUrl = await documentUrl(proposal.pdfUrl);
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
@@ -153,9 +157,9 @@ export default async function ProposalDetailPage({
         }
         actions={
           <>
-            {proposal.pdfUrl && (
+            {pdfUrl && (
               <Button asChild variant="outline">
-                <a href={proposal.pdfUrl} target="_blank" rel="noreferrer">
+                <a href={pdfUrl} target="_blank" rel="noreferrer">
                   <Download className="size-3.5" />
                   PDF
                 </a>
@@ -174,6 +178,9 @@ export default async function ProposalDetailPage({
                 )}
               />
             )}
+            {!proposal.contract && (
+              <ManualStatusMenu entity="proposal" id={proposal.id} status={proposal.status} />
+            )}
             {proposal.status === "ACCEPTED" && !proposal.contract && (
               <LifecycleButton
                 label="Generate contract"
@@ -188,7 +195,6 @@ export default async function ProposalDetailPage({
               id={proposal.id}
               label={`${proposal.projectType} · ${proposal.client.company ?? proposal.client.name ?? "Client"}`}
               redirectTo="/proposals"
-              variant="ghost"
             />
           </>
         }
@@ -264,7 +270,7 @@ export default async function ProposalDetailPage({
                   <p className="text-base text-muted-foreground">
                     {proposal.status === "ACCEPTED"
                       ? "Accepted. Generate the contract to turn this offer into a commitment."
-                      : "A contract can be generated once the client accepts."}
+                      : "A contract can be generated once the client accepts. If they agreed outside the system, use Record manually → Accepted."}
                   </p>
                 )}
                 <Button asChild variant="outline">
@@ -477,6 +483,14 @@ export default async function ProposalDetailPage({
                 </p>
               )}
             </Panel>
+
+            {content && (
+              <ServiceTermsPanel
+                services={content.services}
+                currency={proposal.currency}
+                liveHref={`/clients/${proposal.clientId}?tab=services`}
+              />
+            )}
           </>
         )}
 

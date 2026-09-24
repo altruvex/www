@@ -1,3 +1,4 @@
+import type { ServiceSlug } from "@/lib/config/accent-world";
 import type { SupportedLocale } from "@/lib/metadata";
 
 type LocalizedValue = Record<SupportedLocale, string>;
@@ -24,6 +25,10 @@ export type CaseStudyRecord = {
   slug: CaseStudySlug;
   summary: LocalizedValue;
   year: string;
+  /** The service pages this project is evidence for. A service page lists only
+      the work tagged with it, so a store never stands in as proof of interface
+      design, and a new project appears on its page by being tagged here. */
+  services: readonly ServiceSlug[];
   externalUrl?: string;
   /** Base path for production screenshots; `-light.png`/`-dark.png` are appended. */
   screenshot?: string;
@@ -86,6 +91,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "A bilingual multilingual proof build designed to demonstrate technical quality, native RTL execution, and lead qualification before the first call.",
     },
     year: "2025",
+    services: ["interface-design"],
     externalUrl: "https://altruvex.com",
   },
   {
@@ -142,6 +148,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
     },
     year: "2024",
+    services: [],
     externalUrl: "https://www.artlighting-eg.com",
     screenshot: "/projects/artlighting-eg.com",
   },
@@ -201,6 +208,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports bilingual buying on every device.",
     },
     year: "2024",
+    services: [],
     externalUrl: "https://www.newlight-eg.com/",
     screenshot: "/projects/newlight-eg.com",
   },
@@ -208,6 +216,10 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
 
 export function getAllCaseStudies() {
   return CASE_STUDIES;
+}
+
+export function getCaseStudiesForService(service: ServiceSlug) {
+  return CASE_STUDIES.filter((caseStudy) => caseStudy.services.includes(service));
 }
 
 export function getCaseStudyBySlug(slug: string): CaseStudyRecord | null {

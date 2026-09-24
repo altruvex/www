@@ -3,6 +3,7 @@ import { FolderOpen } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
+import { documentUrl } from "@/lib/storage";
 import { DocumentsTable, type DocumentRow } from "./documents-table";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default async function DocumentsPage() {
   const label = (c: { name: string | null; company: string | null }) =>
     c.company || c.name || "Unnamed client";
 
-  const rows: DocumentRow[] = [
+  const storedRows: DocumentRow[] = [
     ...proposals.flatMap((p) =>
       [
         p.fileUrl && {
@@ -119,6 +120,13 @@ export default async function DocumentsPage() {
       ].filter(Boolean),
     ),
   ] as DocumentRow[];
+
+  // Each row carries whatever is stored on the record; the link a browser can
+  // actually open is minted here and expires. In public-bucket mode this
+  // returns the stored URL unchanged.
+  const rows = await Promise.all(
+    storedRows.map(async (row) => ({ ...row, url: (await documentUrl(row.url)) ?? row.url })),
+  );
 
   const byCategory = rows.reduce<Record<string, number>>((acc, row) => {
     acc[row.category] = (acc[row.category] ?? 0) + 1;

@@ -31,6 +31,9 @@ export const MAX_LOG_BATCH = 500;
  */
 export const MAX_LOG_MESSAGE_LENGTH = 10_000;
 
+/** Ceiling on one entry's `metadata` object, measured as serialised JSON. */
+export const MAX_LOG_METADATA_BYTES = 8_000;
+
 export interface IngestContext {
   product: Product;
 }
@@ -60,6 +63,12 @@ export function withIngestToken(handler: IngestHandler) {
     try {
       return await handler(request, { product });
     } catch (error) {
+      if (error instanceof PayloadTooLargeError) {
+        return NextResponse.json(
+          { success: false, message: error.message },
+          { status: 413 },
+        );
+      }
       if (error instanceof z.ZodError) {
         return NextResponse.json(
           { success: false, message: "Invalid payload.", issues: error.issues },
@@ -75,11 +84,36 @@ export function withIngestToken(handler: IngestHandler) {
   };
 }
 
+/**
+ * A body ceiling for the ingest endpoints.
+ *
+ * A build agent posts a few kilobytes. Nothing here needs megabytes, and
+ * `request.json()` will happily buffer whatever the platform lets through, so
+ * the limit is stated here rather than inherited from the host.
+ */
+export const MAX_INGEST_BODY_BYTES = 1_000_000;
+
+export class PayloadTooLargeError extends Error {
+  constructor() {
+    super("Payload too large.");
+    this.name = "PayloadTooLargeError";
+  }
+}
+
 export async function readIngestJson<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
+  const declared = Number(request.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > MAX_INGEST_BODY_BYTES) {
+    throw new PayloadTooLargeError();
+  }
+
   let raw: unknown;
   try {
-    raw = await request.json();
-  } catch {
+    const text = await request.text();
+    // A caller that sends no content-length, or lies about it, is caught here.
+    if (text.length > MAX_INGEST_BODY_BYTES) throw new PayloadTooLargeError();
+    raw = JSON.parse(text);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) throw error;
     throw new z.ZodError([
       { code: "custom", path: [], message: "Body must be valid JSON." },
     ]);

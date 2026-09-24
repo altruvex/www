@@ -64,17 +64,37 @@ function splitIntoChars(element: HTMLElement): Element[] {
     const raw = textNode.textContent ?? "";
     const fragment = document.createDocumentFragment();
 
+    /* Each word is one nowrap box, and the characters live inside it.
+       Without the box every `.m-char` is an independent inline-block, so the
+       browser is free to break a line *inside* a word — a display headline
+       reads "already te / lling you". The box changes nothing for callers:
+       `.m-char` is still what gets animated. */
+    let word: HTMLSpanElement | null = null;
+    const closeWord = () => {
+      if (word) {
+        fragment.appendChild(word);
+        word = null;
+      }
+    };
+
     for (const ch of raw) {
       if (/\s/.test(ch)) {
+        closeWord();
         fragment.appendChild(document.createTextNode(ch === " " ? "\u00A0" : ch));
       } else {
+        if (!word) {
+          word = document.createElement("span");
+          word.className = "m-word-box";
+          word.style.cssText = "display:inline-block;white-space:nowrap";
+        }
         const span = document.createElement("span");
         span.className = "m-char inline-block";
         span.dataset.script = "latin";
         span.textContent = ch;
-        fragment.appendChild(span);
+        word.appendChild(span);
       }
     }
+    closeWord();
     textNode.parentNode?.replaceChild(fragment, textNode);
   }
 

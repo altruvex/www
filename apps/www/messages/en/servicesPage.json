@@ -1,0 +1,137 @@
+{
+  "capabilities": {
+    "consulting": "Technical Consulting",
+    "development": "Custom Development",
+    "interfaceDesign": "Interface Design",
+    "maintenance": "Maintenance & Support"
+  },
+  "description": "Each service is structured around <strong>a single business outcome</strong> - so scope, investment, and next steps all point in the same direction.",
+  "eyebrow": "Services",
+  "index": {
+    "eyebrow": "How to choose",
+    "title": "Start from the problem you need solved —",
+    "titleAccent": "not the deliverable name."
+  },
+  "services": {
+    "audit": {
+      "outcome": "Prioritized findings and an execution-ready roadmap in 5 business days.",
+      "problem": "Need clarity before a costly decision?",
+      "deliverables": [
+        "Risk-ranked findings across architecture, performance and SEO",
+        "A recommended rebuild-or-repair path, with its trade-offs",
+        "A roadmap any team can execute — ours or yours"
+      ],
+      "engagement": "{auditPrice} fixed, five business days",
+      "leaves": "A decision you can defend, in five days."
+    },
+    "maintenance": {
+      "outcome": "Predictable coverage without firefighting — releases, monitoring, and one accountable partner.",
+      "problem": "Need reliable execution after launch?",
+      "deliverables": [
+        "Monitoring, patching and backups on a defined cycle",
+        "Content and small feature updates without a new project",
+        "A direct channel to engineers who know the codebase"
+      ],
+      "engagement": "Monthly retainer, three coverage plans",
+      "leaves": "A system that keeps working after we leave."
+    },
+    "portal": {
+      "outcome": "A system that removes operational bottlenecks, supports scale, and fits how the business actually works.",
+      "problem": "Need custom workflows or product logic?",
+      "deliverables": [
+        "Dashboards and workflows modelled on how your team actually operates",
+        "A typed, documented codebase on a stack you own",
+        "An automated build-and-deploy pipeline from the first release"
+      ],
+      "engagement": "Fixed-scope project, priced per scope",
+      "leaves": "Your operation, without the bottleneck."
+    },
+    "website": {
+      "outcome": "A custom multilingual website with strong performance, clear messaging, and a conversion-ready structure.",
+      "problem": "Need a stronger market-facing presence?",
+      "deliverables": [
+        "A custom site with English and Arabic engineered as equals",
+        "Page structures designed around one conversion path",
+        "Performance measured against Core Web Vitals before launch"
+      ],
+      "engagement": "Fixed-scope project, priced per scope",
+      "leaves": "A site that is yours, not rented."
+    }
+  },
+  "title": "Four focused disciplines.",
+  "titleItalic": "One uncompromising standard.",
+  "chapters": {
+    "eyebrow": "What each one leaves behind",
+    "engagementLabel": "Engagement",
+    "explore": "What {name} includes",
+    "plate": {
+      "eyebrow": "Constant across all four",
+      "items": [
+        "Scope and price written down before work begins.",
+        "Built from your requirements — never a recycled theme.",
+        "Arabic and English engineered as equals.",
+        "Code, accounts and findings stay in your name."
+      ]
+    },
+    "leftWith": "Left with you"
+  },
+  "stage": {
+    "label": "What we do, and how it runs",
+    "services": "What we do",
+    "run": "How it runs",
+    "handsTo": "Hands to {stage}",
+    "leavesLabel": "Left with you"
+  },
+  "loop": {
+    "eyebrow": "The system",
+    "title": "Ideas enter.",
+    "titleAccent": "Systems emerge.",
+    "description": "An idea rarely arrives finished. It moves — out of ambiguity into structure, out of structure into something that runs, and out of that into the next question.",
+    "forwardLabel": "Moves forward",
+    "insideBuild": "Inside every build — not sold separately.",
+    "returnLabel": "Nothing stays finished.",
+    "close": {
+      "statement": "Every system you own asks the next question. Bring us the one you are holding now.",
+      "title": "Every system you own",
+      "titleAccent": "asks the next question.",
+      "body": "Bring us the one you are holding now."
+    },
+    "stages": {
+      "discover": {
+        "phase": "Where the idea is unclear",
+        "title": "Discover",
+        "statement": "We remove the noise.",
+        "body": "Before anything is built, we establish what is actually worth building — and what it costs to get wrong.",
+        "hands": "A risk-ranked roadmap. It becomes the architecture's brief."
+      },
+      "architect": {
+        "phase": "Where it takes shape",
+        "title": "Architect",
+        "statement": "We give the idea structure.",
+        "body": "Strategy becomes a sitemap, a data model and an interface designed to scale — decided on paper, where changing it is still cheap.",
+        "hands": "An approved structure. It becomes the build's scope."
+      },
+      "build": {
+        "phase": "Where it becomes real",
+        "title": "Build",
+        "statement": "We turn the structure into a product.",
+        "body": "Design and engineering converge into one working system — custom code, not a template in a new skin.",
+        "hands": "Documented code in your repository. It becomes the launch candidate."
+      },
+      "launch": {
+        "phase": "Where it meets the world",
+        "title": "Launch",
+        "statement": "We put it into the world.",
+        "body": "The system ships to accounts in your name, meets real traffic and starts returning signals.",
+        "hands": "A live system and its monitoring. They become the support runbook."
+      },
+      "evolve": {
+        "phase": "Where it keeps moving",
+        "title": "Evolve",
+        "statement": "The work does not end at launch.",
+        "body": "We refine, extend and harden the system as the business changes — releases, monitoring, one accountable partner.",
+        "hands": "What monitoring surfaces. It becomes the next Discover's starting point."
+      }
+    }
+  }
+}

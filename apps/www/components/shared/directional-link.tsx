@@ -18,7 +18,7 @@ import type { ReactNode } from "react";
  * slides in from nothing, or a static list glyph. It drops the translate so a
  * call site's own transform is not fighting this one.
  */
-const ARROW_BASE = "h-4 w-4 shrink-0 transition-all duration-150 ease-out";
+const ARROW_BASE = "h-4 w-4 shrink-0 transition-all duration-(--motion-hover) ease-default";
 
 const ARROW_ROTATE = {
   forward: "rtl:-rotate-180",
@@ -38,7 +38,7 @@ const ARROW_PATH = {
   external: "M7 17 17 7M7 7h10v10",
 } as const;
 
-export type ArrowDirection = keyof typeof ARROW_PATH;
+type ArrowDirection = keyof typeof ARROW_PATH;
 
 export function ArrowIcon({
   className,

@@ -1,0 +1,68 @@
+{
+  "eyebrow": "The quote",
+  "title": "Every number you will be charged",
+  "titleAccent": "is already on this page.",
+  "subtitle": "Not a summary of a quote — the structure of the real one, including the parts most agencies leave for later.",
+  "document": {
+    "label": "Sample quote · structure",
+    "status": "Illustrative figures. Your numbers are confirmed in discovery — this structure is not."
+  },
+  "clauses": {
+    "scope": {
+      "index": "01",
+      "title": "Scope and range",
+      "body": "One tier, one fixed scope, one range. The range narrows to a single number after discovery, and it does not move upward without a signed change order.",
+      "figure": "{essentialRange} · Marketing System",
+      "note": "The range is the honest part. A single number quoted before discovery is a guess wearing the clothes of a commitment."
+    },
+    "schedule": {
+      "index": "02",
+      "title": "Payment schedule",
+      "body": "Milestone-based, never time-and-materials. You pay against delivered stages, and the bar below is drawn to the real proportions.",
+      "note": "No deposit, no project start. That protects your build window as much as ours."
+    },
+    "included": {
+      "index": "03",
+      "title": "Included in year one",
+      "body": "Domain, SSL, deployment, CI/CD, and base hosting for the first year — plus {warrantyDays} days of post-launch monitoring.",
+      "note": "These are the line items that arrive later elsewhere as setup fees. They are already inside the figure above."
+    },
+    "passthrough": {
+      "index": "04",
+      "title": "Billed by others, not by us",
+      "body": "Stripe, Fawry, SMS gateways, and analytics tools are billed at their own standard rates, and only if your build actually uses them.",
+      "note": "Never marked up. We take nothing on top of a third party's price."
+    },
+    "separate": {
+      "index": "05",
+      "title": "Quoted separately",
+      "body": "Branding from scratch, copywriting, paid stock, email and SMS credits, and premium SaaS subscriptions sit outside the scope unless the scope lists them.",
+      "note": "Named here on purpose. A cost you can read in advance is not a surprise."
+    },
+    "ownership": {
+      "index": "06",
+      "title": "What you own at the end",
+      "body": "Full source code ownership from the moment the final payment clears, permanently. No subscription, no plugin stack, no dependency on us to keep it running.",
+      "note": "The last line matters most: nothing here rents you your own website."
+    }
+  },
+  "schedule": {
+    "start": {
+      "share": "50%",
+      "label": "To start — secures the build window"
+    },
+    "milestone": {
+      "share": "30%",
+      "label": "Mid-project — design and architecture signed off"
+    },
+    "launch": {
+      "share": "20%",
+      "label": "Before launch — due before the site goes live"
+    }
+  },
+  "footer": {
+    "minimum": "Projects start at {minimumEngagement}.",
+    "ctaLabel": "See full pricing",
+    "footnote": "Sample document. Your quote is issued after discovery."
+  }
+}

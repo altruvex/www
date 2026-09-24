@@ -1,24 +1,29 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { Highlight } from "@/components/ui/emphasis";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils/utils";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
+import { HeroHeadline, HeroReveal } from "./hero-motion-wrappers";
 
 interface PageHeroProps {
   eyebrow?: string;
   title: string;
   titleItalic?: string;
   description: ReactNode;
+  /** Facts about the page itself, set under the same 2px ink rule the
+      homepage hero opens its readout with. Omit it rather than invent one. */
   children?: ReactNode;
   className?: string;
-  alignCenter?: boolean;
   minHeightClass?: string;
-  showStatusIndicator?: boolean;
 }
 
+/**
+ * The homepage hero's structure for simple pages: bottom-anchored, start
+ * aligned, eyebrow → h1 with its Highlight line → one paragraph → an optional
+ * record under an ink rule. Same scale, same load-time motion, no status dot.
+ */
 export function PageHero({
   eyebrow,
   title,
@@ -26,66 +31,46 @@ export function PageHero({
   description,
   children,
   className,
-  alignCenter = false,
-  minHeightClass = "min-h-screen",
-  showStatusIndicator = false,
+  minHeightClass = "lg:min-h-dvh",
 }: PageHeroProps) {
-  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement & HTMLDivElement>();
-  const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const descRef = useSectionDescription<HTMLParagraphElement & HTMLDivElement>();
-
   return (
     <section
       className={cn(
-        // pb +3vh lifts centered content to the optical center (S7) —
-        // geometric center reads low.
-        "accent-world-blue flex items-center pt-(--section-y-top) pb-[calc(var(--section-y-bottom)+3vh)]",
+        "accent-world-blue relative flex w-full flex-col justify-end pt-(--section-y-top) pb-(--section-y-bottom)",
         minHeightClass,
         className,
       )}
     >
-      <Container>
-        <div className={cn("w-full", alignCenter ? "mx-auto max-w-2xl text-center flex flex-col items-center" : "sm:max-w-5xl max-w-full")}>
-          {eyebrow && (
-            <div
-              ref={eyebrowRef}
-              className={cn(
-                "mb-6 flex items-center gap-2",
-                alignCenter ? "justify-center" : "inline-flex"
-              )}
-            >
-              {showStatusIndicator && (
-                <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse shrink-0" />
-              )}
-              <Eyebrow>{eyebrow}</Eyebrow>
-            </div>
+      <Container className="flex w-full flex-col justify-end py-12 lg:py-0">
+        {eyebrow && (
+          <HeroReveal delay={0.2} className="mb-6">
+            <Eyebrow>{eyebrow}</Eyebrow>
+          </HeroReveal>
+        )}
+
+        <HeroHeadline
+          as="h1"
+          className="mb-7 max-w-176 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+        >
+          {titleItalic ? <span className="block">{title}</span> : title}
+          {titleItalic && (
+            <Highlight className="block tracking-[-0.02em] rtl:tracking-normal">
+              {titleItalic}
+            </Highlight>
           )}
-          <h1
-            ref={titleRef}
-            className={cn(
-              "text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-8 font-sans font-light text-foreground select-none",
-              alignCenter && "mx-auto text-center"
-            )}
-          >
-            {title}
-            {titleItalic && (
-              <>
-                <br />
-                <Highlight>{titleItalic}</Highlight>
-              </>
-            )}
-          </h1>
-          <div className={cn("grid gap-8 items-start mb-12", alignCenter ? "justify-center w-full" : "grid-cols-1 md:grid-cols-[80px_1fr]")}>
-            {!alignCenter && <div className="h-px w-full bg-foreground/8 mt-3 hidden md:block" />}
-            <p
-              ref={descRef}
-              className={cn("text-base text-primary/60 leading-relaxed max-w-[52ch]", alignCenter && "mx-auto text-center")}
-            >
-              {description}
-            </p>
-          </div>
-          {children}
-        </div>
+        </HeroHeadline>
+
+        <HeroReveal delay={0.5} className="max-w-2xl">
+          <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+            {description}
+          </p>
+        </HeroReveal>
+
+        {children && (
+          <HeroReveal delay={0.65} className="mt-12 border-t-2 border-foreground pt-4 md:mt-16">
+            {children}
+          </HeroReveal>
+        )}
       </Container>
     </section>
   );

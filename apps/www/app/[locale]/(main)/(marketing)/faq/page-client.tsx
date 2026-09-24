@@ -1,158 +1,129 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
-import { Container } from "@/components/shared/container";
-import { SectionEndCta } from "@/components/sections/section-end-cta";
-import { useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { cn } from "@/lib/utils/utils";
-import { ChevronDown, MessageCircle } from "lucide-react";
 import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { PageHero } from "@/components/sections/page-hero";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { Container } from "@/components/shared/container";
+import { ContentsRail } from "@/components/shared/contents-rail";
+import { FaqList, type FaqListItem } from "@/components/shared/faq-list";
+import { Num } from "@/components/ui/num";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+
+type FaqQuestion = { question: string; answer: string };
+
+/**
+ * Topic order and membership. Kept in code rather than in the message files
+ * because it is structure, not copy — and because the question keys are
+ * numeric strings, which JavaScript orders "10".."14" ahead of "01" when the
+ * object is iterated, so reading them with Object.values scrambled the page.
+ * A key missing from a locale is skipped, never rendered empty.
+ */
+const FAQ_GROUPS = [
+  { id: "ownership", keys: ["01", "02", "09", "14"] },
+  { id: "pricing", keys: ["11", "10", "12", "08"] },
+  { id: "delivery", keys: ["04", "05", "13"] },
+  { id: "engineering", keys: ["03", "07", "06"] },
+] as const;
 
 export default function FAQPageClient() {
   const t = useTranslations("faq");
+  const tEnd = useTranslations("common.endCta.pages.faq");
   // FAQ prose quotes prices and the post-launch warranty window as {token}s,
   // filled from the resolved pricing so an answer cannot state a figure that
   // /pricing no longer charges — or a warranty the contract no longer grants.
   // Questions carry them too: one of them names the warranty window.
   const fillTokens = useFillPricingTokens();
-  const questions = Object.values(
-    t.raw("questions") as Record<
-      string,
-      { question: string; answer: string; context?: string }
-    >
-  );
+  const questions = t.raw("questions") as Record<string, FaqQuestion>;
 
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const filled = FAQ_GROUPS.map((group) => ({
+    id: `faq-${group.id}`,
+    title: t(`groups.${group.id}`),
+    items: group.keys.flatMap((key): FaqListItem[] => {
+      const entry = questions[key];
+      if (!entry) return [];
+      return [
+        {
+          id: key,
+          question: fillTokens(entry.question),
+          answer: fillTokens(entry.answer),
+        },
+      ];
+    }),
+  })).filter((group) => group.items.length > 0);
 
-  const eyebrowRef = useSectionEyebrow<HTMLSpanElement>();
-  const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const descRef = useSectionDescription<HTMLParagraphElement>();
+  // Numbering runs on across topics, so "07" names one question page-wide.
+  const groups = filled.map((group, index) => ({
+    ...group,
+    startIndex:
+      1 +
+      filled.slice(0, index).reduce((sum, prev) => sum + prev.items.length, 0),
+  }));
 
   return (
     <>
-      <section className="relative py-20 sm:py-28 md:py-32 overflow-hidden border-b border-foreground/10 bg-linear-to-b from-background to-foreground/5">
-        <Container className="max-w-3xl relative z-10">
-          <div className="flex flex-col items-center text-center space-y-6">
-            <span
-              ref={eyebrowRef}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-foreground/5 border border-foreground/10 text-xs font-mono uppercase tracking-widest text-foreground/70 mb-2"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              {t("eyebrow")}
-            </span>
-            <h1
-              ref={titleRef}
-              className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight"
-            >
-              {t("title")}
-            </h1>
-            <p
-              ref={descRef}
-              className="text-lg md:text-xl text-foreground/60 leading-relaxed max-w-2xl"
-            >
-              {t("subtitle")}
-            </p>
-          </div>
-        </Container>
-      </section>
-      <section className="py-16 md:py-24 ps-section">
-        <Container>
-          <div className="max-w-3xl mx-auto space-y-4">
-            {questions.map((item, index) => (
-              <FAQItem
-                key={index}
-                question={fillTokens(item.question)}
-                answer={fillTokens(item.answer)}
-                isOpen={openIndex === index}
-                onToggle={() =>
-                  setOpenIndex(openIndex === index ? null : index)
-                }
-                index={index}
-              />
-            ))}
-          </div>
-        </Container>
-      </section>
-      
-      <SectionEndCta variant="contact" />
-    </>
-  );
-}
+      <PageHero
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("subtitle")}
+        minHeightClass="min-h-[60vh]"
+      />
 
-function FAQItem({
-  question,
-  answer,
-  isOpen,
-  onToggle,
-  index,
-}: {
-  question: string;
-  answer: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  index: number;
-}) {
-  return (
-    <div
-      className={cn(
-        "group border rounded-xl transition-[border-color,background-color,box-shadow] duration-200 ease-out overflow-hidden",
-        isOpen
-          ? "border-foreground/20 bg-foreground/2 shadow-md"
-          : "transition-all border-foreground/10 hover:border-foreground/20 bg-transparent hover:bg-foreground/1"
-      )}
-    >
-      <button
-        onClick={onToggle}
-        className="w-full px-6 py-5 md:py-6 flex items-start justify-between gap-6 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50"
-        aria-expanded={isOpen}
+      <section
+        aria-label={t("title")}
+        className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
       >
-        <div className="flex items-start gap-5 flex-1">
-          <span
-            className={cn(
-              "text-sm font-mono font-bold mt-0.5 shrink-0 transition-colors duration-300",
-              isOpen ? "text-primary" : "transition-all text-foreground/30 group-hover:text-foreground/50"
-            )}
-          >
-            <Num value={index + 1} pad={2} />
-          </span>
-          <h2
-            className={cn(
-              "font-medium text-base md:text-lg leading-snug transition-colors duration-300",
-              isOpen ? "text-foreground" : "transition-all text-foreground/80 group-hover:text-foreground"
-            )}
-          >
-            {question}
-          </h2>
-        </div>
-        <div
-          className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-colors duration-200 ease-out",
-            isOpen ? "bg-foreground/10" : "transition-all bg-foreground/5 group-hover:bg-foreground/10"
-          )}
-        >
-          <ChevronDown
-            className={cn(
-              "w-4 h-4 text-foreground/60 transition-transform duration-300 ease-spring",
-              isOpen && "rotate-180 text-foreground"
-            )}
-          />
-        </div>
-      </button>
-      <div
-        className={cn(
-          "grid transition-[grid-template-rows,opacity] duration-300 ease-strong",
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        )}
-      >
-        <div className="overflow-hidden">
-          <div
-            className="px-6 pb-6 pt-2 border-t border-foreground/5 ml-13 text-foreground/70 text-sm md:text-base leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_ol]:list-decimal [&_ol]:list-inside [&_ol]:space-y-2 [&_ol]:mb-3 [&_ol]:ml-2 [&_ul]:list-disc [&_ul]:list-inside [&_ul]:space-y-2 [&_ul]:mb-3 [&_ul]:ml-2 [&_li]:text-foreground/70 [&_strong]:font-semibold [&_strong]:text-foreground"
-            dangerouslySetInnerHTML={{ __html: answer }}
-          />
-        </div>
-      </div>
-    </div>
+        <Container>
+          <div className="grid gap-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20 xl:grid-cols-[17rem_minmax(0,1fr)]">
+            <ContentsRail
+              title={t("contents")}
+              items={groups.map((group) => ({
+                id: group.id,
+                label: group.title,
+                count: group.items.length,
+              }))}
+            />
+
+            <div className="max-w-4xl space-y-20 md:space-y-24">
+              {groups.map((group, index) => (
+                <section
+                  key={group.id}
+                  id={group.id}
+                  tabIndex={-1}
+                  aria-labelledby={`${group.id}-title`}
+                  className="scroll-mt-28 outline-none"
+                >
+                  <div className="mb-6 flex items-baseline gap-4 md:mb-8">
+                    <span
+                      aria-hidden
+                      className="text-sm tabular-nums text-local-accent-text ltr:font-mono"
+                    >
+                      <Num value={index + 1} pad={2} />
+                    </span>
+                    <h2
+                      id={`${group.id}-title`}
+                      className="text-[clamp(1.5rem,2.2vw,2rem)] font-normal leading-tight tracking-[-0.015em] text-foreground"
+                    >
+                      {group.title}
+                    </h2>
+                  </div>
+                  <FaqList items={group.items} startIndex={group.startIndex} />
+                </section>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* Someone who reached the end of the FAQ did not find their question,
+          so the close asks for it rather than for a build. */}
+      <SectionEndCta
+        eyebrow={tEnd("eyebrow")}
+        title={tEnd("title")}
+        titleAccent={tEnd("titleAccent")}
+        body={tEnd("body")}
+        primary="describeTheBuild"
+        secondary="technicalCall"
+      />
+    </>
   );
 }

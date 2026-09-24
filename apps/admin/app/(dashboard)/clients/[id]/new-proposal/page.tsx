@@ -748,7 +748,7 @@ export default function NewProposalPage() {
             >
               Restore draft
             </Button>
-            <Button variant="outline" size="sm" onClick={clearDraft}>
+            <Button variant="destructive-ghost" size="sm" onClick={clearDraft}>
               Discard
             </Button>
           </div>

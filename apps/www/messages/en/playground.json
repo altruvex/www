@@ -1,0 +1,41 @@
+{
+  "eyebrow": "This site's own system",
+  "title": "Not a mockup.",
+  "titleItalic": "The system itself, running.",
+  "description": "The parts this site is built from — its tokens, motion and accessibility rules, running live. Every client gets a system like this, designed for their product and handed over with the code. Change a setting and watch it respond.",
+  "controlsLabel": "Props",
+  "copy": "Copy",
+  "copied": "Copied",
+  "footnote": "A look inside how we build interfaces — not a component library for sale. Each project gets its own system, designed around its brand. Reduced-motion and RTL behaviour come built in — switch your OS setting or the site language and re-test.",
+  "tabs": {
+    "button": "Button",
+    "card": "Card",
+    "field": "Field",
+    "accent": "Emphasis"
+  },
+  "controls": {
+    "variant": "Variant",
+    "size": "Size",
+    "loading": "Loading state",
+    "lift": "Hover lift",
+    "glass": "Liquid glass",
+    "tilt": "3D tilt",
+    "tiltNote": "Tilt self-disables on touch devices and under reduced motion.",
+    "state": "State",
+    "stateDefault": "Default",
+    "stateError": "Error",
+    "stateDisabled": "Disabled",
+    "gradient": "Gradient",
+    "shimmer": "Shimmer"
+  },
+  "demo": {
+    "buttonLabel": "Start the conversation",
+    "cardEyebrow": "Uptime — last 12 months",
+    "cardBody": "Every surface in the system carries its own elevation, border, and motion rules.",
+    "fieldLabel": "Work email",
+    "fieldPlaceholder": "you@company.com",
+    "fieldError": "Enter a valid email address.",
+    "accentPre": "Interfaces engineered for",
+    "accentPhrase": "measurable outcomes."
+  }
+}

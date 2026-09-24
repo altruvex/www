@@ -1,5 +1,6 @@
 import { SITE_CONFIG, normalizeLocale } from "@/lib/metadata";
 import { ImageResponse } from "next/og";
+import { css, PALETTE } from "@repo/ui/palette";
 
 export const alt = "Altruvex social preview";
 export const contentType = "image/png";
@@ -73,8 +74,8 @@ export default async function OpenGraphImage({
       <div
         style={{
           alignItems: "stretch",
-          background: "#FAFAFA",
-          color: "#0F0F0F",
+          background: css(PALETTE.light["n-0"]),
+          color: css(PALETTE.light["n-8"]),
           display: "flex",
           fontFamily,
           height: "100%",
@@ -100,7 +101,7 @@ export default async function OpenGraphImage({
           >
             <div
               style={{
-                color: "#737373",
+                color: css(PALETTE.light["n-5"]),
                 display: "flex",
                 fontSize: 24,
                 letterSpacing: "0.22em",
@@ -115,7 +116,7 @@ export default async function OpenGraphImage({
                 background: "rgba(15,15,15,0.06)",
                 border: "1px solid rgba(15,15,15,0.1)",
                 borderRadius: 999,
-                color: "#525252",
+                color: css(PALETTE.light["n-6"]),
                 display: "flex",
                 fontSize: 22,
                 height: 48,
@@ -152,7 +153,7 @@ export default async function OpenGraphImage({
             </div>
             <div
               style={{
-                color: "#525252",
+                color: css(PALETTE.light["n-6"]),
                 display: "flex",
                 fontSize: 28,
                 lineHeight: 1.4,
@@ -187,7 +188,7 @@ export default async function OpenGraphImage({
             </div>
             <div
               style={{
-                color: "#737373",
+                color: css(PALETTE.light["n-5"]),
                 display: "flex",
                 fontSize: 22,
                 gap: "16px",
@@ -199,7 +200,7 @@ export default async function OpenGraphImage({
                   "",
                 )}
               </span>
-              <span style={{ color: "#0E70F1" }}>
+              <span style={{ color: css(PALETTE.light.brand) }}>
                 {isArabic ? "العربية + English" : "English + العربية"}
               </span>
             </div>

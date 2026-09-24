@@ -16,6 +16,11 @@ interface TimePickerProps {
   onChange?: (time: string) => void;
   disabled?: boolean;
   className?: string;
+  /** Trigger placeholders — required, so no caller can ship English into another language. */
+  hourPlaceholder: string;
+  minutePlaceholder: string;
+  /** The page's locale ("en", "ar", ...): the digits are shown in its numbering system. */
+  locale: string;
 }
 
 export function TimePicker({
@@ -23,7 +28,16 @@ export function TimePicker({
   onChange,
   disabled = false,
   className,
+  hourPlaceholder,
+  minutePlaceholder,
+  locale,
 }: TimePickerProps) {
+  // The value stays "HH:MM" in Latin digits for the form; only the label
+  // is localized, so Arabic reads ٠٩ where English reads 09.
+  const digits = new Intl.NumberFormat(locale.startsWith("ar") ? "ar-EG" : "en-US", {
+    minimumIntegerDigits: 2,
+    useGrouping: false,
+  });
   const [hour, setHour] = React.useState<string>(
     value ? (value.split(":")[0] ?? "") : "",
   );
@@ -62,12 +76,12 @@ export function TimePicker({
       <Clock className="h-4 w-4 text-muted-foreground" />
       <Select value={hour} onValueChange={handleHourChange} disabled={disabled}>
         <SelectTrigger className="w-[100px]">
-          <SelectValue placeholder="Hour" />
+          <SelectValue placeholder={hourPlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {hours.map((h) => (
             <SelectItem key={h} value={h.toString().padStart(2, "0")}>
-              {h.toString().padStart(2, "0")}
+              {digits.format(h)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -79,12 +93,12 @@ export function TimePicker({
         disabled={disabled}
       >
         <SelectTrigger className="w-[100px]">
-          <SelectValue placeholder="Min" />
+          <SelectValue placeholder={minutePlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {minutes.map((m) => (
             <SelectItem key={m} value={m}>
-              {m}
+              {digits.format(Number(m))}
             </SelectItem>
           ))}
         </SelectContent>

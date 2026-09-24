@@ -1,0 +1,73 @@
+{
+  "agreement": {
+    "eyebrow": "The working agreement",
+    "title": "Everything that recurs during a project,",
+    "titleItalic": "settled before it starts.",
+    "description": "The questions every client asks halfway through a build. The answers are here before you sign, not negotiated once the work is under way.",
+    "label": "{n} {count, plural, one {clause} other {clauses}}",
+    "caption": "Filled in before you sign",
+    "clauses": {
+      "who": {
+        "question": "Who you talk to",
+        "note": "{role}. The person who answers your first message writes the code - no account manager in between."
+      },
+      "updates": {
+        "question": "How often you hear from us",
+        "value": "Every week",
+        "note": "A written update during development: what shipped, and what is next."
+      },
+      "progress": {
+        "question": "Where you see progress",
+        "value": "A live preview link",
+        "note": "From the first working build, so you judge the system itself - not screenshots of it."
+      },
+      "changes": {
+        "question": "What a change costs",
+        "value": "Quoted first",
+        "note": "A fixed price, or {revisionRate} an hour. You approve the figure before any work starts."
+      },
+      "warranty": {
+        "question": "After launch",
+        "value": "{n} {count, plural, one {day} other {days}}",
+        "note": "Critical fixes at no charge. After that, a maintenance plan or a new quote."
+      },
+      "ownership": {
+        "question": "What you own",
+        "value": "Everything",
+        "note": "Source code, hosting accounts and documentation, handed over at launch. Zero lock-in."
+      }
+    }
+  },
+  "cta": {
+    "description": "We will walk through how these phases and standards apply to your scope - before you commit to anything.",
+    "eyebrow": "Next Step",
+    "schedule": "Book a discovery call",
+    "title": "See how this maps",
+    "titleAccent": "to your project.",
+    "work": "See case studies"
+  },
+  "hero": {
+    "eyebrow": "How we work",
+    "title": "One engineer, one schedule,",
+    "titleItalic": "and the terms in writing.",
+    "description": "What working with Altruvex is like from the first call to the day after launch - who you talk to, how often you hear from us, what a change costs, and what you own."
+  },
+  "map": {
+    "eyebrow": "Each part in full",
+    "approach": {
+      "label": "Approach",
+      "figure": "{n} {count, plural, one {decision} other {decisions}}, data first",
+      "line": "The order we make decisions in - data before pages."
+    },
+    "process": {
+      "label": "Process",
+      "figure": "{phases} {phasesCount, plural, one {phase} other {phases}} · {min}–{max} working days",
+      "line": "Every phase in detail, with your part at each step."
+    },
+    "standards": {
+      "label": "Standards",
+      "figure": "{checks} {checksCount, plural, one {check} other {checks}} · one gate",
+      "line": "Every benchmark we build against, and the line each one has to clear."
+    }
+  }
+}

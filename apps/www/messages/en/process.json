@@ -1,0 +1,100 @@
+{
+  "length": {
+    "session": "1 session",
+    "days": "{n} {count, plural, one {day} other {days}}"
+  },
+  "page": {
+    "strip": {
+      "label": "One engagement, in working days",
+      "scope": {
+        "label": "Scope",
+        "min": "Smallest scope",
+        "max": "Largest scope"
+      },
+      "totalLabel": "From the first call to launch",
+      "total": "<n></n> {count, plural, one {working day} other {working days}}",
+      "legend": {
+        "other": "The other four phases"
+      },
+      "note": "Scope stretches every phase after discovery - development most. It never adds a phase, reorders one, or skips a sign-off. Both ends come from our published price ranges; a flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks, never further. Discovery counts as one day."
+    },
+    "register": {
+      "eyebrow": "Phase by phase",
+      "title": "No phase starts",
+      "titleItalic": "before your part is done.",
+      "gate": {
+        "next": "Then {next} starts.",
+        "last": "Then the system is yours."
+      }
+    }
+  },
+  "closing": {
+    "cta": "Book a Discovery Call",
+    "startsHere": "Your project starts here"
+  },
+  "eyebrow": "03 - Delivery Model",
+  "flexibility": {
+    "description": "These phases are a framework, not a rigid contract. Some projects need deeper discovery. Others need to ship fast. We adjust the intensity - <strong>never the discipline.</strong>",
+    "title": "The process serves",
+    "titleItalic": "the project."
+  },
+  "footer": "A clear system before implementation. A working product after delivery.",
+  "hero": {
+    "description": "A framework, not a formula. Every engagement follows the same backbone - calibrated to what the scope actually demands.",
+    "eyebrow": "10 - Our Process",
+    "title": "How we work.",
+    "titleItalic": "every time."
+  },
+  "meta": {
+    "deliverables": "Deliverables"
+  },
+  "phases": {
+    "deliverables": "Deliverables",
+    "design": {
+      "headline": "Agree on the whole design before a line of code.",
+      "deliverables": "Visual mockups | Responsive layouts | Brand alignment",
+      "description": "You review the full design system before a single line of code is written. Revisions are within scope.",
+      "title": "03 - Design",
+      "yourRole": "Review"
+    },
+    "development": {
+      "headline": "Build the system behind the idea.",
+      "deliverables": "Working system | Live preview link | Weekly updates",
+      "description": "We build. You track live progress via a staging link. No black boxes.",
+      "title": "04 - Development",
+      "yourRole": "Review"
+    },
+    "discovery": {
+      "headline": "Understand the problem before proposing a solution.",
+      "deliverables": "Requirements summary | Technical audit | Project roadmap",
+      "description": "We listen before we build. 60 minutes. No sales pitch - only the questions that surface the real constraints.",
+      "title": "01 - Discovery",
+      "yourRole": "Share"
+    },
+    "launch": {
+      "headline": "Turn the system into something ready to operate.",
+      "deliverables": "Source code | Hosting setup | Documentation",
+      "description": "You receive everything: source code, hosting setup, full documentation. Zero lock-in.",
+      "title": "05 - Launch",
+      "yourRole": "Launch"
+    },
+    "wireframe": {
+      "headline": "Define the system before the interface.",
+      "deliverables": "Sitemap | Page structure | Key flows",
+      "description": "You approve the architecture before any visual work begins. No downstream surprises.",
+      "title": "02 - Wireframe",
+      "yourRole": "Approve"
+    },
+    "yourRole": "Your Role"
+  },
+  "subtitle": "Every project moves through discovery, wireframe, design, development and launch - <strong>with one owner responsible from start to delivery.</strong>",
+  "title": "Clear phases. Accountable outcomes.",
+  "scale": {
+    "label": "Working days, drawn to scale — longest case",
+    "days": "<n></n> {count, plural, one {day} other {days}}"
+  },
+  "range": {
+    "days": "{min} – {max} {count, plural, one {day} other {days}}"
+  },
+  "share": "<pct></pct> of the calendar"
+}

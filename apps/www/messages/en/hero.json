@@ -1,0 +1,30 @@
+{
+  "badge": "Precision Web Engineering · Cairo",
+  "readout": {
+    "title": "This page, measured in your browser",
+    "live": "Live",
+    "measuring": "Measuring",
+    "unsupported": "Not reported by this browser",
+    "noScript": "The readout needs JavaScript to measure this page.",
+    "source": "Read from your browser's Performance API, not from us. Reload and they change.",
+    "standardsLink": "The pass lines",
+    "passes": "Passes",
+    "misses": "Misses",
+    "noLine": "Reported as measured",
+    "metrics": {
+      "lcp": "Largest paint",
+      "cls": "Layout shift",
+      "ttfb": "Server response"
+    },
+    "unit": {
+      "ms": "{value} ms"
+    }
+  },
+  "problem": "Custom multilingual web systems for businesses that demand high-end engineering - not recycled templates.",
+  "title": "Build the system your revenue depends on.",
+  "title_pre": "Build the system your",
+  "title_accent": "revenue",
+  "title_post": "depends on.",
+  "title2": "Architecture first. Performance by default.",
+  "watermark": "WEB"
+}

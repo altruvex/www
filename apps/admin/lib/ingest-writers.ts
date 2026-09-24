@@ -89,13 +89,27 @@ export async function writeBuild(product: Product, body: BuildInput): Promise<Bu
 
     const finishedAt =
       body.finishedAt ??
-      (BUILD_TERMINAL.has(body.status) ? (existing?.finishedAt ?? new Date()) : null);
+      (BUILD_TERMINAL.has(body.status)
+        ? (existing?.finishedAt ?? new Date())
+        : // Keep the finish time of a build that already ended; only a build
+          // still running has none.
+          (existing && BUILD_TERMINAL.has(existing.status as BuildStatusInput)
+            ? existing.finishedAt
+            : null));
 
     if (existing) {
+      // Events arrive out of order — a retried "in progress" after the run
+      // finished, or a replayed delivery — and a finished build that flips
+      // back to RUNNING is a screen telling an operator something untrue.
+      // Late non-terminal news about a settled build updates its details and
+      // leaves its verdict alone.
+      const settled = BUILD_TERMINAL.has(existing.status as BuildStatusInput);
+      const regressing = settled && !BUILD_TERMINAL.has(body.status);
+
       return tx.build.update({
         where: { id: existing.id },
         data: {
-          status: body.status,
+          status: regressing ? existing.status : body.status,
           environment: body.environment,
           // Coalesce rather than overwrite: a later post that omits a field is
           // reporting progress, not clearing what an earlier post established.
@@ -194,12 +208,23 @@ export async function writeDeployment(
         })
       : null;
 
+    const settled = existing
+      ? DEPLOYMENT_TERMINAL.has(existing.status as DeploymentStatusInput)
+      : false;
+    const regressing = settled && !DEPLOYMENT_TERMINAL.has(body.status);
+
     const finishedAt =
       body.finishedAt ??
-      (DEPLOYMENT_TERMINAL.has(body.status) ? (existing?.finishedAt ?? new Date()) : null);
+      (DEPLOYMENT_TERMINAL.has(body.status)
+        ? (existing?.finishedAt ?? new Date())
+        : settled
+          ? existing?.finishedAt
+          : null);
 
     const common = {
-      status: body.status,
+      // A deployment that already succeeded or failed keeps that verdict; a
+      // late or replayed non-terminal event is bookkeeping, not a new outcome.
+      status: regressing ? (existing!.status as DeploymentStatusInput) : body.status,
       environment: body.environment,
       version: body.version ?? existing?.version ?? null,
       commitSha: body.commitSha ?? existing?.commitSha ?? null,

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · Screens — Interface Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.hero{position:relative;height:200vh}
+.hero .pin{position:sticky;top:0;height:100svh;overflow:hidden;display:grid;grid-template-rows:auto 1fr;padding-top:104px;text-align:center}
+.hero h1{font-size:clamp(48px,7vw,120px);max-width:14ch;margin:18px auto 0}
+.hero .sub{color:var(--muted);max-width:52ch;margin:22px auto 0;line-height:1.6}
+.hero .btns{display:flex;gap:10px;justify-content:center;margin-top:28px}
+.fan{position:relative}
+.card{position:absolute;left:50%;top:6%;width:clamp(240px,26vw,400px);aspect-ratio:16/10;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--line);background:var(--card);box-shadow:0 30px 60px -24px rgba(0,0,0,.35);transform-origin:50% 320%}
+.card img{width:100%;height:100%;object-fit:cover;object-position:top}
+
+.say{padding:22vh 0}
+.say p.big{font-family:Outfit;font-weight:300;font-size:clamp(34px,4.4vw,72px);line-height:1.06;letter-spacing:-.03em;max-width:21ch;margin-left:auto}
+.say .w{color:var(--muted-2)}
+
+.gal{position:relative;height:420vh}
+.gal .pin{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:28px}
+.gal .head{display:flex;justify-content:space-between;align-items:end}
+.gal h2{font-size:clamp(36px,4vw,64px);max-width:16ch}
+.gal .count{font-family:"Geist Mono";font-size:13px;color:var(--muted)}
+.track{display:flex;gap:28px;padding-left:64px;will-change:transform}
+.slide{flex:0 0 min(62vw,860px)}
+.slide .frame{aspect-ratio:16/10}
+.slide .frame img{height:calc(100% - 28px);object-fit:cover;object-position:top}
+.slide .cap{display:flex;gap:14px;align-items:baseline;margin-top:16px}
+.slide .cap b{font-family:"Geist Mono";font-weight:400;font-size:12px;color:var(--accent)}
+.slide .cap span{font-family:Outfit;font-size:22px;letter-spacing:-.02em}
+.slide .cap em{font-style:normal;color:var(--muted);font-size:14px;margin-left:auto}
+.slide.m .frame{aspect-ratio:auto;width:300px}
+.slide.m{flex-basis:auto}
+
+.grid{padding:18vh 0}
+.grid h2{font-size:clamp(40px,4.6vw,76px);text-align:center;margin:18px auto 56px;max-width:16ch}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cardx{border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);padding:28px;min-height:220px;display:flex;flex-direction:column;gap:14px}
+.cardx h3{font-size:26px;letter-spacing:-.02em;font-weight:400}
+.cardx p{color:var(--muted);line-height:1.55;font-size:15px}
+
+.close{background:#171717;color:#f0f0f0;padding:22vh 0 12vh;text-align:center}
+.close h2{font-size:clamp(56px,8vw,140px);max-width:13ch;margin:28px auto 0;font-weight:400}
+.close p{color:#999;max-width:44ch;margin:28px auto;line-height:1.6}
+.close .pill.s{border-color:rgba(255,255,255,.4);color:#f0f0f0}
+@media(max-width:900px){.cards{grid-template-columns:1fr}.track{padding-left:24px}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div class="l"><a>Work</a><a class="on">Services</a><a>Pricing</a><a>About</a><a>Contact</a></div><a class="pill sm">Get an Estimate</a></nav>
+
+<section class="hero" id="hero">
+  <div class="pin">
+    <div class="wrap">
+      <p class="eyebrow a"><span class="tick"></span>Interface design</p>
+      <h1>Interfaces built to <em class="w">convert.</em></h1>
+      <p class="sub">Sharper hierarchy, clearer messaging and one direct path — in Arabic and English, light and dark, from one system.</p>
+      <div class="btns"><a class="pill p">Request a Scope →</a><a class="pill s">See a Real Build →</a></div>
+    </div>
+    <div class="fan" id="fan"></div>
+  </div>
+</section>
+
+<section class="say wrap">
+  <p class="eyebrow">01 — The approach</p>
+  <p class="big" id="say">Design here is not a layer applied after the build plan. It is the build plan — every spacing and contrast decision made to support one job.</p>
+</section>
+
+<section class="gal band" id="gal">
+  <div class="pin">
+    <div class="wrap head"><div><p class="eyebrow">02 — Decisions, not decoration</p><h2 style="margin-top:14px">Every screen answers <em class="w">one question.</em></h2></div><span class="count" id="count">01 / 06</span></div>
+    <div class="track" id="track">
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/home.jpg" alt=""></div><div class="cap"><b>01</b><span>One idea leads the screen</span><em>Home</em></div></div>
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/pricing.jpg" alt=""></div><div class="cap"><b>02</b><span>The number is the hierarchy</span><em>Pricing</em></div></div>
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/home-ar.jpg" alt=""></div><div class="cap"><b>03</b><span>Arabic is a layout, not a translation</span><em>Home · AR</em></div></div>
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/home-dark.jpg" alt=""></div><div class="cap"><b>04</b><span>Dark mode from the same tokens</span><em>Home · dark</em></div></div>
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/contact.jpg" alt=""></div><div class="cap"><b>05</b><span>A form that reads like a letter</span><em>Contact</em></div></div>
+      <div class="slide"><div class="frame"><div class="top"><i></i><i></i><i></i></div><img src="img/process.jpg" alt=""></div><div class="cap"><b>06</b><span>Time drawn to scale</span><em>Process</em></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="grid wrap">
+  <p class="eyebrow" style="text-align:center">03 — What the work covers</p>
+  <h2>Six parts of one <em class="w">system.</em></h2>
+  <div class="cards">
+    <div class="cardx"><span class="tick"></span><h3>Conversion layouts</h3><p>Every page structure guides the visitor toward one action.</p></div>
+    <div class="cardx"><span class="tick"></span><h3>User flows</h3><p>Journeys mapped before screens are drawn.</p></div>
+    <div class="cardx"><span class="tick"></span><h3>Visual hierarchy</h3><p>The most important element always wins first.</p></div>
+    <div class="cardx"><span class="tick"></span><h3>Identity systems</h3><p>A system that holds after launch, not a snapshot.</p></div>
+    <div class="cardx"><span class="tick"></span><h3>Performance budgets</h3><p>Every visual decision measured against load time.</p></div>
+    <div class="cardx"><span class="tick"></span><h3>Accessibility</h3><p>WCAG 2.1 AA built into the system itself.</p></div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <p class="eyebrow a"><span class="tick"></span>Next step</p>
+    <h2>Need an interface that <em class="w">converts?</em></h2>
+    <p>We review your current design and map the next step — in a free 30-minute call.</p>
+    <div style="display:flex;gap:10px;justify-content:center"><a class="pill p">Request a Scope →</a><a class="pill s">Book the call →</a></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="switch.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const imgs = ["about","pricing","home-ar","home","home-dark","standards","contact","work","process"];
+const fan = document.getElementById("fan");
+const cards = imgs.map((n, i) => { const c = document.createElement("div"); c.className = "card"; c.innerHTML = `<img src="img/${n}.jpg" alt="">`; fan.appendChild(c); return c; });
+const mid = (cards.length - 1) / 2;
+cards.forEach((c, i) => gsap.set(c, { xPercent: -50, rotate: (i - mid) * 2, y: 0, zIndex: 20 - Math.abs(i - mid) }));
+gsap.from(cards, { y: 300, opacity: 0, duration: 1.2, ease: "power4.out", stagger: { each: .05, from: "center" }, delay: .2 });
+if (!reduce) gsap.to(cards, { rotate: i => (i - mid) * 9, y: i => Math.abs(i - mid) * 14 - 40, ease: "none", scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom bottom", scrub: .6 } });
+const say = document.getElementById("say");
+say.innerHTML = say.textContent.split(" ").map(w => `<span class="w">${w}</span>`).join(" ");
+gsap.to("#say .w", { color: () => getComputedStyle(document.body).color, stagger: .05, ease: "none", scrollTrigger: { trigger: "#say", start: "top 78%", end: "bottom 45%", scrub: true } });
+const track = document.getElementById("track"), slides = track.children;
+gsap.to(track, { x: () => -(track.scrollWidth - innerWidth + 64), ease: "none", scrollTrigger: { trigger: "#gal", start: "top top", end: "bottom bottom", scrub: .5, invalidateOnRefresh: true, onUpdate: s => document.getElementById("count").textContent = String(Math.min(6, 1 + Math.floor(s.progress * 6))).padStart(2, "0") + " / 06" } });
+gsap.from(".cardx", { y: 40, opacity: 0, duration: .7, ease: "power3.out", stagger: .06, scrollTrigger: { trigger: ".cards", start: "top 85%" } });
+</script>
+</body>
+</html>

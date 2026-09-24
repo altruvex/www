@@ -55,6 +55,13 @@ const envSchema = z.object({
   // public cache's own timer rather than immediately.
   PUBLIC_SITE_URL: z.string().url().optional(),
   PRICING_REVALIDATE_SECRET: z.string().min(16).optional(),
+  // The scheduler's credential for /api/cron/*. Optional: without it the
+  // scheduled renewal sweep refuses to run, and renewal alerts are raised from
+  // the "Check renewals now" button on /services instead.
+  CRON_SECRET: z.string().min(16).optional(),
+  // Two-factor is offered and skippable by default; exactly "true" makes
+  // enrolment a gate with no skip — see lib/mfa.ts.
+  ADMIN_MFA_REQUIRED: z.enum(["true", "false"]).optional(),
 });
 
 /**
@@ -75,6 +82,23 @@ const withoutBlanks = Object.fromEntries(
 
 const parsed = envSchema.safeParse(withoutBlanks);
 
+/**
+ * BETTER_AUTH_URL is optional in the schema because a laptop has no fixed
+ * public address, but every client-facing link — the sign link, the portal
+ * link a client is texted after signing — is built on it. Without it those
+ * links fall back to the request's own Host header, which the caller chooses.
+ * Required in a serving production process, exempt during the build for the
+ * same reason as everything else here.
+ */
+const servingInProduction =
+  process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD;
+
+if (servingInProduction && !process.env.BETTER_AUTH_URL?.trim()) {
+  throw new Error(
+    "BETTER_AUTH_URL must be set in production. Client-facing links are built on it and must never come from the request host.",
+  );
+}
+
 if (!parsed.success) {
   console.error(
     "❌ Invalid environment variables:",
@@ -85,7 +109,7 @@ if (!parsed.success) {
   // ones that never touch auth. Runtime secrets like BETTER_AUTH_SECRET are
   // often only present in the deploy's runtime environment, not the build
   // environment, so only hard-fail once the app is actually serving traffic.
-  if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
+  if (servingInProduction) {
     throw new Error("Invalid environment variables. Check server logs.");
   }
 }

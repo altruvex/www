@@ -206,6 +206,7 @@ Class: hard-rule
 ### C10 — Functional hue semantics drive assignment
 Rule: Assign accent/gradient hues by the section's job using conventional color function — blue = trust/authority, warm high-chroma (orange/red) = action/urgency, yellow = caution, green = positive/confirmation — and keep cultural context in mind.
 Values: Site mapping: blue world = brand/trust · orange world = action/CTA/pricing · green world = proof/shipped.
+Values: /services is the one exception, and it is scoped: there a hue names a discipline rather than a job - violet = interface design (craft), cyan = consulting (diagnosis), blue = development, green = maintenance. Each service page wears its world end to end, closing CTA included. Every other surface keeps the three-world mapping above, so "orange means act" is never re-taught. Source: `apps/www/lib/config/accent-world.ts` (SERVICE_WORLD).
 Applies to: Color worlds, gradient keys, semantic tokens.
 Script scope: both (verify hue conventions hold for the Arab market audience; no known inversions for these three).
 Verify by: Table of section → world → job; flag any hue fighting its section's job.

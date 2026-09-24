@@ -215,7 +215,7 @@ export function PortalClient({
               placeholder="New image is in the shared drive, folder /brand/2026."
             />
           </label>
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" variant="brand" disabled={submitting}>
             {submitting ? <LoadingIcon size="md" /> : "Send request"}
           </Button>
         </form>

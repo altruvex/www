@@ -245,7 +245,7 @@ parentheses are how often each appears in the live `components/` + `app/` (a sig
 |---|---|---|
 | Page background | `bg-background` | `#FAFAFA` light / `#121212` dark. Pick one mode, commit. |
 | A card / raised panel | `bg-card` (white / `#171717`) or `bg-surface` | `bg-card` for floating cards; `bg-surface` for subtle inset tint. |
-| Hairline divider / cell border | `border-border` (10% ink) | The standard separator (`border-t border-border` between sections). |
+| Hairline divider / cell / card border | `border-border-subtle` (10% ink, scene-aware) | **The** hairline for containers, separators and grids (§6.1.4). `border-t border-border-subtle` between sections. |
 | A stronger border (emphasis, active cell) | `border-border-mid` (18% ink) | When the hairline is too faint to read. |
 | Section identity tint | `accent-world-{blue\|orange\|green}` on the `<section>` | One per section. Everything inside reads `--local-accent`. |
 
@@ -253,9 +253,9 @@ parentheses are how often each appears in the live `components/` + `app/` (a sig
 | Case | Use | Condition |
 |---|---|---|
 | Focus ring on any control | `ring-brand` / the focus-visible outline | Always. Non-negotiable accessibility default. |
-| A literal "brand-blue" button | `bg-brand` (16×) + `bg-brand-hover` on hover | Use sparingly. **One sanctioned primary-CTA exception: the homepage hero** ("Request a Scope") — the single brand-fill moment of the page. Every other primary CTA is ink; the nav CTA is always ink. |
+| A literal "brand-blue" button | `bg-brand` (16×) + `bg-brand-hover` on hover | Use sparingly. **One sanctioned primary-CTA exception: the homepage hero** ("Request a Scope") — the single brand-fill moment of the page. The nav CTA (desktop bar and mobile drawer) is also brand blue (Ali, 2026-09-17). Every other primary CTA is ink. |
 | Selection highlight, top-of-page glow | `--selection-accent`, dark-mode radial glow | Automatic; don't override. |
-| ⚠️ Don't | brand blue on a nav CTA, or as body text | A blue nav button reads "generic SaaS"; nav CTA stays **ink**. Brand blue is a fill/focus color, not a text color (use `text-brand-text` for that). |
+| ⚠️ Don't | brand blue as body text | Brand blue is a fill/focus color, not a text color (use `text-brand-text` for that). |
 
 **Local-accent (the section's color world) — the primary "colorful" channel:**
 | Case | Use | Condition |
@@ -379,33 +379,102 @@ rejected alternative. Never put color or serif-italic in body — those are head
 
 ## 6. Spacing, Radius, Elevation, Texture
 
-### 6.1 Radius (base `--radius: 1rem` = 16px)
-Scales `xs` 8 → `sm` 12 → `md` **16** → `lg` **22** → `xl` **28** → `2xl` **34** → `3xl` 40.
+### 6.1 Edges — radius and borders (base `--radius: 1rem` = 16px)
 
-**Apple has two radius families, not one ramp — and the `md`→`lg` gap is the boundary:**
+The edge system was unified on 2026-09-19 (the full record, including every decision, is in
+`docs/edge-system-2026-09.md`). Every border and radius in `apps/www` traces back either to a
+token below or to a named exception in §6.1.5.
 
-| tier | steps | value | what belongs here |
+#### 6.1.1 Two radius families, never mixed
+
+| family | tokens | value | keyed to | what belongs here |
+|---|---|---|---|---|
+| **control** | `ctl-xs` `ctl-sm` `ctl` `ctl-lg` `ctl-xl` | 4 / 12 / 16 / 18 / 20 | **height** | buttons, inputs, chips, keys, segmented controls, focus shapes |
+| **panel** | `panel-sm` `panel-md` `panel-lg` | 22 / 28 / 34 | **role** | cards, overlays/popovers, large blocks and tiles |
+
+**Control radius tracks control HEIGHT, not importance**, so pick the token by the measured height:
+`rounded-ctl-xs` (≤24px: keys, inline code, small tags, glyphs) · `rounded-ctl-sm` (~32px) ·
+`rounded-ctl` (36–40px) · `rounded-ctl-lg` (44px) · `rounded-ctl-xl` (48px and up). 20px is the
+ceiling, because half of a 40px control is 20px, so anything at or above half the height is a
+capsule. `MagneticButton` wires each size to its own token: `sm` (40px) → `ctl`, `default`
+(44 → 48px) → `ctl-lg` → `sm:ctl-xl`, `lg` (52 → 56px) → `ctl-xl`. There is no `Button`
+component in `apps/www`.
+
+**Panel radius tracks ROLE, not size or importance**: card → `panel-sm`, overlay/popover →
+`panel-md`, large block or tile → `panel-lg`. A lead-capture card is still a card. Visual weight
+comes from shadow, colour or physical size, never from a bigger corner.
+
+Never cross the families: a panel radius on a 40px button **is** a pill, and a control radius on
+a card reads machined. The legacy steps (`rounded-sm/md/lg/xl/2xl`) are still defined only because
+the recorded exceptions use them. **New code never uses them.**
+
+#### 6.1.2 The concentric rule, and when it binds
+
+`inner = outer − padding`, but **only when the child sits in the parent's corner and the padding is
+smaller than the outer radius.** When padding ≥ outer radius, the two curves are too far apart to
+read as nested, and the child takes its own role's token. In practice, only padding under ~20px on
+a panel binds. The one inset that occurs has its own token, `--radius-panel-inset` =
+`panel-sm − 1rem` = **6px** (a panel-sm padded 16px).
+
+When the concentric value and the height key disagree, **change the padding or position, not the
+radius**. Examples:
+- the command palette: `panel-md` 28 − `p-3` 12 = 16 = `ctl` for its 40px rows;
+- the code-block copy button: `panel-sm` 22 − `top-2.5` 10 = 12 = `ctl-sm`;
+- a segmented control: segment `ctl-sm` 12 + `p-1` 4 = 16 = `ctl` for the well.
+
+`panel-md` was derived exactly this way (8px list padding + a 20px row = 28). `panel-sm` is one 6px
+step below it and leaves a visible 6px inset at the dominant card padding. `panel-lg` is the same
+step up; nothing in the code constrains it, so a `panel-lg` block may host corner children only at
+padding ≤ 24px.
+
+#### 6.1.3 Three edge roles
+
+| role | what | edge | radius |
 |---|---|---|---|
-| **control** | `ctl-sm` `ctl` `ctl-lg` `ctl-xl` | 12 / 16 / 18 / 20 | buttons, inputs, chips, badges, icon buttons, segmented controls |
-| **panel** | `lg` `xl` `2xl` | 22 / 28 / 34 | cards, modals/sheets, large sections and tiles |
+| **A · Container** | cards, panels, overlays, popovers, media frames | 4-side 1px `border-border-subtle`, or no border on glass or media | `panel-*` |
+| **B · Separator** | list and table rows, section dividers, underline inputs, drawn `h-px` rules | one side only, 1px `border-border-subtle` / `divide-border-subtle` / `bg-border-subtle` | **never** |
+| **C · Grid** | tabular or grid data only: the estimator grids, transparency grids, ownership stack, maintenance table | outer 1px `border-border-subtle` + a panel radius; internal 1px lines (`gap-px` over `bg-border-subtle`, or row `border-b`) | outer: `panel-*`; cells: **0** |
 
-Never put a control on the panel tier: a 22px radius on a 40px-tall button **is** a pill.
+Pick one containment per section. Never wrap separated rows in a bordered box **and** border each
+row; that composite belongs to role C alone, and only for tabular data.
 
-**Control radius tracks control HEIGHT, not importance.** One flat value makes a 48px full-width
-CTA read square while making a 32px button read pill, so pick the token by height:
-`rounded-ctl-sm` (32px tall) · `rounded-ctl` (36–40px) · `rounded-ctl-lg` (44px) ·
-`rounded-ctl-xl` (48px and up). 20px is the ceiling — half of a 48px control is 24px, so anything
-above ~20 starts reading as a capsule. `Button` wires each `size` variant to its matching token;
-`MagneticButton` is `ctl-xl` because both its sizes are `min-h-12`.
+#### 6.1.4 One hairline
 
-Semantic aliases: `--radius-surface` (cards, **22px**), `--radius-overlay` (modals/popovers,
-**28px**), `--radius-section` (large blocks, **34px**), `--radius-nested` (12px). Squircle
-continuous corners
-via `@supports (corner-shape: squircle)` — **applied to rounded-rects only**. `.rounded-full` is
-explicitly reset to `corner-shape: round`: a squircle at capsule radius renders a rounded *square*,
-not a circle, which silently boxed every dot, badge, avatar and the custom cursor. Never widen
-that rule to an attribute selector — `[class*="rounded-full"]` would catch `after:rounded-full`
-and friends.
+`--border-subtle` (`border-border-subtle`) is **the** hairline for all three roles. It is an alias
+of `--s-border`, declared **beside every `--s-border` definition** (root, dark, and each inverted
+scene), so it follows every Chromatic Intent scene flip. A single `:root` alias would not follow the
+flips: a custom property resolves where it is declared, and descendants inherit the resolved value.
+Nothing thicker than 1px except the named exceptions and interactive, error or focus states.
+`border-border-mid` remains for a deliberately stronger edge and for hover.
+
+#### 6.1.5 Named exceptions (closed lists; valid only where stated)
+
+| exception | valid only for | edge |
+|---|---|---|
+| **ledger-head-rule** | the top rule that opens a ledger or register data block | `border-t-2 border-foreground`. Never thinned, never used as generic emphasis (standards' card-top rule was refused it and is language B) |
+| **accent-side-rule** | pull quotes, blockquotes, annotated notes | `border-s-2` + accent or ink colour. Logical side only, never `border-l`/`border-r` |
+| **status-edge** | semantic status cards: error, warning, success, info (alerts, callouts) | tinted 1px `border-{status}/…` |
+| **pill** | badges, tags, status chips, dots, toggles, circular icon buttons | `rounded-full`, a true capsule (see the squircle note) |
+| **focus-shape** | a radius that exists only so a focus ring has corners | `rounded-ctl-sm` |
+| **diagram / glyph** | drawn marks: nodes, pass markers, connectors, legend swatches, icon glyphs, illustrated UI mocks | may use 2px and dashed strokes; radius from `ctl-xs`, or scaled with the glyph |
+| **logo tile** | the brand mark | its corner scales with the mark |
+
+The full exception record, with every location and its reason, is in `docs/edge-system-2026-09.md`.
+
+#### 6.1.6 Squircle
+
+Continuous corners come from `@supports (corner-shape: squircle)` at the end of
+`apps/www/app/globals.css`, **applied to rounded-rects only**. `.rounded-full` is explicitly reset to
+`corner-shape: round`: a squircle at capsule radius renders a rounded *square*, not a circle, which
+silently boxed every dot, badge, avatar and the custom cursor. Never widen that rule to an attribute
+selector: `[class*="rounded-full"]` would catch `after:rounded-full` and friends.
+
+The rule once vanished in an unrelated commit with nothing failing. After touching `globals.css`,
+check it in the browser: computed `corner-shape` must read `superellipse(2)` on a rounded-rect and
+`superellipse(1)` on `rounded-full`.
+
+`--radius-surface`, `--radius-overlay` and `--radius-section` are kept as aliases of
+`panel-sm/md/lg`.
 
 **The radius decision (CI8 — Ali, 2026-07-27, reference: macOS/iOS widgets):** both the "12px
 machined" call and the 14px/**pill** pass are retired. The reference Ali set is the *widget*
@@ -428,7 +497,7 @@ sections breathe; don't crowd social layouts either.
 ### 6.3 Elevation (shadows)
 | Token | Level | Use |
 |---|---|---|
-| — | 0 | Flat: `border-border` edge only (edges define depth first — CI9) |
+| — | 0 | Flat: `border-border-subtle` edge only (edges define depth first — CI9) |
 | `--shadow-card` | 1 | Default card lift (very subtle) |
 | `--shadow-card-lg` | 2 | Hover / featured card |
 | `--shadow-overlay` | 3 | Popovers, menus, floating panels |
@@ -461,17 +530,18 @@ aesthetic is flat-with-a-whisper, not heavy material drop-shadows.
 
 Sizes: `sm` 32px · `default` 40px · `lg` 44px · `xl` 48px · icons 32–40px. On **coarse pointers
 (touch)** every size grows to the 44px minimum via `pointer-coarse:` variants (CI1) — the compact
-sizes are a fine-pointer-only spec. Radius is **per-size**, tracking height via the `ctl-*` tokens
-— `sm`/`icon`/`icon-sm` → `rounded-ctl-sm` (12px), `default`/`icon-lg` → `rounded-ctl` (16px),
-`lg` → `rounded-ctl-lg` (18px), `xl` → `rounded-ctl-xl` (20px). See §6.1; never use `rounded-lg`,
-that's the panel tier and would render a pill. `font-medium`, micro
+sizes are a fine-pointer-only spec. Radius is **per-size**, tracking the measured height via the
+`ctl-*` tokens (§6.1.1). In `apps/www` the CTA is `MagneticButton`: `sm` (40px) → `rounded-ctl`,
+`default` (44 → 48px) → `rounded-ctl-lg sm:rounded-ctl-xl`, `lg` (52 → 56px) → `rounded-ctl-xl`.
+Never a `panel-*` or legacy `rounded-lg`/`rounded-xl`: those are panel values and render a pill. `font-medium`, micro
 press animation (`active:scale-[0.98]`), 200ms transitions, built-in `loading` spinner state.
-**Note:** the nav CTA is intentionally **neutral ink, not blue** — a blue nav button reads as "generic
-SaaS." Keep primary CTAs confident and restrained.
+**Note:** the nav CTA is brand blue — `MagneticButton variant="primary"` in the desktop bar and the
+mobile drawer (Ali, 2026-09-17). Keep other primary CTAs confident and restrained.
 
 ### 7.2 Cards
-White (`#FFFFFF`) on light / `#171717` on dark, `--radius-surface` (22px), `--shadow-card`. Connected
-grid sections use 1px-gap borders rather than floating cards (alignment over decoration).
+White (`#FFFFFF`) on light / `#171717` on dark, `rounded-panel-sm` (22px),
+`border border-border-subtle`, `--shadow-card`. Tabular and grid data uses role C (§6.1.3): one
+bordered outer box with 1px internal lines, rather than floating cards (alignment over decoration).
 
 ### 7.3 Focus & accessibility (non-negotiable, it's a brand value)
 - Visible focus ring on everything (`focus-visible: 2px brand outline, offset`).
@@ -505,7 +575,7 @@ aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive ar
 ```
 
 **States:**
-- **Default** — bottom hairline `border-border`, transparent fill, muted placeholder.
+- **Default** — bottom hairline `border-border`, transparent fill, muted placeholder. (This input lives in `packages/ui`, which is shared with admin and keeps its own tokens until the admin/www token reconciliation — a recorded edge-system exception, D10.)
 - **Focus** — border becomes `ring` (brand) **and** a 2px offset brand outline appears.
 - **Invalid** (`aria-invalid`) — border + focus outline flip to `destructive`.
 - **Disabled** — inherit the standard `disabled:opacity-50` / `pointer-events-none` convention.
@@ -718,8 +788,10 @@ text-local-accent        // the current section's color world (blue/orange/green
 
 // Backgrounds & borders
 bg-background  bg-card  bg-surface  bg-brand  bg-success/error/warning
-border border-border        // hairline (10% ink)
-border border-border-mid    // stronger hairline (18%)
+border border-border-subtle // THE hairline (10% ink, scene-aware) — §6.1.4
+border border-border-mid    // stronger edge / hover (18%)
+rounded-panel-sm|md|lg      // card · overlay · large block (22/28/34) — by ROLE
+rounded-ctl-xs|sm|—|lg|xl   // 4/12/16/18/20 — by measured HEIGHT
 
 // Surface opacity scale (layering on any bg)
 text-s-high  text-s-mid  text-s-low  text-s-muted   // 90/72/52/40% ink, theme-aware
@@ -754,14 +826,14 @@ Every section follows the same outer skeleton: a full-bleed `<section>` for back
 
 ```tsx
 // Container = mx-auto, max-w-352 (~1408px), responsive px (6→8→12→16)
-<section className="border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
+<section className="border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)">
   <Container>
     {/* content */}
   </Container>
 </section>
 ```
 - **Vertical rhythm:** always `pt-(--section-y-top) pb-(--section-y-bottom)` (the clamp-based tokens).
-- **Section dividers:** a top hairline `border-t border-border` is the standard separator.
+- **Section dividers:** a top hairline `border-t border-border-subtle` is the standard separator.
 - **Max width:** `Container` caps at `max-w-352`; content blocks often cap tighter (`max-w-5xl`,
   `max-w-[52ch]` for prose) — generous whitespace is intentional.
 
@@ -808,15 +880,20 @@ prop is the Highlight-vs-Accent decision from §5, encoded.
 
 ### 10.5 Hero patterns: `<PageHero>` and `<ServiceHero>`
 
-Two ready-made hero shells (both default to `accent-world-blue`, `min-h-screen`, centered title +
-mono status pill):
+Both shells follow the homepage hero's structure (2026-09-18): bottom-anchored, start-aligned,
+eyebrow → `<h1>` → one paragraph (`text-muted-foreground`, ≤ `max-w-2xl`), with load-time motion from
+`hero-motion-wrappers.tsx` (`HeroHeadline`/`HeroReveal`). No status pill, no pulsing dot, no scroll
+hint, no grid-line overlay — all removed as decoration (the scroll hint and dot were idle loops).
 - **`PageHero`** (`components/sections/page-hero.tsx`) — simple pages. Props: `eyebrow`, `title`,
-  `titleItalic` (rendered as `<Highlight>`), `description`, `showStatusIndicator`, `alignCenter`.
-- **`ServiceHero`** (`components/sections/service-hero.tsx`) — service pages. Adds a `watermark`,
-  grid-line overlay, CTA button group, scroll hint, `titleSize="large"` option.
+  `titleItalic` (rendered as `<Highlight>`), `description`, `minHeightClass` (default `lg:min-h-dvh`),
+  and `children`, which render as a record under a 2px ink rule (legal pages: last updated).
+- **`ServiceHero`** (`components/sections/service-hero.tsx`) — service pages. Adds the discipline
+  number as `watermark`, the colour `world`, and the CTA group (primary fills with the world).
+- The homepage hero adds the live readout (`hero-readout.tsx`); that device belongs to the homepage
+  only and is not copied into these shells.
 
-Hero `<h1>` is `font-sans font-light` at `clamp(3rem,5vw,4.5rem)`, tracking `-0.03em`, with the
-second clause on its own line as a `<Highlight>`.
+Hero `<h1>` is `font-sans font-light` at `clamp(3rem,4.5vw,4.5rem)`, tracking `-0.03em` (normal in
+RTL), with the second clause on its own line as a `<Highlight>`.
 
 ### 10.6 Motion contract (GSAP, via hooks)
 
@@ -846,7 +923,7 @@ Order of appearance is always **eyebrow → title → description → element �
 ### 10.7 Cards: `<SurfaceCard>`
 
 ```tsx
-<SurfaceCard interactive>            // flat: border-border + bg-surface, hover bg shift
+<SurfaceCard interactive>            // flat: border-border + bg-surface, hover bg shift (packages/ui — D10 exception)
 <SurfaceCard glass>                  // frosted liquid-glass-panel (nav/overlays)
 ```
 Connected grids (services/work/pricing) use **1px-gap bordered cells** instead of floating cards —
@@ -871,7 +948,7 @@ export function ExampleSection() {
   return (
     <section
       aria-labelledby="example-heading"
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
@@ -899,7 +976,7 @@ export function ExampleSection() {
 - **All colors are tokens** (`text-foreground`, `bg-brand`, `text-local-accent`) — zero hex/rgb in components.
 - **All fonts via Tailwind classes** — headings auto-use Outfit; only set `font-mono`/`font-serif` deliberately.
 - **One color world per section**, matched gradient, ≤2 Accents/page, never same-world adjacent.
-- **Section wrapper** = `pt-(--section-y-top) pb-(--section-y-bottom)` + `Container` + (usually) `border-t border-border`.
+- **Section wrapper** = `pt-(--section-y-top) pb-(--section-y-bottom)` + `Container` + (usually) `border-t border-border-subtle`.
 - **Motion via `useSection*` refs**, never raw GSAP. Always provide `aria-labelledby`/`titleId`.
 - **RTL is first-class:** use logical classes (`inset-s-*`, `ltr:`/`rtl:` only where needed), never assume LTR.
 - **Accessibility is a build gate:** semantic headings, visible focus, AA contrast, respect reduced-motion.
@@ -951,7 +1028,7 @@ root default (`--local-accent` = brand blue) unless an ancestor overrides.
 
 | Section | File | World | Role |
 |---|---|---|---|
-| Hero | `hero-section.server.tsx` + `hero-motion-wrappers.tsx` | **blue** (explicit) | The opening claim; `<h1>` + status pill + scroll hint. |
+| Hero | `hero-section.server.tsx` + `hero-motion-wrappers.tsx` + `hero-readout.tsx` | **blue** (explicit) | The opening claim; `<h1>` + CTAs + a live readout of this page's LCP/CLS/TTFB, measured in the visitor's browser against `STANDARDS`. |
 | Problem | `problem-section.tsx` | inherit (blue) | Names the industry failure. Heading uses an `ember` Accent. |
 | Services / What we build | `services-section.tsx` | **orange** (explicit) | Connected bordered grid of offerings. |
 | Process / Delivery | `process-section.tsx` | inherit (blue) | Numbered delivery model; step dots use `--local-accent`. |
@@ -964,7 +1041,7 @@ root default (`--local-accent` = brand blue) unless an ancestor overrides.
 | Pricing signal | `pricing-signal-section.tsx` | **orange** (explicit) | Pricing / conversion. |
 | Consulting brief | `consulting-brief-section.tsx` | inherit (blue) | Scoping offer. |
 | FAQ | `faq-section.tsx` | inherit (blue) | Accordion. |
-| Audit lead capture | `audit-lead-capture.tsx` | inherit (blue) | Inline mid-article lead form (not a full bordered section) — bordered card (`border-foreground/8 bg-foreground/2 rounded-xl p-8`), eyebrow + title + 3 trust-stat mini-cards + underline phone field + `MagneticButton`. Drops below every `/writing/[slug]` article body. Same underline-input idiom as §7.4. |
+| Audit lead capture | `audit-lead-capture.tsx` | inherit (blue) | Inline mid-article lead form (not a full bordered section) — bordered card (`border-border-subtle bg-foreground/2 rounded-panel-sm p-8` — a card by role, so `panel-sm`, not the overlay tier), eyebrow + title + 3 trust-stat mini-cards + underline phone field + `MagneticButton`. Drops below every `/writing/[slug]` article body. Same underline-input idiom as §7.4. |
 | CTA / Section-end CTA | `cta-section.tsx`, `section-end-cta.tsx` | **orange** (explicit) | Closing call to action. |
 
 **Home-page order (verified):** Hero → Problem → Ownership Stack →

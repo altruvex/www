@@ -1,0 +1,534 @@
+{
+  "back": "Back",
+  "badge": "Estimate your project",
+  "description": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing.",
+  "seo": {
+    "body": "Transparency is designed to make early project planning less vague. The estimator gives a realistic starting range for custom web development by looking at the kind of system you need, the maturity of your brand and content, the complexity of the workflows, and the pressure around launch timing.",
+    "eyebrow": "How the estimate works",
+    "sections": [
+      {
+        "body": "The estimate is not a fixed quote. It is a planning range that helps you understand whether the project is closer to a focused marketing site, a multilingual content system, a commerce platform, or a deeper operational product build.",
+        "points": [
+          "Project type and business model",
+          "Brand and content readiness",
+          "Workflow and integration complexity",
+          "Delivery timeline and urgency"
+        ],
+        "title": "What the estimator measures"
+      },
+      {
+        "body": "Custom systems vary because the work is not only page count. Real effort comes from architecture, bilingual UX, payment flows, dashboards, data models, permissions, third-party integrations, QA, deployment, and handover documentation.",
+        "points": [
+          "Bilingual Arabic and English experience",
+          "CMS, CRM, booking, or payment integrations",
+          "Role-based dashboards or portals",
+          "Performance, SEO, and launch assurance"
+        ],
+        "title": "Why the range can change"
+      },
+      {
+        "body": "Use the result to decide whether to continue with a discovery call, request a technical audit, or refine the scope before committing budget. The goal is a clearer decision before anyone writes a proposal.",
+        "points": [
+          "Budget planning before discovery",
+          "Scope alignment with decision makers",
+          "Early identification of unknowns",
+          "A practical next step for the project"
+        ],
+        "title": "How to use the result"
+      }
+    ],
+    "title": "A clearer way to plan a custom web build"
+  },
+  "exitIntent": {
+    "buttonText": "Book a Free Call",
+    "description": "Most projects fail in the first conversation - not the build. A 30-minute call is enough to know if we are the right fit.",
+    "phoneError": "Enter a valid phone or WhatsApp number.",
+    "phoneHint": "Used only for follow-up. Never shared.",
+    "phoneLabel": "Phone (WhatsApp)",
+    "phonePlaceholder": "+201... or +971...",
+    "secondaryButtonText": "No thanks",
+    "stats": {
+      "founderAccess": "Founder access",
+      "noCommitment": "No commitment",
+      "noPitch": "No pitch"
+    },
+    "submitting": "Sending...",
+    "subtitle": "ONE LAST THING",
+    "successDescription": "We will reach out on WhatsApp within 24 hours.",
+    "successTitle": "Request Received",
+    "title": "Before you leave."
+  },
+  "faq": {
+    "a1": "Custom development gives you complete technical ownership, no platform constraints, and fundamentally better performance. <strong>A system built for your business logic loads faster, ranks higher, and converts more visitors</strong> <dim>than any plugin-dependent platform</dim>.",
+    "a2": "<dim>This is an initial estimate to help you plan.</dim> It is calibrated against current custom-development pricing and our delivery history. <strong>For a precise proposal tailored to your specific goals</strong>, Schedule a Briefing.",
+    "a3": "<strong>Yes.</strong> All projects include a {warrantyDays}-day post-launch warranty for critical fixes. Structured maintenance retainers are available for teams that need ongoing coverage, monitoring, and <dim>a predictable technical partner</dim>.",
+    "a4": "<strong>You receive your personalized estimate PDF immediately.</strong> <dim>We follow up within 24 hours to schedule a discovery call and walk through the requirements in detail.</dim>",
+    "q1": "Why custom engineering instead of WordPress or Shopify?",
+    "q2": "How accurate is this estimate?",
+    "q3": "Do you offer ongoing support?",
+    "more": "Questions about ownership, pricing and delivery are answered on the FAQ page.",
+    "q4": "What happens after I request the PDF?",
+    "subtitle": "Common questions about our process and project investment model.",
+    "title": "Frequently Asked Questions"
+  },
+  "getEstimate": "See Estimate",
+  "next": "Next",
+  "pdf": {
+    "button": "Download Estimate",
+    "description": "Download a <strong>detailed PDF breakdown</strong> of this project investment estimate.",
+    "generating": "Generating...",
+    "label": "Project Roadmap"
+  },
+  "pdfContent": {
+    "bookCall": "Book a free 30-min discovery call - no obligation.",
+    "confidential": "This document is confidential and prepared exclusively for {name}. Scope and investment may adjust after discovery if requirements change.",
+    "deliverables": {
+      "corporate": {
+        "enterprise": [
+          "Custom corporate platform with portal or secure stakeholder areas",
+          "Role-based access, document flows, or approval workflows",
+          "Multi-site or multi-brand architecture planning",
+          "Deeper CRM / ERP / internal system integration",
+          "Security review, permissions model, and environment strategy",
+          "Infrastructure quoted to real traffic and operational needs",
+          "Phased roadmap for future modules and rollout",
+          "Hypercare window after launch, then ongoing support quoted separately"
+        ],
+        "large": [
+          "Everything in Connected Platform",
+          "Richer storytelling sections, motion, and case-study structure",
+          "Advanced lead routing, gated content, or light account workflows",
+          "Calendar, CRM, or operations integration where needed",
+          "Performance hardening for heavier content and higher traffic",
+          "Reusable design system for future landing pages",
+          "Launch planning across environments and stakeholders",
+          "{warrantyDays}-day launch assurance plus rollout support"
+        ],
+        "medium": [
+          "Everything in Focused Website",
+          "Expanded page system with reusable sections",
+          "CMS or blog setup for ongoing content updates",
+          "One lead-flow integration such as CRM, booking, or advanced forms",
+          "Full Multilingual implementation and QA where required",
+          "Tracking, SEO, and conversion event setup",
+          "Structured handover for internal marketing teams",
+          "{warrantyDays}-day launch assurance with post-launch review"
+        ],
+        "small": [
+          "Discovery-led sitemap and page structure",
+          "Up to 6 core pages with custom UI implementation",
+          "Contact or lead form with email routing",
+          "Responsive build with strong performance fundamentals",
+          "Basic SEO setup, analytics, and search console readiness",
+          "Multilingual-ready structure where the scope calls for it",
+          "Deployment and launch checklist",
+          "{warrantyDays}-day launch assurance for critical fixes"
+        ]
+      },
+      "custom": {
+        "enterprise": [
+          "Platform architecture for multi-team or multi-tenant operation",
+          "Advanced permissions, auditability, and operational controls",
+          "Multiple integrations, data pipelines, or system-to-system workflows",
+          "Infrastructure, CI/CD, and release management design",
+          "Security review and deployment governance",
+          "Phased rollout across teams, regions, or business units",
+          "Operational documentation and training handover",
+          "Ongoing product support quoted separately after launch"
+        ],
+        "large": [
+          "Everything in Connected Platform",
+          "Advanced workflow logic, approvals, or automation rules",
+          "Background jobs, queues, or webhook-driven processes where required",
+          "Audit logs, exports, and operational reporting",
+          "Performance and security hardening for heavier usage",
+          "Multi-environment rollout with CI/CD planning",
+          "Technical roadmap for phase-two growth",
+          "Hypercare window after launch"
+        ],
+        "medium": [
+          "Everything in Focused Website",
+          "Multi-role workflows and richer admin controls",
+          "One or two business-critical integrations",
+          "Reporting, exports, uploads, or dashboard modules where needed",
+          "QA coverage for key business flows",
+          "Documentation and handover for product ownership",
+          "Launch plan with staging and production readiness",
+          "{warrantyDays}-day launch assurance with post-launch review"
+        ],
+        "small": [
+          "Discovery-scoped MVP around one core workflow",
+          "Authentication, basic roles, and protected routes",
+          "Admin-facing screens for essential operations",
+          "Core data model, API, and database setup",
+          "Responsive web app UI for desktop and mobile",
+          "Basic notifications or status updates where required",
+          "Deployment, environment setup, and documentation baseline",
+          "{warrantyDays}-day launch assurance for critical fixes"
+        ]
+      },
+      "ecommerce": {
+        "enterprise": [
+          "Custom commerce architecture for complex operational needs",
+          "ERP, POS, warehouse, or multi-system integration planning",
+          "Role-based back-office workflows and approvals",
+          "Multi-brand, multi-store, or regional rollout requirements",
+          "Security review, release process, and environment strategy",
+          "Infrastructure design quoted to actual traffic and operational load",
+          "Phased roadmap for post-launch expansion",
+          "Hypercare window after launch, then ongoing support quoted separately"
+        ],
+        "large": [
+          "Everything in Connected Platform",
+          "Richer storefront UX, search, and merchandising logic",
+          "Multiple operational workflows such as payments, shipping, and inventory coordination",
+          "Customer accounts, returns, or post-purchase flows where required",
+          "Custom reporting surfaces for key commerce metrics",
+          "Performance pass for higher traffic and heavier catalogs",
+          "Infrastructure planning for scale, CDN, and backup strategy",
+          "{warrantyDays}-day launch assurance plus rollout support"
+        ],
+        "medium": [
+          "Larger catalog with variants, bundles, or collections",
+          "Improved checkout flow and customer account basics",
+          "One core operational integration such as payment, shipping, or ERP-lite sync",
+          "Promotions, coupon codes, and merchandising controls",
+          "CMS support for landing pages, blog, or campaign content",
+          "Multilingual storefront and QA where required",
+          "Analytics, pixels, and search-readiness setup",
+          "{warrantyDays}-day launch assurance with structured handover"
+        ],
+        "small": [
+          "Catalog setup for a focused store (up to 50 SKUs)",
+          "Product pages, categories, and basic filtering",
+          "Checkout with one payment method such as Paymob or cash on delivery",
+          "Order notifications and a simple order-status flow",
+          "Mobile-first storefront implementation",
+          "Essential SEO, analytics, and launch tracking",
+          "Multilingual-ready structure where the scope requires it",
+          "{warrantyDays}-day launch assurance for critical fixes"
+        ]
+      },
+      "performance": {
+        "enterprise": [
+          "Performance program for complex or high-traffic systems",
+          "Cross-stack review spanning frontend, backend, and infrastructure",
+          "SLA-oriented benchmarking and target definition",
+          "Release-risk review for major traffic or launch events",
+          "Operational reporting for engineering and leadership",
+          "Optimization roadmap phased by business impact",
+          "Retainer or ongoing monitoring quoted separately"
+        ],
+        "large": [
+          "Everything in Connected Platform",
+          "Broader implementation across frontend, server, and delivery layers",
+          "Load testing and performance budgeting for key flows",
+          "Database or API bottleneck review where relevant",
+          "Monitoring baseline for ongoing performance visibility",
+          "Stakeholder-ready report with next-phase priorities",
+          "30-day observation period after optimization"
+        ],
+        "medium": [
+          "Everything in Focused Website",
+          "Up to 10 priority fixes across frontend performance issues",
+          "Caching, script loading, and rendering-path improvements",
+          "Third-party tag audit and cleanup recommendations",
+          "Analytics review to protect measurement accuracy",
+          "Validation pass after implementation",
+          "Short post-audit support window"
+        ],
+        "small": [
+          "Baseline Lighthouse and Core Web Vitals audit",
+          "Findings summary across the highest-impact pages",
+          "Image, asset, and script bottleneck review",
+          "Up to 5 priority fixes applied",
+          "Clear before/after measurements",
+          "Written remediation roadmap",
+          "One debrief session"
+        ]
+      }
+    },
+    "deliverablesCount": "{count} deliverables · {tier} tier",
+    "deliveryMode": "Delivery Mode",
+    "discoverySeparate": "Discovery phase separate",
+    "engineeringBeyond": "Engineering Beyond Standards",
+    "estimateValid": "This is an initial estimate to help you plan. For a precise proposal tailored to your specific goals, Schedule a Briefing. Preliminary estimate valid 30 days. Year 1 domain, SSL, and base hosting included where relevant; third-party subscriptions excluded unless scoped.",
+    "estimatedDelivery": "Estimated Delivery",
+    "fullDeliverablesList": "Full Deliverables List",
+    "howWeWork": "How We Work",
+    "inclDomain": "Incl. domain + base hosting (Year 1)",
+    "infraDetails": "Domain registration (.com or equivalent) · SSL/TLS · deployment setup · and the standard hosting stack required for launch. Higher-load infrastructure, databases, SMS, email credits, and paid subscriptions are quoted separately only when the scope requires them.",
+    "infraIncluded": "Infrastructure - Included Year 1",
+    "investmentEstimate": "Project Investment Estimate",
+    "phase1Desc": "1 week - requirements, architecture, wireframes",
+    "phase1Title": "Discovery & Scoping",
+    "phase2Desc": "1 week - components, tokens, prototypes",
+    "phase2Title": "Design System",
+    "phase3Desc": "{min}–{max} weeks - iterative builds, structured updates",
+    "phase3Title": "Development Sprints",
+    "phase4Desc": "1 week - testing, performance, deployment",
+    "phase4Title": "QA & Launch",
+    "projectLabels": {
+      "corporate": "Corporate Website",
+      "custom": "Custom Web Application",
+      "ecommerce": "E-Commerce Platform",
+      "performance": "Performance Audit & Optimization"
+    },
+    "projectType": "Project Type",
+    "prospectiveClient": "the prospective client",
+    "readyToMoveForward": "Ready to move forward?",
+    "renewalFromYear2": "Renewal from Year 2: {amount} / year",
+    "scopeOfDeliverables": "Scope of Deliverables",
+    "scopeTier": "Scope Tier",
+    "tier": "{tier} Tier",
+    "tierLabels": {
+      "enterprise": "Enterprise",
+      "large": "Operational Product",
+      "medium": "Connected Platform",
+      "small": "Focused Website"
+    },
+    "timelineLabels": {
+      "flexible": "Extended - up to 12 weeks",
+      "soon": "Standard - 4–8 weeks",
+      "standard": "Standard - balanced pace",
+      "urgent": "Urgent - compressed sprint"
+    },
+    "totalRange": "Total Investment Range - Year 1",
+    "weeksFromKickoff": "weeks from kick-off",
+    "whatsCovered": "What's Covered",
+    "whatsIncluded": "What is included in your project"
+  },
+  "phoneCapture": {
+    "button": "View Your Estimate",
+    "companyLabel": "Company (Optional)",
+    "companyPlaceholder": "Company name",
+    "emailLabel": "Email (Optional)",
+    "emailPlaceholder": "you@company.com",
+    "nameLabel": "Name or Company (Optional)",
+    "namePlaceholder": "Your name or company name",
+    "phoneError": "Enter a valid phone or WhatsApp number.",
+    "phoneHint": "Used only for follow-up on this estimate. Never shared.",
+    "phoneLabel": "Phone Number (WhatsApp)",
+    "phonePlaceholder": "01XXXXXXXXX",
+    "submitting": "Preparing your estimate...",
+    "subtitle": "Enter your contact details to view your project investment estimate and download a full PDF roadmap.",
+    "title": "One last step",
+    "trustNote": "<strong>We'll send your estimate + next steps.</strong> <dim>No spam. No pressure.</dim>"
+  },
+  "preselected": "Preselected Tier",
+  "readiness": {
+    "title": "Project readiness",
+    "labels": {
+      "projectType": "Project",
+      "complexity": "Scope",
+      "brandIdentity": "Brand",
+      "contentReadiness": "Content",
+      "timeline": "Timeline"
+    }
+  },
+  "results": {
+    "badge": "Estimate Ready",
+    "bookCall": "Book a technical call",
+    "deliveryCeiling": "Price ranges run {windowMin}–{windowMax} weeks; the conditions you picked can stretch that to {weeks} weeks - never further. Anything larger ships in phases.",
+    "detailedEstimateTitle": "Get the detailed estimate",
+    "estimateLabel": "Estimate",
+    "fallbackDeliverables": [
+      "Custom design",
+      "Responsive development",
+      "Production deployment",
+      "Performance and launch QA"
+    ],
+    "fullScopeLabel": "Full scope",
+    "includesLabel": "What this includes",
+    "moreInPdf": "+ {count} more deliverables in the PDF",
+    "nextStepBody": "The PDF is yours to keep. Narrowing the range to a single number happens in a conversation — not in a form.",
+    "nextStepTitle": "Next step",
+    "referenceLabel": "Estimate reference",
+    "requestAudit": "Request a technical audit",
+    "talkNow": "Talk on WhatsApp",
+    "weeks": "weeks",
+    "whatsappMessage": "Hi — I ran the estimator on altruvex.com. My estimate reference is {reference}.",
+    "whyCopy": "The range is shaped by the system type, scope depth, brand readiness, content support, and delivery pace. It is a planning range, not a locked quote.",
+    "whyTitle": "Why this range?"
+  },
+  "startOver": "Start Over",
+  "step": "Step",
+  "steps": {
+    "brand": {
+      "hint": "This helps us understand how much design groundwork is already in place.",
+      "options": {
+        "complete": {
+          "description": "Full identity system ready: logo, colors, typography, and usage rules. We integrate it - no additional design scope needed.",
+          "title": "Ready"
+        },
+        "partial": {
+          "description": "You have a logo or basic visuals but no full system. We refine and extend what exists without starting from scratch.",
+          "title": "Partial"
+        },
+        "scratch": {
+          "description": "No brand identity yet. We build the full system - logo, colors, typography - as part of the project scope.",
+          "title": "Starting fresh"
+        }
+      },
+      "title": "What is your brand identity status?"
+    },
+    "complexity": {
+      "hint": "<strong>This helps us calibrate scope</strong>, <dim>not just price</dim>.",
+      "options": {
+        "basic": {
+          "description": "Core features only. Straightforward flows, minimal custom logic. The right choice for a disciplined first release.",
+          "title": "Essential"
+        },
+        "premium": {
+          "description": "Advanced logic, multiple roles, bespoke interactions. For flagship products and operationally complex systems.",
+          "title": "Premium"
+        },
+        "standard": {
+          "description": "Additional workflows, integrations, and richer UI. Everything in Focused, plus more depth where the business needs it.",
+          "title": "Standard"
+        }
+      },
+      "title": "How ambitious should it be?"
+    },
+    "content": {
+      "hint": "Content readiness directly affects both timeline and cost.",
+      "options": {
+        "need-help": {
+          "description": "We co-create messaging and structure with you, which adds time to the early phases.",
+          "title": "Need support"
+        },
+        "provide": {
+          "description": "Copy and assets are structured and ready. We focus entirely on architecture, design, and engineering.",
+          "title": "Ready"
+        },
+        "unsure": {
+          "description": "Content is not yet structured. We clarify key messages and hierarchy before locking timelines and scope.",
+          "title": "Not sure"
+        }
+      },
+      "title": "How ready is your content?"
+    },
+    "deadline": {
+      "hint": "Your timeline shapes the team size and delivery strategy we recommend.",
+      "options": {
+        "1month": {
+          "description": "~4 weeks. We scope a focused, shippable version of the system for this window.",
+          "title": "Within 1 Month"
+        },
+        "2months": {
+          "description": "~8 weeks from kick-off. Scope kept tight to protect quality without artificial pressure.",
+          "title": "Within 2 Months"
+        },
+        "flexible": {
+          "description": "Beyond 8 weeks. We use the full window for depth and durability - and still hand over within 12 weeks of kick-off.",
+          "title": "Flexible"
+        },
+        "urgent": {
+          "description": "Under 4 weeks. Lean scope, high engineering intensity. Quality is non-negotiable regardless of timeline.",
+          "title": "As Soon as Possible"
+        }
+      },
+      "title": "When do you need to launch?"
+    },
+    "projectType": {
+      "hint": "Each type has a different technical foundation - pick the closest match.",
+      "options": {
+        "ecommerce": {
+          "description": "An online store with products, checkout, payments, and the inventory infrastructure to sell reliably at scale.",
+          "title": "E-commerce"
+        },
+        "pwa": {
+          "description": "App-like mobile experience built on the web stack - offline support, installable, push notifications.",
+          "title": "PWA"
+        },
+        "webapp": {
+          "description": "A product or internal tool with accounts, workflows, and custom business logic - SaaS, dashboards, portals.",
+          "title": "Web App"
+        },
+        "website": {
+          "description": "A high-performance marketing site built for clarity, trust, and lead generation - no application logic.",
+          "title": "Website"
+        }
+      },
+      "title": "What are you building?"
+    },
+    "timeline": {
+      "hint": "<strong>Faster delivery requires more resources</strong>; <dim>flexible timelines reduce cost</dim>.",
+      "options": {
+        "flexible": {
+          "description": "Extra time for iteration, testing, and refinement inside the same 12-week ceiling. Best where durability matters more than speed.",
+          "title": "Flexible"
+        },
+        "standard": {
+          "description": "Structured cadence with enough time for discovery, design, build, and QA - no artificial pressure.",
+          "title": "Standard"
+        },
+        "urgent": {
+          "description": "Compressed, high-intensity build. Scope controlled tightly to maintain quality at speed.",
+          "title": "Urgent"
+        }
+      },
+      "title": "What delivery pace do you need?"
+    }
+  },
+  "subtitle": "Your range updates as you shape the project.",
+  "tierNames": {
+    "commerce": "Commerce Platform",
+    "essential": "Focused Website",
+    "flagship": "Operational Product",
+    "professional": "Connected Platform"
+  },
+  "title": "Get a realistic range",
+  "titleItalic": "before we talk.",
+  "ledger": {
+    "eyebrow": "The ledger",
+    "forming": "Estimate forming",
+    "resolved": "Estimate resolved",
+    "pending": "Awaiting input",
+    "labels": {
+      "projectType": "Type",
+      "complexity": "Depth",
+      "brandIdentity": "Brand",
+      "contentReadiness": "Content",
+      "timeline": "Timeline"
+    }
+  },
+  "live": {
+    "deliveryCeiling": "Up to {weeks} weeks with conditions",
+    "estimateLabel": "Estimate",
+    "pickTypeFirst": "Pick a project type to start the range.",
+    "projectEstimateLabel": "Project Estimate",
+    "settled": "Settled on your answers.",
+    "updatesAsYouShape": "Updates live as you shape requirements.",
+    "answeredCount": "{n} of {total} answered"
+  },
+  "optIn": {
+    "title": "Want it as a document?",
+    "subtitle": "The estimate above is yours either way. Leave a number only if you want the PDF and a follow-up call.",
+    "skip": "No thanks — I have what I need"
+  },
+  "terms": {
+    "title": "Commercial terms",
+    "subtitle": "The figures that appear at contract stage, published here first.",
+    "itemColumn": "Item"
+  },
+  "instrument": {
+    "publishedLabel": "Published range",
+    "yourLabel": "Your estimate",
+    "publishedNote": "Every engagement we take falls inside this range. Each answer below narrows it - nothing is added at the end."
+  },
+  "stages": {
+    "build": "The build",
+    "buildNote": "These two answers resolve the price cell. Everything after them adjusts it.",
+    "conditions": "Project conditions",
+    "conditionsNote": "What you already have. These multiply the range - they never set it.",
+    "conditionsTitle": "What are you bringing to it?",
+    "conditionsBody": "Brand, content and pace decide how much groundwork the build carries before engineering starts."
+  },
+  "factors": {
+    "title": "What moved the range",
+    "base": "Sets the range",
+    "none": "No change",
+    "pending": "Not answered"
+  }
+}

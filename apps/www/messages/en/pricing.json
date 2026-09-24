@@ -1,0 +1,77 @@
+{
+  "commercial": {
+    "items": {
+      "deliveryWindow": {
+        "label": "Delivery Window"
+      },
+      "exclusions": {
+        "label": "Quoted Separately",
+        "value": "Branding from scratch, copywriting, paid stock, SMS, email credits, premium SaaS tools, and third-party subscriptions are not included unless listed in scope."
+      },
+      "paymentTerms": {
+        "label": "Payment Terms",
+        "value": "50% to start · 30% at design sign-off · 20% before launch\n<strong>No deposit = no project start.</strong>"
+      },
+      "yearOne": {
+        "label": "Year 1 Setup",
+        "value": "Domain, SSL, deployment, and base hosting for Year 1 are included for standard website scopes. Higher-load infrastructure is quoted only when the project requires it."
+      }
+    }
+  },
+  "description": "What you build picks the row. How much scope it carries picks the column. The estimator and every proposal read these same cells - there is no second price list.",
+  "grid": {
+    "caption": "Project price ranges by what is built and how much scope it carries",
+    "rowsAxis": "What is built",
+    "columnsAxis": "How much scope",
+    "legendNamed": "A package - select it to read what it includes",
+    "legendPlain": "Priced, not packaged - start from the estimator",
+    "coordinates": "{service} · {band}",
+    "includes": "What the build includes",
+    "notIncluded": "Not in this package"
+  },
+  "terms": {
+    "eyebrow": "The terms",
+    "title": "Every cell carries the same terms",
+    "titleAccent": "- not a different deal per package.",
+    "ownershipLabel": "Ownership"
+  },
+  "minimumEngagementLabel": "Minimum Engagement",
+  "ownershipNote": "Every project includes <strong>full source code ownership</strong> - <dim>not a Shopify subscription, not a WordPress plugin stack.</dim> You own everything, permanently.",
+  "faq": {
+    "questions": {
+      "01": {
+        "a": "<strong>Architecture, workflows, integrations, and multilingual requirements drive the number</strong> - <span class=\"text-foreground/60\">not arbitrary metrics like page count</span>. We price against current custom-development market rates and the engineering complexity of the system.",
+        "q": "How do you determine the investment range?"
+      },
+      "02": {
+        "a": "<strong>No hidden fees.</strong> Year 1 includes domain, SSL, deployment, and base hosting where relevant. <span class=\"text-foreground/60\">Renewals, paid third-party tools, and channels like SMS are only billed if your scope actually uses them.</span>",
+        "q": "Are there hidden recurring costs?"
+      },
+      "03": {
+        "a": "<strong>Milestone-based</strong>: a commencement deposit to secure the build window, then payments tied to discovery completion, design approval, and development delivery.",
+        "q": "What does the payment schedule look like?"
+      },
+      "04": {
+        "a": "<strong>Yes.</strong> Every project is built on modular architecture so it can grow. Start with a Focused Website and layer on authentication, payments, or dashboards as the business evolves.",
+        "q": "Can I upgrade my system tier later?"
+      },
+      "05": {
+        "a": "<strong>Yes.</strong> Our Focused Website tier is for companies that need custom work without jumping straight into product-level investment. <span class=\"text-foreground/60\">For more complex systems, we phase the build so the investment matches the business stage.</span>",
+        "q": "Do you work with early-stage companies?"
+      }
+    },
+    "subtitle": "Common questions about our investment model and how we scope projects.",
+    "title": "Pricing Questions"
+  },
+  "label": "Published pricing",
+  "recommended": "Most common starting point",
+  "roi": {
+    "calculation": "A site rebuilt 18 months after launch because it could not handle integrations, user accounts, or traffic typically costs <strong>2–3× the original build</strong> - plus the revenue lost during the gap.",
+    "eyebrow": "Return on Investment",
+    "question": "The real question is not what this costs to build. It is <strong>what the wrong build costs over two years.</strong>",
+    "title": "The wrong system",
+    "titleItalic": "compounds in cost."
+  },
+  "title": "{cellsLabel} price ranges, all published.",
+  "titleItalic": "{tiers, plural, one {One of them has a name.} other {{tiersLabel} of them have names.}}"
+}

@@ -14,14 +14,26 @@ import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
 import { PROJECT_PHASE_ORDER, statusOf } from "@/lib/status";
 import { date, dateTime, dueLabel, money, when } from "@/lib/format";
-import { PhaseControl } from "./phase-control";
+import { PhaseControl, ProjectStatusControl } from "./phase-control";
+import { ChangeRequestsPanel, type ChangeRequestRow } from "./change-requests";
+import { CloseProjectButton } from "./close-project";
 import { Button } from "@repo/ui";
+import { headers } from "next/headers";
+import { getPricing } from "@/lib/pricing-store";
+import { publicBaseUrlFromHeaders } from "@/lib/public-url";
+import { emailTransport } from "@/lib/email";
+import { ServicesList } from "@/components/os/services/services-list";
+import { listServices } from "@/lib/client-services";
+import { needsAttention } from "@/lib/service-lifecycle";
+import { coveredByWarranty, isOpen, rateFor, warrantyWindow } from "@/lib/change-requests";
 
 export const dynamic = "force-dynamic";
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "milestones", label: "Milestones" },
+  { id: "changes", label: "Change requests" },
+  { id: "services", label: "Services" },
   { id: "financials", label: "Financials" },
   { id: "communication", label: "Communication" },
   { id: "activity", label: "Activity" },
@@ -46,15 +58,38 @@ export default async function ProjectDetailPage({
       },
       contract: { include: { proposal: true } },
       payments: { orderBy: { dueDate: "asc" } },
+      changeRequests: {
+        orderBy: { requestedAt: "desc" },
+        include: { payment: { select: { status: true } } },
+      },
     },
   });
   if (!project) notFound();
+
+  const { terms } = await getPricing();
 
   const messages = await prisma.whatsAppMessage.findMany({
     where: { clientId: project.clientId },
     orderBy: { createdAt: "desc" },
     take: 20,
   });
+
+  // Domains, hosting and mail sold with this engagement. Loaded on every tab:
+  // the tab count and the header alert both read them.
+  const [services, clientProjects, clientProducts] = await Promise.all([
+    listServices({ projectId: project.id }),
+    prisma.project.findMany({
+      where: { clientId: project.clientId },
+      select: { id: true, name: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.product.findMany({
+      where: { clientId: project.clientId },
+      select: { id: true, name: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+  const servicesDue = services.filter((s) => needsAttention(s.state));
 
   const clientName = project.client.company || project.client.name || "Unnamed client";
   const now = new Date();
@@ -82,6 +117,53 @@ export default async function ProjectDetailPage({
   const progress = Math.round(((phaseIndex + 1) / PROJECT_PHASE_ORDER.length) * 100);
 
   const currency = project.contract.proposal.currency;
+  const warranty = warrantyWindow(project.actualLaunchDate, terms.postLaunchWarrantyDays, now);
+  const openRequests = project.changeRequests.filter((c) => isOpen(c.status));
+  const changeBilled = project.changeRequests.reduce((s, c) => s + (c.billedAmount ?? 0), 0);
+  const changeRows: ChangeRequestRow[] = project.changeRequests.map((c) => ({
+    id: c.id,
+    title: c.title,
+    detail: c.detail,
+    status: c.status,
+    pricing: c.pricing,
+    estimatedMinutes: c.estimatedMinutes,
+    actualMinutes: c.actualMinutes,
+    hourlyRate: c.hourlyRate,
+    quotedAmount: c.quotedAmount,
+    billedAmount: c.billedAmount,
+    requestedAt: c.requestedAt.toISOString(),
+    deliveredAt: c.deliveredAt?.toISOString() ?? null,
+    warrantyEligible: coveredByWarranty(c.requestedAt, project.actualLaunchDate, terms.postLaunchWarrantyDays),
+    payment: c.payment,
+    quoteToken: c.quoteToken,
+    quoteSentAt: c.quoteSentAt?.toISOString() ?? null,
+    quoteSentVia: c.quoteSentVia,
+    quoteViewedAt: c.quoteViewedAt?.toISOString() ?? null,
+    quoteExpiresAt: c.quoteExpiresAt?.toISOString() ?? null,
+    respondedByName: c.respondedByName,
+    clientResponseNote: c.clientResponseNote,
+  }));
+  let quoteBaseUrl: string | null = null;
+  try {
+    quoteBaseUrl = publicBaseUrlFromHeaders(await headers());
+  } catch {
+    // BETTER_AUTH_URL unset in production: the send dialog says so instead of the page failing.
+  }
+  const tabs = TABS.map((t) =>
+    t.id === "changes"
+      ? { ...t, count: openRequests.length }
+      : t.id === "services"
+        ? { ...t, count: servicesDue.length }
+        : t,
+  );
+  const closed = project.status === "COMPLETED";
+  const warrantyLabel =
+    warranty.state === "active"
+      ? `until ${date(warranty.endsAt)} · ${warranty.daysLeft}d left`
+      : warranty.state === "ended"
+        ? `ended ${date(warranty.endsAt)}`
+        : "starts at launch";
+
   const activity = buildActivity({
     projects: [project],
     contracts: [project.contract],
@@ -112,12 +194,22 @@ export default async function ProjectDetailPage({
             <MetaItem label="Target">
               {project.targetLaunchDate ? date(project.targetLaunchDate) : "not set"}
             </MetaItem>
-            <MetaItem label="Progress">{progress}%</MetaItem>
+            {closed ? (
+              <MetaItem label="Closed">
+                {project.completedAt ? date(project.completedAt) : "date not recorded"}
+              </MetaItem>
+            ) : (
+              <MetaItem label="Progress">{progress}%</MetaItem>
+            )}
           </>
         }
         actions={
           <>
             <PhaseControl projectId={project.id} phase={project.phase} />
+            <ProjectStatusControl projectId={project.id} status={project.status} />
+            {(project.status === "ACTIVE" || project.status === "ON_HOLD") && (
+              <CloseProjectButton projectId={project.id} projectName={project.name} />
+            )}
             <Button asChild variant="outline">
               <Link href={`/portal/${project.portalToken}`} target="_blank">
                 <ExternalLink className="size-3.5" />
@@ -129,12 +221,28 @@ export default async function ProjectDetailPage({
               id={project.id}
               label={project.name}
               redirectTo="/projects"
-              variant="ghost"
             />
           </>
         }
         alert={
-          late ? (
+          // First, because a lapsed domain takes the live site down with it —
+          // nothing else on this page is that immediate.
+          servicesDue.some((s) => s.state === "expired" || s.state === "urgent") ? (
+            <AlertBar
+              tone="danger"
+              href={`/projects/${project.id}?tab=services`}
+              cta="Open services"
+            >
+              {(() => {
+                const hot = servicesDue.filter((s) => s.state === "expired" || s.state === "urgent");
+                const lapsed = hot.filter((s) => s.state === "expired").length;
+                const names = hot.slice(0, 2).map((s) => s.name).join(", ");
+                return lapsed > 0
+                  ? `${names}${hot.length > 2 ? ` and ${hot.length - 2} more` : ""} — ${lapsed} already expired. Renew at the provider before the client notices.`
+                  : `${names}${hot.length > 2 ? ` and ${hot.length - 2} more` : ""} expire${hot.length === 1 ? "s" : ""} within 7 days. Renew and invoice the next term.`;
+              })()}
+            </AlertBar>
+          ) : late ? (
             <AlertBar
               tone="danger"
               href={`/whatsapp/${project.clientId}`}
@@ -154,9 +262,20 @@ export default async function ProjectDetailPage({
               this project — {money(overdue.reduce((s, p) => s + p.amount, 0), currency)}{" "}
               outstanding.
             </AlertBar>
+          ) : openRequests.some((c) => c.status === "REQUESTED") ? (
+            <AlertBar
+              tone="warning"
+              href={`/projects/${project.id}?tab=changes`}
+              cta="Quote them"
+            >
+              {(() => {
+                const n = openRequests.filter((c) => c.status === "REQUESTED").length;
+                return `${n} change request${n === 1 ? " is" : "s are"} waiting for a quote. Nothing moves until the client has a number.`;
+              })()}
+            </AlertBar>
           ) : null
         }
-        tabs={<TabNav tabs={TABS} active={tab} basePath={`/projects/${project.id}`} />}
+        tabs={<TabNav tabs={tabs} active={tab} basePath={`/projects/${project.id}`} />}
       />
 
       <DetailLayout
@@ -192,6 +311,15 @@ export default async function ProjectDetailPage({
                     label: "Launched",
                     value: project.actualLaunchDate ? date(project.actualLaunchDate) : "—",
                   },
+                  { label: "Warranty", value: warrantyLabel },
+                  ...(closed
+                    ? [
+                        {
+                          label: "Closed",
+                          value: project.completedAt ? date(project.completedAt) : "not recorded",
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </Panel>
@@ -268,6 +396,9 @@ export default async function ProjectDetailPage({
                   <Row label="Contract value">
                     {money(project.contract.proposal.totalPrice, project.contract.proposal.currency)}
                   </Row>
+                  {changeBilled > 0 && (
+                    <Row label="Change requests">{money(changeBilled, currency)}</Row>
+                  )}
                   <Row label="Billed">{money(billed, currency)}</Row>
                   <Row label="Collected">
                     <span className="text-success">{money(collected, currency)}</span>
@@ -289,6 +420,12 @@ export default async function ProjectDetailPage({
                     {project.actualLaunchDate ? date(project.actualLaunchDate) : "—"}
                   </Row>
                   <Row label="Elapsed">{elapsedWeeks} weeks</Row>
+                  <Row label="Warranty">{warrantyLabel}</Row>
+                  {closed && (
+                    <Row label="Closed">
+                      {project.completedAt ? date(project.completedAt) : "not recorded"}
+                    </Row>
+                  )}
                 </dl>
               </Panel>
             </div>
@@ -317,6 +454,45 @@ export default async function ProjectDetailPage({
               ))}
             </ul>
           </Panel>
+        )}
+
+        {tab === "changes" && (
+          <ChangeRequestsPanel
+            projectId={project.id}
+            currency={currency}
+            rate={rateFor(currency, terms)}
+            warrantyDays={terms.postLaunchWarrantyDays}
+            closed={closed}
+            rows={changeRows}
+            sending={{
+              baseUrl: quoteBaseUrl,
+              validityDays: terms.proposalValidityDays,
+              clientName: project.client.name || project.client.company,
+              clientEmail: project.client.email,
+              clientPhone: project.client.phone,
+              emailConfigured: emailTransport() !== "none",
+              whatsappConfigured: Boolean(
+                process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
+              ),
+            }}
+          />
+        )}
+
+        {tab === "services" && (
+          <ServicesList
+            title="Services"
+            description="Domain, hosting and anything else this project runs on that has to be renewed"
+            services={services}
+            emailConfigured={emailTransport() !== "none"}
+            createScope={{
+              clientId: project.clientId,
+              projectId: project.id,
+              projects: clientProjects,
+              products: clientProducts,
+              currency,
+            }}
+            emptyText="Nothing recorded for this project. Add its domain and hosting — each one counts down to its expiry and alerts you 30, 14, 7 and 1 days before. Services listed in the signed proposal would have appeared here automatically."
+          />
         )}
 
         {tab === "financials" && (

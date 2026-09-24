@@ -1,0 +1,23 @@
+{
+  "buttonText": "اطلب مكالمة",
+  "closeLabel": "إغلاق الحوار",
+  "description": "لست متأكداً من أننا المناسبون؟ مكالمة اكتشاف تقنية مدتها ٣٠ دقيقة كافية لمعرفة ذلك - لا عرض ترويجي ولا ضغط.",
+  "phoneError": "الرجاء إدخال رقم هاتف صحيح",
+  "phoneHint": "سنتصل فقط لتنسيق الموعد.",
+  "phoneLabel": "الهاتف (واتساب)",
+  "phonePlaceholder": "+201... أو +971...",
+  "secondaryButtonText": "ربما لاحقاً",
+  "stats": {
+    "founderAccess": "وصول للمؤسس",
+    "founderAccessValue": "مباشر",
+    "noCommitment": "لا التزام",
+    "noCommitmentValue": "مجاني",
+    "noPitch": "لا عرض مبيعات",
+    "noPitchValue": "٣٠ دقيقة"
+  },
+  "submitting": "جارٍ الإرسال...",
+  "subtitle": "انتظر - قبل أن تغادر",
+  "successDescription": "استلمنا رقمك. سنتواصل خلال ساعتي عمل لتنسيق الموعد.",
+  "successTitle": "نراك قريباً.",
+  "title": "دعنا نختبر تفاصيل مشروعك."
+}

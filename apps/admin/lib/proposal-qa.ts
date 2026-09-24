@@ -7,6 +7,7 @@ import {
   type ProposalContent,
   type ValidationIssue,
 } from "./proposal-schema";
+import { DECK_COLORS } from "./document-colors";
 
 // QA gate for the proposal generator. The palette is fixed for every client,
 // so contrast is checkable without rendering anything — this runs on every
@@ -20,8 +21,9 @@ interface ContrastPair {
   large: boolean;
 }
 
-const PAPER = "FAFAFA";
-const DARK = "121212";
+const C = DECK_COLORS;
+const PAPER = C.paper;
+const DARK = C.darkBg;
 
 /**
  * Every (foreground, background) combination the generator paints. The two
@@ -31,35 +33,35 @@ const DARK = "121212";
  */
 function contrastPairs(company: CompanyDetails): ContrastPair[] {
   return [
-    { name: "ink on paper (headings)", fg: "0F0F0F", bg: PAPER, large: false },
-    { name: "inkTitle on paper (problem titles)", fg: "0D0D11", bg: PAPER, large: false },
-    { name: "body on paper (descriptions)", fg: "666666", bg: PAPER, large: false },
-    { name: "bodyWarm on paper (problem descriptions)", fg: "767373", bg: PAPER, large: false },
-    { name: "label on paper (eyebrows/mono captions)", fg: "525252", bg: PAPER, large: false },
-    { name: "muted on paper (quote, bar + week labels)", fg: "737373", bg: PAPER, large: false },
+    { name: "ink on paper (headings)", fg: C.ink, bg: PAPER, large: false },
+    { name: "inkTitle on paper (problem titles)", fg: C.inkTitle, bg: PAPER, large: false },
+    { name: "body on paper (descriptions)", fg: C.body, bg: PAPER, large: false },
+    { name: "bodyWarm on paper (problem descriptions)", fg: C.bodyWarm, bg: PAPER, large: false },
+    { name: "label on paper (eyebrows/mono captions)", fg: C.label, bg: PAPER, large: false },
+    { name: "muted on paper (quote, bar + week labels)", fg: C.muted, bg: PAPER, large: false },
     { name: "brand accent word (18pt italic)", fg: company.brandColor, bg: PAPER, large: true },
     { name: "brand score value (10.5pt bold)", fg: company.brandColor, bg: PAPER, large: false },
     { name: "brand total amount (15.25pt bold)", fg: company.brandColor, bg: PAPER, large: true },
     // Payment-split labels are paper-on-fill, not --foreground-on-fill:
     // against the 737373 segment, FAFAFA clears AA (4.54:1) where F0F0F0
     // would not (4.16:1).
-    { name: "paper % label on split segment 1 (muted fill)", fg: PAPER, bg: "737373", large: false },
-    { name: "paper % label on split segment 2 (label fill)", fg: PAPER, bg: "525252", large: false },
-    { name: "paper % label on split segment 3 (ink fill)", fg: PAPER, bg: "0F0F0F", large: false },
-    { name: "coverFg on darkBg (cover/closing headings)", fg: "F0F0F0", bg: DARK, large: false },
-    { name: "mutedOnDark on darkBg (secondary text)", fg: "949494", bg: DARK, large: false },
+    { name: "paper % label on split segment 1 (muted fill)", fg: PAPER, bg: C.muted, large: false },
+    { name: "paper % label on split segment 2 (label fill)", fg: PAPER, bg: C.label, large: false },
+    { name: "paper % label on split segment 3 (ink fill)", fg: PAPER, bg: C.ink, large: false },
+    { name: "coverFg on darkBg (cover/closing headings)", fg: C.coverFg, bg: DARK, large: false },
+    { name: "mutedOnDark on darkBg (secondary text)", fg: C.mutedOnDark, bg: DARK, large: false },
     { name: "brand accent word on dark (22pt italic)", fg: company.brandColorDark, bg: DARK, large: true },
   ];
 }
 
-// Decorative-only pairs, carried verbatim from the approved reference deck.
+// Decorative-only pairs.
 // These are not readable content: losing them costs a viewer nothing, and
 // changing them would stop the output matching the signed-off design. They
 // are listed (not silently omitted) so the ratio stays visible and any new
 // low-contrast pair still has to be an explicit decision.
 const DECORATIVE_EXCEPTIONS: ContrastPair[] = [
-  { name: "numeralWarm index on paper (decorative)", fg: "A09880", bg: PAPER, large: false },
-  { name: "hairline ghost numeral on paper (decorative)", fg: "E8E8E8", bg: PAPER, large: true },
+  { name: "numeralWarm index on paper (decorative)", fg: C.numeralWarm, bg: PAPER, large: false },
+  { name: "hairline ghost numeral on paper (decorative)", fg: C.hairline, bg: PAPER, large: true },
 ];
 
 function relativeLuminance(hex: string): number {

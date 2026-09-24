@@ -3,353 +3,97 @@
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { motion, usePress } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { Check, ChevronDown, Globe } from "lucide-react";
-import { useLocale } from "next-intl";
+import { Globe } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { createPortal } from "react-dom";
+import { useTransition } from "react";
+import { SegmentedControl } from "./segmented-control";
 
-type LanguageSwitcherVariant = "default" | "compact" | "toggle";
+type Locale = "en" | "ar";
 
-interface Language {
-  code: string;
-  name: string;
-  nativeName: string;
-  flag: string;
-  direction: "ltr" | "rtl";
-}
-
-const focusRingClasses =
-  "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
-
-const LANGUAGES: Language[] = [
-  {
-    code: "en",
-    name: "English",
-    nativeName: "English",
-    flag: "US",
-    direction: "ltr",
-  },
-  {
-    code: "ar",
-    name: "Arabic",
-    nativeName: "العربية",
-    flag: "EG",
-    direction: "rtl",
-  },
+const LANGUAGES: readonly { code: Locale; nativeName: string }[] = [
+  { code: "en", nativeName: "English" },
+  { code: "ar", nativeName: "العربية" },
 ];
 
+// A language's own name is set in that language's face, whatever the page's.
+const arabicFace = "font-[family-name:var(--font-vazirmatn)]";
+
 interface LanguageSwitcherBaseProps {
-  variant?: LanguageSwitcherVariant;
+  /**
+   * `inline` — one tap switches to the other language (the header bar).
+   * `segmented` — both languages visible, current one selected (the drawer).
+   */
+  variant?: "inline" | "segmented";
   className?: string;
 }
 
 export function LanguageSwitcherBase({
-  variant = "default",
+  variant = "inline",
   className,
 }: LanguageSwitcherBaseProps) {
+  const t = useTranslations("nav");
   const locale = useLocale();
   const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
-
-  const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  const [menuPosition, setMenuPosition] = useState<{
-    top: number;
-    left?: number;
-    right?: number;
-  }>({ top: 0 });
-
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const pressRef = usePress<HTMLButtonElement>(motion.pressIcon());
-  const triggerRef = useCallback(
-    (node: HTMLButtonElement | null) => {
-      buttonRef.current = node;
-      pressRef.current = node;
-    },
-    [pressRef],
-  );
 
-  const currentLang =
-    LANGUAGES.find((lang) => lang.code === locale) || LANGUAGES[0];
-  const isRTL = currentLang.direction === "rtl";
-
-  const switchLocale = (newLocale: string) => {
-    if (newLocale === locale) {
-      setIsOpen(false);
-      return;
-    }
-
+  const switchLocale = (next: Locale) => {
+    if (next === locale) return;
     startTransition(() => {
       router.replace(
-        // @ts-expect-error -- pathname is dynamic at runtime, not a typed route literal
+        // @ts-expect-error -- pathname is dynamic at runtime
         { pathname, params },
-        { locale: newLocale },
+        { locale: next },
       );
-      setIsOpen(false);
     });
   };
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const updateMenuPosition = () => {
-      if (buttonRef.current && isOpen) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        const viewportWidth = document.documentElement.clientWidth;
-
-        const menuWidth =
-          menuRef.current?.offsetWidth || (variant === "compact" ? 160 : 192);
-
-        let leftPos: number | undefined;
-        let rightPos: number | undefined;
-
-        if (isRTL) {
-          rightPos = viewportWidth - rect.right;
-          if (rect.right - menuWidth < 16) {
-            rightPos = undefined;
-            leftPos = 16;
-          }
-        } else {
-          leftPos = rect.left;
-          if (leftPos + menuWidth > viewportWidth - 16) {
-            leftPos = undefined;
-            rightPos = viewportWidth - rect.right;
-          }
-        }
-
-        setMenuPosition({
-          top: rect.bottom + 8,
-          left: leftPos,
-          right: rightPos,
-        });
-      }
-    };
-
-    if (isOpen) {
-      updateMenuPosition();
-      window.addEventListener("scroll", updateMenuPosition, true);
-      window.addEventListener("resize", updateMenuPosition, true);
-    }
-
-    return () => {
-      window.removeEventListener("scroll", updateMenuPosition, true);
-      window.removeEventListener("resize", updateMenuPosition, true);
-    };
-  }, [isOpen, isRTL, variant]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      if (
-        menuRef.current &&
-        buttonRef.current &&
-        !menuRef.current.contains(target) &&
-        !buttonRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("touchstart", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isOpen) {
-        setIsOpen(false);
-        buttonRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen]);
-
-  if (variant === "toggle") {
+  if (variant === "segmented") {
     return (
-      <div
-        dir={isRTL ? "rtl" : "ltr"}
-        className={cn(
-          "flex items-center gap-1 liquid-glass rounded-md p-1 outline-none",
-          isPending && "opacity-70 pointer-events-none",
-          className,
-        )}
-      >
-        {LANGUAGES.map((lang) => {
-          const isActive = locale === lang.code;
-
-          return (
-            <button
-              key={lang.code}
-              type="button"
-              onClick={() => switchLocale(lang.code)}
-              className={cn(
-                "relative z-10 px-3 py-1.5 font-mono text-sm rounded-lg font-medium leading-normal tracking-wider uppercase transition-[background-color,color,box-shadow] duration-200",
-                focusRingClasses,
-                isActive
-                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
-                  : "transition-all text-primary/60 hover:bg-foreground/10 hover:text-primary",
-              )}
-              aria-label={`Switch to ${lang.name}`}
-              aria-pressed={isActive}
-              disabled={isPending}
-            >
-              {lang.code}
-            </button>
-          );
-        })}
-      </div>
+      <SegmentedControl
+        label={t("language")}
+        value={locale as Locale}
+        onChange={switchLocale}
+        disabled={isPending}
+        className={className}
+        options={LANGUAGES.map((lang) => ({
+          value: lang.code,
+          label: (
+            <span className={cn(lang.code === "ar" && arabicFace)}>
+              {lang.nativeName}
+            </span>
+          ),
+          lang: lang.code,
+        }))}
+      />
     );
   }
+
+  // Two languages make a menu an extra step with nothing to choose between:
+  // the button names the other language, in that language, and goes there.
+  const target = LANGUAGES.find((lang) => lang.code !== locale) ?? LANGUAGES[0];
+
   return (
-    <>
-      <div
-        className={cn("relative inline-block", className)}
-        dir={isRTL ? "rtl" : "ltr"}
-      >
-        <button
-          ref={triggerRef}
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={cn(
-            "group flex items-center gap-2 rounded-lg liquid-glass-flat transition-[background-color,opacity] duration-200",
-            "hover:bg-foreground/5",
-            focusRingClasses,
-            isPending && "opacity-70 cursor-not-allowed",
-            variant === "compact"
-              ? "h-12 w-12 sm:h-9 sm:w-9 p-0 justify-center"
-              : "px-3 py-1.5",
-          )}
-          aria-label="Select language"
-          aria-expanded={isOpen}
-          disabled={isPending}
-        >
-          {variant === "compact" ? (
-            <>
-              <Globe
-                className="h-4 w-4 mx-auto text-primary/80"
-                strokeWidth={2.5}
-              />
-              <span
-                className={cn(
-                  "absolute -top-1 flex h-4 w-4 items-center justify-center rounded-full font-mono text-[13px] font-bold leading-none",
-                  "bg-primary text-primary-foreground",
-                  isRTL ? "-left-1" : "-right-1",
-                )}
-              >
-                {currentLang.code.charAt(0).toUpperCase()}
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="font-mono text-sm leading-normal tracking-wider uppercase text-primary/80">
-                {currentLang.code}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "h-3 w-3 transition-transform duration-300 text-primary/60",
-                  isOpen && "rotate-180",
-                )}
-              />
-            </>
-          )}
-        </button>
-      </div>
-      {mounted &&
-        isOpen &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={{
-              position: "fixed",
-              top: `${menuPosition.top}px`,
-              ...(menuPosition.left !== undefined
-                ? { left: `${menuPosition.left}px` }
-                : {}),
-              ...(menuPosition.right !== undefined
-                ? { right: `${menuPosition.right}px` }
-                : {}),
-              zIndex: 50,
-            }}
-            className={cn(
-              "rounded-overlay liquid-glass p-1 shadow-lg outline-none",
-              "animate-in fade-in zoom-in-95 duration-200 ease-out origin-top",
-              variant === "compact" ? "w-40" : "w-48",
-            )}
-            role="menu"
-            aria-orientation="vertical"
-            dir={isRTL ? "rtl" : "ltr"}
-          >
-            {LANGUAGES.map((lang) => {
-              const isActive = locale === lang.code;
-              const langIsRTL = lang.direction === "rtl";
-              return (
-                <button
-                  key={lang.code}
-                  type="button"
-                  onClick={() => switchLocale(lang.code)}
-                  dir={langIsRTL ? "rtl" : "ltr"}
-                  className={cn(
-                    "flex w-full items-center justify-between transition-colors rounded-lg",
-                    focusRingClasses,
-                    variant === "compact"
-                      ? "gap-2 px-3 py-2"
-                      : "gap-3 px-4 py-2.5",
-                    isActive
-                      ? "bg-foreground/15 text-primary font-medium"
-                      : "transition-all text-primary/80 hover:bg-foreground/10 hover:text-primary",
-                    langIsRTL ? "text-right" : "text-left",
-                  )}
-                  role="menuitem"
-                  aria-current={isActive ? "true" : undefined}
-                >
-                  <div className="flex items-center gap-2">
-                    {variant === "compact" ? (
-                      <span className="text-xs font-medium">
-                        {lang.nativeName}
-                      </span>
-                    ) : (
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">
-                          {lang.nativeName}
-                        </span>
-                        <span className="font-mono text-xs tracking-wider text-primary/50">
-                          {lang.name}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {isActive && (
-                    <Check
-                      className={cn(
-                        "shrink-0 text-primary",
-                        variant === "compact" ? "h-3.5 w-3.5" : "h-4 w-4",
-                      )}
-                      strokeWidth={2.5}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>,
-          document.body,
-        )}
-    </>
+    <button
+      ref={pressRef}
+      type="button"
+      lang={target.code}
+      onClick={() => switchLocale(target.code)}
+      disabled={isPending}
+      aria-busy={isPending || undefined}
+      className={cn(
+        "group inline-flex h-11 items-center gap-1.5 rounded-ctl-lg px-2.5 text-sm font-medium text-foreground/70 transition-[color,opacity] duration-(--motion-instant) ease-smooth hover:text-foreground disabled:opacity-60",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        className,
+      )}
+    >
+      <Globe className="size-4.5 shrink-0" aria-hidden />
+      <span className={cn(target.code === "ar" && arabicFace)}>
+        {target.nativeName}
+      </span>
+    </button>
   );
 }

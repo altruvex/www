@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>D · The Lab — Interface Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400&family=Vazirmatn:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.hero{padding:150px 0 12vh}
+.hero h1{font-size:clamp(56px,8.6vw,156px);line-height:.95;letter-spacing:-.05em;max-width:12ch}
+.hero .row{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end;margin-top:48px;border-top:1px solid var(--line);padding-top:26px}
+.hero p{color:var(--muted);font-size:18px;line-height:1.6;max-width:50ch}
+
+/* Work that works (Kott): names in large type, the screen follows the cursor */
+.work{padding:6vh 0 16vh;position:relative}
+.work .head{display:flex;justify-content:space-between;align-items:end;margin-bottom:28px}
+.work h2{font-size:clamp(40px,4.6vw,76px)}
+.wrow{display:grid;grid-template-columns:60px 1fr auto;gap:20px;align-items:center;border-top:1px solid var(--line);padding:18px 0;cursor:default}
+.wrow:last-child{border-bottom:1px solid var(--line)}
+.wrow b{font-family:"Geist Mono";font-weight:400;font-size:12px;color:var(--muted)}
+.wrow h3{font-size:clamp(30px,3.8vw,60px);letter-spacing:-.04em;transition:color var(--m-drawer) var(--ease-smooth),transform var(--m-drawer) var(--ease-strong)}
+.wrow span{font-size:13px;color:var(--muted)}
+.wrow:hover h3{color:var(--accent);transform:translateX(10px)}
+.peek{position:fixed;left:0;top:0;width:380px;aspect-ratio:16/10;border-radius:var(--r-sm);overflow:hidden;pointer-events:none;z-index:40;opacity:0;transform:translate(-50%,-50%) scale(.85);box-shadow:0 30px 60px -20px rgba(0,0,0,.4);border:1px solid var(--line);background:var(--card)}
+.peek img{width:100%;height:100%;object-fit:cover;object-position:top}
+
+/* The Lab */
+.lab{padding:18vh 0}
+.lab .head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;margin-bottom:48px}
+.lab h2{font-size:clamp(48px,6vw,104px)}
+.lab .head p{color:var(--muted);line-height:1.6;max-width:44ch}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.tool{border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);padding:26px;display:flex;flex-direction:column;gap:18px;min-height:460px}
+.tool .t{display:flex;justify-content:space-between;align-items:baseline}
+.tool .t h3{font-size:28px;font-weight:400;letter-spacing:-.02em}
+.tool .t b{font-family:"Geist Mono";font-weight:400;font-size:12px;color:var(--muted)}
+.tool .d{color:var(--muted);font-size:14px;line-height:1.55;max-width:46ch}
+.stage{flex:1;border-radius:14px;background:var(--surface);padding:22px;display:flex;flex-direction:column;gap:12px;overflow:hidden;position:relative}
+.ts .stage{justify-content:flex-end}
+.ctl{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
+.ctl input[type=range]{flex:1;accent-color:var(--accent)}
+.ctl output{font-family:"Geist Mono";color:var(--fg);min-width:54px;text-align:right}
+/* type */
+.ts .h{font-family:Outfit;letter-spacing:-.03em;line-height:1.05;display:flex;justify-content:space-between;align-items:baseline;gap:10px;white-space:nowrap;overflow:hidden}
+.ts .h small{font:12px "Geist Mono";color:var(--muted);letter-spacing:0}
+.ts .h,.ts .h small{transition:font-size var(--m-drawer) var(--ease-strong)}
+/* contrast */
+.cc .pair{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cc .sw{height:30px;border-radius:8px;border:1px solid var(--line);cursor:pointer;outline-offset:2px}
+.cc .sw.on{outline:2px solid var(--accent)}
+.cc .sample{border-radius:12px;padding:18px;flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;transition:background var(--m-drawer),color var(--m-drawer)}
+.cc .sample strong{font:500 28px Outfit;letter-spacing:-.02em}
+.cc .ratio{display:flex;gap:8px;align-items:center;font-size:13px}
+.cc .ratio .n{font:600 22px "Geist Mono";color:var(--fg)}
+.badge{padding:4px 10px;border-radius:999px;font:500 12px Inter}
+.badge.ok{background:hsl(145 60% 40% / .14);color:hsl(145 55% 32%)}
+.badge.no{background:hsl(0 70% 50% / .12);color:hsl(0 65% 45%)}
+:root[data-theme="dark"] .badge.ok{color:hsl(145 55% 60%)} :root[data-theme="dark"] .badge.no{color:hsl(0 80% 70%)}
+/* direction */
+.dir .seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--card);border:1px solid var(--line);align-self:flex-start}
+.dir .seg button{border:0;background:none;padding:8px 16px;border-radius:999px;font:500 13px Inter;color:var(--muted);cursor:pointer}
+.dir .seg button.on{background:var(--accent);color:var(--accent-fg)}
+.dir .comp{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:opacity var(--m-drawer) var(--ease-smooth)}
+.dir .comp[dir=rtl]{font-family:Vazirmatn,sans-serif}
+.dir .comp .k{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--accent)}
+.dir .comp h4{font:400 24px Outfit;letter-spacing:-.02em}
+.dir .comp[dir=rtl] h4{font-family:Vazirmatn;font-weight:600;letter-spacing:0}
+.dir .comp p{color:var(--muted);font-size:14px;line-height:1.6}
+.dir .comp .b{align-self:flex-start;display:inline-flex;gap:8px;align-items:center;background:var(--brand);color:#fff;border-radius:999px;padding:9px 16px;font-size:13px}
+.dir .comp[dir=rtl] .b .ar{transform:scaleX(-1)}
+.dir .note{font-size:12px;color:var(--muted);font-family:"Geist Mono"}
+/* spacing */
+.sp .lay{flex:1;display:flex;flex-direction:column;transition:gap var(--m-drawer) var(--ease-strong)}
+.sp .blk{background:var(--card);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:space-between;transition:padding var(--m-drawer) var(--ease-strong)}
+.sp .blk i{display:block;height:8px;border-radius:4px;background:var(--muted-2)}
+.sp .blk.a i{background:var(--accent)}
+.sp .scale{display:flex;gap:4px;align-items:flex-end;height:36px}
+.sp .scale span{flex:1;background:var(--accent-soft);border-radius:3px;display:flex;align-items:flex-end;justify-content:center;font:10px "Geist Mono";color:var(--muted);transition:height var(--m-drawer) var(--ease-strong)}
+
+.close{background:#171717;color:#f0f0f0;padding:22vh 0 12vh}
+.close h2{font-size:clamp(56px,9vw,150px);max-width:13ch;font-weight:400;margin-top:28px}
+.close .row{margin-top:10vh;border-top:1px solid rgba(255,255,255,.1);padding-top:28px;display:flex;justify-content:space-between;align-items:end;gap:24px;flex-wrap:wrap}
+.close p{color:#999;max-width:44ch;line-height:1.6}
+.close .pill.s{border-color:rgba(255,255,255,.4);color:#f0f0f0}
+@media(max-width:900px){.tools,.lab .head,.hero .row{grid-template-columns:1fr}.peek{display:none}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div class="l"><a>Work</a><a class="on">Services</a><a>Pricing</a><a>About</a><a>Contact</a></div><a class="pill sm">Get an Estimate</a></nav>
+
+<section class="hero wrap">
+  <p class="eyebrow a"><span class="tick"></span>Interface design</p>
+  <h1 style="margin-top:22px">Design you can <em class="w">test.</em></h1>
+  <div class="row">
+    <p>We translate your offer into sharper hierarchy, clearer messaging and one direct path — and every decision behind it is a rule you can check, not a taste you have to trust.</p>
+    <div style="display:flex;gap:10px"><a class="pill p">Request a Scope →</a><a class="pill s">Open the lab ↓</a></div>
+  </div>
+</section>
+
+<section class="work wrap">
+  <div class="head"><h2>Screens that <em class="w">work.</em></h2><span class="eyebrow">In production · altruvex.com</span></div>
+  <div class="wrow" data-img="home"><b>01</b><h3>Home</h3><span>One idea leads the screen</span></div>
+  <div class="wrow" data-img="pricing"><b>02</b><h3>Pricing</h3><span>The number is the hierarchy</span></div>
+  <div class="wrow" data-img="home-ar"><b>03</b><h3>Home · العربية</h3><span>A layout, not a translation</span></div>
+  <div class="wrow" data-img="contact"><b>04</b><h3>Contact</h3><span>A form that reads like a letter</span></div>
+  <div class="wrow" data-img="process"><b>05</b><h3>Process</h3><span>Time drawn to scale</span></div>
+</section>
+<div class="peek" id="peek"><img alt=""></div>
+
+<section class="lab band" id="lab">
+  <div class="wrap">
+    <div class="head">
+      <div><p class="eyebrow">The lab — after Kott Studio</p><h2 style="margin-top:16px">Play that <em class="w">proves.</em></h2></div>
+      <p>Four rules every interface we ship follows. They are not adjectives here — they are small working tools. Move them, break them, see what holds.</p>
+    </div>
+    <div class="tools">
+
+      <article class="tool ts">
+        <div class="t"><h3>Type scale</h3><b>01</b></div>
+        <p class="d">Hierarchy is a ratio, not a feeling. Every heading is the body size times the same step — change the step and the whole page moves together.</p>
+        <div class="stage">
+          <div class="ctl">Ratio <input type="range" id="ratio" min="1.125" max="1.414" step="0.001" value="1.25"><output id="ratioOut">1.250</output></div>
+          <div id="scale"></div>
+        </div>
+      </article>
+
+      <article class="tool cc">
+        <div class="t"><h3>Contrast</h3><b>02</b></div>
+        <p class="d">Every text colour is measured against its background before it ships. Pick a pair — the ratio is computed live, WCAG 2.1.</p>
+        <div class="stage">
+          <div class="ctl">Top row: text colour · bottom row: background</div>
+          <div class="pair" id="pairs"></div>
+          <div class="sample" id="sample"><strong>Understood in eight seconds.</strong><span>Body copy at the size a buyer reads it.</span></div>
+          <div class="ratio"><span class="n" id="cr">—</span><span class="badge" id="aa">AA</span><span class="badge" id="aal">AA large</span><span class="badge" id="aaa">AAA</span></div>
+        </div>
+      </article>
+
+      <article class="tool dir">
+        <div class="t"><h3>Two directions</h3><b>03</b></div>
+        <p class="d">Arabic is a layout direction we engineer, not a mirrored template. The same screen, read the other way — flip it.</p>
+        <div class="stage">
+          <div class="seg"><button class="on" data-d="ltr">English</button><button data-d="rtl">العربية</button></div>
+          <div class="comp" id="comp" dir="ltr">
+            <span class="k"><span class="tick" style="margin:0"></span><span data-en="Custom development" data-ar="تطوير مخصص"></span></span>
+            <h4 data-en="Engineered to outlast the brief." data-ar="مبنيٌّ ليبقى بعد أن ينتهي المشروع."></h4>
+            <p data-en="Dashboards, portals and operational flows — handed over in your name." data-ar="لوحات تحكم وبوابات ومسارات تشغيل — تُسلَّم باسمك."></p>
+            <span class="b"><span data-en="Request a Scope" data-ar="اطلب تحديد النطاق"></span><span class="ar">→</span></span>
+          </div>
+          <span class="note" id="dirnote">dir="ltr" · the layout mirrors, the meaning holds</span>
+        </div>
+      </article>
+
+      <article class="tool sp">
+        <div class="t"><h3>Spacing rhythm</h3><b>04</b></div>
+        <p class="d">Space comes from one unit and its multiples, so nothing is placed by eye. Change the unit — the rhythm scales, the proportions hold.</p>
+        <div class="stage">
+          <div class="ctl">Unit <input type="range" id="unit" min="4" max="12" step="1" value="8"><output id="unitOut">8px</output></div>
+          <div class="scale" id="spscale"></div>
+          <div class="lay" id="lay">
+            <div class="blk a"><i style="width:40%"></i><i style="width:14%"></i></div>
+            <div class="blk"><i style="width:62%"></i></div>
+            <div class="blk"><i style="width:48%"></i><i style="width:10%"></i></div>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <p class="eyebrow a"><span class="tick"></span>Next step</p>
+    <h2>Need an interface that <em class="w">converts?</em></h2>
+    <div class="row"><p>We review your current design against these rules, find what suppresses conversion and map the next step — in a free 30-minute call.</p><div style="display:flex;gap:10px"><a class="pill p">Request a Scope →</a><a class="pill s">Book the call →</a></div></div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="switch.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+gsap.from(".hero h1", { y: 40, opacity: 0, duration: 1.1, ease: "power4.out" });
+
+/* Work rows: the screen follows the pointer */
+const peek = document.getElementById("peek"), pimg = peek.querySelector("img");
+const px = gsap.quickTo(peek, "x", { duration: .5, ease: "power3.out" }), py = gsap.quickTo(peek, "y", { duration: .5, ease: "power3.out" });
+addEventListener("pointermove", e => { px(e.clientX + 200); py(e.clientY); });
+document.querySelectorAll(".wrow").forEach(r => {
+  r.addEventListener("pointerenter", () => { pimg.src = `img/${r.dataset.img}.jpg`; gsap.to(peek, { opacity: 1, scale: 1, duration: .3, ease: "power3.out" }); });
+  r.addEventListener("pointerleave", () => gsap.to(peek, { opacity: 0, scale: .85, duration: .2 }));
+});
+
+/* 01 Type scale */
+const levels = [["Display", 4], ["H1", 3], ["H2", 2], ["H3", 1], ["Body", 0]];
+const scale = document.getElementById("scale");
+scale.innerHTML = levels.map(([n]) => `<div class="h" data-n="${n}"><span>${n === "Body" ? "The body a buyer reads." : "Built to convert"}</span><small></small></div>`).join("");
+const drawScale = r => {
+  document.getElementById("ratioOut").textContent = (+r).toFixed(3);
+  const base = 14;
+  scale.querySelectorAll(".h").forEach((el, i) => { const px = base * Math.pow(r, levels[i][1]); el.style.fontSize = px + "px"; el.style.fontFamily = levels[i][1] ? "Outfit" : "Inter"; el.style.fontWeight = levels[i][1] ? 300 : 400; el.querySelector("small").textContent = `${levels[i][0]} · ${px.toFixed(0)}px`; });
+};
+document.getElementById("ratio").oninput = e => drawScale(e.target.value); drawScale(1.25);
+
+/* 02 Contrast (WCAG 2.1 relative luminance) */
+const sw = ["#1b1b1d", "#666666", "#9a9a9a", "#ffffff", "#f0f0f0", "#8b3fd9"];
+const pairs = document.getElementById("pairs"); let fg = 0, bg = 3;
+const lum = hex => { const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4)); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + .05) / (y + .05); };
+const drawCC = () => {
+  pairs.innerHTML = sw.map((c, i) => `<button class="sw ${i === fg ? "on" : ""}" data-k="fg" data-i="${i}" style="background:${c}" aria-label="text ${c}"></button>`).join("") + sw.map((c, i) => `<button class="sw ${i === bg ? "on" : ""}" data-k="bg" data-i="${i}" style="background:${c}" aria-label="background ${c}"></button>`).join("");
+  const s = document.getElementById("sample"); s.style.color = sw[fg]; s.style.background = sw[bg];
+  const r = ratio(sw[fg], sw[bg]); document.getElementById("cr").textContent = r.toFixed(2) + ":1";
+  [["aa", 4.5], ["aal", 3], ["aaa", 7]].forEach(([id, t]) => { const el = document.getElementById(id); el.className = "badge " + (r >= t ? "ok" : "no"); });
+};
+pairs.addEventListener("click", e => { const b = e.target.closest(".sw"); if (!b) return; if (b.dataset.k === "fg") fg = +b.dataset.i; else bg = +b.dataset.i; drawCC(); });
+pairs.style.gridTemplateColumns = "repeat(6,1fr)"; drawCC();
+
+/* 03 Direction */
+const comp = document.getElementById("comp");
+const drawDir = d => { comp.dir = d; comp.querySelectorAll("[data-en]").forEach(el => el.textContent = d === "rtl" ? el.dataset.ar : el.dataset.en); document.getElementById("dirnote").textContent = `dir="${d}" · the layout mirrors, the meaning holds`; };
+document.querySelectorAll(".dir .seg button").forEach(b => b.onclick = () => { document.querySelectorAll(".dir .seg button").forEach(x => x.classList.toggle("on", x === b)); gsap.fromTo(comp, { opacity: 0, x: b.dataset.d === "rtl" ? -12 : 12 }, { opacity: 1, x: 0, duration: .4, ease: "power3.out" }); drawDir(b.dataset.d); });
+drawDir("ltr");
+
+/* 04 Spacing */
+const steps = [1, 2, 3, 4, 6, 8];
+const drawSp = u => {
+  document.getElementById("unitOut").textContent = u + "px";
+  document.getElementById("spscale").innerHTML = steps.map(m => `<span style="height:${Math.min(36, u * m / 2 + 6)}px">${u * m}</span>`).join("");
+  const lay = document.getElementById("lay"); lay.style.gap = (u * 2) + "px";
+  lay.querySelectorAll(".blk").forEach(b => { b.style.padding = `${u * 2}px ${u * 3}px`; b.style.gap = u + "px"; });
+};
+document.getElementById("unit").oninput = e => drawSp(+e.target.value); drawSp(8);
+
+gsap.from(".tool", { y: 50, opacity: 0, duration: .8, ease: "power3.out", stagger: .08, scrollTrigger: { trigger: ".tools", start: "top 80%" } });
+gsap.utils.toArray(".wrow").forEach(r => gsap.from(r, { y: 24, opacity: 0, duration: .6, ease: "power3.out", scrollTrigger: { trigger: r, start: "top 92%" } }));
+</script>
+</body>
+</html>

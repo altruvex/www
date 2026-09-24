@@ -39,18 +39,18 @@ export function CodeBlock({ children, className }: CodeBlockProps) {
       <button
         onClick={handleCopy}
         className={cn(
-          "absolute right-4 top-4 rounded-md border bg-background p-2",
+          "absolute end-2.5 top-2.5 rounded-ctl-sm border border-border-subtle bg-background p-2",
           "opacity-0 transition-all group-hover:opacity-100",
         )}
         aria-label="Copy code"
       >
         {copied ? (
-          <Check className="h-4 w-4 text-green-500" />
+          <Check className="h-4 w-4 text-success" />
         ) : (
           <Copy className="h-4 w-4" />
         )}
       </button>
-      <pre className={cn("overflow-x-auto rounded-lg border p-4", className)}>
+      <pre className={cn("overflow-x-auto rounded-panel-sm border border-border-subtle p-4", className)}>
         {children}
       </pre>
     </div>

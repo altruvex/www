@@ -437,7 +437,7 @@ export const PAGE_METADATA = {
         "مراجعة معمارية مواقع",
         "خارطة طريق تقنية",
       ],
-      title: "استشارات تطوير مواقع ويب مخصصة وتطوير دقيق",
+      title: "الاستشارات التقنية ومراجعات المواقع",
     },
     en: {
       breadcrumb: "Technical Consulting",
@@ -449,13 +449,13 @@ export const PAGE_METADATA = {
         "web platform audit",
         "technical audit cairo",
       ],
-      title: "Technical Web Engineering Consulting",
+      title: "Technical Consulting & Web Audits",
     },
     path: "/services/consulting",
   },
   serviceDevelopment: {
     ar: {
-      breadcrumb: "تطوير Next.js",
+      breadcrumb: "التطوير المخصص",
       description:
         "استعن بوكالة تطوير Next.js لبناء بوابات ومنتجات ولوحات تحكم وأنظمة مواقع ويب مخصصة ثنائية اللغة مصممة للتوسع والسرعة والتسليم النظيف.",
       keywords: [
@@ -464,10 +464,10 @@ export const PAGE_METADATA = {
         "تطوير منتجات ويب مخصصة",
         "أنظمة مواقع ويب مخصصة ثنائية اللغة",
       ],
-      title: "وكالة تطوير Next.js",
+      title: "التطوير المخصص: بوابات ومنتجات Next.js",
     },
     en: {
-      breadcrumb: "Next.js Development",
+      breadcrumb: "Custom Development",
       description:
         "Hire a Next.js development agency for portals, product builds, dashboards, and bilingual web systems engineered for scale and clean handoff.",
       keywords: [
@@ -476,13 +476,13 @@ export const PAGE_METADATA = {
         "technical web engineering agency",
         "bilingual product development",
       ],
-      title: "Next.js Development Agency",
+      title: "Custom Development: Next.js Portals & Products",
     },
     path: "/services/development",
   },
   serviceInterfaceDesign: {
     ar: {
-      breadcrumb: "تصميم واجهات المواقع",
+      breadcrumb: "تصميم الواجهات",
       description:
         "صمّم واجهات تركّز على التحويل وأنظمة مكونات وتجارب عربية/إنجليزية مع مواصفات جاهزة للتنفيذ وإمكانية وصول مدروسة.",
       keywords: [
@@ -491,10 +491,10 @@ export const PAGE_METADATA = {
         "واجهة استخدام ثنائية اللغة",
         "تصميم UI قابل للتنفيذ",
       ],
-      title: "خدمات تصميم واجهات المواقع وأنظمة التصميم المخصصة",
+      title: "تصميم الواجهات: هندسة واجهات مواقع مخصصة",
     },
     en: {
-      breadcrumb: "UI Engineering",
+      breadcrumb: "Interface Design",
       description:
         "Design conversion-focused interfaces, component systems, and bilingual website experiences with implementation-ready UI engineering.",
       keywords: [
@@ -503,13 +503,13 @@ export const PAGE_METADATA = {
         "design systems agency",
         "bilingual interface design",
       ],
-      title: "Custom UI Engineering Services",
+      title: "Interface Design: Custom UI Engineering Services",
     },
     path: "/services/interface-design",
   },
   serviceMaintenance: {
     ar: {
-      breadcrumb: "الصيانة والتطوير",
+      breadcrumb: "الصيانة والدعم",
       description:
         "حافظ على أنظمة الويب المخصصة سريعة وآمنة وجاهزة للإصدارات عبر صيانة مستمرة ومراقبة ودعم منتج تكراري من Altruvex.",
       keywords: [
@@ -518,7 +518,7 @@ export const PAGE_METADATA = {
         "مراقبة أداء الأنظمة",
         "صيانة بوابات الأعمال",
       ],
-      title: "صيانة الأنظمة المخصصة وتطويرها",
+      title: "الصيانة والدعم للمواقع المخصصة",
     },
     en: {
       breadcrumb: "Maintenance & Support",
@@ -530,36 +530,9 @@ export const PAGE_METADATA = {
         "ongoing web engineering support",
         "product maintenance partner",
       ],
-      title: "Website Maintenance for Custom Systems",
+      title: "Maintenance & Support for Custom Websites",
     },
     path: "/services/maintenance",
-  },
-  serviceEcommerce: {
-    ar: {
-      breadcrumb: "التجارة الإلكترونية",
-      description:
-        "ابنِ متجراً إلكترونياً مخصصاً على Next.js مع كتالوج عالي الدقة ومخزون متزامن وسداد ثنائي اللغة-مصمم للتجزئة الفاخرة في مصر والمنطقة.",
-      keywords: [
-        "تطوير متجر إلكتروني مخصص",
-        "وكالة تجارة إلكترونية القاهرة",
-        "متجر Next.js ثنائي اللغة",
-        "بناء متجر إضاءة إلكتروني",
-      ],
-      title: "تطوير متاجر إلكترونية مخصصة | Next.js",
-    },
-    en: {
-      breadcrumb: "E-Commerce",
-      description:
-        "Build a custom Next.js e-commerce store with high-resolution catalogs, synced inventory, bilingual checkout, and production-grade performance for Cairo and MENA retail brands.",
-      keywords: [
-        "custom ecommerce development cairo",
-        "next.js ecommerce agency",
-        "bilingual online store development",
-        "custom shopify alternative nextjs",
-      ],
-      title: "Custom E-Commerce Development | Next.js Stores",
-    },
-    path: "/services/ecommerce",
   },
   services: {
     ar: {

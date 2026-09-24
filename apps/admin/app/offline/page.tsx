@@ -49,7 +49,7 @@ export default function OfflinePage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <Button
               size="lg"
-              variant="default"
+              variant="brand"
               onClick={handleRetry}
               className="gap-2"
             >
@@ -58,7 +58,7 @@ export default function OfflinePage() {
             </Button>
             <Button
               size="lg"
-              variant="secondary"
+              variant="outline"
               onClick={() => window.history.back()}
             >
               Go Back

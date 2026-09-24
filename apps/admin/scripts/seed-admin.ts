@@ -18,7 +18,6 @@ async function main() {
     create: {
       email,
       name: "Ali",
-      passwordHash,
       role: "SUPERADMIN",
       emailVerified: true,
     },

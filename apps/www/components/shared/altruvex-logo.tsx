@@ -1,57 +1,61 @@
 import { cn } from "@/lib/utils/utils";
 
 interface AltruvexLogoProps {
-className?: string;
-size?: "sm" | "md" | "lg";
-variant?: "full" | "icon";
+  className?: string;
+  size?: "sm" | "md" | "lg";
+  variant?: "full" | "icon";
 }
 
 export function AltruvexLogo({
-className,
-size = "md",
-variant = "full",
+  className,
+  size = "md",
+  variant = "full",
 }: AltruvexLogoProps) {
-const sizeClasses = {
-  sm: "text-xl",
-  md: "text-2xl",
-  lg: "text-3xl md:text-4xl",
-};
+  const sizeClasses = {
+    sm: "text-base",
+    md: "text-lg",
+    lg: "text-xl md:text-2xl",
+  };
 
-const iconSizeClasses = {
-  sm: "h-7 w-7",
-  md: "h-9 w-9",
-  lg: "h-11 w-11",
-};
+  const iconSizeClasses = {
+    sm: "h-7 w-7 rounded-xl",
+    md: "h-9 w-9 rounded-2xl",
+    lg: "h-11 w-11 rounded-[1.25rem]",
+  };
 
-if (variant === "icon") {
+  if (variant === "icon") {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center liquid-glass-flat transition-transform duration-(--motion-drawer) ease-default hover:scale-105 active:scale-95 shadow-sm",
+          iconSizeClasses[size],
+          className
+        )}
+      >
+        <span
+          className={cn(
+            "font-sans font-bold tracking-tight text-foreground",
+            size === "sm" && "text-xs",
+            size === "md" && "text-sm",
+            size === "lg" && "text-base"
+          )}
+        >
+          A
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center rounded-lg liquid-glass transition-colors duration-200 ease-smooth hover:border-foreground/20 hover:bg-foreground/5",
-        iconSizeClasses[size],
-      )}
-    >
-      <span className={cn(
-        "font-sans text-sm font-semibold tracking-[-0.04em] transition-colors duration-300",
-        "text-primary",
-      )}>
-        A
+    <div className={cn("flex items-center", className)}>
+      <span
+        className={cn(
+          "font-sans font-semibold tracking-tight transition-opacity duration-(--motion-drawer) group-hover:opacity-80 text-foreground uppercase",
+          sizeClasses[size]
+        )}
+      >
+        Altruvex
       </span>
     </div>
   );
-}
-
-return (
-  <div className={cn("flex items-center", className)}>
-    <span
-      className={cn(
-        "font-sans font-semibold uppercase tracking-[-0.05em] transition-opacity duration-300 ease-smooth group-hover:opacity-75",
-        sizeClasses[size],
-        "text-primary",
-      )}
-    >
-      Altruvex
-    </span>
-  </div>
-);
 }

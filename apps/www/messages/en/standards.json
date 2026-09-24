@@ -1,0 +1,119 @@
+{
+  "categories": {
+    "accessibility": {
+      "description": "<strong>If it is not accessible, it is not finished.</strong> WCAG compliance is a build requirement - not a post-launch checklist item. We audit keyboard navigation, screen reader output, and color contrast on every screen before it is marked done, the same way we check that a layout renders correctly. Treating accessibility as a late-stage patch is how teams end up retrofitting ARIA labels onto a component library that was never structured to carry them - <dim>we structure for it from the first commit instead.</dim>",
+      "requirements": "Semantic HTML | WCAG 2.1 AA compliance | Keyboard accessibility | Screen reader support",
+      "title": "Accessible by Default",
+      "checks": {
+        "lighthouse": {
+          "label": "Lighthouse accessibility score"
+        },
+        "aria": {
+          "label": "ARIA errors"
+        },
+        "contrast": {
+          "label": "Text contrast ratio"
+        }
+      }
+    },
+    "code": {
+      "description": "Code is read far more often than it is written. We optimize for clarity, consistency, and maintainability - <dim>not clever shortcuts that create future debt.</dim> Strict typing catches the class of bugs that QA cycles miss, and a component-based architecture means a new developer can trace a feature from route to render without a walkthrough call. This matters commercially: the codebase you inherit at handoff is the one your next hire has to extend, and unreadable code is a recurring tax on every future change.",
+      "requirements": "Strict TypeScript | Component-based architecture | Automated testing | Continuous integration",
+      "title": "Clean, Maintainable Code",
+      "checks": {
+        "lint": {
+          "label": "Lint errors"
+        },
+        "coverage": {
+          "label": "Test coverage"
+        },
+        "apiDocs": {
+          "label": "API endpoints documented",
+          "value": "Every endpoint"
+        }
+      }
+    },
+    "performance": {
+      "description": "<strong>Every 100ms of latency is a conversion leak.</strong> Performance is a design constraint from day one - not an optimization pass squeezed in post-launch. We choose edge-first delivery, modern image formats, and minimal client-side JavaScript before a single screen is built, because retrofitting speed into a slow architecture means rebuilding it. <dim>A 95+ Lighthouse score is not a vanity number</dim> - it correlates directly with bounce rate and search ranking, especially on mobile connections in the markets we build for.",
+      "requirements": "Edge-first delivery | Modern image formats | Minimal JS execution | Font optimization",
+      "title": "Speed as a Revenue Driver",
+      "checks": {
+        "lighthouse": {
+          "label": "Lighthouse performance score"
+        },
+        "lcp": {
+          "label": "Largest Contentful Paint (LCP)"
+        },
+        "cls": {
+          "label": "Cumulative Layout Shift (CLS)"
+        }
+      }
+    },
+    "security": {
+      "description": "Trust is earned through security <strong>built in</strong> - <dim>not bolted on.</dim> CSP headers, dependency audits, and input sanitization before anything ships. We run dependency audits as part of the build pipeline, not as an annual fire drill, and authentication flows are reviewed against current OWASP guidance before launch. For e-commerce and ERP clients handling customer payment data, this is not optional hardening - it is the baseline that keeps a breach from becoming the headline.",
+      "requirements": "CSP headers | Secure authentication | Sanitized inputs | Dependency audits",
+      "title": "Security from Day One",
+      "checks": {
+        "headers": {
+          "label": "Security headers grade"
+        },
+        "cves": {
+          "label": "High-risk CVEs in dependencies"
+        },
+        "patches": {
+          "label": "Dependency patching",
+          "value": "Every week"
+        }
+      }
+    }
+  },
+  "enforcement": {
+    "description": "CI/CD pipelines block deployments if these standards are not met. Quality does not degrade over time - it is <strong>enforced on every deploy.</strong> There is no manual checklist someone forgets to run under deadline pressure - the pipeline either passes or the deploy does not happen. That is the only way these four standards stay true six months after launch instead of slowly drifting the way most agency-built sites do once the original team moves on.",
+    "title": "Accountability built in.",
+    "titleItalic": "automatically.",
+    "eyebrow": "The gate",
+    "label": "What the pipeline decides",
+    "outcomes": {
+      "pass": {
+        "state": "All {n} {count, plural, one {check} other {checks}} pass",
+        "result": "The deploy ships."
+      },
+      "fail": {
+        "state": "One check misses its line",
+        "result": "Nothing deploys.",
+        "example": "Example: {check} misses its line. Every other check passes, and the deploy still does not happen."
+      }
+    }
+  },
+  "hero": {
+    "description": "Every system must be fast, readable, accessible, and maintainable enough that every decision after launch is easier - not harder.",
+    "eyebrow": "11 - Standards",
+    "title": "Quality is a delivery requirement,",
+    "titleItalic": "not a bonus round.",
+    "contents": {
+      "summary": "{standards} {standardsCount, plural, one {standard} other {standards}} · {checks} {checksCount, plural, one {check} other {checks}} · one gate every deploy passes through",
+      "checks": "{n} {count, plural, one {check} other {checks}}"
+    }
+  },
+  "sheet": {
+    "sectionLabel": "The standards and their pass lines",
+    "builtWith": "Built with",
+    "passLine": "The pass line",
+    "legend": {
+      "pass": "Passes",
+      "fail": "Fails"
+    },
+    "pass": {
+      "atLeast": "{value} or higher",
+      "over": "Over {value}",
+      "under": "Under {value}",
+      "zero": "None allowed",
+      "grade": "Grade {value} or higher"
+    },
+    "unit": {
+      "seconds": "{value} s",
+      "percent": "{value}%",
+      "ratio": "{value}:1"
+    }
+  }
+}

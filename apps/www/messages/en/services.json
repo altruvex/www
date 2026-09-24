@@ -1,0 +1,34 @@
+{
+  "eyebrow": "02 - What We Build",
+  "footerText": "03 Core Services - ALTRUVEX",
+  "service1": {
+    "badge1": "React / Next.js",
+    "badge2": "Custom-built",
+    "description": "React/Next.js systems built to onboard users, reduce churn, and generate revenue - <dim>not just to render on a screen.</dim>",
+    "tag": "Architecture",
+    "title": "Custom Web Applications"
+  },
+  "service3": {
+    "badge1": "EN · AR",
+    "badge2": "RTL-native",
+    "description": "All supported languages built as <strong>structural equals</strong> - <dim>not a translation layer added after the fact.</dim> Every component reconsidered for each language and direction.",
+    "tag": "Localization",
+    "title": "Multilingual Business Portals"
+  },
+  "service4": {
+    "badge1": "Audit",
+    "badge2": "Rebuild",
+    "description": "Your current system is slow, broken, or failing to convert. We audit, diagnose, and rebuild exactly what needs rebuilding - <dim>without a full restart.</dim>",
+    "tag": "Optimization",
+    "title": "Performance Rescues"
+  },
+  "subtitle": "Every layer engineered precisely - from the interface to the data model.",
+  "title": "Three disciplines. One delivery standard.",
+  "standard": {
+    "label": "The standard"
+  },
+  "explore": "How each one is delivered",
+  "disciplines": {
+    "label": "The disciplines"
+  }
+}

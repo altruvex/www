@@ -1,19 +1,16 @@
 "use client";
-import { Container } from "@/components/shared/container";
-import { Accent } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { MOTION, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { useTranslations } from "next-intl";
-import React, { useEffect, useRef, useState } from "react";
 
-const STAGE_COLORS = [
-  "80,  71, 229",
-  "5,  150, 105",
-  "217, 119,   6",
-  "96,  165, 250",
-  "167, 139, 250",
-  "52,  211, 153",
-] as const;
+import { Container } from "@/components/shared/container";
+import {
+  useSectionDescription,
+  useSectionElement,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
+import { cn } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+import { Fragment, useRef, useState } from "react";
+import { SectionHeading } from "./section-heading";
 
 type StageStatus = "queued" | "running" | "done";
 
@@ -98,6 +95,16 @@ const STAGES: Stage[] = [
   },
 ];
 
+const EMPTY_TIME = "--:--:--";
+
+/* One accent marks "active"; semantic tokens mark the log verdicts. The
+   six per-stage RGB colours this replaced sat outside the token system and
+   did not track dark mode. */
+const LOG_TAG_TONE: Record<string, string> = {
+  "[ok]": "text-success",
+  "[warn]": "text-warning",
+};
+
 function nowStr() {
   return new Date().toTimeString().slice(0, 8);
 }
@@ -106,36 +113,42 @@ function jitter(stage: Stage) {
   return stage.dur[0] + Math.random() * (stage.dur[1] - stage.dur[0]);
 }
 
+function LogLine({ line }: { line: string }) {
+  const match = /^(\[\w+\])\s*(.*)$/.exec(line);
+  const tag = match?.[1] ?? "";
+  const text = match?.[2] ?? line;
+
+  return (
+    <div className="flex items-start gap-2 text-xs leading-relaxed">
+      <span
+        className={cn(
+          "w-12 shrink-0",
+          LOG_TAG_TONE[tag] ?? "text-muted-foreground",
+        )}
+      >
+        {tag}
+      </span>
+      <span className="text-muted-foreground">{text}</span>
+    </div>
+  );
+}
+
 export function PipelineSection() {
   const [statuses, setStatuses] = useState<StageStatus[]>(
     STAGES.map(() => "queued"),
   );
-  const [times, setTimes] = useState<string[]>(STAGES.map(() => "--:--:--"));
+  const [times, setTimes] = useState<string[]>(STAGES.map(() => EMPTY_TIME));
   const [expanded, setExpanded] = useState<number | null>(null);
   const [running, setRunning] = useState(false);
   const [complete, setComplete] = useState(false);
   const [footerMsg, setFooterMsg] = useState("awaiting trigger");
-  const [revealed, setRevealed] = useState(false);
 
-  const sectionRef = useRef<HTMLElement>(null);
   const runningRef = useRef(false);
   const t = useTranslations("pipeline");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setRevealed(true);
-      },
-      { threshold: 0.08 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
+  const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descRef = useSectionDescription<HTMLParagraphElement>();
+  const frameRef = useSectionElement<HTMLDivElement>();
 
   const doneCount = statuses.filter((s) => s === "done").length;
   const statusLabel = complete ? "complete" : running ? "running" : "idle";
@@ -152,7 +165,7 @@ export function PipelineSection() {
 
   const reset = () => {
     setStatuses(STAGES.map(() => "queued"));
-    setTimes(STAGES.map(() => "-- : -- : --"));
+    setTimes(STAGES.map(() => EMPTY_TIME));
     setExpanded(null);
     setComplete(false);
     setRunning(false);
@@ -166,7 +179,7 @@ export function PipelineSection() {
     setRunning(true);
     setComplete(false);
     setStatuses(STAGES.map(() => "queued"));
-    setTimes(STAGES.map(() => "--:--:--"));
+    setTimes(STAGES.map(() => EMPTY_TIME));
 
     setStageStatus(0, "running");
     setFooterMsg("discovery in progress");
@@ -202,328 +215,193 @@ export function PipelineSection() {
     runningRef.current = false;
   };
 
-  const dur = (n: number) => `${Math.round(n * 1000)}ms`;
-  const ease = MOTION.ease.smooth;
-
   return (
-    <>
-      <style>{`
-        @keyframes pl-ring {
-          0%   { transform: scale(1);   opacity: .65; }
-          70%  { transform: scale(2.5); opacity: 0;   }
-          100% { transform: scale(2.5); opacity: 0;   }
-        }
-        @keyframes pl-breathe {
-          0%,100% { opacity: 1;   }
-          50%     { opacity: .3;  }
-        }
-        @keyframes pl-blink {
-          0%,100% { opacity: 1; }
-          50%     { opacity: 0; }
-        }
-        @keyframes pl-scan {
-          0%   { transform: translateX(-100%); opacity: 0;  }
-          8%   { opacity: 1;                                }
-          92%  { opacity: 1;                                }
-          100% { transform: translateX(200%);  opacity: 0;  }
-        }
-        @keyframes pl-line-in {
-          from { opacity: 0; transform: translateX(-5px); }
-          to   { opacity: 1; transform: translateX(0);    }
-        }
-        @keyframes pl-row-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0);    }
-        }
-        @keyframes pl-bar-in {
-          from { transform: scaleY(0); }
-          to   { transform: scaleY(1); }
-        }
+    <section
+      id="pipeline"
+      aria-labelledby="pipeline-heading"
+      className="accent-world-blue bg-surface pt-(--section-y-top) pb-(--section-y-bottom) transition-colors duration-(--motion-drawer) dark:bg-background"
+    >
+      <Container>
+        <SectionHeading
+          titleId="pipeline-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={t("title")}
+          secondTitle={t("titleAccent")}
+          accent="world"
+          description={t("description")}
+          className="mb-10 md:mb-14"
+        />
 
-        .pl-breathe  { animation: pl-breathe  1.2s ease-in-out infinite; }
-        .pl-blink    { animation: pl-blink    1.1s step-end    infinite; }
-        .pl-scan     { animation: pl-scan     2.4s linear      infinite; }
-        .pl-log-line { animation: pl-line-in  .28s ease both; }
-        .pl-bar-in   { transform-origin: top; animation: pl-bar-in .32s cubic-bezier(.22,1,.36,1) both; }
-        
-        .pl-row {
-          display: grid;
-          grid-template-columns: auto 1fr auto;
-          gap: 10px;
-        }
-        .pl-col-ts     { display: none; }
-        .pl-col-stage  { display: flex;  }
-
-        @media (min-width: 640px) {
-          .pl-row    { gap: 12px; }
-        }
-        @media (min-width: 1024px) {
-          .pl-row {
-            grid-template-columns: 84px 196px 1fr 104px;
-            gap: 14px;
-          }
-          .pl-col-ts { display: block; }
-        }
-      `}</style>
-
-      <section
-        ref={sectionRef}
-        id="pipeline"
-        aria-labelledby="pipeline-heading"
-        className="accent-world-green font-mono text-sm leading-normal tracking-wider pt-(--section-y-top) pb-(--section-y-bottom) bg-surface dark:bg-background transition-colors duration-300"
-      >
-        <Container>
-          <Eyebrow
-            className="text-muted-foreground transition-[opacity,transform] mb-3"
-            ref={eyebrowRef}
-            style={{
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0)" : "translateY(6px)",
-              transitionDuration: dur(MOTION.duration.base),
-              transitionTimingFunction: ease,
-            }}
-          >
-            {t("eyebrow")}
-          </Eyebrow>
-          <h2
-            ref={titleRef}
-            id="pipeline-heading"
-            className="font-sans font-light leading-[1.06] transition-[opacity,transform] text-[clamp(2.125rem,4vw,3.25rem)] tracking-tight text-foreground mb-8"
-            style={{
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0)" : "translateY(10px)",
-              transitionDuration: dur(MOTION.duration.text),
-              transitionDelay: dur(MOTION.duration.micro),
-              transitionTimingFunction: ease,
-            }}
-          >
-            {t("title")}
-            <br />
-            <Accent gradient="mint">{t("titleAccent")}</Accent>
-          </h2>
-          <p
-            ref={descRef}
-            className="text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground max-w-md leading-relaxed mb-8 font-sans tracking-normal"
-          >
-            {t("description")}
-          </p>
-          <div
-            dir="ltr"
-            className="transition-[opacity,transform] overflow-hidden rounded-xl border border-border dark:border-white/10 bg-background dark:bg-card shadow-card dark:shadow-none"
-            style={{
-              opacity: revealed ? 1 : 0,
-              transform: revealed ? "translateY(0)" : "translateY(16px)",
-              transitionDuration: dur(MOTION.duration.base),
-              transitionDelay: dur(MOTION.duration.fast),
-              transitionTimingFunction: ease,
-            }}
-          >
-            <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 border-b border-black/5 dark:border-white/10 bg-black/2 dark:bg-transparent">
-              <span className="font-mono text-xs font-semibold leading-normal tracking-widest uppercase text-muted-foreground">
-                system.build.pipeline / production
+        <div
+          ref={frameRef}
+          dir="ltr"
+          className="overflow-hidden rounded-panel-sm border border-border-subtle bg-background font-mono text-sm dark:bg-card"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              system.build.pipeline / example
+            </span>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <span className="text-xs tabular-nums tracking-wider text-muted-foreground">
+                <span className="font-medium text-foreground">{doneCount}</span>
+                /{STAGES.length} deployed
               </span>
-              <div className="flex items-center gap-3 sm:gap-4">
-                <span className="text-sm tracking-widest text-muted-foreground">
-                  <span
-                    className="inline-block transition-transform duration-300 text-foreground font-medium"
-                    style={{ transform: doneCount > 0 ? "scale(1.1)" : "scale(1)" }}
-                  >
-                    {doneCount}
-                  </span>
-                  /6 deployed
-                </span>
-                <span
-                  className="transition-colors duration-300 font-mono text-xs leading-normal tracking-widest uppercase font-semibold"
-                  style={{
-                    color: complete
-                      ? `rgb(${STAGE_COLORS[1]})`
-                      : running
-                        ? `rgb(${STAGE_COLORS[2]})`
-                        : "currentColor",
-                    opacity: complete || running ? 1 : 0.5,
-                  }}
-                >
-                  {statusLabel}
-                </span>
-              </div>
-            </div>
-            {STAGES.map((stage, i) => {
-              const status = statuses[i];
-              const isExp = expanded === i;
-              const isRunning = status === "running";
-              const isDone = status === "done";
-              const isActive = isRunning || isDone;
-              const color = STAGE_COLORS[i];
-              return (
-                <React.Fragment key={stage.id}>
-                  <div
-                    className="pl-row relative items-start cursor-pointer overflow-hidden transition-all duration-300 border-b border-black/5 dark:border-white/5 px-4 py-3.5 hover:bg-black/2 dark:hover:bg-white/2"
-                    style={{
-                      backgroundColor: isExp
-                        ? `rgba(${color},.04)`
-                        : isRunning
-                          ? `rgba(${color},.02)`
-                          : "transparent",
-                      animation: revealed
-                        ? `pl-row-in ${dur(MOTION.duration.fast)} cubic-bezier(.22,1,.36,1) ${dur(i * 0.065)} both`
-                        : "none",
-                    }}
-                    onClick={() => setExpanded(isExp ? null : i)}
-                  >
-                    {isRunning && (
-                      <div
-                        className="pl-scan pointer-events-none absolute inset-0"
-                        style={{
-                          background: `linear-gradient(90deg, transparent, rgba(${color},.05), transparent)`,
-                          width: "40%",
-                        }}
-                      />
-                    )}
-                    <div
-                      className="absolute inset-y-0 left-0 transition-opacity duration-300"
-                      style={{
-                        width: "3px",
-                        backgroundColor: `rgb(${color})`,
-                        opacity: isActive || isExp ? 1 : 0,
-                        animation: isActive || isExp ? "pl-bar-in .32s cubic-bezier(.22,1,.36,1) both" : "none",
-                      }}
-                    />
-                    <span
-                      className="pl-col-ts tabular-nums transition-colors duration-300 text-[11.5px] tracking-wider pt-px"
-                      style={{ color: isActive ? `rgba(${color},.6)` : "currentColor", opacity: isActive ? 1 : 0.4 }}
-                    >
-                      {times[i]}
-                    </span>
-                    <span
-                      className="pl-col-stage items-center gap-1.5 transition-colors duration-300 self-start text-[11.5px] tracking-widest uppercase font-semibold whitespace-nowrap pt-px"
-                      style={{ color: isActive ? `rgb(${color})` : "currentColor", opacity: isActive ? 1 : 0.5 }}
-                    >
-                      <span className="opacity-50 font-normal">[{stage.id}]</span>
-                      <span className="hidden sm:inline">{stage.key}</span>
-                      <span className="sm:hidden">{stage.key.slice(0, 4)}</span>
-                      {stage.parallel && (
-                        <span
-                          className="text-xs border px-1 py-px hidden sm:inline rounded-sm"
-                          style={{
-                            color: `rgba(${color},.7)`,
-                            borderColor: `rgba(${color},.3)`,
-                          }}
-                        >
-                          ||
-                        </span>
-                      )}
-                    </span>
-                    <span
-                      className="transition-colors duration-300 text-sm sm:text-[13px] leading-relaxed tracking-wide pt-px"
-                      style={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
-                    >
-                      {stage.desc}
-                    </span>
-                    <span
-                      className="flex items-center gap-2 transition-colors duration-300 self-start justify-end text-sm tracking-widest uppercase font-semibold pt-[2px]"
-                      style={{
-                        color: isRunning
-                          ? `rgb(${color})`
-                          : isDone
-                            ? `rgba(${color},.6)`
-                            : "currentColor",
-                        opacity: isRunning || isDone ? 1 : 0.4,
-                      }}
-                    >
-                      <span className="relative flex items-center justify-center shrink-0 w-2 h-2 mt-px">
-                        {isRunning && (
-                          <span
-                            className="absolute inset-0 rounded-full"
-                            style={{
-                              backgroundColor: `rgb(${color})`,
-                              animation: `pl-ring 1.4s ease-out infinite`,
-                            }}
-                          />
-                        )}
-                        <span
-                          className={`relative rounded-full transition-colors duration-300 ${isRunning ? "pl-breathe" : ""}`}
-                          style={{
-                            width: "6px",
-                            height: "6px",
-                            backgroundColor: isActive ? `rgb(${color})` : "currentColor",
-                            opacity: isActive ? 1 : 0.3,
-                          }}
-                        />
-                      </span>
-                      <span className="hidden sm:inline">{status}</span>
-                    </span>
-                  </div>
-                  <div
-                    className="overflow-hidden transition-[max-height,opacity] ease-[cubic-bezier(0.22,1,0.36,1)]"
-                    style={{
-                      maxHeight: isExp ? "300px" : "0px",
-                      opacity: isExp ? 1 : 0,
-                      transitionDuration: dur(MOTION.duration.fast),
-                    }}
-                  >
-                    {/* Simulated log flavor text: aria-hidden (decorative),
-                        info lines on the theme-aware s-mid so they hold ≥3:1
-                        visually (the old rgba .8 measured 2.02:1). */}
-                    <div
-                      aria-hidden="true"
-                      className="space-y-1 px-4 py-3 bg-black/2 dark:bg-black/20 border-b border-black/5 dark:border-white/5 shadow-inner"
-                    >
-                      {stage.logs.map((line, li) => (
-                        <div
-                          key={li}
-                          className="pl-log-line text-[11.5px] leading-[1.85] tracking-wide flex items-start"
-                          style={{
-                            animationDelay: `${li * 55}ms`,
-                            color: line.startsWith("[ok]")
-                              ? `rgb(${STAGE_COLORS[1]})`
-                              : line.startsWith("[warn]")
-                                ? `rgb(${STAGE_COLORS[2]})`
-                                : "var(--s-mid)",
-                          }}
-                        >
-                          <span className="text-muted-foreground mr-2 shrink-0">-</span>
-                          <span>{line}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </React.Fragment>
-              );
-            })}
-            <div className="flex items-center justify-between flex-wrap gap-3 px-4 py-3 bg-black/1 dark:bg-transparent">
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-[11.5px] tracking-widest font-medium transition-colors duration-500 uppercase"
-                  style={{
-                    color: complete ? `rgb(${STAGE_COLORS[1]})` : "var(--muted-foreground)",
-                  }}
-                >
-                  {footerMsg}
-                </span>
-                <span
-                  className="pl-blink inline-block w-[5px] h-[11px] bg-foreground rounded-sm"
-                  style={{
-                    opacity: running ? 1 : 0,
-                    transition: `opacity ${dur(MOTION.duration.instant)}`,
-                  }}
-                />
-              </div>
-              <button
-                className="cursor-pointer transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed font-mono text-[11.5px] font-semibold leading-normal tracking-[0.18em] uppercase rounded-md px-4 py-2 border hover:shadow-sm"
-                disabled={running}
-                onClick={complete ? reset : execute}
-                style={{
-                  borderColor: complete ? `rgba(${STAGE_COLORS[1]},.4)` : "var(--border)",
-                  color: complete ? `rgb(${STAGE_COLORS[1]})` : "var(--foreground)",
-                  backgroundColor: complete ? `rgba(${STAGE_COLORS[1]},.05)` : "transparent",
-                }}
+              <span
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-widest transition-colors duration-(--motion-drawer)",
+                  complete
+                    ? "text-success"
+                    : running
+                      ? "text-local-accent-text"
+                      : "text-muted-foreground",
+                )}
               >
-                {complete ? "↺ Re-Execute" : running ? "Running…" : "▶ Execute"}
-              </button>
+                {statusLabel}
+              </span>
             </div>
           </div>
-        </Container>
-      </section>
-    </>
+
+          {STAGES.map((stage, i) => {
+            const status = statuses[i];
+            const isExp = expanded === i;
+            const isRunning = status === "running";
+            const isDone = status === "done";
+            const isActive = isRunning || isDone;
+
+            return (
+              <Fragment key={stage.id}>
+                <button
+                  type="button"
+                  aria-expanded={isExp}
+                  onClick={() => setExpanded(isExp ? null : i)}
+                  className={cn(
+                    "relative grid w-full cursor-pointer grid-cols-[auto_1fr_auto] items-start gap-2.5 border-b border-border-subtle/60 px-4 py-3.5 text-start transition-colors duration-(--motion-drawer) hover:bg-muted/50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-local-accent sm:gap-3 lg:grid-cols-[84px_196px_1fr_104px] lg:gap-3.5",
+                    isExp && "bg-muted/40",
+                  )}
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute inset-y-0 start-0 w-0.5 bg-local-accent transition-opacity duration-(--motion-drawer)",
+                      isActive || isExp ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "hidden pt-px text-xs tabular-nums tracking-wider transition-colors duration-(--motion-drawer) lg:block",
+                      isActive
+                        ? "text-muted-foreground"
+                        : "text-muted-foreground/60",
+                    )}
+                  >
+                    {times[i]}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex items-center gap-1.5 self-start whitespace-nowrap pt-px text-xs font-semibold uppercase tracking-widest transition-colors duration-(--motion-drawer)",
+                      isRunning
+                        ? "text-local-accent-text"
+                        : isDone
+                          ? "text-foreground"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    <span className="font-normal opacity-60">[{stage.id}]</span>
+                    <span className="hidden sm:inline">{stage.key}</span>
+                    <span className="sm:hidden">{stage.key.slice(0, 4)}</span>
+                    {stage.parallel ? (
+                      <span className="hidden rounded-ctl-xs border border-border-subtle px-1 text-[10px] font-normal text-muted-foreground sm:inline">
+                        ||
+                      </span>
+                    ) : null}
+                  </span>
+                  <span
+                    className={cn(
+                      "pt-px text-[13px] leading-relaxed tracking-wide transition-colors duration-(--motion-drawer)",
+                      isActive ? "text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {stage.desc}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex items-center justify-end gap-2 self-start pt-0.5 text-xs font-semibold uppercase tracking-widest transition-colors duration-(--motion-drawer)",
+                      isRunning
+                        ? "text-local-accent-text"
+                        : isDone
+                          ? "text-foreground/70"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-1.5 shrink-0 rounded-full transition-colors duration-(--motion-drawer)",
+                        isRunning
+                          ? "bg-local-accent motion-safe:animate-pulse"
+                          : isDone
+                            ? "bg-local-accent/60"
+                            : "bg-foreground/20",
+                      )}
+                    />
+                    <span className="hidden sm:inline">{status}</span>
+                  </span>
+                </button>
+                <div
+                  className="overflow-hidden transition-[max-height,opacity] duration-(--motion-drawer) ease-default motion-reduce:transition-none"
+                  style={{
+                    maxHeight: isExp ? "300px" : "0px",
+                    opacity: isExp ? 1 : 0,
+                  }}
+                >
+                  {/* Simulated log flavour text — decorative, so hidden from AT. */}
+                  <div
+                    aria-hidden="true"
+                    className="space-y-1 border-b border-border-subtle/60 bg-muted/40 px-4 py-3"
+                  >
+                    {stage.logs.map((line) => (
+                      <LogLine key={line} line={line} />
+                    ))}
+                  </div>
+                </div>
+              </Fragment>
+            );
+          })}
+
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <span
+              aria-live="polite"
+              className={cn(
+                "text-xs font-medium uppercase tracking-widest transition-colors duration-(--motion-fast)",
+                complete ? "text-success" : "text-muted-foreground",
+              )}
+            >
+              {footerMsg}
+            </span>
+            <button
+              type="button"
+              disabled={running}
+              onClick={complete ? reset : execute}
+              className={cn(
+                "inline-flex min-h-9 cursor-pointer items-center rounded-full border px-4 text-xs font-semibold uppercase tracking-[0.14em] transition-colors duration-(--motion-instant) disabled:cursor-not-allowed disabled:opacity-40 pointer-coarse:min-h-11",
+                complete
+                  ? "border-success/40 text-success hover:bg-success/5"
+                  : "border-border-subtle text-foreground hover:bg-muted",
+              )}
+            >
+              {complete ? "↺ Re-Execute" : running ? "Running…" : "▶ Execute"}
+            </button>
+          </div>
+        </div>
+        {/* The run is a demonstration of the pipeline's shape; its counts and
+            latencies are not measured on a client project, so it says so. */}
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          {t("exampleNote")}
+        </p>
+      </Container>
+    </section>
   );
 }

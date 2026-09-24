@@ -135,7 +135,7 @@ export function NotesPanel({
           <span className="font-mono text-micro text-subtle-foreground">
             Press Post to record note
           </span>
-          <Button type="submit" size="sm" disabled={isPending || !content.trim()}>
+          <Button type="submit" variant="secondary" size="sm" disabled={isPending || !content.trim()}>
             <Send />
             {isPending ? "Posting…" : "Post note"}
           </Button>

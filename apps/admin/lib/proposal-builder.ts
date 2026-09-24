@@ -1,5 +1,7 @@
 import PptxGenJS from "pptxgenjs";
-import { runProposalContrastGate } from "./proposal-qa";
+import { DECK_COLORS } from "./document-colors";
+import { ProposalQaError, runProposalContrastGate } from "./proposal-qa";
+import { perTermLabel } from "./service-lifecycle";
 import {
   discountAmount,
   fillTemplate,
@@ -18,28 +20,11 @@ import {
 // arrives in the ProposalContent argument. There is no client-specific
 // literal anywhere below — if you find one, it is a bug, not a default.
 //
-// Colors are the deck's own, not an approximation: where the reference uses a
-// warm neutral (E3DED7, A09880) rather than the cool --n-* ramp, that IS the
-// design — do not "correct" it back to the cool ramp.
-const TOKENS = {
-  // light surface (slides 2-6)
-  paper: "FAFAFA",
-  ink: "0F0F0F",
-  inkTitle: "0D0D11", // problem-card titles sit a shade cooler than --foreground
-  body: "666666",
-  bodyWarm: "767373", // problem-card descriptions
-  label: "525252", // eyebrows, footers, mono labels
-  muted: "737373", // captions, quote, bar labels, split segment 1
-  hairline: "E8E8E8",
-  ruleWarm: "E3DED7", // problem-card left rule
-  numeralWarm: "A09880", // problem-card index numerals
-
-  // dark surface (slides 1 + 7)
-  darkBg: "121212",
-  coverFg: "F0F0F0",
-  mutedOnDark: "949494",
-  ghostDark: "242424", // ghost numeral, dot grid, crop marks, CTA border
-};
+// Colors come from the one palette (lib/document-colors.ts → @repo/ui/palette),
+// so the deck prints the same neutrals and brand the screens paint. The deck's
+// earlier warm neutrals (E3DED7, A09880, 767373, 0D0D11) were retired for the
+// nearest ramp step.
+const TOKENS = DECK_COLORS;
 
 const FONT = {
   display: "Georgia",
@@ -985,7 +970,123 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     color: TOKENS.label,
   });
 
+  if (content.services.length > 0) {
+    buildServicesBlock(slide, pptx, content, payBottom + 0.85);
+  }
+
   footer(slide, pptx, content.labels.footerCompany, 5);
+}
+
+// Rows are laid out from the block's top so the fit check and the drawing
+// cannot disagree about where the last row ends.
+const SERVICES_ROW_STEP = 0.36;
+const SERVICES_FIRST_ROW = 0.42;
+const SERVICES_NOTE_GAP = 0.12;
+/** Lowest the block may reach — clear of the footer hairline at 11.12. */
+const SERVICES_FLOOR = 10.9;
+
+/**
+ * Recurring services, under the payment split and visibly outside it.
+ *
+ * Not a row in the investment table: those rows sum into the total, and a
+ * domain renewal printed there would read as part of the project fee — the
+ * one thing the pricing rule for pass-through services forbids. Each service
+ * says its term and what the client pays per term; a first term covered by
+ * the fee says so instead of printing a price that will not be invoiced.
+ *
+ * Refuses to overflow. A block that runs into the footer is a deck nobody
+ * meant to send, so it fails the generation with a message the editor can put
+ * next to the services list instead.
+ */
+function buildServicesBlock(
+  slide: PptxGenJS.Slide,
+  pptx: PptxGenJS,
+  content: ProposalContent,
+  top: number,
+) {
+  const { currency } = content.meta;
+  const bottom =
+    top + SERVICES_FIRST_ROW + content.services.length * SERVICES_ROW_STEP + SERVICES_NOTE_GAP + 0.25;
+  if (bottom > SERVICES_FLOOR) {
+    const fits = Math.max(
+      0,
+      Math.floor(
+        (SERVICES_FLOOR - top - SERVICES_FIRST_ROW - SERVICES_NOTE_GAP - 0.25) / SERVICES_ROW_STEP,
+      ),
+    );
+    throw new ProposalQaError("Recurring services do not fit on the investment slide", [
+      {
+        path: "services",
+        message: `With this many line items and payments, slide 5 has room for ${fits} service${fits === 1 ? "" : "s"}. Remove a service, a line item or a payment row.`,
+      },
+    ]);
+  }
+
+  slide.addText(content.labels.services, {
+    ...BOX,
+    x: ML,
+    y: top,
+    w: 4.0,
+    h: 0.25,
+    fontFace: FONT.mono,
+    fontSize: 9.5,
+    color: TOKENS.label,
+    charSpacing: 2,
+  });
+  hairline(slide, pptx, ML, top + 0.3, TW, TOKENS.hairline);
+
+  content.services.forEach((service, i) => {
+    const y = top + SERVICES_FIRST_ROW + i * SERVICES_ROW_STEP;
+    slide.addText(service.name, {
+      ...BOX,
+      x: ML,
+      y,
+      w: 3.3,
+      h: 0.3,
+      fontFace: FONT.heading,
+      fontSize: 12,
+      color: TOKENS.ink,
+      fit: "shrink",
+    });
+    // Compact on purpose: at 8.5pt Courier the column holds ~24 characters
+    // before it runs into the price, and "EVERY 2 YEARS · FIRST TERM INCLUDED"
+    // does not. The contract spells the same facts out in full.
+    const term = `${service.termMonths} MO`;
+    slide.addText(service.firstTermIncluded ? `${term} · 1ST TERM IN FEE` : term, {
+      ...BOX,
+      x: 4.05,
+      y,
+      w: 1.75,
+      h: 0.3,
+      fontFace: FONT.mono,
+      fontSize: 8.5,
+      color: TOKENS.label,
+    });
+    slide.addText(`${formatCurrency(service.price, currency)} ${perTermLabel(service.termMonths)}`, {
+      ...BOX,
+      x: 5.9,
+      y,
+      w: CONTENT_R - 5.9,
+      h: 0.3,
+      fontFace: FONT.mono,
+      fontSize: 11,
+      color: TOKENS.body,
+      align: "right",
+    });
+  });
+
+  const noteY =
+    top + SERVICES_FIRST_ROW + content.services.length * SERVICES_ROW_STEP + SERVICES_NOTE_GAP;
+  slide.addText(content.labels.servicesNote, {
+    ...BOX,
+    x: ML,
+    y: noteY,
+    w: TW,
+    h: 0.25,
+    fontFace: FONT.mono,
+    fontSize: 9,
+    color: TOKENS.label,
+  });
 }
 
 // ---- Slide 6 — Scope & Terms ----

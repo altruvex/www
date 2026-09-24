@@ -180,6 +180,22 @@ export function Topbar({
               destructive
               onSelect={async () => {
                 await signOut();
+                // An earlier service-worker config cached every response it
+                // saw, so a browser that ran that version still holds client
+                // records in Cache Storage. Signing out is the moment to drop
+                // them; the current config keeps only hashed build output.
+                if (typeof caches !== "undefined") {
+                  await caches
+                    .keys()
+                    .then((keys) =>
+                      Promise.all(
+                        keys
+                          .filter((key) => key !== "static-assets" && key !== "font-cache")
+                          .map((key) => caches.delete(key)),
+                      ),
+                    )
+                    .catch(() => undefined);
+                }
                 window.location.href = "/login";
               }}
             >

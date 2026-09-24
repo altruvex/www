@@ -1,8 +1,9 @@
 "use client";
 
+import { MagneticButton } from "@/components/magnetic-button";
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Container } from "@/components/shared/container";
 import { ArrowLabel } from "@/components/shared/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
 import {
@@ -13,7 +14,6 @@ import {
   useSectionTitle,
 } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
-import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SectionHeading } from "./section-heading";
@@ -48,7 +48,7 @@ function ScheduleBar(): React.ReactElement {
           <span
             key={segment.key}
             className={cn(
-              "quote-schedule-segment flex-none rounded-[2px]",
+              "quote-schedule-segment flex-none rounded-ctl-xs",
               segment.basis,
               segment.tone,
             )}
@@ -91,7 +91,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
     <section
       id="quote-artifact"
       aria-labelledby="quote-artifact-heading"
-      className="accent-world-orange border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-orange border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
@@ -106,8 +106,8 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
           description={t("subtitle")}
           className="mb-16"
         />
-        <div ref={documentRef} className="border border-border bg-card rounded-lg">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-b border-border px-6 py-5 md:px-10">
+        <div ref={documentRef} className="border border-border-subtle bg-card rounded-panel-sm">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3 border-b border-border-subtle px-6 py-5 md:px-10">
             <Eyebrow tone="accent">{t("document.label")}</Eyebrow>
             <p className="text-[0.8125rem] leading-snug text-muted-foreground">
               {t("document.status")}
@@ -117,7 +117,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
             {CLAUSE_KEYS.map((key: ClauseKey, index) => (
               <li
                 key={key}
-                className="grid gap-x-10 gap-y-4 border-b border-border px-6 py-8 last:border-b-0 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:px-10 md:py-10"
+                className="grid gap-x-10 gap-y-4 px-6 py-8 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:px-10 md:py-11"
               >
                 <div>
                   <div className="flex items-baseline gap-4">
@@ -143,8 +143,8 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                 </div>
                 <p
                   className={cn(
-                    "text-[0.875rem] leading-relaxed text-muted-foreground",
-                    "border-s border-border ps-5 md:mt-1",
+                    "text-md leading-relaxed text-muted-foreground",
+                    "border-s border-border-subtle ps-5 md:mt-1",
                     index % 2 === 0 ? "md:text-balance" : "",
                   )}
                 >
@@ -156,7 +156,7 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
         </div>
         <div
           ref={footerRef}
-          className="mt-10 grid gap-8 border-t border-border pt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:items-start"
+          className="mt-10 grid gap-8 border-t border-border-subtle pt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:items-start"
         >
           <div className="flex flex-col items-start gap-5">
             <p className="text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-foreground">

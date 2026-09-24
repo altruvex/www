@@ -1,0 +1,26 @@
+{
+  "email": "البريد الإلكتروني",
+  "emailValue": "hello@altruvex.com",
+  "form": {
+    "message": "الرسالة",
+    "messagePlaceholder": "صف مشروعك - ما الذي تبنيه، ما الذي لا يعمل، أو القرار الذي تحتاج وضوحاً بشأنه.",
+    "name": "الاسم",
+    "namePlaceholder": "اسمك",
+    "phone": "رقم الهاتف",
+    "phonePlaceholder": "01XXXXXXXXX",
+    "riskReversal": "مكالمة مجانية ٣٠ دقيقة · بدون التزام · رد خلال ساعتي عمل",
+    "submit": "إرسال الرسالة",
+    "submitting": "جارٍ الإرسال...",
+    "success": "تم الاستلام. سنرد خلال ٢٤ ساعة."
+  },
+  "location": "الموقع",
+  "social": {
+    "dribbble": "دريبل",
+    "instagram": "إنستغرام",
+    "linkedin": "لينكد إن",
+    "twitter": "تويتر"
+  },
+  "subtitle": "ابدأ المحادثة",
+  "title": "لنبني",
+  "title2": "شيئاً يعمل فعلاً."
+}

@@ -1,7 +1,7 @@
 import { ADDONS, type Addon } from "./addons";
 import { computeAddonPrice, type AddonPrice } from "./compute";
-import { CONSULTING_PACKAGES } from "./consulting";
-import { pricingCopy } from "./copy/index";
+import { consultingCreditAmount, CONSULTING_PACKAGES } from "./consulting";
+import { pricingCopy, type MaintenanceCompare } from "./copy/index";
 import {
   fillTemplate,
   formatFrom,
@@ -11,11 +11,15 @@ import {
   formatRange,
   formatWeeks,
 } from "./format";
-import type {
-  AddonId,
-  ConsultingPackageId,
-  MaintenancePlanId,
-  TierId,
+import {
+  COMPLEXITY_IDS,
+  SERVICE_IDS,
+  type AddonId,
+  type ComplexityId,
+  type ConsultingPackageId,
+  type MaintenancePlanId,
+  type ServiceId,
+  type TierId,
 } from "./ids";
 import {
   MAINTENANCE_PLANS,
@@ -101,9 +105,15 @@ export function tierWeeksFrom(
  * Rendered next to the tier cards so the cap is stated where the windows are,
  * not only inside the estimator a click away.
  */
-export function deliveryCeilingLabel(locale: Locale): string {
+export function deliveryCeilingLabel(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): string {
+  const span = deliveryWindowFrom(pricing);
   return fillTemplate(pricingCopy(locale).tierTemplates.ceiling, {
-    max: formatNumber(MAX_DELIVERY_WEEKS, locale),
+    windowMin: formatNumber(span.min, locale),
+    windowMax: formatNumber(span.max, locale),
+    ceiling: formatNumber(MAX_DELIVERY_WEEKS, locale),
   });
 }
 
@@ -142,6 +152,83 @@ export function tierViews(
   });
 }
 
+export interface PriceCellView {
+  readonly serviceId: ServiceId;
+  readonly complexityId: ComplexityId;
+  /** The cell's range, e.g. "40,000 – 75,000 EGP". Always a range. */
+  readonly priceLabel: string;
+  /** The cell's delivery window, e.g. "3–5 weeks". */
+  readonly weeksLabel: string;
+  /** The marketed package that names this cell, or null when none does. */
+  readonly tierId: TierId | null;
+}
+
+export interface PriceMatrixRowView {
+  readonly serviceId: ServiceId;
+  readonly name: string;
+  readonly description: string;
+  /** One cell per complexity band, in `COMPLEXITY_IDS` order. */
+  readonly cells: readonly PriceCellView[];
+}
+
+export interface PriceMatrixView {
+  readonly bands: readonly { readonly id: ComplexityId; readonly label: string }[];
+  readonly rows: readonly PriceMatrixRowView[];
+  /** Cells in the grid, so copy can count them instead of hardcoding it. */
+  readonly cellCount: number;
+  readonly tierCount: number;
+}
+
+/**
+ * The whole service matrix, as `/pricing` draws it.
+ *
+ * The tiers are four cells of this grid given names; drawing the grid itself
+ * is what makes that visible — a buyer sees the package in the context of the
+ * cells around it, and sees that the cells nobody named are published too.
+ * Every figure resolves from the same set `tierViews` reads, so a named cell
+ * and the package it opens cannot disagree.
+ */
+export function priceMatrixView(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): PriceMatrixView {
+  const copy = pricingCopy(locale);
+
+  const tierAt = (serviceId: ServiceId, complexityId: ComplexityId) =>
+    ORDERED_TIERS.find(
+      (tier) =>
+        tier.serviceId === serviceId && tier.complexityId === complexityId,
+    )?.id ?? null;
+
+  const rows = SERVICE_IDS.map((serviceId) => {
+    const service = pricing.services[serviceId];
+    return {
+      serviceId,
+      name: copy.services[serviceId].name,
+      description: copy.services[serviceId].description,
+      cells: COMPLEXITY_IDS.map((complexityId) => {
+        const weeks = service.weeks[complexityId];
+        return {
+          serviceId,
+          complexityId,
+          priceLabel: formatRange(service.price[complexityId], locale),
+          weeksLabel: fillTemplate(copy.tierTemplates.timelineValue, {
+            weeks: formatWeeks(weeks.min, weeks.max, locale),
+          }),
+          tierId: tierAt(serviceId, complexityId),
+        };
+      }),
+    };
+  });
+
+  return {
+    bands: COMPLEXITY_IDS.map((id) => ({ id, label: copy.bands[id] })),
+    rows,
+    cellCount: SERVICE_IDS.length * COMPLEXITY_IDS.length,
+    tierCount: ORDERED_TIERS.length,
+  };
+}
+
 export function minimumEngagementLabel(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -149,10 +236,51 @@ export function minimumEngagementLabel(
   return formatFrom(lowestCell(pricing), locale);
 }
 
+/**
+ * The published delivery window: the shortest and longest cell in the matrix,
+ * in weeks. The process pages split this window into phases, so the phase
+ * lengths they print cannot promise more (or less) time than a price cell
+ * does - and an admin edit to a cell's weeks moves them with it.
+ */
+export function deliveryWindowFrom(
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): WeekRange {
+  const cells = Object.values(pricing.services).flatMap((service) =>
+    Object.values(service.weeks),
+  );
+  return {
+    min: Math.min(...cells.map((cell) => cell.min)),
+    max: Math.max(...cells.map((cell) => cell.max)),
+  };
+}
+
 /** The engagement floor: the lowest published cell in the matrix. */
 function lowestCell(pricing: ResolvedPricing): number {
   return Math.min(
     ...Object.values(pricing.services).map((s) => s.price.basic.min),
+  );
+}
+
+/**
+ * The whole published build range — the lowest cell in the matrix to the
+ * highest — as one formatted span.
+ *
+ * `/services/consulting` states the audit's fee against it ("4% of the largest
+ * build we publish"), so the two figures have to come from the same matrix an
+ * admin edits. Deriving it in the app would put a second authority on what the
+ * published range is.
+ */
+export function publishedBuildRangeLabel(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): string {
+  const services = Object.values(pricing.services);
+  return formatRange(
+    {
+      min: Math.min(...services.map((service) => service.price.basic.min)),
+      max: Math.max(...services.map((service) => service.price.premium.max)),
+    },
+    locale,
   );
 }
 
@@ -168,6 +296,17 @@ export interface MaintenanceView {
   /** Published overage term. Null on quote-only plans. */
   readonly overageNote: string | null;
   readonly highlight: boolean;
+  /**
+   * The client-facing cap on edit requests per cycle — the unit the retainer
+   * is sold in — so a surface can draw the allowance as a count, not only
+   * read it in a sentence. Null when quote-only.
+   */
+  readonly requestsPerCycle: number | null;
+  readonly priorityTurnaround: boolean;
+  /** The plan answered against the shared comparison questions. */
+  readonly compare: MaintenanceCompare;
+  /** "{rate} EGP / hour" for a table cell. Null on quote-only plans. */
+  readonly overageShort: string | null;
 }
 
 function maintenanceFeatures(
@@ -223,6 +362,15 @@ export function maintenanceViews(
               rate: formatNumber(plan.overageHourlyRate, locale),
             }),
       highlight: plan.highlight,
+      requestsPerCycle: plan.requestsPerCycle,
+      priorityTurnaround: plan.priorityTurnaround,
+      compare: copy.maintenance[plan.id].compare,
+      overageShort:
+        plan.overageHourlyRate === null
+          ? null
+          : fillTemplate(tpl.overageShort, {
+              rate: formatNumber(plan.overageHourlyRate, locale),
+            }),
     }));
 }
 
@@ -240,6 +388,16 @@ export interface ConsultingView {
   readonly ctaLabel: string;
   readonly eyebrow: string;
   readonly includedLabel: string;
+  /**
+   * The credit rule, already resolved against the package's own price.
+   *
+   * `creditAmountLabel` is null when nothing is credited, which is the signal
+   * for a surface to print neither half — never a "0 EGP credited" line.
+   */
+  readonly creditLabel: string;
+  readonly creditAmountLabel: string | null;
+  readonly creditIfBuild: string;
+  readonly creditIfNot: string;
 }
 
 export function consultingView(
@@ -249,6 +407,7 @@ export function consultingView(
 ): ConsultingView {
   const pkg = pricing.consulting[id];
   const text = pricingCopy(locale).consulting[id];
+  const credit = consultingCreditAmount(pkg);
 
   return {
     id,
@@ -264,6 +423,12 @@ export function consultingView(
     ctaLabel: text.ctaLabel,
     eyebrow: text.eyebrow,
     includedLabel: text.includedLabel,
+    creditLabel: text.creditLabel,
+    creditAmountLabel: credit > 0 ? formatMoney(credit, locale) : null,
+    creditIfBuild: fillTemplate(text.creditIfBuild, {
+      credit: formatMoney(credit, locale),
+    }),
+    creditIfNot: text.creditIfNot,
   };
 }
 
@@ -388,6 +553,9 @@ export function pricingTokens(
 
   return {
     auditPrice: formatMoney(audit.price, locale),
+    // What that fee is worth against a build. Prose that states the credit
+    // quotes this, so the sentence cannot outlive the rule it describes.
+    auditCredit: formatMoney(consultingCreditAmount(audit), locale),
     essentialRange: formatRange(tierRangeFrom("essential", pricing), locale),
     maintenanceEssential:
       essential.price === null ? "" : formatMoney(essential.price, locale),
@@ -403,6 +571,10 @@ export function pricingTokens(
     // terms of service and the quote artifact all name the window, and the
     // contract promises it.
     warrantyDays: formatNumber(COMMERCIAL_TERMS.postLaunchWarrantyDays, locale),
+    // The delivery window the process pages divide into phases.
+    deliveryWeeksMin: formatNumber(deliveryWindowFrom(pricing).min, locale),
+    deliveryWeeksMax: formatNumber(deliveryWindowFrom(pricing).max, locale),
+    deliveryCeilingWeeks: formatNumber(MAX_DELIVERY_WEEKS, locale),
   };
 }
 

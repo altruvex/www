@@ -1,0 +1,23 @@
+{
+  "buttonText": "Request a Call",
+  "closeLabel": "Close dialog",
+  "description": "Not sure if we are a fit? A 30-minute technical discovery call is enough to find out - no pitch, no pressure.",
+  "phoneError": "Please enter a valid phone number",
+  "phoneHint": "We will only call to coordinate the time.",
+  "phoneLabel": "Phone (WhatsApp)",
+  "phonePlaceholder": "+201... or +971...",
+  "secondaryButtonText": "Maybe later",
+  "stats": {
+    "founderAccess": "Founder Access",
+    "founderAccessValue": "Direct",
+    "noCommitment": "No Commitment",
+    "noCommitmentValue": "Free",
+    "noPitch": "No Sales Pitch",
+    "noPitchValue": "30 min"
+  },
+  "submitting": "Sending...",
+  "subtitle": "Wait - before you go",
+  "successDescription": "We have received your number. We will reach out within 2 business hours to coordinate.",
+  "successTitle": "Talk soon.",
+  "title": "Let's pressure-test your scope."
+}

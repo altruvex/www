@@ -59,8 +59,13 @@ type Props = {
 
 export default async function RootLayout({ children, params }: Props) {
   const { locale } = await params;
+  // Vazirmatn is defined on every locale: English pages still print Arabic
+  // (the language switcher names "العربية" in its own script). The arabic
+  // subset's unicode-range means a page without Arabic glyphs never fetches it.
   const primaryFontVariable =
-    locale === "ar" ? vazirmatn.variable : inter.variable;
+    locale === "ar"
+      ? vazirmatn.variable
+      : cn(inter.variable, vazirmatn.variable);
 
   if (!hasLocale(routing.locales, locale)) {
     notFound();
@@ -92,7 +97,7 @@ export default async function RootLayout({ children, params }: Props) {
       >
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:inset-s-4 focus:z-100 focus:p-3 focus:px-5 focus:rounded-md focus:shadow-lg focus:border focus:border-border focus:bg-background focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:inset-s-4 focus:z-100 focus:p-3 focus:px-5 focus:rounded-ctl-xl focus:shadow-lg focus:border focus:border-border-subtle focus:bg-background focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {tA11y("skipToContent")}
         </a>

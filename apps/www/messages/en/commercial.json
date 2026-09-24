@@ -1,0 +1,84 @@
+{
+  "cta": {
+    "body": "Use the call to pressure-test the scope, clarify technical risk, and determine the right build path before committing budget.",
+    "eyebrow": "Technical next step",
+    "footnote": "Founder-direct. No sales script. No pitch deck.",
+    "nextStepEyebrow": "Next step",
+    "sectionAriaLabel": "Call to action",
+    "title": "If the scope is real, the next move is",
+    "titleAccent": "a direct technical conversation."
+  },
+  "ctas": {
+    "architecture": "Talk Through the Architecture",
+    "describeTheBuild": "Tell Us What You're Building",
+    "maintenanceEnquiry": "Put Your Site Under a Plan",
+    "maintenancePlans": "See Maintenance Plans",
+    "projectRange": "Request a Scope",
+    "realBuild": "See a Real Build",
+    "technicalAudit": "Start with a Technical Audit",
+    "technicalCall": "Book a Technical Call"
+  },
+  "flagship": {
+    "eyebrow": "04 - Flagship Case Study",
+    "labels": {
+      "outcome": "03 - Outcome",
+      "problem": "01 - Problem",
+      "solution": "02 - Solution"
+    },
+    "outcome": "Sub-1s mobile TTI, RTL switching under 16ms with zero layout shift, and leads that arrive pre-qualified - reducing discovery-call time by cutting scope mismatches before the first sentence.",
+    "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing credibility it had not yet earned.",
+    "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
+    "summary": "A multilingual proof build designed to qualify leads, demonstrate engineering quality, and show what precision multilingual delivery looks like in production.",
+    "title": "Altruvex.com - The Site Itself Had to Be the Proof"
+  },
+  "trust": {
+    "body": "You work <strong>directly with the engineer shaping the system.</strong> Strategy, scope, implementation quality, and communication stay in one line of ownership from brief to launch.",
+    "eyebrow": "05 - Why leaders choose Altruvex",
+    "founder": {
+      "body": "The goal is not to appear premium. It is to build work with enough quality, clarity, and structural depth that <dim>the surface can be copied</dim> - but <strong>the standard behind it cannot.</strong>",
+      "eyebrow": "Founder",
+      "linkLabel": "View LinkedIn",
+      "name": "Ali Abdelhadi",
+      "role": "Founder & Lead Engineer"
+    },
+    "sheet": {
+      "eyebrow": "Sign-off sheet",
+      "stagesLabel": "stages",
+      "oneSignature": "one signature",
+      "columns": {
+        "stage": "Stage",
+        "commitment": "What it means for you",
+        "signedBy": "Signed off by"
+      },
+      "initials": "A.A.",
+      "signedBy": "Signed off by {name}"
+    },
+    "stages": [
+      {
+        "title": "Reads your brief and replies",
+        "body": "The first reply comes from the engineer who will build the system - not from a sales desk that passes notes along."
+      },
+      {
+        "title": "Sets scope and price in writing",
+        "body": "Every figure traces to the published pricing, and the next step is always named. Nothing appears on an invoice that was not on the quote."
+      },
+      {
+        "title": "Designs the architecture",
+        "body": "Arabic and English are planned as equal systems from the first schema - not translated onto a one-language build afterwards."
+      },
+      {
+        "title": "Writes the code",
+        "body": "From your requirements, line by line - not a recycled theme, a plugin stack, or a purchased UI kit."
+      },
+      {
+        "title": "Ships it and answers for it",
+        "body": "The engineer who deployed it is the one you reach when something needs fixing after launch."
+      }
+    ],
+    "testimonials": {
+      "eyebrow": "In the client's words"
+    },
+    "title": "Direct access to the engineer building your system,",
+    "titleAccent": "from first reply to launch."
+  }
+}

@@ -30,6 +30,7 @@ import {
   Target,
   Terminal,
   Wrench,
+  Server,
   Users,
   Wallet,
 } from "lucide-react";
@@ -77,7 +78,8 @@ export type BadgeKey =
   | "meetings"
   | "inbox"
   | "payments"
-  | "incidents";
+  | "incidents"
+  | "renewals";
 
 export const PRIMARY: NavItem[] = [
   {
@@ -180,6 +182,14 @@ export const GROUPS: NavGroup[] = [
         icon: Wrench,
         state: "live",
         blurb: "Retainers, renewals, allowances and client requests",
+      },
+      {
+        href: "/services",
+        label: "Services & renewals",
+        icon: Server,
+        state: "live",
+        blurb: "Domains, hosting and email per client — prices, expiry dates, renewal alerts",
+        badgeKey: "renewals",
       },
       {
         href: "/calendar",

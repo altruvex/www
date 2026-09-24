@@ -24,8 +24,23 @@ export default function WritingPage({
       <OpeningSection />
       <IntroSection />
       <ListSection articles={articles} locale={locale} />
-      <SectionEndCta variant="transparency" />
+      <WritingEndCta />
     </div>
+  );
+}
+
+/** A reader is early; the close offers the estimator, which needs no call. */
+function WritingEndCta() {
+  const t = useTranslations("common.endCta.pages.writing");
+
+  return (
+    <SectionEndCta
+      title={t("title")}
+      titleAccent={t("titleAccent")}
+      body={t("body")}
+      primary="projectRange"
+      secondary="technicalAudit"
+    />
   );
 }
 
@@ -68,7 +83,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
   return (
     <section
       ref={sectionRef}
-      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-foreground/8"
+      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-border-subtle"
     >
       <Container>
         <div className="h-px w-full bg-foreground/8 mb-0" />
@@ -78,15 +93,15 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
               key={article.slug}
               href={`/writing/${article.slug}`}
               data-article
-              className="group block border-b border-foreground/8 py-8 md:py-10 overflow-hidden relative cursor-pointer px-4"
+              className="group block border-b border-border-subtle py-8 md:py-10 overflow-hidden relative cursor-pointer px-4"
             >
               <div
                 aria-hidden
-                className="absolute inset-0 rounded-lg bg-foreground/2 pointer-events-none origin-left scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100 transition-all duration-300 ease-out rtl:origin-right"
+                className="absolute inset-0 rounded-panel-sm bg-foreground/2 pointer-events-none origin-left scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100 transition-all duration-(--motion-drawer) ease-default rtl:origin-right"
               />
               <div className="relative z-10 grid gap-6 md:grid-cols-[56px_1fr_auto] items-start">
                 <span
-                  className="font-mono text-sm leading-normal tracking-wider font-light text-primary/20 group-hover:text-primary/50 transition-all duration-300 pt-1"
+                  className="font-mono text-sm leading-normal tracking-wider font-light text-primary/20 group-hover:text-primary/50 transition-all duration-(--motion-drawer) pt-1"
                   style={{
                     fontSize: "clamp(16px, 1.5vw, 20px)",
                     letterSpacing: "-0.02em",
@@ -96,7 +111,7 @@ function ListSection({ articles, locale }: WritingPageClientProps) {
                 </span>
                 <div>
                   <h2
-                    className="font-sans font-medium text-primary mb-2 transition-all duration-300 ltr:group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
+                    className="font-sans font-medium text-primary mb-2 transition-all duration-(--motion-drawer) ltr:group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
                     style={{
                       fontSize: "clamp(17px, 2vw, 22px)",
                       letterSpacing: "-0.015em",

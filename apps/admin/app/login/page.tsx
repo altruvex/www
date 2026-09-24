@@ -3,48 +3,44 @@
 import { Button } from "@repo/ui";
 import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
-import { signIn } from "@/lib/auth-client";
+import { signIn, twoFactor } from "@/lib/auth-client";
+import {
+  getRememberMe,
+  getServerRememberMe,
+  setRememberMe,
+  subscribeRememberMe,
+} from "@/lib/remember-me";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useState, useSyncExternalStore, useTransition } from "react";
 import { Checkbox } from "@repo/ui";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  // Read through `useSyncExternalStore` so the server's value survives
+  // hydration and the stored one is applied straight after — see lib/remember-me.ts.
+  const rememberMe = useSyncExternalStore(
+    subscribeRememberMe,
+    getRememberMe,
+    getServerRememberMe,
+  );
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("altruvex_remember_me");
-      if (saved !== null) {
-        setRememberMe(saved === "true");
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("Could not access localStorage:", err);
-      }
-    }
-  }, []);
+  // Better Auth answers a password sign-in with `twoFactorRedirect` when the
+  // account carries a second factor; no session exists until the code verifies.
+  const [needsCode, setNeedsCode] = useState(false);
+  const [code, setCode] = useState("");
 
   const handleRememberMeChange = (checked: boolean | "indeterminate") => {
-    const shouldRemember = checked === true;
-    setRememberMe(shouldRemember);
-    try {
-      localStorage.setItem("altruvex_remember_me", String(shouldRemember));
-    } catch (err) {
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("Could not access localStorage:", err);
-      }
-    }
+    setRememberMe(checked === true);
   };
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/";
+  const redirect = safeRedirectPath(searchParams.get("redirect"));
   const sessionExpired = searchParams.get("expired") === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,18 +49,46 @@ function LoginForm() {
 
     startTransition(async () => {
       try {
-        const { error: signInError } = await signIn.email({
+        const { data, error: signInError } = await signIn.email({
           email,
           password,
           rememberMe,
         });
 
-        if (!signInError) {
-          router.push(redirect);
-          router.refresh();
-        } else {
+        if (signInError) {
           setError(signInError.message || "Invalid email or password. Please try again.");
+          return;
         }
+
+        if ((data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect) {
+          setNeedsCode(true);
+          return;
+        }
+
+        router.push(redirect);
+        router.refresh();
+      } catch {
+        setError("The sign-in service did not respond. Please try again later.");
+      }
+    });
+  };
+
+  const handleCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    startTransition(async () => {
+      try {
+        const { error: verifyError } = await twoFactor.verifyTotp({ code });
+        if (verifyError) {
+          setError(
+            verifyError.message ||
+              "That code is not correct. Check the clock on your phone and try again.",
+          );
+          return;
+        }
+        router.push(redirect);
+        router.refresh();
       } catch {
         setError("The sign-in service did not respond. Please try again later.");
       }
@@ -81,6 +105,47 @@ function LoginForm() {
           <span className="font-sans text-md font-semibold tracking-tight">Altruvex</span>
           <span className="telemetry ms-auto text-subtle-foreground">Operating system</span>
         </div>
+        {needsCode ? (
+          <div className="plane p-5">
+            <h1 className="text-lg font-semibold">Enter your code</h1>
+            <p className="mt-1 text-base text-muted-foreground">
+              Your password was accepted. Type the six-digit code from your authenticator app, or
+              one of your backup codes.
+            </p>
+            <form onSubmit={handleCode} className="mt-5 space-y-3">
+              <Field label="Six-digit code">
+                <Input
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  placeholder="000000"
+                  className="h-9 tracking-[0.3em]"
+                  autoFocus
+                  required
+                />
+              </Field>
+              {error && (
+                <p
+                  className="rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              )}
+              <Button
+                type="submit"
+                variant="brand"
+                className="h-9 w-full"
+                disabled={isPending || code.length !== 6}
+                aria-busy={isPending}
+              >
+                {isPending && <LoadingIcon size="sm" />}
+                {isPending ? "Verifying…" : "Verify and sign in"}
+              </Button>
+            </form>
+          </div>
+        ) : (
         <div className="plane p-5">
           <h1 className="text-lg font-semibold">Sign in</h1>
           <p className="mt-1 text-base text-muted-foreground">
@@ -88,7 +153,7 @@ function LoginForm() {
             per person and every session is logged.
           </p>
           {sessionExpired && (
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-amber-500/25 bg-amber-500/[0.07] px-2.5 py-2 text-base text-amber-600 dark:text-amber-400" role="alert">
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-warning/25 bg-warning/[0.07] px-2.5 py-2 text-base text-warning" role="alert">
               <AlertCircle className="size-4 shrink-0" />
               <span>Your session has expired. Please sign in again.</span>
             </div>
@@ -164,6 +229,7 @@ function LoginForm() {
             </Button>
           </form>
         </div>
+        )}
         <p className="mt-3 flex items-start gap-2 text-meta text-subtle-foreground">
           <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           Accounts are created by an owner — there is no sign-up. If you cannot get in,

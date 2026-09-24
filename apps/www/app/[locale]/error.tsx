@@ -88,7 +88,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
           aria-label="Error page"
         >
           <div
-            className={`flex flex-col items-center transition-[transform,opacity] duration-700 ease-out ${
+            className={`flex flex-col items-center transition-[transform,opacity] duration-(--motion-base) ease-default ${
               mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
             }`}
           >
@@ -116,7 +116,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             </p>
             {error.digest && (
               <div className="mb-12 w-full max-w-md text-left rtl:text-right">
-                <details className="group rounded-lg border border-foreground/8 bg-foreground/1.5 p-4 transition-all hover:border-foreground/20 hover:bg-foreground/2">
+                <details className="group rounded-panel-sm border border-border-subtle bg-foreground/1.5 p-4 transition-all hover:border-foreground/20 hover:bg-foreground/2">
                   <summary
                     className={cn(
                       monoCaps,
@@ -125,7 +125,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                   >
                     Error Digest
                   </summary>
-                  <pre className="mt-4 overflow-auto rounded-lg bg-foreground/5 p-3 font-mono text-[13px] text-primary/70 leading-relaxed">
+                  <pre className="mt-4 overflow-auto rounded-panel-inset bg-foreground/5 p-3 font-mono text-[13px] text-primary/70 leading-relaxed">
                     <code>{error.digest}</code>
                   </pre>
                 </details>
@@ -141,7 +141,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 <span className="flex items-center gap-2">
                   Try Again
                   <svg
-                    className="h-4 w-4 transition-all duration-300 group-hover:rotate-180"
+                    className="h-4 w-4 transition-all duration-(--motion-drawer) group-hover:rotate-180"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"

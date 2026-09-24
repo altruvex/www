@@ -147,7 +147,28 @@ export const paymentMilestone: Registry = {
   DEPOSIT_50: { label: "Deposit · 50%", tone: "info" },
   MILESTONE_30: { label: "Milestone · 30%", tone: "info" },
   FINAL_20: { label: "Final · 20%", tone: "info" },
+  CHANGE_REQUEST: { label: "Change request", tone: "info" },
+  SERVICE_RENEWAL: { label: "Service term", tone: "info", hint: "One term of a domain, hosting or email service" },
   OTHER: { label: "Other", tone: "neutral" },
+};
+
+/* -- Change requests --------------------------------------------------------
+   Transitions live in lib/change-requests.ts; this is only how each reads. */
+
+export const changeRequestStatus: Registry = {
+  REQUESTED: { label: "Needs a quote", tone: "warning", hint: "Price it before anything else happens" },
+  QUOTED: { label: "Quoted", tone: "info", hint: "Waiting on the client's answer" },
+  APPROVED: { label: "Approved", tone: "warning", hint: "Agreed and not started" },
+  IN_PROGRESS: { label: "In progress", tone: "progress" },
+  DELIVERED: { label: "Delivered", tone: "success" },
+  DECLINED: { label: "Declined", tone: "neutral", hint: "The client said no" },
+  CANCELLED: { label: "Cancelled", tone: "neutral" },
+};
+
+export const changeRequestPricing: Registry = {
+  HOURLY: { label: "Hourly", tone: "neutral" },
+  FIXED: { label: "Fixed", tone: "neutral" },
+  WARRANTY: { label: "Warranty", tone: "success", hint: "Free — inside the post-launch window" },
 };
 
 export const meetingStatus: Registry = {
@@ -321,7 +342,21 @@ export const renewalUrgency: Registry = {
   none: { label: "—", tone: "neutral" },
 };
 
+/* -- Client services ---------------------------------------------------------
+   Keyed on the DERIVED state from lib/service-lifecycle.ts, not the stored
+   status: "expired" is something the calendar says, never a column. */
+
+export const clientServiceState: Registry = {
+  pending: { label: "Not registered", tone: "neutral", hint: "Agreed, no expiry date yet" },
+  active: { label: "Active", tone: "success" },
+  "renewing-soon": { label: "Renews soon", tone: "warning", hint: "Inside 30 days — invoice now" },
+  urgent: { label: "Expiring", tone: "danger", hint: "Inside 7 days" },
+  expired: { label: "Expired", tone: "danger", hint: "The expiry date has passed" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
+};
+
 export const REGISTRIES = {
+  clientServiceState,
   submissionStatus,
   priority,
   proposalStatus,
@@ -330,6 +365,8 @@ export const REGISTRIES = {
   projectPhase,
   paymentStatus,
   paymentMilestone,
+  changeRequestStatus,
+  changeRequestPricing,
   meetingStatus,
   meetingType,
   clientSource,

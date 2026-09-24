@@ -1,13 +1,41 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreDependencies": ["@repo/database"],
+  "ignoreDependencies": [
+    "@repo/database",
+    "@repo/ui",
+    "@repo/pricing-schema"
+  ],
   "ignoreIssues": {
-    "components/ui/**": ["exports", "types"],
-    "lib/animation-utils.ts": ["exports", "types"],
-    "lib/motion/index.ts": ["exports", "types"],
-    "lib/motion/config.ts": ["types"],
-    "lib/motion/utils/presets.ts": ["exports"],
-    "lib/motion/utils/splite.ts": ["exports"],
-    "lib/case-studies.ts": ["types"]
-  }
+    "components/ui/**": [
+      "exports",
+      "types"
+    ],
+    "lib/animation-utils.ts": [
+      "exports",
+      "types"
+    ],
+    "lib/motion/index.ts": [
+      "exports",
+      "types"
+    ],
+    "lib/motion/config.ts": [
+      "types"
+    ],
+    "lib/motion/utils/presets.ts": [
+      "exports"
+    ],
+    "lib/motion/utils/splite.ts": [
+      "exports"
+    ],
+    "lib/case-studies.ts": [
+      "types"
+    ]
+  },
+  "ignore": [
+    "contents/**",
+    "scripts/**"
+  ],
+  "ignoreBinaries": [
+    "scripts/update-transparency-json.js"
+  ]
 }

@@ -8,6 +8,7 @@ import { prisma } from "@repo/database";
 import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { tooManyRequests } from "@/lib/server/too-many-requests";
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,16 +26,7 @@ export async function POST(request: NextRequest) {
       windowSeconds: 10 * 60,
     });
     if (!rl.ok) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Too many requests. Please try again later.",
-        },
-        {
-          status: 429,
-          headers: { "Retry-After": rl.retryAfterSeconds.toString() },
-        },
-      );
+      return tooManyRequests(request, rl.retryAfterSeconds);
     }
 
     const body = await request.json();
@@ -55,7 +47,7 @@ export async function POST(request: NextRequest) {
       const now = new Date();
       if (scheduledDate < now) {
         return NextResponse.json(
-          { success: false, message: "Cannot schedule meetings in the past" },
+          { success: false, message: t("contact.preferred-date-future") },
           { status: 400 },
         );
       }
@@ -66,7 +58,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "Please select a date within the next 3 months",
+            message: t("contact.preferred-date-within-three-months"),
           },
           { status: 400 },
         );
@@ -174,7 +166,7 @@ export async function POST(request: NextRequest) {
       today.setHours(0, 0, 0, 0);
       if (requestedDate < today) {
         return NextResponse.json(
-          { success: false, message: "Cannot schedule meetings in the past" },
+          { success: false, message: t("contact.preferred-date-future") },
           { status: 400 },
         );
       }
@@ -186,7 +178,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             success: false,
-            message: "Please select a date within the next 3 months",
+            message: t("contact.preferred-date-within-three-months"),
           },
           { status: 400 },
         );

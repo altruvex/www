@@ -1,426 +1,740 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
-import { ArrowLabel } from "@/components/shared/directional-link";
-import { PageHero } from "@/components/sections/page-hero";
+import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Input, SelectField, Textarea } from "@repo/ui/www";
-import { Link } from "@/i18n/navigation";
+import {
+  DirectionalLink,
+  ExternalDirectionalLink,
+} from "@/components/shared/directional-link";
+import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { SITE_CONFIG } from "@/lib/metadata";
-import { useSectionDescription, useSectionElement, useSectionTitle } from "@/lib/motion";
+import {
+  MOTION,
+  useSectionDescription,
+  useSectionElement,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
+import { gsap } from "@/lib/utils/gsap";
+import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { createContactFormSchema } from "@/lib/validations/contact";
-import { AlertCircle, CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Input, SelectField, Textarea } from "@repo/ui/www";
+import { AlertCircle } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 
-type FormErrors = Record<string, string>;
+/** Mirrors the schema's `message.max` — the counter shows the real limit. */
+const MESSAGE_MAX = 1000;
+const CAIRO = "Africa/Cairo";
+
+const SERVICES = [
+  "interface-design",
+  "development",
+  "consulting",
+  "maintenance",
+] as const;
+
+type Service = (typeof SERVICES)[number];
+type Field = "name" | "phone" | "message";
+type FieldErrors = Partial<Record<Field, string>>;
+type Values = { name: string; phone: string; service: Service | ""; message: string };
+
+const FIELDS: readonly Field[] = ["name", "phone", "message"];
+const EMPTY: Values = { name: "", phone: "", service: "", message: "" };
+
+const SERVICE_LABEL_KEYS = {
+  "interface-design": "serviceWebDesign",
+  development: "serviceDevelopment",
+  consulting: "serviceConsulting",
+  maintenance: "serviceMaintenance",
+} as const satisfies Record<Service, string>;
+
+const SOCIAL_ORDER = [
+  "linkedin",
+  "x",
+  "instagram",
+  "github",
+  "dribbble",
+  "threads",
+  "facebook",
+] as const satisfies readonly (keyof typeof SITE_CONFIG.social)[];
+
+function isService(value: string | null): value is Service {
+  return SERVICES.some((service) => service === value);
+}
+
+/** The database knows fewer services than the page offers; the rest are OTHER. */
+function toServiceInterest(service: Values["service"]) {
+  if (service === "development") return "web-development";
+  if (service === "interface-design") return "ui-ux";
+  return service ? "other" : undefined;
+}
+
+function isField(key: string): key is Field {
+  return FIELDS.some((field) => field === key);
+}
+
+function formatCairoTime(locale: string, date: Date): string {
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: CAIRO,
+  }).format(date);
+}
+
+function subscribeToMinute(onChange: () => void) {
+  const id = window.setInterval(onChange, 15_000);
+  return () => window.clearInterval(id);
+}
+
+/**
+ * The time in Cairo, read from the visitor's clock. It renders nothing on the
+ * server — a server-rendered minute would be stale by the time it is read and
+ * would mismatch on hydration.
+ */
+function useCairoTime(): string | null {
+  const locale = useLocale();
+  return useSyncExternalStore(
+    subscribeToMinute,
+    () => formatCairoTime(locale, new Date()),
+    () => null,
+  );
+}
 
 export default function ContactPage() {
+  return (
+    <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
+      <ContactSection />
+    </main>
+  );
+}
+
+/**
+ * CLAIM: you write to the person who builds it, and you know what happens to
+ * the message before you send it.
+ * PROOF: artifact — the form is set as the letter it actually is, addressed to
+ * a named founder rather than to a sales inbox: To / From / Reply to / About,
+ * then the body.
+ *
+ * Signature: sending turns the letter into its receipt — the time it was
+ * received in Cairo and the three things that happen next. The receipt is the
+ * finished markup; reduced motion swaps it in without the entrance.
+ */
+function ContactSection() {
   const t = useTranslations("contactPage");
-  const tContact = useTranslations("contact");
+
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle();
+  const descRef = useSectionDescription();
+  const letterRef = useSectionElement();
+  const linesRef = useSectionElement();
+
+  return (
+    <section
+      aria-labelledby="contact-heading"
+      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <div className="grid gap-y-16 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-14 xl:gap-x-16">
+          <SectionHeading
+            titleAs="h1"
+            titleId="contact-heading"
+            eyebrowRef={eyebrowRef}
+            titleRef={titleRef}
+            descriptionRef={descRef}
+            eyebrow={t("eyebrow")}
+            firstTitle={t("heroTitle")}
+            secondTitle={t("heroTitleItalic")}
+            description={t("heroDescription")}
+            className="lg:col-span-5 lg:row-start-1"
+            classes={{
+              container: "lg:flex-col lg:items-start",
+              titleWrapper: "space-y-6",
+              title:
+                "max-w-[16ch] text-[clamp(2.5rem,4.6vw,4.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              description: "max-w-[44ch] text-[clamp(1rem,1.1vw,1.125rem)]",
+            }}
+          />
+
+          <div
+            ref={letterRef}
+            className="lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1"
+          >
+            <Letter />
+          </div>
+
+          <div ref={linesRef} className="lg:col-span-5 lg:row-start-2">
+            <DirectLines />
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
+
+function Letter() {
+  const t = useTranslations("contactPage.letter");
   const tValidations = useTranslations("validations");
-  const contactFormSchema = useMemo(
+  const tFounder = useTranslations("about.founder");
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+
+  const schema = useMemo(
     () => createContactFormSchema(tValidations),
     [tValidations],
   );
-  const searchParams = useSearchParams();
 
-  const infoTitleRef = useSectionTitle<HTMLHeadingElement>();
-  const leftRef = useSectionDescription();
-  const rightRef = useSectionElement();
-
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [service, setService] = useState("");
-  const [message, setMessage] = useState("");
+  // A service arriving in the URL (`/contact?service=maintenance`) prefills the
+  // About line; read once, as the initial value, so it never overwrites a choice.
+  const [values, setValues] = useState<Values>(() => {
+    const incoming = searchParams.get("service");
+    return { ...EMPTY, service: isService(incoming) ? incoming : "" };
+  });
+  const [website, setWebsite] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [receivedAt, setReceivedAt] = useState<Date | null>(null);
 
-  useEffect(() => {
-    const incomingService = searchParams.get("service");
-    if (!incomingService || service) return;
+  const payloadOf = (next: Values) => ({
+    name: next.name,
+    phone: next.phone,
+    message: next.message,
+    serviceInterest: toServiceInterest(next.service),
+    website,
+  });
 
-    if (
-      incomingService === "development" ||
-      incomingService === "interface-design" ||
-      incomingService === "consulting" ||
-      incomingService === "maintenance"
-    ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setService(incomingService);
+  const errorsOf = (next: Values): FieldErrors => {
+    const result = schema.safeParse(payloadOf(next));
+    if (result.success) return {};
+    const found: FieldErrors = {};
+    for (const issue of result.error.issues) {
+      const key = String(issue.path[0] ?? "");
+      if (isField(key) && !found[key]) found[key] = issue.message;
     }
-  }, [searchParams, service]);
+    return found;
+  };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const update = (field: keyof Values) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+      const next = { ...values, [field]: event.target.value };
+      setValues(next);
+      // Once a line has been marked, it clears the moment it becomes valid —
+      // it does not wait for the next blur to stop accusing the visitor.
+      if (isField(field) && errors[field]) {
+        setErrors((current) => ({ ...current, [field]: errorsOf(next)[field] }));
+      }
+    };
+
+  // Validated on blur, and only once something has been typed: tabbing through
+  // an empty letter should not paint it red.
+  const validateOnBlur = (field: Field) => () => {
+    if (!values[field]) return;
+    setErrors((current) => ({ ...current, [field]: errorsOf(values)[field] }));
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFormError(null);
+
+    const found = errorsOf(values);
+    const firstInvalid = FIELDS.find((field) => found[field]);
+    if (firstInvalid) {
+      setErrors(found);
+      setFormError(t("errorFix"));
+      document.getElementById(`contact-${firstInvalid}`)?.focus();
+      return;
+    }
+
+    setErrors({});
     setIsSubmitting(true);
-    setSubmitSuccess(false);
-    setSubmitError(null);
-    setFormErrors({});
 
     try {
-      const payload = {
-        name,
-        phone,
-        message,
-        serviceInterest:
-          service === "development"
-            ? "web-development"
-            : service === "interface-design"
-              ? "ui-ux"
-              : service
-                ? "other"
-                : undefined,
-        website: "",
-      };
-
-      const validatedData = contactFormSchema.parse(payload);
-
-      const locale =
-        typeof window !== "undefined"
-          ? window.location.pathname.split("/")[1] ||
-          document.documentElement.lang ||
-          "en"
-          : "en";
-
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...validatedData, locale }),
+        body: JSON.stringify({ ...schema.parse(payloadOf(values)), locale }),
       });
+      const result: unknown = await response.json();
+      const body =
+        result && typeof result === "object"
+          ? (result as { success?: boolean; message?: string; errors?: Record<string, string> })
+          : {};
 
-      const result = await response.json();
-
-      if (response.ok && result.success) {
-        setSubmitSuccess(true);
-        setName("");
-        setPhone("");
-        setService("");
-        setMessage("");
-        setTimeout(() => setSubmitSuccess(false), 7000);
-      } else {
-        if (result.errors && typeof result.errors === "object") {
-          setFormErrors(result.errors as FormErrors);
-          const firstError = Object.values(result.errors as FormErrors)[0];
-          setSubmitError(
-            firstError || result.message || t("form.errorGeneric"),
-          );
-        } else {
-          setSubmitError(result.message || t("form.errorGeneric"));
-        }
+      if (response.ok && body.success) {
+        setValues(EMPTY);
+        setReceivedAt(new Date());
+        return;
       }
-    } catch (error: unknown) {
-      console.error("Contact form submission error:", error);
-      setSubmitError(t("form.errorNetwork"));
+
+      if (body.errors && typeof body.errors === "object") {
+        const serverErrors: FieldErrors = {};
+        for (const [key, message] of Object.entries(body.errors)) {
+          if (isField(key)) serverErrors[key] = message;
+        }
+        setErrors(serverErrors);
+        setFormError(t("errorFix"));
+        return;
+      }
+
+      setFormError(body.message || t("errorGeneric"));
+    } catch {
+      setFormError(t("errorNetwork"));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="flex flex-col min-h-screen">
-      <PageHero
-        eyebrow={t("badge")}
-        title={t("heroTitle")}
-        description={t("heroDescription")}
-        minHeightClass="min-h-[70vh]"
-        showStatusIndicator={true}
+  if (receivedAt) {
+    return (
+      <Receipt
+        receivedAt={receivedAt}
+        onWriteAnother={() => setReceivedAt(null)}
       />
-      <section className="accent-world-orange flex w-full items-center py-24 md:py-32">
-        <Container>
-          <div className="grid gap-12 md:grid-cols-2 md:gap-20 lg:gap-28">
-            <div className="flex flex-col justify-center">
-              <div className="mb-12 sm:mb-14 md:mb-16">
-                <h2
-                  ref={infoTitleRef}
-                  className="mb-3 font-sans font-normal leading-[1.05] tracking-tight text-primary"
-                  style={{
-                    fontSize: "clamp(28px, 4.5vw, 56px)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  {t("infoTitle")}
-                  <br />
-                  <span className="text-primary/75">
-                    {t("infoTitleHighlight")}
-                  </span>
-                </h2>
-                <p className="font-mono leading-normal tracking-wider text-sm text-primary/60 sm:text-base">
-                  {t("infoSubtitle")}
-                </p>
-              </div>
-              <div ref={leftRef} className="space-y-8 sm:space-y-9">
-                <a
-                  href={`mailto:${tContact("emailValue")}`}
-                  className="group block"
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5 text-primary/60" />
-                    <span className="font-mono text-sm leading-normal tracking-wider text-primary/60">
-                      {t("emailLabel")}
-                    </span>
-                  </div>
-                  <p className="text-lg text-primary transition-all group-hover:text-primary/75 md:text-xl lg:text-2xl">
-                    {tContact("emailValue")}
-                  </p>
-                </a>
-                <a
-                  href={`tel:${t("phoneValue").replace(/\s/g, "")}`}
-                  className="group block"
-                >
-                  <div className="mb-2 flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5 text-primary/60" />
-                    <span className="font-mono text-sm leading-normal tracking-wider text-primary/60">
-                      {t("phoneLabel")}
-                    </span>
-                  </div>
-                  <p className="text-lg text-primary transition-all group-hover:text-primary/75 md:text-xl lg:text-2xl">
-                    {t("phoneValue")}
-                  </p>
-                </a>
-                <div>
-                  <div className="mb-2 flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-primary/60" />
-                    <span className="font-mono text-sm leading-normal tracking-wider text-primary/60">
-                      {t("locationLabel")}
-                    </span>
-                  </div>
-                  <p className="text-lg text-primary md:text-xl lg:text-2xl">
-                    {t("address1")}
-                    <br />
-                    {t("address2")}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3 pt-2 sm:gap-4">
-                  {Object.keys(SITE_CONFIG.social).map((social) => (
-                    <a
-                      key={social}
-                      href={
-                        SITE_CONFIG.social[
-                        social as keyof typeof SITE_CONFIG.social
-                        ]
-                      }
-                      className="uppercase border-b border-transparent font-mono text-sm leading-normal tracking-wider text-primary/60 transition-all duration-200 ease-out hover:border-foreground/60 hover:text-primary/85 sm:text-sm"
-                    >
-                      {social}
-                    </a>
-                  ))}
-                </div>
-                <div className="pt-6 sm:pt-8">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Link href="/schedule" className="flex-1 sm:flex-none">
-                      <MagneticButton
-                        size="lg"
-                        className="w-full group relative"
-                      >
-                        <ArrowLabel>{t("scheduleCall")}</ArrowLabel>
-                      </MagneticButton>
-                    </Link>
-                    <a
-                      href={`https://wa.me/${t("phoneValue").replace(/\D/g, "")}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 sm:flex-none"
-                    >
-                      <MagneticButton
-                        size="lg"
-                        className="w-full group relative bg-messaging-whatsapp text-messaging-whatsapp-fg hover:bg-messaging-whatsapp/90 border-transparent"
-                      >
-                        <span className="flex items-center gap-2">
-                          <svg
-                            className="w-5 h-5"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                          </svg>
-                          24/7 WhatsApp
-                        </span>
-                      </MagneticButton>
-                    </a>
-                  </div>
-                  <p className="mt-4 text-primary/60 font-mono text-sm leading-normal tracking-wider">
-                    {t("responseTime")}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div ref={rightRef} className="flex flex-col justify-center">
-              <div className="p-8 border-border border rounded-xl">
-                <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-                  <div>
-                    <label htmlFor="contact-name" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
-                      {t("form.nameLabel")}{" "}
-                      <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      id="contact-name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={t("form.namePlaceholder")}
-                      className={cn(
-                        formErrors.name && "border-destructive",
-                      )}
-                      aria-invalid={!!formErrors.name}
-                      aria-describedby={
-                        formErrors.name ? "contact-name-error" : undefined
-                      }
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.name && (
-                      <p
-                        id="contact-name-error"
-                        className="mt-1.5 flex items-center gap-1 font-mono text-sm leading-normal tracking-wider text-destructive"
-                      >
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                        {formErrors.name}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="contact-phone" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
-                      {t("form.phoneLabel")}{" "}
-                      <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      id="contact-phone"
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder={t("form.phonePlaceholder")}
-                      className={cn(
-                        formErrors.phone && "border-destructive",
-                      )}
-                      aria-invalid={!!formErrors.phone}
-                      aria-describedby={
-                        formErrors.phone ? "contact-phone-error" : undefined
-                      }
-                      autoComplete="tel"
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.phone && (
-                      <p
-                        id="contact-phone-error"
-                        className="mt-1.5 flex items-center gap-1 font-mono text-sm leading-normal tracking-wider text-destructive"
-                      >
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                        {formErrors.phone}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label htmlFor="contact-service" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
-                      {t("form.serviceLabel")}
-                    </label>
-                    <SelectField
-                      id="contact-service"
-                      value={service}
-                      onChange={(e) => setService(e.target.value)}
-                      disabled={isSubmitting}
-                    >
-                      <option value="">{t("form.servicePlaceholder")}</option>
-                      <option value="interface-design">
-                        {t("form.serviceWebDesign")}
-                      </option>
-                      <option value="development">
-                        {t("form.serviceDevelopment")}
-                      </option>
-                      <option value="consulting">
-                        {t("form.serviceConsulting")}
-                      </option>
-                      <option value="maintenance">
-                        {t("form.serviceMaintenance")}
-                      </option>
-                    </SelectField>
-                  </div>
-                  <div>
-                    <label htmlFor="contact-message" className="mb-2 block font-mono text-sm leading-normal tracking-wider text-muted-foreground sm:text-sm">
-                      {t("form.messageLabel")}{" "}
-                      <span className="text-destructive">*</span>
-                    </label>
-                    <Textarea
-                      id="contact-message"
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      placeholder={t("form.messagePlaceholder")}
-                      rows={4}
-                      className={cn(
-                        formErrors.message && "border-destructive",
-                      )}
-                      aria-invalid={!!formErrors.message}
-                      aria-describedby={
-                        formErrors.message ? "contact-message-error" : undefined
-                      }
-                      disabled={isSubmitting}
-                    />
-                    {formErrors.message && (
-                      <p
-                        id="contact-message-error"
-                        className="mt-1.5 flex items-center gap-1 font-mono text-sm leading-normal tracking-wider text-destructive"
-                      >
-                        <AlertCircle className="h-3 w-3" aria-hidden="true" />
-                        {formErrors.message}
-                      </p>
-                    )}
-                  </div>
-                  <input
-                    type="text"
-                    name="website"
-                    className="hidden"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    aria-hidden="true"
-                    defaultValue=""
-                  />
-                  <div className="pt-3 space-y-3">
-                    <MagneticButton
-                      type="submit"
-                      variant="primary"
-                      size="lg"
-                      className="w-full text-base"
-                      disabled={isSubmitting}
-                      aria-busy={isSubmitting}
-                    >
-                      {isSubmitting ? t("form.submitting") : t("form.submit")}
-                    </MagneticButton>
-                    <p className="text-center font-mono text-sm leading-normal tracking-wider text-primary/60">
-                      {t("form.riskReversal")}
-                    </p>
-                    {submitSuccess && (
-                      <div
-                        role="status"
-                        className="mt-2 rounded-lg border border-success/30 bg-success/10 px-3 py-2.5 text-center"
-                      >
-                        <p className="flex items-center justify-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                          {t("form.success")}
-                        </p>
-                      </div>
-                    )}
-                    {submitError && (
-                      <div
-                        role="alert"
-                        className="mt-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-center"
-                      >
-                        <p className="flex items-center justify-center gap-2 font-mono text-sm leading-normal tracking-wider text-primary">
-                          <AlertCircle className="h-3.5 w-3.5 text-destructive" />
-                          {submitError}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
+    );
+  }
+
+  const describedBy = (field: Field, extra?: string) =>
+    [extra, errors[field] ? `contact-${field}-error` : null]
+      .filter(Boolean)
+      .join(" ") || undefined;
+
+  return (
+    <form
+      aria-labelledby="contact-letter-heading"
+      onSubmit={handleSubmit}
+      noValidate
+      className="relative border-t-2 border-foreground pt-6"
+    >
+      <h2
+        id="contact-letter-heading"
+        className="text-xl font-medium leading-tight tracking-[-0.015em] text-foreground"
+      >
+        {t("heading")}
+      </h2>
+
+      <div className="mt-8 space-y-7">
+        <LetterLine label={t("toLabel")}>
+          <p className="py-2.5 text-lg leading-snug text-foreground">
+            {tFounder("name")}
+            <span className="text-muted-foreground"> — {tFounder("role")}</span>
+          </p>
+        </LetterLine>
+
+        <LetterLine label={t("fromLabel")} htmlFor="contact-name" error={errors.name} field="name">
+          <Input
+            id="contact-name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            value={values.name}
+            onChange={update("name")}
+            onBlur={validateOnBlur("name")}
+            placeholder={t("namePlaceholder")}
+            aria-required
+            aria-invalid={Boolean(errors.name)}
+            aria-describedby={describedBy("name")}
+            disabled={isSubmitting}
+            className="text-lg"
+          />
+        </LetterLine>
+
+        <LetterLine
+          label={t("replyLabel")}
+          htmlFor="contact-phone"
+          error={errors.phone}
+          field="phone"
+          hint={<span id="contact-phone-hint">{t("replyHint")}</span>}
+        >
+          <Input
+            id="contact-phone"
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            normalize
+            value={values.phone}
+            onChange={update("phone")}
+            onBlur={validateOnBlur("phone")}
+            placeholder={t("phonePlaceholder")}
+            aria-required
+            aria-invalid={Boolean(errors.phone)}
+            aria-describedby={describedBy("phone", "contact-phone-hint")}
+            disabled={isSubmitting}
+            className="text-lg"
+          />
+        </LetterLine>
+
+        <LetterLine
+          label={
+            <>
+              {t("aboutLabel")}
+              <span className="block text-xs text-muted-foreground">
+                {t("optional")}
+              </span>
+            </>
+          }
+          htmlFor="contact-service"
+        >
+          <SelectField
+            id="contact-service"
+            name="service"
+            value={values.service}
+            onChange={update("service")}
+            disabled={isSubmitting}
+            className={cn(
+              "text-lg",
+              !values.service && "text-muted-foreground",
+            )}
+          >
+            <option value="">{t("servicePlaceholder")}</option>
+            {SERVICES.map((service) => (
+              <option key={service} value={service} className="text-foreground">
+                {t(SERVICE_LABEL_KEYS[service])}
+              </option>
+            ))}
+          </SelectField>
+        </LetterLine>
+      </div>
+
+      <div className="mt-12">
+        <div className="flex items-baseline justify-between gap-4">
+          <label
+            htmlFor="contact-message"
+            className="text-sm font-medium text-foreground"
+          >
+            {t("messageLabel")}
+          </label>
+          <span
+            id="contact-message-count"
+            className={cn(
+              "text-xs tabular-nums",
+              values.message.length > MESSAGE_MAX
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {t("count", {
+              count: localizeNumbers(String(values.message.length), locale),
+              max: localizeNumbers(String(MESSAGE_MAX), locale),
+            })}
+          </span>
+        </div>
+        <Textarea
+          id="contact-message"
+          name="message"
+          rows={8}
+          value={values.message}
+          onChange={update("message")}
+          onBlur={validateOnBlur("message")}
+          placeholder={t("messagePlaceholder")}
+          aria-required
+          aria-invalid={Boolean(errors.message)}
+          aria-describedby={describedBy("message", "contact-message-count")}
+          disabled={isSubmitting}
+          className="mt-3 text-lg"
+        />
+        <FieldError field="message" message={errors.message} />
+      </div>
+
+      {/* Honeypot: invisible to people and to assistive technology. */}
+      <div aria-hidden className="absolute -start-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor="contact-website">Website</label>
+        <input
+          id="contact-website"
+          type="text"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(event) => setWebsite(event.target.value)}
+        />
+      </div>
+
+      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+        <MagneticButton
+          type="submit"
+          variant="primary"
+          size="lg"
+          className="w-full sm:w-auto"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? t("submitting") : t("submit")}
+        </MagneticButton>
+        <p className="text-sm leading-snug text-muted-foreground">
+          {t("assurance")}
+        </p>
+      </div>
+
+      <div aria-live="assertive" className="mt-5 empty:hidden">
+        {formError ? (
+          <p className="flex items-start gap-2 text-sm leading-snug text-destructive">
+            <AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {formError}
+          </p>
+        ) : null}
+      </div>
+    </form>
+  );
+}
+
+function LetterLine({
+  label,
+  htmlFor,
+  field,
+  error,
+  hint,
+  children,
+}: {
+  label: ReactNode;
+  htmlFor?: string;
+  field?: Field;
+  error?: string;
+  hint?: ReactNode;
+  children: ReactNode;
+}) {
+  const labelClass =
+    "text-sm font-medium leading-snug text-muted-foreground sm:pt-3.5";
+
+  return (
+    <div className="grid gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-6">
+      {htmlFor ? (
+        <label htmlFor={htmlFor} className={labelClass}>
+          {label}
+        </label>
+      ) : (
+        <span className={labelClass}>{label}</span>
+      )}
+      <div className="min-w-0">
+        {children}
+        {hint ? (
+          <p className="mt-2 text-xs leading-snug text-muted-foreground">{hint}</p>
+        ) : null}
+        {field ? <FieldError field={field} message={error} /> : null}
+      </div>
+    </div>
+  );
+}
+
+function FieldError({ field, message }: { field: Field; message?: string }) {
+  if (!message) return null;
+  return (
+    <p
+      id={`contact-${field}-error`}
+      className="mt-2 flex items-start gap-1.5 text-sm leading-snug text-destructive"
+    >
+      <AlertCircle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+      {message}
+    </p>
+  );
+}
+
+const RECEIPT_STEPS = ["read", "reply", "call"] as const;
+
+function Receipt({
+  receivedAt,
+  onWriteAnother,
+}: {
+  receivedAt: Date;
+  onWriteAnother: () => void;
+}) {
+  const t = useTranslations("contactPage.receipt");
+  const tFounder = useTranslations("about.founder");
+  const locale = useLocale();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    // Focus follows the letter into its receipt, so a keyboard or screen
+    // reader user lands on the confirmation instead of on a removed button.
+    headingRef.current?.focus();
+
+    const root = rootRef.current;
+    if (!root) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from("[data-receipt-part]", {
+          y: 14,
+          opacity: 0,
+          duration: MOTION.duration.fast,
+          ease: MOTION.ease.strong,
+          stagger: MOTION.stagger.loose,
+        });
+        gsap.from("[data-receipt-rule]", {
+          scaleX: 0,
+          transformOrigin: document.documentElement.dir === "rtl" ? "right center" : "left center",
+          duration: MOTION.duration.base,
+          ease: MOTION.ease.strong,
+        });
+      });
+    }, root);
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <div ref={rootRef} role="status" className="relative pt-6">
+      <span
+        aria-hidden
+        data-receipt-rule
+        className="absolute inset-x-0 top-0 h-0.5 bg-local-accent"
+      />
+      <Eyebrow tone="accent" data-receipt-part className="m-0">
+        {t("eyebrow")}
+      </Eyebrow>
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        data-receipt-part
+        className="mt-4 max-w-[22ch] text-[clamp(1.75rem,3vw,2.5rem)] font-light leading-[1.1] tracking-[-0.02em] text-foreground outline-none"
+      >
+        {t("title", { founder: tFounder("name") })}
+      </h2>
+      <p data-receipt-part className="mt-3 text-base text-muted-foreground">
+        {t("sentAt", { time: formatCairoTime(locale, receivedAt) })}
+      </p>
+
+      <div data-receipt-part className="mt-12">
+        <h3 className="text-sm font-medium text-foreground">{t("nextLabel")}</h3>
+        <ol className="mt-5 space-y-6">
+          {RECEIPT_STEPS.map((step, index) => (
+            <li
+              key={step}
+              className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline"
+            >
+              <span className="text-sm tabular-nums text-local-accent-text">
+                <Num value={index + 1} pad={2} />
+              </span>
+              <span className="max-w-[52ch] text-base leading-relaxed text-foreground">
+                {t(`steps.${step}`)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <button
+        type="button"
+        data-receipt-part
+        onClick={onWriteAnother}
+        className="mt-12 text-sm text-foreground underline underline-offset-4 decoration-foreground/40 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+      >
+        {t("another")}
+      </button>
+    </div>
+  );
+}
+
+function DirectLines() {
+  const t = useTranslations("contactPage");
+  const tContact = useTranslations("contact");
+  const cairoTime = useCairoTime();
+
+  const email = tContact("emailValue");
+  const phone = t("phoneValue");
+
+  const valueClass =
+    "text-lg leading-snug text-foreground underline-offset-4 decoration-foreground/40 hover:underline";
+
+  return (
+    <section aria-labelledby="contact-lines-heading" className="border-t border-border-subtle pt-8">
+      <h2 id="contact-lines-heading" className="sr-only">
+        {t("lines.heading")}
+      </h2>
+
+      <dl className="grid gap-y-6">
+        <LineRow term={t("lines.emailLabel")}>
+          <a href={`mailto:${email}`} className={valueClass}>
+            {email}
+          </a>
+        </LineRow>
+        <LineRow term={t("lines.phoneLabel")}>
+          <a href={`tel:${phone.replace(/\s/g, "")}`} dir="ltr" className={valueClass}>
+            {phone}
+          </a>
+        </LineRow>
+        <LineRow term={t("lines.whatsappLabel")}>
+          <ExternalDirectionalLink
+            href={`https://wa.me/${phone.replace(/\D/g, "")}`}
+            className={valueClass}
+          >
+            {t("lines.whatsappValue")}
+          </ExternalDirectionalLink>
+          <span className="mt-1 block text-sm text-muted-foreground">
+            {t("lines.whatsappNote")}
+          </span>
+        </LineRow>
+        <LineRow term={t("lines.locationLabel")}>
+          <span className="block text-lg leading-snug text-foreground">
+            {t("lines.address1")}
+          </span>
+          <span className="mt-1 block text-sm text-muted-foreground">
+            {t("lines.address2")}
+            {cairoTime ? <> · {t("lines.localTime", { time: cairoTime })}</> : null}
+          </span>
+        </LineRow>
+      </dl>
+
+      <p className="mt-10 max-w-[46ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+        {t("responseTime")}
+      </p>
+      <p className="mt-4 text-[0.9375rem] text-muted-foreground">
+        {t("callLead")}{" "}
+        <DirectionalLink
+          href="/schedule"
+          className="text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground"
+        >
+          {t("scheduleCall")}
+        </DirectionalLink>
+      </p>
+
+      <nav aria-labelledby="contact-social-label" className="mt-10">
+        <Eyebrow id="contact-social-label" className="m-0">
+          {t("socialLabel")}
+        </Eyebrow>
+        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+          {SOCIAL_ORDER.map((key) => (
+            <li key={key}>
+              <a
+                href={SITE_CONFIG.social[key]}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-foreground underline-offset-4 decoration-foreground/40 hover:underline"
+              >
+                {t(`social.${key}`)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </section>
+  );
+}
+
+function LineRow({ term, children }: { term: string; children: ReactNode }) {
+  return (
+    <div className="grid gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-6">
+      <dt className="text-sm font-medium leading-snug text-muted-foreground sm:pt-1">
+        {term}
+      </dt>
+      <dd className="min-w-0">{children}</dd>
     </div>
   );
 }

@@ -1,474 +1,174 @@
 "use client";
-import { Num } from "@/components/ui/num";
-import { MagneticButton } from "@/components/magnetic-button";
+
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { SectionWatermark } from "@/components/section-watermark";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
+import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { ArrowIcon, ExternalDirectionalLink } from "@/components/shared/directional-link";
-import { Highlight } from "@/components/ui/emphasis";
+import { DirectionalLink } from "@/components/shared/directional-link";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { Link } from "@/i18n/navigation";
-import { FOUNDER_LINK, getCommercialCta } from "@/lib/config/commercial";
+import { getCommercialCta } from "@/lib/config/commercial";
 import {
-  useSectionCardGrid,
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { monoCaps } from "@/lib/utils/mono-caps";
-import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { memo } from "react";
+import { HandoffChainSection } from "./handoff-chain";
+import { NamePrincipleSection } from "./name-principle";
 
-export type RouteCard = {
-  description: string;
-  href: string;
-  label: string;
-  title: string;
-};
-
-type PageClientProps = {
-  routeCards: RouteCard[];
-};
-
-export default memo(function AboutPageClient({ routeCards }: PageClientProps) {
+export default memo(function AboutPageClient() {
   return (
-    <div className="relative min-h-screen w-full overflow-x-hidden bg-background">
-      <HeroSection />
-      <PrinciplesSection />
-      <NamePrincipleSection />
-      <OperatingModelSection />
-      <PathwaysSection routeCards={routeCards} />
-      <SectionEndCta variant="contact" />
-    </div>
+    <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
+      <AboutHero />
+      <ErrorBoundary>
+        <HandoffChainSection />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <NamePrincipleSection />
+      </ErrorBoundary>
+      <ContinueRow />
+      <AboutEndCta />
+    </main>
   );
 });
 
-function HeroSection() {
+/**
+ * The hero already offers the scope request; the page argues there is nobody
+ * between the client and the engineer, so the close offers exactly that call.
+ */
+function AboutEndCta() {
+  const t = useTranslations("common.endCta.pages.about");
+
+  return (
+    <SectionEndCta
+      title={t("title")}
+      titleAccent={t("titleAccent")}
+      body={t("body")}
+      primary="technicalCall"
+      secondary="describeTheBuild"
+    />
+  );
+}
+
+const RECORD_ITEMS = ["base", "languages", "lead", "floor"] as const;
+
+/**
+ * The page opens on its statement and closes the fold on a plain record of
+ * the company: four facts a visitor can check, set as a definition list rather
+ * than as counters. The previous hero led with "Zero" and "Native" at display
+ * size - words dressed as figures.
+ */
+function AboutHero() {
   const t = useTranslations("about");
   const tCTAs = useTranslations("commercial.ctas");
+  const tNav = useTranslations("nav");
   const projectRangeCta = getCommercialCta("projectRange");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
   const ctaRef = useSectionElement();
-
-  const stats = [
-    {
-      sub: t("stat1.sublabel"),
-      value: t("stat1.value"),
-      label: t("stat1.label"),
-    },
-    {
-      sub: t("stat2.sublabel"),
-      value: t("stat2.value"),
-      label: t("stat2.label"),
-    },
-    {
-      sub: t("stat3.sublabel"),
-      value: t("stat3.value"),
-      label: t("stat3.label"),
-    },
-  ];
-
-  return (
-    <section className="accent-world-orange relative flex min-h-[90vh] flex-col justify-between overflow-hidden pt-(--section-y-top)">
-      <SectionWatermark>06</SectionWatermark>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-50">
-        <div className="absolute top-0 inset-s-1/3 h-full w-px bg-foreground/5" />
-        <div className="absolute top-0 inset-e-1/3 h-full w-px bg-foreground/5" />
-      </div>
-      <Container className="relative z-10 flex flex-1 flex-col justify-center pb-20">
-        <div className="max-w-5xl">
-          <p
-            ref={eyebrowRef}
-            className={cn(
-              monoCaps,
-              "mb-8 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal",
-            )}
-          >
-            {t("eyebrow")}
-          </p>
-          <h1
-            ref={titleRef}
-            className="mb-10 text-[clamp(3rem,5vw,4.5rem)] font-normal leading-[0.95] tracking-[-0.03em] text-foreground"
-          >
-            {t("title")}
-            <br />
-            {t("title2")} <Highlight>{t("title3")}</Highlight>
-          </h1>
-          <div
-            ref={descRef}
-            className="flex flex-col gap-6 md:flex-row md:items-start md:gap-12"
-          >
-            <div className="mt-3 hidden h-px w-20 bg-border md:block shrink-0" />
-            <div className="space-y-6 max-w-2xl">
-              <p className="text-[clamp(1.125rem,1.2vw,1.25rem)] leading-[1.6] text-muted-foreground">
-                {t.rich("description1", bodyMarks)}
-              </p>
-              <p className="text-[clamp(1.125rem,1.2vw,1.25rem)] leading-[1.6] text-muted-foreground">
-                {t.rich("description2", bodyMarks)}
-              </p>
-              <CtaButtonGroup
-                ref={ctaRef}
-                primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
-                secondary={{ href: "/work", label: t("ctaSecondary") }}
-                className="mt-12"
-              />
-            </div>
-          </div>
-        </div>
-      </Container>
-      <div className="border-t border-border bg-surface/10 backdrop-blur-xs">
-        <Container>
-          <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-3 md:divide-y-0 md:divide-x rtl:divide-x-reverse">
-            {stats.map((stat) => (
-              <div key={stat.label} className="py-8 px-4 md:px-8">
-                <p className="text-[clamp(2rem,3vw,2.75rem)] font-light leading-none tracking-[-0.03em] text-foreground">
-                  {stat.value}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground">
-                    {stat.label}
-                  </p>
-                  <p className={cn(monoCaps, "text-xs text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-                    {stat.sub}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </div>
-    </section>
-  );
-}
-
-function PrinciplesSection() {
-  const t = useTranslations("about");
-  const titleRef = useSectionTitle();
-  const bodyRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-principle-card]" });
-
-  const values = [
-    { label: t("values.multilingual.label"), sub: t("values.multilingual.sublabel") },
-    { label: t("values.noTemplate.label"), sub: t("values.noTemplate.sublabel") },
-    { label: t("values.outcome.label"), sub: t("values.outcome.sublabel") },
-  ];
-
-  return (
-    <section className="accent-world-orange border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        {/* Editorial Layout: Sticky Left, Scrolling Right */}
-        <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:gap-24">
-
-          {/* Founder Context (Left) */}
-          <div className="lg:sticky lg:top-32 lg:h-fit">
-            <p className={cn(monoCaps, "mb-6 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-              {t("founder.eyebrow")}
-            </p>
-            <h2 ref={titleRef} className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
-              {t("founder.name")}
-            </h2>
-            <p className={cn(monoCaps, "mt-4 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-              {t("founder.role")}
-            </p>
-            <div className="mt-8 max-w-md space-y-5">
-              <p className="text-base leading-[1.75] text-muted-foreground">
-                {t.rich("founder.philosophy1", bodyMarks)}
-              </p>
-              <p className="text-base leading-[1.75] text-muted-foreground">
-                {t.rich("founder.philosophy2", bodyMarks)}
-              </p>
-            </div>
-            <div className="mt-10">
-              <ExternalDirectionalLink href={FOUNDER_LINK} className={cn(monoCaps, "text-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-                {t("founder.linkedInLabel")}
-              </ExternalDirectionalLink>
-            </div>
-          </div>
-          <div ref={bodyRef} className="flex flex-col">
-            {values.map((value, index) => (
-              <article
-                key={value.label}
-                data-principle-card
-                className="group border-t border-border py-10 first:border-t-0 first:pt-0 lg:py-14"
-              >
-                <div className="mb-6 flex items-center gap-4">
-                  <span className="flex size-12 items-center justify-center rounded-full border border-border bg-surface text-sm text-muted-foreground">
-                    <Num value={index + 1} pad={2} />
-                  </span>
-                </div>
-                <h3 className="text-[clamp(1.5rem,2.5vw,2rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground transition-all group-hover:text-foreground/80">
-                  {value.label}
-                </h3>
-                <p className="mt-4 text-[1.0625rem] leading-[1.8] text-muted-foreground">
-                  {value.sub}
-                </p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-const PRINCIPLE_ITEMS = ["scope", "ownership", "handover", "pricing"] as const;
-
-/**
- * The operating principle behind the first half of the name - stated as a
- * ledger of commitments with the price each one carries for us, never as a
- * claim about our character.
- */
-function NamePrincipleSection() {
-  const t = useTranslations("about.principle");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const leadRef = useSectionDescription();
-  const ledgerRef = useSectionCardGrid<HTMLOListElement>({
-    selector: "[data-ledger-row]",
-  });
-
-  const ledgerColumns =
-    "lg:grid-cols-[3rem_minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-x-12";
-  const rtlLabel = "rtl:font-sans rtl:normal-case rtl:tracking-normal";
+  const recordRef = useSectionElement<HTMLElement>();
 
   return (
     <section
-      id="operating-principle"
-      aria-labelledby="operating-principle-heading"
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      aria-labelledby="about-hero-heading"
+      className="accent-world-blue pt-(--section-y-top)"
     >
       <Container>
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:gap-24">
-          <div>
-            <p
-              ref={eyebrowRef}
-              className={cn(monoCaps, "mb-6 text-muted-foreground", rtlLabel)}
-            >
-              {t("eyebrow")}
-            </p>
-            <h2
-              id="operating-principle-heading"
-              ref={titleRef}
-              className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground"
-            >
-              {t("title")}{" "}
-              <Highlight className="block mt-2 md:mt-0 md:inline">
-                {t("titleItalic")}
-              </Highlight>
-            </h2>
-          </div>
-          <div ref={leadRef} className="max-w-[62ch] space-y-6 lg:pt-3">
-            <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
-              {t.rich("lead1", bodyMarks)}
-            </p>
-            <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
-              {t.rich("lead2", bodyMarks)}
-            </p>
-          </div>
-        </div>
+        <SectionHeading
+          titleAs="h1"
+          titleId="about-hero-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={`${t("title")} ${t("title2")}`}
+          secondTitle={t("title3")}
+          description={t.rich("description1", bodyMarks)}
+          classes={{
+            titleWrapper: "space-y-6",
+            title:
+              "max-w-[20ch] text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+            description:
+              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+          }}
+        />
 
-        <div className="mt-16 lg:mt-24">
-          <div
-            aria-hidden
-            className={cn(
-              "hidden border-b border-border pb-4 lg:grid",
-              ledgerColumns,
-            )}
-          >
-            <span />
-            <p className={cn(monoCaps, "text-muted-foreground", rtlLabel)}>
-              {t("commitmentLabel")}
-            </p>
-            <p className={cn(monoCaps, "text-local-accent-text", rtlLabel)}>
-              {t("costLabel")}
-            </p>
-          </div>
-          <ol ref={ledgerRef} className="flex flex-col">
-            {PRINCIPLE_ITEMS.map((key, index) => (
-              <li
-                key={key}
-                data-ledger-row
-                className={cn(
-                  "grid gap-6 border-b border-border py-10 lg:gap-y-0 lg:py-12",
-                  ledgerColumns,
-                )}
-              >
-                <p
-                  className={cn(
-                    monoCaps,
-                    "text-muted-foreground lg:pt-2",
-                    rtlLabel,
-                  )}
-                >
-                  <Num value={index + 1} pad={2} />
-                </p>
-                <div>
-                  <h3 className="text-[clamp(1.25rem,1.8vw,1.5rem)] font-medium leading-[1.25] tracking-[-0.015em] text-foreground">
-                    {t(`items.${key}.label`)}
-                  </h3>
-                  <p className="mt-4 max-w-[62ch] text-[1.0625rem] leading-[1.8] text-muted-foreground">
-                    {t(`items.${key}.body`)}
-                  </p>
-                </div>
-                <div className="border-s-2 border-local-accent/40 ps-5">
-                  <p
-                    className={cn(
-                      monoCaps,
-                      "mb-2 text-local-accent-text lg:hidden",
-                      rtlLabel,
-                    )}
-                  >
-                    {t("costLabel")}
-                  </p>
-                  <p className="max-w-[46ch] text-[0.9375rem] leading-[1.8] text-foreground">
-                    {t(`items.${key}.cost`)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-12 flex items-center gap-5">
-            <p className="max-w-[48ch] text-[clamp(1.125rem,1.6vw,1.375rem)] leading-snug">
-              <Highlight tone="contrast">{t("closing")}</Highlight>
-            </p>
-            <span aria-hidden className="hidden h-px flex-1 bg-foreground/8 sm:block" />
-          </div>
-        </div>
-      </Container>
-    </section>
-  );
-}
+        <CtaButtonGroup
+          ref={ctaRef}
+          primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
+          secondary={{ href: "/work", label: tNav("work") }}
+          secondaryArrow
+          className="mt-10 lg:mt-12"
+        />
 
-function OperatingModelSection() {
-  const t = useTranslations("process");
-  const navT = useTranslations("nav");
-  const titleRef = useSectionTitle();
-  const listRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-process-card]" });
-
-  const steps = ["step1", "step2", "step3", "step4"].map((key, index) => ({
-    index: String(index + 1).padStart(2, "0"),
-    tag: t(`steps.${key}.tag`),
-    title: t(`steps.${key}.title`),
-    description: t.rich(`steps.${key}.description`, bodyMarks),
-    deliverables: t(`steps.${key}.deliverables`),
-    timeline: t(`steps.${key}.timeline`),
-  }));
-
-  return (
-    <section className="accent-world-green bg-surface/30 border-y border-border pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="mb-16 md:mb-24 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className={cn(monoCaps, "mb-5 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-              {t("eyebrow")}
-            </p>
-            <h2 ref={titleRef} className="text-[clamp(2.5rem,4vw,3.75rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
-              {t("title")}
-            </h2>
-          </div>
-          <p className="max-w-[34ch] text-base leading-[1.75] text-muted-foreground">
-            {t.rich("subtitle", bodyMarks)}
-          </p>
-        </div>
-        <div ref={listRef} className="grid gap-0 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((step, i) => (
-            <article
-              key={step.index}
-              data-process-card
-              className={cn(
-                "group relative border-t border-border pt-8 pb-12 transition-all hover:bg-surface/50 sm:px-6 md:border-t-0 md:border-s md:pt-10 md:pb-16 rtl:border-s-0 rtl:border-e",
-                i === 0 && "md:border-s-0 md:ps-0 rtl:md:border-e-0 rtl:md:pe-0"
-              )}
-            >
-              <div className="absolute top-4 right-4 text-[6rem] font-bold leading-none text-foreground/2 transition-all duration-500 group-hover:text-foreground/5 rtl:left-4 rtl:right-auto pointer-events-none select-none">
-                <Num value={step.index} />
-              </div>
-              <div className="relative z-10">
-                <p className={cn(monoCaps, "inline-block rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-                  {step.tag}
-                </p>
-                <h3 className="mt-8 text-xl font-medium leading-[1.2] tracking-[-0.015em] text-foreground">
-                  {step.title}
-                </h3>
-                <p className="mt-4 text-[0.98rem] leading-[1.75] text-muted-foreground">
-                  {step.description}
-                </p>
-                <div className="mt-8 space-y-4">
-                  <div>
-                    <p className={cn(monoCaps, "mb-1 text-xs text-foreground/80 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>{t("meta.deliverables")}</p>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{step.deliverables}</p>
-                  </div>
-                  <div>
-                    <p className={cn(monoCaps, "mb-1 text-xs text-foreground/80 rtl:font-sans rtl:normal-case rtl:tracking-normal")}>{t("meta.timeline")}</p>
-                    <p className="text-sm leading-relaxed text-muted-foreground">{step.timeline}</p>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="mt-12 flex flex-wrap gap-4 justify-center lg:justify-start">
-          <MagneticButton asChild size="lg" variant="secondary">
-            <Link href="/process">{navT("process")}</Link>
-          </MagneticButton>
-          <MagneticButton asChild size="lg" variant="secondary">
-            <Link href="/how-we-work">{navT("how-we-work")}</Link>
-          </MagneticButton>
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-function PathwaysSection({ routeCards }: PageClientProps) {
-  const t = useTranslations("commercial.cta");
-  const cardsRef = useSectionCardGrid<HTMLDivElement>({ selector: "[data-route-card]" });
-
-  return (
-    <section className="accent-world-orange pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container>
-        <div className="mx-auto max-w-3xl text-center mb-16">
-          <p className={cn(monoCaps, "mb-5 text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-            {t("eyebrow")}
-          </p>
-          <h2 className="text-[clamp(2.25rem,4vw,3.5rem)] font-normal leading-[1.05] tracking-[-0.02em] text-foreground">
-            {t("title")} <Highlight>{t("titleAccent")}</Highlight>
+        <section
+          ref={recordRef}
+          aria-labelledby="about-record-heading"
+          className="mt-(--section-y-bottom) border-t border-border-subtle py-10 lg:py-12"
+        >
+          <h2 id="about-record-heading" className="sr-only">
+            {t("record.label")}
           </h2>
-          <p className="mt-6 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
-            {t("body")}
-          </p>
-        </div>
-        <div ref={cardsRef} className="grid gap-6 md:grid-cols-2 lg:gap-8 max-w-5xl mx-auto">
-          {routeCards.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              data-route-card
-              className="group flex flex-col justify-between rounded-xl border border-border bg-surface p-8 md:p-10 transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:border-foreground/30 hover:bg-background hover:shadow-2xl hover:shadow-foreground/5"
-            >
-              <div>
-                <p className={cn(monoCaps, "text-muted-foreground rtl:font-sans rtl:normal-case rtl:tracking-normal")}>
-                  {card.label}
-                </p>
-                <h3 className="mt-5 text-[clamp(1.5rem,2vw,1.85rem)] font-medium leading-[1.2] tracking-[-0.015em] text-foreground">
-                  {card.title}
-                </h3>
-                <p className="mt-4 text-[1rem] leading-[1.8] text-muted-foreground">
-                  {card.description}
-                </p>
+          <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+            {RECORD_ITEMS.map((key) => (
+              <div key={key}>
+                <dt className="eyebrow text-muted-foreground">
+                  {t(`record.items.${key}.term`)}
+                </dt>
+                <dd className="mt-2 max-w-[28ch] text-[0.9375rem] leading-relaxed text-foreground">
+                  {t(`record.items.${key}.value`)}
+                </dd>
               </div>
-              <div className="mt-10 flex size-12 shrink-0 items-center justify-center rounded-full border border-border bg-background/60 transition-all duration-300 ease-out group-hover:border-foreground group-hover:bg-foreground group-hover:text-background">
-                <ArrowIcon strokeWidth={1.5} className="size-[18px] text-current duration-300" />
-              </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </dl>
+        </section>
       </Container>
     </section>
+  );
+}
+
+const CONTINUE_LINKS = [
+  { key: "services", href: "/services" },
+  { key: "work", href: "/work" },
+  { key: "process", href: "/process" },
+  { key: "how-we-work", href: "/how-we-work" },
+  { key: "pricing", href: "/pricing" },
+] as const;
+
+/**
+ * Where the old page spent two sections - a four-step process grid that
+ * repeated /process and a 2x2 card grid that repeated the navigation - this is
+ * one line of links. The closing CTA below already carries the conversion.
+ */
+function ContinueRow() {
+  const t = useTranslations("about.continue");
+  const tNav = useTranslations("nav");
+
+  return (
+    <nav aria-labelledby="about-continue-label" className="border-t border-border-subtle">
+      <Container className="flex flex-col gap-4 py-8 md:flex-row md:items-baseline md:gap-10">
+        <Eyebrow id="about-continue-label" className="m-0 shrink-0">
+          {t("label")}
+        </Eyebrow>
+        <ul className="flex flex-wrap gap-x-8 gap-y-3">
+          {CONTINUE_LINKS.map((link) => (
+            <li key={link.href}>
+              <DirectionalLink
+                href={link.href}
+                className="text-[0.9375rem] text-foreground underline-offset-4 hover:underline"
+              >
+                {tNav(link.key)}
+              </DirectionalLink>
+            </li>
+          ))}
+        </ul>
+      </Container>
+    </nav>
   );
 }

@@ -1,4 +1,7 @@
+import { consultingCreditIn, type Currency } from "@repo/pricing-schema";
 import { z } from "zod";
+
+import { CLIENT_SERVICE_KINDS } from "./service-lifecycle";
 
 // The complete, per-client content of a proposal deck. Every string the
 // generator renders comes from here — the generator itself holds no client
@@ -12,6 +15,13 @@ const percent = z
   .number()
   .refine((v) => Number.isFinite(v), "Must be a number")
   .refine((v) => v >= 0 && v <= 100, "Must be between 0 and 100");
+
+/**
+ * Recurring services print as a block on the investment slide, under the
+ * payment split. Six rows is what fits beside a typical line-item table; the
+ * generator's own fit check (proposal-builder.ts) is the real limit.
+ */
+export const MAX_PROPOSAL_SERVICES = 6;
 
 /** At least one item, and every list stays reorderable in the Admin. */
 const list = <T extends z.ZodTypeAny>(item: T, label: string) =>
@@ -86,6 +96,19 @@ export const keyTermSchema = z.object({
  */
 export const discountSchema = z.object({
   mode: z.enum(["none", "percent", "amount"]),
+  /**
+   * What kind of reduction this is.
+   *
+   * "audit-credit" is not a discount the operator negotiated — it is the
+   * published rule that a paid Technical Audit comes off the project price,
+   * and the client has already read it on the site. Marking it as its own
+   * kind is what lets the gate below pin the figure to the schema and the
+   * contract name the audit in its own clause: an anonymous amount with a
+   * hand-typed label could drift from what was published the moment either
+   * one was edited, and the document a client signs is the wrong place to
+   * discover that.
+   */
+  kind: z.enum(["manual", "audit-credit"]).default("manual"),
   /** Percent of subtotal when mode is "percent"; absolute money when "amount". */
   value: z
     .number()
@@ -94,6 +117,38 @@ export const discountSchema = z.object({
   label: z.string().trim().max(80),
   /** Internal note — never printed in the deck. */
   reason: z.string().trim().max(240),
+});
+
+/**
+ * A recurring third-party service the proposal commits to: the domain, the
+ * hosting, the mailboxes.
+ *
+ * Deliberately NOT an investment item. The pricing rule is that pass-through
+ * services are billed separately and never folded into the project fee, so
+ * nothing here reaches `investmentTotal`, `netTotal`, the milestone payments
+ * or the discount. `price` is the renewal price per term the client agrees to;
+ * `firstTermIncluded` records the contract's "Year 1 included" per service
+ * rather than as one sentence covering everything.
+ *
+ * On signing, each becomes a PENDING ClientService row
+ * (lib/client-services.ts) — the thing that later raises the renewal alerts.
+ */
+export const proposalServiceSchema = z.object({
+  kind: z.enum(CLIENT_SERVICE_KINDS),
+  name: nonEmpty("Service name", 120),
+  provider: z.string().trim().max(80).default(""),
+  termMonths: z
+    .number()
+    .int("Term must be whole months")
+    .min(1, "Term must be at least one month")
+    .max(120, "Term cannot exceed ten years"),
+  firstTermIncluded: z.boolean().default(false),
+  // A service priced at zero is quoted to the client as free for every term
+  // after the first — never what anyone meant by leaving the field blank.
+  price: z
+    .number()
+    .int("Price must be a whole amount")
+    .min(1, "Set the renewal price the client pays per term"),
 });
 
 export const whyUsSchema = z.object({
@@ -166,6 +221,12 @@ export const labelsSchema = z.object({
   scopeIncluded: nonEmpty("Included column", 40),
   scopeNotIncluded: nonEmpty("Not-included column", 40),
   keyTerms: nonEmpty("Key terms label", 40),
+  // Added with recurring services. Defaulted so a proposal saved before they
+  // existed still parses — the block only prints when a service does.
+  services: nonEmpty("Services block label", 60).default("RECURRING SERVICES"),
+  servicesNote: nonEmpty("Services note", 200).default(
+    "Billed separately from the project fee, per term, at the price shown.",
+  ),
 });
 
 export const proposalContentSchema = z
@@ -182,7 +243,13 @@ export const proposalContentSchema = z
     // Proposals written before discounts existed carry no `discount` key.
     // Defaulting here (rather than at each read site) means every consumer —
     // the deck, the contract, the detail pages — sees the same shape.
-    discount: discountSchema.default({ mode: "none", value: 0, label: "Discount", reason: "" }),
+    discount: discountSchema.default({ mode: "none", kind: "manual", value: 0, label: "Discount", reason: "" }),
+    // Optional and outside the fee — see proposalServiceSchema. Proposals
+    // written before services existed read back as an empty list.
+    services: z
+      .array(proposalServiceSchema)
+      .max(MAX_PROPOSAL_SERVICES, `A proposal can list at most ${MAX_PROPOSAL_SERVICES} services`)
+      .default([]),
     paymentSchedule: list(paymentScheduleSchema, "Payment schedule"),
     scopeIncluded: list(nonEmpty("Scope item", 240), "Scope included"),
     scopeNotIncluded: list(nonEmpty("Scope item", 240), "Scope not included"),
@@ -234,6 +301,27 @@ export const proposalContentSchema = z
           message: "The discount is larger than the line-item subtotal",
         });
       }
+      // The credit is a published promise, so the gate re-derives it rather
+      // than trusting what arrived. A proposal drafted before a rate change,
+      // or a value edited in the payload, is refused here instead of being
+      // signed at a number the site never offered.
+      if (discount.kind === "audit-credit") {
+        const credit = auditCreditFor(content.meta.currency);
+        if (credit === null) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["discount", "kind"],
+            message: `The audit credit has no published figure in ${content.meta.currency} — quote this engagement in EGP or apply the reduction by hand`,
+          });
+        } else if (discount.mode !== "amount" || discount.value !== credit) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["discount", "value"],
+            message: `The audit credit is ${credit.toLocaleString("en-US")} ${content.meta.currency} — re-apply it rather than editing the figure`,
+          });
+        }
+      }
+
       if (subtotal > 0 && netTotal(content.investmentItems, discount) <= 0) {
         ctx.addIssue({
           code: "custom",
@@ -254,6 +342,7 @@ export type InvestmentItem = z.infer<typeof investmentItemSchema>;
 export type PaymentScheduleRow = z.infer<typeof paymentScheduleSchema>;
 export type KeyTerm = z.infer<typeof keyTermSchema>;
 export type Discount = z.infer<typeof discountSchema>;
+export type ProposalService = z.infer<typeof proposalServiceSchema>;
 export type WhyUs = z.infer<typeof whyUsSchema>;
 export type SectionHeading = z.infer<typeof sectionHeadingSchema>;
 export type ProposalSections = z.infer<typeof sectionsSchema>;
@@ -280,10 +369,42 @@ export function investmentTotal(items: { amount: number }[]): number {
 /** No discount at all — the shape every pre-discount proposal reads back as. */
 export const NO_DISCOUNT: Discount = {
   mode: "none",
+  kind: "manual",
   value: 0,
   label: "Discount",
   reason: "",
 };
+
+/**
+ * How the credit is named on the investment slide and in the contract.
+ *
+ * Pinned here rather than taken from the site's consulting copy: the deck and
+ * the agreement are English-only documents whose wording outlives a marketing
+ * edit, exactly as the service and band spellings are. The *figure* is not
+ * pinned — it resolves from the schema on every read.
+ */
+export const AUDIT_CREDIT_LABEL = "Technical Audit credit";
+
+/**
+ * The credit a proposal in this currency can carry, or null when the audit
+ * fee has no published figure in it. Null is a refusal, never a zero credit.
+ */
+export function auditCreditFor(currency: string): number | null {
+  return consultingCreditIn(currency as Currency);
+}
+
+/** The discount an operator applies when this build follows a paid audit. */
+export function auditCreditDiscount(currency: string): Discount | null {
+  const amount = auditCreditFor(currency);
+  if (amount === null) return null;
+  return {
+    mode: "amount",
+    kind: "audit-credit",
+    value: amount,
+    label: AUDIT_CREDIT_LABEL,
+    reason: "Technical Audit fee credited against the build (published rule).",
+  };
+}
 
 /**
  * What the discount is actually worth in money.

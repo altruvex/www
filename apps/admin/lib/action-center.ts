@@ -5,14 +5,23 @@ import {
   CalendarClock,
   FileSignature,
   FileText,
+  Globe,
   MessageCircle,
   RefreshCw,
   Rocket,
+  Server,
   ShieldAlert,
   Target,
   Wallet,
 } from "lucide-react";
 import { deriveStatus, renewalView } from "@/lib/subscription-lifecycle";
+import {
+  daysUntilExpiry,
+  KIND_LABEL,
+  remindedThisCycle,
+  SERVICE_SOON_DAYS,
+  SERVICE_URGENT_DAYS,
+} from "@/lib/service-lifecycle";
 import type { Tone } from "@/lib/status";
 
 /**
@@ -37,7 +46,8 @@ export interface ActionItem {
     | "project"
     | "incident"
     | "deployment"
-    | "renewal";
+    | "renewal"
+    | "service";
   icon: LucideIcon;
   tone: Tone;
   title: string;
@@ -74,6 +84,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
     openIncidents,
     failedDeployments,
     renewableSubscriptions,
+    expiringServices,
   ] = await Promise.all([
     // A lead nobody has contacted. The single most expensive thing to ignore.
     prisma.client.findMany({
@@ -197,6 +208,16 @@ export async function getActionCentre(): Promise<ActionItem[]> {
     prisma.maintenanceSubscription.findMany({
       where: { status: { in: ["TRIALING", "ACTIVE"] } },
       include: { client: { select: { id: true, name: true, company: true } } },
+    }),
+    // Domains, hosting, mailboxes inside the first alert threshold or lapsed.
+    prisma.clientService.findMany({
+      where: {
+        status: "ACTIVE",
+        expiresAt: { lte: new Date(now.getTime() + SERVICE_SOON_DAYS * DAY) },
+      },
+      include: { client: { select: { id: true, name: true, company: true } } },
+      orderBy: { expiresAt: "asc" },
+      take: 50,
     }),
   ]);
 
@@ -466,6 +487,29 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       cta: overdue ? "Renew or suspend" : "Review",
       score: overdue ? 90 + Math.min(Math.abs(view.daysUntil), 30) : 70,
       ageDays: overdue ? Math.abs(view.daysUntil) : 0,
+    });
+  }
+
+  for (const service of expiringServices) {
+    if (!service.expiresAt) continue;
+    const days = daysUntilExpiry(service.expiresAt, now);
+    const lapsed = days <= 0;
+    const urgent = days <= SERVICE_URGENT_DAYS;
+    items.push({
+      id: `svc-${service.id}`,
+      kind: "service",
+      icon: service.kind === "DOMAIN" ? Globe : Server,
+      tone: urgent ? "danger" : "warning",
+      title: lapsed
+        ? `${KIND_LABEL[service.kind]} expired · ${label(service.client)}`
+        : `${KIND_LABEL[service.kind]} expires in ${days}d · ${label(service.client)}`,
+      detail: `${service.name}${service.provider ? ` · ${service.provider}` : ""}${remindedThisCycle(service) ? " · client reminded" : " · client not reminded yet"}`,
+      href: `/services#service-${service.id}`,
+      cta: lapsed ? "Renew now" : "Renew & invoice",
+      // A lapsed domain takes the client's site and email down with it, so it
+      // ranks beside a failed production deploy rather than beside a retainer.
+      score: lapsed ? 105 + Math.min(Math.abs(days), 30) : urgent ? 88 + (SERVICE_URGENT_DAYS - days) * 2 : 60,
+      ageDays: lapsed ? Math.abs(days) : 0,
     });
   }
 

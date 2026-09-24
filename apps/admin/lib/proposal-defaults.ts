@@ -76,6 +76,8 @@ const DEFAULT_LABELS = {
   scopeIncluded: "INCLUDED",
   scopeNotIncluded: "NOT INCLUDED",
   keyTerms: "KEY TERMS",
+  services: "RECURRING SERVICES",
+  servicesNote: "Billed separately from the project fee, per term, at the price shown.",
 };
 
 // Percentages come from the schema so a proposal and the contract generated
@@ -147,6 +149,9 @@ export function buildDefaultProposalContent(
     })),
     // Off by default: a discount is a deliberate act, never a starting state.
     discount: { ...NO_DISCOUNT },
+    // Empty by default: a domain or hosting line is added when this client
+    // actually needs one, with the price for that one registrar and term.
+    services: [],
     paymentSchedule: DEFAULT_PAYMENT_SCHEDULE.map((row) => ({ ...row })),
     scopeIncluded: [...SCOPE_INCLUDED],
     scopeNotIncluded: [...SCOPE_NOT_INCLUDED],

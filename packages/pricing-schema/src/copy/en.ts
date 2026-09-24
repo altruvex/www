@@ -119,7 +119,7 @@ export const EN_COPY: PricingCopy = {
     timelineLabel: "Delivery",
     timelineValue: "{weeks} weeks",
     ceiling:
-      "No engagement runs past {max} weeks. Anything larger ships in phases.",
+      "{windowMin}–{windowMax} weeks across the price matrix. A flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks - never further. Anything larger ships in phases.",
   },
   maintenance: {
     essential: {
@@ -130,6 +130,13 @@ export const EN_COPY: PricingCopy = {
         "Business-hours WhatsApp or email support",
         "Quarterly health summary",
       ],
+      compare: {
+        bestFor: "A site that mostly needs to stay safe and up to date",
+        cadence: "Monthly update cycle",
+        monitoring: "Uptime monitoring, backups verified",
+        reporting: "Quarterly health summary",
+        support: "Business hours, WhatsApp or email",
+      },
     },
     professional: {
       name: "Professional",
@@ -139,6 +146,13 @@ export const EN_COPY: PricingCopy = {
         "Monthly performance and security report",
         "Support for small rollout or release updates",
       ],
+      compare: {
+        bestFor: "A site or store that changes every month",
+        cadence: "Weekly checks",
+        monitoring: "Daily monitoring, backup and uptime review",
+        reporting: "Monthly performance and security report",
+        support: "Priority incident handling",
+      },
     },
     enterprise: {
       name: "Enterprise",
@@ -148,6 +162,13 @@ export const EN_COPY: PricingCopy = {
         "Multi-system monitoring and incident management",
         "Optional tooling and integration management",
       ],
+      compare: {
+        bestFor: "Several systems, or one that cannot go down",
+        cadence: "Agreed with you",
+        monitoring: "Multi-system monitoring and incident management",
+        reporting: "Architecture, performance and security reviews",
+        support: "Custom SLA and a dedicated response protocol",
+      },
     },
   },
   maintenanceTemplates: {
@@ -157,6 +178,7 @@ export const EN_COPY: PricingCopy = {
       "Up to {count} edit requests per month, with priority turnaround",
     portal: "Client Portal access — track every request and its status",
     overage: "Additional requests are billed at {rate} EGP/hr.",
+    overageShort: "{rate} EGP / hour",
     customPrice: "Custom",
     perCycle: {
       monthly: "/ month",
@@ -184,6 +206,11 @@ export const EN_COPY: PricingCopy = {
       ctaLabel: "Start with the audit",
       eyebrow: "Fixed-scope entry offer",
       includedLabel: "What is included",
+      creditLabel: "Credited to the build",
+      creditIfBuild:
+        "If you go on to build with Altruvex, the {credit} comes off the project price.",
+      creditIfNot:
+        "If you don't, you keep the findings and the roadmap — the fee stands.",
     },
   },
   addons: {

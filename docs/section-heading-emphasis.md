@@ -10,6 +10,7 @@ Law layer: `docs/design-principles.md` (C10 functional hue semantics, T-rules on
 | **Plain** | no second line | one sans line, foreground colour | utility / descriptive titles ("Questions About Building Your Tech Stack", "Contact") |
 | **Italic** | `<Highlight>` (SectionHeading default when `accent` is omitted) | dimmed serif-italic, light weight; bold sans in RTL | the composed voice: craft, method, restraint, philosophy, identity — and **every negative / loss / risk framing** |
 | **Colour** | `<Accent>` (`accent="world"` or a named gradient) | world-matched gradient, inline, per-word animated | the bold voice: outcome, value-prop, proof, conversion |
+| **World italic** | `<Highlight tone="world">` / `<SectionHeading italicWorld>` | the serif-italic clause, painted in the section's world gradient (bold sans in RTL) | `/services` only: the composed voice, but claiming an outcome, proof or a price |
 
 Decision test for the second clause of a headline, in order:
 
@@ -29,11 +30,48 @@ Every coloured heading sits inside an `accent-world-*` wrapper. The gradient mus
 | `accent-world-blue` | brand, trust, ownership, architecture | `brand` (blue → indigo) | `ocean` (cyan → blue) | `iris` (blue → violet) |
 | `accent-world-orange` | action, CTA, pricing, cost certainty | `ember` (amber → red) | `sunset` (orange → pink) | — |
 | `accent-world-green` | proof, shipped, reliability, "live" | `forest` (deep green) | `mint` (green → teal) | — |
+| `accent-world-violet` | interface design: craft, the designed surface | `world` (indigo → violet) | — | — |
+| `accent-world-cyan` | consulting: diagnosis, the instrument reading | `world` (teal → cyan) | — | — |
 
 - **Default: `accent="world"`.** It reads `--world-grad-*` from the wrapper (light, dark and inverted variants are defined in `globals.css`), so the heading can never wear the wrong world. This is what removed the drift that had put `iris` in an orange section and `lavender` in a blue one.
 - **Alternate** (named): only when a page has two Colour headings in the same world, or a same-world section sits directly before the closing CTA. Example: homepage quote-artifact (`sunset`) sits right above the `ember` CTA.
 - **`iris`**: the page hero `h1` only, one per page (homepage "revenue").
+- **The two discipline worlds (violet, cyan) exist on `/services` only.** There a hue
+  names the discipline rather than the job (C10), each service page wears one world end to end -
+  hero, sections and closing CTA, the pattern `/services/maintenance` already shipped in green -
+  and the map lives in `apps/www/lib/config/accent-world.ts` (`SERVICE_WORLD`), never in a
+  className. They take **no named alternate**: `accent="world"` is the only way to wear them, so
+  a discipline hue cannot be applied to a page that is not that discipline.
+- **Inside a page, the world appears only where something is true of that moment**: the eyebrow
+  above a coloured heading, the primary button, an active/selected element, a progress fill, a
+  hover affordance. Cards, rules, body copy and the rest stay monochrome. `/services/maintenance`
+  is the reference for the dose. Two things are deliberately *not* recoloured: semantic state
+  (`text-success` on a passing step, the audit's red/amber/green annotations - C11 says those
+  signal state and must not follow a page's hue), and the `/services/interface-design` playground
+  stage, which is a specimen of the real component library and would be lying if its `primary`
+  button were repainted to match the section around it.
 - **Retired for headings:** `aurora`, `lavender`, `neon`, `candy`. They exist for the playground and MDX colour only.
+
+### World italic on /services (added 2026-09-13)
+
+The service pages each wear one world end to end, so the Italic/Colour split is where their
+rhythm comes from. A second clause that would be Colour by the decision test in section 1 keeps
+its serif-italic face there and takes the world gradient instead of dimmed ink. The test itself
+does not change: warnings and method stay muted Italic.
+
+| page | clause | shape |
+|---|---|---|
+| all four heroes | "built to convert." / "built to scale." / "& Web Audits." / "built for reliability." | World italic |
+| /services/interface-design | showcase "No generic patterns." | Italic - negative framing |
+| /services/interface-design | playground "The system itself, running." | World italic - a live thing |
+| /services/interface-design | what-we-offer "in every engagement." | Italic - method |
+| /services/development | tech stack "every tool, chosen with intent." | Italic - method |
+| /services/consulting | brief "carefully." | Italic - method |
+| /services/consulting | audit panel "Fixed Scope, Fixed Price." | World italic - cost certainty; the dark panel resolves the world's dark gradient |
+
+The per-page budget in section 3 does not apply to `/services`, as it does not apply to the
+homepage: a single-world page cannot break the same-world adjacency rule, so the alternation of
+muted and world italic carries the hierarchy instead.
 
 ## 3. Budget and adjacency
 
@@ -66,11 +104,11 @@ Every coloured heading sits inside an `accent-world-*` wrapper. The gradient mus
 | /approach | closing "let's talk." | orange | Colour `world` | conversion |
 | /process | closing "the project." | orange | Italic | method, not conversion — was `ember` |
 | /standards | closing "automatically." | green | Colour `world` | guarantee / proof |
-| /services/maintenance | pricing "transparent, predictable." | orange | Colour `world` | cost certainty — was `iris` (blue in an orange section) |
-| /services/maintenance | cta "a gamble." | orange | Italic | loss-framed exception |
-| /services/* closing CTAs | orange | Colour `ember` | inline `<Accent>`, in-world |
-| /services/ecommerce | proof | green | Colour `forest` | in-world |
-| /services/development | pipeline "systems that last" | green | Colour `mint` | in-world alternate |
+| /services (index) | hero list rows | per discipline | — | each row carries its own world, so the hover arrow teaches the hue before the click |
+| /services/interface-design | whole page | violet | Colour `world` | hero, playground and CTA, one world |
+| /services/development | whole page (incl. pipeline "systems that last") | blue | Colour `world` | was green `mint`; development is the brand world |
+| /services/consulting | whole page | cyan | Colour `world` | was orange; the audit panel's hairline follows the world too |
+| /services/maintenance | whole page | green | Colour `world` / `mint` | unchanged — this is the pattern the other four now follow |
 | /about | name principle "are not decoration." | blue | Italic | identity claim; key renamed to `titleItalic` |
 | /about, /pricing, /how-we-work, /services, /work/[slug] | all others | — | Italic / Plain | unchanged |
 | shared `SectionEndCta`, `CtaSection` | orange | Colour `world` | were `ember` (same result, now drift-proof) |

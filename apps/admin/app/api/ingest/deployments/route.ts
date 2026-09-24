@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { environmentSchema, readIngestJson, withIngestToken } from "@/lib/ingest";
 import { announceDeployment, writeDeployment } from "@/lib/ingest-writers";
+import { httpUrl } from "@/lib/http-url";
 
 /**
  * Deployment telemetry from CI (§7).
@@ -27,7 +28,7 @@ const bodySchema = z.object({
   environment: environmentSchema,
   version: z.string().max(100).optional(),
   commitSha: z.string().max(100).optional(),
-  url: z.string().url().max(500).optional(),
+  url: httpUrl.optional(),
   triggeredBy: z.string().max(200).optional(),
   /** Ties the deployment to the build that produced it, by the build's externalId. */
   buildExternalId: z.string().max(200).optional(),

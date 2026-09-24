@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@repo/database";
 
 import { recordActivity, recordChange } from "@/lib/activity-log";
+import { httpUrl } from "@/lib/http-url";
 import { issueToken } from "@/lib/ingest-auth";
 import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
@@ -30,9 +31,9 @@ const createSchema = z.object({
   status: z
     .enum(["PLANNED", "IN_DEVELOPMENT", "LIVE", "MAINTENANCE", "SUNSET"])
     .default("PLANNED"),
-  productionUrl: z.string().url().max(500).nullable().optional(),
-  stagingUrl: z.string().url().max(500).nullable().optional(),
-  repositoryUrl: z.string().url().max(500).nullable().optional(),
+  productionUrl: httpUrl.nullable().optional(),
+  stagingUrl: httpUrl.nullable().optional(),
+  repositoryUrl: httpUrl.nullable().optional(),
   framework: z.string().max(100).nullable().optional(),
   hostingProvider: z.string().max(100).nullable().optional(),
 });
@@ -57,6 +58,10 @@ const patchSchema = z.discriminatedUnion("action", [
 export const GET = withAdmin(async () => {
   const products = await prisma.product.findMany({
     orderBy: { updatedAt: "desc" },
+    // The screens show whether a token exists and its last four characters,
+    // never the digest itself. Omitted here so a future caller cannot pick it
+    // up by accident.
+    omit: { ingestTokenHash: true },
     include: {
       client: { select: { id: true, name: true, company: true } },
       project: { select: { id: true, name: true } },
@@ -177,7 +182,11 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
   }
 
-  const updated = await prisma.product.update({ where: { id: existing.id }, data: patch });
+  const updated = await prisma.product.update({
+    where: { id: existing.id },
+    data: patch,
+    omit: { ingestTokenHash: true },
+  });
 
   await recordChange({
     action: "product.updated",

@@ -11,7 +11,7 @@ this document is the implementation layer.
 
 | file | role |
 |---|---|
-| `tokens.ts` | **Single source of truth**: `MOTION.{ease,duration,spring,distance,stagger,trigger,parallax,reduced,text,section,anticipation,loader,accent,lenis}` + resolvers |
+| `tokens.ts` | **Single source of truth**: `MOTION.{ease (incl. display, fade, fadeOut),duration (… settle, sweep),spring,distance,stagger (… sequence),trigger (… early),parallax,scroll (glide, read*, scrub.{tight,track,assemble,stage,pin}),reduced,text,section,anticipation,loader,accent,lenis}` + resolvers |
 | `config.ts` | compat re-exports of `tokens` + `getConstrainedDevice` (older import path) |
 | `utils/spring.ts` | analytic damped-harmonic spring, one shared `gsap.ticker` listener |
 | `utils/env.ts` | `readMotionEnv()` → `{ reduce, constrained, fine, touch }` |
@@ -19,11 +19,29 @@ this document is the implementation layer.
 | `utils/ready.ts` | imperative "initial loader finished" bus (`whenMotionReady`) |
 | `utils/presets.ts` | named configs (`motion.fadeUp()`, `motion.magneticButton()` …) |
 | `utils/splite.ts` | DOM text splitter (char/word/line, Arabic-aware) |
+| `utils/scrub.ts` | pure scroll-scrub math for state-driven sequences: `smoothstep`, `progressIn`, `riseHoldLeave` (safe during render) |
+| `utils/scroll.ts` | `scrollToY(top)` — programmatic jump through Lenis with `MOTION.scroll.glide`; reduced motion jumps |
 | `hooks/use-magnetic.ts` `use-press.ts` `use-tilt.ts` | **interaction** primitives — spring-driven |
 | `hooks/use-reveal.ts` `use-batch.ts` `use-text.ts` `use-counter.ts` `use-parallax.ts` | **scroll** primitives — ScrollTrigger + duration/ease |
 | `hooks/use-section-motion.ts` | section choreography wrappers |
+| `hooks/use-scroll-scene.ts` | **scroll scenes** — `useWordRead` (+ `splitWords`), `useMediaSettle`, `useKineticTrack`, `useTileAssemble` |
 | `smooth-scroll.tsx` `lenis-instance.ts` | Lenis boot, ScrollTrigger bridge, body-resize refresh |
 | `lib/utils/gsap.ts` | plugin registration, CustomEase registration of every `MOTION.ease` string, `gsap.defaults` |
+
+## 0. The rule — this folder is the heart
+
+Every moving thing on the site takes its values from here: duration, ease,
+distance, stagger, trigger position, scrub lag, spring. A section may call
+GSAP directly, but never with a literal it could have taken from `MOTION`.
+CSS transitions read the same scale through `--motion-*` / `--ease-*`
+(globals.css), and `checkCssMotionTokens()` warns in development if the two
+drift. New motion is added here first (a token or a hook), then used.
+
+The one allowed kind of literal: **durations and positions inside a scrubbed
+timeline** — there they are proportions of the scroll runway (choreography),
+not seconds on the clock, and a shared scale would be meaningless.
+Last full audit: 2026-09-19 — 0 clock literals outside this folder, the
+consulting brief included (its marks pace on `MOTION.stagger.annotate`).
 
 ## 2. Token system
 
@@ -133,6 +151,49 @@ useParallax({ speed?, direction?, scrub?, anchor? })                    // yPerc
   enter effect, never interaction-frequency, and is allowed only on fine-pointer
   non-constrained devices with ≤ `MOTION.text.blurCap` (16) fragments.
 
+### Replaying the section choreography (`utils/section-replay.ts`)
+
+```ts
+playSectionHeading({ eyebrow, title, description, elements })   // plays now, no ScrollTrigger
+playRevealEnter(el, revealShape(preset), scrollTrigger?)         // useReveal's core
+playTextEnter(el, shape, splitBy) · textShape(preset)            // useText's core (utils/text-enter.ts)
+```
+
+- `<SectionHeading>` animates through the section hooks, once, on scroll-in.
+  A surface that swaps one heading for another in place (the /services
+  chapter stage: one photo, five `<SectionHeading>`s) replays that exact
+  entrance with `playSectionHeading` — eyebrow on `sectionEyebrow`, title on
+  `sectionTitle`, description on `sectionDescription`, following blocks on
+  `sectionElement` (anticipation beat included).
+- There is one implementation of each: `useReveal` and `useText` build their
+  tweens through `playRevealEnter` / `textEnterVars`, and only add the scroll
+  trigger. Split, travel, scale, blur gating, ease, stagger cap and the Arabic
+  rules (word-level, no blur, stagger from the end) cannot drift between a
+  heading that scrolls in and one that is replayed. Never hand-roll a CSS or
+  GSAP text rise for a heading; render a `SectionHeading` and replay it.
+- Callers own reduced motion, as the hooks do: `REDUCED_FADE`, no split.
+
+### Scroll scenes (`hooks/use-scroll-scene.ts`)
+
+Scrubbed, scroll-owned sequences that used to be hand-rolled per section. Each
+returns a ref for its root and finds its parts by data attribute; timing lives
+in `MOTION.scroll` / `MOTION.duration.settle`. First used on
+/services/development (`components/sections/dev-studio`).
+
+| hook | markup | does |
+|---|---|---|
+| `useWordRead()` | `[data-word]` spans (render with `splitWords(text)`) | colour `--muted` → `--foreground` per word over `readStart`→`readEnd` — colour, never opacity (Arabic ghosting) |
+| `useMediaSettle({ delay })` | root with a radius, `[data-settle-img]` inside | clip opens from an inset (resolved radius, not `var()`), image eases out of a 1.18 zoom on scroll |
+| `useKineticTrack({ wipeAt })` | tall runway root, sticky stage, `[data-track]` copies, optional `[data-wipe]` layer | tracks cross the inline axis (RTL mirrored); the wipe layer rises through them |
+| `useScrollRise({ distance, scale })` | the block itself | rises into place (travel + slight scale, no fade) as it enters — a screen lifting out of a band |
+| `useRunwayProgress()` | tall runway root | progress 0–1 as React state for sticky stages rendered from scroll (runs under reduced motion: it is position, not motion) |
+| `useTileAssemble()` | `[data-tile]`s in `[data-tile-frame]`, optional `[data-tile-title]` in a mask | seeded scatter → assembled, then the title rises |
+
+State-driven sequences that React renders (the /services index fold and
+chapter curtain) use `utils/scrub.ts` instead of their own easing math.
+**New scroll motion goes here, not into the section** — add a hook or a token,
+then use it.
+
 ### Scroll plumbing
 
 - **No raw `scroll` listeners drive style.** Lenis is stepped from
@@ -168,6 +229,8 @@ that covers Tailwind hover transitions; the hooks below never rely on it.)
 | `usePress` | scale spring | opacity dip to `MOTION.reduced.pressOpacity` and back — feedback survives |
 | `useMagnetic` | x/y springs | none (position shift is motion); CSS hover styling remains |
 | `useTilt` | rotation springs | none (rotation is vestibular); CSS hover styling remains |
+| scroll scenes (`useWordRead` `useMediaSettle` `useKineticTrack` `useTileAssemble`) | scrubbed sequence | nothing is set — the markup's resting state is the reduced state (sections render a static fallback where the sticky runway would otherwise be empty) |
+| `scrollToY` | Lenis glide | immediate jump |
 | route `template.tsx` | 8px lift + fade | fade only |
 | Lenis | smooth wheel | native scroll |
 

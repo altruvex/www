@@ -1,0 +1,33 @@
+{
+  "contact": {
+    "budget-invalid": "Please select a valid budget range.",
+    "honeypot-invalid": "Invalid form submission.",
+    "message-max": "Message must not exceed 1000 characters.",
+    "message-min": "Message must be at least 10 characters.",
+    "name-max": "Name must not exceed 100 characters.",
+    "name-min": "Name must be at least 2 characters.",
+    "notes-max": "Notes must not exceed 500 characters.",
+    "phone-max": "Phone number must not exceed 20 characters.",
+    "phone-min": "Please enter a valid phone number (at least 10 digits).",
+    "phone-regex": "Phone number must contain only digits, spaces, dashes, plus signs, or parentheses.",
+    "preferred-date-format": "Date must be in YYYY-MM-DD format.",
+    "preferred-date-future": "Date must be today or in the future.",
+    "preferred-date-within-three-months": "Date must be within the next 3 months.",
+    "preferred-time-invalid": "Please select morning, afternoon, or evening.",
+    "project-timeline-invalid": "Please select a valid project timeline.",
+    "request-meeting-required": "Date and time are required when requesting a meeting.",
+    "scheduled-datetime-invalid": "Invalid scheduled date and time.",
+    "scheduled-time-format": "Time must be in HH:MM format.",
+    "service-interest-invalid": "Please select a valid service.",
+    "submission-id-invalid": "Invalid submission reference."
+  },
+  "transparency-lead": {
+    "complexity": "Complexity is required.",
+    "email": "Enter a valid email address.",
+    "name": "Name must not exceed 120 characters.",
+    "phone": "Invalid phone number.",
+    "projectType": "Project type is required.",
+    "timeline": "Timeline is required."
+  },
+  "too-many-requests": "Too many requests. Please try again in a few minutes."
+}

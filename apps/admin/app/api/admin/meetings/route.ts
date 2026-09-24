@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, Prisma, MeetingStatus, MeetingType } from "@repo/database";
 import { z } from "zod";
-import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
+import { recordChange, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
+import { deleteRecords } from "@/app/(dashboard)/_actions/delete";
 
 export async function GET(request: NextRequest) {
   try {
@@ -263,6 +264,13 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+/**
+ * Deleting a meeting goes through the same registry every other delete uses.
+ *
+ * It used to call `prisma.meeting.delete` here, which quietly granted ADMIN a
+ * permission the role matrix does not (`rbac.ts` gives `meeting.delete` to
+ * OWNER only) and wrote a thinner audit snapshot than the registry's.
+ */
 export async function DELETE(request: NextRequest) {
   try {
     const session = await requireAdminSession(request);
@@ -278,41 +286,21 @@ export async function DELETE(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Meeting ID is required",
-        },
+        { success: false, message: "Meeting ID is required" },
         { status: 400 },
       );
     }
 
-    const meeting = await prisma.meeting.findUnique({
-      where: { id },
-    });
+    const result = await deleteRecords("meeting", [id]);
 
-    if (!meeting) {
+    if (result.deleted === 0) {
+      const refusal = result.refused[0];
+      const gone = refusal?.reason === "Already gone.";
       return NextResponse.json(
-        {
-          success: false,
-          message: "Meeting not found",
-        },
-        { status: 404 },
+        { success: false, message: gone ? "Meeting not found" : (refusal?.reason ?? "Meeting was not deleted") },
+        { status: gone ? 404 : 409 },
       );
     }
-
-    await prisma.meeting.delete({
-      where: { id },
-    });
-
-    await recordActivity({
-      action: "meeting.deleted",
-      actor: userActor(session),
-      entityType: "meeting",
-      entityId: id,
-      entityLabel: meeting.title,
-      summary: `Deleted "${meeting.title}"`,
-      before: { status: meeting.status },
-    });
 
     return NextResponse.json({
       success: true,
@@ -322,12 +310,11 @@ export async function DELETE(request: NextRequest) {
     if (process.env.NODE_ENV !== "production") {
       console.error("Error deleting meeting:", error);
     }
+    // `deleteRecords` throws when the role matrix refuses the subject.
+    const denied = error instanceof Error && error.message.startsWith("Your role cannot delete");
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to delete meeting",
-      },
-      { status: 500 },
+      { success: false, message: denied ? error.message : "Failed to delete meeting" },
+      { status: denied ? 403 : 500 },
     );
   }
 }

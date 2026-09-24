@@ -77,7 +77,6 @@ export default async function SubmissionDetailPage({
               id={submission.id}
               label={submission.name}
               redirectTo="/submissions"
-              variant="ghost"
             />
           </>
         }

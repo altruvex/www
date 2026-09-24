@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionSkeleton } from "@/components/shared/section-skeleton";
+import { MOTION } from "@/lib/motion/tokens";
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 
 type GsapContext = ReturnType<
@@ -51,7 +52,7 @@ export function SceneInversionWrapper() {
 
             ScrollTrigger.create({
               trigger: wrapper,
-              start: "top 60%",
+              start: MOTION.trigger.inView,
               once: true,
               onEnter: () => setEntered(true),
             });
@@ -70,7 +71,7 @@ export function SceneInversionWrapper() {
     <div
       id="services-wrapper"
       ref={wrapperRef}
-      className="relative overflow-clip transition-colors duration-300 ease-smooth motion-reduce:transition-none"
+      className="relative overflow-clip transition-colors duration-(--motion-drawer) ease-smooth motion-reduce:transition-none"
       data-scene={entered ? "inverted" : undefined}
     >
       <div className="relative z-1">

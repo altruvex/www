@@ -1,9 +1,12 @@
 "use client";
 
 import {
+  auditCreditDiscount,
+  auditCreditFor,
   discountAmount,
   investmentTotal,
   netTotal,
+  NO_DISCOUNT,
   rescaleInvestmentItems,
   type Discount,
   type ProposalContent,
@@ -113,6 +116,23 @@ export function PriceControl({
   const setDiscount = (patch: Partial<Discount>) =>
     onChange({ ...content, discount: { ...discount, ...patch } });
 
+  // The published rule: a paid Technical Audit comes off the build. The
+  // figure is never typed here — applying it stamps the schema's number, and
+  // the gate re-derives it on save, so the deck and the contract cannot quote
+  // a credit the site does not offer. Null means this currency has no
+  // published audit fee; the control says so rather than converting silently.
+  const auditCredit = auditCreditFor(currency);
+  const isAuditCredit = discount.kind === "audit-credit";
+  const applyAuditCredit = () => {
+    const credit = auditCreditDiscount(currency);
+    if (credit) onChange({ ...content, discount: credit });
+  };
+  const clearAuditCredit = () =>
+    onChange({
+      ...content,
+      discount: { ...NO_DISCOUNT, reason: discount.reason },
+    });
+
   const effectivePercent = subtotal > 0 ? (reduction / subtotal) * 100 : 0;
   const calculatedVat = (net * vatPercent) / 100;
   const finalTotalWithVat = net + calculatedVat;
@@ -192,6 +212,44 @@ export function PriceControl({
             })}
           </div>
         </fieldset>
+        <div className="pt-0.5">
+          <button
+            type="button"
+            aria-pressed={isAuditCredit}
+            disabled={auditCredit === null}
+            onClick={isAuditCredit ? clearAuditCredit : applyAuditCredit}
+            className={cn(
+              "flex h-8 w-full items-center justify-center gap-1.5 rounded-md border px-2 text-base",
+              "transition-colors duration-(--dur-state)",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+              isAuditCredit
+                ? "border-brand bg-brand-soft font-medium text-foreground"
+                : "border-border bg-card text-muted-foreground enabled:hover:border-border-mid enabled:hover:text-foreground",
+            )}
+          >
+            {isAuditCredit && (
+              <Check className="size-3 shrink-0 text-brand" aria-hidden />
+            )}
+            <span className="truncate">
+              {isAuditCredit ? "Audit credit applied" : "This build follows a paid audit"}
+              {auditCredit !== null && (
+                <span className="ms-1.5 font-mono text-micro tabular-nums text-subtle-foreground">
+                  −{formatCurrency(auditCredit, currency)}
+                </span>
+              )}
+            </span>
+          </button>
+          <p className="mt-1.5 text-micro leading-relaxed text-subtle-foreground">
+            {auditCredit === null
+              ? `The audit fee has no published figure in ${currency}. Quote in EGP, or apply the reduction by hand.`
+              : isAuditCredit
+                ? "The figure comes from the pricing schema and is re-checked on save. The contract states the credit and names the audit."
+                : "Applies the published rule: the Technical Audit fee comes off the project price."}
+          </p>
+          {issueFor("discount.kind") && (
+            <p className="mt-1 text-micro text-destructive">{issueFor("discount.kind")}</p>
+          )}
+        </div>
         {discount.mode !== "none" && (
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
@@ -204,6 +262,7 @@ export function PriceControl({
                 max={discount.mode === "percent" ? 100 : undefined}
                 suffix={discount.mode === "percent" ? "%" : currency}
                 invalid={!(discount.value > 0)}
+                readOnly={isAuditCredit}
                 onChange={(v) => setDiscount({ value: Number.isFinite(v) ? Math.min(v, discount.mode === "percent" ? 100 : v) : 0 })}
               />
             </Field>
@@ -217,6 +276,7 @@ export function PriceControl({
                 onChange={(v) => setDiscount({ label: v })}
                 placeholder="Launch discount"
                 invalid={!discount.label.trim()}
+                readOnly={isAuditCredit}
               />
             </Field>
             <Field

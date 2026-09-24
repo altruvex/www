@@ -17,7 +17,7 @@ export const AR_COPY: PricingCopy = {
     },
     webapp: {
       documentName: "تطبيق ويب مخصص",
-      name: "تطبيق ويب Custom Webapp",
+      name: "تطبيق ويب مخصص",
       description: "تطبيقات ويب مخصصة: لوحات تحكم وبوابات وأنظمة داخلية.",
     },
     ecommerce: {
@@ -27,7 +27,7 @@ export const AR_COPY: PricingCopy = {
     },
     pwa: {
       documentName: "تطبيق ويب تقدمي",
-      name: "تطبيق ويب Webapp",
+      name: "تطبيق ويب تقدمي (PWA)",
       description: "تطبيقات قابلة للتثبيت وتعمل دون اتصال، مبنية على الويب.",
     },
   },
@@ -117,7 +117,7 @@ export const AR_COPY: PricingCopy = {
     // literal translation of the EN template would have produced.
     timelineValue: "{weeks} أسابيع",
     ceiling:
-      "لا يتجاوز أي مشروع {max} أسبوعاً. ما هو أكبر من ذلك يُسلَّم على مراحل.",
+      "من {windowMin} إلى {windowMax} أسابيع في جدول الأسعار. الموعد المرن أو كتابة المحتوى من الصفر قد يمدّ عرض السعر حتى {ceiling} أسبوعاً - لا أكثر. ما هو أكبر من ذلك يُسلَّم على مراحل.",
   },
   maintenance: {
     essential: {
@@ -128,6 +128,13 @@ export const AR_COPY: PricingCopy = {
         "دعم عبر واتساب أو بريد إلكتروني خلال ساعات العمل",
         "ملخص صحة ربع سنوي",
       ],
+      compare: {
+        bestFor: "موقع يحتاج أساساً أن يبقى آمناً ومحدّثاً",
+        cadence: "دورة تحديث شهرية",
+        monitoring: "رقابة وقت التشغيل والتحقق من النسخ الاحتياطية",
+        reporting: "ملخص صحة ربع سنوي",
+        support: "ساعات العمل، عبر واتساب أو البريد",
+      },
     },
     professional: {
       name: "الاحترافية",
@@ -137,6 +144,13 @@ export const AR_COPY: PricingCopy = {
         "تقرير أداء وأمان شهري",
         "دعم لتحديثات الإصدار الصغيرة",
       ],
+      compare: {
+        bestFor: "موقع أو متجر يتغيّر كل شهر",
+        cadence: "فحوصات أسبوعية",
+        monitoring: "رقابة يومية مع مراجعة النسخ ووقت التشغيل",
+        reporting: "تقرير أداء وأمان شهري",
+        support: "معالجة الحوادث بأولوية",
+      },
     },
     enterprise: {
       name: "المؤسسية",
@@ -146,6 +160,13 @@ export const AR_COPY: PricingCopy = {
         "رقابة متعددة الأنظمة وإدارة الحوادث",
         "إدارة الأدوات والعمليات ربط عند الحاجة",
       ],
+      compare: {
+        bestFor: "عدة أنظمة، أو نظام لا يحتمل التوقف",
+        cadence: "يُتفق عليه معك",
+        monitoring: "رقابة متعددة الأنظمة وإدارة الحوادث",
+        reporting: "مراجعات للبنية والأداء والأمان",
+        support: "SLA مخصص وبروتوكول استجابة مخصص",
+      },
     },
   },
   maintenanceTemplates: {
@@ -155,6 +176,7 @@ export const AR_COPY: PricingCopy = {
       "حتى {count} طلبات تعديل شهرياً، مع أولوية في سرعة التنفيذ",
     portal: "الوصول إلى بوابة العميل — تتبع كل طلب وحالته",
     overage: "الطلبات الإضافية تُحتسب بـ{rate} جنيه/ساعة.",
+    overageShort: "{rate} جنيه / ساعة",
     customPrice: "مخصص",
     perCycle: {
       monthly: "/ شهرياً",
@@ -164,11 +186,11 @@ export const AR_COPY: PricingCopy = {
   },
   consulting: {
     "technical-audit": {
-      title: "مراجعة تقني -",
+      title: "مراجعة تقنية -",
       titleItalic: "نطاق ثابت، سعر ثابت.",
-      name: "مراجعة تقني - نطاق ثابت، سعر ثابت.",
+      name: "مراجعة تقنية - نطاق ثابت، سعر ثابت.",
       description:
-        "تعاون أول محدد قبل أي إعادة بناء أو توسع. نفحص النظام الحالية ونعزل المخاطر التقنية ونحول النتائج إلى <strong>خارطة طريق جاهزة للتنفيذ.</strong>",
+        "تعاون أول محدد قبل أي إعادة بناء أو توسع. نفحص النظام الحالي ونعزل المخاطر التقنية ونحول النتائج إلى <strong>خارطة طريق جاهزة للتنفيذ.</strong>",
       deliverables: [
         "مراجعة البنية والتقنيات الحالية",
         "تحديد مشاكل الأداء",
@@ -182,6 +204,11 @@ export const AR_COPY: PricingCopy = {
       ctaLabel: "ابدأ بالمراجعة",
       eyebrow: "عرض مدخل محدد النطاق",
       includedLabel: "ما هو مشمول",
+      creditLabel: "يُخصم من قيمة المشروع",
+      creditIfBuild:
+        "إذا أكملت البناء مع Altruvex، يُخصم مبلغ {credit} من سعر المشروع.",
+      creditIfNot:
+        "وإن لم تفعل، تحتفظ بالنتائج وخارطة الطريق — وتبقى قيمة المراجعة كما هي.",
     },
   },
   addons: {

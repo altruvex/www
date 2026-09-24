@@ -63,7 +63,7 @@ export const WorkSection = memo(function WorkSection() {
           description={tW.rich("description", bodyMarks)}
           className="mb-12 md:mb-16"
         />
-        <ol ref={recordsRef} className="list-none border-b border-border">
+        <ol ref={recordsRef} className="list-none border-b border-border-subtle">
           {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
             <WorkRecord
               key={slug}
@@ -91,7 +91,7 @@ export const WorkSection = memo(function WorkSection() {
         <FlagshipBlock metaRef={metaRef} tf={tf} stepLabel={stepLabel} />
 
         <div className="mt-8 flex items-center gap-4 md:mt-6">
-          <div className="h-px flex-1 bg-border" />
+          <div className="h-px flex-1 bg-border-subtle" />
           <Eyebrow>{tW("labels.footer")}</Eyebrow>
         </div>
       </Container>
@@ -117,7 +117,7 @@ function FlagshipBlock({
   return (
     <div
       ref={metaRef}
-      className="mt-16 border-t border-border pt-10 md:mt-24 md:pt-16"
+      className="mt-16 border-t border-border-subtle pt-10 md:mt-24 md:pt-16"
     >
       <SectionHeading
         titleAs="h3"
@@ -132,13 +132,10 @@ function FlagshipBlock({
             "max-w-sm text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75]",
         }}
       />
-      <ol className="mt-10 grid list-none gap-4 md:mt-16 md:grid-cols-3 md:gap-px md:overflow-hidden md:rounded-[1.5rem] md:border md:border-border/70 md:bg-border/70">
+      <ol className="mt-12 grid list-none gap-12 md:mt-16 md:grid-cols-3 md:gap-10 lg:gap-14">
         {movements.map((movement, index) => (
-          <li
-            key={movement.label}
-            className="relative bg-card px-6 py-7 md:px-7 md:py-8"
-          >
-            <div className="flex items-start justify-between gap-6">
+          <li key={movement.label} className="relative">
+            <div className="flex items-start gap-3">
               <span
                 aria-hidden
                 className="text-[clamp(2.75rem,5vw,4rem)] font-medium leading-none tracking-[-0.06em] text-foreground/20 tabular-nums"

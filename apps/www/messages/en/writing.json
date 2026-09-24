@@ -1,0 +1,27 @@
+{
+  "backLink": "Back to writing",
+  "ctas": {
+    "evaluating-developers": "See what Technical Consulting includes",
+    "multilingual-architecture": "See what Custom Development includes",
+    "technical-debt": "See what Maintenance & Support includes",
+    "why-not-wordpress": "See what we build instead"
+  },
+  "eyebrow": "Writing",
+  "hero": {
+    "description": "Selected writing on architecture, performance, and the business of high-end software.",
+    "title": "Thoughts on",
+    "titleItalic": "engineering & design"
+  },
+  "intro": {
+    "paragraph1": "<strong>Every article here comes from a project we actually shipped</strong> - a decision we had to defend on a real client codebase, not a hypothetical. We write about multilingual architecture because we have built it for stores serving Egyptian and regional buyers in two directions at once. We write about technical debt because we have inherited it from previous agencies and had to explain, line by line, why a rebuild was cheaper than another patch.",
+    "paragraph2": "This is not a marketing blog padded out for search engines. <dim>If a post does not teach you something you can apply to your own stack or your own hiring decisions, we do not publish it.</dim> Expect specifics - framework choices, performance numbers, the actual trade-offs - because that is what we would want to read before hiring an engineering partner ourselves."
+  },
+  "keepReading": "Keep reading",
+  "nextStep": "Next step",
+  "notFound": {
+    "body": "The article you are looking for is not available.",
+    "title": "Article not found"
+  },
+  "relatedArticles": "Related Articles",
+  "readTime": "{minutes} min read"
+}

@@ -53,7 +53,10 @@ export const ExitIntentModal = () => {
       if (response.ok) {
         setIsSuccess(true);
         markAsConverted();
-        trackEvent("exit_intent_captured", { phone });
+        // No phone number in an analytics payload. Nothing consumes these
+        // events today, and the day a provider script is added is the day this
+        // would start shipping a lead's number to it.
+        trackEvent("exit_intent_captured");
         setTimeout(() => setIsVisible(false), 3000);
       } else {
         setError(t("phoneError"));
@@ -105,8 +108,8 @@ export const ExitIntentModal = () => {
           isSuccess ? "exit-intent-success-title" : "exit-intent-heading"
         }
         className={cn(
-          "relative w-full max-w-md rounded-overlay liquid-glass outline-none",
-          "animate-in fade-in zoom-in-95 duration-200",
+          "relative w-full max-w-md rounded-panel-md liquid-glass outline-none",
+          "animate-in fade-in zoom-in-95 duration-(--motion-instant)",
         )}
       >
         <button
@@ -143,16 +146,22 @@ export const ExitIntentModal = () => {
                 {t("description")}
               </p>
             </div>
-            <div className="border-t border-border mb-6" />
+            <div className="border-t border-border-subtle mb-6" />
             <div className="mb-8 grid grid-cols-3 gap-3">
               {[
-                { value: "30 min", label: t("stats.noPitch") },
-                { value: "Free", label: t("stats.noCommitment") },
-                { value: "Direct", label: t("stats.founderAccess") },
+                { value: t("stats.noPitchValue"), label: t("stats.noPitch") },
+                {
+                  value: t("stats.noCommitmentValue"),
+                  label: t("stats.noCommitment"),
+                },
+                {
+                  value: t("stats.founderAccessValue"),
+                  label: t("stats.founderAccess"),
+                },
               ].map(({ value, label }) => (
                 <div
                   key={label}
-                  className="rounded-lg border border-foreground/8 bg-foreground/2 px-3 py-3"
+                  className="rounded-panel-sm border border-border-subtle bg-foreground/2 px-3 py-3"
                 >
                   <p className="text-sm font-medium text-foreground">{value}</p>
                   <p className="text-xs text-foreground/40 mt-0.5">{label}</p>
@@ -163,7 +172,7 @@ export const ExitIntentModal = () => {
               <div>
                 <div
                   className={cn(
-                    "flex items-center border-b border-border pb-2 gap-2",
+                    "flex items-center border-b border-border-subtle pb-2 gap-2",
                     error && "border-destructive",
                   )}
                 >

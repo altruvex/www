@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { twoFactorClient } from "better-auth/client/plugins";
 
 export const authClient = createAuthClient({
   // Force same-origin requests off whatever host actually served the page.
@@ -9,6 +10,7 @@ export const authClient = createAuthClient({
   // silently fails: the session cookie lands on the hardcoded host, not the
   // one the browser is actually on, so the app just bounces back to /login.
   baseURL: typeof window !== "undefined" ? window.location.origin : undefined,
+  plugins: [twoFactorClient()],
 });
 
-export const { signIn, signOut, useSession } = authClient;
+export const { signIn, signOut, useSession, twoFactor } = authClient;

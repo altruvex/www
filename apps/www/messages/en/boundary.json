@@ -1,0 +1,15 @@
+{
+  "eyebrow": "The boundary",
+  "above": "Templates stop here.",
+  "below": "Control begins",
+  "belowAccent": "underneath.",
+  "floor": "Template floor",
+  "controls": {
+    "schema": "Change the schema",
+    "checkout": "Rewrite the checkout",
+    "host": "Move the host",
+    "export": "Export every row"
+  },
+  "verdictLead": "Below the line, each of those is one commit",
+  "verdictContrast": "above it, each one is a rebuild."
+}

@@ -1,7 +1,8 @@
 import { Strong } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
+
+const BODY = "text-[1.0625rem] leading-[1.75] text-muted-foreground";
 
 function parseInline(text: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -15,13 +16,19 @@ function parseInline(text: string): ReactNode[] {
   });
 }
 
+/** `**Label**: value` — a line that names a thing and then states it. */
+const LABELLED_LINE = /^\*\*([^*]+)\*\*\s*[:：]\s*(.+)$/;
+
 export function LegalList({ items, className }: { items: string[]; className?: string }) {
   return (
-    <ul className={cn("mt-4 space-y-2.5", className)}>
+    <ul className={cn("mt-4 space-y-3", className)}>
       {items.map((item) => (
         <li
           key={item}
-          className="relative ps-5 text-base text-primary/60 leading-relaxed before:absolute before:inset-s-0 before:top-[0.55em] before:h-1 before:w-1 before:rounded-full before:bg-primary/25"
+          className={cn(
+            BODY,
+            "relative ps-6 before:absolute before:inset-s-0 before:top-[0.85em] before:h-px before:w-3 before:bg-foreground/35",
+          )}
         >
           {parseInline(item)}
         </li>
@@ -38,24 +45,21 @@ export function LegalDetails({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "mt-6 grid gap-4 border border-foreground/8 rounded-lg bg-foreground/2 p-5 md:p-6",
-        className,
-      )}
-    >
+    <dl className={cn("mt-6 border-t border-border-subtle", className)}>
       {details.map(({ label, value }) => (
         <div
           key={label}
-          className="grid gap-1 border-b border-foreground/6 pb-4 last:border-b-0 last:pb-0 sm:grid-cols-[minmax(120px,160px)_1fr] sm:gap-4"
+          className="grid gap-1 border-b border-border-subtle py-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(0,1fr)] sm:gap-6"
         >
-          <Eyebrow tone="foreground" className="normal-case tracking-normal font-sans text-sm">
-            {label}
-          </Eyebrow>
-          <p className="text-sm text-primary/60 leading-relaxed">{value}</p>
+          <dt className="text-[0.9375rem] font-medium leading-relaxed text-foreground">
+            {label.replace(/[:：]\s*$/, "")}
+          </dt>
+          <dd className="text-[0.9375rem] leading-relaxed text-muted-foreground">
+            {value}
+          </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }
 
@@ -83,8 +87,24 @@ export function LegalProse({
           );
         }
 
+        // Several `**Label**: value` lines in one block are a reference table
+        // (the subprocessor register), not a paragraph — joined into one
+        // paragraph they ran together into an unreadable line.
+        const labelled = lines.map((line) => LABELLED_LINE.exec(line.trim()));
+        if (lines.length > 1 && labelled.every(Boolean)) {
+          return (
+            <LegalDetails
+              key={blockIndex}
+              details={labelled.map((match) => ({
+                label: match![1],
+                value: match![2],
+              }))}
+            />
+          );
+        }
+
         return (
-          <p key={blockIndex} className="text-base text-primary/60 leading-relaxed">
+          <p key={blockIndex} className={BODY}>
             {parseInline(block)}
           </p>
         );

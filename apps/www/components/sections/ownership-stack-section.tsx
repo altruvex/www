@@ -32,13 +32,11 @@ const LAYER_TINTS: readonly string[] = [
   "bg-local-accent/[0.07]",
 ];
 
-const LAYER_EDGES: readonly string[] = [
-  "bg-local-accent/25",
-  "bg-local-accent/40",
-  "bg-local-accent/55",
-  "bg-local-accent/70",
-  "bg-local-accent/90",
-];
+const separation = () =>
+  gsap.utils.clamp(12, 26, Math.round(window.innerHeight * 0.022));
+
+const lateralStep = (lateral: boolean) =>
+  lateral ? gsap.utils.clamp(7, 14, Math.round(window.innerWidth * 0.009)) : 0;
 
 export function OwnershipStackSection() {
   const t = useTranslations("ownershipStack");
@@ -54,45 +52,152 @@ export function OwnershipStackSection() {
   useEffect(() => {
     const root = specimenRef.current;
     const section = sectionRef.current;
-    if (!root || !section || animated.current) return;
+    if (!root || !section) return;
 
-    const strata = root.querySelectorAll<HTMLElement>("[data-stratum]");
+    const strata = gsap.utils.toArray<HTMLElement>(
+      root.querySelectorAll("[data-stratum]"),
+    );
+    const base = root.querySelector<HTMLElement>("[data-specimen-base]");
+
+    const rtl = document.documentElement.dir === "rtl";
+    const dir = rtl ? -1 : 1;
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        if (!animated.current) {
+          gsap.set(strata, { opacity: 0, yPercent: 1.6 });
+
+          ScrollTrigger.create({
+            trigger: section,
+            start: MOTION.trigger.latest,
+            once: true,
+            onEnter: () => {
+              animated.current = true;
+              gsap.to(strata, {
+                opacity: 1,
+                yPercent: 0,
+                duration: MOTION.duration.base,
+                ease: MOTION.ease.smooth,
+                stagger: { each: MOTION.stagger.loose, from: "end" },
+              });
+            },
+          });
+        }
+      });
 
       mm.add(
         {
           motion: "(prefers-reduced-motion: no-preference)",
           reduced: "(prefers-reduced-motion: reduce)",
+          lateral: "(min-width: 1024px)",
         },
         (context) => {
-          const { reduced } = context.conditions as { reduced: boolean };
+          const { lateral, reduced } = context.conditions as {
+            lateral: boolean;
+            reduced: boolean;
+          };
 
           if (reduced) {
-            gsap.set(strata, { opacity: 1, y: 0 });
+            gsap.set(strata, { opacity: 1, yPercent: 0, x: 0, y: 0, scale: 1 });
+            gsap.set(root.querySelectorAll("[data-seam]"), {
+              scaleX: 1,
+              opacity: 1,
+            });
+            strata.forEach((slab) => {
+              slab.dataset.resolved = "true";
+            });
             return;
           }
 
-          gsap.set(strata, { opacity: 0, y: 14 });
+          const originX = rtl ? "right center" : "left center";
 
-          ScrollTrigger.create({
-            trigger: section,
-            start: "top 72%",
-            once: true,
-            onEnter: () => {
-              animated.current = true;
-              const tl = gsap.timeline({
-                defaults: { ease: MOTION.ease.smooth },
-              });
-              tl.to(strata, {
-                opacity: 1,
-                y: 0,
-                duration: 0.6,
-                stagger: { each: 0.09, from: "end" },
-              });
+          const timeline = gsap.timeline({
+            defaults: { ease: "none" },
+            scrollTrigger: {
+              trigger: root,
+              start: MOTION.trigger.late,
+              end: "bottom 30%",
+              scrub: MOTION.scroll.scrub.stage,
+              invalidateOnRefresh: true,
             },
           });
+
+          strata.forEach((slab, index) => {
+            timeline.to(
+              slab,
+              {
+                y: () => (index - 2) * separation(),
+                x: () => dir * (index - 2) * lateralStep(lateral),
+                duration: 0.4,
+              },
+              0,
+            );
+
+            timeline.to(
+              slab,
+              {
+                y: 0,
+                x: 0,
+                duration: 0.22,
+                ease: MOTION.ease.gentle,
+              },
+              0.78,
+            );
+
+            const seam = slab.querySelector<HTMLElement>("[data-seam]");
+            if (!seam) return;
+
+            const at = 0.06 * index;
+
+            gsap.set(seam, { transformOrigin: originX, scaleX: 0 });
+
+            timeline
+              .to(seam, { scaleX: 1, duration: 0.2 }, at)
+              .to(seam, { scaleX: 0, duration: 0.14 }, 0.84);
+          });
+
+          if (base) {
+            timeline
+              .to(
+                base,
+                { y: () => 2 * separation(), duration: 0.4 },
+                0,
+              )
+              .to(
+                base,
+                { y: 0, duration: 0.22, ease: MOTION.ease.gentle },
+                0.78,
+              );
+          }
+
+          strata.forEach((slab) => {
+            slab.dataset.resolved = "false";
+          });
+
+          const heads = strata.map((slab) =>
+            ScrollTrigger.create({
+              trigger: slab,
+              start: MOTION.trigger.inView,
+              end: "bottom 42%",
+              onToggle: (self) => {
+                slab.dataset.resolved = String(self.isActive);
+                gsap.to(slab, {
+                  scale: self.isActive ? 1.006 : 1,
+                  duration: 0.35,
+                  ease: MOTION.ease.ui,
+                });
+              },
+            }),
+          );
+
+          return () => {
+            heads.forEach((head) => head.kill());
+            strata.forEach((slab) => {
+              slab.dataset.resolved = "true";
+            });
+          };
         },
       );
     }, root);
@@ -105,7 +210,7 @@ export function OwnershipStackSection() {
       ref={sectionRef}
       id="ownership-stack"
       aria-labelledby="ownership-stack-heading"
-      className="accent-world-blue border-t border-border pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
@@ -120,72 +225,56 @@ export function OwnershipStackSection() {
           description={t("subtitle")}
           className="mb-12 lg:mb-16"
         />
-
-        {/* The argument, stated once. */}
         <div className="mb-12 max-w-[62ch] lg:mb-14">
           <Eyebrow className="mb-3">{t("intro.eyebrow")}</Eyebrow>
-          <p className="text-[clamp(1.125rem,1.5vw,1.375rem)] leading-[1.5] text-foreground">
+          <p className="text-[clamp(1.125rem,1.5vw,1.375rem)] leading-normal text-foreground">
             <Dim>{t("intro.dismissed")}</Dim> {t("intro.answerLead")}{" "}
             <Strong>{t("intro.answerStrong")}</Strong>
           </p>
         </div>
-
-        <div ref={specimenRef}>
-          {/* Axis top — surface. The ruler it labels is the strata's leading
-              edge, so the two can never fall out of alignment. */}
-          <div className="mb-2 flex items-center gap-3">
-            <Eyebrow className="text-[11px]">{t("axis.surface")}</Eyebrow>
-            <span aria-hidden className="h-px flex-1 bg-border" />
-            <Eyebrow className="text-[11px]">{t("legend.template")}</Eyebrow>
+        <div ref={specimenRef} data-specimen className="pb-14">
+          <div className="mb-14 flex items-center gap-3">
+            <Eyebrow className="text-micro">{t("axis.surface")}</Eyebrow>
+            <span aria-hidden className="h-px flex-1 bg-border-subtle" />
+            <Eyebrow className="text-micro">{t("legend.template")}</Eyebrow>
           </div>
-
-          <ol className="list-none overflow-hidden rounded-lg border border-border">
+          <ol className="list-none">
             {LAYER_IDS.map((id, i) => (
               <li
                 key={id}
                 data-stratum
+                data-resolved="true"
                 className={cn(
-                  "relative border-b border-border ps-8 pe-5 py-6 last:border-b-0 sm:pe-7 sm:py-7",
+                  "group/slab relative border border-border-subtle px-6 py-6 sm:px-7 sm:py-7",
+                  i > 0 && "-mt-px",
+                  i === 0 && "rounded-t-panel-sm",
+                  i === LAYER_IDS.length - 1 && "rounded-b-panel-sm",
+                  "transition-colors duration-(--motion-drawer) ease-smooth",
+                  "data-[resolved=true]:z-10 data-[resolved=true]:border-local-accent/35",
                   LAYER_TINTS[i],
                 )}
               >
-                {/* Ruler segment: this stratum's leading edge. Together the
-                      five segments are the depth scale, densest at the base. */}
                 <span
+                  data-seam
                   aria-hidden
-                  className={cn(
-                    "pointer-events-none absolute inset-y-0 inset-s-0 w-[3px]",
-                    LAYER_EDGES[i],
-                  )}
+                  className="
+                    pointer-events-none absolute inset-x-0 -top-px origin-[left_center] rtl:origin-[right_center]"
                 />
-
-                {/* The cut line: a mark on the object, not a second layout.
-                      Everything below it is what a template never delivers. */}
-                {i === 1 ? (
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-x-0 top-0 border-t-2 border-dashed border-local-accent/45"
-                  />
-                ) : null}
-
                 <div className="grid gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
                   <div>
                     <div className="flex items-baseline gap-3">
                       <span
                         aria-hidden
-                        className="shrink-0 text-sm tabular-nums text-local-accent-text ltr:font-mono"
+                        className="shrink-0 text-sm tabular-nums text-muted-foreground transition-colors duration-(--motion-drawer) ease-smooth group-data-[resolved=true]/slab:text-local-accent-text ltr:font-mono"
                       >
                         <Num value={i + 1} pad={2} />
                       </span>
                       <h3 className="font-sans text-[clamp(1.125rem,1.6vw,1.375rem)] font-medium leading-tight text-foreground">
                         {t(`layers.${id}.name`)}
                       </h3>
-                      {/* dir="auto": a spec value like "≤1s LCP" is Latin even
-                            on an Arabic page - without it the bidi algorithm
-                            moves the ≤. */}
                       <span
                         dir="auto"
-                        className="ms-auto shrink-0 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] leading-normal tracking-[0.06em] text-muted-foreground ltr:font-mono"
+                        className="ms-auto shrink-0 rounded-full border border-border-subtle bg-surface px-2.5 py-1 text-micro leading-normal tracking-[0.06em] text-muted-foreground ltr:font-mono"
                       >
                         {t(`layers.${id}.tag`)}
                       </span>
@@ -194,13 +283,12 @@ export function OwnershipStackSection() {
                       {t(`layers.${id}.spec`)}
                     </p>
                   </div>
-
                   <div>
                     <p className="text-[0.9375rem] leading-relaxed text-muted-foreground">
                       {t(`layers.${id}.detail`)}
                     </p>
-                    <p className="mt-4 border-s-2 border-local-accent/40 ps-4 text-sm leading-relaxed text-foreground">
-                      <span className="eyebrow block text-[11px] text-local-accent-text">
+                    <p className="mt-4 border-t border-local-accent/30 pt-3 text-sm leading-relaxed text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-data-[resolved=true]/slab:border-local-accent/70">
+                      <span className="eyebrow mb-1 block text-micro text-local-accent-text">
                         {t("ownershipLabel")}
                       </span>
                       {t(`layers.${id}.ownership`)}
@@ -210,9 +298,12 @@ export function OwnershipStackSection() {
               </li>
             ))}
           </ol>
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <Eyebrow className="text-[11px]">{t("axis.foundation")}</Eyebrow>
-            <span aria-hidden className="h-px min-w-8 flex-1 bg-border" />
+          <div
+            data-specimen-base
+            className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2"
+          >
+            <Eyebrow className="text-micro">{t("axis.foundation")}</Eyebrow>
+            <span aria-hidden className="h-px min-w-8 flex-1 bg-border-subtle" />
             <span
               aria-hidden
               className="h-0 w-8 shrink-0 border-t-2 border-dashed border-local-accent/45"
@@ -222,12 +313,11 @@ export function OwnershipStackSection() {
             </p>
           </div>
         </div>
-
-        <div className="mt-14 flex items-center gap-5 border-t border-border pt-8">
+        <div className="flex items-center gap-5 border-t border-border-subtle pt-8">
           <p className="max-w-[46ch] text-[clamp(1.25rem,1.9vw,1.5rem)] leading-snug text-foreground">
             <Highlight>{t("closing")}</Highlight>
           </p>
-          <span aria-hidden className="hidden h-px flex-1 bg-border sm:block" />
+          <span aria-hidden className="hidden h-px flex-1 bg-border-subtle sm:block" />
         </div>
       </Container>
     </section>

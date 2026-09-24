@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { prisma } from "@repo/database";
+import { PALETTE } from "@repo/ui/palette";
 import { auth } from "@/lib/auth";
 import { toProductRole, can, type Subject, type Action } from "@/lib/rbac";
 import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
@@ -319,6 +320,47 @@ export async function setProjectPhase(projectId: string, phase: string) {
   revalidatePath(`/projects/${projectId}`);
 }
 
+const PROJECT_STATUSES = ["ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"] as const;
+type ProjectStatusValue = (typeof PROJECT_STATUSES)[number];
+
+export async function setProjectStatus(projectId: string, status: string) {
+  const session = await authorize("edit", "project");
+  if (!PROJECT_STATUSES.includes(status as ProjectStatusValue)) {
+    throw new Error(`Unknown project status: ${status}`);
+  }
+  // Completion goes through `closeProject` (_actions/change-requests.ts): it
+  // checks unpaid payments and open change requests and stamps completedAt.
+  // Setting COMPLETED here would skip both.
+  if (status === "COMPLETED") {
+    throw new Error("Use Close project — it checks payments and open change requests first.");
+  }
+  const before = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { status: true, name: true },
+  });
+  await prisma.project.update({
+    where: { id: projectId },
+    data: {
+      status: status as ProjectStatusValue,
+      // Reopening a closed project un-closes it; a stale completedAt would
+      // keep reading "closed on" a date that is no longer true.
+      ...(before?.status === "COMPLETED" ? { completedAt: null } : {}),
+    },
+  });
+  await recordChange({
+    action: "project.status_changed",
+    actor: userActor(session),
+    entityType: "project",
+    entityId: projectId,
+    entityLabel: before?.name,
+    summary: `Status set to ${status.replace("_", " ").toLowerCase()}`,
+    before: { status: before?.status },
+    after: { status },
+  });
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}`);
+}
+
 export async function markNotificationsRead() {
   await authorize("view", "client");
   await prisma.notification.updateMany({
@@ -470,8 +512,8 @@ export async function updateCompanyProfile(data: {
       phone: data.phone.trim(),
       email: data.email.trim(),
       website: data.website.trim(),
-      brandColor: data.brandColor?.replace(/^#/, "").trim() || "4F62D4",
-      brandColorDark: data.brandColorDark?.replace(/^#/, "").trim() || "6E7CE2",
+      brandColor: data.brandColor?.replace(/^#/, "").trim() || PALETTE.light["brand-text"],
+      brandColorDark: data.brandColorDark?.replace(/^#/, "").trim() || PALETTE.dark["brand-text"],
     },
     update: {
       phone: data.phone.trim(),

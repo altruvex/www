@@ -1,15 +1,18 @@
-import { TechnicalSection } from "@/components/sections/technical-section";
+import { ConsultingFaqSection } from "@/components/sections/technical-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
-import { consultingView, type Locale } from "@repo/pricing-schema";
+import {
+  consultingView,
+  publishedBuildRangeLabel,
+  type Locale,
+} from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
 const metaKey: RouteMetaKey = "serviceConsulting";
 const pathSuffix = "/services/consulting";
-
 
 type ConsultingSeoFaq = {
   a: string;
@@ -38,6 +41,10 @@ export default async function ConsultingServicePage({
 
   const pricing = await getPublicPricing();
   const audit = consultingView("technical-audit", locale as Locale, pricing);
+  /* The span the audit's fee is stated against. Resolved here rather than in
+     the client component so the figure and the audit price come from the same
+     admin-editable matrix. */
+  const buildRange = publishedBuildRangeLabel(locale as Locale, pricing);
 
   const faqItems = t.raw("faq.items") as ConsultingSeoFaq[];
   const faqEntries = faqItems.map((item) => ({
@@ -53,8 +60,11 @@ export default async function ConsultingServicePage({
           ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
-      <PageClient audit={audit} />
-      <TechnicalSection />
+      <PageClient
+        audit={audit}
+        buildRange={buildRange}
+        faq={<ConsultingFaqSection />}
+      />
     </>
   );
 }

@@ -27,6 +27,41 @@ import {
 } from "@/lib/proposal-schema";
 import { COMMERCIAL_TERMS, applyVat } from "@repo/pricing-schema";
 import { cn } from "@/lib/utils";
+import { Plus } from "lucide-react";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+} from "@repo/ui";
+import { MAX_PROPOSAL_SERVICES, type ProposalService } from "@/lib/proposal-schema";
+import {
+  annualised,
+  CLIENT_SERVICE_KINDS,
+  DEFAULT_TERM_MONTHS,
+  KIND_LABEL,
+  termLabel,
+} from "@/lib/service-lifecycle";
+
+/**
+ * A blank service row. Domain and hosting start with the first term inside
+ * the project fee, because that is what the standard contract says ("domain,
+ * SSL and base hosting for Year 1 are included"). The price starts empty, not
+ * at a guess: a renewal price is a fact about one registrar and one term.
+ */
+function newService(kind: ProposalService["kind"]): ProposalService {
+  return {
+    kind,
+    name: "",
+    provider: "",
+    termMonths: DEFAULT_TERM_MONTHS[kind],
+    firstTermIncluded: kind === "DOMAIN" || kind === "HOSTING" || kind === "SSL_CERTIFICATE",
+    price: Number.NaN,
+  };
+}
 
 function formatCurrency(amount: number, currency: string) {
   try {
@@ -84,7 +119,7 @@ const GROUP_PATHS: Record<ProposalGroupId, string[]> = {
   problems: ["problems"],
   solution: ["solutionModules", "performanceTargets", "performanceScores"],
   timeline: ["timelinePhases"],
-  investment: ["investmentItems", "discount", "paymentSchedule"],
+  investment: ["investmentItems", "discount", "paymentSchedule", "services"],
   scope: ["scopeIncluded", "scopeNotIncluded", "keyTerms"],
   whyus: ["whyUs"],
   chrome: ["labels"],
@@ -399,6 +434,23 @@ export function ProposalContentEditor({
             <TextInput
               value={content.labels.keyTerms}
               onChange={(v) => setLabels({ keyTerms: v })}
+            />
+          </Field>
+          <Field label="Recurring services label" error={sectionError("labels.services")}>
+            <TextInput
+              value={content.labels.services}
+              onChange={(v) => setLabels({ services: v })}
+            />
+          </Field>
+          <Field
+            label="Recurring services note"
+            hint="The line under the services block on slide 5."
+            error={sectionError("labels.servicesNote")}
+            className="sm:col-span-2"
+          >
+            <TextInput
+              value={content.labels.servicesNote}
+              onChange={(v) => setLabels({ servicesNote: v })}
             />
           </Field>
         </div>
@@ -820,6 +872,131 @@ export function ProposalContentEditor({
             </p>
           )}
         </div>
+      </Section>
+
+      <Section
+        title="Recurring services"
+        description="Domain, hosting, mailboxes. Printed under the payment split and billed separately — never part of the total above. Signing opens each one as a tracked service with renewal alerts."
+        action={
+          content.services.length > 0 ? (
+            <span className="telemetry text-subtle-foreground">
+              Per year{" "}
+              <span className="text-foreground">
+                {formatCurrency(
+                  content.services.reduce((sum, s) => sum + annualised(s.price || 0, s.termMonths || 12), 0),
+                  currency,
+                )}
+              </span>
+            </span>
+          ) : undefined
+        }
+      >
+        <ListEditor
+          items={content.services}
+          onChange={(v) => set("services", v)}
+          makeItem={() => newService("DOMAIN")}
+          addLabel="Add service"
+          minItems={0}
+          emptyBody="No recurring services on this proposal. Add the domain and hosting if Altruvex will hold them — each gets its own price and term, and the contract lists them."
+          renderItem={(item, i, update) => {
+            const err = (field: string) => issuesFor(`services.${i}.${field}`)[0]?.message;
+            return (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                  <Select
+                    value={item.kind}
+                    onValueChange={(v) => update({ kind: v as ProposalService["kind"] })}
+                  >
+                    <SelectTrigger className="w-full sm:w-40" aria-label={`Service ${i + 1} type`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLIENT_SERVICE_KINDS.map((kind) => (
+                        <SelectItem key={kind} value={kind}>
+                          {KIND_LABEL[kind]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <TextInput
+                    value={item.name}
+                    onChange={(v) => update({ name: v })}
+                    placeholder={item.kind === "DOMAIN" ? "newlight.com" : "Vercel Pro — production"}
+                    invalid={!item.name.trim()}
+                    className="w-full sm:flex-1"
+                    ariaLabel={`Service ${i + 1} name`}
+                  />
+                  <NumberInput
+                    value={item.price}
+                    min={1}
+                    suffix={currency}
+                    onChange={(v) => update({ price: Number.isFinite(v) ? Math.round(v) : v })}
+                    invalid={!(item.price >= 1) || Boolean(err("price"))}
+                    className="w-full sm:w-40"
+                    ariaLabel={`Service ${i + 1} price per term`}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+                  <TextInput
+                    value={item.provider}
+                    onChange={(v) => update({ provider: v })}
+                    placeholder="Provider (optional)"
+                    className="w-full sm:flex-1"
+                    ariaLabel={`Service ${i + 1} provider`}
+                  />
+                  <Select
+                    value={String(item.termMonths)}
+                    onValueChange={(v) => update({ termMonths: Number(v) })}
+                  >
+                    <SelectTrigger className="w-full sm:w-40" aria-label={`Service ${i + 1} term`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 3, 6, 12, 24, 36].map((months) => (
+                        <SelectItem key={months} value={String(months)}>
+                          {termLabel(months)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <label className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                    <span className="text-meta text-muted-foreground">First term in fee</span>
+                    <Switch
+                      checked={item.firstTermIncluded}
+                      onCheckedChange={(checked) => update({ firstTermIncluded: checked })}
+                      aria-label={`Service ${i + 1}: first term included in the project fee`}
+                    />
+                  </label>
+                </div>
+                {(err("price") || err("name") || err("termMonths")) && (
+                  <p className="text-meta text-danger">{err("price") ?? err("name") ?? err("termMonths")}</p>
+                )}
+              </div>
+            );
+          }}
+        />
+
+        {content.services.length < MAX_PROPOSAL_SERVICES && (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+            <span className="me-1 text-meta text-subtle-foreground">Quick add</span>
+            {(["DOMAIN", "HOSTING", "BUSINESS_EMAIL", "SSL_CERTIFICATE"] as const).map((kind) => (
+              <Button
+                key={kind}
+                variant="outline"
+                size="sm"
+                onClick={() => set("services", [...content.services, newService(kind)])}
+              >
+                <Plus className="size-3" />
+                {KIND_LABEL[kind]}
+              </Button>
+            ))}
+          </div>
+        )}
+        {sectionError("services") && (
+          <p className="rounded-md border border-danger/25 bg-danger/[0.06] px-2.5 py-2 text-base text-danger">
+            {sectionError("services")}
+          </p>
+        )}
       </Section>
       </>
       )}

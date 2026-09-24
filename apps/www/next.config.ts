@@ -91,6 +91,18 @@ const nextConfig: NextConfig = {
         destination: "/:locale/transparency",
         permanent: true,
       },
+      // The e-commerce service page was removed (2026-09-13). The URL was in the
+      // sitemap and indexed, so it lands on the services index rather than a 404.
+      {
+        source: "/services/ecommerce",
+        destination: "/services",
+        permanent: true,
+      },
+      {
+        source: "/:locale(en|ar)/services/ecommerce",
+        destination: "/:locale/services",
+        permanent: true,
+      },
     ];
   },
   async headers() {

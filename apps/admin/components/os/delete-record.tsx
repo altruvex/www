@@ -429,7 +429,7 @@ export function DeleteRecordButton({
   id,
   label,
   redirectTo,
-  variant = "outline",
+  variant = "destructive-ghost",
   size = "default",
   children = "Delete",
   className,
@@ -438,7 +438,8 @@ export function DeleteRecordButton({
   id: string;
   label: string;
   redirectTo?: string;
-  variant?: "outline" | "ghost" | "destructive";
+  /** The trigger stays quiet; the solid red fill belongs to the dialog's commit. */
+  variant?: "destructive-ghost" | "destructive";
   size?: "sm" | "default" | "icon-sm";
   children?: React.ReactNode;
   className?: string;
@@ -456,10 +457,7 @@ export function DeleteRecordButton({
       <Button
         variant={variant}
         size={size}
-        className={cn(
-          variant !== "destructive" && "text-danger hover:text-danger",
-          className,
-        )}
+        className={className}
         onClick={() => request({ id, label })}
       >
         <Trash2 className="size-3.5" />

@@ -19,6 +19,7 @@ const ENTITY_HREF: Record<string, (id: string) => string> = {
   Contract: (id) => `/contracts/${id}`,
   Project: (id) => `/projects/${id}`,
   Meeting: () => `/calendar`,
+  ClientService: (id) => `/services#service-${id}`,
 };
 
 const TYPE_TONE: Record<string, string> = {
@@ -26,6 +27,7 @@ const TYPE_TONE: Record<string, string> = {
   NEW_MEETING: "bg-progress",
   STATUS_CHANGE: "bg-neutral",
   ASSIGNMENT: "bg-warning",
+  RENEWAL_DUE: "bg-danger",
 };
 
 export default async function NotificationsPage() {
@@ -116,7 +118,6 @@ export default async function NotificationsPage() {
                       entity="notification"
                       id={notification.id}
                       label={notification.title}
-                      variant="ghost"
                       size="icon-sm"
                     >
                       {null}

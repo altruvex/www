@@ -1,0 +1,7 @@
+{
+  "description": "Every technical decision is oriented toward long-term stability, performance, and a codebase the next engineer can understand without a walkthrough.",
+  "exampleNote": "Example run — illustrative figures, not a client's build.",
+  "eyebrow": "Service Architecture",
+  "title": "How we build",
+  "titleAccent": "systems that last"
+}

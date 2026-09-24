@@ -1,0 +1,116 @@
+{
+  "multilingual": {
+    "eyebrow": "Multilingual by Design",
+    "paragraphs": "Most sites treat RTL as an afterthought - flip the layout and hope it holds. <strong>We design systems where direction is a first-class architectural decision from day one.</strong>\n\n<dim>This is not about translation.</dim> <strong>It is cultural adaptation.</strong> Right-aligned navigation is not mirrored - it is reconsidered.\n\nEvery component, every layout, every interaction - <strong>built to perform in both directions without compromise.</strong>",
+    "title": "Structure that respects direction.",
+    "specimen": {
+      "label": "One heading, two directions",
+      "en": {
+        "label": "English · left to right",
+        "text": "Structure that respects direction."
+      },
+      "ar": {
+        "label": "Arabic · right to left",
+        "text": "تصميم يحترم اتجاه اللغة."
+      },
+      "notes": {
+        "face": {
+          "term": "Typeface",
+          "value": "Outfit for Latin, Vazirmatn for Arabic. Each is drawn for its own script."
+        },
+        "leading": {
+          "term": "Line height",
+          "value": "Arabic headings get more room than Latin ones, so dots and tall letters never collide."
+        },
+        "tracking": {
+          "term": "Letter spacing",
+          "value": "Never added to Arabic. Spacing breaks the joins between letters."
+        },
+        "direction": {
+          "term": "Direction",
+          "value": "Arrows, lines and order follow the reading direction, not the edge of the screen."
+        }
+      }
+    }
+  },
+  "boundaries": {
+    "intro": "Applied to ourselves first. We do not:",
+    "items": {
+      "1": "Accept projects with fixed deadlines imposed before the scope is understood",
+      "2": "Build systems we cannot stand behind technically",
+      "3": "Work through agencies that sit between us and the end client",
+      "4": "Compete on price",
+      "5": "Start execution before the problem is fully mapped"
+    },
+    "title": "What we will not do."
+  },
+  "closing": {
+    "cta": "Start the conversation: hello@altruvex.com",
+    "description": "Not every project needs this level of thinking. Some need speed. Some need iteration. But if you are building something that needs to last - <strong>if the system is the product, not just the storefront - we should talk</strong>. <dim>No pitch. No pressure.</dim> A direct technical discussion about what you are building and whether we are the right fit.",
+    "title": "If this matches how you think,",
+    "titleItalic": "let's talk."
+  },
+  "constraints": {
+    "eyebrow": "Constraints",
+    "paragraphs": "<strong>Unlimited options create paralysis</strong>, <dim>not products</dim>. We begin every project by defining what we will not build - which features are out of scope, which use cases are excluded, which decisions are off the table.\n\n<dim>This is not limitation.</dim> <strong>It is focus.</strong> A system designed for everyone serves no one well.\n\nConstraints force decisions. Decisions create character. <strong>Character builds a product with a point of view.</strong>",
+    "title": "Constraints are a design tool."
+  },
+  "contrasts": {
+    "1": {
+      "altruvex": "Understand the problem users are actually trying to solve",
+      "common": "Build the features users asked for"
+    },
+    "2": {
+      "altruvex": "Define architectural constraints before opening the editor",
+      "common": "Get it working, optimize later"
+    },
+    "3": {
+      "altruvex": "Launch is when the system starts working - not when fixes start",
+      "common": "We will fix it after launch"
+    },
+    "eyebrow": "The Difference",
+    "label": {
+      "common": "Usually said",
+      "altruvex": "Said here"
+    },
+    "title": "Three sentences said at most kickoffs.",
+    "titleItalic": "And what gets said here instead."
+  },
+  "decisions": {
+    "data": {
+      "description": "Before UI, before features, before brand - we map what the system needs to know. A weak data model cannot be rescued by clean code on top of it.",
+      "title": "Data First"
+    },
+    "eyebrow": "Engineering Principles",
+    "handoff": {
+      "description": "Code written for one person is fragile. Every commit assumes someone else will read and extend it six months from now.",
+      "title": "Write for the Next Engineer"
+    },
+    "maintenance": {
+      "description": "A system that requires constant attention is not finished. We optimize for long stretches of stability where nothing breaks, nothing drifts.",
+      "title": "Minimize Intervention Cost"
+    },
+    "scale": {
+      "description": "Not because every project will reach it - but because growth assumptions change every architectural decision made today.",
+      "title": "Design for 10x"
+    },
+    "title": "Architecture precedes implementation."
+  },
+  "hero": {
+    "description": "Interface, architecture, copy, and CTA structure all emerge from one question: what must the buyer understand, and what should they do next?",
+    "eyebrow": "09 - Approach",
+    "title": "We do not design pages first.",
+    "order": {
+      "label": "The order decisions are made in",
+      "usual": "Usually",
+      "altruvex": "At Altruvex",
+      "items": {
+        "page": "The page",
+        "features": "Features",
+        "architecture": "Architecture",
+        "data": "Data"
+      },
+      "note": "The page is the last thing we decide, because it is the one layer that stays cheap to change."
+    }
+  }
+}

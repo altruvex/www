@@ -158,7 +158,7 @@ export const InitialLoader = memo(function InitialLoader() {
                   <span className="text-foreground/10 tracking-[0.2em] grow overflow-hidden whitespace-nowrap">
                     {line.dots}
                   </span>
-                  <span className="text-emerald-500/80 mx-4 w-4 shrink-0 text-center drop-shadow-[0_0_4px_rgba(34,197,94,0.4)]">
+                  <span className="text-success/80 mx-4 w-4 shrink-0 text-center drop-shadow-[0_0_4px_hsl(var(--success)/0.4)]">
                     {line.status}
                   </span>
                   <span className="text-foreground/60 w-28 shrink-0">{line.value}</span>

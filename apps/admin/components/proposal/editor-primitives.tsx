@@ -37,6 +37,7 @@ export function TextInput({
   invalid,
   className,
   ariaLabel,
+  readOnly,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -44,6 +45,8 @@ export function TextInput({
   invalid?: boolean;
   className?: string;
   ariaLabel?: string;
+  /** For a value the schema owns: shown, focusable, not editable. */
+  readOnly?: boolean;
 }) {
   return (
     <Input
@@ -53,7 +56,8 @@ export function TextInput({
       onChange={(e) => onChange(e.target.value)}
       aria-label={ariaLabel}
       aria-invalid={invalid || undefined}
-      className={className}
+      readOnly={readOnly}
+      className={cn(readOnly && "text-muted-foreground", className)}
     />
   );
 }
@@ -95,6 +99,7 @@ export function NumberInput({
   invalid,
   className,
   ariaLabel,
+  readOnly,
 }: {
   value: number;
   onChange: (value: number) => void;
@@ -105,6 +110,8 @@ export function NumberInput({
   invalid?: boolean;
   className?: string;
   ariaLabel?: string;
+  /** For a value the schema owns: shown, focusable, not editable. */
+  readOnly?: boolean;
 }) {
   const meta = useFieldMeta({ invalid });
   return (
@@ -127,10 +134,12 @@ export function NumberInput({
           }
         }}
         aria-label={ariaLabel}
+        readOnly={readOnly}
         {...meta}
         className={cn(
           controlSurface,
           "h-(--control-h) text-end font-mono tabular-nums",
+          readOnly && "text-muted-foreground",
           suffix && "pe-7",
           "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         )}

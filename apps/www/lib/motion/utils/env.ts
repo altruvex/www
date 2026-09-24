@@ -1,6 +1,6 @@
 import { MOTION } from "../tokens";
 
-export interface MotionEnv {
+interface MotionEnv {
   /** prefers-reduced-motion: reduce */
   reduce: boolean;
   /** Low CPU / RAM / save-data. NOT "is touch" — modern phones are fast. */

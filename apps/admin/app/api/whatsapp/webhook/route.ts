@@ -8,15 +8,29 @@ export async function GET(request: NextRequest) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  if (
-    mode === "subscribe" &&
-    token &&
-    token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN
-  ) {
+  if (mode === "subscribe" && token && verifyTokenMatches(token)) {
     return new NextResponse(challenge, { status: 200 });
   }
 
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
+/**
+ * Compares the handshake token in constant time.
+ *
+ * The token only gates Meta's subscription handshake, so a leak buys little —
+ * but `===` on a secret is a habit, and the file four lines down already does
+ * this properly for the signature.
+ */
+export function verifyTokenMatches(
+  provided: string,
+  expected = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+): boolean {
+  if (!expected) return false;
+  const a = Buffer.from(provided, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 export function isValidSignature(

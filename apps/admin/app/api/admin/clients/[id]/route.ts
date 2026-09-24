@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma, Prisma, SubmissionStatus, Priority } from "@repo/database";
+import { prisma, Prisma, SubmissionStatus, Priority, normalizePhone } from "@repo/database";
 import { recordChange, userActor } from "@/lib/activity-log";
 import { requireAdminSession } from "@/lib/require-admin";
 
@@ -65,6 +65,7 @@ export async function GET(
 
 const updateClientSchema = z.object({
   name: z.string().trim().min(1).optional(),
+  phone: z.string().trim().min(1).optional(),
   email: z.string().trim().email().optional().or(z.literal("")),
   company: z.string().trim().optional(),
   industry: z.string().trim().optional(),
@@ -103,6 +104,16 @@ export async function PATCH(
     const updateData: Prisma.ClientUpdateInput = {};
 
     if (validatedData.name !== undefined) updateData.name = validatedData.name;
+    if (validatedData.phone !== undefined) {
+      const phone = normalizePhone(validatedData.phone);
+      if (!phone) {
+        return NextResponse.json(
+          { success: false, message: "Enter a valid phone number" },
+          { status: 400 },
+        );
+      }
+      updateData.phone = phone;
+    }
     if (validatedData.email !== undefined)
       updateData.email = validatedData.email || null;
     if (validatedData.company !== undefined)

@@ -4,9 +4,7 @@
  * (e.g. a magnetic strength). Components never pass raw numbers.
  */
 import type { BatchConfig } from "../hooks/use-batch";
-import type { CounterConfig } from "../hooks/use-counter";
 import type { MagneticConfig } from "../hooks/use-magnetic";
-import type { ParallaxConfig } from "../hooks/use-parallax";
 import type { PressConfig } from "../hooks/use-press";
 import type { RevealConfig } from "../hooks/use-reveal";
 import type { TextConfig } from "../hooks/use-text";
@@ -123,7 +121,7 @@ const heroHeadline = (overrides: Partial<TextConfig> = {}): TextConfig => ({
   duration: MOTION.duration.display,
   stagger: MOTION.stagger.display,
   distance: MOTION.distance.lg,
-  ease: "power4.out",
+  ease: MOTION.ease.display,
   trigger: MOTION.trigger.hero,
   scrubExit: false,
   ...overrides,
@@ -168,31 +166,6 @@ const listItems = (overrides: Partial<BatchConfig> = {}): BatchConfig => ({
   ...overrides,
 });
 
-// ── Scroll-linked ──────────────────────────────────────────────────────────
-
-const parallax = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig => ({
-  speed: MOTION.parallax.base,
-  direction: "y",
-  scrub: MOTION.parallax.scrub,
-  anchor: "section",
-  ...overrides,
-});
-
-const parallaxSlow = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
-  parallax({ speed: MOTION.parallax.slow, ...overrides });
-
-const parallaxFast = (overrides: Partial<ParallaxConfig> = {}): ParallaxConfig =>
-  parallax({ speed: MOTION.parallax.fast, ...overrides });
-
-const counter = (to: number, overrides: Partial<CounterConfig> = {}): CounterConfig => ({
-  from: 0,
-  to,
-  duration: MOTION.duration.slow,
-  ease: MOTION.ease.strong,
-  trigger: MOTION.trigger.late,
-  once: true,
-  ...overrides,
-});
 
 // ── Interaction (spring-driven) ────────────────────────────────────────────
 // Keep new presets additive — do not invent a fourth interaction primitive
@@ -279,10 +252,6 @@ export const motion = {
   body,
   cardGrid,
   listItems,
-  parallax,
-  parallaxSlow,
-  parallaxFast,
-  counter,
   sectionTitle,
   sectionEyebrow,
   sectionDescription,

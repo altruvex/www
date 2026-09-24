@@ -157,7 +157,6 @@ export function CommandPalette({
       { id: "page-faq", group: "pages", label: tFooter("faq"), keywords: "faq questions اسئلة", href: "/faq" },
       { id: "svc-interface", group: "services", label: tFooter("webDesign"), keywords: "interface design ui ux تصميم واجهات", href: "/services/interface-design" },
       { id: "svc-development", group: "services", label: tFooter("development"), keywords: "development engineering تطوير برمجة", href: "/services/development" },
-      { id: "svc-ecommerce", group: "services", label: tFooter("ecommerce"), keywords: "ecommerce store shop متجر تجارة", href: "/services/ecommerce" },
       { id: "svc-consulting", group: "services", label: tFooter("consulting"), keywords: "consulting audit استشارات", href: "/services/consulting" },
       { id: "svc-maintenance", group: "services", label: tFooter("maintenance"), keywords: "maintenance support صيانة دعم", href: "/services/maintenance" },
     ];
@@ -208,14 +207,14 @@ export function CommandPalette({
         gsap.fromTo(
           [backdrop, panel],
           { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.15, ease: "power1.out" },
+          { autoAlpha: 1, duration: MOTION.duration.hover, ease: MOTION.ease.fade },
         );
       } else {
-        gsap.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.25, ease: "power2.out" });
+        gsap.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: MOTION.duration.drawer, ease: MOTION.ease.fade });
         gsap.fromTo(
           panel,
-          { autoAlpha: 0, y: 10, scale: 0.98 },
-          { autoAlpha: 1, y: 0, scale: 1, duration: 0.3, ease: MOTION.ease.strong },
+          { autoAlpha: 0, y: MOTION.distance.xs, scale: 0.98 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: MOTION.duration.drawer, ease: MOTION.ease.strong },
         );
       }
     }
@@ -241,12 +240,12 @@ export function CommandPalette({
       finish();
       return;
     }
-    gsap.to(backdrop, { autoAlpha: 0, duration: 0.18, ease: "power1.in" });
+    gsap.to(backdrop, { autoAlpha: 0, duration: MOTION.duration.instant, ease: MOTION.ease.fadeOut });
     gsap.to(panel, {
       autoAlpha: 0,
-      y: 6,
+      y: MOTION.distance.xs,
       scale: 0.99,
-      duration: 0.18,
+      duration: MOTION.duration.instant,
       ease: MOTION.ease.exit,
       onComplete: finish,
     });
@@ -347,9 +346,9 @@ export function CommandPalette({
         role="dialog"
         aria-modal="true"
         aria-label={t("title")}
-        className="relative w-full max-w-xl overflow-hidden rounded-overlay liquid-glass shadow-2xl shadow-foreground/10 will-change-transform"
+        className="relative w-full max-w-xl overflow-hidden rounded-panel-md liquid-glass shadow-2xl shadow-foreground/10 will-change-transform"
       >
-        <div className="flex items-center gap-3 border-b border-border px-4">
+        <div className="flex items-center gap-3 border-b border-border-subtle px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
             ref={inputRef}
@@ -371,7 +370,7 @@ export function CommandPalette({
             spellCheck={false}
             className="h-14 w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 outline-none"
           />
-          <kbd className="hidden sm:flex shrink-0 items-center rounded-md border border-border bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <kbd className="hidden sm:flex shrink-0 items-center rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground">
             esc
           </kbd>
         </div>
@@ -381,7 +380,7 @@ export function CommandPalette({
           role="listbox"
           aria-label={t("title")}
           data-lenis-prevent
-          className="max-h-[min(52vh,380px)] overflow-y-auto overscroll-contain p-2"
+          className="max-h-[min(52vh,380px)] overflow-y-auto overscroll-contain p-3"
         >
           {flat.length === 0 ? (
             <p className="px-3 py-10 text-center text-sm text-muted-foreground">
@@ -411,7 +410,7 @@ export function CommandPalette({
                         if (idx >= 0 && idx !== clampedActive) setActiveIndex(idx);
                       }}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm transition-colors duration-150",
+                        "flex w-full items-center gap-3 rounded-ctl px-3 py-2.5 text-start text-sm transition-colors duration-(--motion-hover)",
                         isActive
                           ? "bg-foreground/8 text-foreground"
                           : "text-foreground/70",
@@ -439,14 +438,14 @@ export function CommandPalette({
             ))
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+        <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2.5">
           <span className="text-[10px] text-muted-foreground/70">
             {t("hint")}
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground/70">
-            <kbd className="rounded border border-border bg-surface px-1 py-0.5 text-[10px]">↑</kbd>
-            <kbd className="rounded border border-border bg-surface px-1 py-0.5 text-[10px]">↓</kbd>
-            <kbd className="rounded border border-border bg-surface px-1 py-0.5 text-[10px]">↵</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↑</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↓</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↵</kbd>
           </span>
         </div>
       </div>

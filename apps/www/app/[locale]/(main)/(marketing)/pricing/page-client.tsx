@@ -1,413 +1,171 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
-import { Container } from "@/components/shared/container";
-import { ArrowLabel } from "@/components/shared/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
 import { FaqSection } from "@/components/sections/faq-section";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
-import { Highlight } from "@/components/ui/emphasis";
-import { TiltCard } from "@/components/ui/tilt-card";
-import { Link } from "@/i18n/navigation";
+import { SectionHeading } from "@/components/sections/section-heading";
+import { Container } from "@/components/shared/container";
+import { bodyMarks } from "@/components/ui/rich-text";
 import {
   useSectionCardGrid,
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import type { TierView } from "@repo/pricing-schema";
-import { useTranslations } from "next-intl";
-import { bodyMarks } from "@/components/ui/rich-text";
-
-function HighlightBlobs() {
-  return (
-    <div
-      className="absolute inset-0 overflow-hidden z-0 pointer-events-none mix-blend-multiply dark:mix-blend-screen transition-opacity duration-700"
-      aria-hidden="true"
-    >
-      <div
-        className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-2xl"
-        style={{
-          background:
-            "radial-gradient(circle at center, hsl(var(--brand) / 0.40), transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute top-1/4 left-1/4 w-60 h-60 rounded-full blur-[35px]"
-        style={{
-          background:
-            "radial-gradient(circle at center, hsl(214 89% 66% / 0.34), transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute top-1/3 -right-12 w-72 h-72 rounded-full blur-2xl"
-        style={{
-          background:
-            "radial-gradient(circle at center, hsl(224 70% 58% / 0.32), transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute -bottom-10 right-1/4 w-64 h-64 rounded-full blur-[35px]"
-        style={{
-          background:
-            "radial-gradient(circle at center, hsl(var(--brand) / 0.30), transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute bottom-1/4 left-1/3 w-72 h-72 rounded-full blur-2xl"
-        style={{
-          background:
-            "radial-gradient(circle at center, hsl(204 85% 60% / 0.28), transparent 70%)",
-        }}
-      />
-    </div>
-  );
-}
+import type { PriceMatrixView, TierView } from "@repo/pricing-schema";
+import { localizeNumbers } from "@/lib/utils/number";
+import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
+import { PriceGrid } from "./price-grid";
 
 export default function PricingPage({
   tiers,
+  matrix,
   floorLabel,
   ceilingLabel,
 }: {
   tiers: readonly TierView[];
+  matrix: PriceMatrixView;
   floorLabel: string;
   /** The delivery ceiling, already worded and localized by the schema. */
   ceilingLabel: string;
 }) {
   const t = useTranslations("pricing");
+  const locale = useLocale();
+  const tEnd = useTranslations("common.endCta.pages.pricing");
 
   const heroEyebrowRef = useSectionEyebrow();
   const heroTitleRef = useSectionTitle<HTMLHeadingElement>();
-  const heroDescRef = useSectionDescription();
-  const tierCardsRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".tier-card",
+  const heroDescRef = useSectionDescription<HTMLParagraphElement>();
+
+  const termsEyebrowRef = useSectionEyebrow();
+  const termsTitleRef = useSectionTitle<HTMLHeadingElement>();
+  const termsRowsRef = useSectionCardGrid<HTMLDListElement>({
+    selector: "[data-term]",
   });
-  const commercialNotesRef = useSectionCardGrid<HTMLDivElement>({
-    selector: ".commercial-note",
-  });
+
   const roiEyebrowRef = useSectionEyebrow();
   const roiTitleRef = useSectionTitle<HTMLHeadingElement>();
   const roiBodyRef = useSectionCardGrid<HTMLDivElement>({ selector: ".roi-p" });
-  const roiStatsRef = useSectionDescription();
 
-  const roiStats = [
-    {
-      key: "timeline",
-      label: t("roi.stats.timeline.label"),
-      value: t("roi.stats.timeline.value"),
-      sub: t("roi.stats.timeline.sub"),
-    },
-    {
-      key: "timeSaved",
-      label: t("roi.stats.timeSaved.label"),
-      value: t("roi.stats.timeSaved.value"),
-      sub: t("roi.stats.timeSaved.sub"),
-    },
-    {
-      key: "deliverable",
-      label: t("roi.stats.deliverable.label"),
-      value: t("roi.stats.deliverable.value"),
-      sub: t("roi.stats.deliverable.sub"),
-    },
-  ];
-
-  const commercialNotes = [
-    {
-      key: "yearOne",
-      label: t("commercial.items.yearOne.label"),
-      value: t("commercial.items.yearOne.value"),
-    },
-    {
-      key: "exclusions",
-      label: t("commercial.items.exclusions.label"),
-      value: t("commercial.items.exclusions.value"),
-    },
+  // One ledger of terms that govern every cell of the grid, so none of them
+  // reads as belonging to a single package. The floor is the lowest cell and
+  // the window is the ceiling over all of them — both come from the schema.
+  const terms: { key: string; label: string; value: ReactNode; figure?: boolean }[] = [
+    { key: "floor", label: t("minimumEngagementLabel"), value: floorLabel, figure: true },
+    { key: "deliveryWindow", label: t("commercial.items.deliveryWindow.label"), value: ceilingLabel },
     {
       key: "paymentTerms",
       label: t("commercial.items.paymentTerms.label"),
       value: t.rich("commercial.items.paymentTerms.value", bodyMarks),
     },
-    // The cap sits with the other commercial terms rather than in a card,
-    // because it governs every tier rather than any one of them.
-    {
-      key: "deliveryWindow",
-      label: t("commercial.items.deliveryWindow.label"),
-      value: ceilingLabel,
-    },
+    { key: "yearOne", label: t("commercial.items.yearOne.label"), value: t("commercial.items.yearOne.value") },
+    { key: "exclusions", label: t("commercial.items.exclusions.label"), value: t("commercial.items.exclusions.value") },
+    { key: "ownership", label: t("terms.ownershipLabel"), value: t.rich("ownershipNote", bodyMarks) },
   ];
 
   return (
     <>
       <section
-        className="accent-world-orange relative z-10 flex lg:min-h-screen w-full flex-col justify-end overflow-hidden pt-(--section-y-top) pb-12"
-        aria-label="Pricing section"
+        aria-labelledby="pricing-heading"
+        className="accent-world-orange relative pt-(--section-y-top) pb-(--section-y-bottom)"
       >
         <Container>
-          <div className="mb-16">
-            <div className="py-12 md:py-24">
-              <div className="mb-20 max-w-176">
-                <p
-                  ref={heroEyebrowRef}
-                  className="text-xs leading-normal text-muted-foreground mb-5 block"
+          <SectionHeading
+            titleAs="h1"
+            titleId="pricing-heading"
+            eyebrowRef={heroEyebrowRef}
+            titleRef={heroTitleRef}
+            descriptionRef={heroDescRef}
+            eyebrow={t("label")}
+            firstTitle={t("title", {
+              cells: matrix.cellCount,
+              cellsLabel: localizeNumbers(String(matrix.cellCount), locale),
+            })}
+            secondTitle={t("titleItalic", {
+              tiers: matrix.tierCount,
+              tiersLabel: localizeNumbers(String(matrix.tierCount), locale),
+            })}
+            description={t("description")}
+            className="mt-10 mb-14 md:mt-16 md:mb-20"
+            classes={{ description: "lg:max-w-[22rem]" }}
+          />
+          <PriceGrid matrix={matrix} tiers={tiers} />
+        </Container>
+      </section>
+
+      <section
+        aria-labelledby="pricing-terms-heading"
+        className="border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+      >
+        <Container>
+          <SectionHeading
+            titleId="pricing-terms-heading"
+            eyebrowRef={termsEyebrowRef}
+            titleRef={termsTitleRef}
+            eyebrow={t("terms.eyebrow")}
+            firstTitle={t("terms.title")}
+            secondTitle={t("terms.titleAccent")}
+            className="mb-12 md:mb-16"
+          />
+          {/* One ink rule over the whole set, no rule per term: these read as
+              the grid's small print, not as a list of separate offers. */}
+          <dl
+            ref={termsRowsRef}
+            className="grid gap-x-12 gap-y-10 border-t-2 border-foreground pt-10 md:grid-cols-2 md:pt-12 lg:grid-cols-3 lg:gap-y-14"
+          >
+            {terms.map((term) => (
+              <div key={term.key} data-term>
+                <dt className="text-base font-medium text-foreground md:text-lg">
+                  {term.label}
+                </dt>
+                <dd
+                  className={
+                    term.figure
+                      ? "mt-3 text-[clamp(1.75rem,2.4vw,2.25rem)] font-light leading-none tracking-[-0.02em] tabular-nums text-foreground rtl:tracking-normal"
+                      : "mt-2 max-w-[42ch] whitespace-pre-line text-pretty text-[0.9375rem] leading-relaxed text-muted-foreground md:text-base"
+                  }
                 >
-                  {t("label")}
-                </p>
-                <h1
-                  ref={heroTitleRef}
-                  className="text-[clamp(3rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.03em] mb-7 font-sans font-light text-foreground select-none"
-                >
-                  {t("title")}
-                  <br />
-                  <Highlight className="text-foreground/40">
-                    {t("titleItalic")}
-                  </Highlight>
-                </h1>
-                <p
-                  ref={heroDescRef}
-                  className="text-base text-muted-foreground leading-relaxed"
-                >
-                  {t("description")}
-                </p>
+                  {term.value}
+                </dd>
               </div>
-              <div className="h-px w-full bg-border mb-14" />
-              <div
-                ref={tierCardsRef}
-                className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-24 items-start"
-              >
-                {tiers.map((tier, i) =>
-                  tier.highlight ? (
-                    <TiltCard key={tier.id}>
-                      <article className="tier-card group relative rounded-lg flex flex-col transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 hover:shadow-xl hover:shadow-foreground/10">
-                        <div className="absolute inset-0 overflow-hidden rounded-lg z-0">
-                          <div className="absolute inset-0 bg-background/40 z-0" />
-                          <HighlightBlobs />
-                        </div>
-                        <div className="absolute inset-0 z-10 liquid-glass rounded-lg pointer-events-none" />
-                        <div className="relative z-20 p-7 md:p-8 flex flex-col h-full">
-                          <div className="mb-5">
-                            <span className="inline-flex font-mono text-[9px] tracking-[0.14em] uppercase px-3 py-1.5 rounded-full rtl:font-sans rtl:normal-case rtl:tracking-normal text-foreground bg-s-surface border border-s-border shadow-sm">
-                              {t("recommended")}
-                            </span>
-                          </div>
-                          <span
-                            className="absolute top-5 inset-e-6 font-mono font-bold select-none pointer-events-none leading-none text-foreground/4"
-                            style={{
-                              fontSize: "clamp(64px, 7vw, 80px)",
-                              letterSpacing: "-0.04em",
-                            }}
-                          >
-                            <Num value={i + 1} pad={2} />
-                          </span>
-                          <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
-                            {tier.internalLabel}
-                          </p>
-                          <h2
-                            className="font-sans font-semibold text-foreground mb-4"
-                            style={{
-                              fontSize: "clamp(16px, 1.6vw, 19px)",
-                              letterSpacing: "-0.018em",
-                            }}
-                          >
-                            {tier.buyerLabel}
-                          </h2>
-                          <p className="font-mono text-xs tracking-wider uppercase text-foreground mb-2.5">
-                            {tier.priceLabel}
-                          </p>
-                          {/* The window belongs beside the figure it is priced
-                            with — a buyer comparing tiers is choosing a budget
-                            and a date at the same time. */}
-                          <p className="flex items-baseline gap-2 font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5">
-                            <span>{tier.timelineLabel}</span>
-                            <span className="tabular-nums text-foreground/70">
-                              {tier.timelineValue}
-                            </span>
-                          </p>
-                          <p className="text-[13px] text-muted-foreground leading-relaxed mb-6 font-medium">
-                            {tier.idealFor}
-                          </p>
-                          <ul className="space-y-2 mb-8 relative z-20">
-                            {tier.features.map((feature, j) => (
-                              <li
-                                key={j}
-                                className="flex items-start gap-2.5 text-[12px] text-foreground font-medium"
-                              >
-                                <div className="w-[6px] h-[6px] rounded-full shrink-0 mt-[4px] bg-brand shadow-[0_0_8px_hsl(var(--brand))]" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                          <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3.5 relative z-20">
-                            <MagneticButton
-                              asChild
-                              variant="primary"
-                              className="group w-full justify-center mt-1 shadow-md shadow-brand/20"
-                            >
-                              <Link
-                                href={tier.estimatorHref}
-                                className="w-full justify-center"
-                                aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
-                              >
-                                <ArrowLabel className="text-xs">
-                                  {tier.ctaLabel}
-                                </ArrowLabel>
-                              </Link>
-                            </MagneticButton>
-                          </div>
-                        </div>
-                      </article>
-                    </TiltCard>
-                  ) : (
-                    <article
-                      key={tier.id}
-                      className="tier-card group relative rounded-lg p-7 md:p-8 flex flex-col overflow-hidden transition-all duration-300 ease-strong motion-safe:hover:-translate-y-1 bg-s-surface border border-s-border hover:border-s-border-hover"
-                    >
-                      <div className="relative z-20 flex flex-col h-full">
-                        <span
-                          className="absolute bottom-4 inset-e-1 font-mono font-bold select-none pointer-events-none leading-none text-foreground/3"
-                          style={{
-                            fontSize: "clamp(64px, 7vw, 80px)",
-                            letterSpacing: "-0.04em",
-                          }}
-                        >
-                          <Num value={i + 1} pad={2} />
-                        </span>
-                        <p className="font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-1">
-                          {tier.internalLabel}
-                        </p>
-                        <h2
-                          className="font-sans font-semibold text-foreground mb-4"
-                          style={{
-                            fontSize: "clamp(15px, 1.5vw, 18px)",
-                            letterSpacing: "-0.016em",
-                          }}
-                        >
-                          {tier.buyerLabel}
-                        </h2>
-                        <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase mb-2.5">
-                          {tier.priceLabel}
-                        </p>
-                        <p className="flex items-baseline gap-2 font-mono text-[10px] tracking-widest uppercase rtl:font-sans rtl:normal-case rtl:tracking-normal text-muted-foreground mb-5">
-                          <span>{tier.timelineLabel}</span>
-                          <span className="tabular-nums text-foreground/70">
-                            {tier.timelineValue}
-                          </span>
-                        </p>
-                        <p className="text-[13px] text-muted-foreground leading-relaxed mb-6">
-                          {tier.idealFor}
-                        </p>
-                        <ul className="space-y-2 mb-8">
-                          {tier.features.map((feature, j) => (
-                            <li
-                              key={j}
-                              className="flex items-start gap-2.5 text-[12px] text-muted-foreground"
-                            >
-                              <div className="w-1.25 h-1.25 rounded-full shrink-0 mt-1.25 bg-border-mid transition-all group-hover:bg-muted-foreground/50" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                        <div className="mt-auto pt-5 border-t border-s-border flex flex-col gap-3 relative z-20">
-                          <MagneticButton
-                            asChild
-                            variant="secondary"
-                            className="group w-full justify-center mt-1 bg-s-high-soft border border-s-border hover:bg-s-surface"
-                          >
-                            <Link
-                              href={tier.estimatorHref}
-                              className="w-full justify-center"
-                              aria-label={`${tier.ctaLabel} - ${tier.buyerLabel}`}
-                            >
-                              <ArrowLabel className="text-xs">
-                                {tier.ctaLabel}
-                              </ArrowLabel>
-                            </Link>
-                          </MagneticButton>
-                        </div>
-                      </div>
-                    </article>
-                  ),
-                )}
-              </div>
-              <div className="mb-32 grid grid-cols-1 gap-12 border-t border-border pt-16 md:grid-cols-3">
-                <div className="md:col-span-1">
-                  <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    {t("minimumEngagementLabel")}
-                  </p>
-                  <p className="text-2xl font-medium tracking-tight text-foreground mb-4">
-                    {floorLabel}
-                  </p>
-                  <p className="mx-auto max-w-(--measure-wide) text-sm leading-relaxed text-muted-foreground">
-                    {t.rich("ownershipNote", bodyMarks)}
-                  </p>
-                </div>
-                <div
-                  ref={commercialNotesRef}
-                  className="grid grid-cols-1 gap-12 md:col-span-2 md:grid-cols-2"
-                >
-                  {commercialNotes.map((note) => (
-                    <div key={note.key} className="commercial-note">
-                      <p className="mb-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {note.label}
-                      </p>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {note.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <section className="accent-world-orange border-t border-border pt-24 pb-12">
-                <div className="mb-16 max-w-3xl">
-                  <p
-                    ref={roiEyebrowRef}
-                    className="mb-6 font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground"
-                  >
-                    {t("roi.eyebrow")}
-                  </p>
-                  <h2
-                    ref={roiTitleRef}
-                    className="mb-8 text-[clamp(2rem,3vw,3rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground"
-                  >
-                    {t("roi.title")}{" "}
-                    <Highlight>{t("roi.titleItalic")}</Highlight>
-                  </h2>
-                  <div ref={roiBodyRef} className="grid gap-6 md:grid-cols-2">
-                    <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">
-                      {t.rich("roi.calculation", bodyMarks)}
-                    </p>
-                    <p className="roi-p text-[1.0625rem] leading-[1.7] text-muted-foreground">
-                      {t.rich("roi.question", bodyMarks)}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  ref={roiStatsRef}
-                  className="grid grid-cols-1 gap-8 border-t border-border pt-12 md:grid-cols-3 md:gap-12"
-                >
-                  {roiStats.map((stat) => (
-                    <div key={stat.key}>
-                      <p className="mb-4 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                        {stat.label}
-                      </p>
-                      <p className="mb-2 text-4xl font-light tracking-tight text-foreground md:text-5xl">
-                        {stat.value}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {stat.sub}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            </div>
+            ))}
+          </dl>
+        </Container>
+      </section>
+
+      <section
+        aria-labelledby="pricing-roi-heading"
+        className="accent-world-orange border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+      >
+        <Container className="[&>*]:max-w-[46rem]">
+          <SectionHeading
+            titleId="pricing-roi-heading"
+            eyebrowRef={roiEyebrowRef}
+            titleRef={roiTitleRef}
+            eyebrow={t("roi.eyebrow")}
+            firstTitle={t("roi.title")}
+            secondTitle={t("roi.titleItalic")}
+            className="mb-10 md:mb-12"
+          />
+          <div ref={roiBodyRef} className="space-y-6">
+            <p className="roi-p text-pretty text-lg leading-[1.65] text-muted-foreground md:text-xl">
+              {t.rich("roi.calculation", bodyMarks)}
+            </p>
+            <p className="roi-p text-pretty text-lg leading-[1.65] text-muted-foreground md:text-xl">
+              {t.rich("roi.question", bodyMarks)}
+            </p>
           </div>
         </Container>
       </section>
-      <FaqSection
-        namespace="pricing.faq"
-        className="border-t border-border pt-12 pb-32"
+
+      <FaqSection namespace="pricing.faq" />
+      <SectionEndCta
+        title={tEnd("title")}
+        titleAccent={tEnd("titleAccent")}
+        body={tEnd("body")}
+        primary="projectRange"
+        secondary="technicalCall"
       />
-      <SectionEndCta variant="transparency" />
     </>
   );
 }

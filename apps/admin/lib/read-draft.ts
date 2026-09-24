@@ -13,7 +13,7 @@ export interface OptionalDraft {
 }
 
 const MAX_SUBJECT = 200;
-const MAX_BODY = 20_000;
+const MAX_BODY_CHARS = 20_000;
 
 export async function readOptionalDraft(request: NextRequest): Promise<OptionalDraft> {
   let raw: unknown;
@@ -31,6 +31,6 @@ export async function readOptionalDraft(request: NextRequest): Promise<OptionalD
     subject: typeof subject === "string" ? subject.slice(0, MAX_SUBJECT) : undefined,
     // Truncated rather than refused: an operator who pasted something enormous
     // wants it sent, and a hard failure at this point loses whatever they wrote.
-    body: typeof body === "string" ? body.slice(0, MAX_BODY) : undefined,
+    body: typeof body === "string" ? body.slice(0, MAX_BODY_CHARS) : undefined,
   };
 }

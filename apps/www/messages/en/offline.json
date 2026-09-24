@@ -1,0 +1,8 @@
+{
+  "description": "It looks like you have lost your internet connection.",
+  "description2": "Check your network and try again.",
+  "goBack": "Go Back",
+  "status": "Network Status: Offline",
+  "title": "You're Offline",
+  "tryAgain": "Try Again"
+}

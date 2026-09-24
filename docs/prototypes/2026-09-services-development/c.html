@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · Dark Studio — Custom Development</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080B;--grey:#D9DADC;--line:rgba(255,255,255,.14);--brand:#0E63DB;--amber:#F08A24;--mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:#fff;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+h1,h2,h3{font-family:Outfit,sans-serif;font-weight:400;letter-spacing:-.04em;line-height:1}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+a{color:inherit;text-decoration:none}
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:18px 28px}
+.nav b{font-family:Outfit;font-weight:500;letter-spacing:.04em}
+.nav .r{display:flex;gap:8px}
+.chip{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);font-size:12px;font-weight:500}
+.chip.w{background:#fff;color:#07080B;border-color:#fff}
+
+.hero{position:relative;height:100svh;min-height:700px;overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero .l{position:absolute;left:28px;top:18vh;z-index:2}
+.hero h1{font-size:clamp(52px,6.6vw,112px);max-width:10ch}
+.hero .links{display:flex;gap:26px;margin-top:34px}
+.hero .links a{border-bottom:1px solid rgba(255,255,255,.5);padding-bottom:6px}
+.hero .card{position:absolute;right:28px;bottom:28px;z-index:2;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;max-width:300px}
+.hero .card .b{border:1px solid var(--line);border-radius:6px;padding:10px;text-align:center}
+.hero .card p{font-size:13px;color:#aeb4bf;line-height:1.5;grid-column:1/-1}
+.hero .hint{position:absolute;left:50%;bottom:28px;transform:translateX(-50%);color:#8b93a3;z-index:2}
+
+.about{padding:24vh 28px;display:grid;grid-template-columns:200px 1fr;gap:28px}
+.about p.big{font-family:Outfit;font-size:clamp(36px,4.6vw,76px);letter-spacing:-.035em;line-height:1.04;max-width:20ch}
+.about p.big .w{color:#262a33}
+
+.words{position:relative;height:260vh}
+.words .pin{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;align-items:center}
+.words .pin .panel{position:absolute;inset:0;background:var(--grey);clip-path:inset(100% 0 0 0)}
+.words .track{position:relative;white-space:nowrap;font-family:Outfit;font-weight:400;font-size:clamp(90px,15vw,260px);letter-spacing:-.05em;display:flex;gap:.3em;align-items:center}
+.words .track i{font-style:normal;font-weight:300;opacity:.5;font-size:.5em}
+.words .cap{position:absolute;left:28px;top:14vh}
+
+.tiles{background:var(--grey);color:#07080B;position:relative;height:260vh}
+.tiles .pin{position:sticky;top:0;height:100svh;display:grid;place-items:center;overflow:hidden}
+.tiles .frame{position:relative;width:min(78vw,1100px);aspect-ratio:16/9}
+.tile{position:absolute;background-image:url(img/s6.jpg);background-size:min(78vw,1100px) auto;will-change:transform}
+.tiles .over{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.tiles .over h2{font-size:clamp(48px,7vw,120px);color:#fff;opacity:0;text-shadow:0 10px 40px rgba(0,0,0,.4)}
+.tiles .cap{position:absolute;left:28px;top:12vh}
+
+.facts{background:var(--grey);color:#07080B;padding:10vh 28px 24vh;text-align:center}
+.facts h2{font-size:clamp(48px,6vw,96px)}
+.facts .sub{color:#555b66;margin:14px 0 8vh}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1100px;margin:0 auto}
+.fc{border-radius:14px;min-height:380px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;position:relative;overflow:hidden}
+.fc.d{background:#0f1116;color:#fff}
+.fc.l{background:#eceded}
+.fc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.fc > *{position:relative}
+.fc b{font-family:Outfit;font-weight:400;font-size:72px;letter-spacing:-.05em;line-height:1}
+.fc .ring{width:160px;height:160px;border-radius:50%;background:#fff;display:grid;place-items:center;margin:0 auto;box-shadow:0 20px 50px -20px rgba(0,0,0,.25)}
+.fc .ring b{font-size:48px}
+.fc p{font-size:14px;line-height:1.5;opacity:.75}
+
+.cta{padding:26vh 28px 18vh;position:relative;overflow:hidden}
+.cta h2{font-size:clamp(56px,9vw,170px);max-width:11ch}
+.cta h2 em{font-family:Georgia,serif;font-style:italic;font-weight:400;color:var(--amber)}
+.cta .row{display:flex;justify-content:space-between;align-items:end;margin-top:8vh;gap:24px;flex-wrap:wrap}
+
+.switch{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(20,22,28,.85);backdrop-filter:blur(8px);font:500 12px Inter;border:1px solid var(--line)}
+.switch a{padding:8px 14px;border-radius:999px;color:#cbd5e1}
+.switch a.on{background:#fff;color:#07080B}
+@media(max-width:800px){.about{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.hero .card{display:none}}
+</style>
+</head>
+<body>
+<nav class="nav"><b>ALTRUVEX</b><div class="r"><a class="chip w">Let's talk</a><a class="chip">Menu ≡</a></div></nav>
+
+<section class="hero">
+  <canvas id="gl"></canvas>
+  <div class="l">
+    <h1 id="h1">Engineered to outlast the brief.</h1>
+    <div class="links mono"><a>Discuss your system →</a><a>Book a 30-minute call →</a></div>
+  </div>
+  <div class="card"><div class="b mono">02<br>Dev</div><span class="mono" style="color:#8b93a3">Custom systems<br>built in your name</span><p>Dashboards, portals and operational flows — built for clarity, scale and a clean handover.</p></div>
+  <span class="hint mono">Move to turn it</span>
+</section>
+
+<section class="about">
+  <span class="mono" style="color:#8b93a3">About the work</span>
+  <p class="big" id="about">We design the system before we write it — so the code that ships is the code the next engineer can read, change and own.</p>
+</section>
+
+<section class="words" id="words">
+  <div class="pin">
+    <div class="panel" id="panel"></div>
+    <span class="cap mono" id="wcap">Focused scope. Measured execution.</span>
+    <div class="track" id="track"><span>Architect</span><i>+</i><span>Build</span><i>+</i><span>Hand over</span><i>+</i><span>Own</span></div>
+  </div>
+</section>
+
+<section class="tiles" id="tiles">
+  <div class="pin">
+    <span class="cap mono">Systems, not pages</span>
+    <div class="frame" id="frame"></div>
+    <div class="over"><h2 id="tilesTitle">Systems, not pages.</h2></div>
+  </div>
+</section>
+
+<section class="facts">
+  <h2>Key facts</h2>
+  <p class="sub">What a build with us leaves behind.</p>
+  <div class="cards">
+    <div class="fc d"><img src="img/s3.jpg" alt=""><span class="mono">Measured on altruvex.com</span><div><b>&lt;1s</b><p>Mobile time to interactive — the same build standard we ship to you.</p></div></div>
+    <div class="fc l"><span class="mono">Ownership</span><div class="ring"><b>100%</b></div><p>Of the custom source code, schema and documentation — in your repository.</p></div>
+    <div class="fc d"><img src="img/cube.jpg" alt=""><span class="mono">Languages</span><div><b>2</b><p>Arabic and English, one codebase, one release. Never a translated afterthought.</p></div></div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>Ready to build what you'll <em>own?</em></h2>
+  <div class="row"><p style="color:#9aa3b2;max-width:38ch;line-height:1.5">Scope reply within one business day. One number, in writing, before any work starts.</p><a class="chip w" style="padding:14px 22px;font-size:14px">Request a scope →</a></div>
+</section>
+
+<div class="switch"><a href="a.html">A · Blue</a><a href="b.html">B · Stack</a><a href="c.html" class="on">C · Studio</a></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Hero object: a stack of three machined slabs (a system in layers), metal with
+   a blue key light and a warm rim — turned by the pointer and by scroll. */
+const cv = document.getElementById("gl");
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(32, 1, .1, 100); cam.position.set(0, 0, 11);
+const group = new THREE.Group(); scene.add(group);
+const mat = new THREE.MeshStandardMaterial({ color: 0x1a1d24, metalness: .92, roughness: .28 });
+const edge = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: .55 });
+const slabs = [];
+[[3.2, .34, 3.2], [2.6, .34, 2.6], [2.0, .34, 2.0]].forEach((s, i) => {
+  const g = new THREE.BoxGeometry(...s);
+  const m = new THREE.Mesh(g, mat); m.position.y = (i - 1) * .62;
+  m.add(new THREE.LineSegments(new THREE.EdgesGeometry(g), edge));
+  group.add(m); slabs.push(m);
+});
+const core = new THREE.Mesh(new THREE.BoxGeometry(.5, 2.1, .5), new THREE.MeshStandardMaterial({ color: 0x0e63db, emissive: 0x0e63db, emissiveIntensity: 1.4 }));
+group.add(core);
+scene.add(new THREE.AmbientLight(0xffffff, .15));
+const key = new THREE.PointLight(0x3b82f6, 3.2, 30); key.position.set(-5, 4, 6); scene.add(key);
+const rim = new THREE.PointLight(0xf08a24, 2.4, 30); rim.position.set(6, -3, -2); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffffff, .6); fill.position.set(0, 8, 4); scene.add(fill);
+group.rotation.set(.45, .7, 0); group.position.x = 2.2;
+function size(){ const w = cv.clientWidth, h = cv.clientHeight; renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); group.position.x = w < 800 ? 0 : 2.2; }
+size(); addEventListener("resize", size);
+let tx = 0, ty = 0, spread = 0;
+addEventListener("pointermove", e => { tx = (e.clientX / innerWidth - .5); ty = (e.clientY / innerHeight - .5); });
+ScrollTrigger.create({ trigger: ".hero", start: "top top", end: "bottom top", onUpdate: s => spread = s.progress });
+(function loop(){
+  group.rotation.y += ((.7 + tx * .9) - group.rotation.y) * .05;
+  group.rotation.x += ((.45 + ty * .5) - group.rotation.x) * .05;
+  slabs.forEach((m, i) => m.position.y = (i - 1) * (.62 + spread * 1.2));
+  renderer.render(scene, cam); requestAnimationFrame(loop);
+})();
+
+const about = document.getElementById("about");
+about.innerHTML = about.textContent.split(" ").map(w => `<span class="w">${w}</span>`).join(" ");
+
+/* Tiles: the image cut into a grid, scattered, assembling with scroll. */
+const frame = document.getElementById("frame"); const C = 6, R = 4; const tiles = [];
+for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+  const t = document.createElement("div"); t.className = "tile";
+  t.style.left = (c / C * 100) + "%"; t.style.top = (r / R * 100) + "%"; t.style.width = (100 / C + .1) + "%"; t.style.height = (100 / R + .1) + "%";
+  t.style.backgroundPosition = `${c / (C - 1) * 100}% ${r / (R - 1) * 100}%`;
+  frame.appendChild(t); tiles.push(t);
+}
+
+if (!reduce) {
+  gsap.from("#h1", { y: 50, opacity: 0, duration: 1.4, ease: "expo.out" });
+  gsap.to("#about .w", { color: "#ffffff", stagger: .05, ease: "none", scrollTrigger: { trigger: ".about", start: "top 70%", end: "bottom 60%", scrub: true } });
+  const wt = gsap.timeline({ scrollTrigger: { trigger: "#words", start: "top top", end: "bottom bottom", scrub: .5 } });
+  wt.fromTo("#track", { x: () => innerWidth * .6 }, { x: () => -document.getElementById("track").scrollWidth + innerWidth * .4, ease: "none", duration: 1 }, 0)
+    .to("#panel", { clipPath: "inset(0% 0 0 0)", ease: "none", duration: .35 }, .6)
+    .to(["#track", "#wcap"], { color: "#07080B", duration: .1 }, .72);
+  const tt = gsap.timeline({ scrollTrigger: { trigger: "#tiles", start: "top top", end: "bottom bottom", scrub: .6 } });
+  tiles.forEach((t, i) => tt.fromTo(t, { x: gsap.utils.random(-500, 500), y: gsap.utils.random(-350, 350), rotate: gsap.utils.random(-25, 25), scale: gsap.utils.random(.4, .9), opacity: .0 }, { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1, ease: "power2.out", duration: .7 }, gsap.utils.random(0, .25)));
+  tt.to("#tilesTitle", { opacity: 1, duration: .15 }, .85);
+  gsap.utils.toArray(".fc").forEach((c, i) => gsap.from(c, { y: 80, opacity: 0, duration: 1.1, delay: i * .1, ease: "expo.out", scrollTrigger: { trigger: ".cards", start: "top 85%" } }));
+} else { document.querySelectorAll("#about .w").forEach(w => w.style.color = "#fff"); document.getElementById("tilesTitle").style.opacity = 1; }
+</script>
+</body>
+</html>
