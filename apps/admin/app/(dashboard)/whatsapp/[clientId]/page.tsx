@@ -13,6 +13,8 @@ import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { dateTime, money, phone as fmtPhone, when } from "@/lib/format";
 import { Button } from "@repo/ui";
+import { EntityLink } from "@/components/os/entity-link";
+import { ChannelTabs } from "../../inbox/channel-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -74,11 +76,18 @@ export default async function ThreadPage({
   return (
     <div className="space-y-4">
       <PageHeader
-        crumbs={[{ label: "Inbox", href: "/inbox" }, { label: name }]}
+        crumbs={[
+          { label: "Inbox", href: "/inbox" },
+          { label: "WhatsApp", href: "/whatsapp" },
+          { label: name, href: `/clients/${client.id}` },
+        ]}
+        tabs={<ChannelTabs active="whatsapp" clientId={client.id} />}
         title={
           <span className="flex items-center gap-2">
             <Avatar name={name} size="lg" />
-            {name}
+            <EntityLink type="client" id={client.id} className="min-w-0 truncate">
+              {name}
+            </EntityLink>
           </span>
         }
         status={<StatusPill registry="submissionStatus" value={client.status} />}
@@ -90,11 +99,14 @@ export default async function ThreadPage({
           </>
         }
         actions={
-          <Button asChild variant="outline">
-            <Link href={`/clients/${client.id}`}>
-              Open client
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href={`/inbox?client=${client.id}`}>All channels</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/clients/${client.id}`}>Open client</Link>
+            </Button>
+          </>
         }
         alert={
           failed.length > 0 ? (
@@ -146,9 +158,9 @@ export default async function ThreadPage({
                   {
                     label: "Record",
                     value: (
-                      <Link href={`/clients/${client.id}`} className="hover:text-brand">
+                      <EntityLink type="client" id={client.id}>
                         {name}
-                      </Link>
+                      </EntityLink>
                     ),
                   },
                   { label: "Phone", value: <span className="font-mono text-meta">{client.phone}</span> },

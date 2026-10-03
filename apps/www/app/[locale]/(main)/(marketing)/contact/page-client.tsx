@@ -9,10 +9,8 @@ import {
 } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
-import { SITE_CONFIG } from "@/lib/metadata";
 import {
   MOTION,
-  useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
@@ -21,6 +19,11 @@ import { gsap } from "@/lib/utils/gsap";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { createContactFormSchema } from "@/lib/validations/contact";
+import {
+  MAINTENANCE_PLAN_IDS,
+  pricingCopy,
+  type Locale,
+} from "@repo/pricing-schema";
 import { Input, SelectField, Textarea } from "@repo/ui/www";
 import { AlertCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -61,16 +64,6 @@ const SERVICE_LABEL_KEYS = {
   consulting: "serviceConsulting",
   maintenance: "serviceMaintenance",
 } as const satisfies Record<Service, string>;
-
-const SOCIAL_ORDER = [
-  "linkedin",
-  "x",
-  "instagram",
-  "github",
-  "dribbble",
-  "threads",
-  "facebook",
-] as const satisfies readonly (keyof typeof SITE_CONFIG.social)[];
 
 function isService(value: string | null): value is Service {
   return SERVICES.some((service) => service === value);
@@ -133,13 +126,15 @@ export default function ContactPage() {
  * Signature: sending turns the letter into its receipt — the time it was
  * received in Cairo and the three things that happen next. The receipt is the
  * finished markup; reduced motion swaps it in without the entrance.
+ *
+ * Layout: the letter is the page — one column, nothing beside it. The direct
+ * lines are a single row beneath it, for the visitor who would rather not write.
  */
 function ContactSection() {
   const t = useTranslations("contactPage");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
   const letterRef = useSectionElement();
   const linesRef = useSectionElement();
 
@@ -149,37 +144,28 @@ function ContactSection() {
       className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="grid gap-y-16 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-12 lg:gap-y-14 xl:gap-x-16">
-          <SectionHeading
-            titleAs="h1"
-            titleId="contact-heading"
-            eyebrowRef={eyebrowRef}
-            titleRef={titleRef}
-            descriptionRef={descRef}
-            eyebrow={t("eyebrow")}
-            firstTitle={t("heroTitle")}
-            secondTitle={t("heroTitleItalic")}
-            description={t("heroDescription")}
-            className="lg:col-span-5 lg:row-start-1"
-            classes={{
-              container: "lg:flex-col lg:items-start",
-              titleWrapper: "space-y-6",
-              title:
-                "max-w-[16ch] text-[clamp(2.5rem,4.6vw,4.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
-              description: "max-w-[44ch] text-[clamp(1rem,1.1vw,1.125rem)]",
-            }}
-          />
+        <SectionHeading
+          titleAs="h1"
+          titleId="contact-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={t("heroTitle")}
+          secondTitle={t("heroTitleItalic")}
+          classes={{
+            container: "lg:flex-col lg:items-start",
+            titleWrapper: "space-y-6",
+            title:
+              "max-w-[16ch] text-[clamp(2.5rem,4.6vw,4.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
+          }}
+        />
 
-          <div
-            ref={letterRef}
-            className="lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1"
-          >
-            <Letter />
-          </div>
+        <div ref={letterRef} className="mt-14 max-w-205 lg:mt-20">
+          <Letter />
+        </div>
 
-          <div ref={linesRef} className="lg:col-span-5 lg:row-start-2">
-            <DirectLines />
-          </div>
+        <div ref={linesRef} className="mt-20 lg:mt-28">
+          <DirectLines />
         </div>
       </Container>
     </section>
@@ -200,9 +186,26 @@ function Letter() {
 
   // A service arriving in the URL (`/contact?service=maintenance`) prefills the
   // About line; read once, as the initial value, so it never overwrites a choice.
+  // A maintenance plan arriving with it (`&plan=professional&billing=annual`)
+  // opens the message with that choice as a sentence: the lead stores no plan
+  // field, so the message is the one place it is both seen and sent.
   const [values, setValues] = useState<Values>(() => {
     const incoming = searchParams.get("service");
-    return { ...EMPTY, service: isService(incoming) ? incoming : "" };
+    const plan = MAINTENANCE_PLAN_IDS.find(
+      (id) => id === searchParams.get("plan"),
+    );
+    return {
+      ...EMPTY,
+      service: isService(incoming) ? incoming : "",
+      message:
+        incoming === "maintenance" && plan
+          ? t("planMessage", {
+              plan: pricingCopy(locale as Locale).maintenance[plan].name,
+              billing:
+                searchParams.get("billing") === "annual" ? "annual" : "monthly",
+            })
+          : "",
+    };
   });
   const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -651,90 +654,68 @@ function DirectLines() {
   const phone = t("phoneValue");
 
   const valueClass =
-    "text-lg leading-snug text-foreground underline-offset-4 decoration-foreground/40 hover:underline";
+    "mt-2 block text-lg leading-snug text-foreground wrap-anywhere transition-colors duration-(--motion-drawer) hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
 
   return (
-    <section aria-labelledby="contact-lines-heading" className="border-t border-border-subtle pt-8">
+    <section aria-labelledby="contact-lines-heading">
       <h2 id="contact-lines-heading" className="sr-only">
         {t("lines.heading")}
       </h2>
 
-      <dl className="grid gap-y-6">
-        <LineRow term={t("lines.emailLabel")}>
-          <a href={`mailto:${email}`} className={valueClass}>
-            {email}
-          </a>
-        </LineRow>
-        <LineRow term={t("lines.phoneLabel")}>
-          <a href={`tel:${phone.replace(/\s/g, "")}`} dir="ltr" className={valueClass}>
-            {phone}
-          </a>
-        </LineRow>
-        <LineRow term={t("lines.whatsappLabel")}>
+      <ul className="grid gap-y-8 border-t border-border-subtle pt-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Line label={t("lines.whatsappLabel")} note={t("lines.whatsappNote")}>
           <ExternalDirectionalLink
             href={`https://wa.me/${phone.replace(/\D/g, "")}`}
             className={valueClass}
           >
             {t("lines.whatsappValue")}
           </ExternalDirectionalLink>
-          <span className="mt-1 block text-sm text-muted-foreground">
-            {t("lines.whatsappNote")}
-          </span>
-        </LineRow>
-        <LineRow term={t("lines.locationLabel")}>
-          <span className="block text-lg leading-snug text-foreground">
-            {t("lines.address1")}
-          </span>
-          <span className="mt-1 block text-sm text-muted-foreground">
-            {t("lines.address2")}
-            {cairoTime ? <> · {t("lines.localTime", { time: cairoTime })}</> : null}
-          </span>
-        </LineRow>
-      </dl>
+        </Line>
+        <Line label={t("lines.emailLabel")}>
+          <a href={`mailto:${email}`} dir="ltr" className={cn(valueClass, "rtl:text-end")}>
+            {email}
+          </a>
+        </Line>
+        <Line label={t("lines.phoneLabel")}>
+          <a
+            href={`tel:${phone.replace(/\s/g, "")}`}
+            dir="ltr"
+            className={cn(valueClass, "rtl:text-end")}
+          >
+            {phone}
+          </a>
+        </Line>
+        <Line label={t("callLead")}>
+          <DirectionalLink href="/schedule" className={valueClass}>
+            {t("scheduleCall")}
+          </DirectionalLink>
+        </Line>
+      </ul>
 
-      <p className="mt-10 max-w-[46ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
-        {t("responseTime")}
+      <p className="mt-10 text-sm leading-relaxed text-muted-foreground">
+        {t("lines.address1")} · {t("lines.address2")}
+        {cairoTime ? <> · {t("lines.localTime", { time: cairoTime })}</> : null}
       </p>
-      <p className="mt-4 text-[0.9375rem] text-muted-foreground">
-        {t("callLead")}{" "}
-        <DirectionalLink
-          href="/schedule"
-          className="text-foreground underline underline-offset-4 decoration-foreground/40 hover:decoration-foreground"
-        >
-          {t("scheduleCall")}
-        </DirectionalLink>
-      </p>
-
-      <nav aria-labelledby="contact-social-label" className="mt-10">
-        <Eyebrow id="contact-social-label" className="m-0">
-          {t("socialLabel")}
-        </Eyebrow>
-        <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
-          {SOCIAL_ORDER.map((key) => (
-            <li key={key}>
-              <a
-                href={SITE_CONFIG.social[key]}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-foreground underline-offset-4 decoration-foreground/40 hover:underline"
-              >
-                {t(`social.${key}`)}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav>
     </section>
   );
 }
 
-function LineRow({ term, children }: { term: string; children: ReactNode }) {
+function Line({
+  label,
+  note,
+  children,
+}: {
+  label: string;
+  note?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="grid gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-6">
-      <dt className="text-sm font-medium leading-snug text-muted-foreground sm:pt-1">
-        {term}
-      </dt>
-      <dd className="min-w-0">{children}</dd>
-    </div>
+    <li className="min-w-0 sm:pe-6 lg:border-s lg:border-border-subtle lg:ps-6 lg:first:border-s-0 lg:first:ps-0">
+      <Eyebrow className="m-0">{label}</Eyebrow>
+      {children}
+      {note ? (
+        <span className="mt-1.5 block text-sm text-muted-foreground">{note}</span>
+      ) : null}
+    </li>
   );
 }

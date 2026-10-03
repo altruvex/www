@@ -30,7 +30,7 @@ const SCAN_EXT = new Set([".ts", ".tsx", ".mjs", ".js", ".json"]);
 
 const SKIP_DIRS = new Set([
   "node_modules", ".next", "dist", ".turbo", "build", "coverage", ".git",
-  "public", "prisma",
+  "public", "prisma", ".venv",
 ]);
 
 /**

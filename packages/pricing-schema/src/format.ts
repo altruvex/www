@@ -69,6 +69,36 @@ export function formatPercent(rate: number, locale: Locale): string {
   return formatNumber(Math.round(rate * 100), locale);
 }
 
+/**
+ * A share as a percent with its sign, e.g. "50%" / "٥٠٪". Used where the
+ * percent stands alone in a sentence ("50% to start") rather than beside a
+ * literal "%" in the template, which `formatPercent` serves.
+ */
+export function formatPercentLabel(rate: number, locale: Locale): string {
+  return new Intl.NumberFormat(NUMBER_LOCALE[locale], {
+    style: "percent",
+    maximumFractionDigits: 0,
+  }).format(rate);
+}
+
+/**
+ * A price delta as a signed percent, e.g. "+15%" / "−5%" / "؜+١٥٪؜".
+ *
+ * `rate` is the change from neutral (0.15, −0.05), not the factor itself.
+ * Callers render a factor of exactly 1 with copy ("no change") rather than
+ * "+0%", so zero is not special-cased here. EN uses the typographic minus
+ * (U+2212) rather than the hyphen `Intl` emits, matching how the site sets
+ * negative figures; the Arabic output is left exactly as `Intl` produces it.
+ */
+export function formatSignedPercent(rate: number, locale: Locale): string {
+  const text = new Intl.NumberFormat(NUMBER_LOCALE[locale], {
+    style: "percent",
+    signDisplay: "exceptZero",
+    maximumFractionDigits: 0,
+  }).format(rate);
+  return locale === "en" ? text.replace("-", "−") : text;
+}
+
 /** Fills `{token}` placeholders in a copy template. */
 export function fillTemplate(
   template: string,

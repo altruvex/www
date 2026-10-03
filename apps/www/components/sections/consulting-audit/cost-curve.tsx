@@ -68,7 +68,7 @@ export function CostCurve({
              so a tween whose whole range is one unit can only ever write `1px`
              and `0px` — the line snaps in a single frame and reads as no
              animation at all. Measured, the curve is ~936 viewBox units, which
-             is ~936 steps to draw through. Same as tech-dna-section. */
+             is ~936 steps to draw through. */
           const curveLength = curve.getTotalLength();
           const flatLength = flat.getTotalLength();
           gsap.set(curve, { strokeDasharray: curveLength, strokeDashoffset: curveLength });

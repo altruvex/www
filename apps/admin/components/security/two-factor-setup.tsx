@@ -33,6 +33,9 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Turning it off and re-issuing backup codes both re-confirm the password:
+  // an unattended browser must not be able to weaken the account.
+  const [mode, setMode] = useState<"disable" | "regenerate" | null>(null);
 
   async function start(event: React.FormEvent) {
     event.preventDefault();
@@ -64,6 +67,39 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
     router.refresh();
   }
 
+  async function manage(event: React.FormEvent) {
+    event.preventDefault();
+    if (!mode) return;
+    setError("");
+    setBusy(true);
+    if (mode === "disable") {
+      const { error: failed } = await twoFactor.disable({ password });
+      setBusy(false);
+      setPassword("");
+      if (failed) {
+        setError(failed.message || "That password was not accepted.");
+        return;
+      }
+      setMode(null);
+      setBackupCodes([]);
+      setStage("idle");
+      router.refresh();
+      return;
+    }
+    const { data, error: failed } = await twoFactor.generateBackupCodes({ password });
+    setBusy(false);
+    setPassword("");
+    if (failed || !data) {
+      setError(failed?.message || "That password was not accepted.");
+      return;
+    }
+    // The old codes are void from this moment; the new ones are shown once
+    // and live only in this component's state until the page is left.
+    setBackupCodes(data.backupCodes ?? []);
+    setCopied(false);
+    setMode(null);
+  }
+
   if (stage === "done") {
     return (
       <div className="space-y-4">
@@ -77,9 +113,64 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
           </div>
         </div>
         {backupCodes.length > 0 && <BackupCodes codes={backupCodes} copied={copied} setCopied={setCopied} />}
-        <Button variant="outline" onClick={() => router.push("/")}>
-          Continue to the dashboard
-        </Button>
+
+        {mode ? (
+          <form onSubmit={manage} className="space-y-3 rounded-md border border-border-strong p-3">
+            <p className="text-base text-muted-foreground">
+              {mode === "disable"
+                ? required
+                  ? "This account must keep a second factor, so turning it off signs you out of the dashboard until it is set up again. Confirm your password to continue."
+                  : "Signing in will ask for your password only. Confirm your password to continue."
+                : "Your current backup codes stop working the moment new ones are made. Confirm your password to continue."}
+            </p>
+            <Field label="Your password">
+              <Input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                className="h-9"
+                required
+                autoFocus
+              />
+            </Field>
+            {error && <Problem message={error} />}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="submit"
+                variant={mode === "disable" ? "destructive" : "brand"}
+                disabled={busy || password.length === 0}
+              >
+                {busy && <LoadingIcon size="sm" />}
+                {busy ? "Checking…" : mode === "disable" ? "Turn off two-factor" : "Make new backup codes"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={busy}
+                onClick={() => {
+                  setMode(null);
+                  setPassword("");
+                  setError("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => router.push("/")}>
+              Continue to the dashboard
+            </Button>
+            <Button variant="ghost" onClick={() => setMode("regenerate")}>
+              New backup codes
+            </Button>
+            <Button variant="ghost" onClick={() => setMode("disable")}>
+              Turn off
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

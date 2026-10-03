@@ -1,32 +1,68 @@
 import Link from "next/link";
-import { prisma } from "@repo/database";
+import { prisma, type ProjectPhase } from "@repo/database";
 import { Shapes } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
+import { FilterChip } from "@/components/os/data-table";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
+import { PROJECT_PHASE_ORDER, projectPhase } from "@/lib/status";
 import { ProjectsTable, type ProjectRow } from "./projects-table";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string; phase?: string }>;
+}) {
+  const { client: clientParam, phase: phaseParam } = await searchParams;
+  const clientId = clientParam?.trim() || null;
+  // `?phase=` arrives from the Today page's delivery strip. An unknown value is
+  // ignored rather than producing an empty list that looks like "no projects".
+  const phase = (PROJECT_PHASE_ORDER as readonly string[]).includes(phaseParam ?? "")
+    ? (phaseParam as ProjectPhase)
+    : null;
   const now = new Date();
-  const projects = await prisma.project.findMany({
-    include: {
-      client: { select: { id: true, name: true, company: true } },
-      payments: true,
-      contract: { select: { proposal: { select: { totalPrice: true, currency: true } } } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+
+  // Each chip removes only its own filter; the other one survives.
+  const hrefWithout = (drop: "client" | "phase") => {
+    const params = new URLSearchParams();
+    if (clientId && drop !== "client") params.set("client", clientId);
+    if (phase && drop !== "phase") params.set("phase", phase);
+    const query = params.toString();
+    return query ? `/projects?${query}` : "/projects";
+  };
+
+  // A list reached from a client hub (`?client=`) is that client's delivery,
+  // not the whole book — scoped in the query, named by the chip.
+  const [scopeClient, projects] = await Promise.all([
+    clientId
+      ? prisma.client.findUnique({
+          where: { id: clientId },
+          select: { name: true, company: true },
+        })
+      : null,
+    prisma.project.findMany({
+      where: { ...(clientId ? { clientId } : {}), ...(phase ? { phase } : {}) },
+      include: {
+        client: { select: { id: true, name: true, company: true } },
+        payments: true,
+        contract: { select: { proposal: { select: { totalPrice: true, currency: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+  const scopeName = scopeClient
+    ? scopeClient.company || scopeClient.name || "Unnamed client"
+    : "Unknown client";
 
   const rows: ProjectRow[] = projects.map((p) => {
     const total = p.payments.reduce((s, x) => s + x.amount, 0);
     const collected = p.payments.filter((x) => x.status === "PAID").reduce((s, x) => s + x.amount, 0);
-    const overdue = p.payments.some(
-      (x) => x.dueDate && x.dueDate < now && x.status !== "PAID" && x.status !== "WAIVED",
-    );
+    const overdue = p.payments.some((x) => isPaymentOverdue(x, now));
     const late =
       p.status === "ACTIVE" && p.targetLaunchDate != null && p.targetLaunchDate < now && !p.actualLaunchDate;
 
@@ -65,12 +101,25 @@ export default async function ProjectsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Projects"
-        description="Delivery. Health is computed from launch dates and staging URLs, not self-reported — a project cannot claim to be fine while its date has passed."
+        description="Delivery. Health is computed from the target launch date and the project status, not self-reported — a project cannot claim to be fine while its date has passed."
       />
+
+      {(clientId || phase) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {clientId && <FilterChip label="Client" value={scopeName} clearHref={hrefWithout("client")} />}
+          {phase && (
+            <FilterChip
+              label="Phase"
+              value={projectPhase[phase]?.label ?? phase}
+              clearHref={hrefWithout("phase")}
+            />
+          )}
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Healthy" value={health.healthy} sub="On track" tone={health.healthy ? "success" : "neutral"} />
-        <StatTile label="At risk" value={health.atRisk} sub="Past target, no staging" tone={health.atRisk ? "warning" : "neutral"} />
+        <StatTile label="At risk" value={health.atRisk} sub="Past target, not launched" tone={health.atRisk ? "warning" : "neutral"} />
         <StatTile label="Blocked" value={health.blocked} sub="On hold" tone={health.blocked ? "danger" : "neutral"} />
         <StatTile
           label="Outstanding"
@@ -80,7 +129,36 @@ export default async function ProjectsPage() {
         />
       </div>
 
-      {rows.length === 0 ? (
+      {rows.length === 0 && phase ? (
+        <EmptyState
+          icon={Shapes}
+          title={`No project in ${projectPhase[phase]?.label ?? phase}`}
+          body="Nothing is at this phase right now. Projects move phase from their own page."
+          action={
+            <Button asChild variant="ghost">
+              <Link href={hrefWithout("phase")}>Clear the phase filter</Link>
+            </Button>
+          }
+        />
+      ) : rows.length === 0 && clientId ? (
+        <EmptyState
+          icon={Shapes}
+          title={`No project for ${scopeName}`}
+          body="A project opens when this client signs a contract. Their proposals and contracts are where that starts."
+          action={
+            <>
+              {scopeClient && (
+                <Button asChild variant="outline">
+                  <Link href={`/clients/${clientId}`}>Open the client</Link>
+                </Button>
+              )}
+              <Button asChild variant="ghost">
+                <Link href="/projects">All projects</Link>
+              </Button>
+            </>
+          }
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={Shapes}
           title="Nothing in delivery"

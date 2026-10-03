@@ -2,7 +2,10 @@ import { prisma } from "@repo/database";
 import { FolderOpen } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
+import Link from "next/link";
+import { Button } from "@repo/ui";
 import { EmptyState } from "@/components/os/empty-state";
+import { FilterChip } from "@/components/os/data-table";
 import { documentUrl } from "@/lib/storage";
 import { DocumentsTable, type DocumentRow } from "./documents-table";
 
@@ -16,10 +19,26 @@ export const dynamic = "force-dynamic";
  * than a file store. That is deliberate: a file with no business context is a
  * file nobody can act on six months later.
  */
-export default async function DocumentsPage() {
-  const [proposals, contracts] = await Promise.all([
+export default async function DocumentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const { client: clientParam } = await searchParams;
+  const clientId = clientParam?.trim() || null;
+  // `?client=` scopes both source queries, so the stats count only that
+  // client's files rather than filtering a full list in the browser.
+  const scope = clientId ? { clientId } : {};
+
+  const [scopeClient, proposals, contracts] = await Promise.all([
+    clientId
+      ? prisma.client.findUnique({
+          where: { id: clientId },
+          select: { id: true, name: true, company: true },
+        })
+      : null,
     prisma.proposal.findMany({
-      where: { OR: [{ fileUrl: { not: null } }, { pdfUrl: { not: null } }] },
+      where: { ...scope, OR: [{ fileUrl: { not: null } }, { pdfUrl: { not: null } }] },
       select: {
         id: true,
         fileUrl: true,
@@ -33,7 +52,7 @@ export default async function DocumentsPage() {
       },
     }),
     prisma.contract.findMany({
-      where: { OR: [{ fileUrl: { not: null } }, { signedFileUrl: { not: null } }] },
+      where: { ...scope, OR: [{ fileUrl: { not: null } }, { signedFileUrl: { not: null } }] },
       select: {
         id: true,
         fileUrl: true,
@@ -49,6 +68,7 @@ export default async function DocumentsPage() {
 
   const label = (c: { name: string | null; company: string | null }) =>
     c.company || c.name || "Unnamed client";
+  const scopeName = scopeClient ? label(scopeClient) : "Unknown client";
 
   const storedRows: DocumentRow[] = [
     ...proposals.flatMap((p) =>
@@ -140,6 +160,12 @@ export default async function DocumentsPage() {
         description="Every file the system generated, and the record that produced it. There is no loose upload bucket — a document without a business context is a document nobody can act on."
       />
 
+      {clientId && (
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterChip label="Client" value={scopeName} clearHref="/documents" />
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile label="Documents" value={rows.length} sub="All generated files" />
         <StatTile label="Proposal decks" value={(byCategory["Proposal deck"] ?? 0) + (byCategory["Proposal PDF"] ?? 0)} sub="PPTX and PDF" />
@@ -152,7 +178,24 @@ export default async function DocumentsPage() {
         />
       </div>
 
-      {rows.length === 0 ? (
+      {rows.length === 0 && clientId ? (
+        <EmptyState
+          icon={FolderOpen}
+          title={scopeClient ? `No documents for ${scopeName} yet` : "This client no longer exists"}
+          body={
+            scopeClient
+              ? "A document appears here once a proposal or contract is built for this client. Draft a proposal to produce the first one."
+              : "The link points at a client record that was deleted or never existed. Clear the filter to see every document."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href={scopeClient ? `/clients/${scopeClient.id}/new-proposal` : "/documents"}>
+                {scopeClient ? "New proposal" : "All documents"}
+              </Link>
+            </Button>
+          }
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={FolderOpen}
           title="No documents generated yet"

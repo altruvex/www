@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/services stage — prototypes A / B / C</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400&family=Vazirmatn:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Standalone prototype. House values mirrored from packages/ui/src/styles/tokens.css
+   and apps/www/app/globals.css; not production code. The build reads the real tokens. */
+:root{
+  --bg:#fff;--fg:#1a1a1a;--muted:#666;--line:rgba(0,0,0,.1);--line-strong:rgba(0,0,0,.45);
+  --brand:hsl(214 89% 48%);--brand-text:hsl(214 89% 42%);
+  --w-violet:hsl(272 72% 55%);--w-blue:hsl(214 89% 42%);--w-cyan:hsl(194 88% 31%);--w-green:hsl(158 64% 30%);
+  --serif:Georgia,"Times New Roman",serif;--mono:"Geist Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);--gutter:clamp(16px,4vw,56px);
+}
+html[data-theme="dark"]{
+  --bg:#121212;--fg:#f0f0f0;--muted:#949494;--line:rgba(255,255,255,.1);--line-strong:rgba(255,255,255,.45);
+  --brand-text:hsl(214 95% 68%);
+  --w-violet:hsl(268 88% 74%);--w-blue:hsl(214 95% 68%);--w-cyan:hsl(190 80% 44%);--w-green:hsl(158 36% 49%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:clip;line-height:1.6;padding-bottom:96px}
+[dir="rtl"] body{font-family:Vazirmatn,Inter,sans-serif}
+h1,h2,h3,.display{font-family:Outfit,sans-serif;font-weight:300;letter-spacing:-.035em;line-height:1.04}
+[dir="rtl"] :is(h1,h2,h3,.display){font-family:Vazirmatn,sans-serif;letter-spacing:0!important;line-height:1.3}
+em.acc{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--brand-text);letter-spacing:-.02em}
+[dir="rtl"] em.acc{font-family:inherit;font-style:normal;font-weight:500}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+[dir="rtl"] .eyebrow{font-family:Vazirmatn,sans-serif;letter-spacing:0;font-size:14px}
+.mono{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+[dir="rtl"] .mono{font-family:Vazirmatn,sans-serif}
+a{color:inherit}
+img{display:block;max-width:100%}
+ul,ol{list-style:none}
+.wrap{max-width:1320px;margin:0 auto;padding:0 var(--gutter)}
+.w-violet{--acc:var(--w-violet)}.w-blue{--acc:var(--w-blue)}.w-cyan{--acc:var(--w-cyan)}.w-green{--acc:var(--w-green)}
+
+/* page hero (unchanged on the live page — shown so the section is judged in place) */
+.hero{padding:clamp(120px,18vh,200px) 0 clamp(56px,8vh,96px);display:grid;grid-template-columns:8fr 4fr;gap:32px 48px;align-items:end}
+.hero h1{font-size:clamp(40px,5.6vw,88px);max-width:16ch;margin-top:20px}
+.hero p{color:var(--muted);font-size:17px;max-width:40ch}
+.hero p strong{color:var(--fg);font-weight:500}
+@media (max-width:900px){.hero{grid-template-columns:1fr}}
+.neighbour{margin-top:clamp(96px,14vh,160px);padding:56px 0;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+
+section.stage{display:none}
+section.stage.on{display:block}
+
+/* shared atoms */
+.door{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:500;text-decoration:none;border-bottom:1px solid var(--line-strong);padding-bottom:3px;transition:border-color .2s,color .2s}
+.door:hover{color:var(--acc,var(--brand-text));border-color:currentColor}
+.door svg{width:14px;height:14px;transition:transform .2s var(--ease)}
+.door:hover svg{transform:translateX(3px)}
+[dir="rtl"] .door svg{transform:scaleX(-1)}
+[dir="rtl"] .door:hover svg{transform:scaleX(-1) translateX(3px)}
+.leaves{font-family:var(--serif);font-style:italic;color:var(--acc);letter-spacing:-.01em;line-height:1.2}
+[dir="rtl"] .leaves{font-family:Vazirmatn,sans-serif;font-style:normal;font-weight:500;line-height:1.5}
+.deliv li{padding:12px 0;border-top:1px solid var(--line);font-size:15px;line-height:1.45}
+.rise{opacity:0;transform:translateY(18px);transition:opacity .7s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0)*90ms)}
+.in .rise,.rise.in{opacity:1;transform:none}
+.process-line{display:flex;justify-content:space-between;align-items:baseline;gap:24px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:clamp(56px,8vh,88px);padding-top:20px;color:var(--muted);font-size:15px}
+
+/* ───────── A · The life of a system ───────── */
+.a-head{display:flex;justify-content:space-between;align-items:baseline;gap:24px;flex-wrap:wrap;border-top:2px solid var(--fg);padding:16px 0 clamp(40px,6vh,64px)}
+.a-axis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:40px}
+.a-moment{padding-bottom:18px;font-family:Outfit,sans-serif;font-weight:300;font-size:clamp(22px,2vw,30px);letter-spacing:-.02em;line-height:1.1}
+[dir="rtl"] .a-moment{font-family:Vazirmatn,sans-serif;letter-spacing:0;line-height:1.4}
+.a-moment.build{grid-column:2/4}
+.a-moment small{display:block;font-family:Inter,sans-serif;font-size:14px;color:var(--muted);letter-spacing:0;margin-top:6px;font-weight:400}
+[dir="rtl"] .a-moment small{font-family:inherit}
+.a-line{grid-column:1/-1;position:relative;height:1px;background:var(--line);margin-inline-end:-40px}
+.a-line::after{content:"";position:absolute;inset:0;background:var(--fg);transform-origin:left;transform:scaleX(0);transition:transform 1.6s var(--ease)}
+[dir="rtl"] .a-line::after{transform-origin:right}
+.in .a-line::after{transform:scaleX(1)}
+.a-col{position:relative;padding-top:36px}
+.a-col::before{content:"";position:absolute;top:-5px;inset-inline-start:0;width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px var(--bg)}
+.a-col.joined::after{content:"";position:absolute;top:-1px;inset-inline-start:-40px;width:40px;height:3px;background:var(--acc)}
+.a-col .mono{display:block}
+.a-col h3{font-size:clamp(24px,2.1vw,32px);margin-top:10px;font-weight:400;letter-spacing:-.02em;line-height:1.12;min-height:2.24em}
+[dir="rtl"] .a-col h3{min-height:2.6em}
+.a-col .q{color:var(--muted);font-size:15px;margin-top:10px;min-height:3.2em}
+.a-col .leaves{font-size:clamp(20px,1.7vw,25px);margin:22px 0 22px;min-height:2.5em}
+.a-col .eng{margin:18px 0 20px;display:block}
+.a-return{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;margin-top:clamp(48px,7vh,72px);color:var(--muted);font-size:15px}
+.a-return i{height:1px;background:repeating-linear-gradient(to right,var(--line-strong) 0 6px,transparent 6px 12px)}
+.a-return svg{width:18px;height:18px}
+[dir="rtl"] .a-return svg{transform:scaleX(-1)}
+@media (max-width:1000px){
+  .a-axis{grid-template-columns:1fr;border-inline-start:1px solid var(--line-strong);padding-inline-start:28px}
+  .a-moment,.a-moment.build{grid-column:1;padding:36px 0 0}
+  .a-moment:first-child{padding-top:0}
+  .a-line{display:none}
+  .a-col{padding:20px 0 12px}
+  .a-col::before{top:30px;inset-inline-start:-33px;box-shadow:0 0 0 5px var(--bg)}
+  .a-col.joined::after{display:none}
+  .a-col h3,.a-col .q,.a-col .leaves{min-height:0!important}
+  .a-order-1{order:1}.a-order-2{order:2}.a-order-3{order:3}.a-order-4{order:4}.a-order-5{order:5}.a-order-6{order:6}.a-order-7{order:7}
+  .a-return{grid-template-columns:auto 1fr}.a-return i{display:none}
+}
+
+/* ───────── B · The standard stays ───────── */
+.b-grid{display:grid;grid-template-columns:4fr 8fr;gap:72px;border-top:2px solid var(--fg);padding-top:28px}
+.b-plate{position:sticky;top:18vh;align-self:start}
+.b-plate ul{margin-top:28px;display:grid;gap:22px}
+.b-plate li{display:flex;gap:14px;font-family:Outfit,sans-serif;font-size:clamp(18px,1.5vw,22px);line-height:1.25;letter-spacing:-.015em;max-width:22ch}
+[dir="rtl"] .b-plate li{font-family:Vazirmatn,sans-serif;letter-spacing:0;line-height:1.5}
+.b-plate li::before{content:"";flex:none;width:3px;height:.85em;margin-top:.2em;background:var(--acc);transition:background .5s var(--ease)}
+.b-now{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;font-size:14px;color:var(--muted)}
+.b-now b{color:var(--acc);font-weight:500;transition:color .5s var(--ease)}
+.b-ch{padding:clamp(48px,9vh,104px) 0;border-top:1px solid var(--line);min-height:68vh;display:flex;flex-direction:column;justify-content:center}
+.b-ch:first-child{border-top:0;padding-top:0;min-height:0}
+.b-ch h3{font-size:clamp(40px,6vw,96px);margin-top:14px;max-width:11ch}
+.b-ch .q{color:var(--muted);font-size:17px;margin-top:20px}
+.b-ch .leaves{font-size:clamp(24px,2.6vw,38px);margin-top:36px;max-width:22ch}
+.b-ch .cols{display:grid;grid-template-columns:7fr 4fr;gap:48px;margin-top:36px;align-items:start}
+.b-ch .side{display:grid;gap:18px;padding-top:12px;justify-items:start}
+@media (max-width:1000px){
+  .b-grid{grid-template-columns:1fr;gap:48px}
+  .b-plate{position:static}.b-now{display:none}
+  .b-ch{min-height:0;padding:48px 0}
+  .b-ch .cols{grid-template-columns:1fr;gap:24px}
+}
+
+/* ───────── C · One photograph, four open entries ───────── */
+.c-photo{position:relative;border-radius:14px;overflow:hidden;height:clamp(380px,62vh,620px);color:#fff}
+.c-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(1.12);transition:transform 2.6s var(--ease)}
+[dir="rtl"] .c-photo img{transform:scale(-1.12,1.12)}
+.c-photo.in img{transform:scale(1)}
+[dir="rtl"] .c-photo.in img{transform:scale(-1,1)}
+.c-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,.3) 60%,rgba(0,0,0,.12))}
+.c-plate{position:absolute;inset:auto 0 0 0;z-index:1;padding:clamp(24px,3.4vw,48px)}
+.c-plate .eyebrow{color:rgba(255,255,255,.75)}
+.c-plate ul{display:grid;grid-template-columns:repeat(4,1fr);gap:32px;margin-top:20px;border-top:1px solid rgba(255,255,255,.35);padding-top:20px}
+.c-plate li{font-family:Outfit,sans-serif;font-size:clamp(17px,1.5vw,22px);line-height:1.25;letter-spacing:-.015em;max-width:20ch}
+[dir="rtl"] .c-plate li{font-family:Vazirmatn,sans-serif;letter-spacing:0;line-height:1.5}
+.c-rows{margin-top:clamp(56px,8vh,96px);border-top:2px solid var(--fg)}
+.c-row{display:grid;grid-template-columns:5fr 4fr 3fr;gap:40px;padding:clamp(36px,6vh,64px) 0;border-bottom:1px solid var(--line);align-items:start}
+.c-row h3{font-size:clamp(32px,3.8vw,60px);margin-top:10px;max-width:11ch}
+.c-row .q{color:var(--muted);font-size:16px;margin-top:14px}
+.c-row .leaves{font-size:clamp(20px,1.7vw,25px);margin-bottom:18px}
+.c-row .side{display:grid;gap:18px;justify-items:start;padding-top:6px}
+@media (max-width:1000px){
+  .c-plate ul{grid-template-columns:1fr 1fr;gap:16px 24px}
+  .c-row{grid-template-columns:1fr;gap:20px}
+}
+@media (max-width:560px){.c-photo{height:520px}.c-plate ul{grid-template-columns:1fr}}
+
+/* switcher */
+.bar{position:fixed;inset:auto 0 16px 0;display:flex;justify-content:center;z-index:50;pointer-events:none}
+.bar div{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;background:rgba(20,20,20,.92);color:#fff;padding:6px;border-radius:12px;font-size:13px}
+.bar button{font:inherit;color:rgba(255,255,255,.7);background:none;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+.bar button.on{background:#fff;color:#111}
+.bar span{width:1px;background:rgba(255,255,255,.2);margin:4px}
+@media (prefers-reduced-motion:reduce){.rise{opacity:1;transform:none;transition:none}.a-line::after{transform:scaleX(1);transition:none}.c-photo img{transform:none;transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div><p class="eyebrow" data-t="eyebrow"></p><h1><span data-t="title"></span> <em class="acc" data-t="titleItalic"></em></h1></div>
+    <p data-h="description"></p>
+  </header>
+</div>
+
+<section class="stage on" id="A"><div class="wrap" id="A-root"></div></section>
+<section class="stage" id="B"><div class="wrap" id="B-root"></div></section>
+<section class="stage" id="C"><div class="wrap" id="C-root"></div></section>
+
+<div class="wrap"><div class="neighbour">↓ SectionEndCta (unchanged) — “Every system you own asks the next question.”</div></div>
+
+<div class="bar"><div>
+  <button data-v="A" class="on">A · Life of a system</button>
+  <button data-v="B">B · The standard stays</button>
+  <button data-v="C">C · Photo + open entries</button>
+  <span></span>
+  <button data-l="en" class="on">EN</button><button data-l="ar">AR</button>
+  <span></span>
+  <button data-m="light" class="on">Light</button><button data-m="dark">Dark</button>
+</div></div>
+
+<script>
+/* Copy is the live servicesPage.* copy unless marked NEW (unreviewed).
+   The audit's fixed fee is left as words here; the build reads it from the pricing schema. */
+const COPY = {
+ en:{
+  eyebrow:"Services",title:"Four focused disciplines.",titleItalic:"One uncompromising standard.",
+  description:"Each service is structured around <strong>a single business outcome</strong> - so scope, investment, and next steps all point in the same direction.",
+  plateEyebrow:"Constant across all four",
+  plate:["Scope and price written down before work begins.","Built from your requirements — never a recycled theme.","Arabic and English engineered as equals.","Code, accounts and findings stay in your name."],
+  explore:n=>`What ${n} includes`,
+  /* NEW */ aLabel:"Where each one sits",aHint:"Start at any point — each stands alone",
+  moments:[["Before you build","When the decision is still open"],["The build","Design and engineering, one team"],["Once it is live","When it has to keep working"]],
+  ret:"What monitoring surfaces becomes the next audit's brief.",
+  processQ:"How a build runs, phase by phase",processA:"See the process",now:"Now reading",
+  s:{
+   audit:{name:"Technical Consulting",q:"Need clarity before a costly decision?",leaves:"A decision you can defend, in five days.",d:["Risk-ranked findings across architecture, performance and SEO","A recommended rebuild-or-repair path, with its trade-offs","A roadmap any team can execute — ours or yours"],eng:"Fixed fee, five business days"},
+   website:{name:"Interface Design",q:"Need a stronger market-facing presence?",leaves:"A site that is yours, not rented.",d:["A custom site with English and Arabic engineered as equals","Page structures designed around one conversion path","Performance measured against Core Web Vitals before launch"],eng:"Fixed-scope project, priced per scope"},
+   portal:{name:"Custom Development",q:"Need custom workflows or product logic?",leaves:"Your operation, without the bottleneck.",d:["Dashboards and workflows modelled on how your team actually operates","A typed, documented codebase on a stack you own","An automated build-and-deploy pipeline from the first release"],eng:"Fixed-scope project, priced per scope"},
+   maintenance:{name:"Maintenance & Support",q:"Need reliable execution after launch?",leaves:"A system that keeps working after we leave.",d:["Monitoring, patching and backups on a defined cycle","Content and small feature updates without a new project","A direct channel to engineers who know the codebase"],eng:"Monthly retainer, three coverage plans"}
+  }
+ },
+ ar:{
+  eyebrow:"الخدمات",title:"أربعة تخصصات محددة.",titleItalic:"معيار واحد لا نتنازل عنه.",
+  description:"كل خدمة مصممة حول <strong>نتيجة تجارية واحدة</strong> - حتى يشير النطاق والاستثمار والخطوات التالية إلى الاتجاه نفسه.",
+  plateEyebrow:"ثابت في الخدمات الأربع",
+  plate:["النطاق والسعر مكتوبان قبل أن يبدأ العمل.","مبني من متطلباتك — لا من قالب معاد تدويره.","العربية والإنجليزية مصممتان كتجربتين متكافئتين.","الكود والحسابات والنتائج تبقى باسمك."],
+  explore:n=>`ما يشمله ${n}`,
+  aLabel:"موقع كل خدمة",aHint:"ابدأ من أي نقطة — كل خدمة قائمة بذاتها",
+  moments:[["قبل أن تبني","حين يكون القرار ما زال مفتوحاً"],["البناء","التصميم والهندسة، فريق واحد"],["بعد الإطلاق","حين يجب أن يستمر في العمل"]],
+  ret:"ما تكشفه المراقبة يصبح موجز التدقيق التالي.",
+  processQ:"كيف يسير البناء، مرحلة بمرحلة",processA:"شاهد طريقة العمل",now:"تقرأ الآن",
+  s:{
+   audit:{name:"الاستشارات التقنية",q:"تحتاج وضوحاً قبل قرار مكلف؟",leaves:"قرار تستطيع الدفاع عنه، في خمسة أيام عمل.",d:["نتائج مرتبة حسب الخطورة في البنية والأداء وتحسين محركات البحث","مسار موصى به لإعادة البناء أو الإصلاح، مع مقايضاته","خارطة طريق ينفذها أي فريق — فريقنا أو فريقك"],eng:"سعر ثابت، خمسة أيام عمل"},
+   website:{name:"تصميم الواجهات",q:"تحتاج حضوراً أقوى في السوق؟",leaves:"موقع ملكك، لا مستأجر.",d:["موقع مخصص بالعربية والإنجليزية كتجربتين متكافئتين","بنية صفحات مصممة حول مسار تحويل واحد","أداء مقاس وفق مؤشرات Core Web Vitals قبل الإطلاق"],eng:"مشروع بنطاق محدد، يُسعَّر حسب النطاق"},
+   portal:{name:"التطوير المخصص",q:"تحتاج طريقة عمل مخصصة أو منطق منتج؟",leaves:"تشغيل بلا الاختناق الذي كان.",d:["لوحات تحكم ومسارات عمل مبنية على طريقة عمل فريقك فعلياً","كود موثّق ومحكم الأنواع على تقنيات تملكها","خط بناء ونشر آلي منذ الإصدار الأول"],eng:"مشروع بنطاق محدد، يُسعَّر حسب النطاق"},
+   maintenance:{name:"الصيانة والدعم",q:"تحتاج تنفيذاً موثوقاً بعد الإطلاق؟",leaves:"نظام يستمر في العمل بعد أن نغادر.",d:["مراقبة وتحديثات أمنية ونسخ احتياطي على دورة محددة","تحديثات محتوى وميزات صغيرة دون مشروع جديد","قناة مباشرة مع مهندسين يعرفون الكود"],eng:"اشتراك شهري، ثلاث خطط تغطية"}
+  }
+ }
+};
+const WORLD={website:"violet",portal:"blue",audit:"cyan",maintenance:"green"};
+const SITE_ORDER=["website","portal","audit","maintenance"];   /* SERVICE_ORDER on the live site */
+const LIFE_ORDER=["audit","website","portal","maintenance"];   /* A: order in a system's life */
+const ARROW='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M9 4l4 4-4 4"/></svg>';
+const num=(i,l)=>{const s=String(i).padStart(2,"0");return l==="ar"?s.replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]):s};
+let lang="en";
+
+const deliv=s=>`<ul class="deliv">${s.d.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+const door=(c,s)=>`<a class="door" href="#">${c.explore(s.name)}${ARROW}</a>`;
+const processLine=c=>`<div class="process-line"><span>${c.processQ}</span><a class="door" href="#">${c.processA}${ARROW}</a></div>`;
+
+function renderA(c){
+  const col=(id,i,extra="")=>{const s=c.s[id];return `<article class="a-col rise w-${WORLD[id]} ${extra}" style="--i:${i}">
+    <span class="mono">${num(i+1,lang)}</span><h3>${s.name}</h3><p class="q">${s.q}</p>
+    <p class="leaves">${s.leaves}</p>${deliv(s)}<span class="mono eng">${s.eng}</span>${door(c,s)}</article>`};
+  const m=c.moments.map((x,i)=>`<p class="a-moment ${i===1?"build":""} a-order-${[1,3,6][i]}">${x[0]}<small>${x[1]}</small></p>`).join("");
+  return `<div class="a-head"><p class="eyebrow">${c.aLabel} · ${num(4,lang)}</p><p class="mono">${c.aHint}</p></div>
+  <div class="a-axis io">${m}<div class="a-line"></div>
+    ${col("audit",0,"a-order-2")}${col("website",1,"a-order-4")}${col("portal",2,"joined a-order-5")}${col("maintenance",3,"a-order-7")}
+  </div>
+  <p class="a-return"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 10a6 6 0 1 1-2-4.5M14 2v4h-4"/></svg><i></i><span>${c.ret}</span></p>
+  ${processLine(c)}`;
+}
+function renderB(c){
+  const ch=SITE_ORDER.map((id,i)=>{const s=c.s[id];return `<article class="b-ch w-${WORLD[id]}" data-i="${i}" data-w="${WORLD[id]}" data-n="${s.name}">
+    <span class="mono">${num(i+1,lang)} / ${num(4,lang)}</span><h3>${s.name}</h3><p class="q">${s.q}</p>
+    <p class="leaves">${s.leaves}</p><div class="cols">${deliv(s)}<div class="side"><span class="mono">${s.eng}</span>${door(c,s)}</div></div></article>`}).join("");
+  return `<div class="b-grid"><aside class="b-plate w-violet" id="b-plate"><p class="eyebrow">${c.plateEyebrow}</p>
+    <ul>${c.plate.map(x=>`<li>${x}</li>`).join("")}</ul>
+    <p class="b-now"><span>${c.now}</span><b id="b-now">${c.s.website.name}</b></p></aside><div>${ch}</div></div>${processLine(c)}`;
+}
+function renderC(c){
+  const rows=SITE_ORDER.map((id,i)=>{const s=c.s[id];return `<article class="c-row rise io w-${WORLD[id]}">
+    <div><span class="mono">${num(i+1,lang)}</span><h3>${s.name}</h3><p class="q">${s.q}</p></div>
+    <div><p class="leaves">${s.leaves}</p>${deliv(s)}</div>
+    <div class="side"><span class="mono">${s.eng}</span>${door(c,s)}</div></article>`}).join("");
+  return `<figure class="c-photo io"><img src="img/blue-folds.webp" alt=""><figcaption class="c-plate"><p class="eyebrow">${c.plateEyebrow}</p>
+    <ul>${c.plate.map(x=>`<li>${x}</li>`).join("")}</ul></figcaption></figure><div class="c-rows">${rows}</div>${processLine(c)}`;
+}
+
+let io,bo;
+function render(){
+  const c=COPY[lang];
+  document.querySelectorAll("[data-t]").forEach(e=>e.textContent=c[e.dataset.t]);
+  document.querySelectorAll("[data-h]").forEach(e=>e.innerHTML=c[e.dataset.h]);
+  document.getElementById("A-root").innerHTML=renderA(c);
+  document.getElementById("B-root").innerHTML=renderB(c);
+  document.getElementById("C-root").innerHTML=renderC(c);
+  io?.disconnect();bo?.disconnect();
+  io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
+  document.querySelectorAll(".io").forEach(e=>io.observe(e));
+  /* B: the plate's bars and the "now reading" line take the world of the chapter crossing mid-viewport */
+  const plate=document.getElementById("b-plate"),now=document.getElementById("b-now");
+  bo=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){plate.className="b-plate w-"+e.target.dataset.w;now.textContent=e.target.dataset.n}}),{rootMargin:"-50% 0px -50% 0px"});
+  document.querySelectorAll(".b-ch").forEach(e=>bo.observe(e));
+}
+function pick(sel,btn){document.querySelectorAll(sel).forEach(b=>b.classList.toggle("on",b===btn))}
+document.querySelector(".bar").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.v){pick("[data-v]",b);document.querySelectorAll(".stage").forEach(s=>s.classList.toggle("on",s.id===b.dataset.v));scrollTo(0,0);render()}
+  if(b.dataset.l){pick("[data-l]",b);lang=b.dataset.l;document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";render()}
+  if(b.dataset.m){pick("[data-m]",b);document.documentElement.dataset.theme=b.dataset.m}
+});
+render();
+</script>
+</body>
+</html>

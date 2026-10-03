@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { toProductRole, can } from "@/lib/rbac";
+import { resolveRole, can } from "@/lib/rbac";
 import { recordActivity, userActor } from "@/lib/activity-log";
 import { getDeletable, type DeletionPlan } from "@/lib/deletable";
 
@@ -26,10 +26,9 @@ import { getDeletable, type DeletionPlan } from "@/lib/deletable";
 
 async function context() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const role = toProductRole(
-    (session?.user as { role?: string } | undefined)?.role,
-  );
-  return { session, role };
+  const user = session?.user as { id?: string; role?: string; opsRole?: string | null } | undefined;
+  const role = resolveRole(user ?? {});
+  return { session, role, userId: user?.id ?? null };
 }
 
 export interface DeletionPreview {
@@ -53,14 +52,14 @@ export async function describeDeletion(
   ids: string[],
 ): Promise<DeletionPreview> {
   const deletable = getDeletable(entity);
-  const { role } = await context();
+  const { role, userId } = await context();
   const permitted = can(role, "delete", deletable.subject);
 
   const plans: DeletionPlan[] = [];
   const missing: string[] = [];
   if (permitted) {
     for (const id of ids) {
-      const plan = await deletable.plan(id);
+      const plan = await deletable.plan(id, { userId });
       if (plan) plans.push(plan);
       else missing.push(id);
     }
@@ -88,7 +87,7 @@ export async function deleteRecords(
   options: { override?: boolean } = {},
 ): Promise<DeletionResult> {
   const deletable = getDeletable(entity);
-  const { session, role } = await context();
+  const { session, role, userId } = await context();
 
   if (!can(role, "delete", deletable.subject)) {
     throw new Error(
@@ -98,7 +97,7 @@ export async function deleteRecords(
   const override = options.override === true && role === "OWNER";
 
   const actor = userActor(session);
-  const actorId = (session?.user as { id?: string } | undefined)?.id;
+  const actorId = userId;
   const result: DeletionResult = { deleted: 0, refused: [] };
 
   for (const id of ids) {
@@ -112,7 +111,7 @@ export async function deleteRecords(
       continue;
     }
 
-    const plan = await deletable.plan(id);
+    const plan = await deletable.plan(id, { userId });
     if (!plan) {
       result.refused.push({ label: id, reason: "Already gone." });
       continue;
@@ -160,12 +159,4 @@ export async function deleteRecords(
   }
 
   return result;
-}
-
-export async function deleteRecord(
-  entity: string,
-  id: string,
-  options: { override?: boolean } = {},
-): Promise<DeletionResult> {
-  return deleteRecords(entity, [id], options);
 }

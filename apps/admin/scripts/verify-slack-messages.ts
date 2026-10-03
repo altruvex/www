@@ -89,7 +89,8 @@ check(
   entityUrl("contract", "abc") === "https://admin.example.com/contracts/abc",
   "an entity resolves to its screen",
 );
-check(entityUrl("payment", "abc") === "https://admin.example.com/payments", "a list-only entity resolves to the list");
+check(entityUrl("payment", "abc") === "https://admin.example.com/payments?payment=abc", "a payment resolves to its row in Billing");
+check(entityUrl("maintenance_request", "abc") === "https://admin.example.com/maintenance", "a list-only entity resolves to the list");
 check(entityUrl("nonsense", "abc") === null, "an unknown entity yields no link rather than a broken one");
 delete process.env.NEXT_PUBLIC_APP_URL;
 delete process.env.BETTER_AUTH_URL;

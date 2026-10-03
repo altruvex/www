@@ -10,6 +10,7 @@ import { ThreadList } from "@/components/os/thread-list";
 import { getThreads } from "@/lib/threads";
 import { percent } from "@/lib/format";
 import { Button } from "@repo/ui";
+import { ChannelTabs } from "../inbox/channel-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,8 @@ export default async function WhatsAppPage() {
     <div className="space-y-4">
       <PageHeader
         title="WhatsApp"
+        crumbs={[{ label: "Inbox", href: "/inbox" }, { label: "WhatsApp" }]}
+        tabs={<ChannelTabs active="whatsapp" />}
         description="The channel Altruvex actually closes business on. Every message is bound to a client, and proposal and contract sends are recorded against those records."
         actions={
           <Button asChild variant="outline">
@@ -81,6 +84,11 @@ export default async function WhatsAppPage() {
             icon={MessageCircle}
             title="No conversations"
             body="Nothing has been sent or received through the Cloud API yet. Sending a proposal from a client record is the usual first message, and it creates the thread automatically."
+            action={
+              <Button asChild variant="outline">
+                <Link href="/clients">Open a client</Link>
+              </Button>
+            }
           />
         ) : (
           <Panel title="Conversations" description="Unanswered first" flush>

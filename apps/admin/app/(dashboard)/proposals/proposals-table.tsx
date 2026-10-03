@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { FileText, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date, daysFromNow } from "@/lib/format";
@@ -22,36 +24,44 @@ export interface ProposalRow {
   status: string;
   createdAt: string;
   sentAt: string | null;
+  deliveredAt: string | null;
   readAt: string | null;
   respondedAt: string | null;
   validUntil: string;
-  hasContract: boolean;
+  /** The contract generated from this proposal, when one exists. */
+  contractId: string | null;
   pdfUrl: string | null;
 }
 
 export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
   const del = useRecordDelete({ entity: "proposal" });
   const columns: Column<ProposalRow>[] = [
-    {
-      id: "client",
-      header: "Client",
-      hideable: false,
-      cell: (row) => <span className="truncate">{row.clientName}</span>,
-      sortValue: (row) => row.clientName.toLowerCase(),
-      searchValue: (row) => `${row.clientName} ${row.projectType} ${row.complexity}`,
-    },
+    // Column 0 is the proposal's own identity: DataTable wraps it in the row
+    // link, so the client (a link of its own) cannot live here — nested <a>.
     {
       id: "project",
       header: "Scope",
-      width: "160px",
+      hideable: false,
       cell: (row) => (
-        <span className="truncate text-muted-foreground">
+        <span className="truncate">
           {row.projectType}
           <span className="ms-1.5 text-subtle-foreground">{row.complexity}</span>
         </span>
       ),
-      sortValue: (row) => row.projectType,
-      minWidth: "lg",
+      sortValue: (row) => `${row.projectType} ${row.complexity}`.toLowerCase(),
+      searchValue: (row) => `${row.projectType} ${row.complexity}`,
+    },
+    {
+      id: "client",
+      header: "Client",
+      width: "180px",
+      cell: (row) => (
+        <EntityLink type="client" id={row.clientId} muted className="truncate">
+          {row.clientName}
+        </EntityLink>
+      ),
+      sortValue: (row) => row.clientName.toLowerCase(),
+      searchValue: (row) => row.clientName,
     },
     {
       id: "value",
@@ -88,13 +98,16 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
       cell: (row) => (
         <span className="flex items-center gap-1" title="Sent · delivered · read · answered">
           <Step on={Boolean(row.sentAt)} label="Sent" />
-          <Step on={Boolean(row.sentAt)} label="Delivered" />
+          <Step on={Boolean(row.deliveredAt)} label="Delivered" />
           <Step on={Boolean(row.readAt)} label="Read" />
           <Step on={Boolean(row.respondedAt)} label="Answered" />
         </span>
       ),
       sortValue: (row) =>
-        (row.sentAt ? 1 : 0) + (row.readAt ? 1 : 0) + (row.respondedAt ? 1 : 0),
+        (row.sentAt ? 1 : 0) +
+        (row.deliveredAt ? 1 : 0) +
+        (row.readAt ? 1 : 0) +
+        (row.respondedAt ? 1 : 0),
       minWidth: "lg",
     },
     {
@@ -127,14 +140,14 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
       header: "Contract",
       width: "96px",
       cell: (row) =>
-        row.hasContract ? (
-          <Link href={`/contracts?proposal=${row.id}`} className="text-success hover:underline">
+        row.contractId ? (
+          <Link href={`/contracts/${row.contractId}`} className="text-success hover:underline">
             Generated
           </Link>
         ) : (
           <span className="text-subtle-foreground">—</span>
         ),
-      sortValue: (row) => (row.hasContract ? 1 : 0),
+      sortValue: (row) => (row.contractId ? 1 : 0),
       minWidth: "xl",
       defaultHidden: true,
     },
@@ -162,7 +175,7 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
         rowHref={(row) => `/proposals/${row.id}`}
         searchPlaceholder="Search by client or scope…"
         initialSort={{ columnId: "created", dir: "desc" }}
-        mobile={{ title: "client", subtitle: "project", meta: ["status", "value", "validity", "created"] }}
+        mobile={{ title: "project", subtitle: "client", meta: ["status", "value", "validity", "created"] }}
         selectable
         selectionNoun="proposal"
         bulkActions={[
@@ -177,7 +190,13 @@ export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
         rowActions={(row) => (
           <RowActions onDelete={() => del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })} />
         )}
-        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No proposals.</div>}
+        empty={
+          <EmptyState
+            icon={FileText}
+            title="No proposals in this view"
+            body="Nothing here matches the current view. Clear the filters, or quote a client from their record."
+          />
+        }
       />
       {del.dialog}
     </>

@@ -3,6 +3,8 @@ import { prisma } from "@repo/database";
 import { githubRepoSlug } from "@/lib/github";
 import { NOTIFIED_ACTIONS } from "@/lib/slack";
 import { emailTransport } from "@/lib/email";
+import { storageConfig } from "@/lib/storage";
+import { CRON_JOBS } from "@/lib/cron-jobs";
 
 /**
  * §26 / §27 — integration and system health.
@@ -248,37 +250,36 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
   });
 
   /* ---- object storage --------------------------------------------------- */
-  const r2Missing = present(
-    "R2_ACCOUNT_ID",
-    "R2_ACCESS_KEY_ID",
-    "R2_SECRET_ACCESS_KEY",
-    "R2_BUCKET_NAME",
-    "R2_PUBLIC_URL",
-  );
+  const storage = storageConfig();
+  const storageMissing = storage.missing;
   const [withFiles, withoutFiles] = await Promise.all([
     prisma.proposal.count({ where: { OR: [{ fileUrl: { not: null } }, { pdfUrl: { not: null } }] } }),
     prisma.proposal.count({ where: { fileUrl: null, pdfUrl: null } }),
   ]);
   checks.push({
     id: "storage",
-    name: "Object storage (R2)",
+    name: "Object storage",
     category: "integration",
-    state: r2Missing.length > 0 ? "unconfigured" : "ok",
+    state: storageMissing.length > 0 ? "unconfigured" : "ok",
     summary:
-      r2Missing.length > 0
-        ? `Missing ${r2Missing.length} setting${r2Missing.length === 1 ? "" : "s"} — generated files stay on local disk`
-        : "Configured",
+      storageMissing.length > 0
+        ? `Missing ${storageMissing.length} setting${storageMissing.length === 1 ? "" : "s"} — generated files stay on local disk`
+        : storage.source === "r2"
+          ? "Configured through the old R2_* names — move to AWS_* or STORAGE_*"
+          : "Configured",
     impact:
       "Proposal decks and contract documents are stored here. Without it, generated files live on the app server and are lost on redeploy.",
     remedy:
-      r2Missing.length > 0
-        ? `Set ${r2Missing.join(", ")}. Until then, treat public/generated as ephemeral.`
+      storageMissing.length > 0
+        ? `Set ${storageMissing.join(", ")}. Until then, treat public/generated as ephemeral.`
         : undefined,
     lastChecked: at,
     metrics: [
       { label: "Proposals with a file", value: String(withFiles) },
       { label: "Proposals with none", value: String(withoutFiles) },
-      { label: "Bucket", value: process.env.R2_BUCKET_NAME || "not set" },
+      { label: "Bucket", value: storage.bucket || "not set" },
+      { label: "Endpoint", value: storage.endpoint?.replace(/^https?:\/\//, "") || "not set" },
+      { label: "Mode", value: storage.private ? "private (signed links)" : "public" },
     ],
   });
 
@@ -351,6 +352,108 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
       { label: "Sent", value: String(emailTotal) },
       { label: "Refused (24h)", value: String(emailFailedRecent) },
       { label: "From", value: process.env.EMAIL_FROM || process.env.SMTP_USER || "not set" },
+    ],
+  });
+
+  /* ---- scheduled jobs --------------------------------------------------- */
+  // The sweep writes no activity event of its own; the only durable trace of a
+  // run is the renewal notifications it fans out. The newest of those is the
+  // most honest "last ran" available — when the sweep ran and found nothing
+  // due, it left nothing behind, and the check says so instead of guessing.
+  const cronMissing = present("CRON_SECRET");
+  const lastRenewalNotice = await prisma.notification.findFirst({
+    where: { type: "RENEWAL_DUE" },
+    orderBy: { createdAt: "desc" },
+    select: { createdAt: true },
+  });
+  const cronJob = CRON_JOBS[0];
+  checks.push({
+    id: "cron",
+    name: "Scheduled jobs",
+    category: "infrastructure",
+    state: cronMissing.length > 0 ? "unconfigured" : lastRenewalNotice ? "ok" : "unknown",
+    summary:
+      cronMissing.length > 0
+        ? "No CRON_SECRET set — every scheduled call is refused"
+        : lastRenewalNotice
+          ? `${CRON_JOBS.length} job scheduled; last renewal notice ${lastRenewalNotice.createdAt.toISOString().slice(0, 10)}`
+          : `${CRON_JOBS.length} job scheduled; no run has left a trace yet`,
+    impact:
+      "The renewal sweep is what turns an expiring service into a notification and a Slack line. Without it, expiries are only noticed when someone opens the Services screen.",
+    remedy:
+      cronMissing.length > 0
+        ? "Set CRON_SECRET (16+ characters) in the environment and in the platform's cron configuration, then redeploy."
+        : lastRenewalNotice
+          ? undefined
+          : "Nothing to fix until a service comes within a renewal window — the sweep only writes when something is due.",
+    setup: { href: "/services", label: "Services" },
+    lastChecked: at,
+    metrics: [
+      { label: "Job", value: cronJob.path },
+      { label: "Schedule", value: `${cronJob.schedule} (${cronJob.scheduleText})` },
+      { label: "Secret", value: cronMissing.length > 0 ? "not configured" : "configured" },
+      {
+        label: "Last notice written",
+        value: lastRenewalNotice
+          ? lastRenewalNotice.createdAt.toISOString().slice(0, 16).replace("T", " ")
+          : "not recorded",
+      },
+    ],
+  });
+
+  /* ---- ingest tokens ---------------------------------------------------- */
+  // Per-product tokens let a pipeline post builds, deployments and logs
+  // directly. Only the hash is stored, so the check can say how many exist and
+  // when the newest was issued — never what any of them is.
+  const [tokenProducts, productCount, lastBuild, lastDeployment, lastLog] = await Promise.all([
+    prisma.product.findMany({
+      where: { ingestTokenHash: { not: null } },
+      orderBy: { ingestTokenIssuedAt: "desc" },
+      select: { ingestTokenIssuedAt: true },
+    }),
+    prisma.product.count(),
+    prisma.build.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.deployment.findFirst({ orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+    prisma.logEntry.findFirst({ orderBy: { timestamp: "desc" }, select: { timestamp: true } }),
+  ]);
+  const lastIngest =
+    [lastBuild?.createdAt, lastDeployment?.createdAt, lastLog?.timestamp]
+      .filter((d): d is Date => d instanceof Date)
+      .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
+  checks.push({
+    id: "ingest",
+    name: "Pipeline ingest",
+    category: "integration",
+    state:
+      tokenProducts.length === 0 ? "unconfigured" : lastIngest ? "ok" : "unknown",
+    summary:
+      tokenProducts.length === 0
+        ? "No product has an ingest token"
+        : lastIngest
+          ? `${tokenProducts.length} of ${productCount} product(s) can post; last record ${lastIngest.toISOString().slice(0, 10)}`
+          : `${tokenProducts.length} of ${productCount} product(s) can post; nothing received yet`,
+    impact:
+      "Builds, deployments and log lines are written only by CI through /api/ingest/*. Without a token a product's engineering screens stay empty — there is no button here that fills them.",
+    remedy:
+      tokenProducts.length === 0
+        ? "Issue a token on the product, put it in the pipeline's secrets, and have the pipeline post to /api/ingest/builds and /api/ingest/deployments."
+        : lastIngest
+          ? undefined
+          : "The pipeline has a token but has not posted. Check its ingest step and the token it sends.",
+    setup: { href: "/products", label: "Issue on a product" },
+    lastChecked: at,
+    metrics: [
+      { label: "Products with a token", value: `${tokenProducts.length} / ${productCount}` },
+      {
+        label: "Newest token issued",
+        value: tokenProducts[0]?.ingestTokenIssuedAt
+          ? tokenProducts[0].ingestTokenIssuedAt.toISOString().slice(0, 10)
+          : "never",
+      },
+      {
+        label: "Last record received",
+        value: lastIngest ? lastIngest.toISOString().slice(0, 16).replace("T", " ") : "never",
+      },
     ],
   });
 

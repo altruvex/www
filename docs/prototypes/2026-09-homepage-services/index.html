@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Homepage Services — prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* Values mirror apps/www: #services-wrapper[data-scene=inverted] (globals.css:150),
+   tokens.css brand-text-on-dark/light, --radius 1rem → panel-sm/md, lib/motion/tokens.ts eases. */
+:root {
+  --bg: hsl(0 0% 9%);
+  --fg: hsl(0 0% 95%);
+  --muted: hsl(0 0% 60%);
+  --mid: hsl(0 0% 100% / 0.55);
+  --border: hsl(0 0% 100% / 0.08);
+  --border-strong: hsl(0 0% 100% / 0.16);
+  --line: hsl(0 0% 100% / 0.45);
+  --surface: hsl(0 0% 13%);
+  --accent: hsl(214 95% 64%);
+  --page: hsl(0 0% 98%);
+  --page-fg: hsl(0 0% 6%);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-gentle: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+  --panel-sm: 1.375rem;
+  --panel-md: 1.75rem;
+  --section-y: clamp(6rem, 11vw, 10rem);
+}
+html[data-scene="paper"] {
+  --bg: hsl(0 0% 97%);
+  --fg: hsl(0 0% 6%);
+  --muted: hsl(0 0% 40%);
+  --mid: hsl(0 0% 6% / 0.62);
+  --border: hsl(0 0% 6% / 0.1);
+  --border-strong: hsl(0 0% 6% / 0.18);
+  --line: hsl(0 0% 6% / 0.45);
+  --surface: hsl(0 0% 94%);
+  --accent: hsl(214 90% 43%);
+  --page: hsl(0 0% 7%);
+  --page-fg: hsl(0 0% 94%);
+}
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--page); color: var(--fg); font-family: Inter, system-ui, sans-serif; overflow-x: clip; }
+[dir="rtl"] body { font-family: Vazirmatn, Inter, sans-serif; }
+h2, h3 { font-family: Outfit, sans-serif; margin: 0; }
+[dir="rtl"] :is(h2, h3, .display) { font-family: Vazirmatn, Outfit, sans-serif; letter-spacing: 0 !important; line-height: 1.3 !important; }
+p, ul, ol { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
+a { color: inherit; }
+.mono { font-family: "Geist Mono", ui-monospace, monospace; }
+[dir="rtl"] .mono { font-family: Vazirmatn, sans-serif; }
+.eyebrow { font-family: "Geist Mono", ui-monospace, monospace; font-size: .875rem; line-height: 1.5; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0; }
+[dir="rtl"] .eyebrow { font-family: Vazirmatn, sans-serif; letter-spacing: 0; }
+.num { font-size: .875rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wrap { max-width: 84rem; margin: 0 auto; padding-inline: clamp(1.25rem, 4vw, 3rem); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ── prototype chrome ── */
+.bar { position: fixed; inset-block-start: 12px; inset-inline: 12px; z-index: 50; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: hsl(0 0% 12% / .82); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); }
+.seg button { padding: 7px 12px; border-radius: 9px; color: hsl(0 0% 80%); font: 500 13px/1 Inter, sans-serif; }
+.seg button[aria-pressed="true"] { background: hsl(0 0% 100%); color: hsl(0 0% 8%); }
+.note { position: fixed; inset-block-end: 12px; inset-inline-start: 12px; z-index: 50; max-width: 26rem; padding: 12px 14px; border-radius: 12px; background: hsl(0 0% 12% / .9); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); color: hsl(0 0% 82%); font: 400 12.5px/1.5 Inter, sans-serif; direction: ltr; text-align: left; }
+.note b { color: #fff; font-weight: 500; }
+.note summary { cursor: pointer; color: #fff; font-weight: 500; }
+.stub { background: var(--page); color: var(--page-fg); padding: 22vh 0 18vh; }
+.stub p { font: 400 clamp(1.75rem, 4vw, 3rem)/1.1 Outfit, sans-serif; letter-spacing: -.02em; opacity: .35; }
+
+/* ── the scene ── */
+.scene { background: var(--bg); color: var(--fg); padding-block: var(--section-y); transition: background .3s var(--ease-smooth); }
+.head { display: flex; flex-wrap: wrap; gap: 2rem 3rem; align-items: flex-end; justify-content: space-between; margin-bottom: clamp(3.5rem, 6vw, 5rem); }
+.head .t { flex: 1 1 28rem; display: grid; gap: .75rem; }
+.title { font-size: clamp(28px, 4.5vw, 52px); line-height: 1.08; letter-spacing: -.02em; font-weight: 400; text-wrap: balance; }
+.hl { font-family: Georgia, "Times New Roman", serif; font-style: italic; color: var(--mid); }
+[dir="rtl"] .hl { font-family: Vazirmatn, sans-serif; font-style: normal; font-weight: 600; }
+.desc { max-width: 20rem; font-size: clamp(.9375rem, .98vw, 1rem); line-height: 1.65; color: var(--muted); }
+.divider { display: flex; align-items: baseline; gap: 1rem; }
+.divider .rule { height: 1px; flex: 1; background: var(--border); }
+.explore { display: inline-flex; gap: .5rem; align-items: center; margin-top: clamp(3.5rem, 5vw, 4rem); color: var(--muted); font-size: .9375rem; text-decoration: underline; text-decoration-color: var(--border-strong); text-underline-offset: 4px; transition: color .15s, text-decoration-color .15s; }
+.explore:hover { color: var(--accent); text-decoration-color: var(--accent); }
+[dir="rtl"] .arrow { display: inline-block; transform: scaleX(-1); }
+
+/* shared: the standard register (current section's second register, kept) */
+.std { margin-top: clamp(4rem, 7vw, 5.5rem); }
+.std ol { margin-top: 2.5rem; display: grid; gap: 2rem 3rem; }
+@media (min-width: 640px) { .std ol { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .std ol { grid-template-columns: repeat(4, 1fr); } }
+.std li { display: grid; grid-template-columns: 2.75rem 1fr; }
+@media (min-width: 1024px) { .std li { grid-template-columns: 1fr; gap: .75rem; } }
+.std p { font-size: clamp(.9375rem, 1vw, 1.0625rem); line-height: 1.6; }
+
+/* reveal (stands in for useSectionCardGrid) */
+.rv { opacity: 0; transform: translateY(24px); transition: opacity .7s var(--ease-smooth), transform .7s var(--ease-smooth); transition-delay: calc(var(--i, 0) * 80ms); }
+.rv.in { opacity: 1; transform: none; }
+
+/* ═══════════ A · Rows that open ═══════════ */
+.a-list { margin-top: 1.5rem; border-bottom: 1px solid var(--border); }
+.a-row { border-top: 1px solid var(--border); }
+.a-head { width: 100%; display: grid; grid-template-columns: 3rem 1fr; gap: .25rem 1rem; align-items: baseline; padding-block: clamp(1.25rem, 2.4vw, 2rem); }
+@media (min-width: 1024px) { .a-head { grid-template-columns: 4.5rem 1fr minmax(0, 20rem); } }
+.a-name { font-size: clamp(2rem, 5.4vw, 4.75rem); font-weight: 300; line-height: 1.02; letter-spacing: -.035em; color: var(--mid); transition: color .3s var(--ease-ui); }
+.a-row.open .a-name, .a-head:hover .a-name { color: var(--fg); }
+.a-q { grid-column: 2; font-size: .9375rem; line-height: 1.5; color: var(--muted); }
+@media (min-width: 1024px) { .a-q { grid-column: 3; text-align: end; } }
+.a-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .7s var(--ease-smooth); }
+.a-row.open .a-body { grid-template-rows: 1fr; }
+.a-inner { overflow: hidden; min-height: 0; }
+.a-grid { display: grid; gap: 2rem; padding-bottom: clamp(2rem, 4vw, 3.5rem); }
+@media (min-width: 1024px) { .a-grid { grid-template-columns: 4.5rem minmax(0, 5fr) minmax(0, 7fr); gap: 1rem 3rem; } .a-grid > .a-copy { grid-column: 2; } }
+.leaves { font-family: Georgia, serif; font-style: italic; font-size: clamp(1.5rem, 2.4vw, 2.125rem); line-height: 1.2; color: var(--accent); text-wrap: balance; }
+[dir="rtl"] .leaves { font-family: Vazirmatn, sans-serif; font-style: normal; font-weight: 500; line-height: 1.45; }
+.dl { margin-top: 1.75rem; border-top: 1px solid var(--border); }
+.dl li { padding-block: .8rem; border-bottom: 1px solid var(--border); font-size: .9375rem; line-height: 1.55; color: var(--muted); }
+.meta { margin-top: 1.25rem; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: baseline; justify-content: space-between; font-size: .875rem; color: var(--muted); }
+.meta a { color: var(--fg); text-underline-offset: 4px; text-decoration-color: var(--border-strong); }
+.meta a:hover { color: var(--accent); }
+.a-fig { margin: 0; aspect-ratio: 16 / 10; border-radius: var(--panel-md); overflow: hidden; clip-path: inset(10% 6% 10% 6% round var(--panel-md)); transition: clip-path .9s var(--ease-strong); }
+.a-fig img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.12); transition: transform 1.1s var(--ease-strong); }
+.a-row.open .a-fig { clip-path: inset(0 0 0 0 round var(--panel-md)); }
+.a-row.open .a-fig img { transform: none; }
+
+/* ═══════════ A+ · Rows that open, with the next step ═══════════ */
+.btn { display: inline-flex; align-items: center; gap: .55rem; min-height: 2.875rem; padding: .7rem 1.25rem; border-radius: .75rem; background: hsl(214 89% 48%); color: #fff; font: 500 .9375rem/1.2 Inter, sans-serif; text-decoration: none; transition: background .15s var(--ease-ui), transform .15s var(--ease-ui); }
+[dir="rtl"] .btn { font-family: Vazirmatn, sans-serif; }
+.btn:hover { background: hsl(214 89% 42%); }
+.btn:active { transform: scale(.98); }
+.btn-line { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+.btn-line:hover { background: transparent; border-color: var(--fg); }
+.act { margin-top: 1.75rem; display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1.5rem; }
+.act .hint { font-size: .8125rem; line-height: 1.5; color: var(--muted); }
+.act-meta { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; font-size: .875rem; color: var(--muted); }
+.act-meta a { color: var(--muted); text-underline-offset: 4px; text-decoration-color: var(--border-strong); }
+.act-meta a:hover { color: var(--accent); }
+.next { margin-top: clamp(4rem, 7vw, 5.5rem); padding-top: clamp(2rem, 4vw, 3rem); border-top: 1px solid var(--border); display: grid; gap: 2.5rem; }
+@media (min-width: 1024px) { .next { grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: 4rem; align-items: start; } }
+.next h3 { font-size: clamp(1.625rem, 2.8vw, 2.5rem); font-weight: 400; line-height: 1.12; letter-spacing: -.02em; text-wrap: balance; }
+.next .sub { margin-top: .9rem; max-width: 34rem; font-size: 1rem; line-height: 1.6; color: var(--muted); }
+.next .act { margin-top: 2rem; }
+.steps { border-top: 1px solid var(--border); }
+.steps li { display: grid; grid-template-columns: 2.75rem 1fr; padding-block: 1rem; border-bottom: 1px solid var(--border); font-size: .9375rem; line-height: 1.55; }
+.steps .eyebrow { margin-bottom: 1rem; }
+
+/* ═══════════ B · The through-line ═══════════ */
+.b-scroll { margin-top: 1.5rem; overflow-x: auto; scroll-snap-type: x proximity; }
+.b-grid { min-width: 56rem; display: grid; grid-template-columns: minmax(15rem, 1.35fr) repeat(4, minmax(9.5rem, 1fr)); }
+.b-cell { padding: 1.5rem 1rem; }
+.b-label { position: sticky; inset-inline-start: 0; z-index: 2; background: var(--bg); padding-inline-start: 0; border-inline-end: 1px solid transparent; }
+.b-headrow { display: contents; }
+.b-h { display: grid; align-content: start; gap: .6rem; padding-bottom: 2.25rem; }
+.b-h h3 { font-size: clamp(1.25rem, 1.6vw, 1.625rem); font-weight: 500; line-height: 1.15; letter-spacing: -.01em; }
+.b-h .l { font-size: .875rem; line-height: 1.5; color: var(--muted); }
+.b-h a { font-size: .8125rem; color: var(--muted); text-underline-offset: 4px; text-decoration-color: var(--border-strong); }
+.b-h a:hover { color: var(--accent); }
+.b-row { display: contents; }
+.b-row > .b-label, .b-track { border-top: 1px solid var(--border); }
+.b-row > .b-label { display: grid; grid-template-columns: 2.5rem 1fr; align-items: center; padding-block: 1.75rem; }
+.b-row > .b-label p { font-size: clamp(.9375rem, 1.05vw, 1.0625rem); line-height: 1.5; }
+.b-track { grid-column: 2 / span 4; position: relative; min-height: 5.5rem; }
+.b-line { position: absolute; top: 50%; inset-inline: 12.5%; height: 1px; background: var(--line); transform: scaleX(0); transform-origin: left center; transition: transform 1s var(--ease-gentle); }
+[dir="rtl"] .b-line { transform-origin: right center; }
+.b-node { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--accent); transform: scale(0); transition: transform .35s var(--ease-strong); }
+[dir="rtl"] .b-node { margin: -4.5px -4.5px 0 0; }
+.b-row.in .b-line { transform: scaleX(1); }
+.b-row.in .b-node { transform: scale(1); }
+.b-foot { border-top: 1px solid var(--border); }
+.b-caption { margin-top: 1.25rem; font-size: .875rem; color: var(--muted); }
+.b-img { margin: 0 0 clamp(3rem, 5vw, 4rem); aspect-ratio: 21 / 8; border-radius: var(--panel-md); overflow: hidden; }
+.b-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ═══════════ C · Start from the problem ═══════════ */
+.c-grid { display: grid; gap: 3rem; margin-top: 1.5rem; }
+@media (min-width: 1024px) { .c-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 4rem; align-items: start; } }
+.c-list { border-bottom: 1px solid var(--border); }
+.c-item { border-top: 1px solid var(--border); }
+.c-q { width: 100%; display: grid; grid-template-columns: 3rem 1fr auto; gap: 1rem; align-items: baseline; padding-block: clamp(1.25rem, 2.2vw, 1.875rem); }
+.c-q .qt { font-family: Outfit, sans-serif; font-size: clamp(1.5rem, 2.9vw, 2.625rem); font-weight: 300; line-height: 1.12; letter-spacing: -.025em; color: var(--mid); transition: color .3s var(--ease-ui); text-wrap: balance; }
+[dir="rtl"] .c-q .qt { font-family: Vazirmatn, sans-serif; letter-spacing: 0; line-height: 1.4; }
+.c-q .to { font-size: .8125rem; color: var(--muted); white-space: nowrap; opacity: 0; transform: translateX(-6px); transition: opacity .3s var(--ease-ui), transform .3s var(--ease-ui); }
+[dir="rtl"] .c-q .to { transform: translateX(6px); }
+.c-item.on .qt, .c-q:hover .qt { color: var(--fg); }
+.c-item.on .to { opacity: 1; transform: none; color: var(--accent); }
+.c-panel { position: sticky; top: 5.5rem; display: none; }
+@media (min-width: 1024px) { .c-panel { display: block; } }
+.c-stack { position: relative; aspect-ratio: 4 / 3; border-radius: var(--panel-md); overflow: hidden; background: var(--surface); }
+.c-stack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; clip-path: inset(100% 0 0 0); transform: scale(1.08); transition: clip-path .8s var(--ease-strong), transform 1.1s var(--ease-strong); }
+.c-stack img.on { clip-path: inset(0 0 0 0); transform: none; z-index: 1; }
+.c-ans { margin-top: 1.75rem; }
+.c-ans h3 { margin-top: .5rem; font-size: clamp(1.375rem, 1.7vw, 1.75rem); font-weight: 500; letter-spacing: -.01em; }
+.c-ans .leaves { margin-top: .75rem; font-size: clamp(1.25rem, 1.6vw, 1.5rem); }
+.c-swap { animation: cswap .5s var(--ease-smooth); }
+@keyframes cswap { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.c-inline { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .6s var(--ease-smooth); }
+.c-item.on .c-inline { grid-template-rows: 1fr; }
+.c-inline > div { overflow: hidden; min-height: 0; }
+.c-inline .pad { padding: 0 0 2rem 4rem; }
+[dir="rtl"] .c-inline .pad { padding: 0 4rem 2rem 0; }
+.c-inline figure { margin: 0 0 1.25rem; aspect-ratio: 16 / 10; border-radius: var(--panel-sm); overflow: hidden; }
+.c-inline img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (min-width: 1024px) { .c-inline { display: none; } }
+@media (max-width: 639px) { .c-q { grid-template-columns: 2.25rem 1fr; } .c-q .to { display: none; } .c-inline .pad { padding-inline: 3.25rem 0; } [dir="rtl"] .c-inline .pad { padding: 0 3.25rem 2rem 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0s !important; animation: none !important; }
+  .rv { opacity: 1; transform: none; }
+  .b-line { transform: scaleX(1); } .b-node { transform: scale(1); }
+}
+</style>
+</head>
+<body>
+
+<div class="bar" dir="ltr">
+  <div class="seg" id="opt">
+    <button data-v="a2" aria-pressed="true">A+ · Rows + next step</button>
+    <button data-v="a" aria-pressed="false">A · Rows that open</button>
+    <button data-v="b" aria-pressed="false">B · The through-line</button>
+    <button data-v="c" aria-pressed="false">C · Start from the problem</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar" aria-pressed="false">AR</button></div>
+    <div class="seg" id="scene"><button data-v="dark" aria-pressed="true">Light theme</button><button data-v="paper" aria-pressed="false">Dark theme</button></div>
+  </div>
+</div>
+
+<details class="note" open>
+  <summary id="note-title">A · Rows that open</summary>
+  <div id="note-body" style="margin-top:6px"></div>
+</details>
+
+<div class="stub"><div class="wrap"><p id="stub-top">… Boundary section above</p></div></div>
+<main class="scene" id="scene-root"><div class="wrap" id="root"></div></main>
+<div class="stub"><div class="wrap"><p id="stub-bot">Process section below …</p></div></div>
+
+<script>
+const IMG = "../../../apps/www/public/brand/mood/";
+const DISC = [
+  { id: "website", img: "blue-wall-light-bands.webp" },
+  { id: "portal", img: "blue-concrete.webp" },
+  { id: "audit", img: "single-lamp-dark-wall.webp" },
+  { id: "maintenance", img: "blue-ribs-light.webp" },
+];
+const COPY = {
+  en: {
+    stubTop: "… Boundary section above", stubBot: "Process section below …",
+    eyebrow: "02 — What we build",
+    t1: "Four disciplines.", t2: "One delivery standard.",
+    t2b: "One standard drawn through all four.",
+    sub: "Every layer engineered precisely — from the interface to the data model.",
+    discLabel: "The disciplines", stdLabel: "The standard",
+    stdEyebrow: "Constant across all four",
+    explore: "How each one is delivered",
+    open: "What it includes",
+    cEyebrow: "Start from the problem you need solved",
+    sendTo: "We'd start with",
+    bCaption: "Every line runs the full width. None of it is sold separately.",
+    names: { website: "Interface Design", portal: "Custom Development", audit: "Technical Consulting", maintenance: "Maintenance & Support" },
+    problem: { website: "Need a stronger market-facing presence?", portal: "Need custom workflows or product logic?", audit: "Need clarity before a costly decision?", maintenance: "Need reliable execution after launch?" },
+    leaves: { website: "A site that is yours, not rented.", portal: "Your operation, without the bottleneck.", audit: "A decision you can defend, in five days.", maintenance: "A system that keeps working after we leave." },
+    deliv: {
+      website: ["A custom site with English and Arabic engineered as equals", "Page structures designed around one conversion path", "Performance measured against Core Web Vitals before launch"],
+      portal: ["Dashboards and workflows modelled on how your team actually operates", "A typed, documented codebase on a stack you own", "An automated build-and-deploy pipeline from the first release"],
+      audit: ["Risk-ranked findings across architecture, performance and SEO", "A recommended rebuild-or-repair path, with its trade-offs", "A roadmap any team can execute — ours or yours"],
+      maintenance: ["Monitoring, patching and backups on a defined cycle", "Content and small feature updates without a new project", "A direct channel to engineers who know the codebase"],
+    },
+    eng: { website: "Fixed-scope project, priced per scope", portal: "Fixed-scope project, priced per scope", audit: "Fixed fee, five business days", maintenance: "Monthly retainer, three coverage plans" },
+    std: ["Scope and price written down before work begins.", "Built from your requirements — never a recycled theme.", "Arabic and English engineered as equals.", "Code, accounts and findings stay in your name."],
+    cta: { website: "Scope your site", portal: "Scope your project", audit: "Start with the audit", maintenance: "Put your site on a plan" },
+    ctaHint: "A reply within 24 hours on business days.",
+    how: "How it's delivered",
+    nextTitle: "Not sure which one you need?",
+    nextSub: "Describe the problem in your own words. We'll name the discipline that fits — or tell you it isn't us, and why.",
+    nextPrimary: "Describe your problem",
+    nextSecondary: "Book a 30-minute call",
+    nextLabel: "What happens next",
+    steps: ["The founder reads it — no sales inbox in between.", "A reply by call or WhatsApp within 24 hours on business days.", "If the problem fits what we build, a 30-minute technical call. If it does not, we say so, and why."],
+  },
+  ar: {
+    stubTop: "… قسم الحد أعلاه", stubBot: "قسم المراحل أدناه …",
+    eyebrow: "٠٢ - ما نبنيه",
+    t1: "أربعة تخصصات.", t2: "معيار تسليم واحد.",
+    t2b: "معيار واحد يمر عبرها كلها.",
+    sub: "كل طبقة مصممة بدقة - من الواجهة إلى نموذج البيانات.",
+    discLabel: "التخصصات", stdLabel: "المعيار الثابت",
+    stdEyebrow: "ثابت في الخدمات الأربع",
+    explore: "كيف نسلّم كل واحد منها",
+    open: "ما يشمله",
+    cEyebrow: "ابدأ من المشكلة التي تحتاج حلها",
+    sendTo: "نبدأ معك بـ",
+    bCaption: "كل خط يمتد بالعرض كاملاً. لا شيء منه يُباع منفصلاً.",
+    names: { website: "تصميم الواجهات", portal: "التطوير المخصص", audit: "الاستشارات التقنية", maintenance: "الصيانة والدعم" },
+    problem: { website: "تحتاج حضوراً أقوى في السوق؟", portal: "تحتاج طريقة عمل مخصصة أو منطق منتج؟", audit: "تحتاج وضوحاً قبل قرار مكلف؟", maintenance: "تحتاج تنفيذاً موثوقاً بعد الإطلاق؟" },
+    leaves: { website: "موقع ملكك، لا مستأجر.", portal: "تشغيل بلا الاختناق الذي كان.", audit: "قرار تستطيع الدفاع عنه، في خمسة أيام عمل.", maintenance: "نظام يستمر في العمل بعد أن نغادر." },
+    deliv: {
+      website: ["موقع مخصص بالعربية والإنجليزية كتجربتين متكافئتين", "بنية صفحات مصممة حول مسار تحويل واحد", "أداء مقاس وفق مؤشرات Core Web Vitals قبل الإطلاق"],
+      portal: ["لوحات تحكم ومسارات عمل مبنية على طريقة عمل فريقك فعلياً", "كود موثّق ومحكم الأنواع على تقنيات تملكها", "خط بناء ونشر آلي منذ الإصدار الأول"],
+      audit: ["نتائج مرتبة حسب الخطورة في البنية والأداء وتحسين محركات البحث", "مسار موصى به لإعادة البناء أو الإصلاح، مع مقايضاته", "خارطة طريق ينفذها أي فريق — فريقنا أو فريقك"],
+      maintenance: ["مراقبة وتحديثات أمنية ونسخ احتياطي على دورة محددة", "تحديثات محتوى وميزات صغيرة دون مشروع جديد", "قناة مباشرة مع مهندسين يعرفون الكود"],
+    },
+    eng: { website: "مشروع بنطاق محدد، يُسعَّر حسب النطاق", portal: "مشروع بنطاق محدد، يُسعَّر حسب النطاق", audit: "سعر ثابت، خمسة أيام عمل", maintenance: "اشتراك شهري، ثلاث خطط تغطية" },
+    std: ["النطاق والسعر مكتوبان قبل أن يبدأ العمل.", "مبني من متطلباتك — لا من قالب معاد تدويره.", "العربية والإنجليزية مصممتان كتجربتين متكافئتين.", "الكود والحسابات والنتائج تبقى باسمك."],
+    cta: { website: "حدّد نطاق موقعك", portal: "حدّد تفاصيل مشروعك", audit: "ابدأ بالمراجعة التقنية", maintenance: "ضع موقعك على خطة" },
+    ctaHint: "رد خلال ٢٤ ساعة في أيام العمل.",
+    how: "كيف نسلّمها",
+    nextTitle: "لست متأكداً أيها تحتاج؟",
+    nextSub: "صف المشكلة بكلماتك. نسمّي لك التخصص المناسب — أو نخبرك أننا لسنا الخيار، ولماذا.",
+    nextPrimary: "صف مشكلتك",
+    nextSecondary: "احجز مكالمة ٣٠ دقيقة",
+    nextLabel: "ما الذي يحدث بعد ذلك",
+    steps: ["يقرؤها المؤسس مباشرة — دون صندوق مبيعات في المنتصف.", "رد باتصال أو عبر واتساب خلال ٢٤ ساعة في أيام العمل.", "إن كانت المشكلة ضمن ما نبنيه، مكالمة تقنية مدتها ٣٠ دقيقة. وإن لم تكن، نخبرك بذلك وبالسبب."],
+  },
+};
+const NOTES = {
+  a2: `<b>Your pick (A) + a clear next step.</b> Every open row ends in one action for that discipline, and the section closes with one fallback action for visitors who don't know which they need.<br>
+<b>Where each button goes (real routes, prefilled):</b> Interface → /contact?service=interface-design · Development → /contact?service=development · Consulting → /contact?service=consulting&amp;package=audit (the audit offer’s own link) · Maintenance → /contact?service=maintenance. Fallback → /contact and /schedule.<br>
+<b>Copy reused, not invented:</b> “Scope your project” = serviceDetails.ctaPrimary · “Start with the audit” = consulting cta.auditLink · the 3 steps + 24h promise = contactPage.receipt. New lines: “Scope your site”, “Put your site on a plan”, “Not sure which one you need?”.<br>
+<b>Watch:</b> the homepage’s own CtaSection comes later — this closing strip stays a hairline row, not a second CTA block.`,
+  a: `<b>Claim:</b> four disciplines, each named once at display size; the one you open shows what it leaves behind.<br>
+<b>From:</b> Awwwards element “Service list item hover” (OIC Design) — big service names with an image; the pointer-following image is dropped (cursor-trailing was removed from interface-design at your request), the image opens inside the row instead · The First The Last services section (SIT-001, your pick) — one large sentence per discipline · Moto Finance (Properly Studio, SOTD 2026-09-24) — large quiet photography.<br>
+<b>House:</b> hairline rows + grey mono index (SIG-009, RUL-078). <b>Signature:</b> image clip-opens with the row. <b>Mine:</b> the “left with you” sentence in serif italic as the answer to each name.`,
+  b: `<b>Claim:</b> the standard does not change between disciplines — shown as one line drawn straight through all four columns.<br>
+<b>From:</b> RUL-095 (a difference reads across a line, never in cards) · bleibtgleich'26 by The First The Last (SOTD 2026-09-22) — two-colour restraint, type and rule only · the maintenance-plans table’s sideways scroll + sticky label on mobile (your call, 2026-09-11).<br>
+<b>House:</b> horizontal hairlines only, grey mono index, brand-blue marks. <b>Signature:</b> each through-line draws across on scroll, a mark landing in every column. <b>Mine:</b> the matrix itself — the constants as rows, the disciplines as columns.`,
+  c: `<b>Claim:</b> start from your problem, not from our service names — pick the question, the discipline answers.<br>
+<b>From:</b> your own /services copy “Start from the problem you need solved — not the deliverable name.” (servicesPage.index) · The First The Last services section (SIT-001) — list on one side, the answer large on the other · Moto Finance (SOTD 2026-09-24) — one image carrying the mood.<br>
+<b>Risk:</b> closest to the /services stage (ledger: TFTL device is taken there). <b>Signature:</b> the image wipes up on each new question. <b>No pin</b> — only the answer column is sticky.`,
+};
+
+const HREF = {
+  website: "/contact?service=interface-design", portal: "/contact?service=development",
+  audit: "/contact?service=consulting&package=audit", maintenance: "/contact?service=maintenance",
+};
+const PAGE = { website: "/services/interface-design", portal: "/services/development", audit: "/services/consulting", maintenance: "/services/maintenance" };
+let state = { v: "a2",lang: "en", scene: "dark", aOpen: 0, cOn: 0 };
+const pad = (n, lang) => { const s = String(n).padStart(2, "0"); return lang === "ar" ? s.replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]) : s; };
+const arrow = `<span class="arrow" aria-hidden="true">→</span>`;
+
+function heading(c, second) {
+  return `<header class="head rv">
+    <div class="t"><p class="eyebrow">${c.eyebrow}</p>
+      <h2 class="title" id="services-heading">${c.t1} <span class="hl">${second}</span></h2></div>
+    <p class="desc">${c.sub}</p></header>`;
+}
+function divider(label, count, lang) {
+  return `<div class="divider rv"><p class="eyebrow">${label}</p><span class="num mono">${pad(count, lang)}</span><span class="rule" aria-hidden="true"></span></div>`;
+}
+function standard(c, lang) {
+  return `<div class="std">${divider(c.stdLabel, c.std.length, lang)}
+    <ol>${c.std.map((s, i) => `<li class="rv" style="--i:${i}"><span class="num mono" aria-hidden="true">${pad(i + 1, lang)}</span><p>${s}</p></li>`).join("")}</ol></div>`;
+}
+function explore(c) { return `<a class="explore" href="#">${c.explore} ${arrow}</a>`; }
+function detail(c, id) {
+  return `<p class="leaves">${c.leaves[id]}</p>
+    <ul class="dl">${c.deliv[id].map(d => `<li>${d}</li>`).join("")}</ul>
+    <div class="meta"><span>${c.eng[id]}</span><a href="#">${c.names[id]} ${arrow}</a></div>`;
+}
+
+function renderA(c, lang) {
+  return heading(c, c.t2) + divider(c.discLabel, DISC.length, lang) +
+    `<ol class="a-list">${DISC.map((d, i) => `
+      <li class="a-row rv ${state.aOpen === i ? "open" : ""}" style="--i:${i}" data-i="${i}">
+        <button class="a-head" aria-expanded="${state.aOpen === i}" aria-controls="a-b-${i}">
+          <span class="num mono" aria-hidden="true">${pad(i + 1, lang)}</span>
+          <h3 class="a-name display">${c.names[d.id]}</h3>
+          <span class="a-q">${c.problem[d.id]}</span>
+        </button>
+        <div class="a-body" id="a-b-${i}"><div class="a-inner"><div class="a-grid">
+          <div class="a-copy">${detail(c, d.id)}</div>
+          <figure class="a-fig"><img src="${IMG + d.img}" alt="" loading="lazy"></figure>
+        </div></div></div>
+      </li>`).join("")}</ol>` + standard(c, lang) + explore(c);
+}
+
+function renderA2(c, lang) {
+  return heading(c, c.t2) + divider(c.discLabel, DISC.length, lang) +
+    `<ol class="a-list">${DISC.map((d, i) => `
+      <li class="a-row rv ${state.aOpen === i ? "open" : ""}" style="--i:${i}" data-i="${i}">
+        <button class="a-head" aria-expanded="${state.aOpen === i}" aria-controls="a-b-${i}">
+          <span class="num mono" aria-hidden="true">${pad(i + 1, lang)}</span>
+          <h3 class="a-name display">${c.names[d.id]}</h3>
+          <span class="a-q">${c.problem[d.id]}</span>
+        </button>
+        <div class="a-body" id="a-b-${i}"><div class="a-inner"><div class="a-grid">
+          <div class="a-copy">
+            <p class="leaves">${c.leaves[d.id]}</p>
+            <ul class="dl">${c.deliv[d.id].map(x => `<li>${x}</li>`).join("")}</ul>
+            <div class="act">
+              <a class="btn" href="${HREF[d.id]}" onclick="return false">${c.cta[d.id]} ${arrow}</a>
+              <span class="hint">${c.ctaHint}</span>
+            </div>
+            <div class="act-meta"><span>${c.eng[d.id]}</span><a href="${PAGE[d.id]}" onclick="return false">${c.how} ${arrow}</a></div>
+          </div>
+          <figure class="a-fig"><img src="${IMG + d.img}" alt="" loading="lazy"></figure>
+        </div></div></div>
+      </li>`).join("")}</ol>` + standard(c, lang) +
+    `<div class="next rv">
+      <div>
+        <h3>${c.nextTitle}</h3>
+        <p class="sub">${c.nextSub}</p>
+      </div>
+      <div class="steps-wrap"><p class="eyebrow" style="margin-bottom:1rem">${c.nextLabel}</p>
+        <ol class="steps">${c.steps.map((s, i) => `<li><span class="num mono" aria-hidden="true">${pad(i + 1, lang)}</span><span>${s}</span></li>`).join("")}</ol>
+        <div class="act">
+          <a class="btn" href="/contact" onclick="return false">${c.nextPrimary} ${arrow}</a>
+          <a class="btn btn-line" href="/schedule" onclick="return false">${c.nextSecondary}</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderB(c, lang) {
+  const cols = [12.5, 37.5, 62.5, 87.5];
+  return heading(c, c.t2b) +
+    `<figure class="b-img rv"><img src="${IMG}blue-ribs-light.webp" alt=""></figure>` +
+    divider(c.stdEyebrow, c.std.length, lang) +
+    `<div class="b-scroll" role="region" aria-label="${c.stdLabel}" tabindex="0"><div class="b-grid" role="table">
+      <div class="b-headrow" role="row">
+        <div class="b-cell b-label" role="columnheader"></div>
+        ${DISC.map((d, i) => `<div class="b-cell b-h rv" style="--i:${i}" role="columnheader">
+          <span class="num mono">${pad(i + 1, lang)}</span><h3>${c.names[d.id]}</h3>
+          <p class="l">${c.leaves[d.id]}</p><a href="#">${c.open} ${arrow}</a></div>`).join("")}
+      </div>
+      ${c.std.map((s, r) => `<div class="b-row" role="row">
+        <div class="b-cell b-label" role="rowheader"><span class="num mono" aria-hidden="true">${pad(r + 1, lang)}</span><p>${s}</p></div>
+        <div class="b-track" role="cell" aria-label="${c.stdEyebrow}">
+          <span class="b-line" aria-hidden="true"></span>
+          ${cols.map((x, k) => `<span class="b-node" aria-hidden="true" style="${lang === "ar" ? "right" : "left"}:${x}%;transition-delay:${(0.12 + k * 0.26).toFixed(2)}s"></span>`).join("")}
+        </div></div>`).join("")}
+      <div class="b-foot" style="grid-column:1/-1"></div>
+    </div></div>
+    <p class="b-caption">${c.bCaption}</p>` + explore(c);
+}
+
+function renderC(c, lang) {
+  const on = state.cOn, id = DISC[on].id;
+  return heading(c, c.t2) + divider(c.cEyebrow, DISC.length, lang) +
+    `<div class="c-grid">
+      <ol class="c-list">${DISC.map((d, i) => `
+        <li class="c-item rv ${on === i ? "on" : ""}" style="--i:${i}" data-i="${i}">
+          <button class="c-q" aria-pressed="${on === i}">
+            <span class="num mono" aria-hidden="true">${pad(i + 1, lang)}</span>
+            <span class="qt">${c.problem[d.id]}</span>
+            <span class="to mono">${c.names[d.id]} ${arrow}</span>
+          </button>
+          <div class="c-inline"><div><div class="pad">
+            <figure><img src="${IMG + d.img}" alt="" loading="lazy"></figure>
+            <p class="eyebrow">${c.sendTo}</p><h3 style="margin:.4rem 0 .75rem;font-size:1.375rem;font-weight:500">${c.names[d.id]}</h3>
+            ${detail(c, d.id)}</div></div></div>
+        </li>`).join("")}</ol>
+      <aside class="c-panel rv" aria-live="polite">
+        <div class="c-stack">${DISC.map((d, i) => `<img src="${IMG + d.img}" alt="" class="${i === on ? "on" : ""}">`).join("")}</div>
+        <div class="c-ans" id="c-ans"><p class="eyebrow">${c.sendTo}</p><h3>${c.names[id]}</h3>${detail(c, id)}</div>
+      </aside>
+    </div>` + standard(c, lang) + explore(c);
+}
+
+let io;
+function render() {
+  const c = COPY[state.lang];
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+  document.documentElement.dataset.scene = state.scene;
+  document.getElementById("stub-top").textContent = c.stubTop;
+  document.getElementById("stub-bot").textContent = c.stubBot;
+  const root = document.getElementById("root");
+  root.innerHTML = { a2: renderA2, a: renderA, b: renderB, c: renderC }[state.v](c, state.lang);
+  document.getElementById("note-title").textContent = document.querySelector(`#opt [data-v="${state.v}"]`).textContent;
+  document.getElementById("note-body").innerHTML = NOTES[state.v];
+  observe();
+  wire();
+}
+function observe() {
+  io?.disconnect();
+  io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -40% 0px" });
+  document.querySelectorAll(".rv, .b-row").forEach(el => io.observe(el));
+}
+function wire() {
+  document.querySelectorAll(".a-head").forEach(b => b.addEventListener("click", () => {
+    const row = b.closest(".a-row"), i = +row.dataset.i;
+    state.aOpen = state.aOpen === i ? -1 : i;
+    document.querySelectorAll(".a-row").forEach(r => {
+      const o = +r.dataset.i === state.aOpen;
+      r.classList.toggle("open", o);
+      r.querySelector(".a-head").setAttribute("aria-expanded", o);
+    });
+  }));
+  const fine = matchMedia("(hover: hover) and (min-width: 1024px)").matches;
+  document.querySelectorAll(".c-q").forEach(b => {
+    const pick = () => selectC(+b.closest(".c-item").dataset.i);
+    b.addEventListener("click", pick);
+    b.addEventListener("focus", pick);
+    if (fine) b.addEventListener("mouseenter", pick);
+  });
+}
+function selectC(i) {
+  if (i === state.cOn) return;
+  state.cOn = i;
+  const c = COPY[state.lang], id = DISC[i].id;
+  document.querySelectorAll(".c-item").forEach(el => {
+    const o = +el.dataset.i === i;
+    el.classList.toggle("on", o);
+    el.querySelector(".c-q").setAttribute("aria-pressed", o);
+  });
+  document.querySelectorAll(".c-stack img").forEach((img, k) => img.classList.toggle("on", k === i));
+  const ans = document.getElementById("c-ans");
+  ans.innerHTML = `<p class="eyebrow">${c.sendTo}</p><h3>${c.names[id]}</h3>${detail(c, id)}`;
+  ans.classList.remove("c-swap"); void ans.offsetWidth; ans.classList.add("c-swap");
+}
+function seg(id, key) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    state[key] = b.dataset.v;
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", x === b));
+    const y = scrollY; render(); scrollTo(0, y);
+  }));
+}
+seg("opt", "v"); seg("lang", "lang"); seg("scene", "scene");
+render();
+</script>
+</body>
+</html>

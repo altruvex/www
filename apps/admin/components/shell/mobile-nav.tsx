@@ -3,13 +3,16 @@
 import { CountBadge } from "@/components/ui/badge";
 import { GROUPS, PRIMARY, canSee, type BadgeKey, type Role } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+// The admin kit's bottom sheet, not the marketing site's vaul drawer: this app
+// should not pull the www entry point (and its styles) in for one menu.
 import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@repo/ui/www";
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@repo/ui";
 import { Building2, Inbox, LayoutDashboard, MoreHorizontal, Target } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -97,18 +100,14 @@ export function MobileNavDrawer({
   }, [onOpenChange]);
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85dvh] p-0">
-        <DrawerHeader className="border-b border-border px-4 py-3 text-start">
-          <DrawerTitle className="text-lg font-semibold text-foreground">
-            Navigate
-          </DrawerTitle>
-          <DrawerDescription className="sr-only">
-            Navigation menu
-          </DrawerDescription>
-        </DrawerHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="bottom">
+        <SheetHeader>
+          <SheetTitle>Navigate</SheetTitle>
+          <SheetDescription className="sr-only">Navigation menu</SheetDescription>
+        </SheetHeader>
 
-        <div className="overflow-y-auto pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <SheetBody className="p-0 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {[{ id: "primary", label: "", items: PRIMARY }, ...GROUPS].map((group) => {
             const items = group.items.filter((i) => canSee(i, role));
             if (items.length === 0) return null;
@@ -161,8 +160,8 @@ export function MobileNavDrawer({
               </div>
             );
           })}
-        </div>
-      </DrawerContent>
-    </Drawer>
+        </SheetBody>
+      </SheetContent>
+    </Sheet>
   );
 }

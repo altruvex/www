@@ -48,6 +48,12 @@ model User {
   incidentUpdates    IncidentUpdate[]
   assignedTasks      ProjectTask[]       @relation("TaskAssignee")
   twoFactors         TwoFactor[]
+  clientNotes        ClientNote[]
+
+  /// The operator's role inside the OS (capability permissions, lib/rbac.ts).
+  /// NULL derives it from the auth `role`: SUPERADMIN → OWNER, ADMIN → ADMIN.
+  /// The auth `role` still decides whether the person may sign in at all.
+  opsRole ProductRole?
 
   @@index([email])
   @@index([role])
@@ -293,6 +299,12 @@ model Meeting {
   contactSubmission ContactSubmission? @relation(fields: [submissionId], references: [id])
   submissionId      String?
 
+  /// The client this meeting is with, once the lead has become one. A booking
+  /// from the site arrives with a submission only; linking it to the client is
+  /// what puts it on the client hub.
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientId String?
+
   guestName  String?
   guestEmail String?
 
@@ -310,6 +322,7 @@ model Meeting {
   @@index([status])
   @@index([assignedToId])
   @@index([submissionId])
+  @@index([clientId])
   @@map("meetings")
 }
 
@@ -375,6 +388,11 @@ model TransparencyLead {
   brandIdentity    String?
   /// "provide" | "need-help" | "unsure" — how much copy work the build carries.
   contentReadiness String?
+  /// Unpriced scope notes the buyer ticked (`SCOPE_NOTE_IDS` in @repo/pricing-schema).
+  /// Reviewed in scope review; never a multiplier on the estimate.
+  scopeNotes       String[]  @default([])
+  /// Free-text note from the proposal request form.
+  note             String?
   priceMin         Int
   priceMax         Int
   weeksMin         Int
@@ -410,6 +428,14 @@ model Client {
   company  String?
   industry String?
 
+  /// Business identity, for invoices and the client hub. All optional: a lead
+  /// becomes a client long before anyone knows its tax number.
+  website      String?
+  country      String?
+  address      String?
+  billingEmail String?
+  taxId        String?
+
   source  ClientSource @default(MANUAL)
   addedBy String?
 
@@ -434,6 +460,8 @@ model Client {
   subscriptions MaintenanceSubscription[]
   products      Product[]
   services      ClientService[]
+  notes         ClientNote[]
+  meetings      Meeting[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -522,6 +550,11 @@ model CompanySettings {
   // Changing these is a company-wide branding decision, not a per-client one.
   brandColor     String @default("0E51AA")
   brandColorDark String @default("3687F2")
+
+  /// Invoice numbering: the prefix and the last number issued. Incremented
+  /// atomically when an invoice is issued.
+  invoicePrefix   String @default("INV")
+  invoiceSequence Int    @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -663,6 +696,9 @@ enum PaymentMilestone {
   /// One term of a ClientService (domain, hosting…) — opened when the service
   /// is registered without a first term in the fee, and on every renewal.
   SERVICE_RENEWAL
+  /// One billing period of a MaintenanceSubscription — opened on every renewal,
+  /// priced from the plan's schema price at the subscription's interval.
+  RETAINER_RENEWAL
   OTHER
 }
 
@@ -674,9 +710,15 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id        String  @id @default(uuid())
-  project   Project @relation(fields: [projectId], references: [id])
-  projectId String
+  id        String   @id @default(uuid())
+  /// The engagement this payment bills. Optional since 2026-10: a maintenance
+  /// retainer belongs to a Client, not a Project, and its renewals bill through
+  /// `subscriptionId` instead — the service-term precedent (`serviceId`) refuses
+  /// to bill without a project, which for a retainer would mean never billing.
+  /// A row is created with a project or a subscription, never neither; the
+  /// relation stays Restrict so a project delete must still clear its schedule.
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  projectId String?
 
   milestone PaymentMilestone
   amount    Int
@@ -687,6 +729,13 @@ model Payment {
   method    String?
   reference String?
 
+  /// The persisted invoice number, assigned once from
+  /// `CompanySettings.invoiceSequence` when the invoice is issued and never
+  /// reused — numbering by list position renumbered every invoice whenever a
+  /// row was added or deleted.
+  invoiceNumber String?   @unique
+  invoicedAt    DateTime?
+
   /// Set when this payment bills a delivered change request.
   changeRequest ChangeRequest?
 
@@ -695,12 +744,20 @@ model Payment {
   service   ClientService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   serviceId String?
 
+  /// Set when this payment bills one period of a maintenance retainer. One per
+  /// period — `dueDate` is that period's start, which is how a renewal is kept
+  /// from opening the same period twice. Survives the retainer being deleted,
+  /// like a service term survives its service.
+  subscription   MaintenanceSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  subscriptionId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
   @@index([status])
   @@index([serviceId])
+  @@index([subscriptionId])
   @@map("payments")
 }
 
@@ -758,15 +815,15 @@ model ChangeRequest {
   /// The client's link to review and answer the quote (`/quote/[token]`).
   /// Unguessable, scoped to this one request, and kept across re-quotes so a
   /// link already in the client's inbox keeps showing the current number.
-  quoteToken     String?   @unique
+  quoteToken         String?   @unique
   /// When the CURRENT quote was sent. A re-quote clears it: the link then
   /// refuses an answer until the new number has actually been sent.
-  quoteSentAt    DateTime?
+  quoteSentAt        DateTime?
   /// "email" or "whatsapp".
-  quoteSentVia   String?
-  quoteExpiresAt DateTime?
+  quoteSentVia       String?
+  quoteExpiresAt     DateTime?
   /// First time the client opened the sent quote. Evidence, not a guess.
-  quoteViewedAt  DateTime?
+  quoteViewedAt      DateTime?
   /// Who answered on the quote page, and anything they wrote.
   respondedByName    String?
   clientResponseNote String?
@@ -1057,6 +1114,16 @@ model MaintenanceSubscription {
 
   billingInterval BillingInterval @default(MONTHLY)
 
+  /// The agreed MONTHLY figure (EGP) for a quote-only plan such as enterprise.
+  /// Null on a published plan, whose price always comes from
+  /// @repo/pricing-schema — this column is refused there. Stored per month,
+  /// not per invoice, so one pricing rule covers every plan: an invoice is
+  /// `maintenanceIntervalPrice({ price }, interval)` (annual = 10 paid months,
+  /// like the published plans) and changing the interval never needs a
+  /// re-quote. A change applies from the next invoice; opened payments keep
+  /// their amount.
+  quotedMonthlyPrice Int?
+
   /// The period currently paid for. `currentPeriodEnd` IS the renewal date —
   /// storing one derived from the other is how the two drift apart.
   currentPeriodStart DateTime @default(now())
@@ -1074,6 +1141,8 @@ model MaintenanceSubscription {
   lastRenewedAt DateTime?
 
   requests MaintenanceRequest[]
+  /// One RETAINER_RENEWAL payment per billed period (see `Payment.subscriptionId`).
+  payments Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1645,41 +1714,41 @@ enum ClientServiceStatus {
 model ClientService {
   id String @id @default(uuid())
 
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  clientId  String
+  client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId   String
   /// The engagement it was sold with. Optional: a service outlives its project
   /// and can be added for a client who never had one.
-  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  projectId String?
+  project    Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId  String?
   /// The site or app it serves, when that product is tracked.
-  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productId String?
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId  String?
   /// The proposal whose accepted terms created it. Null for one added by hand.
   proposal   Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
   proposalId String?
 
-  kind     ClientServiceKind
+  kind      ClientServiceKind
   /// "newlight.com", "Vercel Pro", "Google Workspace — 5 seats".
-  name     String
-  provider String?
+  name      String
+  provider  String?
   /// Registrar order id or account handle. Never a credential.
   reference String?
 
   status ClientServiceStatus @default(PENDING)
 
-  currency String @default("EGP")
+  currency          String  @default("EGP")
   /// What the client pays per term.
-  price    Int
+  price             Int
   /// What Altruvex pays the supplier per term. Internal only.
-  cost     Int?
+  cost              Int?
   /// Length of one billing term. 12 for an annual domain, 1 for monthly hosting.
-  termMonths Int @default(12)
+  termMonths        Int     @default(12)
   /// The first term is covered by the project fee (the contract's "Year 1
   /// included"); billing starts at the first renewal.
   firstTermIncluded Boolean @default(false)
   /// Renews at the provider without anyone acting. Alerts still fire — a
   /// renewal the provider charges is still one the client owes.
-  autoRenew Boolean @default(false)
+  autoRenew         Boolean @default(false)
 
   startedAt     DateTime?
   /// The renewal date. Required once ACTIVE; null only while PENDING.
@@ -1706,4 +1775,37 @@ model ClientService {
   @@index([projectId])
   @@index([status, expiresAt])
   @@map("client_services")
+}
+
+/// The operator's role inside the OS. Decides capabilities (lib/rbac.ts), not
+/// sign-in — that is still `User.role`.
+enum ProductRole {
+  OWNER
+  ADMIN
+  SALES
+  PM
+  FINANCE
+  VIEWER
+}
+
+/// A note an operator writes on a client — calls, context, decisions. The
+/// client hub shows them with the audit trail; a note is hard-deleted through
+/// the delete registry like every record.
+model ClientNote {
+  id       String @id @default(uuid())
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  author      User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  authorId    String?
+  authorLabel String
+
+  body   String
+  pinned Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId, createdAt])
+  @@map("client_notes")
 }

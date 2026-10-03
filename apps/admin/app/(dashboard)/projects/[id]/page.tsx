@@ -1,22 +1,26 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
-import { ExternalLink, Globe, Wallet } from "lucide-react";
+import { ExternalLink, GitBranch, Globe, Wallet } from "lucide-react";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
 import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
-import { Timeline } from "@/components/os/timeline";
+import { EntityLink } from "@/components/os/entity-link";
+import { EntityAudit } from "@/components/os/entity-audit";
 import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
-import { buildActivity } from "@/lib/activity";
 import { PROJECT_PHASE_ORDER, statusOf } from "@/lib/status";
 import { date, dateTime, dueLabel, money, when } from "@/lib/format";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
 import { PhaseControl, ProjectStatusControl } from "./phase-control";
 import { ChangeRequestsPanel, type ChangeRequestRow } from "./change-requests";
 import { CloseProjectButton } from "./close-project";
+import { EditProjectButton } from "./edit-project";
+import { getProjectEngineering } from "@/lib/engineering";
+import { httpUrl } from "@/lib/http-url";
 import { Button } from "@repo/ui";
 import { headers } from "next/headers";
 import { getPricing } from "@/lib/pricing-store";
@@ -36,7 +40,7 @@ const TABS = [
   { id: "services", label: "Services" },
   { id: "financials", label: "Financials" },
   { id: "communication", label: "Communication" },
-  { id: "activity", label: "Activity" },
+  { id: "activity", label: "Audit trail" },
 ];
 
 export default async function ProjectDetailPage({
@@ -103,9 +107,7 @@ export default async function ProjectDetailPage({
   const collected = project.payments
     .filter((p) => p.status === "PAID")
     .reduce((s, p) => s + p.amount, 0);
-  const overdue = project.payments.filter(
-    (p) => p.dueDate && p.dueDate < now && p.status !== "PAID" && p.status !== "WAIVED",
-  );
+  const overdue = project.payments.filter((p) => isPaymentOverdue(p, now));
 
   const elapsedWeeks = Math.round(
     (now.getTime() - project.createdAt.getTime()) / 604_800_000,
@@ -164,13 +166,13 @@ export default async function ProjectDetailPage({
         ? `ended ${date(warranty.endsAt)}`
         : "starts at launch";
 
-  const activity = buildActivity({
-    projects: [project],
-    contracts: [project.contract],
-    proposals: [project.contract.proposal],
-    payments: project.payments.map((p) => ({ ...p, projectId: project.id, currency })),
-    messages,
-  });
+  // URLs here are typed by an operator today, but older rows predate the
+  // httpUrl check — a stored value is rendered as a link only if it passes.
+  const stagingHref = safeHref(project.stagingUrl);
+  const liveHref = safeHref(project.liveUrl);
+
+  const engineering = tab === "overview" ? await getProjectEngineering(project.id) : null;
+  const milestones = tab === "milestones" ? buildMilestones(project, terms.postLaunchWarrantyDays, now) : [];
 
   return (
     <div className="space-y-4">
@@ -189,7 +191,11 @@ export default async function ProjectDetailPage({
         }
         meta={
           <>
-            <MetaItem label="Client">{clientName}</MetaItem>
+            <MetaItem label="Client">
+              <EntityLink type="client" id={project.clientId}>
+                {clientName}
+              </EntityLink>
+            </MetaItem>
             <MetaItem label="Started">{date(project.createdAt)}</MetaItem>
             <MetaItem label="Target">
               {project.targetLaunchDate ? date(project.targetLaunchDate) : "not set"}
@@ -205,6 +211,15 @@ export default async function ProjectDetailPage({
         }
         actions={
           <>
+            <EditProjectButton
+              project={{
+                id: project.id,
+                name: project.name,
+                targetLaunchDate: project.targetLaunchDate?.toISOString() ?? null,
+                stagingUrl: project.stagingUrl,
+                liveUrl: project.liveUrl,
+              }}
+            />
             <PhaseControl projectId={project.id} phase={project.phase} />
             <ProjectStatusControl projectId={project.id} status={project.status} />
             {(project.status === "ACTIVE" || project.status === "ON_HOLD") && (
@@ -287,17 +302,17 @@ export default async function ProjectDetailPage({
                   {
                     label: "Client",
                     value: (
-                      <Link href={`/clients/${project.clientId}`} className="hover:text-brand">
+                      <EntityLink type="client" id={project.clientId}>
                         {clientName}
-                      </Link>
+                      </EntityLink>
                     ),
                   },
                   {
                     label: "Contract",
                     value: (
-                      <Link href={`/contracts/${project.contractId}`} className="hover:text-brand">
+                      <EntityLink type="contract" id={project.contractId}>
                         {money(project.contract.proposal.totalPrice, project.contract.proposal.currency)}
-                      </Link>
+                      </EntityLink>
                     ),
                   },
                   { label: "Phase", value: statusOf("projectPhase", project.phase).label },
@@ -326,21 +341,23 @@ export default async function ProjectDetailPage({
 
             <Panel title="Environments" flush>
               <QuickActions>
-                {project.stagingUrl ? (
+                {stagingHref ? (
                   <Button asChild variant="outline">
-                    <a href={project.stagingUrl} target="_blank" rel="noreferrer">
+                    <a href={stagingHref} target="_blank" rel="noopener noreferrer">
                       <Globe className="size-3.5 text-subtle-foreground" />
                       Staging
                     </a>
                   </Button>
                 ) : (
                   <p className="text-meta text-subtle-foreground">
-                    No staging URL recorded. This is what the health check looks for.
+                    {project.stagingUrl
+                      ? "The stored staging URL is not an http(s) address. Correct it with Edit."
+                      : "No staging URL recorded. Add it with Edit."}
                   </p>
                 )}
-                {project.liveUrl && (
+                {liveHref && (
                   <Button asChild variant="outline">
-                    <a href={project.liveUrl} target="_blank" rel="noreferrer">
+                    <a href={liveHref} target="_blank" rel="noopener noreferrer">
                       <Globe className="size-3.5 text-success" />
                       Live site
                     </a>
@@ -429,27 +446,184 @@ export default async function ProjectDetailPage({
                 </dl>
               </Panel>
             </div>
+
+            {engineering && (
+              <>
+                <Panel
+                  title="Products"
+                  description="What this project shipped, and the latest deployment CI reported for each"
+                  flush
+                >
+                  {engineering.products.length === 0 ? (
+                    <EmptyInline
+                      action={
+                        <Button asChild variant="outline" size="sm">
+                          <Link href="/products">Open products</Link>
+                        </Button>
+                      }
+                    >
+                      No product is attached to this project. Attach the site or app it builds to
+                      a product and its deployments and incidents appear here.
+                    </EmptyInline>
+                  ) : (
+                    <ul className="rows">
+                      {engineering.products.map((product) => {
+                        const repo = safeHref(product.repositoryUrl);
+                        const deploy = product.latestDeployment;
+                        return (
+                          <li
+                            key={product.id}
+                            className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-base font-medium">
+                                <EntityLink type="product" id={product.id}>
+                                  {product.name}
+                                </EntityLink>
+                              </p>
+                              <p className="truncate text-meta text-muted-foreground">
+                                {deploy ? (
+                                  <EntityLink type="deployment" id={deploy.id} muted>
+                                    Deploy #{deploy.number} ·{" "}
+                                    {statusOf("deployEnvironment", deploy.environment).label}
+                                    {deploy.version ? ` · ${deploy.version}` : ""} ·{" "}
+                                    {when(deploy.finishedAt ?? deploy.createdAt)}
+                                  </EntityLink>
+                                ) : (
+                                  "No deployment reported yet"
+                                )}
+                              </p>
+                            </div>
+                            {deploy && (
+                              <StatusPill registry="deploymentStatus" value={deploy.status} variant="dot" />
+                            )}
+                            <StatusPill registry="productStatus" value={product.status} />
+                            {repo && (
+                              <a
+                                href={repo}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-meta text-muted-foreground hover:text-foreground"
+                                aria-label={`Repository for ${product.name}`}
+                              >
+                                <GitBranch className="size-3.5" />
+                                Repo
+                              </a>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </Panel>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Panel
+                    title="Open incidents"
+                    description={
+                      engineering.products.length === 0
+                        ? "Incidents are raised against a product"
+                        : `${engineering.openIncidents.length} not resolved`
+                    }
+                    flush
+                  >
+                    {engineering.openIncidents.length === 0 ? (
+                      <EmptyInline>
+                        {engineering.products.length === 0
+                          ? "No product, so nothing to raise an incident against."
+                          : "Nothing open on this project’s products."}
+                      </EmptyInline>
+                    ) : (
+                      <ul className="rows">
+                        {engineering.openIncidents.map((incident) => (
+                          <li key={incident.id} className="flex items-center gap-3 px-3 py-2.5">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-base">
+                                <EntityLink type="incident" id={incident.id}>
+                                  #{incident.number} {incident.title}
+                                </EntityLink>
+                              </p>
+                              <p className="truncate text-meta text-muted-foreground">
+                                {incident.product.name} · {when(incident.detectedAt)}
+                              </p>
+                            </div>
+                            <StatusPill registry="incidentSeverity" value={incident.severity} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </Panel>
+
+                  <Panel
+                    title="Tasks"
+                    action={
+                      <Link
+                        href={`/tasks?project=${project.id}`}
+                        className="text-meta text-muted-foreground hover:text-foreground"
+                      >
+                        Open board →
+                      </Link>
+                    }
+                  >
+                    {engineering.tasks.total === 0 ? (
+                      <p className="text-meta text-subtle-foreground">
+                        No task recorded for this project.{" "}
+                        <Link href={`/tasks?project=${project.id}`} className="underline underline-offset-2 hover:text-foreground">
+                          Add one on the board
+                        </Link>
+                        .
+                      </p>
+                    ) : (
+                      <dl className="space-y-2">
+                        <Row label="Open">{engineering.tasks.open}</Row>
+                        <Row label="Done">{engineering.tasks.done}</Row>
+                        <Row label="Total">{engineering.tasks.total}</Row>
+                      </dl>
+                    )}
+                  </Panel>
+                </div>
+              </>
+            )}
           </>
         )}
 
         {tab === "milestones" && (
           <Panel
             title="Milestones"
-            description="The default phase set. Customisable per project once a Milestone model exists."
+            description="The contract’s payment milestones and the delivery dates on record, in order. Nothing here is planned that was not agreed."
             flush
           >
             <ul className="rows">
-              {PROJECT_PHASE_ORDER.map((phase, i) => (
-                <li key={phase} className="flex items-center gap-3 px-3 py-2.5">
-                  <span className="font-mono text-micro tabular-nums text-subtle-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="min-w-0 flex-1 text-base">
-                    {statusOf("projectPhase", phase).label}
-                  </span>
-                  {i < phaseIndex && <ToneBadge tone="success">Done</ToneBadge>}
-                  {i === phaseIndex && <ToneBadge tone="progress">In progress</ToneBadge>}
-                  {i > phaseIndex && <span className="telemetry text-subtle-foreground">upcoming</span>}
+              {milestones.map((m) => (
+                <li key={m.key} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2.5">
+                  <span
+                    className={
+                      m.state === "done"
+                        ? "size-2 shrink-0 rounded-full bg-success"
+                        : m.state === "late"
+                          ? "size-2 shrink-0 rounded-full bg-danger"
+                          : m.state === "current"
+                            ? "size-2 shrink-0 rounded-full bg-progress ring-2 ring-progress/25"
+                            : "size-2 shrink-0 rounded-full border border-border-mid"
+                    }
+                    aria-hidden
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base">
+                      {m.paymentId ? (
+                        <EntityLink type="payment" id={m.paymentId}>
+                          {m.label}
+                        </EntityLink>
+                      ) : (
+                        m.label
+                      )}
+                    </p>
+                    <p className="text-meta text-muted-foreground">{m.detail}</p>
+                  </div>
+                  {m.amount != null && (
+                    <span className="font-mono text-meta tabular-nums">{money(m.amount, currency)}</span>
+                  )}
+                  <ToneBadge tone={MILESTONE_TONE[m.state]}>{MILESTONE_LABEL[m.state]}</ToneBadge>
                 </li>
               ))}
             </ul>
@@ -569,14 +743,157 @@ export default async function ProjectDetailPage({
           </Panel>
         )}
 
-        {tab === "activity" && (
-          <Panel title="Activity" flush bodyClassName="p-2">
-            <Timeline events={activity} emptyLabel="Nothing recorded for this project." />
-          </Panel>
-        )}
+        {tab === "activity" && <EntityAudit type="project" id={project.id} />}
       </DetailLayout>
     </div>
   );
+}
+
+function safeHref(value: string | null | undefined): string | null {
+  return value && httpUrl.safeParse(value).success ? value : null;
+}
+
+type MilestoneState = "done" | "current" | "upcoming" | "late" | "waived";
+
+const MILESTONE_TONE: Record<MilestoneState, "success" | "progress" | "neutral" | "danger"> = {
+  done: "success",
+  current: "progress",
+  upcoming: "neutral",
+  late: "danger",
+  waived: "neutral",
+};
+const MILESTONE_LABEL: Record<MilestoneState, string> = {
+  done: "Done",
+  current: "In progress",
+  upcoming: "Upcoming",
+  late: "Late",
+  waived: "Waived",
+};
+
+interface Milestone {
+  key: string;
+  label: string;
+  detail: string;
+  state: MilestoneState;
+  /** Sort key; null sinks to the end in its group. */
+  at: Date | null;
+  amount?: number;
+  paymentId?: string;
+}
+
+/** The milestones the contract bills against. Change requests, service terms
+ *  and retainer periods are billed work too, but not delivery milestones —
+ *  they stay on the Financials tab. */
+const CONTRACT_MILESTONES = new Set(["DEPOSIT_50", "MILESTONE_30", "FINAL_20", "OTHER"]);
+
+/**
+ * A milestone view built only from what is recorded: the contract's payment
+ * schedule, the phase the project is in, and the launch / warranty / closure
+ * dates. There is no Milestone model, so nothing here can be scheduled that
+ * was not already agreed in the contract or set on the project.
+ */
+function buildMilestones(
+  project: {
+    createdAt: Date;
+    phase: string;
+    targetLaunchDate: Date | null;
+    actualLaunchDate: Date | null;
+    completedAt: Date | null;
+    status: string;
+    payments: {
+      id: string;
+      milestone: string;
+      amount: number;
+      status: string;
+      dueDate: Date | null;
+      paidAt: Date | null;
+    }[];
+  },
+  warrantyDays: number,
+  now: Date,
+): Milestone[] {
+  const out: Milestone[] = [
+    {
+      key: "opened",
+      label: "Contract signed, project opened",
+      detail: date(project.createdAt),
+      state: "done",
+      at: project.createdAt,
+    },
+  ];
+
+  for (const p of project.payments) {
+    if (!CONTRACT_MILESTONES.has(p.milestone)) continue;
+    const label = `${statusOf("paymentMilestone", p.milestone).label} payment`;
+    if (p.status === "PAID") {
+      out.push({ key: p.id, label, detail: p.paidAt ? `Paid ${date(p.paidAt)}` : "Paid, date not recorded", state: "done", at: p.paidAt ?? p.dueDate, amount: p.amount, paymentId: p.id });
+    } else if (p.status === "WAIVED") {
+      out.push({ key: p.id, label, detail: "Waived", state: "waived", at: p.dueDate, amount: p.amount, paymentId: p.id });
+    } else {
+      out.push({
+        key: p.id,
+        label,
+        detail: p.dueDate ? `Due ${dueLabel(p.dueDate)}` : "No due date set",
+        state: isPaymentOverdue(p, now) ? "late" : "upcoming",
+        at: p.dueDate,
+        amount: p.amount,
+        paymentId: p.id,
+      });
+    }
+  }
+
+  const phaseIndex = PROJECT_PHASE_ORDER.indexOf(project.phase as (typeof PROJECT_PHASE_ORDER)[number]);
+  if (!project.actualLaunchDate) {
+    out.push({
+      key: "phase",
+      label: `${statusOf("projectPhase", project.phase).label} phase`,
+      detail: `Phase ${phaseIndex + 1} of ${PROJECT_PHASE_ORDER.length}`,
+      state: project.status === "COMPLETED" ? "done" : "current",
+      at: now,
+    });
+  }
+
+  if (project.actualLaunchDate) {
+    const missed =
+      project.targetLaunchDate && project.actualLaunchDate > project.targetLaunchDate
+        ? ` · target was ${date(project.targetLaunchDate)}`
+        : "";
+    out.push({ key: "launch", label: "Launched", detail: `${date(project.actualLaunchDate)}${missed}`, state: "done", at: project.actualLaunchDate });
+    const warranty = warrantyWindow(project.actualLaunchDate, warrantyDays, now);
+    if (warranty.endsAt) {
+      out.push({
+        key: "warranty",
+        label: "Warranty ends",
+        detail: `${date(warranty.endsAt)} · ${warrantyDays} days after launch`,
+        state: warranty.state === "ended" ? "done" : "upcoming",
+        at: warranty.endsAt,
+      });
+    }
+  } else {
+    out.push({
+      key: "launch",
+      label: "Target launch",
+      detail: project.targetLaunchDate ? dueLabel(project.targetLaunchDate) : "No date agreed — set one with Edit",
+      state: project.targetLaunchDate && project.targetLaunchDate < now ? "late" : "upcoming",
+      at: project.targetLaunchDate,
+    });
+  }
+
+  if (project.completedAt) {
+    out.push({ key: "closed", label: "Project closed", detail: date(project.completedAt), state: "done", at: project.completedAt });
+  }
+
+  // Dated rows in date order; undated ones (a payment with no due date, a
+  // launch never agreed) last, in the order they were added.
+  return out
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => {
+      if (a.m.at && b.m.at) return a.m.at.getTime() - b.m.at.getTime() || a.i - b.i;
+      if (a.m.at) return -1;
+      if (b.m.at) return 1;
+      return a.i - b.i;
+    })
+    .map(({ m }) => m);
 }
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {

@@ -1,4 +1,11 @@
-import { prisma, type DeployEnvironment, type LogLevel, type Prisma } from "@repo/database";
+import {
+  prisma,
+  type DeployEnvironment,
+  type IncidentSeverity,
+  type IncidentStatus,
+  type LogLevel,
+  type Prisma,
+} from "@repo/database";
 
 /**
  * Reads for the engineering side of the OS (§6–§8).
@@ -55,8 +62,9 @@ export async function getEngineeringSummary(now: Date = new Date()) {
   };
 }
 
-export async function listProducts() {
+export async function listProducts(filters: { clientId?: string; projectId?: string } = {}) {
   const products = await prisma.product.findMany({
+    where: { clientId: filters.clientId, projectId: filters.projectId },
     orderBy: [{ status: "asc" }, { name: "asc" }],
     include: {
       client: { select: { id: true, name: true, company: true } },
@@ -70,8 +78,9 @@ export async function listProducts() {
   const [lastDeployments, openIncidents] = await Promise.all([
     prisma.deployment.findMany({
       where: { productId: { in: products.map((p) => p.id) }, status: "SUCCEEDED" },
-      orderBy: { finishedAt: "desc" },
+      orderBy: [{ finishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
       select: {
+        id: true,
         productId: true,
         number: true,
         finishedAt: true,
@@ -87,14 +96,21 @@ export async function listProducts() {
   ]);
 
   const latestByProduct = new Map<string, (typeof lastDeployments)[number]>();
+  const latestProductionByProduct = new Map<string, (typeof lastDeployments)[number]>();
   for (const d of lastDeployments) {
     if (!latestByProduct.has(d.productId)) latestByProduct.set(d.productId, d);
+    if (d.environment === "PRODUCTION" && !latestProductionByProduct.has(d.productId)) {
+      latestProductionByProduct.set(d.productId, d);
+    }
   }
   const openByProduct = new Map(openIncidents.map((i) => [i.productId, i._count._all]));
 
   return products.map((product) => ({
     ...product,
+    /** Last successful deploy to any environment — a preview counts. */
     lastDeployment: latestByProduct.get(product.id) ?? null,
+    /** Last successful deploy to PRODUCTION — what "last deploy" means to a client. */
+    lastProductionDeployment: latestProductionByProduct.get(product.id) ?? null,
     openIncidents: openByProduct.get(product.id) ?? 0,
   }));
 }
@@ -105,6 +121,18 @@ export async function getProduct(id: string) {
     include: {
       client: { select: { id: true, name: true, company: true, phone: true } },
       project: { select: { id: true, name: true, phase: true, status: true } },
+      services: {
+        orderBy: [{ status: "asc" }, { expiresAt: "asc" }],
+        select: {
+          id: true,
+          kind: true,
+          name: true,
+          provider: true,
+          status: true,
+          expiresAt: true,
+          autoRenew: true,
+        },
+      },
       deployments: {
         orderBy: { createdAt: "desc" },
         take: 25,
@@ -127,15 +155,22 @@ export interface DeploymentFilters {
   productId?: string;
   environment?: DeployEnvironment;
   status?: string;
+  /** Via the product's client. */
+  clientId?: string;
+}
+
+function deploymentWhere(filters: DeploymentFilters): Prisma.DeploymentWhereInput {
+  return {
+    productId: filters.productId,
+    environment: filters.environment,
+    status: filters.status as Prisma.EnumDeploymentStatusFilter | undefined,
+    ...(filters.clientId ? { product: { clientId: filters.clientId } } : {}),
+  };
 }
 
 export async function listDeployments(filters: DeploymentFilters = {}, take = 100) {
   return prisma.deployment.findMany({
-    where: {
-      productId: filters.productId,
-      environment: filters.environment,
-      status: filters.status as Prisma.EnumDeploymentStatusFilter | undefined,
-    },
+    where: deploymentWhere(filters),
     orderBy: { createdAt: "desc" },
     take,
     include: {
@@ -153,15 +188,25 @@ export async function listDeployments(filters: DeploymentFilters = {}, take = 10
   });
 }
 
-export async function listBuilds(
-  filters: { productId?: string; status?: string } = {},
-  take = 100,
-) {
+export interface BuildFilters {
+  productId?: string;
+  status?: string;
+  environment?: DeployEnvironment;
+  clientId?: string;
+}
+
+function buildWhere(filters: BuildFilters): Prisma.BuildWhereInput {
+  return {
+    productId: filters.productId,
+    environment: filters.environment,
+    status: filters.status as Prisma.EnumBuildStatusFilter | undefined,
+    ...(filters.clientId ? { product: { clientId: filters.clientId } } : {}),
+  };
+}
+
+export async function listBuilds(filters: BuildFilters = {}, take = 100) {
   return prisma.build.findMany({
-    where: {
-      productId: filters.productId,
-      status: filters.status as Prisma.EnumBuildStatusFilter | undefined,
-    },
+    where: buildWhere(filters),
     orderBy: { createdAt: "desc" },
     take,
     include: {
@@ -187,8 +232,21 @@ export interface LogFilters {
   requestId?: string;
   deploymentId?: string;
   buildId?: string;
-  /** Opaque cursor: the id of the last row on the previous page. */
+  incidentId?: string;
+  /** Emitting subsystem, exact match ("web", "worker"). */
+  source?: string;
+  /** Inclusive lower bound on the source timestamp. */
+  from?: Date;
+  /** Exclusive upper bound on the source timestamp. */
+  to?: Date;
+  /** Opaque cursor: the id of the last row on the previous page (older). */
   cursor?: string;
+  /**
+   * Opaque cursor for walking back: the id of the first row on the page the
+   * operator is leaving. The page returned is the one just newer than it.
+   * Ignored when `cursor` is set.
+   */
+  before?: string;
 }
 
 /**
@@ -210,19 +268,51 @@ export async function listLogs(filters: LogFilters = {}) {
     requestId: filters.requestId,
     deploymentId: filters.deploymentId,
     buildId: filters.buildId,
+    incidentId: filters.incidentId,
+    source: filters.source,
+    ...(filters.from || filters.to
+      ? { timestamp: { ...(filters.from ? { gte: filters.from } : {}), ...(filters.to ? { lt: filters.to } : {}) } }
+      : {}),
     ...(filters.q ? { message: { contains: filters.q, mode: "insensitive" } } : {}),
   };
+
+  const include = {
+    product: { select: { id: true, name: true, slug: true } },
+    deployment: { select: { id: true, number: true } },
+    build: { select: { id: true, number: true } },
+    incident: { select: { id: true, number: true, title: true } },
+  } satisfies Prisma.LogEntryInclude;
+
+  // Walking back is the same cursor read in the opposite order, then flipped:
+  // the rows just newer than the page being left, oldest first, so the extra
+  // row answers "is there an even newer page".
+  if (filters.before && !filters.cursor) {
+    const rows = await prisma.logEntry.findMany({
+      where,
+      orderBy: [{ timestamp: "asc" }, { id: "asc" }],
+      take: LOG_PAGE_SIZE + 1,
+      cursor: { id: filters.before },
+      skip: 1,
+      include,
+    });
+    const hasNewer = rows.length > LOG_PAGE_SIZE;
+    const entries = (hasNewer ? rows.slice(0, LOG_PAGE_SIZE) : rows).reverse();
+    return {
+      entries,
+      // Coming back from an older page means an older page exists.
+      hasMore: entries.length > 0,
+      nextCursor: entries[entries.length - 1]?.id ?? null,
+      hasNewer,
+      prevCursor: hasNewer ? (entries[0]?.id ?? null) : null,
+    };
+  }
 
   const rows = await prisma.logEntry.findMany({
     where,
     orderBy: [{ timestamp: "desc" }, { id: "desc" }],
     take: LOG_PAGE_SIZE + 1,
     ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-    include: {
-      product: { select: { id: true, name: true, slug: true } },
-      deployment: { select: { id: true, number: true } },
-      build: { select: { id: true, number: true } },
-    },
+    include,
   });
 
   // One extra row is fetched purely to answer "is there another page", without
@@ -234,12 +324,45 @@ export async function listLogs(filters: LogFilters = {}) {
     entries,
     hasMore,
     nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null,
+    // A page reached through a cursor always has the rows before it.
+    hasNewer: Boolean(filters.cursor) && entries.length > 0,
+    prevCursor: filters.cursor ? (entries[0]?.id ?? null) : null,
   };
 }
 
-export async function listIncidents(openOnly = false) {
+/**
+ * The distinct `source` values products report, for the source filter. A
+ * grouped query, so it runs in the database rather than reading every row.
+ */
+export async function listLogSources(productId?: string, take = 50): Promise<string[]> {
+  const groups = await prisma.logEntry.groupBy({
+    by: ["source"],
+    where: { source: { not: null }, productId },
+    orderBy: { source: "asc" },
+    take,
+  });
+  return groups.map((g) => g.source).filter((s): s is string => Boolean(s));
+}
+
+export interface IncidentFilters {
+  status?: IncidentStatus;
+  severity?: IncidentSeverity;
+  productId?: string;
+  /** Via the product's client. */
+  clientId?: string;
+  deploymentId?: string;
+}
+
+export async function listIncidents(openOnly = false, filters: IncidentFilters = {}) {
   return prisma.incident.findMany({
-    where: openOnly ? { status: { not: "RESOLVED" } } : undefined,
+    where: {
+      ...(openOnly ? { status: { not: "RESOLVED" as const } } : {}),
+      ...(filters.status ? { status: filters.status } : {}),
+      severity: filters.severity,
+      productId: filters.productId,
+      deploymentId: filters.deploymentId,
+      ...(filters.clientId ? { product: { clientId: filters.clientId } } : {}),
+    },
     orderBy: [{ resolvedAt: { sort: "asc", nulls: "first" } }, { detectedAt: "desc" }],
     include: {
       product: {
@@ -274,5 +397,312 @@ export async function incidentStats(sinceDays = 90, now: Date = new Date()) {
   return {
     resolvedCount: resolved.length,
     mttrHours: Math.round(totalMs / resolved.length / 3_600_000),
+  };
+}
+
+export const DEPLOYMENT_PAGE_SIZE = 50;
+
+/**
+ * One page of deployments, newest first, cursor-paginated like logs. `cursor`
+ * is the id of the last row on the previous page.
+ */
+export async function listDeploymentsPage(filters: DeploymentFilters = {}, cursor?: string) {
+  const rows = await prisma.deployment.findMany({
+    where: deploymentWhere(filters),
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: DEPLOYMENT_PAGE_SIZE + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          client: { select: { id: true, name: true, company: true } },
+        },
+      },
+      build: { select: { id: true, number: true, status: true } },
+      rolledBackBy: { select: { id: true, number: true } },
+    },
+  });
+  const hasMore = rows.length > DEPLOYMENT_PAGE_SIZE;
+  const entries = hasMore ? rows.slice(0, DEPLOYMENT_PAGE_SIZE) : rows;
+  return { entries, hasMore, nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null };
+}
+
+/** One page of builds, same contract as `listDeploymentsPage`. */
+export async function listBuildsPage(filters: BuildFilters = {}, cursor?: string) {
+  const rows = await prisma.build.findMany({
+    where: buildWhere(filters),
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: DEPLOYMENT_PAGE_SIZE + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          client: { select: { id: true, name: true, company: true } },
+        },
+      },
+      _count: { select: { deployments: true } },
+    },
+  });
+  const hasMore = rows.length > DEPLOYMENT_PAGE_SIZE;
+  const entries = hasMore ? rows.slice(0, DEPLOYMENT_PAGE_SIZE) : rows;
+  return { entries, hasMore, nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null };
+}
+
+/**
+ * The last successful PRODUCTION deploy of a product. "Last deploy" on a
+ * product means what the client's visitors are running; a preview deploy of a
+ * branch is not that.
+ */
+export async function lastProductionDeployment(productId: string) {
+  return prisma.deployment.findFirst({
+    where: { productId, environment: "PRODUCTION", status: "SUCCEEDED" },
+    orderBy: [{ finishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+    select: { id: true, number: true, version: true, finishedAt: true, createdAt: true, url: true },
+  });
+}
+
+/** A deployment with everything its detail page links to. */
+export async function getDeployment(id: string) {
+  const deployment = await prisma.deployment.findUnique({
+    where: { id },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          client: { select: { id: true, name: true, company: true } },
+          project: { select: { id: true, name: true } },
+        },
+      },
+      build: {
+        select: {
+          id: true,
+          number: true,
+          status: true,
+          branch: true,
+          commitSha: true,
+          commitMessage: true,
+          durationMs: true,
+        },
+      },
+      rolledBackBy: { select: { id: true, number: true, status: true } },
+      rollbackOf: { select: { id: true, number: true, status: true } },
+      incidents: {
+        orderBy: { detectedAt: "desc" },
+        select: { id: true, number: true, title: true, severity: true, status: true, detectedAt: true },
+      },
+      _count: { select: { logs: true } },
+    },
+  });
+  if (!deployment) return null;
+
+  // Neighbours in the same product and environment, by number — the order an
+  // operator reads a release history in.
+  const [previous, next] = await Promise.all([
+    prisma.deployment.findFirst({
+      where: {
+        productId: deployment.productId,
+        environment: deployment.environment,
+        number: { lt: deployment.number },
+      },
+      orderBy: { number: "desc" },
+      select: { id: true, number: true, status: true },
+    }),
+    prisma.deployment.findFirst({
+      where: {
+        productId: deployment.productId,
+        environment: deployment.environment,
+        number: { gt: deployment.number },
+      },
+      orderBy: { number: "asc" },
+      select: { id: true, number: true, status: true },
+    }),
+  ]);
+
+  return { ...deployment, previous, next };
+}
+
+/** A build with everything its detail page links to. */
+export async function getBuild(id: string) {
+  const build = await prisma.build.findUnique({
+    where: { id },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          client: { select: { id: true, name: true, company: true } },
+          project: { select: { id: true, name: true } },
+        },
+      },
+      deployments: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          number: true,
+          status: true,
+          environment: true,
+          url: true,
+          finishedAt: true,
+          createdAt: true,
+        },
+      },
+      _count: { select: { logs: true } },
+    },
+  });
+  if (!build) return null;
+
+  const [previous, next] = await Promise.all([
+    prisma.build.findFirst({
+      where: { productId: build.productId, number: { lt: build.number } },
+      orderBy: { number: "desc" },
+      select: { id: true, number: true, status: true },
+    }),
+    prisma.build.findFirst({
+      where: { productId: build.productId, number: { gt: build.number } },
+      orderBy: { number: "asc" },
+      select: { id: true, number: true, status: true },
+    }),
+  ]);
+
+  return { ...build, previous, next };
+}
+
+/** An incident with its full timeline and the evidence linked to it. */
+export async function getIncident(id: string) {
+  return prisma.incident.findUnique({
+    where: { id },
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          status: true,
+          client: { select: { id: true, name: true, company: true } },
+          project: { select: { id: true, name: true } },
+        },
+      },
+      owner: { select: { id: true, name: true, email: true } },
+      deployment: {
+        select: {
+          id: true,
+          number: true,
+          environment: true,
+          status: true,
+          version: true,
+          commitSha: true,
+          finishedAt: true,
+          createdAt: true,
+        },
+      },
+      updates: {
+        orderBy: { createdAt: "asc" },
+        include: { author: { select: { id: true, name: true, email: true } } },
+      },
+      logs: {
+        orderBy: [{ timestamp: "desc" }, { id: "desc" }],
+        take: 50,
+        select: {
+          id: true,
+          level: true,
+          environment: true,
+          source: true,
+          message: true,
+          requestId: true,
+          timestamp: true,
+        },
+      },
+      _count: { select: { logs: true } },
+    },
+  });
+}
+
+/**
+ * Engineering state of one project: its products, the latest deployment per
+ * product (any status — a failed one is the news), open incidents and task
+ * counts. Grouped queries, not one per product.
+ */
+export async function getProjectEngineering(projectId: string) {
+  const products = await prisma.product.findMany({
+    where: { projectId },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      status: true,
+      kind: true,
+      productionUrl: true,
+      stagingUrl: true,
+      repositoryUrl: true,
+    },
+  });
+  const productIds = products.map((p) => p.id);
+
+  const [deployments, openIncidents, taskGroups] = await Promise.all([
+    // One indexed findFirst per product rather than `distinct`, which Prisma
+    // resolves in memory over every deployment the products ever had. A
+    // project has a handful of products; their histories can be long.
+    Promise.all(
+      productIds.map((productId) =>
+        prisma.deployment.findFirst({
+          where: { productId },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            productId: true,
+            number: true,
+            status: true,
+            environment: true,
+            version: true,
+            finishedAt: true,
+            createdAt: true,
+          },
+        }),
+      ),
+    ).then((rows) => rows.filter((d): d is NonNullable<typeof d> => d !== null)),
+    productIds.length
+      ? prisma.incident.findMany({
+          where: { productId: { in: productIds }, status: { not: "RESOLVED" } },
+          orderBy: [{ severity: "asc" }, { detectedAt: "desc" }],
+          select: {
+            id: true,
+            number: true,
+            title: true,
+            severity: true,
+            status: true,
+            detectedAt: true,
+            product: { select: { id: true, name: true } },
+          },
+        })
+      : Promise.resolve([]),
+    prisma.projectTask.groupBy({
+      by: ["status"],
+      where: { projectId },
+      _count: { _all: true },
+    }),
+  ]);
+
+  const latestByProduct = new Map(deployments.map((d) => [d.productId, d]));
+  const taskCount = (status?: string) =>
+    taskGroups
+      .filter((g) => (status ? g.status === status : true))
+      .reduce((sum, g) => sum + g._count._all, 0);
+  const total = taskCount();
+  const closed = taskCount("DONE") + taskCount("CANCELLED");
+
+  return {
+    products: products.map((p) => ({ ...p, latestDeployment: latestByProduct.get(p.id) ?? null })),
+    openIncidents,
+    tasks: { total, open: total - closed, done: taskCount("DONE") },
   };
 }

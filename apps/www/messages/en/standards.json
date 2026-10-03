@@ -2,7 +2,7 @@
   "categories": {
     "accessibility": {
       "description": "<strong>If it is not accessible, it is not finished.</strong> WCAG compliance is a build requirement - not a post-launch checklist item. We audit keyboard navigation, screen reader output, and color contrast on every screen before it is marked done, the same way we check that a layout renders correctly. Treating accessibility as a late-stage patch is how teams end up retrofitting ARIA labels onto a component library that was never structured to carry them - <dim>we structure for it from the first commit instead.</dim>",
-      "requirements": "Semantic HTML | WCAG 2.1 AA compliance | Keyboard accessibility | Screen reader support",
+      "requirements": "Semantic HTML | WCAG\u00a02.1\u00a0AA compliance | Keyboard accessibility | Screen reader support",
       "title": "Accessible by Default",
       "checks": {
         "lighthouse": {

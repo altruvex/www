@@ -26,10 +26,17 @@ import {
 // nearest ramp step.
 const TOKENS = DECK_COLORS;
 
+// Altruvex Sans, the face both apps set all text in (packages/brand-font). The
+// deck embeds nothing: the fonts reach it as the installed desktop builds
+// (packages/brand-font/dist/desktop), on the machine that renders the PDF.
+// "Altruvex Sans Light" is the legacy family the Light styles install under,
+// so `italic: true` on it picks Light Italic, the drawn italic the site sets
+// its emphasis clause in. The labels and figures were Courier New; the site
+// has no mono, so the deck has none either - the key is kept for the role.
 const FONT = {
-  display: "Georgia",
-  heading: "Trebuchet MS",
-  mono: "Courier New",
+  display: "Altruvex Sans Light",
+  heading: "Altruvex Sans",
+  mono: "Altruvex Sans",
 };
 
 const ML = 0.65;
@@ -75,8 +82,8 @@ function formatCurrency(amount: number, currency: string): string {
   })
     .format(amount)
     // Intl separates the code from the number with U+00A0; the deck uses a
-    // plain space. Courier New renders them at the same width, but the
-    // non-breaking space would show up as a mismatch in any text diff.
+    // plain space; the non-breaking space would show up as a mismatch in any
+    // text diff.
     .replace(/\u00A0/g, " ");
   return formatted;
 }
@@ -201,7 +208,7 @@ function eyebrow(slide: PptxGenJS.Slide, text: string, dark = false) {
   });
 }
 
-/** Section heading: bold sans lead-in + the one Georgia-italic accent word. */
+/** Section heading: bold sans lead-in + the one light-italic accent word. */
 function sectionHeading(
   slide: PptxGenJS.Slide,
   lead: string,
@@ -1048,7 +1055,7 @@ function buildServicesBlock(
       color: TOKENS.ink,
       fit: "shrink",
     });
-    // Compact on purpose: at 8.5pt Courier the column holds ~24 characters
+    // Compact on purpose: at 8.5pt the column holds ~24 characters
     // before it runs into the price, and "EVERY 2 YEARS · FIRST TERM INCLUDED"
     // does not. The contract spells the same facts out in full.
     const term = `${service.termMonths} MO`;

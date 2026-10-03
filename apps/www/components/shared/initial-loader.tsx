@@ -3,9 +3,8 @@
 import { useLoading } from "@/components/providers/loading-provider";
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { MOTION } from "@/lib/motion";
+import { INITIAL_LOAD_KEY } from "@/lib/motion/utils/ready";
 import { memo, startTransition, useEffect, useRef, useState } from "react";
-
-const INITIAL_LOAD_KEY = "Altruvex_initial_load_complete";
 
 const BOOT_LINES = [
   { text: "$ altruvex --init", delay: 0, type: "command" },
@@ -144,7 +143,6 @@ export const InitialLoader = memo(function InitialLoader() {
               key={i}
               className="flex items-center tracking-wide font-mono text-[clamp(11px,1vw,13px)] leading-[1.6] min-h-[1.6em]"
               style={{
-                fontFamily: "var(--font-mono, ui-monospace, monospace)",
                 opacity: reduced ? 1 : 0,
                 transform: reduced ? "none" : "translateY(4px)",
                 animation: reduced

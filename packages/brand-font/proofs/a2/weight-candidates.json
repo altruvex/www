@@ -1,0 +1,268 @@
+{
+  "chromium": {
+    "version": "153.0.8010.12",
+    "weights": [
+      {
+        "ar": [
+          {
+            "density": 0.2574,
+            "nominal": true,
+            "ratio": 0.86,
+            "weight": 600
+          },
+          {
+            "density": 0.2659,
+            "nominal": false,
+            "ratio": 0.888,
+            "weight": 650
+          },
+          {
+            "density": 0.2701,
+            "nominal": false,
+            "ratio": 0.902,
+            "weight": 675
+          },
+          {
+            "density": 0.2742,
+            "nominal": false,
+            "ratio": 0.916,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.2994,
+        "en_weight": 600,
+        "px": 52,
+        "role": "h2 / section title"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.2634,
+            "nominal": true,
+            "ratio": 0.887,
+            "weight": 600
+          },
+          {
+            "density": 0.2722,
+            "nominal": false,
+            "ratio": 0.917,
+            "weight": 650
+          },
+          {
+            "density": 0.2764,
+            "nominal": false,
+            "ratio": 0.931,
+            "weight": 675
+          },
+          {
+            "density": 0.2809,
+            "nominal": false,
+            "ratio": 0.946,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.297,
+        "en_weight": 600,
+        "px": 32,
+        "role": "h3"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.2699,
+            "nominal": true,
+            "ratio": 0.816,
+            "weight": 700
+          },
+          {
+            "density": 0.2874,
+            "nominal": false,
+            "ratio": 0.868,
+            "weight": 800
+          },
+          {
+            "density": 0.2925,
+            "nominal": false,
+            "ratio": 0.884,
+            "weight": 830
+          },
+          {
+            "density": 0.2961,
+            "nominal": false,
+            "ratio": 0.895,
+            "weight": 850
+          }
+        ],
+        "en_density": 0.3309,
+        "en_weight": 700,
+        "px": 72,
+        "role": "h1"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.2447,
+            "nominal": true,
+            "ratio": 1.344,
+            "weight": 600
+          },
+          {
+            "density": 0.253,
+            "nominal": false,
+            "ratio": 1.39,
+            "weight": 650
+          },
+          {
+            "density": 0.2572,
+            "nominal": false,
+            "ratio": 1.413,
+            "weight": 675
+          },
+          {
+            "density": 0.2613,
+            "nominal": false,
+            "ratio": 1.436,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.182,
+        "en_weight": 300,
+        "px": 120,
+        "role": "hero (AR rtl:font-semibold)"
+      }
+    ]
+  },
+  "webkit": {
+    "version": "26.6",
+    "weights": [
+      {
+        "ar": [
+          {
+            "density": 0.2585,
+            "nominal": true,
+            "ratio": 0.858,
+            "weight": 600
+          },
+          {
+            "density": 0.2673,
+            "nominal": false,
+            "ratio": 0.888,
+            "weight": 650
+          },
+          {
+            "density": 0.2717,
+            "nominal": false,
+            "ratio": 0.902,
+            "weight": 675
+          },
+          {
+            "density": 0.2758,
+            "nominal": false,
+            "ratio": 0.916,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.3012,
+        "en_weight": 600,
+        "px": 52,
+        "role": "h2 / section title"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.266,
+            "nominal": true,
+            "ratio": 0.888,
+            "weight": 600
+          },
+          {
+            "density": 0.2747,
+            "nominal": false,
+            "ratio": 0.917,
+            "weight": 650
+          },
+          {
+            "density": 0.2789,
+            "nominal": false,
+            "ratio": 0.931,
+            "weight": 675
+          },
+          {
+            "density": 0.2831,
+            "nominal": false,
+            "ratio": 0.945,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.2996,
+        "en_weight": 600,
+        "px": 32,
+        "role": "h3"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.271,
+            "nominal": true,
+            "ratio": 0.816,
+            "weight": 700
+          },
+          {
+            "density": 0.2886,
+            "nominal": false,
+            "ratio": 0.869,
+            "weight": 800
+          },
+          {
+            "density": 0.2941,
+            "nominal": false,
+            "ratio": 0.886,
+            "weight": 830
+          },
+          {
+            "density": 0.2968,
+            "nominal": false,
+            "ratio": 0.894,
+            "weight": 850
+          }
+        ],
+        "en_density": 0.3321,
+        "en_weight": 700,
+        "px": 72,
+        "role": "h1"
+      },
+      {
+        "ar": [
+          {
+            "density": 0.2454,
+            "nominal": true,
+            "ratio": 1.343,
+            "weight": 600
+          },
+          {
+            "density": 0.2537,
+            "nominal": false,
+            "ratio": 1.388,
+            "weight": 650
+          },
+          {
+            "density": 0.2578,
+            "nominal": false,
+            "ratio": 1.411,
+            "weight": 675
+          },
+          {
+            "density": 0.2623,
+            "nominal": false,
+            "ratio": 1.435,
+            "weight": 700
+          }
+        ],
+        "en_density": 0.1827,
+        "en_weight": 300,
+        "px": 120,
+        "role": "hero (AR rtl:font-semibold)"
+      }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-import { prisma, type Build, type Deployment, type Product } from "@repo/database";
+import { prisma, type Build, type Deployment, type Product, type ProductStatus } from "@repo/database";
 
 import type { Actor } from "@/lib/activity-log";
 import { ingestActor, nextNumber, recordActivity } from "@/lib/ingest";
@@ -30,6 +30,14 @@ export const DEPLOYMENT_TERMINAL = new Set<DeploymentStatusInput>([
   "FAILED",
   "ROLLED_BACK",
 ]);
+
+/**
+ * Product statuses a successful production deploy may promote to LIVE: the ones
+ * that mean "not launched yet". MAINTENANCE and SUNSET are operator decisions
+ * about a product that already launched, and a deploy is not evidence against
+ * them.
+ */
+const PRE_LAUNCH_STATUSES = new Set<ProductStatus>(["PLANNED", "IN_DEVELOPMENT"]);
 
 export interface BuildInput {
   externalId?: string;
@@ -265,13 +273,16 @@ export async function writeDeployment(
     }
 
     // A live production deployment is the only trustworthy evidence of what a
-    // product's URL and status actually are.
+    // product's URL and status actually are. It promotes a product that had not
+    // launched yet (PLANNED / IN_DEVELOPMENT) to LIVE, and nothing else: a
+    // MAINTENANCE or SUNSET product still deploys fixes, and an operator's
+    // decision that it is winding down must not be undone by a CI run.
     if (body.status === "SUCCEEDED" && body.environment === "PRODUCTION") {
       await tx.product.update({
         where: { id: product.id },
         data: {
           productionUrl: body.url ?? product.productionUrl,
-          status: product.status === "LIVE" ? product.status : "LIVE",
+          ...(PRE_LAUNCH_STATUSES.has(product.status) ? { status: "LIVE" as const } : {}),
         },
       });
     } else if (body.status === "SUCCEEDED" && body.environment === "STAGING" && body.url) {

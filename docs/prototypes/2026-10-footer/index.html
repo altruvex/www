@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Footer — prototypes A / B / C</title>
+<style>
+/* Standalone prototype for apps/www/components/layout/footer.tsx. House values mirrored from
+   packages/ui/src/styles/tokens.css + apps/www/app/globals.css; not production code.
+   Link labels, tagline, description and copyright are messages/{en,ar}/footer.json.
+   Closing lines, the colophon and "Local time" are prototype copy, unreviewed. */
+@font-face{font-family:"Altruvex Sans";src:url(fonts/AltruvexSansLatin-VF.woff2) format("woff2");font-weight:100 900;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215}
+@font-face{font-family:"Altruvex Sans";src:url(fonts/AltruvexSansArabic-VF.woff2) format("woff2");font-weight:100 900;unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F}
+
+:root{
+  --bg:hsl(0 0% 98%);--fg:hsl(0 0% 6%);--muted:hsl(0 0% 40%);
+  --line:hsl(0 0% 6% / .1);--line-mid:hsl(0 0% 6% / .18);--soft:hsl(0 0% 6% / .04);
+  --brand:hsl(214 89% 48%);--brand-text:hsl(214 90% 43%);
+  --ctl-sm:12px;--ctl:16px;--panel:20px;--panel-lg:28px;
+  --instant:200ms;--drawer:300ms;--reveal:700ms;--ease:cubic-bezier(.22,1,.36,1);
+  --gutter:clamp(16px,4vw,48px);
+  color-scheme:light;
+}
+html[data-theme="dark"]{
+  --bg:hsl(0 0% 9%);--fg:hsl(0 0% 95%);--muted:hsl(0 0% 62%);
+  --line:hsl(0 0% 100% / .1);--line-mid:hsl(0 0% 100% / .18);--soft:hsl(0 0% 100% / .05);
+  --brand-text:hsl(214 95% 64%);color-scheme:dark;
+}
+/* the site's dark ground — the closing page of the dark sandwich (RUL-134 / SIG-013) stays dark in both modes */
+.ground{
+  --bg:hsl(0 0% 7%);--fg:hsl(0 0% 95%);--muted:hsl(0 0% 64%);
+  --line:hsl(0 0% 100% / .1);--line-mid:hsl(0 0% 100% / .2);--soft:hsl(0 0% 100% / .05);
+  --brand-text:hsl(214 95% 66%);color-scheme:dark;
+}
+html[data-theme="dark"] .ground{--bg:hsl(0 0% 4.5%)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:1ms!important;animation:none!important}}
+html.theme-fade *{transition:background-color var(--drawer) ease,color var(--drawer) ease,border-color var(--drawer) ease!important}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Altruvex Sans",system-ui,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:clip;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+ul{list-style:none}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+svg{display:block}
+.wrap{max-width:1320px;margin:0 auto;padding:0 var(--gutter)}
+.num{font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--muted)}
+html[lang="ar"] .eyebrow{letter-spacing:0;text-transform:none;font-size:13px}
+.flip{display:inline-block}
+html[dir="rtl"] .flip{transform:scaleX(-1)}
+
+/* shared link idiom: brand rule draws from inline-start, same family as the nav's shared rule */
+.ln{position:relative;display:inline-flex;align-items:center;min-height:32px;color:var(--muted);font-size:15px;transition:color var(--instant) var(--ease)}
+.ln::after{content:"";position:absolute;inset-inline:0;bottom:4px;height:1px;background:var(--brand);transform:scaleX(0);transform-origin:var(--o,left);transition:transform var(--drawer) var(--ease)}
+html[dir="rtl"] .ln::after{--o:right}
+.ln:hover,.ln:focus-visible{color:var(--fg)}
+.ln:hover::after,.ln:focus-visible::after{transform:scaleX(1)}
+@media (pointer:coarse){.ln{min-height:44px}}
+
+.cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;padding:0 22px;border-radius:var(--ctl);background:var(--brand);color:#fff;font-size:15px;font-weight:500;white-space:nowrap;transition:transform var(--instant) var(--ease),filter var(--instant)}
+.cta:hover{filter:brightness(1.08)}.cta:active{transform:scale(.98)}
+.ghost{display:inline-flex;align-items:center;height:48px;padding:0 4px;font-size:15px;color:var(--fg);gap:8px}
+.ghost .ar{transition:transform var(--drawer) var(--ease)}
+.ghost:hover .ar{transform:translateX(4px)}
+html[dir="rtl"] .ghost:hover .ar{transform:translateX(-4px)}
+.ico{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* segmented switch (language / theme) — same component as the nav panel */
+.seg{display:inline-flex;padding:3px;border:1px solid var(--line-mid);border-radius:var(--ctl-sm);gap:2px}
+.seg button{height:30px;padding:0 12px;border-radius:9px;font-size:13px;color:var(--muted);transition:background-color var(--instant),color var(--instant)}
+.seg button[aria-checked="true"]{background:var(--soft);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-mid)}
+
+/* ───────── page context: the end of an ordinary page ───────── */
+main{position:relative;z-index:1;background:var(--bg)}
+.sec{padding:clamp(80px,12vw,140px) 0;border-top:1px solid var(--line)}
+.sec h2{font-size:clamp(28px,4vw,48px);font-weight:500;letter-spacing:-.02em;line-height:1.1;max-width:18ch}
+.sec p{margin-top:18px;color:var(--muted);max-width:56ch}
+.sec .rows{margin-top:40px;border-top:1px solid var(--line)}
+.sec .rows li{display:flex;justify-content:space-between;padding:18px 0;border-bottom:1px solid var(--line);font-size:18px}
+.sec .rows li span{color:var(--muted)}
+
+footer[hidden]{display:none!important}
+
+/* ═══════════ A · THE CURTAIN ═══════════
+   The page lifts off a dark ground that was under it all along. One closing line, the two
+   doors (estimate / talk), the register, the base. Signature = the reveal (CSS sticky, no JS motion). */
+body.curtain main{border-end-start-radius:var(--panel-lg);border-end-end-radius:var(--panel-lg);box-shadow:0 1px 0 var(--line)}
+body.curtain #A{position:sticky;bottom:0;z-index:0}
+#A{background:var(--bg);color:var(--fg)}
+#A .top{padding-top:clamp(56px,7vw,96px);display:grid;gap:28px}
+#A .close{font-size:clamp(40px,6.6vw,108px);line-height:.98;font-weight:500;letter-spacing:-.035em;max-width:12ch}
+html[lang="ar"] #A .close{letter-spacing:0;line-height:1.15;font-weight:600}
+#A .close em{font-style:normal;color:var(--muted)}
+#A .lead{display:grid;gap:28px;align-items:end}
+#A .lead p{color:var(--muted);max-width:52ch;font-size:16px}
+#A .doors{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+#A .map{margin-top:clamp(48px,5vw,72px);padding-top:32px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,1fr);gap:36px 24px}
+#A .map h3{margin-bottom:14px}
+#A .lines dd{font-size:15px}
+#A .lines dt{font-size:12px;color:var(--muted);margin-top:12px}
+#A .lines dt:first-child{margin-top:0}
+#A .base{margin-top:clamp(36px,4vw,56px);padding:22px 0 28px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+#A .base ul{display:flex;gap:4px 22px;flex-wrap:wrap}
+#A .base .ln{font-size:13px}
+@media (min-width:900px){
+  #A .lead{grid-template-columns:1fr auto}
+  #A .map{grid-template-columns:repeat(4,1fr)}
+}
+
+/* ═══════════ B · THE COLOPHON ═══════════
+   Light and quiet, set like the last page of a well-made book: who made this, where, in what,
+   and a register of everything inside. Signature = the live Cairo clock (real data, no loop). */
+#B{border-top:1px solid var(--line);background:var(--bg)}
+#B .grid{display:grid;gap:48px;padding:clamp(64px,8vw,104px) 0 clamp(48px,6vw,72px)}
+#B .who .name{font-size:clamp(26px,3vw,36px);font-weight:500;letter-spacing:-.02em;line-height:1.15}
+html[lang="ar"] #B .who .name{letter-spacing:0}
+#B .who .tag{margin-top:16px;color:var(--muted);max-width:44ch}
+#B .facts{margin-top:36px;display:grid;grid-template-columns:auto 1fr;gap:12px 28px;font-size:15px;max-width:440px}
+#B .facts dt{color:var(--muted);line-height:32px}
+#B .facts dd{display:flex;align-items:center;gap:10px;min-height:32px}
+#B .clock{font-variant-numeric:tabular-nums}
+#B .clock .sep{animation:none}
+#B .day{color:var(--muted)}
+#B .reg{column-count:2;column-gap:32px}
+#B .reg section{break-inside:avoid;margin-bottom:34px}
+#B .reg h3{margin-bottom:10px;display:flex;gap:10px;align-items:baseline}
+#B .reg h3 .num{color:var(--brand-text)}
+#B .colo{border-top:1px solid var(--line);padding:26px 0;display:grid;gap:20px;align-items:center}
+#B .colo p{font-size:14px;color:var(--muted);max-width:70ch}
+#B .colo .sets{display:flex;flex-wrap:wrap;gap:12px}
+#B .base{border-top:1px solid var(--line);padding:20px 0 28px;display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+#B .base ul{display:flex;gap:4px 22px;flex-wrap:wrap}
+#B .base .ln{font-size:13px}
+@media (min-width:640px){#B .reg{column-count:3}}
+@media (min-width:1000px){
+  #B .grid{grid-template-columns:5fr 7fr;gap:64px}
+  #B .colo{grid-template-columns:1fr auto}
+}
+
+/* ═══════════ C · THE FITTED MARK ═══════════
+   Today's footer kept and corrected: the wordmark is fitted to the column edge-to-edge (measured,
+   never cropped) and rises once from its own baseline. The register sits in a hairline grid above it. */
+#C{border-top:1px solid var(--line);background:var(--bg);overflow:clip}
+#C .head{padding:clamp(64px,8vw,104px) 0 40px;display:grid;gap:28px;align-items:end}
+#C .head p{font-size:clamp(22px,2.4vw,30px);line-height:1.3;letter-spacing:-.015em;max-width:30ch}
+html[lang="ar"] #C .head p{letter-spacing:0}
+#C .head .doors{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+#C .cells{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid var(--line);border-radius:var(--panel);overflow:hidden}
+#C .cells>div{padding:24px 22px 26px;border-inline-end:1px solid var(--line);border-bottom:1px solid var(--line)}
+#C .cells h3{margin-bottom:12px}
+#C .cells .live{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+#C .cells .live b{font-weight:500;color:var(--fg)}
+#C .base{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between;align-items:center;padding:22px 0;font-size:13px;color:var(--muted)}
+#C .base ul{display:flex;gap:4px 22px;flex-wrap:wrap}
+#C .base .ln{font-size:13px}
+#C .mark{overflow:clip;line-height:.74;padding-top:.08em;text-align:center}
+#C .mark span{display:inline-block;font-weight:600;letter-spacing:-.045em;white-space:nowrap;transform:translateY(105%);transition:transform 1100ms var(--ease);direction:ltr;text-align:center;user-select:none}
+#C .mark.in span{transform:none}
+@media (min-width:900px){
+  #C .head{grid-template-columns:1fr auto}
+  #C .cells{grid-template-columns:repeat(4,1fr)}
+  #C .cells>div{border-bottom:0}
+  #C .cells>div:last-child{border-inline-end:0}
+}
+@media (max-width:899px){#C .cells>div:nth-child(2n){border-inline-end:0}#C .cells>div:nth-last-child(-n+2){border-bottom:0}}
+
+/* ───────── review bar ───────── */
+.review{position:fixed;inset-inline:0;bottom:14px;margin:auto;width:max-content;max-width:calc(100% - 24px);z-index:50;display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:5px;border-radius:16px;background:hsl(0 0% 8% / .92);color:#fff;font-size:13px;box-shadow:0 10px 30px hsl(0 0% 0% / .25);backdrop-filter:blur(10px)}
+.review button{height:32px;padding:0 12px;border-radius:11px;color:hsl(0 0% 100% / .7)}
+.review button[aria-pressed="true"]{background:#fff;color:#000}
+.review .x{width:1px;height:20px;background:hsl(0 0% 100% / .2);margin:0 4px}
+</style>
+</head>
+<body class="curtain">
+
+<main>
+  <section class="sec"><div class="wrap">
+    <h2 data-t="f1"></h2><p data-t="fp1"></p>
+    <ul class="rows"><li><b data-t="r1"></b><span class="num">01</span></li><li><b data-t="r2"></b><span class="num">02</span></li><li><b data-t="r3"></b><span class="num">03</span></li></ul>
+  </div></section>
+  <section class="sec" id="last"><div class="wrap">
+    <h2 data-t="f2"></h2><p data-t="fp2"></p>
+  </div></section>
+</main>
+
+<!-- A · THE CURTAIN -->
+<footer id="A" class="ground" aria-labelledby="A-close">
+  <div class="wrap">
+    <div class="top">
+      <span class="eyebrow" data-t="studioLine"></span>
+      <p class="close" id="A-close"><span data-t="closeA1"></span> <em data-t="closeA2"></em></p>
+      <div class="lead">
+        <p data-t="description"></p>
+        <div class="doors">
+          <a class="cta" href="#"><span data-t="transparency"></span><svg class="ico flip" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="ghost" href="#"><span data-t="schedule"></span><svg class="ico flip ar" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </div>
+    </div>
+    <nav class="map" data-t-aria="footerNav" data-map="A"></nav>
+    <div class="base">
+      <span data-copy></span>
+      <ul data-legal></ul>
+      <a class="ln" href="#top" data-top><span data-t="toTop"></span></a>
+    </div>
+  </div>
+</footer>
+
+<!-- B · THE COLOPHON -->
+<footer id="B" hidden aria-labelledby="B-name">
+  <div class="wrap">
+    <div class="grid">
+      <div class="who">
+        <p class="name" id="B-name" data-t="studioName"></p>
+        <p class="tag" data-t="tagline"></p>
+        <dl class="facts">
+          <dt data-t="emailLabel"></dt><dd><a class="ln" href="#"><bdi data-email></bdi></a></dd>
+          <dt data-t="whatsappLabel"></dt><dd><a class="ln" href="#"><bdi data-phone></bdi></a></dd>
+          <dt data-t="localTime"></dt><dd><span class="clock" data-clock></span><span class="day" data-t="cairo"></span></dd>
+        </dl>
+      </div>
+      <nav class="reg" data-t-aria="footerNav" data-map="B"></nav>
+    </div>
+    <div class="colo">
+      <p data-t="colophon"></p>
+      <div class="sets">
+        <div class="seg" role="radiogroup" data-t-aria="language" data-seg="lang"></div>
+        <div class="seg" role="radiogroup" data-t-aria="theme" data-seg="theme"></div>
+      </div>
+    </div>
+    <div class="base">
+      <span data-copy></span>
+      <ul data-legal></ul>
+    </div>
+  </div>
+</footer>
+
+<!-- C · THE FITTED MARK -->
+<footer id="C" hidden aria-labelledby="C-head">
+  <div class="wrap">
+    <div class="head">
+      <p id="C-head" data-t="closeC"></p>
+      <div class="doors">
+        <a class="cta" href="#"><span data-t="transparency"></span><svg class="ico flip" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="ghost" href="#"><span data-t="schedule"></span><svg class="ico flip ar" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+    </div>
+    <nav class="cells" data-t-aria="footerNav" data-map="C"></nav>
+    <div class="base">
+      <span data-copy></span>
+      <ul data-legal></ul>
+    </div>
+    <div class="mark" aria-hidden="true"><span>Altruvex</span></div>
+  </div>
+</footer>
+
+<div class="review" role="toolbar" aria-label="Prototype switcher">
+  <button data-v="A" aria-pressed="true">A · Curtain</button>
+  <button data-v="B" aria-pressed="false">B · Colophon</button>
+  <button data-v="C" aria-pressed="false">C · Fitted mark</button>
+  <span class="x"></span>
+  <button data-lang="en" aria-pressed="true">EN</button>
+  <button data-lang="ar" aria-pressed="false">AR</button>
+  <span class="x"></span>
+  <button data-theme-btn="light" aria-pressed="true">Light</button>
+  <button data-theme-btn="dark" aria-pressed="false">Dark</button>
+</div>
+
+<script>
+const EMAIL="hello@altruvex.com", PHONE="+20 102 312 5493";
+const T={
+ en:{servicesTitle:"Services",companyTitle:"Company",resourcesTitle:"Resources",webDesign:"Interface Design",development:"Custom Development",consulting:"Technical Consulting",maintenance:"Maintenance & Support",
+  approach:"Approach","how-we-work":"How We Work",work:"Work",process:"Process",standards:"Standards",pricing:"Pricing",transparency:"Estimate your project",faq:"FAQ",writing:"Writing",schedule:"Discuss your requirements",contact:"Contact",
+  privacy:"Privacy",terms:"Terms",about:"About",emailLabel:"Email",whatsappLabel:"WhatsApp",copyright:"© {year} Altruvex. All rights reserved.",
+  tagline:"Custom web systems, portals, and product infrastructure engineered for teams that need multilingual precision, performance, and zero vendor lock-in.",
+  description:"Every line of code is engineered for your specific system. No themes, no plugin stacks, no vendor lock-in - architecture you own outright.",
+  /* prototype copy, unreviewed */
+  studioLine:"Altruvex · Web engineering studio · Cairo",closeA1:"Built to be owned.",closeA2:"Every line of it.",directLines:"Direct lines",toTop:"Back to top",
+  studioName:"Altruvex — a web engineering studio in Cairo.",localTime:"Local time",cairo:"Cairo",
+  colophon:"Set in Altruvex Sans, written in Arabic and English, built with Next.js — the same way we build for clients.",
+  closeC:"Have a system to build? Start with an estimate, or talk it through first.",
+  language:"Language",theme:"Theme",light:"Light",dark:"Dark",footerNav:"Footer navigation",legal:"Legal",
+  f1:"The last section of an ordinary page.",fp1:"Filler for the prototype — scroll down to reach the footer.",r1:"Discovery",r2:"Build",r3:"Care",
+  f2:"Keep scrolling.",fp2:"In A the page lifts off the footer; in B and C the footer simply follows."},
+ ar:{servicesTitle:"الخدمات",companyTitle:"الشركة",resourcesTitle:"المصادر",webDesign:"تصميم الواجهات",development:"التطوير المخصص",consulting:"الاستشارات التقنية",maintenance:"الصيانة والدعم",
+  approach:"المنهجية","how-we-work":"كيف نعمل",work:"أعمالنا",process:"آلية العمل",standards:"معايير الجودة",pricing:"التسعير",transparency:"قدّر مشروعك",faq:"الأسئلة الشائعة",writing:"المقالات",schedule:"ناقش متطلباتك معنا",contact:"تواصل معنا",
+  privacy:"الخصوصية",terms:"الشروط",about:"من نحن",emailLabel:"البريد الإلكتروني",whatsappLabel:"واتساب",copyright:"© {year} Altruvex. جميع الحقوق محفوظة.",
+  tagline:"مواقع ويب مخصصة وبوابات وبنية تحتية للمنتجات - مبنية للفرق التي تحتاج دقة متعددة اللغات وأداءً متميزاً وملكية كاملة بلا قيود.",
+  description:"كل سطر كود نكتبه مبني خصيصاً لنظامك. لا قوالب، لا حزم إضافات، لا تبعية لمزوّد - بنية تملكها بالكامل.",
+  studioLine:"Altruvex · استوديو هندسة ويب · القاهرة",closeA1:"مبني لتملكه.",closeA2:"كل سطر فيه.",directLines:"تواصل مباشر",toTop:"إلى الأعلى",
+  studioName:"Altruvex — استوديو هندسة ويب في القاهرة.",localTime:"الوقت المحلي",cairo:"القاهرة",
+  colophon:"مكتوب بخط Altruvex Sans، بالعربية والإنجليزية، ومبني بـ Next.js — بالطريقة نفسها التي نبني بها لعملائنا.",
+  closeC:"لديك نظام تريد بناءه؟ ابدأ بتقدير للتكلفة، أو ناقشه معنا أولاً.",
+  language:"اللغة",theme:"المظهر",light:"فاتح",dark:"داكن",footerNav:"تنقل التذييل",legal:"قانوني",
+  f1:"آخر قسم في صفحة عادية.",fp1:"نص مؤقت للنموذج — مرّر لأسفل لتصل إلى التذييل.",r1:"الاكتشاف",r2:"البناء",r3:"الرعاية",
+  f2:"تابع التمرير.",fp2:"في A ترتفع الصفحة عن التذييل؛ في B وC يأتي التذييل بعدها ببساطة."}
+};
+const GROUPS=[
+ {k:"servicesTitle",links:["webDesign","development","consulting","maintenance"]},
+ {k:"companyTitle",links:["work","approach","how-we-work","process","standards"]},
+ {k:"resourcesTitle",links:["pricing","transparency","faq","writing","schedule","contact"]}
+];
+const LEGAL=["privacy","terms","about"];
+const S={v:"A",lang:"en",theme:"light"};
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const t=k=>T[S.lang][k]??k;
+const loc=s=>S.lang==="ar"?String(s).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]):String(s);
+const pad=n=>String(n).padStart(2,"0");
+const group=(g,i,num)=>`<section><h3 class="eyebrow">${num?`<span class="num">${loc(pad(i+1))}</span>`:""}${t(g.k)}</h3><ul>${g.links.map(k=>`<li><a class="ln" href="#">${t(k)}</a></li>`).join("")}</ul></section>`;
+const lines=()=>`<section><h3 class="eyebrow">${t("directLines")}</h3><dl class="lines"><dt>${t("emailLabel")}</dt><dd><a class="ln" href="#"><bdi>${EMAIL}</bdi></a></dd><dt>${t("whatsappLabel")}</dt><dd><a class="ln" href="#"><bdi>${PHONE}</bdi></a></dd></dl></section>`;
+
+function cairoTime(){
+  return new Intl.DateTimeFormat(S.lang==="ar"?"ar-EG":"en-GB",{timeZone:"Africa/Cairo",hour:"2-digit",minute:"2-digit",hour12:false}).format(new Date());
+}
+function build(){
+  $('[data-map="A"]').innerHTML=GROUPS.map((g,i)=>group(g,i)).join("")+lines();
+  $('[data-map="B"]').innerHTML=GROUPS.map((g,i)=>group(g,i,true)).join("");
+  $('[data-map="C"]').innerHTML=GROUPS.map(g=>`<div>${group(g)}</div>`).join("")+
+    `<div><h3 class="eyebrow">${t("directLines")}</h3><ul><li><a class="ln" href="#"><bdi>${EMAIL}</bdi></a></li><li><a class="ln" href="#"><bdi>${PHONE}</bdi></a></li></ul><p class="live"><span>${t("cairo")}</span><b class="num" data-clock></b></p></div>`;
+  $$("[data-legal]").forEach(ul=>ul.innerHTML=LEGAL.map(k=>`<li><a class="ln" href="#">${t(k)}</a></li>`).join(""));
+  $$("[data-copy]").forEach(el=>el.textContent=t("copyright").replace("{year}",loc(new Date().getFullYear())));
+  $$("[data-t]").forEach(el=>el.textContent=t(el.dataset.t));
+  $$("[data-t-aria]").forEach(el=>el.setAttribute("aria-label",t(el.dataset.tAria)));
+  $$("[data-email]").forEach(el=>el.textContent=EMAIL);
+  $$("[data-phone]").forEach(el=>el.textContent=PHONE);
+  $('[data-seg="lang"]').innerHTML=[["en","English"],["ar","العربية"]].map(([c,n])=>`<button role="radio" aria-checked="${S.lang===c}" data-set-lang="${c}">${n}</button>`).join("");
+  $('[data-seg="theme"]').innerHTML=["light","dark"].map(m=>`<button role="radio" aria-checked="${S.theme===m}" data-set-theme="${m}">${t(m)}</button>`).join("");
+  tick();fit();
+}
+function tick(){$$("[data-clock]").forEach(el=>el.textContent=cairoTime())}
+// the clock only changes when the minute does — no idle loop
+(function schedule(){const ms=60000-Date.now()%60000;setTimeout(()=>{tick();schedule()},ms+50)})();
+
+/* C: fit the wordmark to the column width by measurement, never by cropping */
+function fit(){
+  const box=$("#C .wrap"),m=$("#C .mark span");if(!box||$("#C").hidden)return;
+  const w=box.clientWidth-parseFloat(getComputedStyle(box).paddingLeft)*2;
+  m.style.fontSize="100px";const nat=m.scrollWidth;m.style.fontSize=(100*w/nat)+"px";
+}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.35});
+
+/* A: sticky at bottom:0 while the footer fits the viewport; taller than that, a negative bottom
+   pins its TOP to the viewport top instead, so the reveal still starts at the closing line */
+function curtain(){
+  const a=$("#A");document.body.classList.toggle("curtain",S.v==="A");
+  a.style.bottom=Math.min(0,innerHeight-a.offsetHeight)+"px";
+}
+function setV(v){
+  S.v=v;["A","B","C"].forEach(k=>$("#"+k).hidden=k!==v);
+  $$("[data-v]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v));
+  if(v==="C"){const m=$("#C .mark");m.classList.remove("in");fit();requestAnimationFrame(()=>io.observe(m))}
+  curtain();
+}
+function setLang(l){S.lang=l;document.documentElement.lang=l;document.documentElement.dir=l==="ar"?"rtl":"ltr";$$("[data-lang]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===l));build();curtain()}
+function setTheme(m){S.theme=m;const h=document.documentElement;h.classList.add("theme-fade");h.dataset.theme=m;$$("[data-theme-btn]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.themeBtn===m));build();setTimeout(()=>h.classList.remove("theme-fade"),350)}
+
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button,a");if(!b)return;
+  if(b.dataset.v)setV(b.dataset.v);
+  else if(b.dataset.lang)setLang(b.dataset.lang);
+  else if(b.dataset.themeBtn)setTheme(b.dataset.themeBtn);
+  else if(b.dataset.setLang)setLang(b.dataset.setLang);
+  else if(b.dataset.setTheme)setTheme(b.dataset.setTheme);
+  else if(b.hasAttribute("data-top")){e.preventDefault();scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
+  else if(b.getAttribute("href")==="#")e.preventDefault();
+});
+addEventListener("resize",()=>{fit();curtain()});
+document.fonts.ready.then(()=>{fit();curtain()});
+const q=new URLSearchParams(location.search);
+build();setV(q.get("v")||"A");if(q.get("lang"))setLang(q.get("lang"));if(q.get("theme"))setTheme(q.get("theme"));
+</script>
+</body>
+</html>

@@ -339,7 +339,7 @@ export function ProposalContentEditor({
           </Field>
           <Field
             label="Cover title line 2 (accent)"
-            hint="Georgia italic, the muted cover tone."
+            hint="Light italic, the muted cover tone."
             error={sectionError("labels.cover.titleLine2")}
           >
             <TextInput
@@ -529,7 +529,7 @@ export function ProposalContentEditor({
           })}
         </div>
         <p className="text-meta text-subtle-foreground">
-          The second box on each heading is the accent word — it renders in Georgia italic in the
+          The second box on each heading is the accent word — it renders in the light italic in the
           brand color, so keep the punctuation with it (&ldquo;build.&rdquo;, not &ldquo;build&rdquo;).
         </p>
       </Section>
@@ -1099,7 +1099,7 @@ export function ProposalContentEditor({
           </Field>
           <Field
             label="Headline line 2 (accent)"
-            hint="Rendered in the brand accent, Georgia italic."
+            hint="Rendered in the brand accent, light italic."
             error={sectionError("whyUs.headlineLine2")}
           >
             <TextInput

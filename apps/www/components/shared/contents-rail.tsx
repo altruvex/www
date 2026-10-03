@@ -2,7 +2,7 @@
 
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getLenis } from "@/lib/motion/lenis-instance";
-import { localizeNumbers } from "@/lib/utils/number";
+import { formatIndex, localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { ChevronDown } from "lucide-react";
 import { useLocale } from "next-intl";
@@ -113,7 +113,7 @@ export function ContentsRail({ title, items, className }: ContentsRailProps) {
               )}
             >
               <span aria-hidden className="tabular-nums ltr:font-mono ltr:text-xs">
-                {localizeNumbers(String(index + 1).padStart(2, "0"), locale)}
+                {formatIndex(index + 1, 2, locale)}
               </span>
               <span>{item.label}</span>
               {item.count !== undefined ? (

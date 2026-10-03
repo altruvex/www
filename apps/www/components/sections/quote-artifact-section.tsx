@@ -1,11 +1,8 @@
 "use client";
 
-import { MagneticButton } from "@/components/magnetic-button";
 import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Container } from "@/components/shared/container";
-import { ArrowLabel } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Link } from "@/i18n/navigation";
 import {
   useSectionCardGrid,
   useSectionDescription,
@@ -29,14 +26,21 @@ const CLAUSE_KEYS = [
 
 type ClauseKey = (typeof CLAUSE_KEYS)[number];
 
+/* In payment-schedule milestone order; each segment's width is its share of
+   the resolved payment split, so the bar is drawn to the real proportions. */
 const SCHEDULE_SEGMENTS = [
-  { key: "start", basis: "basis-1/2", tone: "bg-local-accent" },
-  { key: "milestone", basis: "basis-[30%]", tone: "bg-local-accent/55" },
-  { key: "launch", basis: "basis-1/5", tone: "bg-local-accent/25" },
+  { key: "start", tone: "bg-local-accent" },
+  { key: "milestone", tone: "bg-local-accent/55" },
+  { key: "launch", tone: "bg-local-accent/25" },
 ] as const;
 
-function ScheduleBar(): React.ReactElement {
+function ScheduleBar({
+  paymentSplit,
+}: {
+  paymentSplit: readonly number[];
+}): React.ReactElement {
   const t = useTranslations("quoteArtifact.schedule");
+  const fillTokens = useFillPricingTokens();
   const barRef = useSectionCardGrid<HTMLDivElement>({
     selector: ".quote-schedule-segment",
   });
@@ -44,31 +48,29 @@ function ScheduleBar(): React.ReactElement {
   return (
     <div ref={barRef} className="mt-6">
       <div aria-hidden className="flex h-2 w-full gap-1">
-        {SCHEDULE_SEGMENTS.map((segment) => (
+        {SCHEDULE_SEGMENTS.map((segment, index) => (
           <span
             key={segment.key}
             className={cn(
               "quote-schedule-segment flex-none rounded-ctl-xs",
-              segment.basis,
               segment.tone,
             )}
+            style={{ flexBasis: `${paymentSplit[index]}%` }}
           />
         ))}
       </div>
       <dl className="mt-4 flex w-full gap-1">
-        {SCHEDULE_SEGMENTS.map((segment) => (
+        {SCHEDULE_SEGMENTS.map((segment, index) => (
           <div
             key={segment.key}
-            className={cn(
-              "quote-schedule-segment flex-none pe-3",
-              segment.basis,
-            )}
+            className="quote-schedule-segment flex-none pe-3"
+            style={{ flexBasis: `${paymentSplit[index]}%` }}
           >
             <dt className="text-[clamp(1.125rem,1.6vw,1.5rem)] font-medium leading-none tabular-nums text-foreground">
-              {t(`${segment.key}.share`)}
+              {fillTokens(t.raw(`${segment.key}.share`))}
             </dt>
             <dd className="mt-2 text-[0.8125rem] leading-snug text-muted-foreground">
-              {t(`${segment.key}.label`)}
+              {fillTokens(t.raw(`${segment.key}.label`))}
             </dd>
           </div>
         ))}
@@ -77,7 +79,16 @@ function ScheduleBar(): React.ReactElement {
   );
 }
 
-export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
+export const QuoteArtifactSection = memo(function QuoteArtifactSection({
+  paymentSplit,
+  scopeFigure,
+}: {
+  /** The resolved payment split's percentages, in milestone order. */
+  paymentSplit: readonly number[];
+  /** Clause 01's range: the worked example's estimate, the same figure
+      "Transparent by design" ends on, so both sections tell one story. */
+  scopeFigure: string;
+}) {
   const t = useTranslations("quoteArtifact");
   const fillTokens = useFillPricingTokens();
 
@@ -134,10 +145,12 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
                   <p className="mt-4 max-w-[62ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
                     {fillTokens(t.raw(`clauses.${key}.body`))}
                   </p>
-                  {key === "schedule" ? <ScheduleBar /> : null}
+                  {key === "schedule" ? (
+                    <ScheduleBar paymentSplit={paymentSplit} />
+                  ) : null}
                   {key === "scope" ? (
                     <p className="mt-6 text-[clamp(1.375rem,2.2vw,1.875rem)] font-medium leading-[1.15] tracking-[-0.018em] tabular-nums text-foreground">
-                      {fillTokens(t.raw("clauses.scope.figure"))}
+                      {scopeFigure}
                     </p>
                   ) : null}
                 </div>
@@ -156,18 +169,8 @@ export const QuoteArtifactSection = memo(function QuoteArtifactSection() {
         </div>
         <div
           ref={footerRef}
-          className="mt-10 grid gap-8 border-t border-border-subtle pt-10 md:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] md:items-start"
+          className="mt-10 border-t border-border-subtle pt-10"
         >
-          <div className="flex flex-col items-start gap-5">
-            <p className="text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-foreground">
-              {fillTokens(t.raw("footer.minimum"))}
-            </p>
-            <MagneticButton asChild size="lg" className="group">
-              <Link href="/pricing">
-                <ArrowLabel>{t("footer.ctaLabel")}</ArrowLabel>
-              </Link>
-            </MagneticButton>
-          </div>
           <Eyebrow>{t("footer.footnote")}</Eyebrow>
         </div>
       </Container>

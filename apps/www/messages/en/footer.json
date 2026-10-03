@@ -14,13 +14,20 @@
   "privacy": "Privacy",
   "process": "Process",
   "resourcesTitle": "Resources",
-  "schedule": "Schedule",
+  "schedule": "Discuss your requirements",
   "servicesTitle": "Services",
   "standards": "Standards",
-  "tagline": "Custom web systems, portals, and product infrastructure engineered for teams that need multilingual precision, performance, and zero vendor lock-in.",
   "terms": "Terms",
+  "transparency": "Estimate your project",
   "webDesign": "Interface Design",
   "work": "Work",
   "writing": "Writing",
-  "faq": "FAQ"
+  "faq": "FAQ",
+  "studioLine": "Altruvex · Web engineering studio · Cairo",
+  "closeLine": "Built to be owned.",
+  "closeLineDim": "Every line of it.",
+  "directLines": "Direct lines",
+  "toTop": "Back to top",
+  "navLabel": "Footer navigation",
+  "legalLabel": "Legal links"
 }

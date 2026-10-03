@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing · B — Step-up ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.tablewrap{margin-top:40px;overflow-x:auto;scroll-snap-type:x proximity;border-top:2px solid var(--fg)}
+table{border-collapse:collapse;width:100%;min-width:900px}
+th{font:400 12px "Geist Mono",monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-align:start;padding:16px 16px 14px;border-bottom:1px solid var(--line-strong)}
+html[lang="ar"] th{font-family:Vazirmatn;letter-spacing:0;font-size:13px;text-transform:none}
+th:first-child,td.who{position:sticky;inset-inline-start:0;background:var(--bg);z-index:2;min-width:230px;width:24%}
+td{padding:14px 12px;vertical-align:top;border-bottom:1px solid var(--line)}
+td.who{padding-inline-end:20px}
+td.who b{display:block;font:300 22px Outfit;letter-spacing:-.02em}
+html[lang="ar"] td.who b{font:400 19px Vazirmatn;letter-spacing:0}
+td.who span{display:block;margin-top:6px;font-size:13px;color:var(--muted);line-height:1.5}
+tr.hot td.who b{color:var(--brand-text)}
+.cell{display:block;width:100%;text-align:start;border:1px dashed var(--line-strong);border-radius:var(--r-sm);padding:16px 16px 12px;transition:background var(--m-hover),border-color var(--m-hover)}
+.cell:hover{background:var(--brand-soft)}
+.cell .n{display:block;font-size:15px;line-height:1.35;margin-bottom:2px;color:var(--brand-text)}
+.cell .pr{display:block;font-size:15px}.cell .wk{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.cell.named{border:1px solid var(--brand);background:var(--brand-soft)}
+.cell[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-fg)}
+.cell[aria-pressed="true"] .n,.cell[aria-pressed="true"] .wk{color:var(--brand-fg)}
+.step{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.cell[aria-pressed="true"] .step{border-color:#ffffff55;color:#ffffffcc}
+.step b{font-weight:500;color:var(--fg)}.cell[aria-pressed="true"] .step b{color:#fff}
+.step .ar{display:inline-block}html[dir="rtl"] .step .ar{transform:scaleX(-1)}
+.legend{display:flex;gap:28px;flex-wrap:wrap;margin:26px 0 0;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:26px;height:14px;border-radius:5px;vertical-align:middle;margin-inline-end:10px}
+.legend .a{border:1px solid var(--brand);background:var(--brand-soft)}.legend .b{border:1px dashed var(--line-strong)}
+.readout{margin:40px 0 96px;display:grid;grid-template-columns:5fr 7fr;gap:56px;border-top:2px solid var(--fg);padding-top:28px}
+@media(max-width:1000px){.readout{grid-template-columns:1fr;gap:28px}}
+.readout h2{font-size:clamp(1.8rem,3vw,2.6rem);margin-top:10px}
+.readout .from{margin-top:14px;color:var(--muted);font-size:15px;line-height:1.55}
+.deltas{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--line)}
+.deltas>div{padding:18px 16px 18px 0;border-bottom:1px solid var(--line)}
+.deltas .v{display:block;font:300 clamp(1.4rem,2.4vw,2rem) Outfit;letter-spacing:-.02em;margin-top:8px}
+html[lang="ar"] .deltas .v{font-family:Vazirmatn;letter-spacing:0}
+.adds{margin-top:22px}.adds ul{list-style:none;margin-top:12px;display:grid;gap:10px;font-size:15px;line-height:1.5}
+.adds li::before{content:"+";font-family:"Geist Mono";color:var(--brand-text);margin-inline-end:10px}
+.adds p{margin-top:12px}
+@media(max-width:600px){.deltas{grid-template-columns:1fr}}
+</style></head>
+<body>
+<main class="wrap">
+  <header class="hero" id="hero"></header>
+  <div id="doors" class="doors"></div>
+  <div class="tablewrap"><table id="tbl"></table></div>
+  <div class="legend" id="leg"></div>
+  <section class="readout" id="ro" aria-live="polite"></section>
+</main>
+<script src="data.js"></script><script src="shared.js"></script>
+<script>
+let S = "website", B = "standard";
+P.chrome("b");
+const sign = (n) => (n >= 0 ? "+" : "−") + P.fmt(Math.abs(n));
+function render() {
+  const t = P.t(); P.hero(document.getElementById("hero"));
+  P.doors(document.getElementById("doors"), S, (s) => { S = s; render(); document.getElementById("tbl").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "center" }); });
+  const bands = P.bands();
+  document.getElementById("tbl").innerHTML = `<caption class="eyebrow" style="text-align:start;padding:14px 16px;caption-side:top">${t.by}</caption>
+  <thead><tr><th scope="col">${t.whatBuilt}</th>${bands.map((b) => `<th scope="col">${b.label}</th>`).join("")}</tr></thead>
+  <tbody>${P.rows().map((r) => `<tr class="${r.serviceId === S ? "hot" : ""}"><td class="who"><b>${r.name}</b><span>${r.description}</span></td>${r.cells.map((c) => {
+    const tier = P.tier(c.tierId), up = P.stepUp(c.serviceId, c.complexityId);
+    return `<td><button class="cell ${tier ? "named" : ""}" data-s="${c.serviceId}" data-b="${c.complexityId}" aria-pressed="${c.serviceId === S && c.complexityId === B}">
+      ${tier ? `<span class="n">${tier.buyerLabel}</span>` : ""}<span class="pr num">${c.priceLabel}</span><span class="wk num">${c.weeksLabel}</span>
+      <span class="step">${up ? `<span class="ar">↗</span><span><b class="num">${sign(up.floor)}</b> ${P.cur()}</span>` : `<span>${t.stepTop}</span>`}</span></button></td>`; }).join("")}</tr>`).join("")}</tbody>`;
+  document.querySelectorAll(".cell").forEach((b) => (b.onclick = () => { S = b.dataset.s; B = b.dataset.b; render(); }));
+  document.getElementById("leg").innerHTML = `<span><i class="a"></i>${t.legendNamed}</span><span><i class="b"></i>${t.legendPlain}</span>`;
+  readout();
+}
+function readout() {
+  const t = P.t(), r = P.row(S), bands = P.bands(), c = P.cell(S, B), up = P.stepUp(S, B), from = P.tier(c.tierId);
+  const el = document.getElementById("ro"), bl = (id) => bands.find((b) => b.id === id).label;
+  if (!up) { el.innerHTML = `<div><span class="eyebrow">${t.lead}</span><h2>${r.name} · ${bl(B)}</h2><p class="from num">${c.priceLabel} · ${c.weeksLabel}</p></div><div><span class="eyebrow">${t.stepTop}</span></div>`; return; }
+  const to = P.cell(S, up.to), toTier = P.tier(to.tierId);
+  const added = from && toTier ? toTier.features.filter((f) => !from.features.includes(f)) : null;
+  el.innerHTML = `<div><span class="eyebrow">${t.stepUp}</span><h2>${bl(B)} → ${bl(up.to)}</h2><p class="from num">${r.name}: ${c.priceLabel} → ${to.priceLabel}</p></div>
+  <div><div class="deltas"><div><span class="eyebrow">${t.floor}</span><span class="v num">${sign(up.floor)} ${P.cur()}</span></div><div><span class="eyebrow">${t.ceil}</span><span class="v num">${sign(up.ceil)} ${P.cur()}</span></div><div><span class="eyebrow">${t.weeks}</span><span class="v num">${up.wMin === up.wMax ? sign(up.wMin) : sign(up.wMin) + " – " + sign(up.wMax)}</span></div></div>
+  <div class="adds"><span class="eyebrow">${t.adds}</span>${added ? `<ul>${added.map((f) => `<li>${f}</li>`).join("")}</ul>` : `<p class="note">${t.addsNone}</p>`}</div></div>`;
+}
+P.onChange(render);
+</script></body></html>

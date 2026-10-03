@@ -42,21 +42,6 @@ const DEFAULTS: Required<TextConfig> = {
   scrubExit: false,
 };
 
-/** A text config resolved against the hook's own defaults, as an entrance shape. */
-export function textShape(config: TextConfig = {}) {
-  return {
-    shape: {
-      duration: config.duration ?? DEFAULTS.duration,
-      stagger: config.stagger ?? DEFAULTS.stagger,
-      distance: config.distance ?? DEFAULTS.distance,
-      ease: config.ease ?? DEFAULTS.ease,
-      blur: config.blur ?? DEFAULTS.blur,
-      delay: config.delay ?? DEFAULTS.delay,
-    },
-    splitBy: config.splitBy ?? DEFAULTS.splitBy,
-  };
-}
-
 export function useText<T extends HTMLElement = HTMLHeadingElement>(
   config: TextConfig = {},
 ): RefObject<T | null> {

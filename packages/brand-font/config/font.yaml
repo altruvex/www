@@ -1,0 +1,239 @@
+# Altruvex Sans (Track A) — build configuration.
+#
+# Track A is an interim OFL derivative of Outfit and Vazirmatn. It is not a proprietary or
+# custom-drawn typeface. Every value that shapes the output lives here; tools/build.py reads
+# nothing else.
+
+build:
+  # Derivative build version, written into name ID 3 (unique ID).
+  version: "0.1.0"
+  # Fixed head.modified for every output, so identical inputs give identical bytes.
+  timestamp: "2026-09-29T00:00:00Z"
+
+# Pinned upstream sources. fetch.py downloads them into sources/<key>/ and the build refuses to
+# run if a SHA-256 does not match. Both files are taken from google/fonts at one commit, which is
+# also what next/font/google serves to apps/www today.
+sources:
+  outfit:
+    version: "1.100"
+    upstream_repository: https://github.com/Outfitio/Outfit-Fonts
+    upstream_commit: 902773808eb372f70fb34e8946dd1ffe604efc79
+    files:
+      font:
+        filename: "Outfit[wght].ttf"
+        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/outfit/Outfit%5Bwght%5D.ttf
+        sha256: fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade
+      license:
+        filename: OFL.txt
+        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/outfit/OFL.txt
+        sha256: c676351bf8576b9aba743cd5eaa8c0e7ee0d51f805d720447b4df4ddb6a2e416
+  vazirmatn:
+    version: "33.003"
+    upstream_repository: https://github.com/rastikerdar/vazirmatn
+    upstream_commit: 14f8686945b97ac535bdb144a7c3794431d894d2
+    files:
+      font:
+        filename: "Vazirmatn[wght].ttf"
+        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/vazirmatn/Vazirmatn%5Bwght%5D.ttf
+        sha256: 696249a2c74b39ffdef55de4df2809c5b639d3ff80d618d8160a095d2fd49dca
+      license:
+        filename: OFL.txt
+        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/vazirmatn/OFL.txt
+        sha256: 17e355067c8284f47743a1ee3b1ef7ff684ff0601eda357f9353b10b3016ab31
+
+families:
+  latin:
+    source: outfit
+    family: Altruvex Sans Latin
+    postscript: AltruvexSansLatin
+    output: AltruvexSansLatin-VF.woff2
+    # null = keep every upstream glyph. The Latin file is renamed only.
+    unicodes: null
+    required_unicodes: []
+    scale: null
+
+  arabic:
+    source: vazirmatn
+    family: Altruvex Sans Arabic
+    postscript: AltruvexSansArabic
+    output: AltruvexSansArabic-VF.woff2
+    # Explicit subset, in two parts. `unicodes` is the Arabic script as prototype 01 took it:
+    # codepoints Vazirmatn lacks (U+061C, U+204F, U+2E41, ...) are skipped and counted, never
+    # synthesized. `required_unicodes` must all exist upstream or the build fails.
+    unicodes:
+      # Arabic script (same ranges as prototype 01)
+      - U+0600-06FF
+      - U+0750-077F
+      - U+0870-089F
+      - U+08A0-08FF
+      - U+FB50-FDFF
+      - U+FE70-FEFF
+      - U+200C-200F   # ZWNJ, ZWJ, LRM, RLM
+      - U+2010-2011   # hyphen, non-breaking hyphen
+      - U+204F
+      - U+2E41
+      - U+25CC        # dotted circle for isolated marks
+    # Common characters Arabic text needs in Vazirmatn's own form (prototype 01 dropped them).
+    required_unicodes:
+      - U+0020        # space: 0.285em after scaling, against Outfit's 0.208em
+      - U+00A0        # no-break space
+      - U+2009        # thin space
+      - U+202F        # narrow no-break space
+      - U+0028-0029   # ( )
+      - U+005B        # [
+      - U+005D        # ]
+      - U+00AB        # «
+      - U+00BB        # »
+    scale:
+      # k = Outfit ascender / Vazirmatn alef = 0.714 / 0.672 = 1.0625 (Ali, 2026-09-27).
+      # Do not change without Ali's approval.
+      k: 1.0625
+      source_upm: 2048
+      # The em stays 2048 units; outlines, advances, gvar, HVAR, GDEF and GPOS are multiplied by k
+      # (fontTools scale_upem to 2176, then head.unitsPerEm reset to 2048). 2048 x 1.0625 = 2176 is
+      # an integer, so k is exact and the only error is per-value rounding.
+      output_upm: 2048
+      # Every stored coordinate, delta and advance must be within this many font units of
+      # source x k (0.5 = the rounding of one value to an integer).
+      rounding_tolerance_units: 0.5
+      # Vertical metrics (hhea, OS/2 typo and win) are the source's, multiplied by k. They are not
+      # replaced with Outfit's: its shallower descender clipped the dots under yeh/beh inside
+      # background-clip:text gradients (<Accent>) in prototype 01.
+      ascent_policy: source_times_k
+      descent_policy: source_times_k
+      line_gap_policy: source_times_k
+
+# Arabic weight parity (stress test C2). Ali chose from the A.2 proof (2026-09-29): a requested
+# 600 draws Vazirmatn 675 and 700 draws 830. The build composes this into the Arabic file's avar;
+# 500 and below are unchanged, and weights above the last choice interpolate to the axis maximum.
+# A null chosen value applies no remap. Do not change without Ali's approval.
+weights:
+  "600":
+    candidates: [650, 675, 700]
+    chosen: 675
+  "700":
+    candidates: [800, 830, 850]
+    chosen: 830
+
+# Payload budgets. Measured first (phase A.5), proposed to Ali, enforced only after approval.
+#
+# NOT ENFORCED. The top-level values are the budgets a check would enforce; they stay null (and
+# `enforced` false) until Ali approves a proposal. KB = bytes / 1024.
+budgets:
+  # Enforced (approved by Ali 2026-09-30): tests/test_font_loading.py fails when
+  # dist/payload-report.json exceeds any value here, and tools/payload.py exits non-zero.
+  # Values = `proposed` below (the rule is kept as the record of how they were derived).
+  enforced: true
+  latin_woff2_kb: 49
+  arabic_woff2_kb: 51
+  initial_route_font_kb:
+    en: 226
+    ar: 263
+  # Measured by tools/payload.py (2026-09-30) against `next build` + `next start` of apps/www:
+  # every font response Chromium received before window load on `/` and `/ar`, desktop and
+  # mobile width (both widths measured the same). Details: dist/payload-report.json.
+  # Initial EN includes the Arabic brand file (46.0 KB), preloaded on every page today.
+  baseline_source: dist/payload-report.json
+  baseline:
+    latin_woff2_kb: 43.8
+    arabic_woff2_kb: 46.0
+    initial_route_font_kb:
+      en: 204.9
+      ar: 238.5
+  # How the budgets were derived (proposed, then approved 2026-09-30): baseline + 10 %, rounded up
+  # to a whole KB, so a rebuild that grows a file by more than a tenth has to be looked at.
+  proposed_rule: baseline x 1.10, rounded up to a whole KB
+  proposed:
+    latin_woff2_kb: 49
+    arabic_woff2_kb: 51
+    initial_route_font_kb:
+      en: 226
+      ar: 263
+
+# Display spacing (phase A.2, ladder re-anchored in A.5). tools/tracking.py turns this into
+# dist/web/tokens.css; it reads the Latin weight factor from the built font, so no per-weight
+# number is typed here.
+spacing:
+  # The ladder is anchored on what apps/www ships today (approved by being live), not on
+  # prototype 01. Each anchor is [font size px, font weight, letter-spacing em, source].
+  # tools/tracking.py back-solves each anchor to weight 400 with weight_model and the factor
+  # measured from the font, then log-interpolates between them; the token at each anchor's
+  # (size, weight) reproduces the live value within bucket_gap_fraction. Anchors are not smoothed:
+  # a reversal (a larger size looser at 400) is reported in dist/spacing-report.json.
+  ladder_anchors:
+    - [24, 500, -0.015, "apps/www/app/globals.css:788-793 h4"]
+    - [32, 600, -0.018, "apps/www/app/globals.css:780-786 h3"]
+    - [52, 600, -0.020, "apps/www/app/globals.css:772-778 h2"]
+    - [72, 700, -0.030, "apps/www/app/globals.css:764-770 h1"]
+    - [136, 300, -0.035, "apps/www/components/sections/hero-section.server.tsx:52 home hero (md max 8.5rem)"]
+  # Display sizes apps/www uses today, as the max of a font-size rule or clamp:
+  #   24 h4 (globals.css:790)            32 h3 (globals.css:782)
+  #   40 contact/page-client.tsx:606     52 h2, .section-title (globals.css:774, 848)
+  #   72 h1 (globals.css:766)            96 dev-studio.tsx:182 (6rem)
+  #   120 dev-studio.tsx:245 (7.5rem)    136 home hero (hero-section.server.tsx:52)
+  sizes: [24, 32, 40, 52, 72, 96, 120, 136]
+  weights: [300, 400, 500, 600, 700]
+  # How tracking changes with weight. Ali chose sidebearing from the A.2 proof (2026-09-29).
+  #   sidebearing: track(w) = track(400) x gap(w) / gap(400)  (prototype 01)
+  #   rhythm:      keep (gap + track) / counter of "n" equal to weight 400's
+  weight_model: sidebearing
+  # Adjacent sizes share one token while, at every size and weight it covers, the token is within
+  # this fraction of the white between two letters (the "n" gap) of the exact value. The eye reads
+  # tracking as a share of that white, so the tolerance is relative, not px.
+  bucket_gap_fraction: 0.02
+  # All-caps display (decision 3). From this size up, --track-caps-<size>-<weight> keeps the
+  # lowercase word-to-letter white ratio in capitals (rule and measurements: tools/tracking.py,
+  # dist/spacing-report.json "caps"). 120: the word space vanished in NOT ASSEMBLED at 120 and
+  # 136px / 700 in proofs/a4 (d-120-700, d-136-700).
+  #   lever: how capitals get back to that ratio; the report shows both.
+  #     letter_spacing: --track-caps-<size>-<weight>, solve (space + 2t_c + gap_H) / (gap_H + t_c) = R.
+  #       The ratio only rises as letters tighten, so it lands at -0.09 to -0.13em and the capitals
+  #       collide (Seen, proofs/a5/<engine>/caps-136-700.png, 2026-09-30).
+  #     word_spacing: capitals keep the lowercase token and --word-caps-<size>-<weight> (CSS
+  #       word-spacing) solves (space + ws + 2t + gap_H) / (gap_H + t) = R.
+  caps:
+    from_px: 120
+    lever: word_spacing
+  # Arabic is joined script: letter-spacing breaks it. Stays 0 unless evidence says otherwise.
+  arabic_tracking_em: 0
+  line_height:
+    heading_ar: 1.3   # RUL-147
+    vocalised: 1.5    # prototype 01: fully vocalised Arabic collides at 1.4 and clears at 1.5
+    # Latin display (decision 6). The value every Latin specimen in the A.4 optical proof was
+    # set at (proofs/a4-proof.html:17, stated as "a page value (no Latin token exists)" at :38);
+    # apps/www's h4 uses the same 1.2 (globals.css:791). Not measured; now one source.
+    display_latin: 1.2
+
+# Arabic weight next to a light Latin display (decision 5). tools/pairing.py measures ink density
+# (ink / (advance x font size), the A.2 proof's measure) in each engine: the reference headings
+# at AR weight = EN weight, and the hero's Arabic at every weight in ar_weights against the hero's
+# EN weight. The chosen weight is the one whose AR/EN ratio is closest to the mean of the
+# references' ratios (mean over engines). It is written to proofs/a5/pairing.json, and
+# tools/tracking.py turns it into --weight-ar-display-light. Copy is read from apps/www/messages.
+pairing:
+  hero:
+    role: home hero
+    px: 136
+    weight: 300
+    text: {namespace: hero, keys: [title_line1, title_line2]}
+    source: "apps/www/components/sections/hero-section.server.tsx:52 (font-light, AR rtl:font-semibold)"
+  # Step 5: at step 25 the target fell between two steps (300: 0.875, 325: 0.915; target 0.893).
+  ar_weights: {start: 300, stop: 600, step: 5}
+  references:
+    - role: h1
+      px: 72
+      weight: 700
+      text: {namespace: hero, keys: [title_line1, title_line2]}
+      source: "apps/www/app/globals.css:764-770"
+    - role: h2
+      px: 52
+      weight: 600
+      text: {namespace: services, keys: [title]}
+      source: "apps/www/app/globals.css:772-778"
+    - role: h3
+      px: 32
+      weight: 600
+      text: {namespace: problem, keys: [title]}
+      source: "apps/www/app/globals.css:780-786"
+  # Firefox does not launch on the current macOS build (README, Verification).
+  engines: [chromium, webkit]

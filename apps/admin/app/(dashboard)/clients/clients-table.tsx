@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Archive, CheckCircle2, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
+import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar } from "@repo/ui";
 import { money, phone as fmtPhone, when } from "@/lib/format";
@@ -35,6 +36,7 @@ export interface ClientRow {
   projectCount: number;
   messageCount: number;
   activeProject: string | null;
+  activeProjectId: string | null;
 }
 
 export function ClientsTable({ rows }: { rows: ClientRow[] }) {
@@ -51,7 +53,9 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
         <span className="flex items-center gap-2">
           <Avatar name={row.company ?? row.name ?? row.phone} size="sm" />
           <span className="min-w-0">
-            <span className="block truncate">{row.company || row.name || "Unnamed"}</span>
+            <span className="block truncate">
+              {row.company || row.name || "Unnamed"}
+            </span>
             {row.company && row.name && (
               <span className="block truncate text-meta font-normal text-subtle-foreground">
                 {row.name}
@@ -62,7 +66,14 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       ),
       sortValue: (row) => (row.company || row.name || "").toLowerCase(),
       searchValue: (row) =>
-        [row.company, row.name, row.phone, row.email, row.industry, row.activeProject]
+        [
+          row.company,
+          row.name,
+          row.phone,
+          row.email,
+          row.industry,
+          row.activeProject,
+        ]
           .filter(Boolean)
           .join(" "),
     },
@@ -70,7 +81,9 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       id: "stage",
       header: "Stage",
       width: "132px",
-      cell: (row) => <StatusPill registry="pipelineStage" value={row.stage} variant="dot" />,
+      cell: (row) => (
+        <StatusPill registry="pipelineStage" value={row.stage} variant="dot" />
+      ),
       sortValue: (row) => row.stage,
       searchValue: (row) => statusOf("pipelineStage", row.stage).label,
     },
@@ -81,7 +94,11 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       align: "end",
       mono: true,
       cell: (row) =>
-        row.latestValue ? money(row.latestValue, row.currency) : <span className="text-subtle-foreground">—</span>,
+        row.latestValue ? (
+          money(row.latestValue, row.currency)
+        ) : (
+          <span className="text-subtle-foreground">—</span>
+        ),
       sortValue: (row) => row.latestValue ?? 0,
     },
     {
@@ -94,7 +111,11 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
         row.lifetimeValue ? (
           <span
             className="text-success"
-            title={row.mixedCurrency ? "This client has accepted work in more than one currency" : undefined}
+            title={
+              row.mixedCurrency
+                ? "This client has accepted work in more than one currency"
+                : undefined
+            }
           >
             {money(row.lifetimeValue, row.lifetimeCurrency)}
             {row.mixedCurrency && <span className="ms-1 text-warning">*</span>}
@@ -114,7 +135,8 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
           {row.proposalCount}P · {row.contractCount}C · {row.projectCount}Pr
         </span>
       ),
-      sortValue: (row) => row.proposalCount + row.contractCount + row.projectCount,
+      sortValue: (row) =>
+        row.proposalCount + row.contractCount + row.projectCount,
       minWidth: "xl",
     },
     {
@@ -123,7 +145,13 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       width: "18%",
       cell: (row) =>
         row.activeProject ? (
-          <span className="truncate">{row.activeProject}</span>
+          <EntityLink
+            type="project"
+            id={row.activeProjectId}
+            className="truncate"
+          >
+            {row.activeProject}
+          </EntityLink>
         ) : (
           <span className="text-subtle-foreground">—</span>
         ),
@@ -149,7 +177,10 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       width: "148px",
       mono: true,
       cell: (row) => (
-        <a href={`tel:${row.phone}`} className="text-muted-foreground hover:text-brand">
+        <a
+          href={`tel:${row.phone}`}
+          className="text-muted-foreground hover:text-brand"
+        >
           {fmtPhone(row.phone)}
         </a>
       ),
@@ -175,12 +206,18 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
     return (selected: ClientRow[]) => {
       startTransition(async () => {
         try {
-          await bulkSetClientStatus(selected.map((r) => r.id), status);
-          toast.success(`${selected.length} client${selected.length === 1 ? "" : "s"} ${label}`);
+          await bulkSetClientStatus(
+            selected.map((r) => r.id),
+            status,
+          );
+          toast.success(
+            `${selected.length} client${selected.length === 1 ? "" : "s"} ${label}`,
+          );
           router.refresh();
         } catch (error) {
           toast.error("Could not update", {
-            description: error instanceof Error ? error.message : "Unknown error",
+            description:
+              error instanceof Error ? error.message : "Unknown error",
           });
         }
       });
@@ -199,22 +236,51 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
         initialSort={{ columnId: "updated", dir: "desc" }}
         selectable
         selectionNoun="client"
-        mobile={{ title: "client", subtitle: "phone", meta: ["stage", "value", "source", "updated"] }}
+        mobile={{
+          title: "client",
+          subtitle: "phone",
+          meta: ["stage", "value", "source", "updated"],
+        }}
         bulkActions={[
-          { label: "Qualify", icon: CheckCircle2, onRun: runBulk("QUALIFIED", "qualified") },
-          { label: "Mark lost", icon: Archive, destructive: true, onRun: runBulk("LOST", "marked lost") },
+          {
+            label: "Qualify",
+            icon: CheckCircle2,
+            onRun: runBulk("QUALIFIED", "qualified"),
+          },
+          {
+            label: "Mark lost",
+            icon: Archive,
+            destructive: true,
+            onRun: runBulk("LOST", "marked lost"),
+          },
           {
             label: "Delete",
             icon: Trash2,
             destructive: true,
             onRun: (selected) =>
-              del.request(selected.map((row) => ({ id: row.id, label: row.company || row.name || row.phone }))),
+              del.request(
+                selected.map((row) => ({
+                  id: row.id,
+                  label: row.company || row.name || row.phone,
+                })),
+              ),
           },
         ]}
         rowActions={(row) => (
-          <RowActions onDelete={() => del.request({ id: row.id, label: row.company || row.name || row.phone })} />
+          <RowActions
+            onDelete={() =>
+              del.request({
+                id: row.id,
+                label: row.company || row.name || row.phone,
+              })
+            }
+          />
         )}
-        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No clients.</div>}
+        empty={
+          <div className="plane px-6 py-12 text-center text-muted-foreground">
+            No client matches.
+          </div>
+        }
       />
       {del.dialog}
     </>

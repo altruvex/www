@@ -3,14 +3,28 @@
 Scope: every `<SectionHeading>` and every hand-rolled `h1`/`h2` that uses `<Highlight>` or `<Accent>` in `apps/www`.
 Law layer: `docs/design-principles.md` (C10 functional hue semantics, T-rules on mixed faces). This document is the application of that law to headings.
 
+## 0. The rule on one screen (2026-10-03)
+
+Every headline has at most one emphasised clause, and that clause takes exactly one of three treatments:
+
+| treatment | when | how |
+|---|---|---|
+| **Gradient** (Colour) | the clause is what the client *gets*: an outcome, proof, a live thing, a price they can trust, an invitation to act | `accent="world"` / `<Accent gradient="world">`, inside an `accent-world-*` wrapper. At most 2 per page (homepage and `/services/*` excepted, §2-3). Never on an inverted island |
+| **Dimmed italic** | the clause is how we *think* or *work*, an identity claim, or any warning / loss / "not" | `<Highlight>` in the drawn italic of Altruvex Sans. Display headings use `tone="soft"` (the SectionHeading default); `tone="muted"` is for text-size titles only (modal titles, MDX `em`, closing lines under a section); `tone="surface"` on inverted islands |
+| **Plain** | the heading is a label or a description and there is no second clause worth a voice change | one line, no `<Highlight>` |
+
+Two tests decide a doubtful case: if colouring the clause would celebrate bad news, it is italic; if the clause would read the same on a competitor's site, it is plain. `Highlight tone="world"` / `italicWorld` (the italic painted in the world gradient) stays a `/services` signature (RUL-063) and is not used on other pages. Named gradient alternates (`mint`, `sunset`, `ocean`) are only for the collisions in §2, never for taste.
+
+Arabic: no italic exists, so the dimmed clause is the brand face in bold and the gradient clause is the same weight as its line (RTL-071).
+
 ## 1. The three shapes
 
 | shape | component | looks like | job |
 |---|---|---|---|
 | **Plain** | no second line | one sans line, foreground colour | utility / descriptive titles ("Questions About Building Your Tech Stack", "Contact") |
-| **Italic** | `<Highlight>` (SectionHeading default when `accent` is omitted) | dimmed serif-italic, light weight; bold sans in RTL | the composed voice: craft, method, restraint, philosophy, identity — and **every negative / loss / risk framing** |
+| **Italic** | `<Highlight>` (SectionHeading default when `accent` is omitted) | dimmed italic (the drawn italic of Altruvex Sans, light weight); bold sans in RTL | the composed voice: craft, method, restraint, philosophy, identity — and **every negative / loss / risk framing** |
 | **Colour** | `<Accent>` (`accent="world"` or a named gradient) | world-matched gradient, inline, per-word animated | the bold voice: outcome, value-prop, proof, conversion |
-| **World italic** | `<Highlight tone="world">` / `<SectionHeading italicWorld>` | the serif-italic clause, painted in the section's world gradient (bold sans in RTL) | `/services` only: the composed voice, but claiming an outcome, proof or a price |
+| **World italic** | `<Highlight tone="world">` / `<SectionHeading italicWorld>` | the italic clause, painted in the section's world gradient (bold sans in RTL) | `/services` only: the composed voice, but claiming an outcome, proof or a price |
 
 Decision test for the second clause of a headline, in order:
 
@@ -56,7 +70,7 @@ Every coloured heading sits inside an `accent-world-*` wrapper. The gradient mus
 
 The service pages each wear one world end to end, so the Italic/Colour split is where their
 rhythm comes from. A second clause that would be Colour by the decision test in section 1 keeps
-its serif-italic face there and takes the world gradient instead of dimmed ink. The test itself
+its italic face there and takes the world gradient instead of dimmed ink. The test itself
 does not change: warnings and method stay muted Italic.
 
 | page | clause | shape |
@@ -112,6 +126,16 @@ muted and world italic carries the hierarchy instead.
 | /about | name principle "are not decoration." | blue | Italic | identity claim; key renamed to `titleItalic` |
 | /about, /pricing, /how-we-work, /services, /work/[slug] | all others | — | Italic / Plain | unchanged |
 | shared `SectionEndCta`, `CtaSection` | orange | Colour `world` | were `ember` (same result, now drift-proof) |
+
+Corrections of 2026-10-03, after the September page rebuilds drifted from this map:
+
+| page | section | world | shape | note |
+|---|---|---|---|---|
+| /about | hero "we hold ourselves to." | blue | Italic | was World italic, which is `/services` only; an identity claim |
+| /process | hero "Every time." | green | Italic | was World italic; method |
+| /work | hero "In production." | green | Colour `world` | was `mint`; no same-world collision on the page, so no alternate |
+| /approach | contrasts "And what gets said here instead." | green | Colour `world` | the map above already ruled Colour; the rebuild had dropped it |
+| /faq, /writing, legal | `PageHero` second line | blue | Italic `soft` | was `muted`; every display heading now dims with the same ink |
 
 ## 6. Adding a new section
 

@@ -1,4 +1,4 @@
-import { getActionCentre } from "@/lib/action-center";
+import { getActionCentre, type ActionItem } from "@/lib/action-center";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
@@ -6,7 +6,9 @@ import { ActionCenter } from "@/components/os/action-center";
 
 export const dynamic = "force-dynamic";
 
-const KIND_LABEL: Record<string, string> = {
+// Keyed on the ActionItem union, so a new kind in lib/action-center.ts fails
+// the type check here instead of rendering its raw key.
+const KIND_LABEL: Record<ActionItem["kind"], string> = {
   lead: "Leads",
   proposal: "Proposals",
   contract: "Contracts",
@@ -14,6 +16,10 @@ const KIND_LABEL: Record<string, string> = {
   message: "Messages",
   meeting: "Meetings",
   project: "Projects",
+  incident: "Incidents",
+  deployment: "Deployments",
+  renewal: "Retainer renewals",
+  service: "Services",
 };
 
 export default async function ActionsPage() {
@@ -32,7 +38,7 @@ export default async function ActionsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Everything waiting on a person"
-        crumbs={[{ label: "Dashboard", href: "/" }, { label: "Action centre" }]}
+        crumbs={[{ label: "Today", href: "/" }, { label: "Action centre" }]}
         description="One ranked list across every module. Ordering is by urgency, not by entity type — an overdue payment and an unanswered message compete for the same hour of your day."
       />
 
@@ -55,7 +61,7 @@ export default async function ActionsPage() {
               {byKind.map(([kind, count]) => (
                 <li key={kind} className="flex items-center gap-2">
                   <span className="min-w-0 flex-1 truncate text-base text-muted-foreground">
-                    {KIND_LABEL[kind] ?? kind}
+                    {KIND_LABEL[kind as ActionItem["kind"]] ?? kind}
                   </span>
                   <span className="h-1 w-10 overflow-hidden rounded-full bg-surface-2">
                     <span

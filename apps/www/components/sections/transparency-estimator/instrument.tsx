@@ -12,23 +12,6 @@ import { QUESTIONS, STICKY_OFFSET, TOTAL } from "./constants";
 import { useStuck } from "./hooks";
 import type { Delta, MoneyFormats, Translator } from "./types";
 
-export function PreselectedTier({
-  label,
-  t,
-}: {
-  label: string;
-  t: Translator;
-}) {
-  return (
-    <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-border-subtle bg-surface px-4 py-2">
-      <span className="size-2 rounded-full bg-local-accent" aria-hidden />
-      <span className="eyebrow text-micro text-muted-foreground">
-        {t("preselected")} / {label}
-      </span>
-    </div>
-  );
-}
-
 function TweenedMoney({
   value,
   format,
@@ -166,7 +149,7 @@ export function Instrument({
   delta: Delta | null;
   handedOff: boolean;
   fmt: MoneyFormats;
-  num: (n: string | number) => string;
+  num: (n: string | number, pad?: number) => string;
   t: Translator;
 }) {
   const { sentinel, stuck } = useStuck(STICKY_OFFSET);
@@ -270,8 +253,8 @@ export function Instrument({
                   )}
                 >
                   {t("live.answeredCount", {
-                    n: num(String(answeredCount).padStart(2, "0")),
-                    total: num(String(TOTAL).padStart(2, "0")),
+                    n: num(answeredCount, 2),
+                    total: num(TOTAL, 2),
                   })}
                 </p>
                 <div

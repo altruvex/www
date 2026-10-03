@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero v3 · no photo</title>
+<!-- Round 2 (2026-09-27). No stock photo: the visual is built in code and proves the claim
+     "Engineered, not assembled." Research, Awwwards SOTD / studio heroes:
+       A · Blueprint  — bleibtgleich.dev (SOTD 2026-09-22): the page's own structure is the object
+       B · Mirror     — Happly (SIT-280) / The Lookback: typography as the object; our own twist = two scripts, one grid
+       C · Source     — basement.studio / Lusion lead with the thing they build; we have no reel, so we show the build itself
+     Switch with the bar at the bottom, ?v=a|b|c, ?lang=ar, ?theme=dark, ?motion=off. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var r = document.documentElement, q;
+    try { q = new URLSearchParams(location.search); } catch (e) { q = { get: function () { return null; } }; }
+    var dark = false, reduce = false;
+    try { dark = matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (q.get("theme")) dark = q.get("theme") === "dark";
+    if (q.get("lang") === "ar") { r.lang = "ar"; r.dir = "rtl"; }
+    r.dataset.theme = dark ? "dark" : "light";
+    r.dataset.v = (q.get("v") || "a").toLowerCase();
+    if (!reduce && q.get("motion") !== "off") r.classList.add("motion");
+  })();
+</script>
+<style>
+/* Tokens copied from packages/ui/src/styles/tokens.css + apps/www/app/globals.css */
+:root {
+  --brand: 214 89% 48%; --brand-hover: 214 89% 41%;
+  --background: 0 0% 98%; --foreground: 0 0% 6%; --muted: 0 0% 40%;
+  --stage-ink: 214 30% 4%;
+  --iris-1: hsl(212 96% 64%); --iris-2: hsl(250 92% 70%); --iris-3: hsl(276 88% 72%);
+  --radius-panel-lg: 34px; --radius-panel-sm: 22px; --ctl: 12px;
+  --gap: 12px;
+  --f-display: "Outfit", system-ui, sans-serif;
+  --f-body: "Inter", system-ui, sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, monospace;
+  --f-ar: "Vazirmatn", sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --w-60: rgb(255 255 255 / .62); --w-hair: rgb(255 255 255 / .1); --w-guide: rgb(255 255 255 / .26);
+  --inset: clamp(20px, 3.4vw, 52px);
+}
+[data-theme="dark"] { --background: 0 0% 5%; --foreground: 0 0% 96%; --muted: 0 0% 64%; }
+[dir="rtl"] { --f-display: var(--f-ar); --f-body: var(--f-ar); }
+
+* { box-sizing: border-box; margin: 0; }
+html { background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--f-body); -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+.v { display: none; }
+[data-v="a"] .v-a, [data-v="b"] .v-b, [data-v="c"] .v-c { display: block; }
+[lang="ar"] [data-en], [lang="en"] [data-ar] { display: none !important; }
+
+/* ── Shared: nav, stage, type, CTAs ───────────────────────────────────── */
+.nav { position: fixed; inset-inline: 0; top: 0; z-index: 20; height: 76px; display: flex; align-items: center; justify-content: space-between; padding-inline: calc(var(--inset) + var(--gap)); color: #fff; }
+.nav .logo { font-family: "Outfit", sans-serif; font-weight: 500; font-size: 20px; letter-spacing: -0.02em; }
+.nav ul { display: flex; gap: 28px; list-style: none; padding: 0; font-size: 14px; opacity: .82; }
+.nav .cta { font-size: 14px; background: hsl(var(--brand)); padding: 10px 16px; border-radius: var(--ctl); }
+@media (max-width: 860px) { .nav ul { display: none; } }
+
+.frame { padding: 8px; }
+@media (min-width: 768px) { .frame { padding: var(--gap); } }
+.stage { position: relative; isolation: isolate; overflow: clip; border-radius: var(--radius-panel-lg); background: hsl(var(--stage-ink)); color: #fff; min-height: calc(100svh - 2 * var(--gap)); }
+@media (max-width: 767.98px) { .stage { min-height: calc(100svh - 16px); } }
+.pad { padding: 116px var(--inset) clamp(36px, 6vh, 64px); }
+
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--w-60); display: flex; gap: 12px; align-items: center; }
+.eyebrow::before { content: ""; width: 20px; height: 2px; background: currentColor; }
+[dir="rtl"] .eyebrow { font-family: var(--f-body); letter-spacing: 0; font-size: 15px; font-weight: 500; }
+.h1 { font-family: var(--f-display); font-weight: 300; letter-spacing: -0.035em; line-height: 1.02; font-size: clamp(2.75rem, 7.4vw, 7.75rem); }
+[dir="rtl"] .h1 { font-weight: 600; letter-spacing: 0; line-height: 1.3; }
+.iris { background: linear-gradient(100deg, var(--iris-1), var(--iris-2) 55%, var(--iris-3)); -webkit-background-clip: text; background-clip: text; color: transparent; padding: .12em .06em; margin: -.12em -.06em; }
+.dim { color: rgb(255 255 255 / .58); }
+.line { display: block; overflow: clip; padding-block: .06em; }
+.line > span { display: inline-block; }
+.sub { max-width: 44ch; font-size: 17px; line-height: 1.6; color: rgb(255 255 255 / .74); text-wrap: pretty; }
+[dir="rtl"] .sub { font-size: 18px; line-height: 1.85; max-width: 40ch; }
+.ctas { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding-inline: 20px; border-radius: var(--ctl); font-size: 15px; font-weight: 500; transition: background 200ms var(--ease); }
+.btn-primary { background: hsl(var(--brand)); color: #fff; }
+.btn-primary:hover { background: hsl(var(--brand-hover)); }
+.btn-glass { background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .22); color: #fff; }
+.btn-glass:hover { background: rgb(255 255 255 / .14); }
+[dir="rtl"] .arrow { transform: scaleX(-1); display: inline-block; }
+.c-src bdi, .mono [data-ar] { font-family: var(--f-ar); letter-spacing: 0; }
+.mono [data-ar] { font-size: 12.5px; }
+.mono { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--w-60); }
+
+/* The one arrival (RUL-105): construction first, then the line masks rise. */
+.motion .line > span { translate: 0 110%; }
+.motion .rise { opacity: 0; translate: 0 14px; }
+.in .line > span { translate: 0 0; transition: translate 900ms var(--ease) calc(var(--t0, 500ms) + var(--i, 0) * 110ms); }
+.in .rise { opacity: 1; translate: 0 0; transition: opacity 700ms var(--ease) calc(var(--t1, 850ms) + var(--i, 0) * 90ms), translate 700ms var(--ease) calc(var(--t1, 850ms) + var(--i, 0) * 90ms); }
+
+/* ── A · Blueprint → Built ─────────────────────────────────────────────
+   Claim: engineered, not assembled. Proof: the hero shows the drawing it was
+   built from — every annotation is a true fact about this very screen. */
+.v-a .stage { display: flex; flex-direction: column; justify-content: flex-end; --t0: 1150ms; --t1: 1500ms; }
+.a-guides { position: absolute; inset: 0; z-index: -1; padding-inline: var(--inset); pointer-events: none; opacity: calc(var(--g, 1) * (1 - var(--p, 0))); transition: opacity 600ms var(--ease); }
+.a-cols { height: 100%; display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; }
+.a-cols i { border-inline: 1px solid var(--w-hair); background: rgb(255 255 255 / .018); transform-origin: top; }
+@media (max-width: 767.98px) { .a-cols { grid-template-columns: repeat(4, 1fr); column-gap: 16px; } .a-cols i:nth-child(n+5) { display: none; } }
+.a-note { position: absolute; display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.a-note.grid { top: 92px; inset-inline-start: var(--inset); }
+.a-note.mirror { top: 92px; inset-inline-end: var(--inset); }
+@media (max-width: 767.98px) { .a-note.mirror { display: none; } }
+.a-content { position: relative; display: grid; gap: 28px; }
+.a-row { position: relative; display: block; width: fit-content; }
+/* cap + baseline, drawn right through the stage edge to edge */
+.a-row::before, .a-row::after { content: ""; position: absolute; left: -100vw; right: -100vw; border-top: 1px dashed var(--w-guide); transform-origin: var(--from, left); }
+[dir="rtl"] .a-row { --from: right; }
+.a-row::before { top: .3em; } .a-row::after { bottom: .27em; }
+[dir="rtl"] .a-row::before { top: .5em; } [dir="rtl"] .a-row::after { bottom: .42em; }
+.a-row .tag { position: absolute; inset-inline-start: 100%; margin-inline-start: 24px; bottom: .27em; translate: 0 -6px; font-size: 11px; letter-spacing: .12em; font-weight: 400; white-space: nowrap; }
+[dir="rtl"] .a-row .tag { bottom: .42em; }
+@media (max-width: 1023.98px) { .a-row .tag { display: none; } }
+.a-foot { display: grid; gap: 26px; }
+@media (min-width: 1024px) { .a-foot { grid-template-columns: minmax(0, 44ch) auto; justify-content: space-between; align-items: end; } }
+.a-measure { position: relative; padding-top: 22px; max-width: 44ch; }
+[dir="rtl"] .a-measure { max-width: 40ch; }
+.a-measure .dimline { position: absolute; top: 0; inset-inline: 0; height: 12px; display: flex; align-items: center; gap: 8px; }
+.a-measure .dimline::before, .a-measure .dimline::after { content: ""; flex: 1; height: 1px; background: var(--w-guide); }
+.a-measure .ends { position: absolute; top: 0; inset-inline: 0; height: 12px; border-inline: 1px solid var(--w-60); }
+.a-cta { position: relative; }
+.a-cta .bracket { position: absolute; inset-inline-start: -14px; top: 0; height: 48px; width: 6px; border: 1px solid var(--w-60); border-inline-end: 0; }
+.a-cta .bracket span { white-space: nowrap; position: absolute; inset-inline-end: 12px; top: 50%; translate: 0 -50%; }
+@media (max-width: 1023.98px) { .a-cta .bracket { display: none; } }
+.a-toggle { position: absolute; bottom: 16px; inset-inline-end: var(--inset); display: none; }
+@media (min-width: 1024px) { .a-toggle { display: inline-flex; } .a-foot { padding-bottom: 8px; } }
+.toggle { align-items: center; gap: 8px; height: 28px; padding-inline: 10px; border-radius: 8px; border: 1px solid var(--w-hair); background: none; color: var(--w-60); cursor: pointer; font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+.toggle .dot { width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .4; }
+.toggle[aria-pressed="true"] .dot { background: hsl(var(--brand)); opacity: 1; }
+.toggle:hover { color: #fff; }
+/* arrival: columns drop, construction draws, notes appear — then the type is built on it */
+.motion .a-cols i { transform: scaleY(0); }
+.motion .a-row::before, .motion .a-row::after, .motion .a-measure .dimline, .motion .a-measure .ends { transform: scaleX(0); }
+.motion .a-note, .motion .a-row .tag, .motion .a-cta .bracket { opacity: 0; }
+.in .a-cols i { transform: none; transition: transform 900ms var(--ease) calc(var(--c, 0) * 40ms); }
+.in .a-row::before, .in .a-row::after { transform: none; transition: transform 1000ms var(--ease) 350ms; }
+.in .a-measure .dimline, .in .a-measure .ends { transform: none; transition: transform 800ms var(--ease) 700ms; }
+.in .a-note, .in .a-row .tag, .in .a-cta .bracket { opacity: 1; transition: opacity 600ms var(--ease) 800ms; }
+/* after it is built, the drawing steps back but stays — the proof never leaves */
+.built .v-a .stage { --g: .55; }
+.guides-off .v-a .stage { --g: 0; }
+.guides-off .a-row::before, .guides-off .a-row::after, .guides-off .a-row .tag, .guides-off .a-measure .dimline, .guides-off .a-measure .ends, .guides-off .a-cta .bracket, .guides-off .a-note { opacity: 0 !important; transition: opacity 400ms var(--ease) !important; }
+.a-row::before, .a-row::after { opacity: calc(1 - var(--p, 0)); }
+
+/* ── B · Mirror ─────────────────────────────────────────────────────────
+   Claim: Arabic is engineered, not translated. Proof: both scripts sit on one
+   construction grid — same baselines, mirrored around one seam. */
+.v-b .stage { display: grid; grid-template-rows: auto 1fr auto; --t0: 700ms; --t1: 1250ms; }
+.b-top { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.b-seam { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--w-guide); z-index: -1; transform-origin: top; }
+.b-seamtag { position: absolute; left: 50%; top: 104px; translate: -50% 0; display: flex; gap: 14px; background: hsl(var(--stage-ink)); padding: 6px 10px; direction: ltr; }
+.b-mirror { direction: ltr; align-self: center; display: grid; grid-template-columns: 1fr 0 1fr; column-gap: clamp(28px, 4vw, 64px); align-items: baseline; font-size: clamp(2.5rem, 5.6vw, 6.25rem); margin-block: 40px; }
+.b-mirror .en { font-family: "Outfit", sans-serif; font-weight: 300; letter-spacing: -0.035em; line-height: 1.05; text-align: right; direction: ltr; }
+.b-mirror .ar { font-family: var(--f-ar); font-weight: 600; letter-spacing: 0; line-height: 1.3; text-align: left; direction: rtl; font-size: .92em; }
+.b-mirror .en, .b-mirror .ar { display: block; overflow: clip; padding-block: .04em; }
+.b-mirror .en > span, .b-mirror .ar > span { display: inline-block; }
+.b-mirror .other { color: rgb(255 255 255 / .34); }
+.b-mirror .other .iris { background: none; color: rgb(255 255 255 / .5); }
+.b-cell { position: relative; }
+.b-cell i { position: absolute; left: -50vw; width: 100vw; height: 0; border-top: 1px dashed var(--w-guide); bottom: 0; }
+.b-cell b { position: absolute; left: calc(50vw - var(--inset) - 24px); translate: -100% 0; bottom: 6px; white-space: nowrap; font-weight: 400; }
+.b-cell::before { content: "\200b"; }
+.b-foot { display: grid; gap: 24px; }
+@media (min-width: 1024px) { .b-foot { grid-template-columns: minmax(0, 44ch) auto; justify-content: space-between; align-items: end; } }
+@media (max-width: 899.98px) {
+  .b-seam, .b-seamtag, .b-cell { display: none; }
+  .b-mirror { display: block; font-size: clamp(2.5rem, 12vw, 4rem); margin-block: 32px; }
+  .b-mirror .en { text-align: left; }
+  .b-mirror .ar { text-align: right; }
+  .b-mirror .split { display: block; height: 1px; background: var(--w-guide); margin-block: 18px; }
+}
+@media (min-width: 900px) { .b-mirror .split { display: none; } }
+/* arrival: the seam draws, the baselines grow out from it, then both scripts rise */
+.motion .b-seam { transform: scaleY(0); }
+.motion .b-cell i { transform: scaleX(0); }
+.motion .b-seamtag, .motion .b-cell b { opacity: 0; }
+.motion .b-mirror .en > span, .motion .b-mirror .ar > span { translate: 0 110%; }
+.in .b-seam { transform: none; transition: transform 900ms var(--ease); }
+.in .b-cell i { transform: none; transition: transform 1000ms var(--ease) 300ms; }
+.in .b-seamtag, .in .b-cell b { opacity: 1; transition: opacity 600ms var(--ease) 700ms; }
+.in .b-mirror .en > span, .in .b-mirror .ar > span { translate: 0 0; transition: translate 900ms var(--ease) calc(var(--t0) + var(--i, 0) * 110ms); }
+
+/* ── C · Source → Surface ───────────────────────────────────────────────
+   Claim: not assembled. Proof: the hero's own source sits beside what it
+   renders; point at either and its twin lights up. */
+.v-c .stage { display: grid; align-content: end; gap: 40px; --t0: 1300ms; --t1: 1650ms; }
+@media (min-width: 1024px) { .v-c .stage { grid-template-columns: minmax(0, 1fr) minmax(360px, 34vw); align-items: end; align-content: stretch; } }
+.c-copy { display: grid; gap: 26px; align-self: end; }
+.c-copy .h1 { font-size: clamp(2.75rem, 6.2vw, 6.75rem); }
+.c-src { align-self: end; border: 1px solid var(--w-hair); border-radius: var(--radius-panel-sm); background: rgb(255 255 255 / .03); overflow: clip; direction: ltr; }
+.c-src header { display: flex; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--w-hair); }
+.c-src ol { list-style: none; padding: 10px 0; counter-reset: ln; font: 12.5px/1.9 var(--f-mono); }
+.c-src li > span { overflow: hidden; text-overflow: ellipsis; }
+.c-src li { counter-increment: ln; display: grid; grid-template-columns: 36px minmax(0, 1fr); padding-inline-end: 16px; white-space: pre; overflow: hidden; text-overflow: ellipsis; color: rgb(255 255 255 / .8); transition: background 200ms var(--ease); }
+.c-src li::before { content: counter(ln); text-align: right; padding-right: 14px; color: rgb(255 255 255 / .3); }
+.c-src .tg { color: rgb(255 255 255 / .45); } .c-src .at { color: rgb(255 255 255 / .6); } .c-src .st { color: #fff; }
+.c-src li.lit { background: hsl(var(--brand) / .22); }
+.c-src li.lit::before { color: #fff; }
+.c-src footer { padding: 10px 16px; border-top: 1px solid var(--w-hair); display: flex; justify-content: space-between; gap: 12px; }
+[data-src] { transition: outline-color 200ms var(--ease), background 200ms var(--ease); outline: 1px dashed transparent; outline-offset: 6px; border-radius: 4px; }
+[data-src].lit { outline-color: hsl(var(--brand)); }
+@media (max-width: 1023.98px) { .c-src li:nth-child(n+8):not(:last-child) { display: none; } }
+/* arrival: the source writes itself (one pass), then it renders */
+.motion .c-src li { opacity: 0; translate: -8px 0; }
+.motion .c-src header, .motion .c-src footer { opacity: 0; }
+.in .c-src li { opacity: 1; translate: 0 0; transition: opacity 400ms var(--ease) calc(150ms + var(--n, 0) * 80ms), translate 400ms var(--ease) calc(150ms + var(--n, 0) * 80ms); }
+.in .c-src header, .in .c-src footer { opacity: 1; transition: opacity 500ms var(--ease) 100ms; }
+
+/* next section stub + switcher */
+.next { padding: clamp(5rem, 10vh, 8rem) clamp(20px, 3.4vw, 52px); max-width: 1200px; }
+.next .eyebrow { color: hsl(var(--muted)); }
+.next h2 { font-family: var(--f-display); font-weight: 600; font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: -0.03em; margin-top: 18px; max-width: 18ch; }
+.switch { position: fixed; bottom: 16px; left: 50%; translate: -50% 0; z-index: 30; display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: hsl(0 0% 8% / .86); backdrop-filter: blur(12px); color: #fff; font: 13px var(--f-mono); direction: ltr; white-space: nowrap; }
+.switch button { color: inherit; background: none; border: 0; padding: 8px 12px; border-radius: 12px; cursor: pointer; opacity: .7; font-family: var(--f-mono); }
+.switch button[aria-pressed="true"] { background: #fff; color: #000; opacity: 1; }
+.switch .sep { width: 1px; background: rgb(255 255 255 / .2); margin: 6px 4px; }
+@media (max-width: 560px) { .switch button { padding: 8px 8px; font-size: 12px; } .switch .lbl { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="logo" href="#">Altruvex</a>
+  <ul>
+    <li><span data-en>Services</span><span data-ar>الخدمات</span></li>
+    <li><span data-en>Process</span><span data-ar>المنهج</span></li>
+    <li><span data-en>Pricing</span><span data-ar>الأسعار</span></li>
+    <li><span data-en>About</span><span data-ar>من نحن</span></li>
+  </ul>
+  <a class="cta" href="#"><span data-en>Request a Scope</span><span data-ar>اطلب تحديد النطاق</span></a>
+</header>
+
+<main>
+<!-- ═════════ A · Blueprint → Built ═════════ -->
+<section class="v v-a frame">
+  <div class="stage pad">
+    <div class="a-guides" aria-hidden="true">
+      <div class="a-cols"><i style="--c:0"></i><i style="--c:1"></i><i style="--c:2"></i><i style="--c:3"></i><i style="--c:4"></i><i style="--c:5"></i><i style="--c:6"></i><i style="--c:7"></i><i style="--c:8"></i><i style="--c:9"></i><i style="--c:10"></i><i style="--c:11"></i></div>
+    </div>
+    <p class="a-note grid mono" aria-hidden="true"><span data-en>Grid · 12 col · 24 gutter</span><span data-ar>الشبكة · ١٢ عمود · ٢٤ فاصل</span></p>
+    <p class="a-note mirror mono" aria-hidden="true"><span data-en>LTR ⇄ RTL · mirrored, not translated</span><span data-ar>RTL ⇄ LTR · معكوس، لا مترجَم</span></p>
+
+    <div class="a-content">
+      <p class="eyebrow rise" style="--i:0"><span data-en>Web engineering studio · Cairo</span><span data-ar>استوديو هندسة ويب · القاهرة</span></p>
+      <h1 class="h1">
+        <span class="a-row"><span class="line" style="--i:0"><span class="iris"><span data-en>Engineered,</span><span data-ar>نُهندِس،</span></span></span><span class="tag mono" aria-hidden="true"><span data-en>cap · baseline</span><span data-ar>ارتفاع · خط القاعدة</span></span></span>
+        <span class="a-row"><span class="line" style="--i:1"><span class="dim"><span data-en>not assembled.</span><span data-ar>لا نُركِّب.</span></span></span></span>
+      </h1>
+      <div class="a-foot">
+        <div class="a-measure rise" style="--i:1">
+          <span class="ends" aria-hidden="true"></span>
+          <span class="dimline mono" aria-hidden="true"><span data-en>measure · 44 ch</span><span data-ar>طول السطر · ٤٠ حرفاً</span></span>
+          <p class="sub"><span data-en>Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</span><span data-ar>أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</span></p>
+        </div>
+        <div class="ctas a-cta rise" style="--i:2">
+          <span class="bracket mono" aria-hidden="true"><span><span data-en>48 px target</span><span data-ar>هدف ٤٨ بكسل</span></span></span>
+          <a class="btn btn-primary" href="#"><span data-en>Request a Scope</span><span data-ar>اطلب تحديد النطاق</span> <span class="arrow">→</span></a>
+          <a class="btn btn-glass" href="#"><span data-en>See a Real Build</span><span data-ar>شاهد بناءً حقيقياً</span></a>
+        </div>
+      </div>
+    </div>
+    <button class="toggle a-toggle" type="button" aria-pressed="true" id="guides"><span class="dot"></span><span data-en>Construction</span><span data-ar>خطوط البناء</span></button>
+  </div>
+</section>
+
+<!-- ═════════ B · Mirror ═════════ -->
+<section class="v v-b frame">
+  <div class="stage pad">
+    <span class="b-seam" aria-hidden="true"></span>
+    <p class="b-seamtag mono" aria-hidden="true"><span>← LTR</span><span>RTL →</span></p>
+    <div class="b-top">
+      <p class="eyebrow rise" style="--i:0"><span data-en>Web engineering studio · Cairo</span><span data-ar>استوديو هندسة ويب · القاهرة</span></p>
+    </div>
+    <h1 class="b-mirror" id="mirror">
+      <span class="en" lang="en" style="grid-area:1/1;--i:0"><span class="iris">Engineered,</span></span>
+      <span class="b-cell" style="grid-area:1/2" aria-hidden="true"><i></i><b class="mono">baseline 1</b></span>
+      <span class="ar" lang="ar" style="grid-area:1/3;--i:1"><span class="iris">نُهندِس،</span></span>
+      <span class="split" style="grid-area:3/1" aria-hidden="true"></span>
+      <span class="en" lang="en" style="grid-area:2/1;--i:1"><span class="dim">not assembled.</span></span>
+      <span class="b-cell" style="grid-area:2/2" aria-hidden="true"><i></i><b class="mono">baseline 2</b></span>
+      <span class="ar" lang="ar" style="grid-area:2/3;--i:2"><span class="dim">لا نُركِّب.</span></span>
+    </h1>
+    <div class="b-foot">
+      <p class="sub rise" style="--i:1"><span data-en>Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</span><span data-ar>أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</span></p>
+      <div class="ctas rise" style="--i:2">
+        <a class="btn btn-primary" href="#"><span data-en>Request a Scope</span><span data-ar>اطلب تحديد النطاق</span> <span class="arrow">→</span></a>
+        <a class="btn btn-glass" href="#"><span data-en>See a Real Build</span><span data-ar>شاهد بناءً حقيقياً</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════ C · Source → Surface ═════════ -->
+<section class="v v-c frame">
+  <div class="stage pad">
+    <div class="c-copy">
+      <p class="eyebrow rise" style="--i:0" data-src="eyebrow"><span data-en>Web engineering studio · Cairo</span><span data-ar>استوديو هندسة ويب · القاهرة</span></p>
+      <h1 class="h1">
+        <span class="line" style="--i:0"><span class="iris" data-src="l1"><span data-en>Engineered,</span><span data-ar>نُهندِس،</span></span></span>
+        <span class="line" style="--i:1"><span class="dim" data-src="l2"><span data-en>not assembled.</span><span data-ar>لا نُركِّب.</span></span></span>
+      </h1>
+      <p class="sub rise" style="--i:1" data-src="sub"><span data-en>Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</span><span data-ar>أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</span></p>
+      <div class="ctas rise" style="--i:2">
+        <a class="btn btn-primary" href="#" data-src="cta1"><span data-en>Request a Scope</span><span data-ar>اطلب تحديد النطاق</span> <span class="arrow">→</span></a>
+        <a class="btn btn-glass" href="#" data-src="cta2"><span data-en>See a Real Build</span><span data-ar>شاهد بناءً حقيقياً</span></a>
+      </div>
+    </div>
+    <figure class="c-src" aria-label="Source of this hero">
+      <header class="mono"><span>hero.tsx</span><span id="c-lines"></span></header>
+      <ol id="code"></ol>
+      <footer class="mono"><span data-en>Written by hand · no template</span><span data-ar>مكتوب يدوياً · بلا قالب</span><span data-en>point to compare</span><span data-ar>أشر للمقارنة</span></footer>
+    </figure>
+  </div>
+</section>
+
+<section class="next">
+  <p class="eyebrow"><span data-en>01 · The problem</span><span data-ar>٠١ · المشكلة</span></p>
+  <h2><span data-en>Templates stop where your business starts.</span><span data-ar>القوالب تتوقف حيث يبدأ عملك.</span></h2>
+</section>
+<div style="height:60vh"></div>
+</main>
+
+<div class="switch" role="group" aria-label="Prototype">
+  <button data-set="v" data-val="a">A<span class="lbl"> · Blueprint</span></button>
+  <button data-set="v" data-val="b">B<span class="lbl"> · Mirror</span></button>
+  <button data-set="v" data-val="c">C<span class="lbl"> · Source</span></button>
+  <span class="sep"></span>
+  <button data-set="lang">EN/AR</button>
+  <button data-set="theme">◐</button>
+  <button data-set="replay">↺</button>
+</div>
+
+<script>
+(function () {
+  var r = document.documentElement;
+  function lang() { return r.lang === "ar" ? "ar" : "en"; }
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+  // C · the hero's own source, per language. [text, linked element]
+  var T = {
+    en: { dir: "ltr", eb: "Web engineering studio · Cairo", l1: "Engineered,", l2: "not assembled.", sub: "Custom web systems, built in Cairo…", c1: "Request a Scope", c2: "See a Real Build" },
+    ar: { dir: "rtl", eb: "استوديو هندسة ويب · القاهرة", l1: "نُهندِس،", l2: "لا نُركِّب.", sub: "أنظمة ويب مخصصة نبنيها في القاهرة…", c1: "اطلب تحديد النطاق", c2: "شاهد بناءً حقيقياً" }
+  };
+  function tag(open, attrs) { return '<span class="tg">&lt;' + open + '</span>' + (attrs || "") + '<span class="tg">&gt;</span>'; }
+  function close(n) { return '<span class="tg">&lt;/' + n + '&gt;</span>'; }
+  function at(k, v) { return ' <span class="at">' + k + '=</span><span class="st">"' + v + '"</span>'; }
+  function str(s) { return '<span class="st"><bdi>' + esc(s) + '</bdi></span>'; }
+  function buildCode() {
+    var t = T[lang()];
+    var rows = [
+      ["", tag("section", at("lang", lang()) + at("dir", t.dir))],
+      ["eyebrow", "  " + tag("Eyebrow") + str(t.eb) + close("Eyebrow")],
+      ["l1 l2", "  " + tag("h1")],
+      ["l1", "    " + tag("Accent", at("gradient", "iris")) + str(t.l1) + close("Accent")],
+      ["l2", "    " + tag("Dim") + str(t.l2) + close("Dim")],
+      ["l1 l2", "  " + close("h1")],
+      ["sub", "  " + tag("p") + str(t.sub) + close("p")],
+      ["cta1", "  " + tag("Button", at("variant", "brand")) + str(t.c1) + close("Button")],
+      ["cta2", "  " + tag("Button", at("variant", "glass")) + str(t.c2) + close("Button")],
+      ["", close("section")]
+    ];
+    var ol = document.getElementById("code");
+    ol.innerHTML = rows.map(function (row, n) { return '<li data-for="' + row[0] + '" style="--n:' + n + '"><span>' + row[1] + "</span></li>"; }).join("");
+    document.getElementById("c-lines").textContent = rows.length + " lines";
+  }
+  function light(key, on) {
+    if (!key) return;
+    document.querySelectorAll('.c-src li').forEach(function (li) { if ((" " + li.dataset.for + " ").indexOf(" " + key + " ") > -1) li.classList.toggle("lit", on); });
+    key.split(" ").forEach(function (k) { var el = document.querySelector('.v-c [data-src="' + k + '"]'); if (el) el.classList.toggle("lit", on); });
+  }
+  var vc = document.querySelector(".v-c");
+  ["pointerover", "focusin"].forEach(function (ev) { vc.addEventListener(ev, function (e) { var el = e.target.closest("[data-src], .c-src li"); if (el) light(el.dataset.src || el.dataset.for, true); }); });
+  ["pointerout", "focusout"].forEach(function (ev) { vc.addEventListener(ev, function (e) { var el = e.target.closest("[data-src], .c-src li"); if (el) light(el.dataset.src || el.dataset.for, false); }); });
+
+  // B · the page language leads; the other script is the drawn twin.
+  function syncMirror() {
+    var l = lang();
+    document.querySelectorAll("#mirror .en, #mirror .ar").forEach(function (el) {
+      var other = el.getAttribute("lang") !== l;
+      el.classList.toggle("other", other);
+      if (other) el.setAttribute("aria-hidden", "true"); else el.removeAttribute("aria-hidden");
+    });
+  }
+
+  // A · construction toggle + scroll-linked fade (no pin)
+  document.getElementById("guides").addEventListener("click", function () {
+    var on = this.getAttribute("aria-pressed") !== "true";
+    this.setAttribute("aria-pressed", on); r.classList.toggle("guides-off", !on);
+  });
+  var ticking = false;
+  addEventListener("scroll", function () {
+    if (ticking) return; ticking = true;
+    requestAnimationFrame(function () { r.style.setProperty("--p", Math.min(1, scrollY / (innerHeight * .6)).toFixed(3)); ticking = false; });
+  }, { passive: true });
+
+  var builtT;
+  function arrive() {
+    clearTimeout(builtT);
+    r.classList.remove("in", "built");
+    void r.offsetWidth;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { r.classList.add("in"); }); });
+    builtT = setTimeout(function () { r.classList.add("built"); }, r.classList.contains("motion") ? 2900 : 0);
+  }
+  function sync() {
+    document.querySelectorAll('[data-set="v"]').forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.val === r.dataset.v); });
+    var q = new URLSearchParams(location.search); q.set("v", r.dataset.v); q.set("lang", lang()); q.set("theme", r.dataset.theme);
+    history.replaceState(null, "", "?" + q);
+    buildCode(); syncMirror();
+  }
+  document.querySelector(".switch").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var k = b.dataset.set;
+    if (k === "v") r.dataset.v = b.dataset.val;
+    if (k === "lang") { var ar = lang() !== "ar"; r.lang = ar ? "ar" : "en"; r.dir = ar ? "rtl" : "ltr"; }
+    if (k === "theme") r.dataset.theme = r.dataset.theme === "dark" ? "light" : "dark";
+    sync(); if (k !== "theme") { scrollTo(0, 0); arrive(); }
+  });
+  sync();
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(arrive);
+  setTimeout(function () { r.classList.add("in"); }, 3000); // failsafe
+})();
+</script>
+</body>
+</html>

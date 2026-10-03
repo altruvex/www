@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Maintenance month — prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* Values mirror apps/www: bg-background scene, .accent-world-green (globals.css:304/311/411),
+   lib/motion/tokens.ts eases. Copy for the Professional plan comes from
+   packages/pricing-schema (copy/en.ts, copy/ar.ts, maintenance.ts requestsPerCycle = 4). */
+:root {
+  --bg: hsl(0 0% 99%);
+  --fg: hsl(0 0% 6%);
+  --muted: hsl(0 0% 38%);
+  --border: hsl(0 0% 6% / 0.1);
+  --border-strong: hsl(0 0% 6% / 0.2);
+  --accent: hsl(158 64% 30%);
+  --accent-soft: hsl(158 64% 30% / 0.08);
+  --grad: linear-gradient(90deg, hsl(162 70% 34%), hsl(152 62% 38%), hsl(168 72% 36%));
+  --page: hsl(0 0% 94%);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --section-y: clamp(6rem, 11vw, 10rem);
+}
+html[data-theme="dark"] {
+  --bg: hsl(0 0% 7%);
+  --fg: hsl(0 0% 95%);
+  --muted: hsl(0 0% 62%);
+  --border: hsl(0 0% 100% / 0.09);
+  --border-strong: hsl(0 0% 100% / 0.18);
+  --accent: hsl(158 36% 49%);
+  --accent-soft: hsl(158 36% 49% / 0.1);
+  --grad: linear-gradient(90deg, hsl(156 54% 52%), hsl(148 46% 54%), hsl(170 58% 50%));
+  --page: hsl(0 0% 4%);
+}
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--page); color: var(--fg); font-family: Inter, system-ui, sans-serif; overflow-x: clip; }
+[dir="rtl"] body { font-family: Vazirmatn, Inter, sans-serif; }
+h2, h3 { font-family: Outfit, sans-serif; margin: 0; font-weight: 400; }
+[dir="rtl"] :is(h2, h3, .display) { font-family: Vazirmatn, Outfit, sans-serif; letter-spacing: 0 !important; line-height: 1.4 !important; }
+p, ul, ol { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
+.eyebrow { font-family: "Geist Mono", ui-monospace, monospace; font-size: .8125rem; line-height: 1.5; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+[dir="rtl"] .eyebrow { font-family: Vazirmatn, sans-serif; letter-spacing: 0; font-size: .875rem; }
+.wrap { max-width: 84rem; margin: 0 auto; padding-inline: clamp(1.25rem, 4vw, 3rem); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+/* ── prototype chrome ── */
+.bar { position: fixed; inset-block-start: 12px; inset-inline: 12px; z-index: 50; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: hsl(0 0% 12% / .85); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); }
+.seg button { padding: 7px 12px; border-radius: 9px; color: hsl(0 0% 80%); font: 500 13px/1 Inter, sans-serif; }
+.seg button[aria-pressed="true"] { background: #fff; color: hsl(0 0% 8%); }
+.note { position: fixed; inset-block-end: 12px; inset-inline-start: 12px; z-index: 50; max-width: 27rem; padding: 12px 14px; border-radius: 12px; background: hsl(0 0% 12% / .92); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); color: hsl(0 0% 82%); font: 400 12.5px/1.5 Inter, sans-serif; direction: ltr; text-align: left; }
+.note summary { cursor: pointer; color: #fff; font-weight: 500; }
+.stub { background: var(--bg); padding: 16vh 0; border-bottom: 1px solid var(--border); }
+.stub p { font: 300 clamp(1.5rem, 3vw, 2.5rem)/1.1 Outfit, sans-serif; opacity: .3; }
+
+/* ── section frame ── */
+.scene { background: var(--bg); color: var(--fg); padding-block: var(--section-y); }
+.head { display: grid; gap: 1.1rem; max-width: 52rem; margin-bottom: clamp(3.5rem, 6vw, 5.5rem); }
+.title { font-size: clamp(2.25rem, 5vw, 4rem); line-height: 1.04; letter-spacing: -.03em; font-weight: 300; text-wrap: balance; }
+.title .acc { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.desc { font-size: 1.0625rem; line-height: 1.65; color: var(--muted); max-width: 40rem; }
+.honesty { margin-top: 3rem; font-size: .8125rem; line-height: 1.6; color: var(--muted); max-width: 40rem; }
+.rv { opacity: 0; transform: translateY(16px); transition: opacity .7s var(--ease-smooth), transform .7s var(--ease-smooth); transition-delay: calc(var(--i, 0) * 70ms); }
+.rv.in { opacity: 1; transform: none; }
+.lbl { font-family: "Geist Mono", monospace; font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+[dir="rtl"] .lbl { font-family: Vazirmatn, sans-serif; letter-spacing: 0; font-size: .8125rem; }
+.you { font-size: .875rem; color: var(--muted); }
+.you b { font-weight: 500; color: var(--fg); }
+
+/* ── A · five rhythms ── */
+.a-list { border-top: 1px solid var(--border-strong); }
+.a-row { display: grid; gap: .9rem 3rem; padding: clamp(1.75rem, 3vw, 2.5rem) 0; border-bottom: 1px solid var(--border); }
+@media (min-width: 1024px) { .a-row { grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) minmax(0, 6fr); align-items: center; } }
+.a-freq { font: 300 clamp(1.875rem, 3.4vw, 3rem)/1.05 Outfit, sans-serif; letter-spacing: -.03em; }
+.a-row.demand .a-freq { color: var(--accent); }
+.a-what { font-size: 1.0625rem; line-height: 1.5; }
+.a-what .you { display: block; margin-top: .35rem; }
+.strip { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; align-items: center; height: 2rem; }
+.strip i { display: block; height: 10px; border-radius: 2px; background: var(--border-strong); opacity: .6; transition: background .5s var(--ease-smooth), height .5s var(--ease-strong), opacity .5s; transition-delay: calc(var(--d, 0) * 22ms); }
+.in .strip i.on { background: var(--accent); opacity: 1; height: 22px; }
+.strip-cap { margin-top: .5rem; display: flex; justify-content: space-between; font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.slots { display: flex; gap: .6rem; align-items: center; height: 2rem; }
+.slots i { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid var(--accent); transform: scale(.4); opacity: 0; transition: transform .6s var(--ease-strong), opacity .4s; transition-delay: calc(var(--d, 0) * 90ms); }
+.in .slots i { transform: none; opacity: 1; }
+.anyday { height: 2rem; display: flex; align-items: center; }
+.anyday span { flex: 1; border-top: 1.5px dashed var(--border-strong); }
+
+/* ── B · our part / your part ── */
+.b-split { display: grid; border-top: 1px solid var(--border-strong); }
+@media (min-width: 900px) { .b-split { grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); } .b-you { border-inline-start: 1px solid var(--border-strong); padding-inline-start: clamp(2rem, 4vw, 4rem); } .b-we { padding-inline-end: clamp(2rem, 4vw, 4rem); } }
+.b-col { padding-top: 2rem; }
+.b-col > h3 { font-size: clamp(1.5rem, 2.4vw, 2rem); font-weight: 300; letter-spacing: -.02em; margin-top: .6rem; }
+.b-we ol { margin-top: 1.75rem; border-top: 1px solid var(--border); }
+.b-we li { display: grid; grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr); gap: .25rem 2rem; padding: 1.35rem 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.b-we .f { font: 400 1rem/1.4 Outfit, sans-serif; color: var(--accent); }
+[dir="rtl"] .b-we .f { font-family: Vazirmatn, sans-serif; }
+.b-we .w { font-size: 1.0625rem; line-height: 1.5; }
+.b-you ol { margin-top: 1.75rem; border-top: 1px solid var(--border); }
+.b-you li { padding: 1.35rem 0; border-bottom: 1px solid var(--border); }
+.b-you .big { font: 300 clamp(1.5rem, 2.4vw, 2.125rem)/1.2 Outfit, sans-serif; letter-spacing: -.02em; text-wrap: balance; }
+[dir="rtl"] .b-you .big { font-family: Vazirmatn, sans-serif; letter-spacing: 0; line-height: 1.45; }
+.b-you .you { margin-top: .6rem; display: block; }
+.b-you .slots { margin-top: 1rem; }
+.b-quiet { margin-top: 2rem; font-size: .9375rem; line-height: 1.6; color: var(--muted); max-width: 26rem; }
+@media (max-width: 899px) { .b-you { margin-top: 3rem; } .b-we li { grid-template-columns: 1fr; } }
+
+/* ── C · the month as a log ── */
+.c-wrap { display: grid; gap: 3rem; }
+@media (min-width: 1024px) { .c-wrap { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 5rem; } .c-side { position: sticky; top: 18vh; align-self: start; } }
+.c-side .big { font: 300 clamp(3.5rem, 7vw, 6rem)/1 Outfit, sans-serif; letter-spacing: -.04em; color: var(--accent); font-variant-numeric: tabular-nums; }
+[dir="rtl"] .c-side .big { font-family: Vazirmatn, sans-serif; letter-spacing: 0; }
+.c-side p { margin-top: .75rem; font-size: 1rem; line-height: 1.55; color: var(--muted); max-width: 20rem; }
+.c-side .tally { margin-top: 2rem; border-top: 1px solid var(--border); }
+.c-side .tally li { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid var(--border); font-size: .9375rem; }
+.c-side .tally b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.c-log { position: relative; padding-inline-start: 2.25rem; }
+.c-log::before { content: ""; position: absolute; inset-inline-start: 5px; top: .5rem; bottom: .5rem; width: 1px; background: var(--border-strong); }
+.c-fill { position: absolute; inset-inline-start: 5px; top: .5rem; width: 1px; height: calc((100% - 1rem) * var(--p, 0)); background: var(--accent); }
+.c-log li { position: relative; padding: 0 0 2.5rem; }
+.c-log li::before { content: ""; position: absolute; inset-inline-start: calc(-2.25rem + 1px); top: .45rem; width: 9px; height: 9px; border-radius: 999px; background: var(--bg); border: 1.5px solid var(--border-strong); transition: background .4s, border-color .4s; }
+.c-log li.hit::before { background: var(--accent); border-color: var(--accent); }
+.c-log li.you-row::before { background: var(--bg); border-color: var(--accent); }
+.c-day { font-size: .8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.c-log h3 { margin-top: .35rem; font-size: clamp(1.25rem, 1.9vw, 1.625rem); font-weight: 400; letter-spacing: -.015em; line-height: 1.25; text-wrap: balance; }
+.c-log .you { margin-top: .4rem; display: block; max-width: 36rem; line-height: 1.55; }
+.c-tag { display: inline-block; margin-inline-start: .5rem; font-size: .75rem; color: var(--accent); vertical-align: middle; }
+.c-log li.who-you h3 { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) { .rv, .strip i, .slots i { transition: none !important; opacity: 1 !important; transform: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="bar" dir="ltr">
+  <div class="seg" id="opt">
+    <button data-v="a" aria-pressed="true">A · Five rhythms</button>
+    <button data-v="b" aria-pressed="false">B · Our part, your part</button>
+    <button data-v="c" aria-pressed="false">C · The month as a log</button>
+  </div>
+  <div style="display:flex;gap:8px">
+    <div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar" aria-pressed="false">AR</button></div>
+    <div class="seg" id="theme"><button data-v="light" aria-pressed="true">Light</button><button data-v="dark" aria-pressed="false">Dark</button></div>
+  </div>
+</div>
+
+<details class="note" open>
+  <summary id="note-title"></summary>
+  <div id="note-body" style="margin-top:6px"></div>
+</details>
+
+<div class="stub"><div class="wrap"><p id="stub-top"></p></div></div>
+<main class="scene"><div class="wrap" id="root"></div></main>
+<div class="stub"><div class="wrap"><p id="stub-bot"></p></div></div>
+
+<script>
+/* Professional plan (packages/pricing-schema): daily monitoring with backup and uptime review,
+   weekly checks, monthly performance and security report, priority incident handling,
+   up to 4 edit requests a month with priority turnaround. */
+const REQUESTS = 4;
+const REQ_AR = "٤";
+const WEEK_DAYS = [1, 8, 15, 22, 29];
+
+const COPY = {
+  en: {
+    stubTop: "… Maintenance hero (h1, description, CTAs) …",
+    stubBot: "… The three plans, compared …",
+    eyebrow: "What a month looks like",
+    title: "Most of it happens", acc: "without you asking.",
+    desc: "One ordinary month on the Professional plan: what we do on a schedule, what we do if something breaks, and the one thing you do — only when you want to.",
+    honesty: "An example month drawn from the plan's terms — not a record of a real client's month.",
+    youLbl: "You:",
+    nothing: "nothing to do.",
+    day: n => `Day ${n}`,
+    times: n => n === 1 ? "once this month" : `${n} times this month`,
+    rows: {
+      daily:   { f: "Every day",          w: "We watch your site and check last night's backup.", y: "nothing to do." },
+      weekly:  { f: "Every week",         w: "We give the whole site a check-up.",                 y: "nothing to do." },
+      monthly: { f: "Every month",        w: "We write down how the site performed, and how safe it is.", y: "read the report." },
+      broken:  { f: "If something breaks", w: "It goes to the front of our queue.",               y: "tell us if you notice it first." },
+      request: { f: "Whenever you want",  w: "Send us a change — new text, a new image, a small edit. It goes ahead of other work.", y: `up to ${REQUESTS} a month.` },
+    },
+    anyDay: "Any day — no schedule",
+    upTo: `Up to ${REQUESTS}, on any day`,
+    b: {
+      we: "Our part", weH: "Everything that keeps the site up.",
+      you: "Your part", youH: "One thing, and only when you want.",
+      youBig: "Send us a change when you need one.",
+      youSub: `Up to ${REQUESTS} a month — new text, a new image, a small edit. Each goes ahead of other work.`,
+      quiet: "The rest of the month, there is nothing for you to remember. If you spot something wrong before we do, tell us — that is the only other thing we will ever ask.",
+    },
+    c: {
+      big: "30 days", sub: "One example month, day by day. The quiet days are the point.",
+      tally: [["Site watched, backup checked", "30"], ["Full check-ups", "5"], ["Reports", "1"], ["Changes you sent", `2 of ${REQUESTS}`]],
+      log: [
+        { d: "Day 1", h: "Site watched, backup checked.", s: "This happens every day, on its own. You never see it — unless it finds something.", k: "hit", tag: "×30" },
+        { d: "Day 1", h: "The first weekly check-up.", s: "The whole site, looked over. Again on days 8, 15, 22 and 29.", k: "hit", tag: "×5" },
+        { d: "Day 11", h: "You send a change.", s: "For example, a new price list. It goes ahead of other work.", k: "you", tag: `1 of ${REQUESTS}` },
+        { d: "Day 17", h: "Something breaks.", s: "For example, a form stops sending. It goes to the front of our queue — before anything else we are doing.", k: "hit" },
+        { d: "Day 24", h: "You send another change.", s: "A new image on the home page, say.", k: "you", tag: `2 of ${REQUESTS}` },
+        { d: "Day 30", h: "Your report arrives.", s: "How the site performed this month, and how safe it is — written down.", k: "hit", tag: "×1" },
+      ],
+    },
+  },
+  ar: {
+    stubTop: "… مقدمة صفحة الصيانة (العنوان، الوصف، الأزرار) …",
+    stubBot: "… مقارنة الخطط الثلاث …",
+    eyebrow: "كيف يبدو الشهر",
+    title: "معظمه يحدث", acc: "دون أن تطلب.",
+    desc: "شهر عادي على الخطة الاحترافية: ما نفعله بجدول ثابت، وما نفعله إن تعطّل شيء، والشيء الوحيد الذي تفعله أنت — حين تريد فقط.",
+    honesty: "شهر توضيحي مأخوذ من شروط الخطة، وليس سجلاً لشهر عميل حقيقي.",
+    youLbl: "أنت:",
+    nothing: "لا شيء عليك.",
+    day: n => `يوم ${n}`,
+    times: n => n === 1 ? "مرة هذا الشهر" : `${n} مرة هذا الشهر`,
+    rows: {
+      daily:   { f: "كل يوم",        w: "نراقب موقعك ونتأكد من نسخته الاحتياطية.", y: "لا شيء عليك." },
+      weekly:  { f: "كل أسبوع",      w: "نفحص الموقع كله فحصاً دورياً.",           y: "لا شيء عليك." },
+      monthly: { f: "كل شهر",        w: "نكتب لك كيف كان أداء الموقع، ومدى أمانه.", y: "تقرأ التقرير." },
+      broken:  { f: "إن تعطّل شيء",  w: "يتقدّم على كل عمل آخر لدينا.",             y: "أخبرنا إن لاحظته قبلنا." },
+      request: { f: "متى أردت",      w: "أرسل لنا تعديلاً — نصاً جديداً أو صورة أو تعديلاً صغيراً. يُقدَّم على غيره.", y: `حتى ${REQ_AR} في الشهر.` },
+    },
+    anyDay: "أي يوم — بلا جدول",
+    upTo: `حتى ${REQ_AR}، في أي يوم`,
+    b: {
+      we: "ما علينا", weH: "كل ما يُبقي الموقع يعمل.",
+      you: "ما عليك", youH: "شيء واحد، وحين تريد فقط.",
+      youBig: "أرسل لنا تعديلاً حين تحتاجه.",
+      youSub: `حتى ${REQ_AR} في الشهر — نص جديد أو صورة أو تعديل صغير. كل واحد يُقدَّم على غيره.`,
+      quiet: "باقي الشهر لا شيء عليك أن تتذكّره. وإن لاحظت خللاً قبلنا فأخبرنا — هذا هو الشيء الآخر الوحيد الذي سنطلبه منك.",
+    },
+    c: {
+      big: "٣٠ يوماً", sub: "شهر توضيحي، يوماً بيوم. الأيام الهادئة هي المقصود.",
+      tally: [["مراقبة الموقع والتأكد من النسخة", "٣٠"], ["فحوص دورية كاملة", "٥"], ["تقارير", "١"], ["تعديلات أرسلتها", `٢ من ${REQ_AR}`]],
+      log: [
+        { d: "يوم ١", h: "مراقبة الموقع والتأكد من النسخة الاحتياطية.", s: "يحدث هذا كل يوم وحده. لا تراه أبداً — إلا إن وجد شيئاً.", k: "hit", tag: "×٣٠" },
+        { d: "يوم ١", h: "أول فحص أسبوعي.", s: "الموقع كله يُراجَع. ويتكرر في الأيام ٨ و١٥ و٢٢ و٢٩.", k: "hit", tag: "×٥" },
+        { d: "يوم ١١", h: "ترسل تعديلاً.", s: "قائمة أسعار جديدة مثلاً. يُقدَّم على غيره من العمل.", k: "you", tag: `١ من ${REQ_AR}` },
+        { d: "يوم ١٧", h: "شيء يتعطّل.", s: "نموذج تواصل يتوقف عن الإرسال مثلاً. يتقدّم على كل ما نعمل عليه.", k: "hit" },
+        { d: "يوم ٢٤", h: "ترسل تعديلاً آخر.", s: "صورة جديدة في الصفحة الرئيسية مثلاً.", k: "you", tag: `٢ من ${REQ_AR}` },
+        { d: "يوم ٣٠", h: "يصلك التقرير.", s: "كيف كان أداء الموقع هذا الشهر، ومدى أمانه — مكتوباً.", k: "hit", tag: "×١" },
+      ],
+    },
+  },
+};
+
+const NOTES = {
+  a: "Each rhythm is its own row, read in one line: <b>how often → what we do → what you do</b>. The 30-day strip sits beside the sentence and fills in when the row arrives — no shared axis, no legend (REJ-018, CMP-016's second-pass note \"it takes thinking\"). Requests are four open circles, not dots on invented days: they can land on any day.",
+  b: "The page's own promise, drawn: <i>focus on the business, we handle the system</i>. Our column is full; your column holds one thing. The empty space under it is the argument (CMP-097 — explain it simply; RUL-006 — the plans table below already carries the numbers, so this does not repeat them).",
+  c: "An example month told as a short log — six entries, day by day, with the line filling as you scroll (STU-111: scroll as narrative time). A sticky tally on the side keeps the totals in view. The request and breakage entries say \"for example\" and the section note says the month is illustrative.",
+};
+
+const state = { v: "a", lang: "en", theme: "light" };
+const digits = (s, lang) => lang === "ar" ? String(s).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]) : String(s);
+
+function head(c) {
+  return `<header class="head">
+    <p class="eyebrow rv">${c.eyebrow}</p>
+    <h2 class="title rv" style="--i:1">${c.title} <span class="acc">${c.acc}</span></h2>
+    <p class="desc rv" style="--i:2">${c.desc}</p>
+  </header>`;
+}
+
+function strip(days) {
+  let s = "";
+  for (let d = 1; d <= 30; d++) s += `<i class="${days.includes(d) ? "on" : ""}" style="--d:${d}"></i>`;
+  return `<div class="strip">${s}</div>`;
+}
+
+function renderA(c, lang) {
+  const all = Array.from({ length: 30 }, (_, i) => i + 1);
+  const rows = [
+    ["daily", strip(all), all.length],
+    ["weekly", strip(WEEK_DAYS), WEEK_DAYS.length],
+    ["monthly", strip([30]), 1],
+    ["broken", `<div class="anyday"><span></span></div><div class="strip-cap"><span>${c.anyDay}</span></div>`, null],
+    ["request", `<div class="slots">${Array.from({ length: REQUESTS }, (_, i) => `<i style="--d:${i}"></i>`).join("")}</div><div class="strip-cap"><span>${c.upTo}</span></div>`, null],
+  ];
+  return head(c) + `<ol class="a-list">${rows.map(([k, vis, n], i) => {
+    const r = c.rows[k];
+    const cap = n === null ? "" : `<div class="strip-cap"><span>${c.day(digits(1, lang))}</span><span>${digits(c.times(n), lang)}</span><span>${c.day(digits(30, lang))}</span></div>`;
+    return `<li class="a-row rv ${k === "request" || k === "broken" ? "demand" : ""}" style="--i:${i}">
+      <h3 class="a-freq">${r.f}</h3>
+      <p class="a-what">${r.w}<span class="you"><b>${c.youLbl}</b> ${r.y}</span></p>
+      <div aria-hidden="true">${vis}${cap}</div>
+    </li>`;
+  }).join("")}</ol><p class="honesty rv">${c.honesty}</p>`;
+}
+
+function renderB(c) {
+  const we = ["daily", "weekly", "monthly", "broken"];
+  return head(c) + `<div class="b-split">
+    <div class="b-col b-we">
+      <p class="lbl rv">${c.b.we}</p>
+      <h3 class="rv" style="--i:1">${c.b.weH}</h3>
+      <ol>${we.map((k, i) => `<li class="rv" style="--i:${i + 2}"><span class="f">${c.rows[k].f}</span><span class="w">${c.rows[k].w}</span></li>`).join("")}</ol>
+    </div>
+    <div class="b-col b-you">
+      <p class="lbl rv">${c.b.you}</p>
+      <h3 class="rv" style="--i:1">${c.b.youH}</h3>
+      <ol><li class="rv" style="--i:2">
+        <p class="big">${c.b.youBig}</p>
+        <div class="slots" aria-hidden="true">${Array.from({ length: REQUESTS }, (_, i) => `<i style="--d:${i}"></i>`).join("")}</div>
+        <span class="you">${c.b.youSub}</span>
+      </li></ol>
+      <p class="b-quiet rv" style="--i:3">${c.b.quiet}</p>
+    </div>
+  </div><p class="honesty rv">${c.honesty}</p>`;
+}
+
+function renderC(c) {
+  return head(c) + `<div class="c-wrap">
+    <aside class="c-side">
+      <p class="big rv">${c.c.big}</p>
+      <p class="rv" style="--i:1">${c.c.sub}</p>
+      <ul class="tally rv" style="--i:2">${c.c.tally.map(([a, b]) => `<li><span>${a}</span><b>${b}</b></li>`).join("")}</ul>
+    </aside>
+    <div>
+      <ol class="c-log" id="c-log"><span class="c-fill" aria-hidden="true"></span>
+        ${c.c.log.map((e, i) => `<li class="rv ${e.k === "you" ? "who-you you-row" : ""}" data-k="${e.k}" style="--i:0">
+          <p class="c-day">${e.d}${e.tag ? `<span class="c-tag">${e.tag}</span>` : ""}</p>
+          <h3>${e.h}</h3>
+          <span class="you">${e.s}</span>
+        </li>`).join("")}
+      </ol>
+      <p class="honesty rv">${c.honesty}</p>
+    </div>
+  </div>`;
+}
+
+let io;
+function scrub() {
+  const log = document.getElementById("c-log");
+  if (!log) return;
+  const r = log.getBoundingClientRect();
+  const mark = innerHeight * 0.6;
+  const p = Math.max(0, Math.min(1, (mark - r.top) / r.height));
+  log.style.setProperty("--p", p);
+  log.querySelectorAll("li").forEach(li => {
+    const top = li.getBoundingClientRect().top + 8;
+    li.classList.toggle("hit", top < mark && li.dataset.k !== "you");
+  });
+}
+addEventListener("scroll", scrub, { passive: true });
+addEventListener("resize", scrub);
+
+function render() {
+  const c = COPY[state.lang];
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+  document.documentElement.dataset.theme = state.theme;
+  document.getElementById("stub-top").textContent = c.stubTop;
+  document.getElementById("stub-bot").textContent = c.stubBot;
+  document.getElementById("root").innerHTML = { a: renderA, b: renderB, c: renderC }[state.v](c, state.lang);
+  document.getElementById("note-title").textContent = document.querySelector(`#opt [data-v="${state.v}"]`).textContent;
+  document.getElementById("note-body").innerHTML = NOTES[state.v];
+  io?.disconnect();
+  io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }), { rootMargin: "0px 0px -15% 0px" });
+  document.querySelectorAll(".rv").forEach(el => io.observe(el));
+  scrub();
+}
+function seg(id, key) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    state[key] = b.dataset.v;
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", x === b));
+    const y = scrollY; render(); scrollTo(0, y);
+  }));
+}
+seg("opt", "v"); seg("lang", "lang"); seg("theme", "theme");
+render();
+</script>
+</body>
+</html>

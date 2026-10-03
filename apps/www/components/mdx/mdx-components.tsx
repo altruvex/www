@@ -30,7 +30,10 @@ function Mark({
   children?: React.ReactNode;
 }) {
   return (
-    <Accent gradient={gradient} className="font-medium">
+    <Accent
+      gradient={gradient}
+      className="body-accent from-(--grad-body-from) via-(--grad-body-via) to-(--grad-body-to) font-medium"
+    >
       {children}
     </Accent>
   );
@@ -111,7 +114,7 @@ export const mdxComponents: MDXComponents = {
     );
   },
   blockquote: ({ children }) => (
-    <blockquote className="my-6 border-s-2 border-primary ps-6 italic text-primary/75">
+    <blockquote className="my-6 border-s-2 border-primary ps-6 text-primary/75">
       {children}
     </blockquote>
   ),
@@ -119,7 +122,7 @@ export const mdxComponents: MDXComponents = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="rounded-ctl-xs bg-muted px-1.5 py-0.5 font-mono text-sm leading-normal tracking-wider text-sm">
+        <code className="rounded-ctl-xs bg-muted px-1.5 py-0.5 text-sm leading-normal tracking-wider text-sm">
           {children}
         </code>
       );

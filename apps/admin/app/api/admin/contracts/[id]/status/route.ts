@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { prisma } from "@repo/database";
-import { recordActivity, recordChange } from "@/lib/activity-log";
+import { recordChange } from "@/lib/activity-log";
 import { handleContractSigned } from "@/lib/contract-signing";
 import { publicBaseUrl } from "@/lib/public-url";
 import { signLinkExpiry } from "@/lib/sign-window";
@@ -56,24 +56,19 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   const who = label || "the client";
 
   if (input.status === "SIGNED") {
-    const { contract: updated, project } = await handleContractSigned({
+    // The operator is the actor on the contract.signed event itself, with the
+    // manual metadata, so the audit trail never claims the client signed here.
+    const { contract: updated } = await handleContractSigned({
       contractId: contract.id,
       signedByName: input.signedByName!,
       signedIp: null,
       signatureMethod: "UPLOADED_PDF",
       baseUrl: publicBaseUrl(request),
-    });
-
-    // `handleContractSigned` attributes the signature to the client. This line
-    // records which operator entered it, and how it arrived.
-    await recordActivity({
-      action: "contract.signature_recorded",
-      actor,
-      entityType: "contract",
-      entityId: contract.id,
-      entityLabel: label,
-      summary: `Recorded ${input.signedByName}'s signature by hand${channelPhrase(input.channel)}`,
-      metadata: { ...manualMetadata(input), clientId: contract.clientId, projectId: project.id },
+      recordedBy: {
+        actor,
+        summary: `Recorded ${input.signedByName}'s signature by hand${channelPhrase(input.channel)}`,
+        metadata: manualMetadata(input),
+      },
     });
 
     return ok({ contract: updated });
@@ -111,4 +106,4 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   });
 
   return ok({ contract: updated });
-});
+}, { can: ["edit", "contract"] });

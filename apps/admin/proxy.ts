@@ -21,7 +21,7 @@ function withCsp(request: NextRequest, response: NextResponse): NextResponse {
 }
 
 export default async function proxy(request: NextRequest) {
-  const publicPaths = ["/login", "/offline"];
+  const publicPaths = ["/login", "/offline", "/reset-password"];
   // Client-facing surfaces. Each is reached by a single-purpose unguessable
   // token rather than a session, so the admin gate would only ever redirect the
   // client it is meant to serve to a login they cannot pass.

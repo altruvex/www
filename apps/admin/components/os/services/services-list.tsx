@@ -28,6 +28,7 @@ import type { ClientServiceKind } from "@repo/database";
 
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import type { ServiceRow } from "@/lib/client-services";
@@ -191,9 +192,16 @@ export function ServicesList({
                       </span>
                     </p>
                     <p className="truncate text-meta text-muted-foreground">
+                      {showClient && (
+                        <>
+                          <EntityLink type="client" id={service.clientId} muted>
+                            {service.clientLabel}
+                          </EntityLink>
+                          {" · "}
+                        </>
+                      )}
                       {[
                         service.provider,
-                        showClient ? service.clientLabel : null,
                         showProject ? service.projectName : null,
                         service.productName && !showProject ? service.productName : null,
                         service.autoRenew ? "auto-renews at provider" : null,
@@ -212,7 +220,11 @@ export function ServicesList({
                       </span>
                     </p>
                     <p className="text-meta text-subtle-foreground">
-                      {service.firstTermIncluded ? "first term in project fee" : "billed separately"}
+                      {service.firstTermIncluded
+                        ? "first term in project fee"
+                        : service.projectId
+                          ? "each term opens a payment on the project"
+                          : "not on a project — record each term on the payments screen"}
                     </p>
                   </div>
 

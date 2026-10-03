@@ -16,9 +16,6 @@ const LANGUAGES: readonly { code: Locale; nativeName: string }[] = [
   { code: "ar", nativeName: "العربية" },
 ];
 
-// A language's own name is set in that language's face, whatever the page's.
-const arabicFace = "font-[family-name:var(--font-vazirmatn)]";
-
 interface LanguageSwitcherBaseProps {
   /**
    * `inline` — one tap switches to the other language (the header bar).
@@ -61,11 +58,8 @@ export function LanguageSwitcherBase({
         className={className}
         options={LANGUAGES.map((lang) => ({
           value: lang.code,
-          label: (
-            <span className={cn(lang.code === "ar" && arabicFace)}>
-              {lang.nativeName}
-            </span>
-          ),
+          label: lang.nativeName,
+          // Sets the name in its own language's face (globals.css, [lang|="ar"]).
           lang: lang.code,
         }))}
       />
@@ -91,9 +85,7 @@ export function LanguageSwitcherBase({
       )}
     >
       <Globe className="size-4.5 shrink-0" aria-hidden />
-      <span className={cn(target.code === "ar" && arabicFace)}>
-        {target.nativeName}
-      </span>
+      <span>{target.nativeName}</span>
     </button>
   );
 }

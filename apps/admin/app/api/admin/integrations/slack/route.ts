@@ -1,6 +1,3 @@
-import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { getActionCentre } from "@/lib/action-center";
 import {
   SlackNotConfiguredError,
@@ -8,17 +5,9 @@ import {
   postToSlack,
 } from "@/lib/slack";
 import { withAdmin } from "@/lib/with-admin";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
-/**
- * The two things a human asks Slack to do on purpose (§26).
- *
- * Event notifications need no endpoint — they ride the audit trail. What needs
- * one is proving the webhook works, and posting the action centre on demand.
- *
- * Unlike `notifySlack`, these do **not** swallow failures. A button that says
- * "sent" over a webhook that rejected the payload is exactly the lie the
- * honesty rule exists to prevent.
- */
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +41,6 @@ export const POST = withAdmin(async (request, { session }) => {
         { status: 503 },
       );
     }
-    // Slack's own words, not a generic failure: "invalid_payload" and
-    // "no_service" name completely different fixes, and the operator is the one
-    // who has to make them.
     return NextResponse.json(
       {
         success: false,
@@ -68,4 +54,4 @@ export const POST = withAdmin(async (request, { session }) => {
     success: true,
     message: action === "test" ? "Test message posted." : "Action centre posted.",
   });
-});
+}, { can: ["edit", "integration"] });

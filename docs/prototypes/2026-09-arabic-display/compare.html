@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arabic display · Outfit companion test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;600&family=Almarai:wght@300;400;700&family=Readex+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var root = document.documentElement, dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    var q = new URLSearchParams(location.search);
+    if (q.get("theme")) dark = q.get("theme") === "dark";
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* Tokens copied from the live code (packages/ui/src/styles/tokens.css,
+   apps/www/app/globals.css) — nothing picked here. */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted: 0 0% 40%;
+  --hair: hsl(var(--n-8) / 0.1);
+  --guide: hsl(var(--brand) / 0.45);
+}
+[data-theme="dark"] {
+  --background: var(--n-8);
+  --foreground: var(--n-0);
+  --muted: 0 0% 64%;
+  --hair: hsl(var(--n-0) / 0.12);
+  --guide: hsl(214 90% 62% / 0.55);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+body { font-family: "Inter", sans-serif; font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 72px 24px 120px; }
+
+.eyebrow { font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .14em;
+  text-transform: uppercase; color: hsl(var(--muted)); }
+h1.page { font-family: "Outfit", sans-serif; font-weight: 300; font-size: clamp(40px, 5vw, 64px);
+  line-height: 1.04; letter-spacing: -.03em; margin: 12px 0 16px; }
+.lede { max-width: 62ch; color: hsl(var(--muted)); margin: 0; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin: 40px 0 8px;
+  padding: 16px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.controls label { font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .08em;
+  text-transform: uppercase; color: hsl(var(--muted)); margin-inline-end: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--hair); border-radius: 10px; overflow: hidden; }
+.seg button { font: 500 13px "Inter", sans-serif; background: none; color: hsl(var(--foreground));
+  border: 0; padding: 8px 14px; cursor: pointer; }
+.seg button + button { border-inline-start: 1px solid var(--hair); }
+.seg button[aria-pressed="true"] { background: hsl(var(--brand)); color: hsl(var(--n-0)); }
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+.candidate { padding: 56px 0; border-bottom: 1px solid var(--hair); }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; }
+.name { font-family: "Outfit", sans-serif; font-weight: 400; font-size: 28px; letter-spacing: -.02em; margin: 0; }
+.meta { font-family: "Geist Mono", monospace; font-size: 12px; color: hsl(var(--muted)); }
+.meta b { color: hsl(var(--foreground)); font-weight: 500; }
+
+/* Row 1 — one baseline, both scripts: the eye compares tooth height with x-height. */
+.pair { position: relative; margin: 32px 0 8px; font-size: var(--size, 88px); line-height: 1.3;
+  white-space: nowrap; overflow-x: auto; }
+.pair .en { font-family: "Outfit", sans-serif; font-weight: 300; letter-spacing: -.03em; }
+.pair .ar { font-family: var(--ar); font-weight: var(--arw, 400); margin-inline-start: .35em; }
+
+/* Row 2 — the real hero, both languages, as they ship. */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 24px; }
+.cell { border-top: 1px solid var(--hair); padding-top: 20px; }
+.cell .tag { font-family: "Geist Mono", monospace; font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: hsl(var(--muted)); margin-bottom: 12px; }
+.hero-en { font-family: "Outfit", sans-serif; font-weight: 300; font-size: clamp(40px, 5.2vw, 72px);
+  line-height: 1.02; letter-spacing: -.035em; margin: 0; }
+.hero-ar { font-family: var(--ar); font-weight: var(--arw, 400); font-size: clamp(40px, 5.2vw, 72px);
+  line-height: 1.3; margin: 0; }
+.dim { color: hsl(var(--muted)); }
+.title-ar { font-family: var(--ar); font-weight: 600; font-size: clamp(26px, 3.2vw, 44px);
+  line-height: 1.28; margin: 28px 0 10px; }
+.body-ar { font-family: "Vazirmatn", sans-serif; line-height: 1.9; color: hsl(var(--muted)); max-width: 52ch; margin: 0; }
+
+.verdict { margin-top: 48px; font-size: 15px; color: hsl(var(--muted)); max-width: 72ch; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="eyebrow">Prototype · Arabic display companion for Outfit</div>
+  <h1 class="page">Which Arabic face stands next to Outfit?</h1>
+  <p class="lede">Three Arabic display faces, each set against the live Outfit 300 hero. The first row puts both scripts on one baseline at the same size — the Arabic should read as the same size as the English. Body copy stays Vazirmatn in every column. Ratio = Arabic tooth height ÷ Outfit x-height, measured from the font files (1.00 = equal).</p>
+
+  <div class="controls" role="group" aria-label="Controls">
+    <div><label id="lw">Arabic weight</label>
+      <span class="seg" role="group" aria-labelledby="lw">
+        <button type="button" data-w="300">Light</button>
+        <button type="button" data-w="400" aria-pressed="true">Regular</button>
+        <button type="button" data-w="600">Semibold</button>
+      </span></div>
+    <div><label id="ls">Pair size</label>
+      <span class="seg" role="group" aria-labelledby="ls">
+        <button type="button" data-s="64px">64</button>
+        <button type="button" data-s="88px" aria-pressed="true">88</button>
+        <button type="button" data-s="120px">120</button>
+      </span></div>
+    <div><label id="lt">Theme</label>
+      <span class="seg" role="group" aria-labelledby="lt">
+        <button type="button" data-t="light">Light</button>
+        <button type="button" data-t="dark">Dark</button>
+      </span></div>
+  </div>
+
+  <section class="candidate" style="--ar: 'Vazirmatn', sans-serif">
+    <div class="head"><h2 class="name">Vazirmatn <span class="dim">— current</span></h2>
+      <div class="meta">ratio <b>0.75</b> · OFL · variable 100–900 · Saber Rastikerdar</div></div>
+    <div class="pair"><span class="en">Engineered,</span><span class="ar" lang="ar" dir="rtl">نُهندِس،</span></div>
+    <div class="grid">
+      <div class="cell"><div class="tag">EN hero · Outfit 300</div>
+        <p class="hero-en">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="cell" dir="rtl" lang="ar"><div class="tag" dir="ltr">AR hero · Vazirmatn</div>
+        <p class="hero-ar">نُهندِس، <span class="dim">لا نُركِّب.</span></p>
+        <p class="title-ar">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="body-ar">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </div>
+  </section>
+
+  <section class="candidate" style="--ar: 'Almarai', sans-serif">
+    <div class="head"><h2 class="name">Almarai</h2>
+      <div class="meta">ratio <b>1.00</b> · OFL · static 300/400/700/800 · Boutros Fonts</div></div>
+    <div class="pair"><span class="en">Engineered,</span><span class="ar" lang="ar" dir="rtl">نُهندِس،</span></div>
+    <div class="grid">
+      <div class="cell"><div class="tag">EN hero · Outfit 300</div>
+        <p class="hero-en">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="cell" dir="rtl" lang="ar"><div class="tag" dir="ltr">AR hero · Almarai</div>
+        <p class="hero-ar">نُهندِس، <span class="dim">لا نُركِّب.</span></p>
+        <p class="title-ar">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="body-ar">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </div>
+  </section>
+
+  <section class="candidate" style="--ar: 'Readex Pro', sans-serif">
+    <div class="head"><h2 class="name">Readex Pro</h2>
+      <div class="meta">ratio <b>0.95</b> · OFL · variable 160–700 · Thomas Jockin, Nadine Chahine</div></div>
+    <div class="pair"><span class="en">Engineered,</span><span class="ar" lang="ar" dir="rtl">نُهندِس،</span></div>
+    <div class="grid">
+      <div class="cell"><div class="tag">EN hero · Outfit 300</div>
+        <p class="hero-en">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="cell" dir="rtl" lang="ar"><div class="tag" dir="ltr">AR hero · Readex Pro</div>
+        <p class="hero-ar">نُهندِس، <span class="dim">لا نُركِّب.</span></p>
+        <p class="title-ar">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="body-ar">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </div>
+  </section>
+
+  <p class="verdict">What to look for: in the first row of each block, does the Arabic word read as the same size and the same weight as "Engineered,"? Then check the section title (600) and whether the display face sits comfortably above Vazirmatn body text. Almarai has no weight between 400 and 700, so "Semibold" shows its 700.</p>
+</main>
+<script>
+  (function () {
+    var root = document.documentElement;
+    function press(group, btn) {
+      group.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+    }
+    document.querySelectorAll("[data-w]").forEach(function (b) {
+      b.addEventListener("click", function () { root.style.setProperty("--arw", b.dataset.w); press(b.parentNode, b); });
+    });
+    document.querySelectorAll("[data-s]").forEach(function (b) {
+      b.addEventListener("click", function () { root.style.setProperty("--size", b.dataset.s); press(b.parentNode, b); });
+    });
+    var t = root.getAttribute("data-theme");
+    document.querySelectorAll("[data-t]").forEach(function (b) {
+      if (b.dataset.t === t) b.setAttribute("aria-pressed", "true");
+      b.addEventListener("click", function () { root.setAttribute("data-theme", b.dataset.t); press(b.parentNode, b); });
+    });
+  })();
+</script>
+</body>
+</html>

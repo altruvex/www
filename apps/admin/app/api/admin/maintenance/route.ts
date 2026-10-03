@@ -1,27 +1,28 @@
 import { MAINTENANCE_PLAN_IDS } from "@repo/pricing-schema";
-import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import {
+  REQUEST_STATUSES,
+  SUBSCRIPTION_STATUSES,
+  changeBillingInterval,
+  changePlan,
   createSubscription,
   listSubscriptions,
-  REQUEST_STATUSES,
+  recordPeriodInvoice,
   renewSubscription,
   setAutoRenew,
+  setQuotedMonthlyPrice,
   setRequestBilling,
   setRequestStatus,
   setSubscriptionStatus,
-  SUBSCRIPTION_STATUSES,
 } from "@/lib/maintenance-admin";
-import { userActor } from "@/lib/activity-log";
-import { requireAdminSession } from "@/lib/require-admin";
+import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
 /** Admin-only management of maintenance retainers and the requests on them. */
 
 export const dynamic = "force-dynamic";
 
-const unauthorized = () =>
-  NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+const billingInterval = z.enum(["MONTHLY", "QUARTERLY", "ANNUAL"]);
 
 const patchSchema = z.discriminatedUnion("action", [
   z.object({
@@ -44,112 +45,98 @@ const patchSchema = z.discriminatedUnion("action", [
     id: z.string().min(1),
   }),
   z.object({
+    action: z.literal("subscription-record-invoice"),
+    id: z.string().min(1),
+  }),
+  z.object({
+    action: z.literal("subscription-quote"),
+    id: z.string().min(1),
+    /** Null clears the quote; the retainer then cannot be invoiced until one is set. */
+    quotedMonthlyPrice: z.number().int().positive().nullable(),
+  }),
+  z.object({
     action: z.literal("subscription-auto-renew"),
     id: z.string().min(1),
     autoRenew: z.boolean(),
+  }),
+  z.object({
+    action: z.literal("subscription-interval"),
+    id: z.string().min(1),
+    billingInterval,
+  }),
+  z.object({
+    action: z.literal("subscription-plan"),
+    id: z.string().min(1),
+    planId: z.enum(MAINTENANCE_PLAN_IDS),
   }),
 ]);
 
 const postSchema = z.object({
   clientId: z.string().min(1),
   planId: z.enum(MAINTENANCE_PLAN_IDS),
-  billingInterval: z.enum(["MONTHLY", "QUARTERLY", "ANNUAL"]).default("MONTHLY"),
+  billingInterval: billingInterval.default("MONTHLY"),
+  quotedMonthlyPrice: z.number().int().positive().optional(),
 });
 
-export async function GET(request: NextRequest) {
-  if (!(await requireAdminSession(request))) return unauthorized();
+export const GET = withAdmin(async () => ok({ subscriptions: await listSubscriptions() }), {
+  can: ["view", "payment"],
+});
 
-  try {
-    return NextResponse.json({
-      success: true,
-      subscriptions: await listSubscriptions(),
-    });
-  } catch (error) {
-    console.error("Maintenance list failed", error);
-    return NextResponse.json(
-      { success: false, message: "Maintenance data could not be loaded." },
-      { status: 500 },
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  const session = await requireAdminSession(request);
-  if (!session) return unauthorized();
-
+export const POST = withAdmin(async (request, { session, actor }) => {
   const parsed = postSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, message: "Pick a client and a plan." },
-      { status: 400 },
-    );
-  }
+  if (!parsed.success) throw badRequest("Pick a client and a plan.");
 
-  const actor = session.user.email ?? session.user.id ?? null;
+  const by = session.user.email ?? session.user.id ?? null;
   const result = await createSubscription(
     parsed.data.clientId,
     parsed.data.planId,
-    actor,
+    by,
     parsed.data.billingInterval,
-    userActor(session),
+    actor,
+    { quotedMonthlyPrice: parsed.data.quotedMonthlyPrice },
   );
+  if (!result.ok) throw conflict(result.message);
+  return ok({ message: result.message, id: result.id });
+}, { can: ["create", "payment"] });
 
-  return NextResponse.json(
-    { success: result.ok, message: result.message, id: result.id },
-    { status: result.ok ? 200 : 409 },
-  );
-}
+export const PATCH = withAdmin(async (request, { session, actor }) => {
+  // A body that fails the schema is answered 400 by `withAdmin`.
+  const body = await readJson(request, patchSchema);
+  const by = session.user.email ?? session.user.id ?? null;
 
-export async function PATCH(request: NextRequest) {
-  const session = await requireAdminSession(request);
-  if (!session) return unauthorized();
-
-  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json(
-      { success: false, message: "Invalid update." },
-      { status: 400 },
-    );
-  }
-
-  const body = parsed.data;
-  const actor = session.user.email ?? session.user.id ?? null;
-
-  const audit = userActor(session);
-
-  try {
-    // A renewal is the one action here that can fail for a *business* reason
-    // rather than a missing row, so it returns its own message instead of being
-    // flattened into the boolean the others share.
-    if (body.action === "subscription-renew") {
-      const result = await renewSubscription(body.id, actor, audit);
-      return NextResponse.json(
-        { success: result.ok, message: result.message },
-        { status: result.ok ? 200 : 409 },
-      );
+  // A renewal, a plan or interval change and a quote can fail for a *business*
+  // reason rather than a missing row, so they return their own message instead
+  // of being flattened into the boolean the others share.
+  switch (body.action) {
+    case "subscription-renew":
+    case "subscription-record-invoice":
+    case "subscription-quote":
+    case "subscription-interval":
+    case "subscription-plan": {
+      const result =
+        body.action === "subscription-renew"
+          ? await renewSubscription(body.id, by, actor, new Date())
+          : body.action === "subscription-record-invoice"
+            ? await recordPeriodInvoice(body.id, by, actor)
+            : body.action === "subscription-quote"
+              ? await setQuotedMonthlyPrice(body.id, body.quotedMonthlyPrice, by, actor)
+              : body.action === "subscription-interval"
+                ? await changeBillingInterval(body.id, body.billingInterval, by, actor)
+                : await changePlan(body.id, body.planId, by, actor);
+      if (!result.ok) throw conflict(result.message);
+      return ok({ message: result.message });
     }
-
-    const ok =
-      body.action === "request-status"
-        ? await setRequestStatus(body.id, body.status, actor, audit)
-        : body.action === "request-billing"
-          ? await setRequestBilling(body.id, body.countsToCap, actor, audit)
-          : body.action === "subscription-auto-renew"
-            ? await setAutoRenew(body.id, body.autoRenew, actor, audit)
-            : await setSubscriptionStatus(body.id, body.status, actor, audit);
-
-    if (!ok) {
-      return NextResponse.json(
-        { success: false, message: "That record no longer exists." },
-        { status: 404 },
-      );
+    default: {
+      const found =
+        body.action === "request-status"
+          ? await setRequestStatus(body.id, body.status, by, actor)
+          : body.action === "request-billing"
+            ? await setRequestBilling(body.id, body.countsToCap, by, actor)
+            : body.action === "subscription-auto-renew"
+              ? await setAutoRenew(body.id, body.autoRenew, by, actor)
+              : await setSubscriptionStatus(body.id, body.status, by, actor);
+      if (!found) throw notFound("That record no longer exists.");
+      return ok({});
     }
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Maintenance update failed", error);
-    return NextResponse.json(
-      { success: false, message: "The change could not be saved." },
-      { status: 500 },
-    );
   }
-}
+}, { can: ["edit", "payment"] });

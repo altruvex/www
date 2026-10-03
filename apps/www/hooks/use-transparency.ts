@@ -1,12 +1,14 @@
 import { useCallback, useState } from "react";
 import {
   calculateEstimate,
-  resolveTierToken,
-  TIERS,
+  DEFAULT_PRICING,
+  SCOPE_NOTE_IDS,
   type BrandIdentityId,
   type ComplexityId,
   type ContentReadinessId,
   type EstimateResult,
+  type ResolvedPricing,
+  type ScopeNoteId,
   type ServiceId,
   type TimelineId,
 } from "@repo/pricing-schema";
@@ -34,41 +36,33 @@ interface TransparencyState {
   contentReadiness: ContentReadiness;
   projectType: ProjectType;
   timeline: Timeline;
+  /**
+   * "What does it need?" — recorded with the request for scope review and
+   * never passed to the engine. Kept in schema order.
+   */
+  scopeNotes: readonly ScopeNoteId[];
 }
 
 interface UseTransparencyOptions {
-  initialTier?: string | null;
   initialProjectType?: ProjectType;
-}
-
-/**
- * Deep links from /pricing land here with a tier already chosen.
- *
- * The band is read off the tier's own schema entry rather than a second map,
- * so a card and the estimator it links to cannot disagree about which cell the
- * visitor was promised.
- */
-function complexityForTierToken(token: string): NonNullable<Complexity> | null {
-  const tierId = resolveTierToken(token);
-  return tierId === null ? null : TIERS[tierId].complexityId;
+  /** The resolved pricing the page read; defaults to the shipped figures. */
+  pricing?: ResolvedPricing;
 }
 
 export function useTransparency({
-  initialTier = null,
   initialProjectType = null,
+  pricing = DEFAULT_PRICING,
 }: UseTransparencyOptions = {}) {
-  const presetComplexity =
-    initialTier !== null ? complexityForTierToken(initialTier) : null;
-
   const createInitialState = useCallback(
     (): TransparencyState => ({
       brandIdentity: null,
-      complexity: presetComplexity,
+      complexity: null,
       contentReadiness: null,
       projectType: initialProjectType,
       timeline: null,
+      scopeNotes: [],
     }),
-    [presetComplexity, initialProjectType],
+    [initialProjectType],
   );
 
   const [state, setState] = useState<TransparencyState>(createInitialState);
@@ -88,6 +82,17 @@ export function useTransparency({
   const setTimeline = useCallback((v: Timeline) => {
     setState((prev) => ({ ...prev, timeline: v }));
   }, []);
+  const toggleScopeNote = useCallback((id: ScopeNoteId) => {
+    setState((prev) => {
+      const on = prev.scopeNotes.includes(id);
+      return {
+        ...prev,
+        scopeNotes: SCOPE_NOTE_IDS.filter((n) =>
+          n === id ? !on : prev.scopeNotes.includes(n),
+        ),
+      };
+    });
+  }, []);
 
   const reset = useCallback(() => {
     setState(createInitialState());
@@ -102,14 +107,17 @@ export function useTransparency({
   const getEstimate = useCallback((): EstimateResult | null => {
     if (!state.projectType || !state.complexity) return null;
 
-    return calculateEstimate({
-      serviceId: state.projectType,
-      complexityId: state.complexity,
-      timeline: state.timeline ?? "standard",
-      brandIdentity: state.brandIdentity,
-      contentReadiness: state.contentReadiness,
-    });
-  }, [state]);
+    return calculateEstimate(
+      {
+        serviceId: state.projectType,
+        complexityId: state.complexity,
+        timeline: state.timeline ?? "standard",
+        brandIdentity: state.brandIdentity,
+        contentReadiness: state.contentReadiness,
+      },
+      pricing,
+    );
+  }, [pricing, state]);
 
   return {
     brandIdentity: state.brandIdentity,
@@ -117,11 +125,13 @@ export function useTransparency({
     contentReadiness: state.contentReadiness,
     projectType: state.projectType,
     timeline: state.timeline,
+    scopeNotes: state.scopeNotes,
     setBrandIdentity,
     setComplexity,
     setContentReadiness,
     setProjectType,
     setTimeline,
+    toggleScopeNote,
     reset,
     getEstimate,
   };

@@ -57,7 +57,7 @@ export const GRADIENT_VIA_HSL = {
   brand: { light: "224 84% 50%", dark: "222 92% 66%" },
   sunset: { light: "10 86% 54%", dark: "12 92% 64%" },
   ember: { light: "24 92% 48%", dark: "26 96% 60%" },
-  mint: { light: "168 70% 38%", dark: "170 50% 52%" },
+  mint: { light: "168 70% 36%", dark: "170 50% 52%" },
   forest: { light: "152 62% 38%", dark: "148 46% 54%" },
 } as const;
 

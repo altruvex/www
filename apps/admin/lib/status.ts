@@ -149,6 +149,7 @@ export const paymentMilestone: Registry = {
   FINAL_20: { label: "Final · 20%", tone: "info" },
   CHANGE_REQUEST: { label: "Change request", tone: "info" },
   SERVICE_RENEWAL: { label: "Service term", tone: "info", hint: "One term of a domain, hosting or email service" },
+  RETAINER_RENEWAL: { label: "Retainer period", tone: "info", hint: "One billing period of a maintenance retainer" },
   OTHER: { label: "Other", tone: "neutral" },
 };
 
@@ -319,9 +320,9 @@ export const taskStatus: Registry = {
 };
 
 /* -- Subscription lifecycle -------------------------------------------------
-   Mirrors STATUS_TONE in lib/subscription-lifecycle.ts. That module is
+   Keyed by the statuses lib/subscription-lifecycle.ts derives. That module is
    isomorphic (it has no Tailwind and no registry) and this one is the single
-   place tone becomes colour, so the two are kept deliberately in step. */
+   place a status becomes a colour, so the two are kept deliberately in step. */
 
 export const subscriptionStatus: Registry = {
   TRIALING: { label: "Trial", tone: "info" },
@@ -355,8 +356,19 @@ export const clientServiceState: Registry = {
   cancelled: { label: "Cancelled", tone: "neutral" },
 };
 
+/* -- Notifications --------------------------------------------------------- */
+
+export const notificationType: Registry = {
+  NEW_CONTACT: { label: "New contact", tone: "info" },
+  NEW_MEETING: { label: "Meeting request", tone: "progress" },
+  STATUS_CHANGE: { label: "Status change", tone: "neutral" },
+  ASSIGNMENT: { label: "Assigned to you", tone: "warning" },
+  RENEWAL_DUE: { label: "Renewal due", tone: "danger" },
+};
+
 export const REGISTRIES = {
   clientServiceState,
+  notificationType,
   submissionStatus,
   priority,
   proposalStatus,

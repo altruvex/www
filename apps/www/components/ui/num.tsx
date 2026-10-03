@@ -1,6 +1,6 @@
 "use client";
 
-import { localizeNumbers } from "@/lib/utils/number";
+import { formatIndex, localizeNumbers } from "@/lib/utils/number";
 import { useLocale } from "next-intl";
 
 interface NumProps {
@@ -10,7 +10,12 @@ interface NumProps {
 
 export function Num({ value, pad }: NumProps) {
   const locale = useLocale();
-  const text = pad ? String(value).padStart(pad, "0") : String(value);
-
-  return <>{localizeNumbers(text, locale)}</>;
+  // Padding follows formatIndex: Arabic index labels carry no leading zero.
+  return (
+    <>
+      {pad
+        ? formatIndex(value, pad, locale)
+        : localizeNumbers(String(value), locale)}
+    </>
+  );
 }

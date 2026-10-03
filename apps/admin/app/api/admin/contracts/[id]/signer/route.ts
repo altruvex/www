@@ -74,4 +74,4 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
       signerEmail: updated.signerEmail,
     },
   });
-});
+}, { can: ["edit", "contract"] });

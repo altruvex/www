@@ -6,7 +6,7 @@ import { Container } from "@/components/shared/container";
 import { ContentsRail, jumpToSection } from "@/components/shared/contents-rail";
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { localizeNumbers } from "@/lib/utils/number";
+import { formatIndex } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
@@ -164,7 +164,7 @@ export function LegalSection({
         aria-hidden
         className="mb-3 text-sm tabular-nums text-local-accent-text ltr:font-mono"
       >
-        {localizeNumbers(String(number).padStart(2, "0"), locale)}
+        {formatIndex(number, 2, locale)}
       </p>
       <h2
         id={`${id}-title`}

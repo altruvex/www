@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { prisma } from "@repo/database";
+import { Button } from "@repo/ui";
 import { Globe } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
+import { IntakeTabs } from "../leads/intake-tabs";
 import { SubmissionsTable, type SubmissionRow } from "./submissions-table";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +29,7 @@ export default async function SubmissionsPage() {
       referrer: true,
       submittedAt: true,
       firstViewedAt: true,
-      client: { select: { id: true } },
+      client: { select: { id: true, name: true, company: true } },
     },
     orderBy: { submittedAt: "desc" },
   });
@@ -49,6 +52,7 @@ export default async function SubmissionsPage() {
     submittedAt: s.submittedAt.toISOString(),
     viewed: Boolean(s.firstViewedAt),
     clientId: s.client?.id ?? null,
+    clientName: s.client ? s.client.company || s.client.name || "Unnamed client" : null,
   }));
 
   const unread = rows.filter((r) => !r.viewed).length;
@@ -58,6 +62,7 @@ export default async function SubmissionsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Form submissions"
+        tabs={<IntakeTabs active="submissions" />}
         description="The raw record of what the website received: exact words, UTM parameters, referrer, locale. Converting one into a lead never edits or deletes it."
       />
 
@@ -77,7 +82,12 @@ export default async function SubmissionsPage() {
         <EmptyState
           icon={Globe}
           title="No submissions received"
-          body="Every contact, service-inquiry and project-request form on the public site posts here. The payload is stored exactly as it arrived — attribution and all — before anything is done with it."
+          body="Every contact, service-inquiry and project-request form on the public site posts here. The payload is stored exactly as it arrived — attribution and all — before anything is done with it. Until one arrives, the public estimator is the other way people reach you."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/transparency">Review estimator leads</Link>
+            </Button>
+          }
         />
       ) : (
         <SubmissionsTable rows={rows} />

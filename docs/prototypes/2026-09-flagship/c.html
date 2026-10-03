@@ -1,0 +1,875 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · The site, labelled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Theme before paint: follow the OS unless a toggle (or ?theme=) says otherwise.
+  (function () {
+    var dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    try {
+      var q = new URLSearchParams(location.search).get("theme");
+      if (q === "dark" || q === "light") dark = q === "dark";
+    } catch (e) {}
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* ── Tokens — shell copied from docs/prototypes/2026-09-problem-section/c.html
+   packages/ui/src/styles/tokens.css  :root / .dark
+   apps/www/app/globals.css  .accent-world-green / .dark .accent-world-green (~300-311) */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
+
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted-foreground: 0 0% 40%;
+  --surface: 0 0% 94%;
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --control-edge: hsl(var(--foreground) / 0.45);
+
+  /* accent-world-green (light) */
+  --local-accent: hsl(158 64% 30%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-vazirmatn: "Vazirmatn", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  --section-y-top: clamp(5rem, 10vh, 8rem);
+  --section-y-bottom: clamp(5rem, 14vh, 10rem);
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --d-fast: 200ms;
+  --d-mid: 320ms;
+  --d-draw: 600ms;
+  --draw-step: 40ms;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --muted-foreground: 0 0% 58%;
+  --surface: 0 0% 11%;
+  --s-border: hsl(var(--n-0) / 0.1);
+
+  /* .dark .accent-world-green */
+  --local-accent: hsl(158 36% 49%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 400ms var(--ease), color 400ms var(--ease);
+}
+[dir="rtl"] body { font-family: var(--font-vazirmatn); }
+
+.container {
+  width: 100%;
+  max-width: 1408px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+@media (max-width: 420px)  { .container { padding-inline: 16px; } }
+@media (min-width: 640px)  { .container { padding-inline: 32px; } }
+@media (min-width: 768px)  { .container { padding-inline: 48px; } }
+@media (min-width: 1024px) { .container { padding-inline: 64px; } }
+
+/* ── Prototype chrome (always LTR, physical sides) ───────────────────── */
+.proto-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  padding: 72px 16px 0 16px;
+  text-align: left;
+}
+@media (min-width: 640px) { .proto-label { padding: 20px 260px 0 20px; } }
+
+.toolbar { position: fixed; top: 12px; right: 12px; z-index: 50; display: flex; gap: 8px; }
+.seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  background: hsl(var(--background));
+}
+.seg button {
+  font: 500 12px/1 var(--font-inter);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 12px;
+  min-width: 44px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: color var(--d-fast) var(--ease), background-color var(--d-fast) var(--ease);
+}
+.seg button[aria-pressed="true"] { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+/* ── House type ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+[dir="rtl"] .eyebrow { font-family: var(--font-vazirmatn); letter-spacing: 0; text-transform: none; }
+
+.block-title {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(28px, 3.6vw, 46px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+[dir="rtl"] .block-title { font-family: var(--font-vazirmatn); letter-spacing: 0; line-height: 1.35; }
+
+.hl { font-family: var(--font-serif); font-style: italic; font-weight: 300; }
+[dir="rtl"] .hl { font-family: var(--font-vazirmatn); font-style: normal; font-weight: 700; }
+
+.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+[dir="rtl"] .num { font-family: var(--font-vazirmatn); }
+
+/* ── Context stubs ───────────────────────────────────────────────────── */
+.stub-above { padding-top: 48px; padding-bottom: 56px; }
+.stub-above p { font-size: 0.9375rem; color: hsl(var(--muted-foreground)); }
+.stub-above .ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.stub-above .ghost {
+  font: 500 14px/1 var(--font-inter);
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  color: hsl(var(--foreground));
+}
+[dir="rtl"] .stub-above .ghost { font-family: var(--font-vazirmatn); }
+
+.stub-below {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: 40vh;
+}
+.stub-below .block-title { color: hsl(var(--foreground) / 0.35); }
+
+/* ── The block ───────────────────────────────────────────────────────── */
+.flagship {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: var(--section-y-bottom);
+}
+
+.heading-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem 3rem;
+  margin-bottom: 3rem;
+}
+@media (min-width: 1024px) { .heading-row { margin-bottom: 4.5rem; } }
+.heading { display: flex; flex-direction: column; gap: 0.75rem; max-width: 52rem; min-width: 0; }
+.problem-line {
+  margin-top: 0.5rem;
+  max-width: 56ch;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+[dir="rtl"] .problem-line { line-height: 1.9; }
+
+/* "Live — you're on it": the one claim that needs no source. */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 44px;
+  padding-inline: 16px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color var(--d-fast) var(--ease);
+}
+[dir="rtl"] .live { font-family: var(--font-vazirmatn); letter-spacing: 0; font-size: 0.875rem; }
+.live .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--local-accent); flex: none; }
+.live:hover { border-color: hsl(var(--foreground)); }
+.live:focus-visible, .callout:focus-visible, .read:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 4px; }
+
+/* ── Anatomy: schematic (start) + callouts (end) ─────────────────────── */
+.anatomy { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 2.5rem; }
+@media (min-width: 1024px) {
+  .anatomy {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: clamp(4rem, 7vw, 7rem);
+    row-gap: 2.5rem;
+  }
+}
+
+.schematic-wrap { position: relative; min-width: 0; }
+.schematic { display: block; width: 100%; height: auto; overflow: visible; }
+
+.schematic path, .schematic .ink {
+  fill: none;
+  stroke: hsl(var(--foreground) / 0.7);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--d-mid) var(--ease), stroke-width var(--d-mid) var(--ease), opacity var(--d-mid) var(--ease);
+}
+.schematic text {
+  fill: hsl(var(--foreground) / 0.7);
+  stroke: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.schematic text.ar { font-family: var(--font-vazirmatn); font-size: 13px; }
+.schematic path.part { stroke: var(--local-accent); }
+
+/* Undrawn: dash fully offset; opacity steps (never fades) at each path's delay. */
+.js .schematic path, .js .schematic text { opacity: 0; }
+/* Non-scaling strokes dash in screen space, so a pathLength=1 dash covers only
+   1/scale of the path. --s (drawn width / viewBox width, set in JS) corrects it. */
+.js .schematic path { stroke-dasharray: var(--s, 1) var(--s, 1); stroke-dashoffset: var(--s, 1); }
+.js .anatomy.drawn .schematic path {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition:
+    stroke-dashoffset var(--d-draw) var(--ease) calc(var(--i) * var(--draw-step)),
+    opacity 0s linear calc(var(--i) * var(--draw-step)),
+    stroke var(--d-mid) var(--ease), stroke-width var(--d-mid) var(--ease), stroke-opacity var(--d-mid) var(--ease);
+}
+.js .anatomy.drawn .schematic text {
+  opacity: 1;
+  transition: opacity 0s linear calc(var(--i) * var(--draw-step) + 200ms);
+}
+
+/* Leader overlay: pixel coordinates, recomputed from the DOM. */
+.leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  display: none;
+}
+@media (min-width: 1024px) { .leaders { display: block; } }
+.leaders .leader {
+  fill: none;
+  stroke: var(--local-accent);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: opacity var(--d-mid) var(--ease), stroke-opacity var(--d-mid) var(--ease), stroke-width var(--d-mid) var(--ease);
+}
+.leaders .tip { fill: var(--local-accent); transition: opacity var(--d-mid) var(--ease); }
+.js .leaders .leader { stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0; }
+.js .leaders .tip { opacity: 0; }
+.js .anatomy.leads .leaders .leader {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition:
+    stroke-dashoffset 520ms var(--ease) calc(var(--k) * 320ms),
+    opacity 0s linear calc(var(--k) * 320ms),
+    stroke-width var(--d-mid) var(--ease);
+}
+.js .anatomy.leads .leaders .tip { opacity: 1; transition: opacity 0s linear calc(var(--k) * 320ms); }
+.js .anatomy.settled .schematic path {
+  transition: opacity var(--d-mid) var(--ease), stroke var(--d-mid) var(--ease), stroke-width var(--d-mid) var(--ease), stroke-opacity var(--d-mid) var(--ease);
+}
+.js .anatomy.settled .leaders .leader,
+.js .anatomy.settled .leaders .tip { transition: opacity var(--d-mid) var(--ease), stroke-opacity var(--d-mid) var(--ease), stroke-width var(--d-mid) var(--ease); }
+
+/* Hover / focus / pinned: the active part + leader go full; siblings rest at 60%.
+   Rest brightness is stroke-opacity; dimming is opacity — two channels, no fight. */
+.schematic path.part { stroke-opacity: 0.85; }
+.leaders .leader { stroke-opacity: 0.7; }
+.js .anatomy.drawn[data-active] .schematic path.part,
+.js .anatomy.leads[data-active] .leaders .leader,
+.js .anatomy.leads[data-active] .leaders .tip { opacity: 0.6; }
+.js .anatomy.drawn[data-active="1"] .schematic path.part[data-part="1"],
+.js .anatomy.drawn[data-active="2"] .schematic path.part[data-part="2"],
+.js .anatomy.drawn[data-active="3"] .schematic path.part[data-part="3"] { opacity: 1; stroke-opacity: 1; stroke-width: 2.25; }
+.js .anatomy.leads[data-active="1"] .leaders [data-part="1"],
+.js .anatomy.leads[data-active="2"] .leaders [data-part="2"],
+.js .anatomy.leads[data-active="3"] .leaders [data-part="3"] { opacity: 1; stroke-opacity: 1; }
+.js .anatomy.leads[data-active="1"] .leaders .leader[data-part="1"],
+.js .anatomy.leads[data-active="2"] .leaders .leader[data-part="2"],
+.js .anatomy.leads[data-active="3"] .leaders .leader[data-part="3"] { stroke-width: 1.5; }
+
+/* Mobile markers: numerals on the schematic that match the list below. */
+.marker {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: hsl(var(--background));
+  border: 1px solid var(--local-accent);
+  color: var(--local-accent-text);
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+  transition: background-color var(--d-mid) var(--ease), color var(--d-mid) var(--ease);
+}
+[dir="rtl"] .marker { font-size: 12px; }
+@media (min-width: 1024px) { .marker { display: none; } }
+.js .marker { opacity: 0; }
+.js .anatomy.leads .marker { opacity: 1; transition: opacity 0s linear calc(var(--k) * 320ms); }
+.anatomy[data-active="1"] .marker[data-part="1"],
+.anatomy[data-active="2"] .marker[data-part="2"],
+.anatomy[data-active="3"] .marker[data-part="3"] { background: var(--local-accent); color: var(--local-accent-fg); }
+
+/* ── Callouts ────────────────────────────────────────────────────────── */
+.callouts {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
+@media (min-width: 1024px) { .callouts { justify-content: space-between; gap: 2.5rem; } }
+.callouts > li { border-top: 1px solid var(--border-subtle); padding-top: 1.5rem; }
+@media (min-width: 1024px) { .callouts > li { border-top: 0; padding-top: 0; } }
+
+.callout {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  column-gap: 1rem;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.callout .circ {
+  width: 2rem;
+  height: 2rem;
+  margin-top: 0.1rem;
+  border-radius: 50%;
+  border: 1px solid var(--local-accent);
+  color: var(--local-accent-text);
+  display: grid;
+  place-items: center;
+  font-size: 0.8125rem;
+  line-height: 1;
+  transition: background-color var(--d-mid) var(--ease), color var(--d-mid) var(--ease);
+}
+[dir="rtl"] .callout .circ { font-size: 0.9375rem; }
+.callout.is-active .circ { background: var(--local-accent); color: var(--local-accent-fg); }
+
+.callout h4 {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 1.05rem + 0.5vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+[dir="rtl"] .callout h4 { font-family: var(--font-vazirmatn); font-weight: 500; letter-spacing: 0; line-height: 1.5; }
+.callout p {
+  margin-top: 0.5rem;
+  max-width: 44ch;
+  font-size: 17px;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+[dir="rtl"] .callout p { line-height: 1.85; }
+
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.625rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono), var(--font-vazirmatn);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  color: hsl(var(--foreground));
+}
+.tokens .sep { color: hsl(var(--muted-foreground)); }
+
+.read-row { min-width: 0; }
+@media (min-width: 1024px) { .read-row { grid-column: 2; } }
+.read {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 1.0625rem;
+  color: hsl(var(--foreground));
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  text-decoration-color: var(--control-edge);
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+.read:hover { text-decoration-color: hsl(var(--foreground)); }
+@media (min-width: 1024px) { .read { margin-inline-start: 3rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar" dir="ltr" role="group" aria-label="Prototype controls">
+  <div class="seg" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="ar" aria-pressed="false" lang="ar">AR</button>
+  </div>
+  <div class="seg" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<p class="proto-label" id="top" dir="ltr">Prototype C — The site, labelled</p>
+
+<!-- Stub: the tail of the Work section. -->
+<div class="container stub-above" aria-hidden="true">
+  <p data-i18n="stubAbove"></p>
+  <div class="ctas"><span class="ghost" data-i18n="ghost1"></span><span class="ghost" data-i18n="ghost2"></span></div>
+</div>
+
+<section class="flagship" aria-labelledby="flagship-title">
+  <div class="container">
+    <div class="heading-row">
+      <div class="heading">
+        <p class="eyebrow" data-i18n="eyebrow"></p>
+        <h3 id="flagship-title" class="block-title"></h3>
+        <p class="problem-line" data-i18n="problem"></p>
+      </div>
+      <a class="live" href="#top"><span class="dot" aria-hidden="true"></span><span data-i18n="live"></span></a>
+    </div>
+
+    <div class="anatomy" id="anatomy">
+      <div class="schematic-wrap" id="schematic-wrap">
+        <svg class="schematic" id="schematic" viewBox="0 0 600 640" aria-hidden="true" focusable="false"></svg>
+      </div>
+      <ol class="callouts" id="callouts"></ol>
+      <div class="read-row"><a class="read" href="#" data-i18n="read"></a></div>
+      <svg class="leaders" id="leaders" aria-hidden="true" focusable="false"></svg>
+    </div>
+  </div>
+</section>
+
+<div class="stub-below" aria-hidden="true">
+  <div class="container">
+    <p class="block-title" data-i18n="stubBelow"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.documentElement.classList.add("js");
+
+  var COPY = {
+    en: {
+      stubAbove: "Two production builds are live today, each with its own record.",
+      ghost1: "See all work", ghost2: "Start a project",
+      eyebrow: "Flagship case study",
+      titleBrand: "Altruvex.com", titleRest: " — the site had to be ", titleHl: "its own proof.",
+      problem: "An engineering studio with no track record can't borrow credibility. The site had to earn it on its own.",
+      live: "Live — you're on it",
+      facts: [
+        { label: "Two languages, as equals", text: "Arabic and English built as one system — not a translated copy. Switch the language at the top and the layout follows." },
+        { label: "Measured, not claimed", text: "Held to the pass lines we publish: Lighthouse 95+, largest paint under 2.5 s, layout shift under 0.1. The top of this page measures them in your browser.",
+          tokens: ["LIGHTHOUSE ≥ 95", "LCP < 2.5 s", "CLS < 0.1"] },
+        { label: "The budget question, answered first", text: "A price estimator that gives an honest range before anyone gets on a call." }
+      ],
+      read: "Read the case study →",
+      stubBelow: "05 — Trust"
+    },
+    ar: {
+      stubAbove: "بناءان إنتاجيان يعملان اليوم، ولكلٍّ منهما سجلّه.",
+      ghost1: "شاهد كل الأعمال", ghost2: "ابدأ مشروعًا",
+      eyebrow: "دراسة الحالة الرئيسية",
+      titleBrand: "Altruvex.com", titleRest: " — كان على الموقع أن يكون ", titleHl: "دليله بنفسه.",
+      problem: "استوديو هندسي بلا سجل أعمال لا يستطيع أن يستعير المصداقية. كان على الموقع أن يكسبها بنفسه.",
+      live: "مباشر — أنت عليه الآن",
+      facts: [
+        { label: "لغتان على قدم المساواة", text: "العربية والإنجليزية مبنيّتان كنظام واحد — لا نسخة مترجمة. بدّل اللغة في الأعلى وسيتبعها التخطيط." },
+        { label: "مقيس، لا مُدّعى", text: "يخضع لخطوط النجاح التي ننشرها: Lighthouse ‏95+، وأكبر عرض أقل من ٢٫٥ ثانية، واهتزاز التخطيط أقل من ٠٫١. أعلى هذه الصفحة يقيسها في متصفحك.",
+          tokens: ["LIGHTHOUSE ≥ ٩٥", "LCP < ٢٫٥\u200E ث", "CLS < ٠٫١"] },
+        { label: "سؤال الميزانية، مُجاب أولًا", text: "مقدّر أسعار يعطي نطاقًا صادقًا قبل أي مكالمة." }
+      ],
+      read: "اقرأ دراسة الحالة ←",
+      stubBelow: "٠٥ — الثقة"
+    }
+  };
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+  var W = 600;
+  var root = document.documentElement;
+  var anatomy = document.getElementById("anatomy");
+  var schematic = document.getElementById("schematic");
+  var wrap = document.getElementById("schematic-wrap");
+  var leadersSvg = document.getElementById("leaders");
+  var calloutsEl = document.getElementById("callouts");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var desktop = window.matchMedia("(min-width: 1024px)");
+  var lang = "en";
+  var rtl = false;
+
+  function digits(s) {
+    return lang === "ar" ? String(s).replace(/\d/g, function (d) { return ARABIC_DIGITS[d]; }) : String(s);
+  }
+
+  /* ── Geometry, mirrored in RTL (the Arabic site is drawn, not flipped:
+        text inside the drawing stays readable). ─────────────────────── */
+  function mx(x) { return rtl ? W - x : x; }
+  function rect(x, y, w, h, r) {
+    var a = mx(x), b = mx(x + w);
+    x = Math.min(a, b);
+    r = r || 0;
+    if (!r) return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
+    return "M" + (x + r) + " " + y + "H" + (x + w - r) + "A" + r + " " + r + " 0 0 1 " + (x + w) + " " + (y + r) +
+      "V" + (y + h - r) + "A" + r + " " + r + " 0 0 1 " + (x + w - r) + " " + (y + h) +
+      "H" + (x + r) + "A" + r + " " + r + " 0 0 1 " + x + " " + (y + h - r) +
+      "V" + (y + r) + "A" + r + " " + r + " 0 0 1 " + (x + r) + " " + y + "Z";
+  }
+  function circle(cx, cy, r) {
+    cx = mx(cx);
+    return "M" + (cx - r) + " " + cy + "a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0";
+  }
+  function line(x1, y1, x2, y2) { return "M" + mx(x1) + " " + y1 + "L" + mx(x2) + " " + y2; }
+
+  /* The homepage, top to bottom. Each part carries exactly one accent
+     stroke (its outline), drawn last within its group. */
+  function strokes() {
+    var cells = [0, 1, 2].map(function (c) { return 32 + c * (536 / 3); });
+    var ticks = "", values = "";
+    cells.forEach(function (x0, c) {
+      for (var t = 0; t <= 10; t++) ticks += line(x0 + 14 + t * 15, 330, x0 + 14 + t * 15, t % 5 ? 333 : 336);
+      values += line(x0 + 14, 312, x0 + 14 + [118, 96, 70][c], 312) + line(x0 + 14 + [134, 128, 124][c], 304, x0 + 14 + [134, 128, 124][c], 320);
+    });
+    return [
+      { d: rect(8, 8, 584, 624, 14) },                                            // window
+      { d: line(8, 44, 592, 44) },                                                 // chrome rule
+      { d: circle(28, 26, 4.5) + circle(44, 26, 4.5) + circle(60, 26, 4.5) },      // three dots
+      { d: rect(170, 15, 260, 22, 11) },                                           // url bar
+      { text: "altruvex.com", x: 300, y: 30.5, anchor: "middle" },
+      { d: rect(32, 60, 18, 18, 4) + line(58, 69, 100, 69) },                      // logo + wordmark
+      { d: line(292, 69, 324, 69) + line(340, 69, 372, 69) + line(388, 69, 420, 69) }, // nav links
+      { text: "EN", x: 504, y: 73.5, anchor: "middle" },
+      { text: "ع", x: 538, y: 74, anchor: "middle", ar: true },
+      { d: line(521, 63, 521, 75) },
+      { d: rect(472, 57, 96, 24, 12), part: 1 },                                   // ① language toggle
+      { d: line(8, 96, 592, 96) },                                                 // nav rule
+      { d: line(32, 146, 470, 146) },                                              // hero, three lines
+      { d: line(32, 176, 420, 176) },
+      { d: line(32, 206, 300, 206) },
+      { d: rect(32, 230, 116, 34, 17) + rect(160, 230, 104, 34, 17) },             // two pill CTAs
+      { d: line(cells[1], 288, cells[1], 344) + line(cells[2], 288, cells[2], 344) },
+      { d: values },
+      { d: ticks },
+      { d: rect(32, 288, 536, 56, 0), part: 2 },                                   // ② readout strip
+      { d: line(8, 384, 592, 384) },                                               // section band
+      { d: line(32, 414, 84, 414) },
+      { d: line(32, 442, 380, 442) + line(32, 464, 320, 464) },
+      { d: line(8, 492, 592, 492) },                                               // section band
+      { d: line(40, 522, 150, 522) },                                              // estimator label
+      { d: line(40, 552, 552, 552) },                                              // range track
+      { d: line(220, 552, 410, 552) + circle(220, 552, 7) + circle(410, 552, 7) }, // selected range + handles
+      { d: rect(40, 578, 88, 26, 13) + rect(140, 578, 104, 26, 13) + rect(256, 578, 80, 26, 13) }, // option chips
+      { d: rect(24, 504, 552, 112, 10), part: 3 }                                  // ③ estimator block
+    ];
+  }
+
+  var partEls = {};
+  function buildSchematic() {
+    while (schematic.firstChild) schematic.removeChild(schematic.firstChild);
+    partEls = {};
+    strokes().forEach(function (s, i) {
+      var el;
+      if (s.text) {
+        el = document.createElementNS(SVG_NS, "text");
+        el.setAttribute("x", mx(s.x));
+        el.setAttribute("y", s.y);
+        el.setAttribute("text-anchor", s.anchor);
+        if (s.ar) el.setAttribute("class", "ar");
+        el.textContent = s.text;
+      } else {
+        el = document.createElementNS(SVG_NS, "path");
+        el.setAttribute("d", s.d);
+        el.setAttribute("pathLength", "1");
+        if (s.part) {
+          el.setAttribute("class", "part");
+          el.setAttribute("data-part", s.part);
+          partEls[s.part] = el;
+        }
+      }
+      el.style.setProperty("--i", i);
+      schematic.appendChild(el);
+    });
+  }
+
+  /* ── Callouts ─────────────────────────────────────────────────────── */
+  var callouts = [1, 2, 3].map(function (n) {
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.className = "callout";
+    a.href = "#schematic-wrap";
+    a.dataset.part = n;
+    var circ = document.createElement("span");
+    circ.className = "circ num";
+    circ.setAttribute("aria-hidden", "true");
+    var body = document.createElement("span");
+    body.style.minWidth = "0";
+    var h4 = document.createElement("h4");
+    var p = document.createElement("p");
+    body.appendChild(h4);
+    body.appendChild(p);
+    var tokens = null;
+    if (n === 2) {
+      tokens = document.createElement("span");
+      tokens.className = "tokens";
+      body.appendChild(tokens);
+    }
+    a.appendChild(circ);
+    a.appendChild(body);
+    li.appendChild(a);
+    calloutsEl.appendChild(li);
+    return { a: a, circ: circ, h4: h4, p: p, tokens: tokens };
+  });
+
+  var markers = [1, 2, 3].map(function (n) {
+    var m = document.createElement("span");
+    m.className = "marker num";
+    m.dataset.part = n;
+    m.style.setProperty("--k", n - 1);
+    m.setAttribute("aria-hidden", "true");
+    wrap.appendChild(m);
+    return m;
+  });
+
+  function applyCopy() {
+    var c = COPY[lang];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = c[el.getAttribute("data-i18n")]; });
+
+    var t = document.getElementById("flagship-title");
+    t.textContent = "";
+    var bdi = document.createElement("bdi");
+    bdi.textContent = c.titleBrand;
+    var hl = document.createElement("em");
+    hl.className = "hl";
+    hl.textContent = c.titleHl;
+    t.appendChild(bdi);
+    t.appendChild(document.createTextNode(c.titleRest));
+    t.appendChild(hl);
+
+    callouts.forEach(function (co, i) {
+      var f = c.facts[i];
+      co.circ.textContent = digits(i + 1);
+      co.h4.textContent = f.label;
+      co.p.textContent = f.text;
+      if (co.tokens) {
+        co.tokens.textContent = "";
+        f.tokens.forEach(function (tok, k) {
+          if (k) {
+            var sep = document.createElement("span");
+            sep.className = "sep";
+            sep.setAttribute("aria-hidden", "true");
+            sep.textContent = "·";
+            co.tokens.appendChild(sep);
+          }
+          var s = document.createElement("span");
+          s.dir = "ltr";
+          s.textContent = tok;
+          co.tokens.appendChild(s);
+        });
+      }
+    });
+    markers.forEach(function (m, i) { m.textContent = digits(i + 1); });
+  }
+
+  /* ── Leaders: part end-edge → elbow in the gutter → callout numeral. ── */
+  var leaderEls = [];
+  function layout() {
+    var box = anatomy.getBoundingClientRect();
+    var wbox = wrap.getBoundingClientRect();
+    var sBox = schematic.getBoundingClientRect();
+    var isDesk = desktop.matches;
+    schematic.style.setProperty("--s", Math.max(sBox.width / W, 0.01).toFixed(4));
+
+    [1, 2, 3].forEach(function (n, i) {
+      var part = partEls[n];
+      if (!part) return;
+      var pr = part.getBoundingClientRect();
+      var ay = pr.top + pr.height / 2;
+      var ax = rtl ? pr.left : pr.right;
+
+      // Mobile markers sit on the part's end edge, inside the window frame.
+      var m = markers[i];
+      m.style.left = (ax - wbox.left) + "px";
+      m.style.top = (ay - wbox.top) + "px";
+
+      if (!isDesk) return;
+      var cr = callouts[i].circ.getBoundingClientRect();
+      var tx = rtl ? cr.right : cr.left;
+      var ty = cr.top + cr.height / 2;
+      var gutterEdge = rtl ? sBox.left : sBox.right;
+      var elbow = gutterEdge + (tx - gutterEdge) * 0.5;
+
+      var x0 = ax - box.left, y0 = ay - box.top;
+      var ex = elbow - box.left, x1 = tx - box.left, y1 = ty - box.top;
+      var d = Math.abs(y1 - y0) < 1
+        ? "M" + x0 + " " + y0 + "H" + x1
+        : "M" + x0 + " " + y0 + "H" + ex + "V" + y1 + "H" + x1;
+      var L = leaderEls[i];
+      L.path.setAttribute("d", d);
+      L.tip.setAttribute("cx", x0);
+      L.tip.setAttribute("cy", y0);
+    });
+  }
+
+  function buildLeaders() {
+    [1, 2, 3].forEach(function (n, i) {
+      var g = document.createElementNS(SVG_NS, "g");
+      var path = document.createElementNS(SVG_NS, "path");
+      path.setAttribute("class", "leader");
+      path.setAttribute("pathLength", "1");
+      path.setAttribute("data-part", n);
+      path.style.setProperty("--k", i);
+      var tip = document.createElementNS(SVG_NS, "circle");
+      tip.setAttribute("class", "tip");
+      tip.setAttribute("r", "3");
+      tip.setAttribute("data-part", n);
+      tip.style.setProperty("--k", i);
+      g.appendChild(path);
+      g.appendChild(tip);
+      leadersSvg.appendChild(g);
+      leaderEls.push({ path: path, tip: tip });
+    });
+  }
+
+  /* ── Active state: hover / focus, tap pins on touch. ──────────────── */
+  var pinned = null;
+  function setActive(n) {
+    if (n) anatomy.setAttribute("data-active", n); else anatomy.removeAttribute("data-active");
+    callouts.forEach(function (co, i) { co.a.classList.toggle("is-active", String(i + 1) === String(n)); });
+  }
+  callouts.forEach(function (co, i) {
+    var n = i + 1;
+    co.a.addEventListener("mouseenter", function () { setActive(n); });
+    co.a.addEventListener("mouseleave", function () { setActive(pinned); });
+    co.a.addEventListener("focus", function () { setActive(n); });
+    co.a.addEventListener("blur", function () { setActive(pinned); });
+    co.a.addEventListener("click", function (e) {
+      pinned = pinned === n ? null : n;
+      setActive(pinned || n);
+      // Only jump when the drawing is off-screen (mobile: list sits below it).
+      var r = wrap.getBoundingClientRect();
+      if (r.top >= 0 && r.bottom <= window.innerHeight) e.preventDefault();
+    });
+  });
+
+  /* ── One motion: the drawing draws itself, then the leaders 1 → 2 → 3. */
+  var DRAW_TOTAL = 29 * 40 + 600; // last stroke's delay + its duration
+  function finish() { anatomy.classList.add("drawn", "leads", "settled"); }
+  function start() {
+    anatomy.classList.add("drawn");
+    setTimeout(function () {
+      anatomy.classList.add("leads");
+      setTimeout(function () { anatomy.classList.add("settled"); }, 2 * 320 + 520 + 50);
+    }, DRAW_TOTAL - 250);
+  }
+
+  function setLang(next) {
+    lang = next;
+    rtl = next === "ar";
+    root.lang = next;
+    root.dir = rtl ? "rtl" : "ltr";
+    document.querySelectorAll("[data-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.lang === next ? "true" : "false");
+    });
+    // A rebuilt drawing must not replay: suspend transitions for one frame.
+    var wasDrawn = anatomy.classList.contains("settled");
+    if (wasDrawn) root.classList.remove("js");
+    buildSchematic();
+    applyCopy();
+    layout();
+    if (wasDrawn) requestAnimationFrame(function () { root.classList.add("js"); });
+  }
+
+  function setTheme(next) {
+    root.setAttribute("data-theme", next);
+    document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.themeSet === next ? "true" : "false");
+    });
+  }
+
+  document.querySelectorAll("[data-lang]").forEach(function (b) { b.addEventListener("click", function () { setLang(b.dataset.lang); }); });
+  document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.addEventListener("click", function () { setTheme(b.dataset.themeSet); }); });
+
+  buildLeaders();
+  setTheme(root.getAttribute("data-theme") || "light");
+  var qLang = null;
+  try { qLang = new URLSearchParams(location.search).get("lang"); } catch (e) {}
+  setLang(qLang === "ar" ? "ar" : "en");
+
+  if ("ResizeObserver" in window) new ResizeObserver(layout).observe(anatomy);
+  window.addEventListener("resize", layout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+  if (reduce.matches || !("IntersectionObserver" in window)) {
+    finish();
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        start();
+        io.disconnect();
+      });
+    }, { threshold: 0.25 });
+    io.observe(wrap);
+  }
+  reduce.addEventListener && reduce.addEventListener("change", function (e) { if (e.matches) finish(); });
+})();
+</script>
+</body>
+</html>

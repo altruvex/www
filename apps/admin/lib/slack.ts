@@ -1,5 +1,6 @@
 import type { ActionItem } from "@/lib/action-center";
 import type { RecordActivityInput } from "@/lib/activity-log";
+import { entityHref } from "@/lib/entity-links";
 
 /**
  * Slack, one direction only (§26).
@@ -33,30 +34,11 @@ function appUrl(): string | null {
   return base ? base.replace(/\/$/, "") : null;
 }
 
-/** Where an entity lives in this application, for the message's link. */
-const ENTITY_PATH: Record<string, (id: string) => string> = {
-  client: (id) => `/clients/${id}`,
-  submission: (id) => `/submissions/${id}`,
-  proposal: (id) => `/proposals/${id}`,
-  contract: (id) => `/contracts/${id}`,
-  project: (id) => `/projects/${id}`,
-  product: (id) => `/products/${id}`,
-  payment: () => "/payments",
-  subscription: () => "/maintenance",
-  maintenance_request: () => "/maintenance",
-  incident: () => "/incidents",
-  deployment: () => "/deployments",
-  build: () => "/deployments?tab=builds",
-  task: () => "/tasks",
-  meeting: () => "/calendar",
-  client_service: () => "/services",
-};
-
 export function entityUrl(entityType: string, entityId: string): string | null {
   const base = appUrl();
-  const path = ENTITY_PATH[entityType];
+  const path = entityHref(entityType, entityId);
   if (!base || !path) return null;
-  return `${base}${path(entityId)}`;
+  return `${base}${path}`;
 }
 
 /* -------------------------------------------------------------------------- */

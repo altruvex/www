@@ -1,4 +1,5 @@
 import { calculateEstimate } from "@repo/pricing-schema";
+import { getPublicPricing } from "@/lib/server/pricing";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { createTransparencyLeadSchema } from "@/lib/validations/transparency-lead";
@@ -90,14 +91,19 @@ export async function POST(request: NextRequest) {
     // Recomputed from the answers rather than taken from the request. The
     // browser sends what it displayed, and an operator later quotes this row
     // back to the client — so the figure has to be one this codebase produced,
-    // through the same engine the estimator itself renders.
-    const estimate = calculateEstimate({
-      serviceId: validatedData.projectType,
-      complexityId: validatedData.complexity,
-      timeline: validatedData.timeline,
-      brandIdentity: validatedData.brandIdentity,
-      contentReadiness: validatedData.contentReadiness,
-    });
+    // through the same engine the estimator itself renders, over the same
+    // resolved pricing (admin overrides applied) the page handed the browser.
+    const pricing = await getPublicPricing();
+    const estimate = calculateEstimate(
+      {
+        serviceId: validatedData.projectType,
+        complexityId: validatedData.complexity,
+        timeline: validatedData.timeline,
+        brandIdentity: validatedData.brandIdentity,
+        contentReadiness: validatedData.contentReadiness,
+      },
+      pricing,
+    );
 
     // The reference is random rather than sequential, so a collision is
     // possible and cheap to retry. Three attempts over a 26^6 space is far
@@ -118,6 +124,8 @@ export async function POST(request: NextRequest) {
             timeline: validatedData.timeline,
             brandIdentity: validatedData.brandIdentity,
             contentReadiness: validatedData.contentReadiness,
+            scopeNotes: validatedData.scopeNotes,
+            note: validatedData.note,
             priceMin: estimate.minPrice,
             priceMax: estimate.maxPrice,
             weeksMin: estimate.minWeeks,

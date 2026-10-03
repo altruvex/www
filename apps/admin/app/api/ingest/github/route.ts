@@ -103,12 +103,6 @@ export async function POST(request: Request) {
     return ok({ message: "Altruvex OS is listening." });
   }
 
-  // Signed, but not necessarily new. A replayed delivery is answered 200 and
-  // applied nothing — GitHub retries on timeout, and a retry is not an error.
-  if (!(await claimDelivery("github", delivery))) {
-    return ok({ delivery, ignored: true, reason: "delivery already processed" });
-  }
-
   let payload: unknown;
   try {
     payload = JSON.parse(raw);
@@ -116,67 +110,101 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, message: "Body must be valid JSON." }, { status: 400 });
   }
 
+  // Signed, but not necessarily new. A replayed delivery is answered 200 and
+  // applied nothing — GitHub retries on timeout, and a retry is not an error.
+  //
+  // The claim is taken before processing, so two concurrent copies of one
+  // delivery cannot both apply. It is released again whenever processing does
+  // not succeed: a claim that outlived a failed run would turn GitHub's retry
+  // (or an operator's "Redeliver" after fixing the repository URL) into a
+  // silent no-op, and the build it describes would never be recorded.
+  if (!(await claimDelivery("github", delivery))) {
+    return ok({ delivery, ignored: true, reason: "delivery already processed" });
+  }
+
+  let response: NextResponse;
   try {
-    if (event === "workflow_run") {
-      const body = workflowRunSchema.parse(payload);
-      const { product, ambiguous } = await productForRepository(body.repository.full_name);
-      if (ambiguous) return ambiguousResponse(body.repository.full_name);
-      if (!product) return unmatchedResponse(body.repository.full_name);
-
-      const input = buildFromWorkflowRun(body);
-      const build = await writeBuild(product, input);
-      await announceBuild(product, build, input.status, actorFor(body.repository.full_name));
-
-      return ok({
-        delivery,
-        product: product.slug,
-        build: { id: build.id, number: build.number, status: build.status },
-      });
-    }
-
-    if (event === "deployment_status") {
-      const body = deploymentStatusSchema.parse(payload);
-      const { product, ambiguous } = await productForRepository(body.repository.full_name);
-      if (ambiguous) return ambiguousResponse(body.repository.full_name);
-      if (!product) return unmatchedResponse(body.repository.full_name);
-
-      const input = deploymentFromStatusEvent(body);
-      if (!input) {
-        // `inactive` and GitHub's other non-terminal states describe bookkeeping
-        // on GitHub's side, not something that happened to the site.
-        return ok({ delivery, ignored: true, reason: `state ${body.deployment_status.state}` });
-      }
-
-      const deployment = await writeDeployment(product, input);
-      await announceDeployment(
-        product,
-        deployment,
-        input.status,
-        actorFor(body.repository.full_name),
-      );
-
-      return ok({
-        delivery,
-        product: product.slug,
-        deployment: {
-          id: deployment.id,
-          number: deployment.number,
-          status: deployment.status,
-        },
-      });
-    }
+    response = await handleEvent(event, payload, delivery);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { success: false, message: "Unexpected payload shape.", issues: error.issues },
         { status: 400 },
       );
+    } else {
+      console.error(`GitHub webhook failed (event ${event}, delivery ${delivery})`, error);
+      response = NextResponse.json(
+        { success: false, message: "Webhook handling failed. The error has been logged." },
+        { status: 500 },
+      );
     }
-    console.error(`GitHub webhook failed (event ${event}, delivery ${delivery})`, error);
-    return NextResponse.json(
-      { success: false, message: "Webhook handling failed. The error has been logged." },
-      { status: 500 },
-    );
+  }
+
+  if (!response.ok) await releaseDelivery(delivery);
+  return response;
+}
+
+/**
+ * Gives a delivery back so the next attempt is processed. A failure to release
+ * is logged and swallowed: the response already describes the real failure,
+ * and the worst outcome is the pre-fix behaviour for this one delivery.
+ */
+async function releaseDelivery(delivery: string | undefined) {
+  if (!delivery) return;
+  try {
+    await prisma.webhookDelivery.deleteMany({ where: { provider: "github", deliveryId: delivery } });
+  } catch (error) {
+    console.error(`Could not release GitHub delivery ${delivery}`, error);
+  }
+}
+
+async function handleEvent(
+  event: string,
+  payload: unknown,
+  delivery: string | undefined,
+): Promise<NextResponse> {
+  if (event === "workflow_run") {
+    const body = workflowRunSchema.parse(payload);
+    const { product, ambiguous } = await productForRepository(body.repository.full_name);
+    if (ambiguous) return ambiguousResponse(body.repository.full_name);
+    if (!product) return unmatchedResponse(body.repository.full_name);
+
+    const input = buildFromWorkflowRun(body);
+    const build = await writeBuild(product, input);
+    await announceBuild(product, build, input.status, actorFor(body.repository.full_name));
+
+    return ok({
+      delivery,
+      product: product.slug,
+      build: { id: build.id, number: build.number, status: build.status },
+    });
+  }
+
+  if (event === "deployment_status") {
+    const body = deploymentStatusSchema.parse(payload);
+    const { product, ambiguous } = await productForRepository(body.repository.full_name);
+    if (ambiguous) return ambiguousResponse(body.repository.full_name);
+    if (!product) return unmatchedResponse(body.repository.full_name);
+
+    const input = deploymentFromStatusEvent(body);
+    if (!input) {
+      // `inactive` and GitHub's other non-terminal states describe bookkeeping
+      // on GitHub's side, not something that happened to the site.
+      return ok({ delivery, ignored: true, reason: `state ${body.deployment_status.state}` });
+    }
+
+    const deployment = await writeDeployment(product, input);
+    await announceDeployment(product, deployment, input.status, actorFor(body.repository.full_name));
+
+    return ok({
+      delivery,
+      product: product.slug,
+      deployment: {
+        id: deployment.id,
+        number: deployment.number,
+        status: deployment.status,
+      },
+    });
   }
 
   // Subscribing to more events than we read is harmless and common; saying so

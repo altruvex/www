@@ -20,12 +20,25 @@ export function TabNav({
   active,
   basePath,
   param = "tab",
+  keep,
 }: {
   tabs: TabDef[];
   active: string;
   basePath: string;
   param?: string;
+  /**
+   * Search params that survive a tab switch — a filter such as `?product=`
+   * or `?client=` scopes every tab, so switching tabs must not drop it.
+   */
+  keep?: Record<string, string | undefined | null>;
 }) {
+  const hrefFor = (id: string) => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(keep ?? {})) if (value) params.set(key, value);
+    if (id !== tabs[0].id) params.set(param, id);
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  };
   return (
     <nav className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
@@ -33,7 +46,7 @@ export function TabNav({
         return (
           <Link
             key={tab.id}
-            href={tab.id === tabs[0].id ? basePath : `${basePath}?${param}=${tab.id}`}
+            href={hrefFor(tab.id)}
             aria-current={isActive ? "page" : undefined}
             className={cn(
               "relative -mb-px inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-base",

@@ -7,5 +7,3 @@
  * motion system look larger than it is.
  */
 export { MOTION } from "./tokens";
-export type { MotionEase, MotionSpring, MotionTrigger, SpringConfig } from "./tokens";
-export { getConstrainedDevice } from "./utils/env";

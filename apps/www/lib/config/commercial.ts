@@ -2,15 +2,12 @@ export type CommercialCtaKey =
   | "describeTheBuild"
   | "projectRange"
   | "realBuild"
+  | "scopeProjects"
   | "technicalCall"
   | "technicalAudit"
   | "architecture"
   | "maintenanceEnquiry"
-  | "maintenancePlans"
-  | "pricingEssential"
-  | "pricingProfessional"
-  | "pricingFlagship"
-  | "flagshipBuild";
+  | "maintenancePlans";
 
 type CommercialCtaDefinition = {
   href: string;
@@ -22,17 +19,21 @@ const COMMERCIAL_CTAS: Record<CommercialCtaKey, CommercialCtaDefinition> = {
   describeTheBuild: { href: "/contact" },
   projectRange: { href: "/transparency" },
   realBuild: { href: "/work" },
+  /* How a project is scoped and priced: the pricing page. */
+  scopeProjects: { href: "/pricing" },
   technicalCall: { href: "/schedule" },
   technicalAudit: { href: "/contact?service=consulting&package=audit" },
   architecture: { href: "/contact?service=development&track=architecture" },
   /* The contact form reads `service` and preselects maintenance. */
   maintenanceEnquiry: { href: "/contact?service=maintenance" },
   maintenancePlans: { href: "/services/maintenance#pricing" },
-  pricingEssential: { href: "/transparency?tier=essential" },
-  pricingProfessional: { href: "/transparency?tier=professional" },
-  pricingFlagship: { href: "/schedule" },
-  flagshipBuild: { href: "/transparency?tier=professional" },
 };
+
+/* Each maintenance plan opens the contact form with the plan and the billing
+   period already written into the message, where the visitor can edit them. */
+export function maintenancePlanHref(id: string, billing: "monthly" | "annual") {
+  return `/contact?service=maintenance&plan=${encodeURIComponent(id)}&billing=${billing}`;
+}
 
 export function getCommercialCta(key: CommercialCtaKey) {
   return COMMERCIAL_CTAS[key];

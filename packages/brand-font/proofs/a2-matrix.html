@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A.2 mixed-script matrix</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+  body { margin: 24px; font: 14px/1.4 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .note { margin: 0 0 16px; max-width: 70em; color: #444; }
+  table { border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 6px 10px; vertical-align: top; text-align: start; }
+  th { background: #f4f4f4; font-weight: 600; }
+  td.label { width: 16em; min-width: 16em; }
+  td.label code { display: block; color: #666; font-size: 12px; }
+  td.cell p { margin: 0; font-size: 48px; white-space: nowrap; }
+  td.cell.prod p { font-family: var(--stack-prod-ar); }
+  td.cell.proto p { font-family: var(--stack-proto); }
+  td.cell.live p { font-family: var(--stack-live-ar); }
+  tr.m td { background: #fafafa; border-bottom: 2px solid #999; }
+  tr.m pre { margin: 0; font: 11px/1.35 ui-monospace, monospace; white-space: pre; }
+  .fail { color: #b00020; font-weight: 600; }
+  /* Off-screen measuring copies, rebuilt by measure(). Large size so WebKit's whole-px Range rects
+     give about ±0.001em per edge. */
+  #measure { position: absolute; top: 0; left: -200000px; width: max-content; }
+  #measure p { margin: 0; font-size: 1000px; line-height: 1.5; }
+  #measure p.natural, #measure p.ink { white-space: nowrap; width: max-content; }
+  #measure p.narrow { width: 7em; white-space: normal; }
+  #measure span.probe { display: inline-block; width: 0; height: 0; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans A.2: mixed RTL/LTR matrix</h1>
+<p class="note">Every rendering is <code>&lt;p lang="ar" dir="rtl"&gt;</code> at 48px. prod = <code>--stack-prod-ar</code> (under test);
+proto and live are reference only. The rows under each case are measured by this page's own <code>window.measure()</code> on
+off-screen copies at 1000px: advance, line count (nowrap / 7em container), every space in context, ink against the line box
+(canvas <code>measureText</code> actualBoundingBox with the element's computed font; baseline from a zero-size inline-block
+probe), and bidi visual order from Range rects over text offsets (no spans around tokens).</p>
+<table>
+  <thead><tr><th>case</th><th>prod</th><th>proto</th><th>live</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<div id="measure" aria-hidden="true"></div>
+<script>
+(() => {
+  const STACKS = { prod: "--stack-prod-ar", proto: "--stack-proto", live: "--stack-live-ar" };
+  const SIZE = 1000;
+  const NARROW_EM = 7;
+  const SPACES = { 0x20: "U+0020", 0xA0: "U+00A0", 0x2009: "U+2009", 0x202F: "U+202F" };
+
+  // A neutral number, not a price.
+  const N = new Intl.NumberFormat("ar-EG").format(1234567.89);
+  const nDigits = [...N].filter((c) => /[0-9٠-٩]/u.test(c));
+  const nHead = nDigits[0];
+  const nTail = nDigits.slice(-2).join("");
+
+  // tokens: in logical order, each found after the previous one. expected: visual left-to-right
+  // order of the same tokens under the Unicode Bidi Algorithm in an RTL paragraph.
+  const rtl = (t) => [...t].reverse();
+  const CASES = [
+    { slug: "arabic", label: "Arabic", text: "نبني مواقع تملكها بالكامل",
+      tokens: ["نبني", "مواقع", "تملكها", "بالكامل"] },
+    { slug: "arabic-spaces", label: "Arabic + spaces", text: "من يرد على رسالتك الأولى هو من يكتب الكود",
+      tokens: ["يرد", "رسالتك", "يكتب", "الكود"] },
+    { slug: "arabic-nbsp", label: "Arabic + NBSP (U+00A0)", text: "تجربة عربية أصيلة من البداية",
+      tokens: ["تجربة", "عربية", "أصيلة", "البداية"] },
+    { slug: "arabic-thin-space", label: "Arabic + thin space (U+2009)", text: "التصميم والبناء والإطلاق",
+      tokens: ["التصميم", "والبناء", "والإطلاق"] },
+    { slug: "arabic-nnbsp", label: "Arabic + narrow NBSP (U+202F)", text: "خطة واضحة وسعر ثابت",
+      tokens: ["خطة", "واضحة", "وسعر", "ثابت"] },
+    { slug: "arabic-punctuation", label: "Arabic + ، ؛ ؟ « »", text: "نخطط، ثم نبني؛ هل تريد «موقعًا» سريعًا؟",
+      tokens: ["نخطط", "،", "نبني", "؛", "«", "موقعًا", "»", "سريعًا", "؟"] },
+    { slug: "arabic-latin", label: "Arabic + Latin", text: "نستخدم React وTypeScript في كل مشروع",
+      tokens: ["نستخدم", "React", "TypeScript", "مشروع"],
+      expected: ["مشروع", "TypeScript", "React", "نستخدم"] },
+    { slug: "arabic-latin-punctuation", label: "Arabic + Latin + punctuation", text: "هل تحتاج Next.js، أم يكفي WordPress؟",
+      tokens: ["هل", "Next.js", "،", "WordPress", "؟"],
+      expected: ["؟", "WordPress", "،", "Next.js", "هل"] },
+    { slug: "latin-digits", label: "Arabic + Latin numbers", text: "أطلقنا 12 صفحة في 3 أسابيع",
+      tokens: ["أطلقنا", "12", "صفحة", "3", "أسابيع"] },
+    { slug: "arabic-indic-digits", label: "Arabic-Indic numbers", text: "أطلقنا ١٢ صفحة في ٣ أسابيع",
+      tokens: ["أطلقنا", "١٢", "صفحة", "٣", "أسابيع"] },
+    { slug: "intl-ar-eg", label: "Intl.NumberFormat('ar-EG'), neutral number", text: `العدد ${N} مثال محايد`,
+      tokens: ["العدد", nHead, nTail, "مثال", "محايد"],
+      expected: ["محايد", "مثال", nHead, nTail, "العدد"] },
+    { slug: "url", label: "URL", text: "زوروا https://altruvex.com/ar/services للتفاصيل",
+      tokens: ["زوروا", "https", "services", "للتفاصيل"],
+      expected: ["للتفاصيل", "https", "services", "زوروا"] },
+    { slug: "email", label: "email", text: "ابدأ المحادثة: hello@altruvex.com",
+      tokens: ["ابدأ", "المحادثة", ":", "hello", "altruvex.com"],
+      expected: ["hello", "altruvex.com", ":", "المحادثة", "ابدأ"] },
+    { slug: "parentheses", label: "parentheses (نص عربي)", text: "نبدأ بمرحلة (مراجعة تقنية) قبل البناء",
+      tokens: ["نبدأ", "(", "مراجعة", "تقنية", ")", "البناء"] },
+    { slug: "brackets", label: "brackets [نص عربي]", text: "نبدأ بمرحلة [مراجعة تقنية] قبل البناء",
+      tokens: ["نبدأ", "[", "مراجعة", "تقنية", "]", "البناء"] },
+    { slug: "guillemets", label: "« » «نص عربي»", text: "نسمّيها «مراجعة تقنية» قبل البناء",
+      tokens: ["نسمّيها", "«", "مراجعة", "تقنية", "»", "البناء"] },
+    { slug: "nextjs-16", label: "\"Next.js 16\" in an Arabic sentence", text: "بنينا الموقع على Next.js 16 من البداية",
+      tokens: ["بنينا", "الموقع", "Next.js", "16", "البداية"],
+      expected: ["البداية", "Next.js", "16", "الموقع", "بنينا"] },
+    { slug: "final-period", label: "sentence-final period", text: "الموقع نفسه هو الدليل.",
+      tokens: ["الموقع", "الدليل", "."] },
+    { slug: "parentheses-latin", label: "(Next.js 16) in Arabic (step 10)", text: "نعتمد على (Next.js 16) في كل مشروع",
+      tokens: ["نعتمد", "(", "Next.js", "16", ")", "مشروع"],
+      expected: ["مشروع", ")", "Next.js", "16", "(", "نعتمد"] },
+    { slug: "guillemets-latin", label: "«Altruvex» in Arabic (step 10)", text: "نحن في «Altruvex» نسلّمك الكود",
+      tokens: ["نحن", "«", "Altruvex", "»", "الكود"],
+      expected: ["الكود", "»", "Altruvex", "«", "نحن"] },
+  ].map((c, i) => ({ id: String(i + 1).padStart(2, "0"), expected: rtl(c.tokens), ...c }));
+
+  const cp = (s) => "U+" + s.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+  const r4 = (v) => Math.round(v * 10000) / 10000;
+  const ARABIC = /\p{Script_Extensions=Arabic}/u;
+  const WS = /\s/u;
+
+  function el(tag, attrs = {}, text) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function render() {
+    const rows = document.getElementById("rows");
+    rows.textContent = "";
+    for (const c of CASES) {
+      const tr = el("tr");
+      const label = el("td", { class: "label" }, `${c.id}. ${c.label}`);
+      label.append(el("code", {}, c.slug));
+      tr.append(label);
+      for (const s of Object.keys(STACKS)) {
+        const td = el("td", { class: `cell ${s}`, id: `c${c.id}-${s}` });
+        td.append(el("p", { lang: "ar", dir: "rtl" }, c.text));
+        tr.append(td);
+      }
+      const m = el("tr", { class: "m" });
+      m.append(el("td", { class: "label" }, "measured"));
+      for (const s of Object.keys(STACKS)) {
+        const td = el("td");
+        td.append(el("pre", { id: `m${c.id}-${s}` }, "…"));
+        m.append(td);
+      }
+      rows.append(tr, m);
+    }
+  }
+
+  function range(node, a, b) {
+    const r = document.createRange();
+    r.setStart(node, a);
+    r.setEnd(node, b);
+    return r;
+  }
+
+  // Union of a Range's client rects (the bounding rect can include empty line fragments).
+  function rectOf(node, a, b) {
+    const rs = [...range(node, a, b).getClientRects()].filter((r) => r.width > 0 || r.height > 0);
+    if (!rs.length) return null;
+    const left = Math.min(...rs.map((r) => r.left)), right = Math.max(...rs.map((r) => r.right));
+    const top = Math.min(...rs.map((r) => r.top)), bottom = Math.max(...rs.map((r) => r.bottom));
+    return { left, right, top, bottom, width: right - left, height: bottom - top };
+  }
+
+  function copy(stack, cls, text, probe = false) {
+    const p = el("p", { lang: "ar", dir: "rtl", class: cls });
+    p.style.fontFamily = `var(${stack})`;
+    if (probe) p.append(el("span", { class: "probe" }));
+    p.append(document.createTextNode(text));
+    document.getElementById("measure").append(p);
+    return p;
+  }
+
+  function spaces(node, text) {
+    const out = [];
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i);
+      if (!(code in SPACES)) continue;
+      const r = rectOf(node, i, i + 1);
+      const side = (c) => (c === undefined ? "edge" : ARABIC.test(c) ? "arabic" : "latin");
+      const before = side(text[i - 1]), after = side(text[i + 1]);
+      out.push({
+        cp: SPACES[code], index: i,
+        context: before === after ? before : "mixed",
+        em: r ? r4(r.width / SIZE) : null,
+      });
+    }
+    return out;
+  }
+
+  // Lines from per-character rects: group by vertical centre, then take the lowest logical index
+  // on each line as that line's start.
+  function lines(p, node, text, lh) {
+    const pts = [];
+    for (let i = 0; i < text.length; i++) {
+      const code = text.codePointAt(i), len = code > 0xFFFF ? 2 : 1;
+      if (!WS.test(text[i])) {
+        const r = rectOf(node, i, i + len);
+        if (r && r.width > 0) pts.push({ i, y: (r.top + r.bottom) / 2 });
+      }
+      i += len - 1;
+    }
+    const groups = [];
+    for (const pt of pts.sort((a, b) => a.y - b.y)) {
+      const g = groups[groups.length - 1];
+      if (g && Math.abs(pt.y - g.y) < lh / 2) g.idx.push(pt.i);
+      else groups.push({ y: pt.y, idx: [pt.i] });
+    }
+    const starts = groups.map((g, n) => {
+      const i = Math.min(...g.idx);
+      return { line: n + 1, index: i, token: text.slice(i).split(/\s/u)[0] };
+    });
+    return { count: groups.length, height_lines: r4(p.getBoundingClientRect().height / lh), starts };
+  }
+
+  function bidi(node, c) {
+    const found = [];
+    let from = 0;
+    for (const t of c.tokens) {
+      const i = c.text.indexOf(t, from);
+      if (i < 0) return { tokens: c.tokens, visual: null, expected: c.expected, pass: false, error: `token not found: ${t}` };
+      const r = rectOf(node, i, i + t.length);
+      found.push({ t, x: r ? (r.left + r.right) / 2 : NaN });
+      from = i + t.length;
+    }
+    const visual = found.slice().sort((a, b) => a.x - b.x).map((f) => f.t);
+    const pass = visual.length === c.expected.length && visual.every((t, k) => t === c.expected[k]);
+    return { tokens: c.tokens, visual, expected: c.expected, pass };
+  }
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  function ink(p, text) {
+    const cs = getComputedStyle(p);
+    ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${SIZE}px ${cs.fontFamily}`;
+    ctx.direction = "rtl";
+    ctx.textBaseline = "alphabetic";
+    const m = ctx.measureText(text);
+    const box = p.getBoundingClientRect();
+    const base = p.querySelector(".probe").getBoundingClientRect().bottom - box.top;
+    const top = base - m.actualBoundingBoxAscent, bottom = base + m.actualBoundingBoxDescent;
+    const outTop = Math.max(0, -top), outBottom = Math.max(0, bottom - box.height);
+    return {
+      method: "canvas measureText actualBoundingBox, computed font; baseline from inline-block probe",
+      canvas_font: ctx.font,
+      line_box_em: r4(box.height / SIZE),
+      baseline_em: r4(base / SIZE),
+      ink_top_em: r4(top / SIZE),
+      ink_bottom_em: r4(bottom / SIZE),
+      outside_top_em: r4(outTop / SIZE),
+      outside_bottom_em: r4(outBottom / SIZE),
+      outside_em: r4((outTop + outBottom) / SIZE),
+    };
+  }
+
+  function summary(v) {
+    const sp = v.spaces.map((s) => `${s.cp}[${s.context}] ${s.em}`).join("\n    ") || "none";
+    const b = v.bidi.pass ? "pass" : `FAIL\n    got ${JSON.stringify(v.bidi.visual)}\n    exp ${JSON.stringify(v.bidi.expected)}`;
+    return [
+      `bbox ${v.bbox_px.w}×${v.bbox_px.h}px  adv ${v.advance_em}em`,
+      `lines ${v.lines.natural.count} / ${v.lines.narrow.count} @${NARROW_EM}em  starts: ${v.lines.narrow.starts.map((s) => s.token).join(" | ")}`,
+      `spaces ${sp}`,
+      `ink ${v.ink.ink_top_em}..${v.ink.ink_bottom_em}em  box ${v.ink.line_box_em}em  outside ${v.ink.outside_em}em`,
+      `bidi ${b}`,
+    ].join("\n");
+  }
+
+  window.measure = async () => {
+    await Promise.all([...document.fonts].map((f) => f.load().catch(() => null)));
+    await document.fonts.ready;
+    const host = document.getElementById("measure");
+    host.textContent = "";
+    const cases = [];
+    for (const c of CASES) {
+      const stacks = {};
+      for (const [s, stack] of Object.entries(STACKS)) {
+        const nat = copy(stack, "natural", c.text);
+        const nar = copy(stack, "narrow", c.text);
+        const ik = copy(stack, "ink", c.text, true);
+        const lh = parseFloat(getComputedStyle(nat).lineHeight);
+        const visible = document.querySelector(`#c${c.id}-${s} p`);
+        const vr = rectOf(visible.firstChild, 0, c.text.length);
+        const nr = rectOf(nat.firstChild, 0, c.text.length);
+        const v = {
+          stack,
+          bbox_px: { w: r4(vr.width), h: r4(vr.height), font_size_px: 48 },
+          advance_em: r4(nr.width / SIZE),
+          lines: {
+            natural: lines(nat, nat.firstChild, c.text, lh),
+            narrow: { width_em: NARROW_EM, ...lines(nar, nar.firstChild, c.text, lh) },
+          },
+          spaces: spaces(nat.firstChild, c.text),
+          ink: ink(ik, c.text),
+          bidi: bidi(nat.firstChild, c),
+        };
+        stacks[s] = v;
+        const pre = document.getElementById(`m${c.id}-${s}`);
+        pre.textContent = summary(v);
+        pre.classList.toggle("fail", !v.bidi.pass);
+      }
+      cases.push({
+        id: c.id, slug: c.slug, label: c.label, text: c.text,
+        codepoints: [...new Set([...c.text])].map(cp),
+        stacks,
+      });
+    }
+    const fonts = [...document.fonts].map((f) => ({ family: f.family, status: f.status }));
+    return JSON.stringify({
+      user_agent: navigator.userAgent,
+      measure_px: SIZE,
+      intl_ar_eg: { input: "1234567.89", output: N, codepoints: [...N].map(cp) },
+      fonts,
+      cases,
+    });
+  };
+
+  render();
+  window.measure();
+})();
+</script>
+</body>
+</html>

@@ -3,9 +3,11 @@ import type {
   ComplexityId,
   ConsultingPackageId,
   MaintenancePlanId,
+  ScopeNoteId,
   ServiceId,
-  TierId,
 } from "../ids";
+import type { MaintenanceInterval } from "../maintenance";
+import type { FactorGroupId } from "../modifiers";
 import type { BillingCycle } from "../types";
 
 export interface ServiceCopy {
@@ -20,17 +22,6 @@ export interface ServiceCopy {
   readonly documentName: string;
   readonly name: string;
   readonly description: string;
-}
-
-export interface TierCopy {
-  readonly name: string;
-  readonly buyerLabel: string;
-  readonly internalLabel: string;
-  readonly idealFor: string;
-  readonly notIncluded: string;
-  readonly features: readonly string[];
-  readonly nextStep: string;
-  readonly ctaLabel: string;
 }
 
 export interface MaintenanceCopy {
@@ -72,6 +63,8 @@ export interface MaintenanceTemplates {
   readonly overageShort: string;
   readonly customPrice: string;
   readonly perCycle: Readonly<Record<BillingCycle, string>>;
+  /** The suffix after a per-invoice figure, one per `MaintenanceInterval`. */
+  readonly perInterval: Readonly<Record<MaintenanceInterval, string>>;
 }
 
 export interface ConsultingCopy {
@@ -110,6 +103,11 @@ export interface AddonCopy {
 export interface TermsCopy {
   readonly vatLabel: string;
   readonly vatNote: string;
+  /**
+   * The one-sentence "excluding VAT" statement the estimator and the pricing
+   * page carry next to a figure. Carries `{rate}`.
+   */
+  readonly vatExcluded: string;
   readonly revisionLabel: string;
   readonly revisionNote: string;
   readonly usdLabel: string;
@@ -120,33 +118,79 @@ export interface TermsCopy {
   readonly markupLabel: string;
   readonly totalLabel: string;
   readonly pendingLabel: string;
+  /**
+   * The three payment milestones, in `paymentSplit` order. Each carries `{p}`
+   * — the percent, formatted — and names what triggers it: the start, an
+   * agreed development milestone, and the production launch. The trigger
+   * wording lives here so a proposal, a contract and the pricing page cannot
+   * describe the same 30% three different ways.
+   */
+  readonly paymentTriggers: readonly [string, string, string];
+  /** The middle trigger on its own, for prose that quotes it: "a development milestone". */
+  readonly milestoneTrigger: string;
+  readonly ownership: string;
+  /** Carries `{days}`. */
+  readonly validity: string;
+}
+
+/** A priced condition's option, as the estimator and the pricing page name it. */
+export interface FactorOptionCopy {
+  readonly label: string;
+}
+
+export interface FactorGroupCopy {
+  readonly label: string;
+  readonly options: Readonly<Record<string, FactorOptionCopy>>;
+}
+
+export interface FactorCopy {
+  readonly groups: Readonly<Record<FactorGroupId, FactorGroupCopy>>;
+  /** The delta label for a factor of exactly 1: "no change". */
+  readonly noChange: string;
+}
+
+export interface ScopeNoteCopy {
+  readonly name: string;
+  readonly description: string;
 }
 
 /**
- * Wording around a tier's delivery window.
- *
- * A template, not a literal, for the same reason the maintenance scope lines
- * are: the weeks come from the service matrix, so a card cannot advertise a
- * window the estimator would not quote. `ceiling` states both numbers a buyer
- * meets: the matrix's own window ({windowMin}-{windowMax} weeks) and the cap
- * ({ceiling}) that the estimator's conditions can stretch a quote to. Quoting
- * the cap alone read as a contradiction beside a matrix that stops at 8.
+ * The service investment register: one row per service line. Figures are
+ * views; these are the words around them.
  */
-export interface TierTemplates {
-  readonly timelineLabel: string;
-  readonly timelineValue: string;
-  readonly ceiling: string;
+export interface InvestmentRowCopy {
+  readonly name: string;
+  readonly covers: string;
+  readonly how: string;
+}
+
+export interface InvestmentCopy {
+  readonly design: InvestmentRowCopy & {
+    /** The figure cell, e.g. "Scoped per project". No number. */
+    readonly figure: string;
+  };
+  readonly development: InvestmentRowCopy;
+  readonly audit: InvestmentRowCopy;
+  readonly maintenance: InvestmentRowCopy;
+  /**
+   * A cell's delivery window, carrying `{weeks}`. A template, not a literal,
+   * for the same reason the maintenance scope lines are: the weeks come from
+   * the service matrix, so no surface can print a window the estimator would
+   * not quote.
+   */
+  readonly weeksValue: string;
 }
 
 export interface PricingCopy {
   readonly services: Readonly<Record<ServiceId, ServiceCopy>>;
   /** Complexity band names as they appear in proposals and contracts. */
   readonly bands: Readonly<Record<ComplexityId, string>>;
-  readonly tiers: Readonly<Record<TierId, TierCopy>>;
-  readonly tierTemplates: TierTemplates;
   readonly maintenance: Readonly<Record<MaintenancePlanId, MaintenanceCopy>>;
   readonly maintenanceTemplates: MaintenanceTemplates;
   readonly consulting: Readonly<Record<ConsultingPackageId, ConsultingCopy>>;
   readonly addons: Readonly<Record<AddonId, AddonCopy>>;
   readonly terms: TermsCopy;
+  readonly factors: FactorCopy;
+  readonly scopeNotes: Readonly<Record<ScopeNoteId, ScopeNoteCopy>>;
+  readonly investment: InvestmentCopy;
 }

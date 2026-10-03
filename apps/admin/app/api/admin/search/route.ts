@@ -1,40 +1,91 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@repo/database";
-import { requireAdminSession } from "@/lib/require-admin";
+import { entityHref, entityNoun, type EntityKind } from "@/lib/entity-links";
+import { money } from "@/lib/format";
+import { canSeeFinance } from "@/lib/nav";
+import { toProductRole } from "@/lib/rbac";
+import { withAdmin } from "@/lib/with-admin";
 
 /**
- * Global search behind ⌘K (§20).
+ * Global search behind ⌘K.
  *
- * Deliberately four small parallel `contains` queries rather than one clever
- * union: Postgres plans each of them off an existing index, the result set is
+ * Deliberately many small parallel `contains` queries rather than one clever
+ * union: Postgres plans each of them off an existing index, every result set is
  * capped, and the shape stays obvious. If this ever gets slow the answer is a
  * tsvector column, not a bigger query here.
+ *
+ * Every result carries its page from `entityHref` and its noun from
+ * `entityNoun`, so the palette never builds a path itself and a record type
+ * gains a detail route in one place. Money records (payments, retainers and the
+ * price on a proposal) are searched only for roles that may see finance.
+ *
+ * `?type=client` narrows to clients — the palette's "New proposal" picker.
  */
-export async function GET(request: NextRequest) {
-  const session = await requireAdminSession(request);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+type Result = {
+  id: string;
+  kind: EntityKind;
+  noun: string;
+  title: string;
+  subtitle?: string;
+  href: string;
+};
+
+type ClientName = { name: string | null; company: string | null };
+const label = (c: ClientName | null | undefined) => c?.company || c?.name || "Unnamed client";
+
+const clientMatch = (like: { contains: string; mode: "insensitive" }) => ({
+  is: { OR: [{ name: like }, { company: like }] },
+});
+
+export const GET = withAdmin(async (request, { session }) => {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json({ results: [] });
 
   const like = { contains: q, mode: "insensitive" as const };
+  const onlyClients = request.nextUrl.searchParams.get("type") === "client";
+  const finance = canSeeFinance(toProductRole((session.user as { role?: string }).role));
+  // "#12" or "12" finds incident and deployment number 12.
+  const asNumber = /^#?\d{1,9}$/.test(q) ? Number(q.replace("#", "")) : null;
 
-  const [clients, proposals, contracts, projects] = await Promise.all([
-    prisma.client.findMany({
-      where: {
-        OR: [{ name: like }, { company: like }, { email: like }, { phone: { contains: q } }],
-      },
-      select: { id: true, name: true, company: true, phone: true, status: true },
-      take: 6,
-      orderBy: { updatedAt: "desc" },
-    }),
+  const clients = await prisma.client.findMany({
+    where: {
+      OR: [{ name: like }, { company: like }, { email: like }, { phone: { contains: q } }],
+    },
+    select: { id: true, name: true, company: true, phone: true, email: true },
+    take: onlyClients ? 10 : 6,
+    orderBy: { updatedAt: "desc" },
+  });
+
+  const results: Result[] = [];
+  const push = (kind: EntityKind, id: string, title: string, subtitle?: string | null) => {
+    const href = entityHref(kind, id);
+    if (!href) return;
+    results.push({ id, kind, noun: entityNoun(kind), title, subtitle: subtitle ?? undefined, href });
+  };
+
+  for (const c of clients) push("client", c.id, label(c), c.phone || c.email);
+  if (onlyClients) return NextResponse.json({ results });
+
+  const [
+    proposals,
+    contracts,
+    projects,
+    products,
+    incidents,
+    deployments,
+    builds,
+    tasks,
+    submissions,
+    estimateLeads,
+    services,
+    meetings,
+    users,
+    subscriptions,
+    payments,
+  ] = await Promise.all([
     prisma.proposal.findMany({
-      where: {
-        OR: [
-          { projectType: like },
-          { client: { is: { OR: [{ name: like }, { company: like }] } } },
-        ],
-      },
+      where: { OR: [{ projectType: like }, { client: clientMatch(like) }] },
       select: {
         id: true,
         projectType: true,
@@ -47,58 +98,211 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.contract.findMany({
-      where: { client: { is: { OR: [{ name: like }, { company: like }] } } },
+      where: { client: clientMatch(like) },
+      select: { id: true, status: true, client: { select: { name: true, company: true } } },
+      take: 4,
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.project.findMany({
+      where: { OR: [{ name: like }, { client: clientMatch(like) }] },
+      select: { id: true, name: true, phase: true },
+      take: 5,
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.product.findMany({
+      where: { OR: [{ name: like }, { slug: like }, { productionUrl: like }] },
+      select: { id: true, name: true, productionUrl: true, status: true },
+      take: 4,
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.incident.findMany({
+      where: {
+        OR: [{ title: like }, ...(asNumber != null ? [{ number: asNumber }] : [])],
+      },
       select: {
         id: true,
+        number: true,
+        title: true,
+        severity: true,
         status: true,
+        product: { select: { name: true } },
+      },
+      take: 4,
+      orderBy: { detectedAt: "desc" },
+    }),
+    prisma.deployment.findMany({
+      where: {
+        OR: [
+          { commitSha: { startsWith: q.toLowerCase() } },
+          { version: like },
+          ...(asNumber != null ? [{ number: asNumber }] : []),
+        ],
+      },
+      select: {
+        id: true,
+        number: true,
+        environment: true,
+        status: true,
+        commitSha: true,
+        product: { select: { name: true } },
+      },
+      take: 4,
+      orderBy: { createdAt: "desc" },
+    }),
+    // Deployments carry no branch; the build that produced one does.
+    prisma.build.findMany({
+      where: {
+        OR: [
+          { commitSha: { startsWith: q.toLowerCase() } },
+          { branch: like },
+          { commitMessage: like },
+        ],
+      },
+      select: {
+        id: true,
+        number: true,
+        branch: true,
+        status: true,
+        commitSha: true,
+        product: { select: { name: true } },
+      },
+      take: 4,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.projectTask.findMany({
+      where: { title: like },
+      select: { id: true, title: true, status: true, project: { select: { name: true } } },
+      take: 5,
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.contactSubmission.findMany({
+      where: { OR: [{ name: like }, { phone: { contains: q } }, { message: like }] },
+      select: { id: true, name: true, status: true, phone: true },
+      take: 4,
+      orderBy: { submittedAt: "desc" },
+    }),
+    prisma.transparencyLead.findMany({
+      where: {
+        OR: [{ reference: like }, { name: like }, { email: like }, { company: like }, { phone: { contains: q } }],
+      },
+      select: { id: true, reference: true, name: true, company: true, projectType: true },
+      take: 4,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.clientService.findMany({
+      where: {
+        OR: [{ name: like }, { reference: like }, { provider: like }, { client: clientMatch(like) }],
+      },
+      select: {
+        id: true,
+        name: true,
+        kind: true,
+        provider: true,
         client: { select: { name: true, company: true } },
       },
       take: 4,
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.project.findMany({
-      where: {
-        OR: [{ name: like }, { client: { is: { OR: [{ name: like }, { company: like }] } } }],
-      },
-      select: { id: true, name: true, phase: true, status: true },
-      take: 5,
-      orderBy: { updatedAt: "desc" },
+    prisma.meeting.findMany({
+      where: { OR: [{ title: like }, { guestName: like }, { guestEmail: like }] },
+      select: { id: true, title: true, scheduledDate: true, scheduledTime: true },
+      take: 4,
+      orderBy: { scheduledDate: "desc" },
     }),
+    prisma.user.findMany({
+      where: { OR: [{ name: like }, { email: like }] },
+      select: { id: true, name: true, email: true },
+      take: 3,
+      orderBy: { name: "asc" },
+    }),
+    finance
+      ? prisma.maintenanceSubscription.findMany({
+          where: { client: clientMatch(like) },
+          select: {
+            id: true,
+            planId: true,
+            status: true,
+            client: { select: { name: true, company: true } },
+          },
+          take: 4,
+          orderBy: { updatedAt: "desc" },
+        })
+      : Promise.resolve([]),
+    finance
+      ? prisma.payment.findMany({
+          where: { OR: [{ invoiceNumber: like }, { reference: like }] },
+          select: {
+            id: true,
+            invoiceNumber: true,
+            reference: true,
+            milestone: true,
+            status: true,
+            project: { select: { name: true } },
+          },
+          take: 4,
+          orderBy: { updatedAt: "desc" },
+        })
+      : Promise.resolve([]),
   ]);
 
-  const label = (c: { name: string | null; company: string | null }) =>
-    c.company || c.name || "Unnamed client";
+  const words = (value: string) => value.toLowerCase().replace(/_/g, " ");
 
-  return NextResponse.json({
-    results: [
-      ...clients.map((c) => ({
-        id: c.id,
-        type: "client" as const,
-        title: label(c),
-        subtitle: c.phone,
-        href: `/clients/${c.id}`,
-      })),
-      ...proposals.map((p) => ({
-        id: p.id,
-        type: "proposal" as const,
-        title: `${label(p.client)} · ${p.projectType}`,
-        subtitle: `${p.currency} ${p.totalPrice.toLocaleString()}`,
-        href: `/proposals/${p.id}`,
-      })),
-      ...contracts.map((c) => ({
-        id: c.id,
-        type: "contract" as const,
-        title: label(c.client),
-        subtitle: c.status,
-        href: `/contracts/${c.id}`,
-      })),
-      ...projects.map((p) => ({
-        id: p.id,
-        type: "project" as const,
-        title: p.name,
-        subtitle: p.phase,
-        href: `/projects/${p.id}`,
-      })),
-    ],
-  });
-}
+  for (const p of proposals) {
+    push(
+      "proposal",
+      p.id,
+      `${label(p.client)} · ${p.projectType}`,
+      finance ? money(p.totalPrice, p.currency) : words(p.status),
+    );
+  }
+  for (const c of contracts) push("contract", c.id, label(c.client), words(c.status));
+  for (const p of projects) push("project", p.id, p.name, words(p.phase));
+  for (const p of products) push("product", p.id, p.name, p.productionUrl ?? words(p.status));
+  for (const i of incidents) {
+    push("incident", i.id, `#${i.number} ${i.title}`, `${i.severity} · ${i.product.name} · ${words(i.status)}`);
+  }
+  for (const d of deployments) {
+    push(
+      "deployment",
+      d.id,
+      `${d.product.name} #${d.number}`,
+      [words(d.environment), words(d.status), d.commitSha?.slice(0, 7)].filter(Boolean).join(" · "),
+    );
+  }
+  for (const b of builds) {
+    push(
+      "build",
+      b.id,
+      `${b.product.name} build #${b.number}`,
+      [b.branch, words(b.status), b.commitSha?.slice(0, 7)].filter(Boolean).join(" · "),
+    );
+  }
+  for (const t of tasks) push("task", t.id, t.title, `${t.project.name} · ${words(t.status)}`);
+  for (const s of submissions) push("submission", s.id, s.name, `${s.phone} · ${words(s.status)}`);
+  for (const l of estimateLeads) {
+    push("transparency_lead", l.id, l.company || l.name || l.reference, `${l.reference} · ${l.projectType}`);
+  }
+  for (const s of services) {
+    push(
+      "client_service",
+      s.id,
+      s.name,
+      [label(s.client), words(s.kind), s.provider].filter(Boolean).join(" · "),
+    );
+  }
+  for (const m of meetings) {
+    push("meeting", m.id, m.title, `${m.scheduledDate.toISOString().slice(0, 10)} ${m.scheduledTime}`);
+  }
+  for (const u of users) push("user", u.id, u.name || u.email, u.email);
+  for (const s of subscriptions) push("subscription", s.id, label(s.client), `${s.planId} · ${words(s.status)}`);
+  for (const p of payments) {
+    push(
+      "payment",
+      p.id,
+      p.invoiceNumber ?? p.reference ?? words(p.milestone),
+      [p.project?.name, words(p.milestone), words(p.status)].filter(Boolean).join(" · "),
+    );
+  }
+
+  return NextResponse.json({ results });
+});

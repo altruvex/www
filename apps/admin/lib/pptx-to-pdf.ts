@@ -5,6 +5,8 @@ import { tmpdir } from "os";
 import path from "path";
 import { pathToFileURL } from "url";
 
+import { sofficeFontEnv } from "./soffice-fonts";
+
 const execFileAsync = promisify(execFile);
 
 /**
@@ -36,7 +38,7 @@ export async function convertPptxToPdf(pptxBuffer: Buffer): Promise<Buffer | nul
         workDir,
         pptxPath,
       ],
-      { timeout: 60_000 },
+      { timeout: 60_000, env: await sofficeFontEnv(workDir) },
     );
 
     return await readFile(path.join(workDir, "input.pdf"));

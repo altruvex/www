@@ -28,6 +28,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useThemeSwitch } from "@/lib/use-theme-switch";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -42,16 +43,20 @@ export function Topbar({
   user,
   unreadCount,
   onOpenPalette,
+  onCreateProposal,
   onOpenMobileNav,
 }: {
   user: { name?: string | null; email?: string | null; role?: string | null };
   unreadCount: number;
   onOpenPalette: () => void;
+  /** Opens the palette's client picker — a proposal is created from its client. */
+  onCreateProposal: () => void;
   onOpenMobileNav: () => void;
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { theme } = useTheme();
+  const switchTheme = useThemeSwitch();
   const [mounted, setMounted] = React.useState(false);
   const [isMac, setIsMac] = React.useState(true);
 
@@ -120,8 +125,12 @@ export function Topbar({
             <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/clients/new")}>
               <Link href="/clients/new">Client</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/proposals/new")}>
-              <Link href="/proposals/new">Proposal</Link>
+            {/* There is no client-less proposal route: a proposal is written for a
+                client at /clients/[id]/new-proposal. This opens the palette as a
+                client picker. Deferred a tick so the menu finishes closing and
+                returning focus before the dialog takes it. */}
+            <DropdownMenuItem onSelect={() => window.setTimeout(onCreateProposal, 0)}>
+              Proposal…
             </DropdownMenuItem>
             <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/calendar?new=meeting")}>
               <Link href="/calendar?new=meeting">Meeting</Link>
@@ -156,7 +165,7 @@ export function Topbar({
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Theme</DropdownMenuLabel>
             {mounted ? (
-              <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+              <DropdownMenuRadioGroup value={theme} onValueChange={switchTheme}>
                 <DropdownMenuRadioItem value="light">
                   <Sun strokeWidth={1.75} /> Light
                 </DropdownMenuRadioItem>

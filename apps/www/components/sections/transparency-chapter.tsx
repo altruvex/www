@@ -7,7 +7,7 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/utils/number";
+import { formatIndex } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { useLocale } from "next-intl";
 import type { ReactNode } from "react";
@@ -45,14 +45,14 @@ export function TransparencyChapter({
         {index !== undefined ? (
           <span
             aria-hidden
-            className="eyebrow shrink-0 self-start text-micro leading-none tabular-nums text-local-accent-text sm:self-center ltr:font-mono"
+            className="eyebrow shrink-0 self-start text-micro leading-none tabular-nums text-muted-foreground sm:self-center ltr:font-mono"
           >
-            {localizeNumbers(String(index).padStart(2, "0"), locale)}
+            {formatIndex(index, 2, locale)}
           </span>
         ) : null}
         <span
           aria-hidden
-          className="hidden h-px w-10 shrink-0 bg-local-accent/50 sm:block"
+          className="hidden h-px w-10 shrink-0 bg-border-subtle sm:block"
         />
         <Eyebrow ref={eyebrowRef} className="min-w-0 text-micro leading-snug">
           {eyebrow}

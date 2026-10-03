@@ -1,5 +1,6 @@
 import { prisma } from "@repo/database";
 
+import { FilterChip } from "@/components/os/data-table";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { NewServiceButton } from "@/components/os/services/new-service-button";
@@ -25,9 +26,18 @@ export const dynamic = "force-dynamic";
  * the sidebar badge are all derived from `expiresAt` and the clock, so they are
  * right whether or not the scheduled sweep has run.
  */
-export default async function ServicesPage() {
+export default async function ServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const { client: clientParam } = await searchParams;
+  const clientId = clientParam?.trim() || null;
+
+  // `?client=` scopes the whole screen — tiles included — to one client's
+  // services, so a hub can link here instead of re-listing them.
   const [services, clients] = await Promise.all([
-    listServices(),
+    listServices(clientId ? { clientId } : {}),
     prisma.client.findMany({
       select: {
         id: true,
@@ -73,6 +83,9 @@ export default async function ServicesPage() {
       (yearly[service.currency] ?? 0) + annualised(service.price, service.termMonths);
   }
 
+  const scopeClient = clientId ? clients.find((c) => c.id === clientId) : null;
+  const scopeName = scopeClient ? clientLabel(scopeClient) : "Unknown client";
+
   const scheduled = Boolean(process.env.CRON_SECRET);
   const emailConfigured = emailTransport() !== "none";
 
@@ -96,6 +109,12 @@ export default async function ServicesPage() {
           </>
         }
       />
+
+      {clientId && (
+        <div className="flex flex-wrap gap-2">
+          <FilterChip label="Client" value={scopeName} clearHref="/services" />
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
@@ -157,7 +176,9 @@ export default async function ServicesPage() {
         emailConfigured={emailConfigured}
         emptyText={
           services.length === 0
-            ? "No services recorded for any client. Add one here, from a client or project, or list them in a proposal — signing it opens them automatically."
+            ? clientId
+              ? `No services recorded for ${scopeName}. Add one here, from the client's page, or list them in a proposal — signing it opens them automatically.`
+              : "No services recorded for any client. Add one here, from a client or project, or list them in a proposal — signing it opens them automatically."
             : "Nothing else — every service is listed above."
         }
       />

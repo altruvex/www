@@ -8,6 +8,8 @@ import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
 import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
 import { Timeline } from "@/components/os/timeline";
+import { EntityAudit } from "@/components/os/entity-audit";
+import { EntityLink } from "@/components/os/entity-link";
 import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
@@ -22,7 +24,15 @@ import { headers } from "next/headers";
 
 import { SendDocument } from "@/components/os/send-document";
 import { ContractSignerForm } from "@/components/os/contract-signer";
-import { effectiveSigner, maskEmail, maskPhone } from "@/lib/sign-verification";
+import {
+  effectiveSigner,
+  maskEmail,
+  maskPhone,
+  whatsappConfigured,
+} from "@/lib/sign-verification";
+import { publicBaseUrlFromHeaders } from "@/lib/public-url";
+import { entityHref } from "@/lib/entity-links";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
 import { contractDraft } from "@/lib/email-templates";
 import { emailTransport } from "@/lib/email";
 import { Button } from "@repo/ui";
@@ -69,11 +79,11 @@ export default async function ContractDetailPage({
   if (!contract) notFound();
 
   // The signing link, absolute, because it goes into a mail a client opens
-  // somewhere else entirely.
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
-  const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
-  const signUrl = contract.signToken ? `${scheme}://${host}/sign/${contract.signToken}` : "";
+  // somewhere else entirely. Client-facing, so it is built on the configured
+  // public origin (BETTER_AUTH_URL), never on the request host.
+  const signUrl = contract.signToken
+    ? `${publicBaseUrlFromHeaders(await headers())}/sign/${contract.signToken}`
+    : "";
 
   // Documents are signed-on-read when the bucket is private, so the link is
   // built here rather than taken off the row.
@@ -150,7 +160,11 @@ export default async function ContractDetailPage({
         status={<StatusPill registry="contractStatus" value={contract.status} />}
         meta={
           <>
-            <MetaItem label="Client">{clientName}</MetaItem>
+            <MetaItem label="Client">
+              <EntityLink type="client" id={contract.clientId}>
+                {clientName}
+              </EntityLink>
+            </MetaItem>
             <MetaItem label="Value">
               {money(contract.proposal.totalPrice, contract.proposal.currency)}
             </MetaItem>
@@ -183,9 +197,7 @@ export default async function ContractDetailPage({
                 defaultBody={contractDraft(contract.client.name, signUrl).body}
                 clientEmail={contract.client.email}
                 emailConfigured={emailTransport() !== "none"}
-                whatsappConfigured={Boolean(
-                  process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
-                )}
+                whatsappConfigured={whatsappConfigured()}
               />
             )}
             {contract.status !== "SIGNED" && (
@@ -236,9 +248,9 @@ export default async function ContractDetailPage({
                   {
                     label: "Client",
                     value: (
-                      <Link href={`/clients/${contract.clientId}`} className="hover:text-brand">
+                      <EntityLink type="client" id={contract.clientId}>
                         {clientName}
-                      </Link>
+                      </EntityLink>
                     ),
                   },
                   { label: "Phone", value: <span className="font-mono text-meta">{contract.client.phone}</span> },
@@ -377,12 +389,13 @@ export default async function ContractDetailPage({
             <Panel title="Delivery" flush>
               {contract.project ? (
                 <div className="px-3 py-3">
-                  <Link
-                    href={`/projects/${contract.project.id}`}
-                    className="text-base font-medium hover:text-brand"
+                  <EntityLink
+                    type="project"
+                    id={contract.project.id}
+                    className="text-base font-medium"
                   >
                     {contract.project.name}
-                  </Link>
+                  </EntityLink>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <StatusPill registry="projectPhase" value={contract.project.phase} variant="dot" />
                     <StatusPill registry="projectStatus" value={contract.project.status} />
@@ -390,14 +403,23 @@ export default async function ContractDetailPage({
                   {contract.project.payments.length > 0 && (
                     <ul className="rows mt-3 border-t border-border">
                       {contract.project.payments.map((payment) => (
-                        <li key={payment.id} className="flex items-center gap-3 py-2">
-                          <span className="min-w-0 flex-1 truncate text-base">
-                            {statusOf("paymentMilestone", payment.milestone).label}
-                          </span>
-                          <span className="font-mono text-meta tabular-nums">
-                            {money(payment.amount, contract.proposal.currency)}
-                          </span>
-                          <StatusPill registry="paymentStatus" value={payment.status} variant="dot" />
+                        <li key={payment.id}>
+                          <Link
+                            href={entityHref("payment", payment.id) ?? "/payments"}
+                            className="-mx-1 flex items-center gap-3 rounded-xs px-1 py-2 transition-colors duration-[var(--dur-state)] hover:bg-surface-2"
+                          >
+                            <span className="min-w-0 flex-1 truncate text-base">
+                              {statusOf("paymentMilestone", payment.milestone).label}
+                            </span>
+                            <span className="font-mono text-meta tabular-nums">
+                              {money(payment.amount, contract.proposal.currency)}
+                            </span>
+                            <StatusPill
+                              registry="paymentStatus"
+                              value={derivedPaymentStatus(payment)}
+                              variant="dot"
+                            />
+                          </Link>
                         </li>
                       ))}
                     </ul>
@@ -542,11 +564,23 @@ export default async function ContractDetailPage({
         )}
 
         {tab === "activity" && (
-          <Panel title="Activity" flush bodyClassName="p-2">
-            <Timeline events={activity} emptyLabel="Nothing recorded for this contract." />
-          </Panel>
+          <>
+            <Panel title="Activity" flush bodyClassName="p-2">
+              <Timeline events={activity} emptyLabel="Nothing recorded for this contract." />
+            </Panel>
+            <EntityAudit type="contract" id={contract.id} />
+          </>
         )}
       </DetailLayout>
     </div>
   );
+}
+
+/**
+ * OVERDUE is derived, never read as stored: a PENDING row past the cutoff is
+ * late, and a row stored OVERDUE whose due day has not passed is still due.
+ */
+function derivedPaymentStatus(payment: { status: string; dueDate: Date | null }): string {
+  if (isPaymentOverdue(payment)) return "OVERDUE";
+  return payment.status === "OVERDUE" ? "PENDING" : payment.status;
 }

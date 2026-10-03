@@ -9,7 +9,8 @@
  *   span.ts            — the pricing math (`spanFor`), no React
  *   hooks.ts            — useStuck / useReached / useRadioKeys
  *   instrument.tsx       — the pinned readout
- *   questions.tsx         — the build questions + conditions block
+ *   intro-chain.tsx       — pricing → estimate → proposal, before the figure
+ *   questions.tsx         — the build questions, scope notes + conditions
  *   result-panel.tsx       — the post-completion payoff, loaded lazily below
  *
  * All of these still ship to the client: every one is reached only through
@@ -33,13 +34,20 @@ import {
   type Timeline,
 } from "@/hooks/use-transparency";
 import { useReveal } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/utils/number";
+import { formatIndex, localizeNumbers } from "@/lib/utils/number";
 import {
   fillScopeTokens,
+  isValidPhone,
   mapProjectType,
-  validatePhone,
   type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
+import {
+  paymentScheduleView,
+  pricingCopy,
+  scopeNoteViews,
+  type ComplexityId,
+  type Locale,
+} from "@repo/pricing-schema";
 import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -47,19 +55,22 @@ import {
   BUILD_QUESTIONS,
   CONDITION_QUESTIONS,
   COMPLEXITY_TIER,
-  KNOWN_TIERS,
+  ESTIMATOR_STEP,
   TOTAL,
 } from "./transparency-estimator/constants";
 import { useReached } from "./transparency-estimator/hooks";
-import {
-  Instrument,
-  PreselectedTier,
-} from "./transparency-estimator/instrument";
+import { Instrument } from "./transparency-estimator/instrument";
+import { IntroChain } from "./transparency-estimator/intro-chain";
 import {
   BuildQuestion,
   ConditionsBlock,
+  ScopeNotesStep,
 } from "./transparency-estimator/questions";
-import { spanFor } from "./transparency-estimator/span";
+import {
+  resolveEstimatorPricing,
+  spanFor,
+  type EstimatorPricing,
+} from "./transparency-estimator/span";
 import type {
   AnswerMap,
   Delta,
@@ -90,18 +101,34 @@ const ResultPanelLazy = dynamic(
 
 interface TransparencyEstimatorProps {
   pageHeading?: boolean;
-  initialTier?: string | null;
   initialProjectType?: ProjectType;
+  /**
+   * The services + terms slice of the pricing the page resolved (admin
+   * overrides applied). Omitted, the estimator prices from the defaults.
+   */
+  pricing?: EstimatorPricing;
 }
 
 export function TransparencyEstimator({
   pageHeading = false,
-  initialTier = null,
   initialProjectType = null,
+  pricing: pricingSlice,
 }: TransparencyEstimatorProps = {}) {
   const t = useTranslations("transparency");
+  const tPM = useTranslations("pricingModel");
   const locale = useLocale();
   const isAr = locale.startsWith("ar");
+  const schemaLocale: Locale = isAr ? "ar" : "en";
+  // One pricing object for the instrument, the deltas, the result and the PDF
+  // — the same figures the lead route recomputes on the server.
+  const pricing = useMemo(
+    () => resolveEstimatorPricing(pricingSlice),
+    [pricingSlice],
+  );
+  const copy = pricingCopy(schemaLocale);
+  const notes = useMemo(() => scopeNoteViews(schemaLocale), [schemaLocale]);
+  /** Step headings sit one level under the section title. */
+  const headingLevel = pageHeading ? 2 : 3;
 
   const {
     projectType,
@@ -114,14 +141,17 @@ export function TransparencyEstimator({
     setBrandIdentity,
     setContentReadiness,
     setTimeline,
+    scopeNotes,
+    toggleScopeNote,
     getEstimate,
     reset,
-  } = useTransparency({ initialTier, initialProjectType });
+  } = useTransparency({ initialProjectType, pricing });
 
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [note, setNote] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -162,7 +192,7 @@ export function TransparencyEstimator({
   /** Only ever read when complete, where it equals `spanFor` exactly. */
   const estimate = getEstimate();
   /** What the instrument prints, at every stage of answering. */
-  const shown = useMemo(() => spanFor(answers), [answers]);
+  const shown = useMemo(() => spanFor(answers, pricing), [answers, pricing]);
 
   const currency = useMemo(
     () =>
@@ -201,7 +231,8 @@ export function TransparencyEstimator({
     [isAr, money, plain],
   );
   const num = useCallback(
-    (n: string | number) => localizeNumbers(String(n), locale),
+    (n: string | number, pad?: number) =>
+      pad ? formatIndex(n, pad, locale) : localizeNumbers(String(n), locale),
     [locale],
   );
 
@@ -210,8 +241,8 @@ export function TransparencyEstimator({
       // The delta is computed here rather than from a render-to-render diff:
       // the answer that caused it is only known at the call site, and a chip
       // that cannot name its cause is decoration.
-      const before = spanFor(answers);
-      const after = spanFor({ ...answers, [key]: value });
+      const before = spanFor(answers, pricing);
+      const after = spanFor({ ...answers, [key]: value }, pricing);
       const minChange = after.minPrice - before.minPrice;
       const maxChange = after.maxPrice - before.maxPrice;
 
@@ -219,9 +250,12 @@ export function TransparencyEstimator({
         minChange === 0 && maxChange === 0
           ? null
           : {
-              label: t(
-                `steps.${[...BUILD_QUESTIONS, ...CONDITION_QUESTIONS].find((q) => q.key === key)!.msg}.options.${value}.title`,
-              ),
+              label:
+                key === "complexity"
+                  ? copy.bands[value as ComplexityId]
+                  : t(
+                      `steps.${[...BUILD_QUESTIONS, ...CONDITION_QUESTIONS].find((q) => q.key === key)!.msg}.options.${value}.title`,
+                    ),
               minChange,
               maxChange,
             },
@@ -236,6 +270,8 @@ export function TransparencyEstimator({
     },
     [
       answers,
+      copy,
+      pricing,
       setBrandIdentity,
       setComplexity,
       setContentReadiness,
@@ -259,6 +295,7 @@ export function TransparencyEstimator({
     setPhone("");
     setEmail("");
     setCompany("");
+    setNote("");
     setPhoneError(null);
     setEmailError(null);
     setSubmitted(false);
@@ -267,8 +304,13 @@ export function TransparencyEstimator({
   }, [reset]);
 
   const submit = useCallback(async () => {
-    if (!validatePhone(phone)) {
-      setPhoneError(t("phoneCapture.phoneError"));
+    // The same rule the lead route's zod schema applies.
+    if (!phone.trim()) {
+      setPhoneError(tPM("form.errors.phoneEmpty"));
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      setPhoneError(tPM("form.errors.phoneInvalid"));
       return;
     }
 
@@ -296,6 +338,8 @@ export function TransparencyEstimator({
           // a deal carries before engineering starts.
           brandIdentity: brandIdentity ?? undefined,
           contentReadiness: contentReadiness ?? undefined,
+          scopeNotes,
+          note: note.trim() || undefined,
           priceMin: estimate.minPrice,
           priceMax: estimate.maxPrice,
           weeksMin: estimate.minWeeks,
@@ -309,7 +353,7 @@ export function TransparencyEstimator({
         // phone.
         if (data?.errors?.email) setEmailError(data.errors.email);
         if (data?.errors?.phone || !data?.errors?.email) {
-          setPhoneError(data?.errors?.phone ?? t("phoneCapture.phoneError"));
+          setPhoneError(data?.errors?.phone ?? tPM("form.errors.phoneInvalid"));
         }
         return;
       }
@@ -317,7 +361,7 @@ export function TransparencyEstimator({
       setReference(typeof data?.reference === "string" ? data.reference : null);
       setSubmitted(true);
     } catch {
-      setPhoneError(t("phoneCapture.phoneError"));
+      setPhoneError(tPM("form.errors.phoneInvalid"));
     } finally {
       setSubmitting(false);
     }
@@ -330,16 +374,18 @@ export function TransparencyEstimator({
     estimate,
     isAr,
     name,
+    note,
     phone,
     projectType,
-    t,
+    scopeNotes,
     timeline,
+    tPM,
   ]);
 
   /**
    * The PDF, generated on demand.
    *
-   * `buildPDFHtml` and `generateEstimatePdf` live in `transparency-utils.ts`
+   * `buildPDFHtml` and `generateEstimatePdf` live in `transparency-pdf.ts`
    * — an ~900-line module whose PDF-markup half is only ever read from this
    * one callback, itself only reachable after all five questions are
    * answered *and* the lead form is submitted. Importing it at module scope
@@ -351,21 +397,38 @@ export function TransparencyEstimator({
 
     setDownloading(true);
     try {
-      const { buildPDFHtml, generateEstimatePdf } =
+      const { buildPDFHtml, collectPdfFonts, generateEstimatePdf } =
         await import("@/lib/utils/transparency-pdf");
 
+      const schedule = paymentScheduleView(schemaLocale, pricing);
       const html = buildPDFHtml({
-        locale: isAr ? "ar" : "en",
+        locale: schemaLocale,
         t: t as unknown as TransparencyTranslator,
         projectType: mapProjectType(projectType),
-        tier: COMPLEXITY_TIER[complexity],
+        band: COMPLEXITY_TIER[complexity],
+        // Label = service + band, both named by the schema (R13).
+        serviceLabel: copy.services[projectType].documentName,
+        bandLabel: copy.bands[complexity],
+        timelineLabel: timeline
+          ? t(`steps.timeline.options.${timeline}.title`)
+          : "",
         timelineKey: timeline ?? "standard",
+        scopeNotes: notes
+          .filter((n) => scopeNotes.includes(n.id))
+          .map((n) => n.name),
+        disclaimer: tPM("result.disclaimer", {
+          days: schedule.validityDaysLabel,
+          vat: schedule.vatExcluded,
+        }),
+        pricing,
+        fonts: collectPdfFonts(),
         priceMin: estimate.minPrice,
         priceMax: estimate.maxPrice,
         weeksMin: estimate.minWeeks,
         weeksMax: estimate.maxWeeks,
-        phone,
         name,
+        brandIdentity,
+        contentReadiness,
       });
 
       await generateEstimatePdf(html, `altruvex-estimate-${locale}.pdf`);
@@ -373,15 +436,21 @@ export function TransparencyEstimator({
       setDownloading(false);
     }
   }, [
+    brandIdentity,
     complexity,
+    contentReadiness,
+    copy,
     estimate,
-    isAr,
     locale,
     name,
-    phone,
+    notes,
+    pricing,
     projectType,
+    schemaLocale,
+    scopeNotes,
     t,
     timeline,
+    tPM,
   ]);
 
   // Scope lines quote the post-launch warranty window as a `{token}`; the
@@ -392,7 +461,7 @@ export function TransparencyEstimator({
           `pdfContent.deliverables.${mapProjectType(projectType)}.${COMPLEXITY_TIER[complexity]}`,
         ) as string[]) ?? [])
       : (t.raw("results.fallbackDeliverables") as string[])
-  ).map((item) => fillScopeTokens(item, locale));
+  ).map((item) => fillScopeTokens(item, locale, pricing));
 
   return (
     <section
@@ -402,18 +471,15 @@ export function TransparencyEstimator({
     >
       <Container>
         {/* No chapter index: the estimator is the instrument that produces
-            the figure, not one of the three chapters that then explain it. */}
+            the figure, not one of the chapters that then explain it. */}
         <TransparencyChapter
           titleId="transparency-estimator-heading"
           titleAs={pageHeading ? "h1" : "h2"}
           eyebrow={t("badge")}
           title={t("title")}
-          titleItalic={t("titleItalic")}
           lede={t("subtitle")}
         />
-        {initialTier && KNOWN_TIERS.has(initialTier) ? (
-          <PreselectedTier label={t(`tierNames.${initialTier}`)} t={t} />
-        ) : null}
+        <IntroChain t={t} />
 
         {/* The instrument, before the first question and pinned for the rest
             of the section. The reader sees the figure they came for at its
@@ -443,15 +509,35 @@ export function TransparencyEstimator({
                 onSelect={(val) => select(question.key, val)}
                 t={t}
                 num={num}
+                headingLevel={headingLevel}
+                titleFor={
+                  question.key === "complexity"
+                    ? (option) => copy.bands[option as ComplexityId]
+                    : undefined
+                }
               />
             ))}
 
+            <ScopeNotesStep
+              index={ESTIMATOR_STEP.scopeNotes}
+              title={tPM("scopeNotes.title")}
+              lead={tPM("scopeNotes.lead")}
+              badge={tPM("scopeNotes.badge")}
+              notes={notes}
+              selected={scopeNotes}
+              onToggle={toggleScopeNote}
+              num={num}
+              headingLevel={headingLevel}
+            />
+
             <ConditionsBlock
+              index={ESTIMATOR_STEP.conditions}
               questions={CONDITION_QUESTIONS}
               answers={answers}
               onSelect={select}
               t={t}
               num={num}
+              headingLevel={headingLevel}
             />
           </div>
         </div>
@@ -469,7 +555,11 @@ export function TransparencyEstimator({
             <div ref={verdictSentinel} aria-hidden className="h-px" />
 
             <ResultPanelLazy
+              index={ESTIMATOR_STEP.result}
+              headingLevel={headingLevel}
+              pricing={pricing}
               answers={answers}
+              scopeNotes={scopeNotes}
               estimate={estimate}
               deliverables={deliverables}
               fmt={fmt}
@@ -483,6 +573,8 @@ export function TransparencyEstimator({
               setEmail={setEmail}
               company={company}
               setCompany={setCompany}
+              note={note}
+              setNote={setNote}
               phoneError={phoneError}
               emailError={emailError}
               submitting={submitting}

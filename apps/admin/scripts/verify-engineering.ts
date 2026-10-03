@@ -235,7 +235,7 @@ try {
       const headers: Record<string, string> = {
         "content-type": "application/json",
         "x-github-event": event,
-        "x-github-delivery": `verify-${Date.now()}`,
+        "x-github-delivery": `verify-${crypto.randomUUID()}`,
       };
       if (signWith) {
         headers["x-hub-signature-256"] =

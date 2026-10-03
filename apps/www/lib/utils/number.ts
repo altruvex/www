@@ -59,3 +59,20 @@ export function normalizeNumeralsToEnglish(input: string): string {
 
   return result;
 }
+
+/**
+ * An index label ("01 / 03"). Arabic counts without the leading zero
+ * ("١ / ٣", not "٠١ / ٠٣"): the padded index is a Latin typographic habit
+ * that reads as noise in Arabic. `<Num pad>` is the JSX form of this.
+ */
+export function formatIndex(
+  value: string | number,
+  pad: number,
+  locale: string,
+): string {
+  const text =
+    locale.split("-")[0] === "ar"
+      ? String(value)
+      : String(value).padStart(pad, "0");
+  return localizeNumbers(text, locale);
+}

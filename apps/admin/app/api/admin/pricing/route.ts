@@ -6,8 +6,10 @@ import {
   ADDON_IDS,
   CONSULTING_PACKAGE_IDS,
   SERVICE_IDS,
+  pricingCopy,
 } from "@repo/pricing-schema";
-import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@repo/database";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
   diffFields,
@@ -15,8 +17,10 @@ import {
   pricingHistory,
   recordChanges,
 } from "@/lib/pricing-store";
-import { requireAdminSession } from "@/lib/require-admin";
+import { recordActivity, type Actor } from "@/lib/activity-log";
+import { withAdmin } from "@/lib/with-admin";
 import { revalidatePublicPricing } from "@/lib/revalidate-pricing";
+import type { ChangeEntry } from "@/lib/pricing-store";
 
 /**
  * The only write path for pricing.
@@ -24,10 +28,9 @@ import { revalidatePublicPricing } from "@/lib/revalidate-pricing";
  * Public surfaces are read-only consumers; this route is where a number
  * changes. Every accepted change is diffed field-by-field and written to the
  * change log in the same transaction, so the log cannot drift from the value.
+ * The same transaction also writes one ActivityEvent per save, so the price
+ * change shows up in the audit trail beside everything else the operator did.
  */
-
-const unauthorized = () =>
-  NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
 const money = z.number().int().min(PRICE_BOUNDS.moneyMin).max(PRICE_BOUNDS.moneyMax);
 const status = z.enum(["active", "planned", "retired"]);
@@ -93,17 +96,16 @@ const payloadSchema = z.discriminatedUnion("kind", [
   termsSchema,
 ]);
 
-export async function GET(request: NextRequest) {
-  if (!(await requireAdminSession(request))) return unauthorized();
+export const GET = withAdmin(
+  async () => {
+    const [pricing, history] = await Promise.all([getPricing(), pricingHistory()]);
+    return NextResponse.json({ success: true, pricing, history });
+  },
+  { can: ["view", "settings"] },
+);
 
-  const [pricing, history] = await Promise.all([getPricing(), pricingHistory()]);
-  return NextResponse.json({ success: true, pricing, history });
-}
-
-export async function PATCH(request: NextRequest) {
-  const session = await requireAdminSession(request);
-  if (!session) return unauthorized();
-
+export const PATCH = withAdmin(
+  async (request, { session, actor }) => {
   const parsed = payloadSchema.safeParse(await request.json());
   if (!parsed.success) {
     return NextResponse.json(
@@ -112,7 +114,9 @@ export async function PATCH(request: NextRequest) {
     );
   }
   const body = parsed.data;
-  const actor = session.user.email ?? session.user.id ?? null;
+  // The change log keeps the operator as a plain string; the audit event keeps
+  // the structured actor. Both name the same person.
+  const changedBy = session.user.email ?? session.user.id ?? null;
 
   // A range that runs backwards would render as "70,000 – 35,000 EGP" on a
   // published page, so it is rejected here rather than shipped.
@@ -133,7 +137,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const changes = await applyChange(body, actor);
+    const changes = await applyChange(body, changedBy, actor);
 
     // The write is already committed. This only shortens how long the public
     // site keeps serving the previous number, so its outcome is reported but
@@ -157,11 +161,66 @@ export async function PATCH(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+  },
+  { can: ["edit", "settings"] },
+);
 
 type Payload = z.infer<typeof payloadSchema>;
 
-async function applyChange(body: Payload, actor: string | null): Promise<number> {
+/** The name an operator knows the item by: "Website · Standard", "Essential plan", "Commercial terms". */
+function itemLabel(body: Payload): string {
+  const copy = pricingCopy("en");
+  switch (body.kind) {
+    case "cell":
+      return `${copy.services[body.serviceId].name} · ${copy.bands[body.complexityId]}`;
+    case "maintenance":
+      return `${copy.maintenance[body.id].name} plan`;
+    case "consulting":
+      return copy.consulting[body.id].title.replace(/\s*-\s*$/, "");
+    case "addon":
+      return copy.addons[body.id].name;
+    case "terms":
+      return "Commercial terms";
+  }
+}
+
+/**
+ * One audit event per save, with the changed fields as before/after maps so
+ * the Activity screen shows "price 1,500 → 1,800" without decoding the change
+ * log. Written through the transaction so a rolled-back save leaves no event.
+ */
+async function auditPricingChange(
+  tx: Prisma.TransactionClient,
+  actor: Actor,
+  body: Payload,
+  entityId: string,
+  entries: readonly ChangeEntry[],
+): Promise<void> {
+  if (entries.length === 0) return;
+  const before: Record<string, unknown> = {};
+  const after: Record<string, unknown> = {};
+  for (const entry of entries) {
+    before[entry.field] = entry.oldValue;
+    after[entry.field] = entry.newValue;
+  }
+  const label = itemLabel(body);
+  await recordActivity(
+    {
+      action: "pricing.price_changed",
+      actor,
+      entityType: "settings",
+      entityId: `pricing/${body.kind}/${entityId}`,
+      entityLabel: label,
+      summary: `Changed ${entries.map((e) => e.field).join(", ")} on ${label}`,
+      before,
+      after,
+      metadata: { kind: body.kind, id: entityId },
+    },
+    tx,
+  );
+}
+
+async function applyChange(body: Payload, changedBy: string | null, actor: Actor): Promise<number> {
   if (body.kind === "cell") {
     const { serviceId, complexityId } = body;
     // Columns are named rather than spread: on the one path that changes a
@@ -177,8 +236,8 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
       const before = await tx.pricingCellOverride.findUnique({ where: key });
       await tx.pricingCellOverride.upsert({
         where: key,
-        create: { serviceId, complexityId, ...fields, updatedBy: actor },
-        update: { ...fields, updatedBy: actor, version: { increment: 1 } },
+        create: { serviceId, complexityId, ...fields, updatedBy: changedBy },
+        update: { ...fields, updatedBy: changedBy, version: { increment: 1 } },
       });
       const entries = diffFields(
         "cell",
@@ -186,7 +245,8 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
         before ?? {},
         fields,
       );
-      await recordChanges(entries, actor);
+      await recordChanges(entries, changedBy);
+      await auditPricingChange(tx, actor, body, `${serviceId}/${complexityId}`, entries);
       return entries.length;
     });
   }
@@ -211,11 +271,12 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
       });
       await tx.commercialTermsOverride.upsert({
         where: { id: "default" },
-        create: { id: "default", ...data, updatedBy: actor },
-        update: { ...data, updatedBy: actor, version: { increment: 1 } },
+        create: { id: "default", ...data, updatedBy: changedBy },
+        update: { ...data, updatedBy: changedBy, version: { increment: 1 } },
       });
       const entries = diffFields("terms", "default", before ?? {}, data);
-      await recordChanges(entries, actor);
+      await recordChanges(entries, changedBy);
+      await auditPricingChange(tx, actor, body, "default", entries);
       return entries.length;
     });
   }
@@ -236,11 +297,12 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
       const before = await tx.maintenancePlanOverride.findUnique({ where: { id } });
       await tx.maintenancePlanOverride.upsert({
         where: { id },
-        create: { id, ...fields, updatedBy: actor },
-        update: { ...fields, updatedBy: actor, version: { increment: 1 } },
+        create: { id, ...fields, updatedBy: changedBy },
+        update: { ...fields, updatedBy: changedBy, version: { increment: 1 } },
       });
       const entries = diffFields("maintenance", id, before ?? {}, fields);
-      await recordChanges(entries, actor);
+      await recordChanges(entries, changedBy);
+      await auditPricingChange(tx, actor, body, id, entries);
       return entries.length;
     });
   }
@@ -256,11 +318,12 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
       const before = await tx.consultingPackageOverride.findUnique({ where: { id } });
       await tx.consultingPackageOverride.upsert({
         where: { id },
-        create: { id, ...fields, updatedBy: actor },
-        update: { ...fields, updatedBy: actor, version: { increment: 1 } },
+        create: { id, ...fields, updatedBy: changedBy },
+        update: { ...fields, updatedBy: changedBy, version: { increment: 1 } },
       });
       const entries = diffFields("consulting", id, before ?? {}, fields);
-      await recordChanges(entries, actor);
+      await recordChanges(entries, changedBy);
+      await auditPricingChange(tx, actor, body, id, entries);
       return entries.length;
     });
   }
@@ -277,11 +340,12 @@ async function applyChange(body: Payload, actor: string | null): Promise<number>
     const before = await tx.addonOverride.findUnique({ where: { id } });
     await tx.addonOverride.upsert({
       where: { id },
-      create: { id, ...fields, updatedBy: actor },
-      update: { ...fields, updatedBy: actor, version: { increment: 1 } },
+      create: { id, ...fields, updatedBy: changedBy },
+      update: { ...fields, updatedBy: changedBy, version: { increment: 1 } },
     });
     const entries = diffFields("addon", id, before ?? {}, fields);
-    await recordChanges(entries, actor);
+    await recordChanges(entries, changedBy);
+    await auditPricingChange(tx, actor, body, id, entries);
     return entries.length;
   });
 }

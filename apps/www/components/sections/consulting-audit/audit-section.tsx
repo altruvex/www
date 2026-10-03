@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
  *
  * Four sections were each hand-rolling the same thing — a hairline top rule,
  * the section rhythm, an eyebrow, a two-clause heading with the world-coloured
- * serif italic, a lede, and a small honesty note at the bottom — with their own
+ * emphasis clause, a lede, and a small honesty note at the bottom — with their own
  * `clamp()` for the heading instead of the house `.section-title`. That is four
  * places for the page to drift from itself and from the rest of the site.
  *

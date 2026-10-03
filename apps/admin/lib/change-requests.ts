@@ -42,8 +42,6 @@ export const CHANGE_REQUEST_STATUSES = [
 
 export type ChangeRequestStatusValue = (typeof CHANGE_REQUEST_STATUSES)[number];
 
-export type ChangeRequestPricingValue = "HOURLY" | "FIXED" | "WARRANTY";
-
 /** Statuses nothing moves out of. */
 export const TERMINAL_STATUSES: readonly ChangeRequestStatusValue[] = [
   "DELIVERED",

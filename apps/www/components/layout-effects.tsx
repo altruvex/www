@@ -1,7 +1,6 @@
 "use client";
 
 import { CommandPaletteHost } from "@/components/interactive/command-palette-host";
-import { ThemeTransition } from "@repo/ui/theme-transition";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
@@ -46,14 +45,13 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <InitialLoaderLazy />
       {shouldMountNonCritical ? <SmoothScrollLazy /> : null}
-      {shouldMountNonCritical ? <InitialLoaderLazy /> : null}
       <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
       >
-        <ThemeTransition />
         <div vaul-drawer-wrapper="">
           <Suspense fallback={null}>
             {shouldMountNonCritical ? <CustomCursorLazy /> : null}

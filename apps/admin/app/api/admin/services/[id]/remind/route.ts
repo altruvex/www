@@ -89,4 +89,4 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   });
 
   return ok({ service: toServiceRow(updated) });
-});
+}, { can: ["send", "message"] });

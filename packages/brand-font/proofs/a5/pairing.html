@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altruvex Sans A.5 pairing proof</title>
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../../dist/web/tokens.css">
+<style>
+  /* Proof page, not a design surface. Filled in by tools/pairing.py; no verdicts. */
+  body { margin: 0; padding: 32px 40px 60px; font: 14px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .note { max-width: 72em; margin: 0 0 12px; }
+  .block { border-top: 1px solid #ddd; padding: 12px 0 20px; }
+  .spec { margin: 0; white-space: nowrap; }
+  .en { font-family: var(--stack-prod-en); line-height: var(--lh-display-latin); }
+  .ar { font-family: var(--stack-prod-ar); letter-spacing: 0; line-height: var(--lh-heading-ar); }
+  .meta { font: 12px/1.4 ui-monospace, monospace; margin: 2px 0 14px; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans (Track A) — A.5 hero Arabic weight</h1>
+<p class="note">Density = ink ÷ (advance × font size) from a 1x canvas raster, untracked — the A.2 proof's measure
+(proofs/a2-proof.html, <code>density()</code>). Ratio = AR density ÷ EN density. Copy is read from
+<code>apps/www/messages</code>. The chosen weight is picked by tools/pairing.py from the numbers, not here.</p>
+<div id="hero"></div>
+
+<script>
+const MESSAGES = "../../../../apps/www/messages/";
+const root = getComputedStyle(document.documentElement);
+const PROD_EN = root.getPropertyValue("--stack-prod-en").trim();
+const PROD_AR = root.getPropertyValue("--stack-prod-ar").trim();
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  n.append(...kids);
+  return n;
+};
+
+// Same as proofs/a2-proof.html density(): ink coverage at 1 CSS px per px, no tracking.
+function density(text, family, weight, px, rtl) {
+  const c = document.createElement("canvas"), ctx = c.getContext("2d");
+  const font = `${weight} ${px}px ${family}`;
+  ctx.font = font;
+  const adv = ctx.measureText(text).width;
+  c.width = Math.ceil(adv + px); c.height = Math.ceil(px * 2.2);
+  ctx.font = font; ctx.direction = rtl ? "rtl" : "ltr"; ctx.textAlign = "left";
+  ctx.fillText(text, px / 2, px * 1.4);
+  const a = ctx.getImageData(0, 0, c.width, c.height).data;
+  let ink = 0;
+  for (let i = 3; i < a.length; i += 4) ink += a[i];
+  return ink / 255 / (adv * px);
+}
+
+const cache = {};
+async function copy(locale, t) {
+  const url = `${MESSAGES}${locale}/${t.namespace}.json`;
+  cache[url] ??= await fetch(url).then(r => r.json());
+  return t.keys.map(k => cache[url][k]).join(" ");
+}
+
+async function ready(weights) {
+  const loads = [];
+  for (const w of weights) for (const fam of ['"Altruvex Sans Latin"', '"Altruvex Sans Arabic"'])
+    loads.push(document.fonts.load(`${w} 40px ${fam}`, "aH ب"));
+  await Promise.all(loads);
+  await document.fonts.ready;
+}
+
+// spec = config/font.yaml pairing, with ar_weights expanded to a list.
+window.measure = async spec => {
+  await ready([...new Set([spec.hero.weight, ...spec.ar_weights, ...spec.references.map(r => r.weight)])]);
+  const r4 = v => +v.toFixed(4);
+  const references = [];
+  for (const r of spec.references) {
+    const en = await copy("en", r.text), ar = await copy("ar", r.text);
+    const e = density(en, PROD_EN, r.weight, r.px, false), a = density(ar, PROD_AR, r.weight, r.px, true);
+    references.push({ role: r.role, px: r.px, weight: r.weight, en, ar, en_density: r4(e), ar_density: r4(a), ratio: r4(a / e) });
+  }
+  const h = spec.hero, en = await copy("en", h.text), ar = await copy("ar", h.text);
+  const e = density(en, PROD_EN, h.weight, h.px, false);
+  const rows = spec.ar_weights.map(w => {
+    const a = density(ar, PROD_AR, w, h.px, true);
+    return { weight: w, ar_density: r4(a), ratio: r4(a / e) };
+  });
+  return { userAgent: navigator.userAgent, references,
+           hero: { role: h.role, px: h.px, en_weight: h.weight, en, ar, en_density: r4(e), rows } };
+};
+
+// Render the hero line: EN at its live weight and tracking, AR at each requested weight.
+window.show = async (spec, arWeights, enTracking) => {
+  const h = spec.hero;
+  await ready([h.weight, ...arWeights]);
+  const host = document.getElementById("hero");
+  const en = await copy("en", h.text), ar = await copy("ar", h.text);
+  const line = (lang, w, text, meta) => {
+    const p = el("p", { class: `spec ${lang}`, lang, dir: lang === "ar" ? "rtl" : "ltr" }, text);
+    p.style.fontSize = h.px + "px"; p.style.fontWeight = w;
+    if (lang === "en") p.style.letterSpacing = enTracking;
+    return [p, el("div", { class: "meta" }, meta)];
+  };
+  for (const w of arWeights) {
+    host.append(el("div", { class: "block", "data-shot": `hero-ar-${w}` },
+      ...line("en", h.weight, en, `EN ${h.weight} · ${h.px}px · letter-spacing ${enTracking} (live)`),
+      ...line("ar", w, ar, `AR requested ${w} · ${h.px}px · tracking 0`)));
+  }
+  await document.fonts.ready;
+};
+</script>
+</body>
+</html>

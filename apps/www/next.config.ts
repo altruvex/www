@@ -3,7 +3,6 @@ import { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import withPWAInit from "@ducanh2912/next-pwa";
 import pkg from "./package.json";
-import mdxInit from "@next/mdx";
 import bundleAnalyzerInit from "@next/bundle-analyzer";
 
 const withPWA = withPWAInit({
@@ -197,17 +196,9 @@ const nextConfig: NextConfig = {
     ];
   },
 };
-const withMDX = mdxInit({
-  extension: /\.mdx?$/,
-  options: {
-    remarkPlugins: [],
-    rehypePlugins: [],
-  },
-});
-
 const withNextIntl = createNextIntlPlugin();
 const withBundleAnalyzer = bundleAnalyzerInit({
   enabled: process.env.ANALYZE === "true",
 });
 
-export default withBundleAnalyzer(withNextIntl(withPWA(withMDX(nextConfig))));
+export default withBundleAnalyzer(withNextIntl(withPWA(nextConfig)));

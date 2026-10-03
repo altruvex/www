@@ -3,7 +3,7 @@ import type { PricingCopy } from "./types";
 /**
  * AR copy for every priced entity.
  *
- * Names and descriptions live next to the numbers they describe so a tier
+ * Names and descriptions live next to the numbers they describe so a plan
  * cannot be renamed in one surface and not another. Page chrome — headings,
  * eyebrows, FAQ prose — stays in the app's next-intl catalogue; only copy that
  * names or describes a priced thing belongs here.
@@ -32,92 +32,9 @@ export const AR_COPY: PricingCopy = {
     },
   },
   bands: {
-    basic: "الأساسية",
-    standard: "الاحترافية",
-    premium: "الرائدة",
-  },
-  tiers: {
-    essential: {
-      name: "موقع تسويقي",
-      buyerLabel: "موقع تسويق بسيط",
-      internalLabel: "نطاق واضح للإطلاق",
-      idealFor:
-        "لإطلاق عرض واضح أو موقع تسويقي مختصر يحتاج تصميماً مخصصاً وسرعة ونماذج عملاء ومساحة للنمو.",
-      notIncluded:
-        "لا تشمل طريقة عمل CMS متقدمة أو لوحات تحكم أو تدفقات دفع - انظر منصة الأعمال أو محرك التجارة.",
-      features: [
-        "تصميم صفحة إطلاق أو موقع مختصر حسب النطاق",
-        "تنفيذ واجهة مخصصة ومتجاوبة عبر الأجهزة الأساسية",
-        "نماذج عملاء وربط تحليلات أساسي",
-        "إعداد SEO والأداء والنشر",
-        "إعداد النطاق وSSL والاستضافة الأساسية",
-      ],
-      nextStep: "الخطوة التالية: افتح الشفافية وحدد تفاصيل الإطلاق.",
-      ctaLabel: "احصل على تقدير الموقع",
-    },
-    professional: {
-      name: "منصة أعمال",
-      buyerLabel: "موقع تسويق كامل",
-      internalLabel: "تسويق مع تشغيل",
-      idealFor:
-        "للشركات التي تحتاج إدارة محتوى متكررة وتجربة متعددة اللغات وعمليات ربط عملية مع أدواتها.",
-      notIncluded:
-        "لا تشمل كتالوج منتجات كامل أو عمليات تجارة عميقة أو منطق منتج داخلي مخصص - انظر محرك التجارة أو البنية التحتية المخصصة.",
-      features: [
-        "كل ما في موقع الانطلاق",
-        "إعداد CMS لإدارة المحتوى بشكل منتظم",
-        "تصميم متعدد اللغات مع اختبار المسارات الأساسية",
-        "تكامل رئيسي مثل CRM أو الحجز أو المصادقة",
-        "استكشاف تقني وخطة بنية وتحليلات",
-      ],
-      nextStep:
-        "الخطوة التالية: افتح الشفافية وحدد سير العمل والتكاملات المطلوبة.",
-      ctaLabel: "احصل على تقدير النظام",
-    },
-    ecommerce: {
-      name: "محرك تجارة",
-      buyerLabel: "منصة تجارة إلكترونية",
-      internalLabel: "متجر مع تشغيل",
-      idealFor:
-        "للمتاجر التي تحتاج كتالوج منتجات وسداد ومدفوعات وشحن وإدارة طلبات بأداء موثوق.",
-      notIncluded:
-        "لا تشمل استبدال ERP داخلي أو منطق منتج معقد - انظر منصة الأعمال أو بناء مخصص.",
-      features: [
-        "بنية تجارة وكتالوج منتجات واضح",
-        "مسار الدفع مع تخطيط بوابات الدفع المناسبة",
-        "أساسيات إدارة المخزون والشحن والطلبات",
-        "تحسين أداء وتحليلات مرتبطة بالإيرادات",
-        "تسليم تشغيلي لإدارة المنتجات والطلبات",
-      ],
-      nextStep: "الخطوة التالية: افتح الشفافية وحدد مسار التجارة.",
-      ctaLabel: "احصل على تقدير التجارة",
-    },
-    flagship: {
-      name: "حلول مخصصة",
-      buyerLabel: "نظام أعمال",
-      internalLabel: "بناء بمستوى منتج",
-      idealFor:
-        "للبوابات ولوحات التحكم ومنتجات SaaS أو الأنظمة التشغيلية التي تحتاج طريقة عمل مخصص.",
-      notIncluded: "",
-      features: [
-        "استكشاف وبنية منتج مخصصة",
-        "لوحات تحكم أو بوابات أو محركات طريقة عمل",
-        "صلاحيات وأدوار ومنطق أعمال مخصص",
-        "عمليات ربط متعددة وتدفقات بيانات",
-        "خارطة تسليم مرحلية مع تخطيط البنية التحتية",
-      ],
-      nextStep: "الخطوة التالية: احجز مكالمة تقنية لتخطيط البنية.",
-      ctaLabel: "احجز مكالمة البنية",
-    },
-  },
-  tierTemplates: {
-    timelineLabel: "مدة التسليم",
-    // A range always lands in the 3-10 band in Arabic, which takes the plural
-    // "أسابيع" — the singular accusative "أسبوعاً" is for 11-99 and is what a
-    // literal translation of the EN template would have produced.
-    timelineValue: "{weeks} أسابيع",
-    ceiling:
-      "من {windowMin} إلى {windowMax} أسابيع في جدول الأسعار. الموعد المرن أو كتابة المحتوى من الصفر قد يمدّ عرض السعر حتى {ceiling} أسبوعاً - لا أكثر. ما هو أكبر من ذلك يُسلَّم على مراحل.",
+    basic: "محدود",
+    standard: "قياسي",
+    premium: "واسع",
   },
   maintenance: {
     essential: {
@@ -183,6 +100,11 @@ export const AR_COPY: PricingCopy = {
       annual: "/ سنوياً",
       one_time: "مرة واحدة",
     },
+    perInterval: {
+      monthly: "/ شهرياً",
+      quarterly: "/ كل ثلاثة أشهر",
+      annual: "/ سنوياً",
+    },
   },
   consulting: {
     "technical-audit": {
@@ -247,5 +169,100 @@ export const AR_COPY: PricingCopy = {
     markupLabel: "الهامش",
     totalLabel: "ما تدفعه",
     pendingLabel: "التسعير قيد الإعداد",
+    vatExcluded: "جميع الأرقام لا تشمل ضريبة القيمة المضافة بنسبة {rate}٪.",
+    paymentTriggers: [
+      "{p} عند البدء",
+      "{p} عند مرحلة تطوير متفق عليها",
+      "{p} قبل الإطلاق على بيئة الإنتاج",
+    ],
+    milestoneTrigger: "مرحلة تطوير متفق عليها",
+    ownership:
+      "تنتقل إليك ملكية الكود والتصاميم والحسابات عند سداد الدفعة الأخيرة.",
+    validity: "{days} يوماً من تاريخ الإصدار.",
+  },
+  factors: {
+    groups: {
+      timeline: {
+        label: "التسليم",
+        options: {
+          urgent: { label: "عاجل" },
+          standard: { label: "عادي" },
+          flexible: { label: "مرن" },
+        },
+      },
+      brand: {
+        label: "الهوية البصرية",
+        options: {
+          complete: { label: "هوية جاهزة" },
+          partial: { label: "هوية جزئية" },
+          scratch: { label: "بلا هوية بعد" },
+        },
+      },
+      content: {
+        label: "جاهزية المحتوى",
+        options: {
+          provide: { label: "المحتوى منك" },
+          "need-help": { label: "مساعدة في المحتوى" },
+          unsure: { label: "غير محدد بعد" },
+        },
+      },
+    },
+    noChange: "بلا تغيير",
+  },
+  scopeNotes: {
+    cms: {
+      name: "نظام إدارة محتوى (CMS)",
+      description: "تعدّل الصفحات والمقالات بنفسك.",
+    },
+    auth: {
+      name: "تسجيل الدخول والحسابات",
+      description: "حسابات للعملاء أو للفريق، مع صلاحيات.",
+    },
+    "payments-integrations": {
+      name: "المدفوعات والربط مع أنظمة خارجية",
+      description: "بوابة دفع، وأنظمة عملاء، وواجهات برمجية، وأدوات تحليل.",
+    },
+    bilingual: {
+      name: "العربية + الإنجليزية",
+      description: "اللغتان معاً، واتجاه من اليمين لليسار مُنفَّذ كما يجب.",
+    },
+    "performance-seo": {
+      name: "أهداف الأداء والظهور في البحث",
+      description:
+        "أهداف للسرعة وسهولة الوصول والظهور في البحث مكتوبة في النطاق.",
+    },
+    maintenance: {
+      name: "صيانة مستمرة",
+      description: "خطة شهرية بعد الإطلاق، تُحتسب منفصلة.",
+    },
+  },
+  investment: {
+    design: {
+      name: "تصميم الواجهات",
+      covers:
+        "تصميم الواجهات وتجربة الاستخدام، يُسلَّم شاشاتٍ ونظامَ تصميم جاهزاً للعمل.",
+      how: "لكل مشروع، حسب الشاشات ومسارات الاستخدام",
+      figure: "يُحدَّد لكل مشروع",
+    },
+    development: {
+      name: "التطوير المخصص",
+      covers: "مواقع وأنظمة تُبنى من متطلباتك.",
+      how: "نطاق منشور حسب نوع المشروع ودرجة تعقيده، ويُثبَّت في عرض السعر",
+    },
+    audit: {
+      name: "المراجعة التقنية",
+      covers: "مراجعة للبنية والأداء والأمان مع خارطة طريق للإصلاح.",
+      how: "رسوم ثابتة، تُخصم من مشروع البناء",
+    },
+    maintenance: {
+      name: "الصيانة",
+      covers:
+        "التحديثات والمراقبة والنسخ الاحتياطي وطلبات التعديل بعد الإطلاق.",
+      how: "خطة شهرية",
+    },
+    // A matrix window always lands in the 3-10 band in Arabic, which takes the
+    // plural "أسابيع" — the singular accusative "أسبوعاً" is for 11-99 and is
+    // what a literal translation of the EN template would have produced.
+    weeksValue: "{weeks} أسابيع",
   },
 };

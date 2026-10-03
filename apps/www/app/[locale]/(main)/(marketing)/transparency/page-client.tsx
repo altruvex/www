@@ -3,17 +3,14 @@
 import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { TransparencyChapter } from "@/components/sections/transparency-chapter";
 import { TransparencyEstimator } from "@/components/sections/transparency-estimator";
+import { TransparencyMeasuresDetailsSection } from "@/components/sections/transparency-measures-details-section";
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { FaqList } from "@/components/shared/faq-list";
 import { bodyMarks } from "@/components/ui/rich-text";
 import type { ProjectType } from "@/hooks/use-transparency";
-import {
-  useSectionCardGrid,
-  useSectionDescription,
-  useSectionElement,
-} from "@/lib/motion";
-import type { AddonView, TermsView } from "@repo/pricing-schema";
+import type { EstimatorPricing } from "@/components/sections/transparency-estimator/span";
+import { useSectionDescription, useSectionElement } from "@/lib/motion";
 import { getCommercialCta } from "@/lib/config/commercial";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -21,15 +18,14 @@ import { useSearchParams } from "next/navigation";
 const PROJECT_TYPES = ["website", "webapp", "ecommerce", "pwa"] as const;
 
 export default function TransparencyPageClient({
-  terms,
-  addons,
+  pricing,
 }: {
-  terms: TermsView;
-  addons: readonly AddonView[];
+  pricing: EstimatorPricing;
 }) {
   const searchParams = useSearchParams();
 
-  const initialTier = searchParams.get("tier");
+  // `?tier=` from old links is ignored on purpose: tiers no longer exist, and
+  // a stale token must not preselect a band the visitor never chose.
   const rawProjectType = searchParams.get("projectType") ?? "";
 
   const initialProjectType = (
@@ -44,279 +40,16 @@ export default function TransparencyPageClient({
     <>
       <TransparencyEstimator
         pageHeading
-        initialTier={initialTier}
+        pricing={pricing}
         initialProjectType={initialProjectType}
       />
 
-      <CommercialTermsSection terms={terms} addons={addons} />
+      {/* The figure first, then how it is reached, then the questions a
+          reader still has. */}
+      <TransparencyMeasuresDetailsSection />
 
       <TransparencyFaqSection />
     </>
-  );
-}
-
-function CommercialTermsSection({
-  terms,
-  addons,
-}: {
-  terms: TermsView;
-  addons: readonly AddonView[];
-}) {
-  const t = useTranslations("transparency");
-
-  const cellsRef = useSectionCardGrid<HTMLDListElement>({
-    selector: "[data-term]",
-  });
-
-  const rows = [
-    {
-      key: "vat",
-      label: terms.vatLabel,
-      value: terms.vatNote,
-    },
-    {
-      key: "revision",
-      label: terms.revisionLabel,
-      value: terms.revisionNote,
-    },
-    {
-      key: "usd",
-      label: terms.usdLabel,
-      value: terms.usdNote,
-    },
-    {
-      key: "addons",
-      label: terms.addonLabel,
-      value: terms.addonNote,
-    },
-  ];
-
-  return (
-    <section
-      aria-labelledby="transparency-terms-heading"
-      className="border-t border-border-subtle py-24 sm:py-28 lg:py-36"
-    >
-      <Container>
-        <TransparencyChapter
-          index={1}
-          titleId="transparency-terms-heading"
-          eyebrow={t("terms.title")}
-          title={t("terms.subtitle")}
-        />
-        <dl
-          ref={cellsRef}
-          className="
-            mt-12
-            grid
-            overflow-hidden
-            rounded-panel-lg
-            border
-            border-border-subtle
-            bg-black/2.5
-            sm:grid-cols-2
-            lg:mt-16
-            dark:bg-white/4.5
-          "
-        >
-          {rows.map((row) => (
-            <div
-              key={row.key}
-              data-term
-              className="
-                border-b
-                border-border-subtle
-                bg-background
-                p-7
-                last:border-b-0
-                sm:p-8
-                sm:nth-[2n]:border-s-0
-                sm:nth-last-[2]:border-b-0
-                lg:p-10
-              "
-            >
-              <dt
-                className="
-                  text-[1.0625rem]
-                  font-semibold
-                  leading-[1.35]
-                  tracking-[-0.015em]
-                  text-foreground
-                  sm:text-[1.125rem]
-                "
-              >
-                {row.label}
-              </dt>
-              <dd
-                className="
-                  mt-3
-                  max-w-[52ch]
-                  text-[0.9375rem]
-                  leading-[1.6]
-                  text-muted-foreground
-                  sm:text-[1rem]
-                "
-              >
-                {row.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        {addons.length > 0 && (
-          <div
-            className="
-              mt-6
-              overflow-hidden
-              rounded-panel-lg
-              border
-              border-border-subtle
-              bg-background
-              lg:mt-8
-            "
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-160 border-collapse text-start">
-                <thead>
-                  <tr className="border-b border-border-subtle">
-                    <th
-                      scope="col"
-                      className="
-                        px-6
-                        py-4
-                        text-start
-                        text-[0.8125rem]
-                        font-medium
-                        text-muted-foreground
-                        sm:px-8
-                        lg:px-10
-                      "
-                    >
-                      {t("terms.itemColumn")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="
-                        px-6
-                        py-4
-                        text-start
-                        text-[0.8125rem]
-                        font-medium
-                        text-muted-foreground
-                        sm:px-8
-                        lg:px-10
-                      "
-                    >
-                      {terms.costBasisLabel}
-                    </th>
-                    <th
-                      scope="col"
-                      className="
-                        px-6
-                        py-4
-                        text-start
-                        text-[0.8125rem]
-                        font-medium
-                        text-muted-foreground
-                        sm:px-8
-                        lg:px-10
-                      "
-                    >
-                      {terms.markupLabel}
-                    </th>
-                    <th
-                      scope="col"
-                      className="
-                        px-6
-                        py-4
-                        text-start
-                        text-[0.8125rem]
-                        font-medium
-                        text-muted-foreground
-                        sm:px-8
-                        lg:px-10
-                      "
-                    >
-                      {terms.totalLabel}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {addons.map((addon) => (
-                    <tr
-                      key={addon.id}
-                      className="
-                        border-b
-                        border-border-subtle
-                        transition-colors
-                        last:border-b-0
-                        hover:bg-black/[0.018]
-                        dark:hover:bg-white/2.5
-                      "
-                    >
-                      <td
-                        className="
-                          px-6
-                          py-5
-                          text-[0.9375rem]
-                          font-medium
-                          text-foreground
-                          sm:px-8
-                          lg:px-10
-                        "
-                      >
-                        {addon.name}
-                      </td>
-                      <td
-                        className="
-                          px-6
-                          py-5
-                          text-[0.875rem]
-                          tabular-nums
-                          text-muted-foreground
-                          sm:px-8
-                          lg:px-10
-                          ltr:font-mono
-                        "
-                      >
-                        {addon.costBasisLabel ?? addon.pendingLabel}
-                      </td>
-                      <td
-                        className="
-                          px-6
-                          py-5
-                          text-[0.875rem]
-                          tabular-nums
-                          text-muted-foreground
-                          sm:px-8
-                          lg:px-10
-                          ltr:font-mono
-                        "
-                      >
-                        {addon.markupLabel ?? "—"}
-                      </td>
-                      <td
-                        className="
-                          px-6
-                          py-5
-                          text-[0.875rem]
-                          font-medium
-                          tabular-nums
-                          text-foreground
-                          sm:px-8
-                          lg:px-10
-                          ltr:font-mono
-                        "
-                      >
-                        {addon.totalLabel ?? "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </Container>
-    </section>
   );
 }
 
@@ -344,7 +77,7 @@ function TransparencyFaqSection() {
   return (
     <section
       aria-labelledby="transparency-faq-heading"
-      className="border-t border-border-subtle py-24 sm:py-28 lg:py-36"
+      className="border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <TransparencyChapter

@@ -9,15 +9,23 @@
  *     non-admin session (HIGH-01 — the layout gate calls this)
  *   - an unauthenticated request to the page gate is refused without a
  *     database (HIGH-01)
+ *   - the product role resolves from `opsRole` first and the auth role second,
+ *     and the route wrapper's capability decision refuses what the matrix
+ *     does not grant (roles, 2026-10)
  *
  *   cd apps/admin && bun run verify:security
  */
 import { isAdminSession, requireAdminSession } from "../lib/require-admin";
 import { mfaRequired } from "../lib/mfa";
+import { can, permitted, resolveRole, toProductRole } from "../lib/rbac";
+import { roleChangeRefusal } from "../lib/team-rules";
 import { SIGN_LINK_DAYS, signLinkExpired, signLinkExpiry } from "../lib/sign-window";
 import { httpUrl } from "../lib/http-url";
 import { safeRedirectPath } from "../lib/safe-redirect";
 import { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { CRON_JOBS } from "../lib/cron-jobs";
 
 let failures = 0;
 const check = (ok: boolean, what: string) => {
@@ -99,6 +107,84 @@ console.log("\nTwo-factor enforcement (MED-08)");
   check(!mfaRequired(), '"false" leaves it optional');
   if (saved === undefined) delete process.env.ADMIN_MFA_REQUIRED;
   else process.env.ADMIN_MFA_REQUIRED = saved;
+}
+
+console.log("\nProduct role resolution (lib/rbac.ts)");
+{
+  check(toProductRole("SUPERADMIN") === "OWNER", "SUPERADMIN derives to Owner");
+  check(toProductRole("ADMIN") === "ADMIN", "ADMIN derives to Admin");
+  check(toProductRole("USER") === undefined, "USER derives to nothing");
+  check(resolveRole({ role: "SUPERADMIN", opsRole: null }) === "OWNER", "null opsRole falls back to the derived role");
+  check(resolveRole({ role: "ADMIN", opsRole: "FINANCE" }) === "FINANCE", "a set opsRole wins over the derived role");
+  check(resolveRole({ role: "SUPERADMIN", opsRole: "VIEWER" }) === "VIEWER", "opsRole can narrow even a superadmin");
+  check(resolveRole({ role: "ADMIN", opsRole: "ROOT" }) === "ADMIN", "an unknown opsRole is ignored, not trusted");
+  check(resolveRole({ role: "USER", opsRole: "OWNER" }) === "OWNER", "resolution alone does not gate sign-in — the auth role does (proxy + layout)");
+  check(resolveRole({}) === undefined, "no roles at all resolve to nothing");
+  check(!can(undefined, "view", "client"), "no role may do nothing");
+}
+
+console.log("\nRoute capability decision (withAdmin { can })");
+{
+  check(permitted("VIEWER", undefined), "no requirement admits every admin (default unchanged)");
+  check(permitted("VIEWER", []), "an empty requirement admits every admin");
+  check(permitted("OWNER", ["delete", "payment"]), "Owner may delete a payment");
+  check(!permitted("ADMIN", ["delete", "payment"]), "Admin may not delete a payment");
+  check(permitted("FINANCE", ["edit", "payment"]), "Finance may edit a payment");
+  check(!permitted("FINANCE", ["send", "proposal"]), "Finance may not send a proposal");
+  check(permitted("SALES", [["view", "lead"], ["send", "proposal"]]), "several capabilities all held → admitted");
+  check(!permitted("SALES", [["view", "lead"], ["view", "payment"]]), "several capabilities, one missing → refused");
+  check(!permitted(undefined, ["view", "client"]), "no role is refused whatever is asked");
+  check(!permitted("ADMIN", ["edit", "team"]), "Admin may not change roles");
+  check(permitted("OWNER", ["edit", "team"]), "Owner may change roles");
+  check(permitted("PM", ["edit", "incident"]), "PM may work an incident");
+  check(!permitted("PM", ["delete", "incident"]), "PM may not delete an incident");
+  check(!permitted("VIEWER", ["edit", "incident"]), "Viewer may only read incidents");
+  check(!permitted("OWNER", ["create", "deployment"]), "nobody creates a deployment by hand — CI writes them");
+  check(permitted("SALES", ["delete", "note"]), "Sales may take back a note they wrote");
+  check(!permitted("SALES", ["delete", "client"]), "Sales still may not delete a client");
+  check(permitted("VIEWER", ["delete", "notification"]), "every role may clear its own inbox");
+
+  // The cron schedule shown on screen is a copy of vercel.json; keep them equal.
+  const vercel = JSON.parse(
+    readFileSync(fileURLToPath(new URL("../vercel.json", import.meta.url)), "utf8"),
+  ) as { crons?: { path: string; schedule: string }[] };
+  const declared = vercel.crons ?? [];
+  check(declared.length === CRON_JOBS.length, "lib/cron-jobs.ts lists every cron in vercel.json");
+  for (const job of CRON_JOBS) {
+    check(
+      declared.some((c) => c.path === job.path && c.schedule === job.schedule),
+      `${job.path} runs on "${job.schedule}" in vercel.json`,
+    );
+  }
+}
+
+console.log("\nRole change rules (lib/team-rules.ts)");
+{
+  const owners = 1;
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "OWNER", targetId: "a", targetRole: "OWNER", next: "ADMIN", owners }) !== null,
+    "you cannot change your own role",
+  );
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "ADMIN", targetId: "b", targetRole: "SALES", next: "PM", owners }) !== null,
+    "an Admin cannot change roles at all",
+  );
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "OWNER", targetId: "b", targetRole: "OWNER", next: "ADMIN", owners }) !== null,
+    "the last Owner cannot be demoted",
+  );
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "OWNER", targetId: "b", targetRole: "OWNER", next: "ADMIN", owners: 2 }) === null,
+    "an Owner may be demoted when another remains",
+  );
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "OWNER", targetId: "b", targetRole: "SALES", next: "OWNER", owners }) === null,
+    "an Owner may grant Owner",
+  );
+  check(
+    roleChangeRefusal({ actorId: "a", actorRole: "OWNER", targetId: "b", targetRole: "SALES", next: "SALES", owners }) !== null,
+    "no change is refused as a no-op",
+  );
 }
 
 console.log("\nUnauthenticated request to the session gate (HIGH-01)");

@@ -51,38 +51,6 @@ export function StatusPill({
   );
 }
 
-/** Free-form tag, no semantic tone. For labels the operator typed. */
-export function Tag({
-  children,
-  className,
-  onRemove,
-}: {
-  children: React.ReactNode;
-  className?: string;
-  onRemove?: () => void;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground",
-        className,
-      )}
-    >
-      {children}
-      {onRemove && (
-        <button
-          type="button"
-          onClick={onRemove}
-          className="-me-0.5 rounded-xs px-0.5 text-subtle-foreground hover:text-danger"
-          aria-label="Remove tag"
-        >
-          ×
-        </button>
-      )}
-    </span>
-  );
-}
-
 export function ToneBadge({
   tone,
   children,

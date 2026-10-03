@@ -25,8 +25,10 @@
     "complexity": "Complexity is required.",
     "email": "Enter a valid email address.",
     "name": "Name must not exceed 120 characters.",
-    "phone": "Invalid phone number.",
+    "note": "The note is too long — please shorten it.",
+    "phone": "Enter a phone or WhatsApp number — digits, spaces, + and - only.",
     "projectType": "Project type is required.",
+    "scopeNotes": "Choose scope notes from the list.",
     "timeline": "Timeline is required."
   },
   "too-many-requests": "Too many requests. Please try again in a few minutes."

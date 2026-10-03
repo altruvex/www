@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altruvex Sans A.5 caps proof</title>
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../../dist/web/tokens.css">
+<style>
+  /* Proof page, not a design surface. Rows are passed in by tools/pairing.py; no verdicts. */
+  body { margin: 0; padding: 32px 40px 60px; font: 14px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .note { max-width: 72em; margin: 0 0 12px; }
+  .block { border-top: 1px solid #ddd; padding: 12px 0 20px; }
+  .spec { margin: 0; white-space: nowrap; font-family: var(--stack-prod-en); line-height: var(--lh-display-latin); }
+  .meta { font: 12px/1.4 ui-monospace, monospace; margin: 2px 0 14px; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans (Track A) — A.5 all-caps word space</h1>
+<p class="note">Each block: one size at one weight. Values come from dist/web/tokens.css (new),
+dist/spacing-report.json (the letter-spacing caps rule, not shipped) and proofs/a4/optical.json (the A.4 token
+the caps row was set at).</p>
+<div id="rows"></div>
+<script>
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  n.append(...kids);
+  return n;
+};
+// blocks = [{ id, px, weight, lines: [{ text, tracking, wordSpacing?, label }] }]
+window.render = async blocks => {
+  await document.fonts.load(`700 40px "Altruvex Sans Latin"`, "NOT");
+  const host = document.getElementById("rows");
+  const em = (v, px) => (parseFloat(v) / px).toFixed(4) + "em";
+  for (const b of blocks) {
+    const block = el("div", { class: "block", "data-shot": b.id });
+    host.append(block);
+    for (const ln of b.lines) {
+      const p = el("p", { class: "spec", lang: "en" }, ln.text);
+      p.style.fontSize = b.px + "px"; p.style.fontWeight = b.weight; p.style.letterSpacing = ln.tracking;
+      if (ln.wordSpacing) p.style.wordSpacing = ln.wordSpacing;
+      block.append(p);
+      const cs = getComputedStyle(p);
+      block.append(el("div", { class: "meta" }, `${b.px}px · ${b.weight} · ${ln.label} · letter-spacing ${ln.tracking}`
+        + ` = ${em(cs.letterSpacing, b.px)}` + (ln.wordSpacing ? ` · word-spacing ${ln.wordSpacing} = ${em(cs.wordSpacing, b.px)}` : "")));
+    }
+  }
+  await document.fonts.ready;
+};
+</script>
+</body>
+</html>

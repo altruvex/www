@@ -1,4 +1,5 @@
 import { prisma } from "@repo/database";
+import { paymentSourceLabel } from "@/lib/payment-source";
 
 import type { Subject } from "@/lib/rbac";
 
@@ -47,13 +48,23 @@ export interface DeletionPlan {
   notes: string[];
 }
 
+/**
+ * Who is asking. Personal records (notifications) refuse anyone else's rows.
+ * Optional so a verification script can plan a company record without a
+ * session; a plan called without it is treated as nobody asking, so a personal
+ * record is refused rather than exposed.
+ */
+export interface PlanContext {
+  userId: string | null;
+}
+
 export interface Deletable {
   subject: Subject;
   noun: string;
   plural: string;
   /** Paths refreshed after a successful delete. */
   revalidate: string[];
-  plan: (id: string) => Promise<DeletionPlan | null>;
+  plan: (id: string, ctx?: PlanContext) => Promise<DeletionPlan | null>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -115,11 +126,17 @@ export const DELETABLES: Record<string, Deletable> = {
 
       const [payments, tasks, signedContracts, paidPayments] =
         await Promise.all([
-          prisma.payment.count({ where: { project: { clientId: id } } }),
+          // A payment reaches a client through its project or its retainer.
+          prisma.payment.count({
+            where: { OR: [{ project: { clientId: id } }, { subscription: { clientId: id } }] },
+          }),
           prisma.projectTask.count({ where: { project: { clientId: id } } }),
           prisma.contract.count({ where: { clientId: id, status: "SIGNED" } }),
           prisma.payment.count({
-            where: { project: { clientId: id }, status: "PAID" },
+            where: {
+              OR: [{ project: { clientId: id } }, { subscription: { clientId: id } }],
+              status: "PAID",
+            },
           }),
         ]);
 
@@ -191,6 +208,10 @@ export const DELETABLES: Record<string, Deletable> = {
         await tx.proposal.deleteMany({ where: { clientId: id } });
         await tx.whatsAppMessage.deleteMany({ where: { clientId: id } });
         // Services cascade with the client row itself.
+        // Retainer payments would survive the subscription (SetNull) with no
+        // client left to belong to — they go with the client, as project
+        // payments do.
+        await tx.payment.deleteMany({ where: { subscription: { clientId: id } } });
         // Subscriptions cascade their requests.
         await tx.maintenanceSubscription.deleteMany({
           where: { clientId: id },
@@ -593,13 +614,14 @@ export const DELETABLES: Record<string, Deletable> = {
           paidAt: true,
           reference: true,
           project: { select: { name: true } },
+          subscription: { select: { planId: true } },
         },
       });
       if (!row) return null;
       return {
         entity: "payment",
         id,
-        label: `${row.milestone.replace(/_/g, " ").toLowerCase()} · ${row.project.name}`,
+        label: `${row.milestone.replace(/_/g, " ").toLowerCase()} · ${paymentSourceLabel(row)}`,
         impact: [],
         block:
           row.status === "PAID"
@@ -967,7 +989,7 @@ export const DELETABLES: Record<string, Deletable> = {
           currentPeriodEnd: true,
           autoRenew: true,
           client: { select: { name: true, company: true } },
-          _count: { select: { requests: true } },
+          _count: { select: { requests: true, payments: true } },
         },
       });
       if (!row) return null;
@@ -992,12 +1014,19 @@ export const DELETABLES: Record<string, Deletable> = {
           currentPeriodEnd: row.currentPeriodEnd,
           autoRenew: row.autoRenew,
           client: row.client.company || row.client.name,
+          payments: row._count.payments,
         },
-        notes: [],
+        notes:
+          row._count.payments > 0
+            ? [
+                `${row._count.payments} payment${row._count.payments === 1 ? "" : "s"} for its periods stay as records of money owed or collected; they will read "Retainer (deleted)".`,
+              ]
+            : [],
       };
     },
     async remove(id) {
-      // Requests cascade.
+      // Requests cascade; payments keep their rows with subscriptionId
+      // cleared (SetNull), the way a service's terms outlive the service.
       await prisma.maintenanceSubscription.delete({ where: { id } });
     },
   },
@@ -1048,7 +1077,7 @@ export const DELETABLES: Record<string, Deletable> = {
 
   /* ---------------------------------------------------------------- note */
   note: {
-    subject: "lead",
+    subject: "note",
     noun: "note",
     plural: "notes",
     revalidate: ["/submissions", "/inbox"],
@@ -1080,6 +1109,55 @@ export const DELETABLES: Record<string, Deletable> = {
     },
     async remove(id) {
       await prisma.contactNote.delete({ where: { id } });
+    },
+  },
+
+  /* ----------------------------------------------------------- client note */
+  // The operator's own note on a client. Subject is "note", shared with the
+  // website-lead note above: a note is conversation, not company data, and the
+  // people who write notes must be able to take them back. "client" delete is
+  // held back for owners because removing a client cascades its whole history.
+  //
+  // The label names the client, never the note: `clientNote.deleted` is posted
+  // to Slack like every delete, and Slack shows the label. The body survives
+  // only in the audit snapshot, which stays inside the admin.
+  clientNote: {
+    subject: "note",
+    noun: "note",
+    plural: "notes",
+    revalidate: ["/clients"],
+    async plan(id) {
+      const row = await prisma.clientNote.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          body: true,
+          pinned: true,
+          authorLabel: true,
+          createdAt: true,
+          clientId: true,
+          client: { select: { company: true, name: true, phone: true } },
+        },
+      });
+      if (!row) return null;
+      return {
+        entity: "clientNote",
+        id,
+        label: `Note on ${row.client.company || row.client.name || row.client.phone}`,
+        impact: [],
+        block: null,
+        snapshot: {
+          clientId: row.clientId,
+          body: row.body,
+          pinned: row.pinned,
+          authorLabel: row.authorLabel,
+          createdAt: row.createdAt,
+        },
+        notes: [],
+      };
+    },
+    async remove(id) {
+      await prisma.clientNote.delete({ where: { id } });
     },
   },
 
@@ -1149,12 +1227,15 @@ export const DELETABLES: Record<string, Deletable> = {
   },
 
   /* --------------------------------------------------------- notification */
+  // Notifications fan out one row per admin, so a row belongs to one inbox.
+  // Clearing your own inbox is every role's right; clearing somebody else's
+  // is a hard block, whatever the role — an owner included.
   notification: {
-    subject: "client",
+    subject: "notification",
     noun: "notification",
     plural: "notifications",
     revalidate: ["/notifications"],
-    async plan(id) {
+    async plan(id, ctx) {
       const row = await prisma.notification.findUnique({
         where: { id },
         select: {
@@ -1163,6 +1244,7 @@ export const DELETABLES: Record<string, Deletable> = {
           title: true,
           read: true,
           createdAt: true,
+          userId: true,
         },
       });
       if (!row) return null;
@@ -1171,7 +1253,10 @@ export const DELETABLES: Record<string, Deletable> = {
         id,
         label: row.title,
         impact: [],
-        block: null,
+        block:
+          row.userId === (ctx?.userId ?? null) && row.userId !== null
+            ? null
+            : { hard: true, reason: "This notification is in someone else's inbox." },
         snapshot: {
           type: row.type,
           title: row.title,

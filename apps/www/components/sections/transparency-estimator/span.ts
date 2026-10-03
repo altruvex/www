@@ -1,57 +1,56 @@
 import {
-  BRAND_IDENTITY_IDS,
-  COMPLEXITY_IDS,
-  CONTENT_READINESS_IDS,
-  ContentReadinessId,
-  SERVICE_IDS,
-  TIMELINE_IDS,
-  calculateEstimate,
+  DEFAULT_PRICING,
+  estimateSpan,
   type BrandIdentityId,
   type ComplexityId,
+  type ContentReadinessId,
   type EstimateResult,
+  type ResolvedPricing,
   type ServiceId,
   type TimelineId,
 } from "@repo/pricing-schema";
 import type { AnswerMap } from "./types";
 
-export function spanFor(answers: AnswerMap): EstimateResult {
-  const services = answers.projectType
-    ? [answers.projectType as ServiceId]
-    : SERVICE_IDS;
-  const complexities = answers.complexity
-    ? [answers.complexity as ComplexityId]
-    : COMPLEXITY_IDS;
-  const timelines = answers.timeline
-    ? [answers.timeline as TimelineId]
-    : TIMELINE_IDS;
-  const brands = answers.brandIdentity
-    ? [answers.brandIdentity as BrandIdentityId]
-    : BRAND_IDENTITY_IDS;
-  const contents = answers.contentReadiness
-    ? [answers.contentReadiness as ContentReadinessId]
-    : CONTENT_READINESS_IDS;
+/**
+ * The slice of the resolved pricing the estimator actually reads.
+ *
+ * The engine prices from `services` only and the result panel quotes
+ * `terms` (VAT, validity, warranty). The page hands the browser just these
+ * two rather than the whole `ResolvedPricing`: a server-to-client prop is
+ * serialised into the page payload, and the full object carries maintenance
+ * margin planning that must never reach a client surface.
+ */
+export type EstimatorPricing = Pick<ResolvedPricing, "services" | "terms">;
 
-  let minPrice = Number.POSITIVE_INFINITY;
-  let maxPrice = 0;
-  let minWeeks = Number.POSITIVE_INFINITY;
-  let maxWeeks = 0;
+/** Rebuilds a full pricing set around the slice, for the schema's views. */
+export function resolveEstimatorPricing(
+  slice: EstimatorPricing | undefined,
+): ResolvedPricing {
+  return slice
+    ? { ...DEFAULT_PRICING, services: slice.services, terms: slice.terms }
+    : DEFAULT_PRICING;
+}
 
-  for (const serviceId of services)
-    for (const complexityId of complexities)
-      for (const timeline of timelines)
-        for (const brandIdentity of brands)
-          for (const contentReadiness of contents) {
-            const cell = calculateEstimate({
-              serviceId,
-              complexityId,
-              timeline,
-              brandIdentity,
-              contentReadiness,
-            });
-            minPrice = Math.min(minPrice, cell.minPrice);
-            maxPrice = Math.max(maxPrice, cell.maxPrice);
-            minWeeks = Math.min(minWeeks, cell.minWeeks);
-            maxWeeks = Math.max(maxWeeks, cell.maxWeeks);
-          }
-  return { minPrice, maxPrice, minWeeks, maxWeeks };
+/**
+ * The widest range still possible given the answers so far.
+ *
+ * A thin adapter over the schema's `estimateSpan`: it maps the estimator's
+ * question keys onto the engine's input and passes the resolved pricing
+ * through, so a surface with admin overrides quotes the same numbers
+ * `/pricing` publishes.
+ */
+export function spanFor(
+  answers: AnswerMap,
+  pricing?: ResolvedPricing,
+): EstimateResult {
+  return estimateSpan(
+    {
+      serviceId: answers.projectType as ServiceId | null,
+      complexityId: answers.complexity as ComplexityId | null,
+      timeline: answers.timeline as TimelineId | null,
+      brandIdentity: answers.brandIdentity as BrandIdentityId | null,
+      contentReadiness: answers.contentReadiness as ContentReadinessId | null,
+    },
+    pricing,
+  );
 }

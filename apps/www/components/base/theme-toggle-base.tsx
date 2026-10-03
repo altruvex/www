@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, usePress } from "@/lib/motion";
+import { motion, usePress, useThemeSwitch } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,16 +16,17 @@ function isThemeChoice(value: string | undefined): value is ThemeChoice {
 
 interface ThemeToggleProps {
   /**
-   * `icon` — flips between light and dark (the header bar).
-   * `segmented` — light, dark or follow the system (the drawer).
+   * `switch` — a pill switch whose thumb carries the sun or moon (the header bar).
+   * `segmented` — light, dark or follow the system (the index panel, the drawer).
    */
-  variant?: "icon" | "segmented";
+  variant?: "switch" | "segmented";
   className?: string;
 }
 
-export function ThemeToggle({ variant = "icon", className }: ThemeToggleProps) {
+export function ThemeToggle({ variant = "switch", className }: ThemeToggleProps) {
   const t = useTranslations("nav");
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, resolvedTheme } = useTheme();
+  const switchTheme = useThemeSwitch();
   // The theme is only known on the client; until then nothing may claim a
   // value, or the server HTML and the first client render disagree.
   const mounted = useSyncExternalStore(
@@ -40,7 +41,7 @@ export function ThemeToggle({ variant = "icon", className }: ThemeToggleProps) {
       <SegmentedControl
         label={t("theme")}
         value={mounted && isThemeChoice(theme) ? theme : undefined}
-        onChange={setTheme}
+        onChange={switchTheme}
         disabled={!mounted}
         className={className}
         options={[
@@ -58,45 +59,56 @@ export function ThemeToggle({ variant = "icon", className }: ThemeToggleProps) {
 
   const ready = mounted && !!resolvedTheme;
   const isDark = resolvedTheme === "dark";
-  const label = isDark ? t("switchToLight") : t("switchToDark");
 
-  // Both glyphs stay mounted and cross over — the icon shows where a press
-  // goes, so the swap itself is the confirmation that it went there.
+  // Both glyphs stay mounted inside the thumb and cross over as it travels —
+  // the thumb's side and its glyph say the same thing twice, on purpose.
   const glyph =
-    "absolute size-4.5 transition-[opacity,transform] duration-(--motion-drawer) ease-smooth";
+    "absolute size-3.5 transition-[opacity,transform] duration-(--motion-drawer) ease-smooth";
 
   return (
     <button
       ref={pressRef}
       type="button"
-      onClick={ready ? () => setTheme(isDark ? "light" : "dark") : undefined}
+      role="switch"
+      aria-checked={ready ? isDark : undefined}
+      onClick={ready ? () => switchTheme(isDark ? "light" : "dark") : undefined}
       disabled={!ready}
-      aria-label={ready ? label : t("theme")}
-      title={ready ? label : undefined}
+      aria-label={t("darkMode")}
+      title={ready ? (isDark ? t("switchToLight") : t("switchToDark")) : undefined}
       className={cn(
-        "relative flex size-11 items-center justify-center rounded-ctl-lg text-foreground/70 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
+        "group/switch flex h-11 items-center justify-center px-1 rounded-ctl-lg",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         className,
       )}
     >
-      <Moon
+      <span
         aria-hidden
-        className={cn(
-          glyph,
-          ready && !isDark
-            ? "rotate-0 scale-100 opacity-100"
-            : "-rotate-90 scale-75 opacity-0",
-        )}
-      />
-      <Sun
-        aria-hidden
-        className={cn(
-          glyph,
-          ready && isDark
-            ? "rotate-0 scale-100 opacity-100"
-            : "rotate-90 scale-75 opacity-0",
-        )}
-      />
+        className="relative flex h-7 w-13 items-center rounded-full border border-foreground/45 bg-foreground/[0.06] transition-colors duration-(--motion-instant) ease-smooth group-hover/switch:border-foreground/70"
+      >
+        <span
+          className={cn(
+            "absolute start-0.5 flex size-5.5 items-center justify-center rounded-full bg-card text-foreground shadow-card transition-transform duration-(--motion-drawer) ease-smooth dark:bg-foreground/15 dark:shadow-none",
+            ready && isDark ? "translate-x-6 rtl:-translate-x-6" : "translate-x-0",
+          )}
+        >
+          <Sun
+            className={cn(
+              glyph,
+              ready && !isDark
+                ? "rotate-0 scale-100 opacity-100"
+                : "-rotate-90 scale-75 opacity-0",
+            )}
+          />
+          <Moon
+            className={cn(
+              glyph,
+              ready && isDark
+                ? "rotate-0 scale-100 opacity-100"
+                : "rotate-90 scale-75 opacity-0",
+            )}
+          />
+        </span>
+      </span>
     </button>
   );
 }

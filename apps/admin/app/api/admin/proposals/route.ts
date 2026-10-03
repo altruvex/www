@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
-import { recordActivity, userActor } from "@/lib/activity-log";
-import { requireAdminSession } from "@/lib/require-admin";
+import { recordActivity } from "@/lib/activity-log";
+import { withAdmin } from "@/lib/with-admin";
 import { buildProposalPptx, totalTimelineWeeks } from "@/lib/proposal-builder";
 import { convertPptxToPdf } from "@/lib/pptx-to-pdf";
 import { upload } from "@/lib/storage";
@@ -16,15 +16,8 @@ import {
 } from "@/lib/proposal-schema";
 import { MAX_DELIVERY_WEEKS } from "@repo/pricing-schema";
 
-export async function GET(request: NextRequest) {
+export const GET = withAdmin(async (request) => {
   try {
-    if (!(await requireAdminSession(request))) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
@@ -43,7 +36,7 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { can: ["view", "proposal"] });
 
 // Only the fields the pipeline needs beyond the content document itself.
 // Everything the deck renders lives in `content` and is validated by the
@@ -54,18 +47,14 @@ const createProposalSchema = z.object({
   complexity: z.enum(["basic", "standard", "premium"]),
   accentName: z.string().min(1),
   content: z.unknown(),
+  // "Edit as a new version": the proposal this one was copied from. Recorded
+  // in the audit trail only — the source row is never written, so a version
+  // can never overwrite what the client was already sent.
+  sourceProposalId: z.string().uuid().optional(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAdmin(async (request, { session, actor }) => {
   try {
-    const session = await requireAdminSession(request);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const body = await request.json();
     const validatedData = createProposalSchema.parse(body);
 
@@ -158,6 +147,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Audited where the row is created, before the document is generated: a
+    // failed generation below still leaves this DRAFT row behind, and the
+    // trail must account for it.
+    const source = validatedData.sourceProposalId
+      ? await prisma.proposal.findFirst({
+          where: { id: validatedData.sourceProposalId, clientId: client.id },
+          select: { id: true },
+        })
+      : null;
+    await recordActivity({
+      action: "proposal.created",
+      actor,
+      entityType: "proposal",
+      entityId: proposal.id,
+      entityLabel: client.name || client.company,
+      summary: source
+        ? `Drafted a new version of a proposal for ${client.name || client.company || "a client"}`
+        : `Drafted a proposal for ${client.name || client.company || "a client"}`,
+      after: { projectType: proposal.projectType, complexity: proposal.complexity, totalPrice: proposal.totalPrice },
+      metadata: source ? { clientId: client.id, sourceProposalId: source.id } : { clientId: client.id },
+    });
+
     let fileUrl: string | null = null;
     let pdfUrl: string | null = null;
 
@@ -203,17 +214,6 @@ export async function POST(request: NextRequest) {
       data: { fileUrl, pdfUrl },
     });
 
-    await recordActivity({
-      action: "proposal.created",
-      actor: userActor(session),
-      entityType: "proposal",
-      entityId: proposal.id,
-      entityLabel: client.name || client.company,
-      summary: `Drafted a proposal for ${client.name || client.company || "a client"}`,
-      after: { projectType: proposal.projectType, complexity: proposal.complexity, totalPrice: proposal.totalPrice },
-      metadata: { clientId: client.id },
-    });
-
     return NextResponse.json(
       { success: true, proposal: updated },
       { status: 201 },
@@ -235,4 +235,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { can: ["create", "proposal"] });

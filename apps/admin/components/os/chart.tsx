@@ -135,24 +135,6 @@ export function ColumnChart({
   );
 }
 
-/** Legend. Required whenever more than one series is on the same chart. */
-export function Legend({ items }: { items: { label: string; seriesIndex: number }[] }) {
-  if (items.length < 2) return null;
-  return (
-    <ul className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      {items.map((item) => (
-        <li key={item.label} className="flex items-center gap-1.5 text-meta text-muted-foreground">
-          <span
-            className={cn("size-2 rounded-xs", SERIES[item.seriesIndex % SERIES.length])}
-            aria-hidden
-          />
-          {item.label}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /**
  * The hero number. `choosing-a-form.md`: when the data is ONE value, the right
  * chart is not a chart.

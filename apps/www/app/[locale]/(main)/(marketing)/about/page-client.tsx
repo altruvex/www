@@ -1,44 +1,53 @@
 "use client";
 
-import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { DirectionalLink } from "@/components/shared/directional-link";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { getCommercialCta } from "@/lib/config/commercial";
 import {
+  useMediaSettle,
   useSectionDescription,
-  useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { memo } from "react";
-import { HandoffChainSection } from "./handoff-chain";
-import { NamePrincipleSection } from "./name-principle";
+import { FitRegisterSection } from "./fit-register";
+import { FounderRouteSection } from "./founder-route";
+import { PrincipleIndexSection } from "./principle-index";
 
+/*
+ * /about as "The Index" - picked by Ali 2026-09-30 from three working
+ * prototypes (docs/prototypes/2026-09-about/b.html): the name's first four
+ * letters as a rule, one mood photograph, the principles that rule commits
+ * us to as an open index, who the studio is and is not for, and the one
+ * person between a decision and the code. The close is the page's only
+ * dark moment and carries the conversion; the hero has no buttons.
+ */
 export default memo(function AboutPageClient() {
   return (
     <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
       <AboutHero />
+      <PhotoStage />
       <ErrorBoundary>
-        <HandoffChainSection />
+        <PrincipleIndexSection />
       </ErrorBoundary>
       <ErrorBoundary>
-        <NamePrincipleSection />
+        <FitRegisterSection />
       </ErrorBoundary>
-      <ContinueRow />
+      <ErrorBoundary>
+        <FounderRouteSection />
+      </ErrorBoundary>
       <AboutEndCta />
     </main>
   );
 });
 
 /**
- * The hero already offers the scope request; the page argues there is nobody
- * between the client and the engineer, so the close offers exactly that call.
+ * The page argues there is nobody between the client and the engineer, so
+ * the close offers exactly that call.
  */
 function AboutEndCta() {
   const t = useTranslations("common.endCta.pages.about");
@@ -54,25 +63,12 @@ function AboutEndCta() {
   );
 }
 
-const RECORD_ITEMS = ["base", "languages", "lead", "floor"] as const;
-
-/**
- * The page opens on its statement and closes the fold on a plain record of
- * the company: four facts a visitor can check, set as a definition list rather
- * than as counters. The previous hero led with "Zero" and "Native" at display
- * size - words dressed as figures.
- */
 function AboutHero() {
   const t = useTranslations("about");
-  const tCTAs = useTranslations("commercial.ctas");
-  const tNav = useTranslations("nav");
-  const projectRangeCta = getCommercialCta("projectRange");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
-  const ctaRef = useSectionElement();
-  const recordRef = useSectionElement<HTMLElement>();
 
   return (
     <section
@@ -87,88 +83,54 @@ function AboutHero() {
           titleRef={titleRef}
           descriptionRef={descRef}
           eyebrow={t("eyebrow")}
-          firstTitle={`${t("title")} ${t("title2")}`}
-          secondTitle={t("title3")}
-          description={t.rich("description1", bodyMarks)}
+          firstTitle={t("title")}
+          secondTitle={t("titleItalic")}
+          description={t.rich("description", bodyMarks)}
           classes={{
-            titleWrapper: "space-y-6",
+            container: "lg:gap-12",
+            titleWrapper: "space-y-6 lg:basis-7/12",
             title:
-              "max-w-[20ch] text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-[12ch] text-[clamp(2.875rem,7.2vw,7.5rem)] font-light leading-[1] tracking-[-0.035em] rtl:leading-[1.3] rtl:tracking-normal",
             description:
-              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+              "max-w-[36ch] text-[clamp(1rem,1.1vw,1.0625rem)] md:max-w-[36ch] lg:max-w-[36ch] lg:basis-5/12 lg:pb-3",
           }}
         />
-
-        <CtaButtonGroup
-          ref={ctaRef}
-          primary={{ href: projectRangeCta.href, label: tCTAs("projectRange") }}
-          secondary={{ href: "/work", label: tNav("work") }}
-          secondaryArrow
-          className="mt-10 lg:mt-12"
-        />
-
-        <section
-          ref={recordRef}
-          aria-labelledby="about-record-heading"
-          className="mt-(--section-y-bottom) border-t border-border-subtle py-10 lg:py-12"
-        >
-          <h2 id="about-record-heading" className="sr-only">
-            {t("record.label")}
-          </h2>
-          <dl className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-            {RECORD_ITEMS.map((key) => (
-              <div key={key}>
-                <dt className="eyebrow text-muted-foreground">
-                  {t(`record.items.${key}.term`)}
-                </dt>
-                <dd className="mt-2 max-w-[28ch] text-[0.9375rem] leading-relaxed text-foreground">
-                  {t(`record.items.${key}.value`)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
       </Container>
     </section>
   );
 }
 
-const CONTINUE_LINKS = [
-  { key: "services", href: "/services" },
-  { key: "work", href: "/work" },
-  { key: "process", href: "/process" },
-  { key: "how-we-work", href: "/how-we-work" },
-  { key: "pricing", href: "/pricing" },
-] as const;
-
 /**
- * Where the old page spent two sections - a four-step process grid that
- * repeated /process and a 2x2 card grid that repeated the navigation - this is
- * one line of links. The closing CTA below already carries the conversion.
+ * One brand-mood photograph, inset, with the one fact the page does not
+ * say anywhere else set on it. It settles through the site's media hook;
+ * with reduced motion it is simply there.
  */
-function ContinueRow() {
-  const t = useTranslations("about.continue");
-  const tNav = useTranslations("nav");
+function PhotoStage() {
+  const t = useTranslations("about.stage");
+  const mediaRef = useMediaSettle<HTMLElement>();
 
   return (
-    <nav aria-labelledby="about-continue-label" className="border-t border-border-subtle">
-      <Container className="flex flex-col gap-4 py-8 md:flex-row md:items-baseline md:gap-10">
-        <Eyebrow id="about-continue-label" className="m-0 shrink-0">
-          {t("label")}
-        </Eyebrow>
-        <ul className="flex flex-wrap gap-x-8 gap-y-3">
-          {CONTINUE_LINKS.map((link) => (
-            <li key={link.href}>
-              <DirectionalLink
-                href={link.href}
-                className="text-[0.9375rem] text-foreground underline-offset-4 hover:underline"
-              >
-                {tNav(link.key)}
-              </DirectionalLink>
-            </li>
-          ))}
-        </ul>
-      </Container>
-    </nav>
+    <Container className="mt-(--section-y-bottom)">
+      <figure
+        ref={mediaRef}
+        className="relative m-0 aspect-[4/5] overflow-hidden rounded-panel-lg sm:aspect-[16/10] lg:aspect-[21/9]"
+      >
+        <div data-settle-img className="absolute inset-0 will-change-transform">
+          <Image
+            src="/brand/mood/blue-wall-light-bands.webp"
+            alt=""
+            fill
+            sizes="(min-width: 1408px) 1280px, 100vw"
+            quality={75}
+            draggable={false}
+            className="select-none object-cover"
+          />
+        </div>
+        <div aria-hidden className="photo-caption-scrim" />
+        <figcaption className="absolute end-5 bottom-5 max-w-[22ch] text-end text-[clamp(1.25rem,2vw,1.75rem)] font-light leading-[1.25] tracking-[-0.02em] text-white sm:end-6 sm:bottom-6 rtl:max-w-[26ch] rtl:leading-[1.6] rtl:tracking-normal">
+          {t("caption")}
+        </figcaption>
+      </figure>
+    </Container>
   );
 }

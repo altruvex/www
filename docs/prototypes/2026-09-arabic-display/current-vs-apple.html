@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type system · current vs Apple-like</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;600&family=Noto+Sans+Arabic:wght@300;400;600&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var root = document.documentElement, dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    var q = new URLSearchParams(location.search);
+    if (q.get("theme")) dark = q.get("theme") === "dark";
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* Tokens copied from the live code (packages/ui/src/styles/tokens.css,
+   apps/www/app/globals.css). Only the typefaces change between columns. */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted: 0 0% 40%;
+  --hair: hsl(var(--n-8) / 0.1);
+}
+[data-theme="dark"] {
+  --background: var(--n-8);
+  --foreground: var(--n-0);
+  --muted: 0 0% 64%;
+  --hair: hsl(var(--n-0) / 0.12);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: hsl(var(--background)); color: hsl(var(--foreground)); }
+body { font-family: "Inter", sans-serif; font-size: 16px; line-height: 1.6; }
+.wrap { max-width: 1480px; margin: 0 auto; padding: 64px 24px 120px; }
+.mono { font-family: "Geist Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: hsl(var(--muted)); }
+.intro h1 { font-family: "Outfit", sans-serif; font-weight: 300; font-size: clamp(36px, 4.4vw, 56px); line-height: 1.04; letter-spacing: -.03em; margin: 12px 0 14px; }
+.intro p { max-width: 70ch; color: hsl(var(--muted)); margin: 0; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; margin: 36px 0 0; padding: 16px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+.controls .lbl { margin-inline-end: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--hair); border-radius: 10px; overflow: hidden; }
+.seg button { font: 500 13px "Inter", sans-serif; background: none; color: hsl(var(--foreground)); border: 0; padding: 8px 14px; cursor: pointer; }
+.seg button + button { border-inline-start: 1px solid var(--hair); }
+.seg button[aria-pressed="true"] { background: hsl(var(--brand)); color: hsl(var(--n-0)); }
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 8px; }
+.col { padding: 32px 28px 40px; border-inline-start: 1px solid var(--hair); }
+.col:first-child { border-inline-start: 0; padding-inline-start: 0; }
+.col header { min-height: 108px; }
+.col h2 { font-family: "Outfit", sans-serif; font-weight: 400; font-size: 24px; letter-spacing: -.02em; margin: 6px 0 4px; }
+.col .note { font-family: "Geist Mono", monospace; font-size: 11.5px; color: hsl(var(--muted)); line-height: 1.5; }
+
+.row { border-top: 1px solid var(--hair); padding-top: 18px; margin-top: 26px; }
+.row .mono { margin-bottom: 10px; display: block; }
+.en-hero { font-family: var(--lat-display); font-weight: 300; font-size: clamp(38px, 3.6vw, 60px); line-height: 1.02; letter-spacing: var(--lat-track, -.035em); margin: 0; font-variation-settings: var(--lat-vs, normal); }
+.ar-hero { font-family: var(--ar); font-weight: var(--arw, 600); font-size: calc(clamp(38px, 3.6vw, 60px) * var(--m, 1)); line-height: 1.3; margin: 0; }
+.en-title { font-family: var(--lat-display); font-weight: 600; font-size: clamp(24px, 2.2vw, 36px); line-height: 1.08; letter-spacing: -.02em; margin: 0 0 10px; font-variation-settings: var(--lat-vs, normal); }
+.ar-title { font-family: var(--ar); font-weight: 600; font-size: calc(clamp(24px, 2.2vw, 36px) * var(--m, 1)); line-height: 1.28; margin: 0 0 10px; }
+.en-body { font-family: var(--lat-body); font-size: 16px; line-height: 1.6; color: hsl(var(--muted)); margin: 0; }
+.ar-body { font-family: var(--ar-body); font-size: calc(16px * var(--mb, 1)); line-height: 1.9; color: hsl(var(--muted)); margin: 0; }
+.dim { color: hsl(var(--muted)); }
+[data-match="on"] .col { --m: var(--match); --mb: var(--match-body); }
+
+.verdict { margin-top: 44px; max-width: 80ch; color: hsl(var(--muted)); font-size: 15px; }
+@media (max-width: 980px) {
+  .cols { grid-template-columns: 1fr; }
+  .col { border-inline-start: 0; border-top: 1px solid var(--hair); padding-inline: 0; }
+  .col header { min-height: 0; }
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <section class="intro">
+    <span class="mono">Prototype · Type system, current vs Apple-like</span>
+    <h1>The site's type today, next to Apple's</h1>
+    <p>Same copy, same tokens, same sizes — only the typefaces change. Column 1 is what ships now. Column 2 is Apple's own system faces (SF Pro + SF Arabic): they render only on Apple devices and cannot be served as web fonts. Column 3 is the open, cross-platform way to get the same feel: Inter at its display optical size (Inter was drawn in the SF tradition) with Noto Sans Arabic. The eyebrow stays Geist Mono everywhere.</p>
+  </section>
+
+  <div class="controls" role="group" aria-label="Controls">
+    <div><span class="mono lbl" id="lm">Arabic size</span>
+      <span class="seg" role="group" aria-labelledby="lm">
+        <button type="button" data-m="off" aria-pressed="true">Same px</button>
+        <button type="button" data-m="on">Optically matched</button>
+      </span></div>
+    <div><span class="mono lbl" id="lw">Arabic hero weight</span>
+      <span class="seg" role="group" aria-labelledby="lw">
+        <button type="button" data-w="300">Light</button>
+        <button type="button" data-w="400">Regular</button>
+        <button type="button" data-w="600" aria-pressed="true">Semibold</button>
+      </span></div>
+    <div><span class="mono lbl" id="lt">Theme</span>
+      <span class="seg" role="group" aria-labelledby="lt">
+        <button type="button" data-t="light">Light</button>
+        <button type="button" data-t="dark">Dark</button>
+      </span></div>
+  </div>
+
+  <div class="cols">
+    <!-- 1 · CURRENT -->
+    <article class="col" style="--lat-display: 'Outfit', sans-serif; --lat-body: 'Inter', sans-serif; --ar: 'Vazirmatn', sans-serif; --ar-body: 'Vazirmatn', sans-serif; --match: 1.33; --match-body: 1.1">
+      <header><span class="mono">1 · Current</span>
+        <h2>Outfit + Inter + Vazirmatn</h2>
+        <div class="note">what ships today · all open (OFL) · same on every device · Arabic ratio 0.75 → matched ×1.33</div></header>
+      <div class="row"><span class="mono">Web engineering studio · Cairo</span>
+        <p class="en-hero">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="row" dir="rtl" lang="ar"><span class="mono" dir="ltr">استوديو هندسة ويب · القاهرة</span>
+        <p class="ar-hero">نُهندِس، <span class="dim">لا نُركِّب.</span></p></div>
+      <div class="row"><p class="en-title">Most companies don't get software engineering.</p>
+        <p class="en-body">Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</p></div>
+      <div class="row" dir="rtl" lang="ar"><p class="ar-title">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="ar-body">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </article>
+
+    <!-- 2 · APPLE SYSTEM -->
+    <article class="col" style="--lat-display: -apple-system, system-ui, sans-serif; --lat-body: -apple-system, system-ui, sans-serif; --lat-track: -.03em; --ar: -apple-system, system-ui, sans-serif; --ar-body: -apple-system, system-ui, sans-serif; --match: 1.45; --match-body: 1.12">
+      <header><span class="mono">2 · Apple system</span>
+        <h2>SF Pro + SF Arabic</h2>
+        <div class="note">Apple devices only · no web licence · Windows shows Segoe UI, Android shows Roboto + Noto · Arabic ratio 0.69 → matched ×1.45</div></header>
+      <div class="row"><span class="mono">Web engineering studio · Cairo</span>
+        <p class="en-hero">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="row" dir="rtl" lang="ar"><span class="mono" dir="ltr">استوديو هندسة ويب · القاهرة</span>
+        <p class="ar-hero">نُهندِس، <span class="dim">لا نُركِّب.</span></p></div>
+      <div class="row"><p class="en-title">Most companies don't get software engineering.</p>
+        <p class="en-body">Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</p></div>
+      <div class="row" dir="rtl" lang="ar"><p class="ar-title">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="ar-body">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </article>
+
+    <!-- 3 · OPEN APPLE-LIKE -->
+    <article class="col" style="--lat-display: 'Inter', sans-serif; --lat-vs: 'opsz' 32; --lat-track: -.03em; --lat-body: 'Inter', sans-serif; --ar: 'Noto Sans Arabic', sans-serif; --ar-body: 'Noto Sans Arabic', sans-serif; --match: 1.35; --match-body: 1.1">
+      <header><span class="mono">3 · Open, Apple-like</span>
+        <h2>Inter Display + Noto Sans Arabic</h2>
+        <div class="note">all open (OFL) · same on every device · Inter opsz 32 for display · Arabic ratio 0.74 → matched ×1.35</div></header>
+      <div class="row"><span class="mono">Web engineering studio · Cairo</span>
+        <p class="en-hero">Engineered, <span class="dim">not assembled.</span></p></div>
+      <div class="row" dir="rtl" lang="ar"><span class="mono" dir="ltr">استوديو هندسة ويب · القاهرة</span>
+        <p class="ar-hero">نُهندِس، <span class="dim">لا نُركِّب.</span></p></div>
+      <div class="row"><p class="en-title">Most companies don't get software engineering.</p>
+        <p class="en-body">Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.</p></div>
+      <div class="row" dir="rtl" lang="ar"><p class="ar-title">معظم الشركات لا تحصل على هندسة برمجية.</p>
+        <p class="ar-body">أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.</p></div>
+    </article>
+  </div>
+
+  <p class="verdict">Read each column top to bottom, then compare across. What changes: Outfit is geometric and round (circles for o, e, a); SF Pro and Inter are grotesques drawn for screens — tighter, more neutral, more "engineered". The Arabic follows its Latin: Vazirmatn is Outfit-friendly, SF Arabic and Noto Sans Arabic are drawn to sit with a grotesque. "Optically matched" scales the Arabic so both scripts read the same size. Column 2 looks right only on your Mac; column 3 is how the same idea ships to everyone.</p>
+</main>
+<script>
+  (function () {
+    var root = document.documentElement;
+    function press(group, btn) { group.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); }); }
+    document.querySelectorAll("[data-m]").forEach(function (b) { b.addEventListener("click", function () { root.setAttribute("data-match", b.dataset.m); press(b.parentNode, b); }); });
+    document.querySelectorAll("[data-w]").forEach(function (b) { b.addEventListener("click", function () { root.style.setProperty("--arw", b.dataset.w); press(b.parentNode, b); }); });
+    var t = root.getAttribute("data-theme");
+    document.querySelectorAll("[data-t]").forEach(function (b) {
+      if (b.dataset.t === t) b.setAttribute("aria-pressed", "true");
+      b.addEventListener("click", function () { root.setAttribute("data-theme", b.dataset.t); press(b.parentNode, b); });
+    });
+  })();
+</script>
+</body>
+</html>

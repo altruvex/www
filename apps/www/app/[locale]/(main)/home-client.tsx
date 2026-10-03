@@ -2,6 +2,7 @@
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { SectionSkeleton } from "@/components/shared/section-skeleton";
 import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 
 const ProblemSection = dynamic(
   () =>
@@ -17,13 +18,6 @@ const OwnershipStackSection = dynamic(
     ),
   { loading: () => <SectionSkeleton /> },
 );
-const BoundarySection = dynamic(
-  () =>
-    import("@/components/sections/boundary-section").then(
-      (mod) => mod.BoundarySection,
-    ),
-  { loading: () => <SectionSkeleton /> },
-);
 const SceneInversionWrapper = dynamic(
   () =>
     import("@/components/scene-inversion-wrapper").then(
@@ -34,13 +28,6 @@ const SceneInversionWrapper = dynamic(
 const CtaSection = dynamic(
   () =>
     import("@/components/sections/cta-section").then((mod) => mod.CtaSection),
-  { loading: () => <SectionSkeleton /> },
-);
-const TransparencyEstimator = dynamic(
-  () =>
-    import("@/components/sections/transparency-estimator").then(
-      (mod) => mod.TransparencyEstimator,
-    ),
   { loading: () => <SectionSkeleton /> },
 );
 const TrustSection = dynamic(
@@ -62,7 +49,23 @@ const QuoteArtifactSection = dynamic(
     ),
   { loading: () => <SectionSkeleton /> },
 );
-export function HomeClient() {
+/**
+ * `transparency` is the server-rendered "Transparent by design" section: it
+ * reads the resolved (override-aware) pricing, so page.tsx renders it and
+ * hands it in. `paymentSplit` is the resolved payment schedule's percentages,
+ * in milestone order, which the quote artifact draws its bar from.
+ * `scopeFigure` is the worked example's estimate range, which the quote
+ * artifact's first clause repeats.
+ */
+export function HomeClient({
+  transparency,
+  paymentSplit,
+  scopeFigure,
+}: {
+  transparency: ReactNode;
+  paymentSplit: readonly number[];
+  scopeFigure: string;
+}) {
   return (
     <>
       <ErrorBoundary>
@@ -71,9 +74,6 @@ export function HomeClient() {
       <ErrorBoundary>
         <OwnershipStackSection />
       </ErrorBoundary>
-      {/* <ErrorBoundary>
-        <BoundarySection />
-      </ErrorBoundary> */}
       <SceneInversionWrapper />
       <ErrorBoundary>
         <WorkSection />
@@ -81,12 +81,7 @@ export function HomeClient() {
       <ErrorBoundary>
         <TrustSection />
       </ErrorBoundary>
-      <ErrorBoundary>
-        <TransparencyEstimator />
-      </ErrorBoundary>
-      <ErrorBoundary>
-        <QuoteArtifactSection />
-      </ErrorBoundary>
+      <ErrorBoundary>{transparency}</ErrorBoundary>
       <ErrorBoundary>
         <CtaSection />
       </ErrorBoundary>

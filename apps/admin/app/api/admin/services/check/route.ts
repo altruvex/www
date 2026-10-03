@@ -15,4 +15,4 @@ export const dynamic = "force-dynamic";
 export const POST = withAdmin(async () => {
   const result = await sweepServiceRenewals();
   return ok({ result });
-});
+}, { can: ["edit", "project"] });

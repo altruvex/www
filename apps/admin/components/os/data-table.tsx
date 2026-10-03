@@ -692,3 +692,45 @@ export function DataTable<T>({
     </div>
   );
 }
+
+/**
+ * The removable "filtered by X" chip a scoped list shows above its table.
+ *
+ * A list reached from a detail page (`/proposals?client=…`) is a different
+ * question from the full list, and must say so — otherwise "3 proposals" reads
+ * as the whole book. The × is a plain link to the unscoped list, so removing
+ * the scope is a real URL like every other view state.
+ */
+export function FilterChip({
+  label,
+  value,
+  clearHref,
+  className,
+}: {
+  /** What the list is scoped by: "Client", "Stage". */
+  label: string;
+  /** The scope, named — a client's name, never its id. */
+  value: React.ReactNode;
+  /** The same list without this scope. */
+  clearHref: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-[var(--control-h-sm)] max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface ps-2 pe-1 text-meta",
+        className,
+      )}
+    >
+      <span className="telemetry shrink-0 text-subtle-foreground">{label}</span>
+      <span className="min-w-0 truncate font-medium">{value}</span>
+      <Link
+        href={clearHref}
+        aria-label={`Remove the ${label.toLowerCase()} filter`}
+        className="inline-flex size-5 shrink-0 items-center justify-center rounded-xs text-subtle-foreground transition-colors duration-[var(--dur-state)] hover:bg-surface-2 hover:text-foreground"
+      >
+        <X className="size-3" />
+      </Link>
+    </span>
+  );
+}

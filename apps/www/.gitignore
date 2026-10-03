@@ -42,3 +42,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# font licence texts: copied from packages/brand-font/licenses by scripts/font-licenses.mjs
+/public/fonts/licenses/

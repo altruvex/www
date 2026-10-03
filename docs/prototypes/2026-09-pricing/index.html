@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing · prototypes</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400&family=Inter:wght@400;500&family=Geist+Mono:wght@400&family=Vazirmatn:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:2px solid var(--fg);margin:48px 0 96px}
+.grid a{padding:28px 28px 32px 0;border-inline-end:1px solid var(--line);padding-inline-start:28px;display:block;transition:background var(--m-hover)}
+.grid a:first-child{padding-inline-start:0}.grid a:last-child{border-inline-end:0}.grid a:hover{background:var(--brand-soft)}
+.grid h2{font-size:2rem;margin:12px 0 14px}.grid p{color:var(--muted);line-height:1.6;font-size:15px;margin-bottom:10px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.grid a{border-inline-end:0;border-bottom:1px solid var(--line);padding-inline-start:0}}</style></head>
+<body><main class="wrap">
+<header class="hero"><div><div class="eyebrow">Pricing rebuild · direction prototypes · 2026-09-29</div><h1>Three ways to read<br><span class="dim">the same twelve cells.</span></h1></div>
+<p>Same figures (generated from pricing-schema), same doors layer, same digit-settle. The device differs. EN/AR + theme toggles at the bottom. Copy unreviewed.</p></header>
+<div class="grid">
+<a href="a.html"><span class="eyebrow">A · Quote sheet</span><h2>The page is a pre-filled quote.</h2><p>Pick what you build and the scope; one document assembles: range, delivery, package, includes, not-included.</p><p class="note">Proof: consequence. Refs: HeyOrca cost breakdown, Cerebrium itemised bill.</p></a>
+<a href="b.html"><span class="eyebrow">B · Step-up ladder</span><h2>Price as the next step.</h2><p>The published table, every cell showing what the step up costs. Select a cell to read what the next band moves and adds.</p><p class="note">Proof: comparison. Ref: HeyOrca comparison table.</p></a>
+<a href="c.html"><span class="eyebrow">C · Sentence</span><h2>Two answers, one price.</h2><p>“I need a Website at Professional scope.” The figure settles beneath; the full grid stays below as proof.</p><p class="note">Overlaps /transparency estimator — see notes.</p></a>
+</div></main>
+<script src="data.js"></script><script src="shared.js"></script><script>P.chrome("o");</script></body></html>

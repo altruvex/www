@@ -29,12 +29,6 @@ export const CLIENT_SERVICE_KINDS = [
   "OTHER",
 ] as const satisfies readonly ClientServiceKind[];
 
-export const CLIENT_SERVICE_STATUSES = [
-  "PENDING",
-  "ACTIVE",
-  "CANCELLED",
-] as const satisfies readonly ClientServiceStatus[];
-
 export const KIND_LABEL: Record<ClientServiceKind, string> = {
   DOMAIN: "Domain",
   HOSTING: "Hosting",
@@ -245,13 +239,14 @@ export function termBilling(input: {
   if (!input.projectId || !input.projectCurrency) {
     return {
       bill: false,
-      reason: "Not linked to a project, so there is no payment schedule to put it on — invoice it by hand.",
+      reason:
+        "The service is not linked to a project, and a payment row always sits on a project's schedule. The term was extended; nothing is owed in this system until you record the payment on the payments screen or link the service to a project.",
     };
   }
   if (input.projectCurrency !== input.currency) {
     return {
       bill: false,
-      reason: `Priced in ${input.currency} but the project bills in ${input.projectCurrency} — invoice it by hand.`,
+      reason: `The service is priced in ${input.currency} but the project bills in ${input.projectCurrency}, and a schedule never mixes currencies. The term was extended; record the ${input.currency} payment on the payments screen.`,
     };
   }
   return { bill: true, amount: input.price, dueDate: input.termStart };

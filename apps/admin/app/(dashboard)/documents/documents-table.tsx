@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, FolderOpen } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
 import type { RegistryName } from "@/lib/status";
@@ -46,9 +48,9 @@ export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
       header: "Client",
       width: "160px",
       cell: (row) => (
-        <Link href={`/clients/${row.clientId}`} className="truncate hover:text-brand">
+        <EntityLink type="client" id={row.clientId} muted className="truncate">
           {row.clientName}
-        </Link>
+        </EntityLink>
       ),
       sortValue: (row) => row.clientName.toLowerCase(),
       minWidth: "md",
@@ -123,7 +125,13 @@ export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
       searchPlaceholder="Search documents…"
       initialSort={{ columnId: "created", dir: "desc" }}
       mobile={{ title: "name", subtitle: "client", meta: ["category", "status", "created"] }}
-      empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No documents.</div>}
+      empty={
+        <EmptyState
+          icon={FolderOpen}
+          title="No documents in this view"
+          body="Nothing here matches the current search or columns. Clear the search to see every generated file."
+        />
+      }
     />
   );
 }

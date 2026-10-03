@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -21,10 +20,12 @@ import {
 } from "@repo/ui";
 
 import { EmptyInline } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import { dueLabel } from "@/lib/format";
+import { optionsOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 export interface TaskItem {
@@ -36,6 +37,7 @@ export interface TaskItem {
   phase: string | null;
   projectId: string;
   projectName: string;
+  clientId: string;
   clientName: string;
   assigneeId: string | null;
   assigneeName: string | null;
@@ -43,6 +45,9 @@ export interface TaskItem {
   completedAt: string | null;
   createdAt: string;
 }
+
+type ProjectOption = { id: string; name: string; phase: string; clientName: string };
+type UserOption = { id: string; name: string | null; email: string };
 
 /**
  * Columns mirror the `TaskStatus` enum exactly.
@@ -57,46 +62,83 @@ const COLUMNS = [
   { id: "BLOCKED", label: "Blocked" },
   { id: "DONE", label: "Done" },
 ] as const;
+const CANCELLED_COLUMN = { id: "CANCELLED", label: "Cancelled" } as const;
+const ALL_COLUMNS = [...COLUMNS, CANCELLED_COLUMN];
+
+/**
+ * What the board shows. Cancelled work is off the default board (it is not
+ * work anyone will do) but never unreachable: "All" and "Cancelled" bring it
+ * back, so a task cancelled by mistake can be found and reopened.
+ */
+const VIEWS = [
+  { id: "board", label: "Board" },
+  { id: "all", label: "All, incl. cancelled" },
+  ...ALL_COLUMNS.map((c) => ({ id: c.id as string, label: c.label as string })),
+];
+
+const GRID: Record<number, string> = {
+  1: "grid-cols-1",
+  4: "md:grid-cols-2 xl:grid-cols-4",
+  5: "md:grid-cols-2 xl:grid-cols-5",
+};
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
-const UNASSIGNED = "__unassigned__";
+const NONE = "__none__";
+const ALL_PROJECTS = "__all__";
 
 export function TasksClient({
   items,
   projects,
   users,
+  scopeProjectId,
+  openTaskId,
 }: {
   items: TaskItem[];
-  projects: { id: string; name: string; phase: string; clientName: string }[];
-  users: { id: string; name: string | null; email: string }[];
+  projects: ProjectOption[];
+  users: UserOption[];
+  /** `?project=` — the board is already scoped server-side. */
+  scopeProjectId: string | null;
+  /** `?task=` — open this task's sheet on arrival. */
+  openTaskId: string | null;
 }) {
   const router = useRouter();
   const [creating, setCreating] = React.useState(false);
+  const [editingId, setEditingId] = React.useState<string | null>(openTaskId);
   const [pending, setPending] = React.useState<string | null>(null);
-  const [projectFilter, setProjectFilter] = React.useState<string>(UNASSIGNED);
+  const [view, setView] = React.useState<string>(() => {
+    // Arriving on a cancelled task's link should show the card it opened.
+    const opened = items.find((t) => t.id === openTaskId);
+    return opened?.status === "CANCELLED" ? "all" : "board";
+  });
   const del = useRecordDelete({ entity: "task" });
 
-  const visible =
-    projectFilter === UNASSIGNED
-      ? items
-      : items.filter((task) => task.projectId === projectFilter);
+  const scopeHref = scopeProjectId ? `/tasks?project=${scopeProjectId}` : "/tasks";
+  const columns =
+    view === "board" ? COLUMNS : view === "all" ? ALL_COLUMNS : ALL_COLUMNS.filter((c) => c.id === view);
+  const shown = new Set<string>(columns.map((c) => c.id));
+  const visible = items.filter((task) => shown.has(task.status));
+  const editing = editingId ? (items.find((t) => t.id === editingId) ?? null) : null;
 
-  async function call(
-    method: "POST" | "PATCH" | "DELETE",
-    body: unknown,
-    okMessage: string,
-  ): Promise<boolean> {
-    const res = await fetch("/api/admin/tasks", {
-      method,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.status === 401) {
+  async function call(method: "POST" | "PATCH", body: unknown, okMessage: string): Promise<boolean> {
+    let data: { success?: boolean; message?: string } = {};
+    let status = 0;
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      status = res.status;
+      data = (await res.json().catch(() => ({}))) as typeof data;
+    } catch {
+      toast.error("The server could not be reached. Nothing was saved.");
+      return false;
+    }
+    if (status === 401) {
       toast.error("Your session expired. Sign in again.");
       router.push("/login");
       return false;
     }
-    const data = (await res.json()) as { success: boolean; message?: string };
     if (!data.success) {
       toast.error(data.message ?? "That change could not be saved.");
       return false;
@@ -113,22 +155,45 @@ export function TasksClient({
     setPending(null);
   }
 
+  function closeEditor() {
+    setEditingId(null);
+    // Drop `?task=` so a refresh does not reopen the sheet just closed.
+    if (openTaskId) router.replace(scopeHref, { scroll: false });
+  }
+
   return (
     <>
       <Panel
         title="Board"
         description={`${visible.length} task${visible.length === 1 ? "" : "s"}`}
         action={
-          <div className="flex items-center gap-1.5">
-            <Select value={projectFilter} onValueChange={setProjectFilter}>
-              <SelectTrigger className="w-48" aria-label="Filter by project">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Select
+              value={scopeProjectId ?? ALL_PROJECTS}
+              onValueChange={(value) =>
+                router.push(value === ALL_PROJECTS ? "/tasks" : `/tasks?project=${value}`)
+              }
+            >
+              <SelectTrigger className="w-40 sm:w-48" aria-label="Filter by project">
                 <SelectValue placeholder="All projects" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={UNASSIGNED}>All projects</SelectItem>
+                <SelectItem value={ALL_PROJECTS}>All projects</SelectItem>
                 {projects.map((project) => (
                   <SelectItem key={project.id} value={project.id}>
                     {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={view} onValueChange={setView}>
+              <SelectTrigger className="w-36 sm:w-44" aria-label="Filter by status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VIEWS.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -144,18 +209,26 @@ export function TasksClient({
         {visible.length === 0 ? (
           <EmptyInline
             action={
-              <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
-                Add the first task
-              </Button>
+              items.length === 0 ? (
+                <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+                  Add the first task
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setView("all")}>
+                  Show every status
+                </Button>
+              )
             }
           >
             {items.length === 0
-              ? "No task has been created yet. A task is a unit of delivery work with an owner and a due date — add one and it appears on this board and on its project."
-              : "No task on that project."}
+              ? scopeProjectId
+                ? "No task on this project yet. A task is a unit of delivery work with an owner and a due date — add one and it appears here and on the project."
+                : "No task has been created yet. A task is a unit of delivery work with an owner and a due date — add one and it appears on this board and on its project."
+              : "No task matches this status filter."}
           </EmptyInline>
         ) : (
-          <div className="grid gap-3 p-3 md:grid-cols-2 xl:grid-cols-4">
-            {COLUMNS.map((column) => {
+          <div className={cn("grid gap-3 p-3", GRID[columns.length])}>
+            {columns.map((column) => {
               const columnTasks = visible.filter((task) => task.status === column.id);
               return (
                 <section key={column.id} className="min-w-0 space-y-2">
@@ -178,27 +251,34 @@ export function TasksClient({
                         className={cn(
                           "plane space-y-1.5 p-2",
                           pending === task.id && "opacity-60",
+                          editingId === task.id && "border-brand",
                         )}
                       >
                         <div className="flex items-start justify-between gap-1">
-                          <p className="text-base leading-snug">{task.title}</p>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(task.id)}
+                            className="min-w-0 text-start text-base leading-snug hover:underline"
+                          >
+                            {task.title}
+                          </button>
                           <RowActions
                             onDelete={() => del.request({ id: task.id, label: task.title })}
                           />
                         </div>
                         <p className="truncate text-meta text-subtle-foreground">
-                          <Link
-                            href={`/projects/${task.projectId}`}
-                            className="hover:text-foreground hover:underline"
-                          >
+                          <EntityLink type="project" id={task.projectId} muted>
                             {task.projectName}
-                          </Link>
+                          </EntityLink>
                           {" · "}
                           {task.assigneeName ?? "Unassigned"}
                         </p>
                         <div className="flex flex-wrap items-center gap-1.5">
                           <StatusPill registry="priority" value={task.priority} variant="dot" />
-                          {task.dueDate && task.status !== "DONE" && (
+                          {task.phase && (
+                            <StatusPill registry="projectPhase" value={task.phase} variant="dot" />
+                          )}
+                          {task.dueDate && task.status !== "DONE" && task.status !== "CANCELLED" && (
                             <span
                               className={cn(
                                 "text-meta",
@@ -223,12 +303,11 @@ export function TasksClient({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {COLUMNS.map((option) => (
+                            {ALL_COLUMNS.map((option) => (
                               <SelectItem key={option.id} value={option.id}>
                                 {option.label}
                               </SelectItem>
                             ))}
-                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
                           </SelectContent>
                         </Select>
                       </li>
@@ -243,20 +322,119 @@ export function TasksClient({
 
       <CreateTaskSheet
         // Remount per opening so the form starts clean without an effect.
-        key={creating ? `open-${projectFilter}` : "closed"}
+        key={creating ? `open-${scopeProjectId ?? ""}` : "closed"}
         open={creating}
         onOpenChange={setCreating}
         projects={projects}
         users={users}
-        defaultProjectId={projectFilter === UNASSIGNED ? (projects[0]?.id ?? "") : projectFilter}
+        defaultProjectId={scopeProjectId ?? projects[0]?.id ?? ""}
         onSubmit={async (body) => {
           const done = await call("POST", body, "Task created.");
           if (done) setCreating(false);
         }}
       />
 
+      <EditTaskSheet
+        // Remount per task so the form always starts from the saved row.
+        key={editing?.id ?? "none"}
+        task={editing}
+        onClose={closeEditor}
+        projects={projects}
+        users={users}
+        onSubmit={async (patch) => {
+          if (!editing) return;
+          if (Object.keys(patch).length === 0) {
+            toast("Nothing changed.");
+            closeEditor();
+            return;
+          }
+          const done = await call("PATCH", { id: editing.id, ...patch }, "Task saved.");
+          if (done) closeEditor();
+        }}
+      />
+
       {del.dialog}
     </>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block space-y-1">
+      <span className="telemetry block text-subtle-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const textareaClass =
+  "w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand";
+
+function PrioritySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full" aria-label="Priority">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {PRIORITIES.map((p) => (
+          <SelectItem key={p} value={p}>
+            {p.charAt(0) + p.slice(1).toLowerCase()}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function ProjectSelect({
+  value,
+  onChange,
+  projects,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  projects: ProjectOption[];
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full" aria-label="Project">
+        <SelectValue placeholder="Pick a project" />
+      </SelectTrigger>
+      <SelectContent>
+        {projects.map((project) => (
+          <SelectItem key={project.id} value={project.id}>
+            {project.name} · {project.clientName}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function AssigneeSelect({
+  value,
+  onChange,
+  users,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  users: UserOption[];
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full" aria-label="Assignee">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NONE}>Unassigned</SelectItem>
+        {users.map((user) => (
+          <SelectItem key={user.id} value={user.id}>
+            {user.name || user.email}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -270,8 +448,8 @@ function CreateTaskSheet({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  projects: { id: string; name: string; clientName: string }[];
-  users: { id: string; name: string | null; email: string }[];
+  projects: ProjectOption[];
+  users: UserOption[];
   defaultProjectId: string;
   onSubmit: (body: Record<string, unknown>) => Promise<void>;
 }) {
@@ -282,7 +460,7 @@ function CreateTaskSheet({
   const [title, setTitle] = React.useState("");
   const [detail, setDetail] = React.useState("");
   const [priority, setPriority] = React.useState<string>("MEDIUM");
-  const [assigneeId, setAssigneeId] = React.useState<string>(UNASSIGNED);
+  const [assigneeId, setAssigneeId] = React.useState<string>(NONE);
   const [dueDate, setDueDate] = React.useState("");
 
   return (
@@ -292,7 +470,7 @@ function CreateTaskSheet({
           <SheetTitle>New task</SheetTitle>
         </SheetHeader>
         <form
-          className="space-y-3 p-4"
+          className="space-y-3 overflow-y-auto p-4"
           onSubmit={async (event) => {
             event.preventDefault();
             if (!title.trim() || !projectId) return;
@@ -302,33 +480,17 @@ function CreateTaskSheet({
               title: title.trim(),
               detail: detail.trim() || null,
               priority,
-              assigneeId: assigneeId === UNASSIGNED ? null : assigneeId,
+              assigneeId: assigneeId === NONE ? null : assigneeId,
               dueDate: dueDate || null,
             });
             setBusy(false);
-            setTitle("");
-            setDetail("");
-            setDueDate("");
           }}
         >
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Project</span>
-            <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger className="w-full" aria-label="Project">
-                <SelectValue placeholder="Pick a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name} · {project.clientName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
+          <Field label="Project">
+            <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
+          </Field>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Task</span>
+          <Field label="Task">
             <Input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
@@ -336,62 +498,30 @@ function CreateTaskSheet({
               required
               maxLength={300}
             />
-          </label>
+          </Field>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Detail</span>
+          <Field label="Detail">
             <textarea
               value={detail}
               onChange={(event) => setDetail(event.target.value)}
               rows={3}
               maxLength={5000}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
+              className={textareaClass}
             />
-          </label>
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="block space-y-1">
-              <span className="telemetry block text-subtle-foreground">Priority</span>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="w-full" aria-label="Priority">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value.charAt(0) + value.slice(1).toLowerCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </label>
-
-            <label className="block space-y-1">
-              <span className="telemetry block text-subtle-foreground">Due</span>
-              <Input
-                type="date"
-                value={dueDate}
-                onChange={(event) => setDueDate(event.target.value)}
-              />
-            </label>
+            <Field label="Priority">
+              <PrioritySelect value={priority} onChange={setPriority} />
+            </Field>
+            <Field label="Due">
+              <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+            </Field>
           </div>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Assignee</span>
-            <Select value={assigneeId} onValueChange={setAssigneeId}>
-              <SelectTrigger className="w-full" aria-label="Assignee">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.name || user.email}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
+          <Field label="Assignee">
+            <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={users} />
+          </Field>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
@@ -402,6 +532,170 @@ function CreateTaskSheet({
             </Button>
           </div>
         </form>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/**
+ * Every field the tasks API accepts, in one place. Only the fields that moved
+ * are sent, so the audit event names exactly what the operator changed.
+ */
+function EditTaskSheet({
+  task,
+  onClose,
+  projects,
+  users,
+  onSubmit,
+}: {
+  task: TaskItem | null;
+  onClose: () => void;
+  projects: ProjectOption[];
+  users: UserOption[];
+  onSubmit: (patch: Record<string, unknown>) => Promise<void>;
+}) {
+  const [busy, setBusy] = React.useState(false);
+  const [title, setTitle] = React.useState(task?.title ?? "");
+  const [detail, setDetail] = React.useState(task?.detail ?? "");
+  const [status, setStatus] = React.useState(task?.status ?? "TODO");
+  const [priority, setPriority] = React.useState(task?.priority ?? "MEDIUM");
+  const [projectId, setProjectId] = React.useState(task?.projectId ?? "");
+  const [phase, setPhase] = React.useState(task?.phase ?? NONE);
+  const [assigneeId, setAssigneeId] = React.useState(task?.assigneeId ?? NONE);
+  const [dueDate, setDueDate] = React.useState(task?.dueDate?.slice(0, 10) ?? "");
+
+  // An assignee who has since lost admin access is still who the task names;
+  // keep them selectable rather than silently showing a blank picker.
+  const userOptions =
+    task?.assigneeId && !users.some((u) => u.id === task.assigneeId)
+      ? [...users, { id: task.assigneeId, name: task.assigneeName, email: task.assigneeName ?? "Former member" }]
+      : users;
+
+  function changes(): Record<string, unknown> {
+    if (!task) return {};
+    const patch: Record<string, unknown> = {};
+    const nextTitle = title.trim();
+    const nextDetail = detail.trim() || null;
+    const nextPhase = phase === NONE ? null : phase;
+    const nextAssignee = assigneeId === NONE ? null : assigneeId;
+    const nextDue = dueDate || null;
+    if (nextTitle !== task.title) patch.title = nextTitle;
+    if (nextDetail !== (task.detail ?? null)) patch.detail = nextDetail;
+    if (status !== task.status) patch.status = status;
+    if (priority !== task.priority) patch.priority = priority;
+    if (projectId !== task.projectId) patch.projectId = projectId;
+    if (nextPhase !== task.phase) patch.phase = nextPhase;
+    if (nextAssignee !== task.assigneeId) patch.assigneeId = nextAssignee;
+    if (nextDue !== (task.dueDate?.slice(0, 10) ?? null)) patch.dueDate = nextDue;
+    return patch;
+  }
+
+  return (
+    <Sheet open={task != null} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="end" className="w-full sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Edit task</SheetTitle>
+        </SheetHeader>
+        {task && (
+          <form
+            className="space-y-3 overflow-y-auto p-4"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (!title.trim()) return;
+              setBusy(true);
+              await onSubmit(changes());
+              setBusy(false);
+            }}
+          >
+            <p className="text-meta text-subtle-foreground">
+              On{" "}
+              <EntityLink type="project" id={task.projectId}>
+                {task.projectName}
+              </EntityLink>{" "}
+              for{" "}
+              <EntityLink type="client" id={task.clientId}>
+                {task.clientName}
+              </EntityLink>
+            </p>
+
+            <Field label="Task">
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                required
+                maxLength={300}
+              />
+            </Field>
+
+            <Field label="Detail">
+              <textarea
+                value={detail}
+                onChange={(event) => setDetail(event.target.value)}
+                rows={4}
+                maxLength={5000}
+                className={textareaClass}
+              />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Status">
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="w-full" aria-label="Status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {optionsOf("taskStatus").map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Priority">
+                <PrioritySelect value={priority} onChange={setPriority} />
+              </Field>
+            </div>
+
+            <Field label="Project">
+              <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Phase">
+                <Select value={phase} onValueChange={setPhase}>
+                  <SelectTrigger className="w-full" aria-label="Phase">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>No phase</SelectItem>
+                    {optionsOf("projectPhase").map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Due">
+                <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+              </Field>
+            </div>
+
+            <Field label="Assignee">
+              <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={userOptions} />
+            </Field>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="ghost" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="brand" disabled={busy || !title.trim()}>
+                {busy ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </form>
+        )}
       </SheetContent>
     </Sheet>
   );

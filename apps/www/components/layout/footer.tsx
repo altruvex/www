@@ -1,176 +1,258 @@
 "use client";
 
-import { AltruvexLogo } from "@/components/shared/altruvex-logo";
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { SITE_CONFIG } from "@/lib/metadata";
-import { motion, useReveal } from "@/lib/motion";
+import { readMotionEnv, scrollToY } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
+import { cn } from "@/lib/utils/utils";
 import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
+
+/*
+ * The curtain footer — prototype A of docs/prototypes/2026-10-footer, with the
+ * wordmark Ali asked to keep (2026-10-03).
+ *
+ * The page lifts off a dark ground that was under it all along: the content
+ * wrapper in main-layout-content.tsx carries the background and a panel-lg
+ * bottom edge, and this footer sits beneath it, sticky at the bottom. When the
+ * footer is taller than the viewport, a negative `bottom` pins its TOP instead,
+ * so the reveal always starts at the closing line. Locked dark in both themes:
+ * the closing page of the dark sandwich (ADI RUL-134).
+ *
+ * The wordmark is fitted to the column, never cropped: its width is
+ * WORDMARK_EM × font-size in Altruvex Sans 700 at -0.05em, so a font-size of
+ * 100cqi / WORDMARK_EM spans the container exactly (globals.css keeps the
+ * Latin face and tracking under RTL). It rises once from its own baseline when
+ * the page uncovers it; with reduced motion it simply rests.
+ */
+const WORDMARK_EM = 3.547; // "Altruvex" advance width, measured
+const WORDMARK_FONT_SIZE = `${Math.floor((100 / WORDMARK_EM) * 10) / 10}cqi`; // 28.1cqi
+
+const linkClass =
+  "relative inline-flex min-h-8 items-center text-[0.9375rem] text-muted-foreground transition-colors duration-(--motion-instant) hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-xs pointer-coarse:min-h-11 after:absolute after:inset-x-0 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-brand after:transition-transform after:duration-(--motion-drawer) after:ease-(--ease-strong) hover:after:scale-x-100 focus-visible:after:scale-x-100 rtl:after:origin-right";
+
+type MarkState = "rest" | "armed" | "in";
 
 export const Footer = memo(function Footer() {
   const t = useTranslations("footer");
   const navT = useTranslations("nav");
+  const tCTAs = useTranslations("commercial.ctas");
   const locale = useLocale();
 
-  const beat0Ref = useReveal<HTMLDivElement>(motion.fadeUp());
-  const beat1Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.08 }));
-  const beat2Ref = useReveal<HTMLDivElement>(motion.fadeUp({ delay: 0.16 }));
+  const footerRef = useRef<HTMLElement>(null);
+  const markRef = useRef<HTMLDivElement>(null);
+  const [overhang, setOverhang] = useState(0);
+  const [markState, setMarkState] = useState<MarkState>("rest");
+
+  // Sticky bottom only holds while the footer fits the viewport; past that,
+  // a negative offset keeps its top in view as the page lifts away.
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const measure = () =>
+      setOverhang(Math.min(0, window.innerHeight - footer.offsetHeight));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(footer);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  // The footer is in the viewport from the first frame, under the page, so
+  // "in view" means uncovered: the sheet's bottom edge has passed the mark.
+  useEffect(() => {
+    const mark = markRef.current;
+    const sheet = footerRef.current?.previousElementSibling;
+    if (!mark || !sheet || readMotionEnv().reduce) return;
+    const uncovered = () => {
+      const box = mark.getBoundingClientRect();
+      const edge = Math.max(sheet.getBoundingClientRect().bottom, 0);
+      return box.top < window.innerHeight && edge < box.bottom - box.height * 0.3;
+    };
+    if (uncovered()) return;
+    setMarkState("armed");
+    const onScroll = () => {
+      if (!uncovered()) return;
+      setMarkState("in");
+      window.removeEventListener("scroll", onScroll);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const localizedYear = useMemo(() => {
-    const year = new Date().getFullYear();
-    return locale === "ar"
-      ? localizeNumbers(year.toString(), locale)
-      : year.toString();
+    const year = new Date().getFullYear().toString();
+    return locale === "ar" ? localizeNumbers(year, locale) : year;
   }, [locale]);
 
-  const servicesLinks = useMemo(
+  const linkColumns = useMemo(
     () => [
-      { href: "/services/interface-design", label: t("webDesign") },
-      { href: "/services/development", label: t("development") },
-      { href: "/services/consulting", label: t("consulting") },
-      { href: "/services/maintenance", label: t("maintenance") },
+      {
+        title: t("servicesTitle"),
+        links: [
+          { href: "/services/interface-design", label: t("webDesign") },
+          { href: "/services/development", label: t("development") },
+          { href: "/services/consulting", label: t("consulting") },
+          { href: "/services/maintenance", label: t("maintenance") },
+        ],
+      },
+      {
+        title: t("companyTitle"),
+        links: [
+          { href: "/work", label: t("work") },
+          { href: "/approach", label: t("approach") },
+          { href: "/how-we-work", label: t("how-we-work") },
+          { href: "/process", label: t("process") },
+          { href: "/standards", label: t("standards") },
+        ],
+      },
+      {
+        title: t("resourcesTitle"),
+        links: [
+          { href: "/pricing", label: t("pricing") },
+          { href: "/transparency", label: t("transparency") },
+          { href: "/faq", label: t("faq") },
+          { href: "/writing", label: t("writing") },
+          { href: "/schedule", label: t("schedule") },
+          { href: "/contact", label: t("contact") },
+        ],
+      },
     ],
     [t],
   );
 
-  const companyLinks = useMemo(
-    () => [
-      { href: "/approach", label: t("approach") },
-      { href: "/how-we-work", label: t("how-we-work") },
-      { href: "/work", label: t("work") },
-      { href: "/process", label: t("process") },
-      { href: "/standards", label: t("standards") },
-    ],
-    [t],
-  );
-
-  const resourceLinks = useMemo(
-    () => [
-      { href: "/pricing", label: t("pricing") },
-      { href: "/faq", label: t("faq") },
-      { href: "/writing", label: t("writing") },
-      { href: "/schedule", label: t("schedule") },
-      { href: "/contact", label: t("contact") },
-    ],
-    [t],
-  );
-
-  const legalLinks = useMemo(
-    () => [
-      { href: "/privacy", label: t("privacy") },
-      { href: "/terms", label: t("terms") },
-      { href: "/about", label: navT("about") },
-    ],
-    [t, navT],
-  );
-
-  const linkColumns = [
-    { title: t("servicesTitle"), links: servicesLinks },
-    { title: t("companyTitle"), links: companyLinks },
-    { title: t("resourcesTitle"), links: resourceLinks },
+  const legalLinks = [
+    { href: "/privacy", label: t("privacy") },
+    { href: "/terms", label: t("terms") },
+    { href: "/about", label: navT("about") },
   ];
 
-  const whatsappUrl = getWhatsAppUrl();
-
   return (
-    <footer className="relative w-full overflow-hidden border-t border-border-subtle bg-background">
-      <Container className="py-12 md:py-20">
-        <div
-          ref={beat0Ref}
-          className="mb-12 flex flex-col gap-10 lg:mb-20 lg:flex-row lg:items-start lg:justify-between"
-        >
-          <div className="max-w-xs shrink-0 lg:max-w-md">
-            <p className="font-sans font-normal leading-relaxed text-foreground text-[clamp(18px,2vw,24px)] tracking-tight">
-              {t("tagline")}
-            </p>
-          </div>
-          <nav aria-label="Footer navigation" className="w-full lg:w-auto">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 md:gap-x-16">
-              {linkColumns.map(({ title, links }) => (
-                <div key={title}>
-                  <h3 className="eyebrow mb-5 text-foreground">
-                    {title}
-                  </h3>
-                  <ul className="flex flex-col gap-3">
-                    {links.map(({ href, label }) => (
-                      <li key={label}>
-                        <Link
-                          href={href}
-                          className="text-sm font-medium leading-snug text-muted-foreground transition-all duration-(--motion-instant) hover:text-brand-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
-                        >
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </nav>
-        </div>
-        <div ref={beat1Ref}>
-          <div className="relative mb-6 overflow-hidden md:mb-10" aria-hidden="true">
-            <div className="select-none font-sans font-bold leading-[0.8] tracking-tighter text-foreground text-[clamp(60px,18vw,400px)] pointer-events-none">
-              Altruvex
-            </div>
-          </div>
-
-          <div className="mb-10 max-w-xl space-y-8 md:mb-16">
-            <p className="text-sm leading-relaxed text-muted-foreground md:text-base">
+    <footer
+      ref={footerRef}
+      aria-labelledby="footer-close"
+      data-scene="inverted"
+      data-scene-lock="dark"
+      data-nav-invert
+      className="sticky z-0 -mt-(--radius-panel-lg) w-full bg-background"
+      style={{ bottom: `${overhang}px` }}
+    >
+      <Container className="@container">
+        <div className="flex flex-col gap-7 pt-[calc(clamp(3.5rem,7vw,6rem)+var(--radius-panel-lg))]">
+          <Eyebrow>{t("studioLine")}</Eyebrow>
+          <p
+            id="footer-close"
+            className="max-w-[12ch] text-[clamp(2.5rem,6.6vw,6.75rem)] leading-[0.98] font-medium tracking-[-0.035em] text-foreground rtl:max-w-[14ch] rtl:leading-[1.15] rtl:tracking-normal"
+          >
+            {t("closeLine")}{" "}
+            <span className="text-muted-foreground">{t("closeLineDim")}</span>
+          </p>
+          <div className="grid items-end gap-7 xl:grid-cols-[1fr_auto]">
+            <p className="max-w-[52ch] text-base leading-relaxed text-muted-foreground">
               {t("description")}
             </p>
-            <div className="flex flex-wrap gap-x-8 gap-y-4 text-sm font-medium">
-              <a
-                href={`mailto:${SITE_CONFIG.email}`}
-                className="text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
-              >
-                {t("emailLabel")}: <bdi className="text-foreground">{SITE_CONFIG.email}</bdi>
-              </a>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground hover:underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm inline-block py-1 pointer-coarse:min-h-11 pointer-coarse:inline-flex pointer-coarse:items-center"
-              >
-                {t("whatsappLabel")}: <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
-              </a>
-            </div>
+            <CtaButtonGroup
+              primary={{
+                href: getCommercialCta("projectRange").href,
+                label: tCTAs("projectRange"),
+              }}
+              secondary={{
+                href: getCommercialCta("technicalCall").href,
+                label: tCTAs("technicalCall"),
+              }}
+              secondaryArrow
+            />
           </div>
         </div>
-        <div
-          ref={beat2Ref}
-          className="flex flex-col gap-4 border-t border-border-subtle pt-6 sm:flex-row sm:items-center sm:justify-between md:pt-8"
+
+        <nav
+          aria-label={t("navLabel")}
+          className="mt-[clamp(3rem,5vw,4.5rem)] grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border-subtle pt-8 lg:grid-cols-4"
         >
-          {/* The fade sits on the mark only: on the whole row it multiplied
-              the muted copyright text down to 2.98:1, below AA. */}
-          <div className="group order-2 flex items-center gap-3 sm:order-1">
-            <span className="opacity-70 transition-opacity group-hover:opacity-100">
-              <AltruvexLogo size="sm" variant="icon" />
-            </span>
-            <Eyebrow className="text-sm">
-              {t("copyright", { year: localizedYear })}
-            </Eyebrow>
+          {linkColumns.map(({ title, links }) => (
+            <div key={title}>
+              <h3 className="eyebrow mb-3.5 text-muted-foreground">{title}</h3>
+              <ul>
+                {links.map(({ href, label }) => (
+                  <li key={href}>
+                    <Link href={href} className={linkClass}>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          <div>
+            <h3 className="eyebrow mb-3.5 text-muted-foreground">{t("directLines")}</h3>
+            <dl>
+              <dt className="text-xs text-muted-foreground">{t("emailLabel")}</dt>
+              <dd>
+                <a href={`mailto:${SITE_CONFIG.email}`} className={linkClass}>
+                  <bdi className="text-foreground">{SITE_CONFIG.email}</bdi>
+                </a>
+              </dd>
+              <dt className="mt-3 text-xs text-muted-foreground">{t("whatsappLabel")}</dt>
+              <dd>
+                <a
+                  href={getWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
+                </a>
+              </dd>
+            </dl>
           </div>
-          <nav aria-label="Legal links" className="order-1 sm:order-2">
-            <ul className="flex flex-wrap gap-6">
+        </nav>
+
+        <div className="mt-[clamp(2.25rem,4vw,3.5rem)] flex flex-wrap items-center justify-between gap-x-7 gap-y-3 border-t border-border-subtle py-5 text-[0.8125rem] text-muted-foreground">
+          <span>{t("copyright", { year: localizedYear })}</span>
+          <nav aria-label={t("legalLabel")}>
+            <ul className="flex flex-wrap gap-x-5">
               {legalLinks.map(({ href, label }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="eyebrow text-sm text-muted-foreground transition-all duration-(--motion-instant) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-ctl-sm"
-                  >
+                <li key={href}>
+                  <Link href={href} className={cn(linkClass, "text-[0.8125rem]")}>
                     {label}
                   </Link>
                 </li>
               ))}
             </ul>
           </nav>
+          <button
+            type="button"
+            onClick={() => scrollToY(0)}
+            className={cn(linkClass, "cursor-pointer text-[0.8125rem]")}
+          >
+            {t("toTop")}
+          </button>
+        </div>
+
+        <div
+          ref={markRef}
+          aria-hidden="true"
+          className="overflow-clip pt-[0.08em] pb-[0.012em] text-center leading-[0.74] select-none"
+          style={{ fontSize: WORDMARK_FONT_SIZE }}
+        >
+          <span
+            dir="ltr"
+            data-wordmark
+            data-state={markState}
+            className="inline-block font-bold tracking-[-0.05em] whitespace-nowrap text-foreground data-[state=armed]:translate-y-[105%] data-[state=in]:translate-y-0 data-[state=in]:transition-transform data-[state=in]:duration-(--motion-display) data-[state=in]:ease-(--ease-strong)"
+          >
+            Altruvex
+          </span>
         </div>
       </Container>
     </footer>
   );
-})
+});

@@ -5,7 +5,7 @@
   "phoneError": "الرجاء إدخال رقم هاتف صحيح",
   "phoneHint": "سنتصل فقط لتنسيق الموعد.",
   "phoneLabel": "الهاتف (واتساب)",
-  "phonePlaceholder": "+201... أو +971...",
+  "phonePlaceholder": "+201... / +971...",
   "secondaryButtonText": "ربما لاحقاً",
   "stats": {
     "founderAccess": "وصول للمؤسس",
@@ -19,5 +19,5 @@
   "subtitle": "انتظر - قبل أن تغادر",
   "successDescription": "استلمنا رقمك. سنتواصل خلال ساعتي عمل لتنسيق الموعد.",
   "successTitle": "نراك قريباً.",
-  "title": "دعنا نختبر تفاصيل مشروعك."
+  "title": "دعنا <h>نختبر</h> تفاصيل مشروعك."
 }

@@ -1,4 +1,5 @@
 import { prisma } from "@repo/database";
+import { paymentSourceHref, paymentSourceLabel } from "@/lib/payment-source";
 import type { Tone } from "@/lib/status";
 
 /**
@@ -26,6 +27,34 @@ export interface CalendarEntry {
   href: string;
   tone: Tone;
   status?: string;
+  /**
+   * Who a meeting is with. `type`/`id` make it an EntityLink; without them it is
+   * a guest who exists only as a name on the booking, shown as plain text.
+   */
+  with?: { label: string; type?: "client" | "submission"; id?: string };
+}
+
+/**
+ * A YYYY-MM-DD day as LOCAL midnight — the same convention `dayKey` reads back,
+ * so a meeting created or moved here lands on the day the grid shows it.
+ */
+export const localDay = (ymd: string) => new Date(`${ymd}T00:00:00`);
+
+/** The client name every list shows: company first, person second. */
+export const clientLabel = (c: { name: string | null; company: string | null }) =>
+  c.company || c.name || "Unnamed client";
+
+/** Who a meeting is with: the client, else the lead it came from, else the guest. */
+export function meetingWith(m: {
+  client: { id: string; name: string | null; company: string | null } | null;
+  contactSubmission: { id: string; name: string } | null;
+  guestName: string | null;
+}): CalendarEntry["with"] {
+  if (m.client) return { type: "client", id: m.client.id, label: clientLabel(m.client) };
+  if (m.contactSubmission) {
+    return { type: "submission", id: m.contactSubmission.id, label: m.contactSubmission.name };
+  }
+  return m.guestName ? { label: m.guestName } : undefined;
 }
 
 /**
@@ -49,7 +78,8 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
         scheduledTime: true,
         durationMinutes: true,
         guestName: true,
-        contactSubmission: { select: { name: true } },
+        contactSubmission: { select: { id: true, name: true } },
+        client: { select: { id: true, name: true, company: true } },
       },
     }),
     prisma.proposal.findMany({
@@ -78,6 +108,7 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
         milestone: true,
         status: true,
         project: { select: { id: true, name: true } },
+        subscription: { select: { planId: true } },
       },
     }),
     prisma.contract.findMany({
@@ -90,8 +121,7 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
     }),
   ]);
 
-  const label = (c: { name: string | null; company: string | null }) =>
-    c.company || c.name || "Unnamed client";
+  const label = clientLabel;
 
   const entries: CalendarEntry[] = [
     ...meetings.map((m) => ({
@@ -100,8 +130,9 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
       date: dayKey(m.scheduledDate),
       time: m.scheduledTime,
       title: m.title,
-      detail: `${m.durationMinutes} min · ${m.guestName ?? m.contactSubmission?.name ?? "no guest recorded"}`,
-      href: "/calendar",
+      detail: `${m.durationMinutes} min`,
+      with: meetingWith(m),
+      href: `/calendar?meeting=${m.id}`,
       tone:
         m.status === "PENDING"
           ? ("warning" as Tone)
@@ -134,9 +165,9 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
       id: `pay-${pay.id}`,
       kind: "payment-due" as const,
       date: dayKey(pay.dueDate!),
-      title: `Payment due · ${pay.project.name}`,
+      title: `Payment due · ${paymentSourceLabel(pay)}`,
       detail: `${pay.amount.toLocaleString()} EGP`,
-      href: `/projects/${pay.project.id}?tab=financials`,
+      href: paymentSourceHref(pay),
       tone: pay.status === "PAID" ? ("success" as Tone) : ("danger" as Tone),
       status: pay.status,
     })),

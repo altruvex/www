@@ -1,7 +1,6 @@
 "use client";
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { DisplayClose } from "@/components/sections/display-close";
 import { Container } from "@/components/shared/container";
 import { Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -20,6 +19,7 @@ import {
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import Image, { getImageProps } from "next/image";
+import type { ReactNode } from "react";
 import { HeroHeadline, HeroReveal } from "../hero-motion-wrappers";
 
 /*
@@ -100,12 +100,14 @@ function StudioHero() {
               className="object-cover"
             />
           </div>
+          <div aria-hidden className="photo-caption-scrim" />
           <HeroReveal
             delay={0.9}
-            className="liquid-glass-panel absolute start-4 bottom-4 max-w-80 rounded-panel-sm p-5 sm:start-6 sm:bottom-6"
+            className="absolute end-5 bottom-5 max-w-[30ch] sm:end-6 sm:bottom-6 rtl:max-w-[34ch]"
           >
-            <span aria-hidden className="mb-3 block h-[3px] w-5 rounded-full bg-local-accent" />
-            <p className="text-sm leading-snug text-foreground">{s("hero.cardText")}</p>
+            <p className="text-end text-[clamp(1.125rem,1.7vw,1.5rem)] font-light leading-[1.25] tracking-[-0.02em] text-white rtl:leading-[1.6] rtl:tracking-normal">
+              {s("hero.cardText")}
+            </p>
           </HeroReveal>
         </div>
       </Container>
@@ -323,24 +325,9 @@ function StudioFacts() {
   );
 }
 
-/* ── Close: the shared display close ─────────────────────────────────── */
-
-function StudioCta() {
-  const s = useTranslations("serviceDetails.development.studio.cta");
-  return (
-    <DisplayClose
-      id="dev-cta-heading"
-      eyebrow={s("eyebrow")}
-      title={s("title")}
-      titleAccent={s("titleAccent")}
-      description={s("description")}
-      primary="projectRange"
-      secondary="architecture"
-    />
-  );
-}
-
-export function DevStudio() {
+/** `investment` is the server-rendered service-investment line, printed
+    after the facts. */
+export function DevStudio({ investment }: { investment?: ReactNode }) {
   return (
     <>
       <StudioHero />
@@ -348,7 +335,7 @@ export function DevStudio() {
       <StudioWords />
       <StudioTiles />
       <StudioFacts />
-      <StudioCta />
+      {investment}
     </>
   );
 }

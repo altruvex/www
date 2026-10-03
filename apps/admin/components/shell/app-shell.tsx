@@ -5,25 +5,10 @@ import { MobileBottomBar, MobileNavDrawer } from "@/components/shell/mobile-nav"
 import { ShortcutsSheet } from "@/components/shell/shortcuts";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
-import type { BadgeKey, Role } from "@/lib/nav";
+import { gotoShortcutsFor, type BadgeKey, type Role } from "@/lib/nav";
 import { TooltipProvider } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-
-const GOTO: Record<string, string> = {
-  d: "/",
-  i: "/inbox",
-  l: "/leads",
-  c: "/clients",
-  p: "/proposals",
-  k: "/pipeline",
-  o: "/projects",
-  n: "/contracts",
-  m: "/calendar",
-  y: "/payments",
-  a: "/analytics",
-  s: "/settings",
-};
 
 export function AppShell({
   user,
@@ -41,9 +26,21 @@ export function AppShell({
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
   const [paletteOpen, setPaletteOpen] = React.useState(false);
+  // "proposal" turns the palette into a client picker: a proposal is always
+  // written for a client, so creating one starts by choosing who it is for.
+  const [paletteMode, setPaletteMode] = React.useState<"search" | "proposal">("search");
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
   const gotoArmed = React.useRef(false);
+  const goto = React.useMemo(
+    () => new Map(gotoShortcutsFor(role).map((s) => [s.key, s.href])),
+    [role],
+  );
+
+  const openPalette = React.useCallback((mode: "search" | "proposal" = "search") => {
+    setPaletteMode(mode);
+    setPaletteOpen(true);
+  }, []);
 
   React.useEffect(() => {
     const saved = window.localStorage.getItem("avx.sidebar.collapsed");
@@ -77,6 +74,7 @@ export function AppShell({
     function onKeyDown(event: KeyboardEvent) {
       if (event.key.toLowerCase() === "k" && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
+        setPaletteMode("search");
         setPaletteOpen((o) => !o);
         return;
       }
@@ -84,12 +82,14 @@ export function AppShell({
 
       if (event.key === "/") {
         event.preventDefault();
-        setPaletteOpen(true);
+        openPalette("search");
         return;
       }
+      // The only `?` handler — the sheet itself does not listen, so one press
+      // cannot open and close it in the same tick.
       if (event.key === "?") {
         event.preventDefault();
-        setShortcutsOpen(true);
+        setShortcutsOpen((o) => !o);
         return;
       }
       if (event.key === "[") {
@@ -103,7 +103,7 @@ export function AppShell({
         return;
       }
       if (gotoArmed.current) {
-        const target = GOTO[event.key.toLowerCase()];
+        const target = goto.get(event.key.toLowerCase());
         gotoArmed.current = false;
         if (target) {
           event.preventDefault();
@@ -114,7 +114,7 @@ export function AppShell({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [router]);
+  }, [router, goto, openPalette]);
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -131,7 +131,8 @@ export function AppShell({
           <Topbar
             user={user}
             unreadCount={unreadCount}
-            onOpenPalette={() => setPaletteOpen(true)}
+            onOpenPalette={() => openPalette("search")}
+            onCreateProposal={() => openPalette("proposal")}
             onOpenMobileNav={() => setMobileNavOpen(true)}
           />
           <main className="min-w-0 flex-1 p-3 pb-20 sm:p-4 lg:pb-4">{children}</main>
@@ -144,8 +145,14 @@ export function AppShell({
         role={role}
         badges={badges}
       />
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-      <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        mode={paletteMode}
+        onModeChange={setPaletteMode}
+        role={role}
+      />
+      <ShortcutsSheet open={shortcutsOpen} onOpenChange={setShortcutsOpen} role={role} />
     </TooltipProvider>
   );
 }

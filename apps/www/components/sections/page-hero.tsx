@@ -54,7 +54,7 @@ export function PageHero({
         >
           {titleItalic ? <span className="block">{title}</span> : title}
           {titleItalic && (
-            <Highlight className="block tracking-[-0.02em] rtl:tracking-normal">
+            <Highlight tone="soft" className="block tracking-[-0.02em] rtl:tracking-normal">
               {titleItalic}
             </Highlight>
           )}

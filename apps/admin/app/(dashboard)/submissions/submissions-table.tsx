@@ -10,6 +10,7 @@ import { StatusPill } from "@/components/ui/badge";
 import { Button } from "@repo/ui";
 import { when, truncate, phone as fmtPhone } from "@/lib/format";
 import { statusOf } from "@/lib/status";
+import { EntityLink } from "@/components/os/entity-link";
 import { convertSubmissionToClient } from "@/app/(dashboard)/_actions/records";
 
 export interface SubmissionRow {
@@ -30,6 +31,8 @@ export interface SubmissionRow {
   submittedAt: string;
   viewed: boolean;
   clientId: string | null;
+  /** Display name of the converted client; null while unconverted. */
+  clientName: string | null;
 }
 
 export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
@@ -134,12 +137,14 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
     },
     {
       id: "convert",
-      header: "Lead",
-      width: "128px",
+      header: "Client",
+      width: "160px",
       hideable: false,
       cell: (row) =>
         row.clientId ? (
-          <span className="text-success">Converted</span>
+          <EntityLink type="client" id={row.clientId} className="block truncate">
+            {row.clientName ?? "Client"}
+          </EntityLink>
         ) : (
           <Button
             size="sm"
@@ -181,7 +186,7 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
         rowHref={(row) => `/submissions/${row.id}`}
         searchPlaceholder="Search the raw messages…"
         initialSort={{ columnId: "received", dir: "desc" }}
-        mobile={{ title: "name", subtitle: "message", meta: ["status", "interest", "received"] }}
+        mobile={{ title: "name", subtitle: "message", meta: ["status", "convert", "interest", "received"] }}
         selectable
         selectionNoun="submission"
         bulkActions={[
@@ -196,7 +201,11 @@ export function SubmissionsTable({ rows }: { rows: SubmissionRow[] }) {
         rowActions={(row) => (
           <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
         )}
-        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No submissions.</div>}
+        empty={
+          <div className="plane px-6 py-12 text-center text-muted-foreground">
+            No submissions match.
+          </div>
+        }
       />
       {del.dialog}
     </>

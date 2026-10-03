@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>/schedule — prototypes A / B / C</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400&family=Vazirmatn:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* Standalone prototype. House values mirrored from packages/ui/src/styles/tokens.css;
+   not production code. Nothing here submits; the build keeps /api/schedule as it is
+   (name, phone, date, time · 09:00–18:00 · 15-minute steps · within three months). */
+:root{
+  --bg:#fff;--fg:#1a1a1a;--muted:#666;--line:rgba(0,0,0,.1);--line-strong:rgba(0,0,0,.45);--soft:rgba(0,0,0,.04);
+  --brand:hsl(214 89% 48%);--brand-text:hsl(214 89% 42%);
+  --mono:"Geist Mono",ui-monospace,monospace;--ease:cubic-bezier(.22,1,.36,1);--gutter:clamp(16px,4vw,56px);
+}
+html[data-theme="dark"]{
+  --bg:#121212;--fg:#f0f0f0;--muted:#949494;--line:rgba(255,255,255,.1);--line-strong:rgba(255,255,255,.45);--soft:rgba(255,255,255,.05);
+  --brand-text:hsl(214 95% 68%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;overflow-x:clip;line-height:1.6}
+[dir="rtl"] body{font-family:Vazirmatn,Inter,sans-serif}
+h1,h2,h3,.display{font-family:Outfit,sans-serif;font-weight:300;letter-spacing:-.035em;line-height:1.04}
+[dir="rtl"] :is(h1,h2,h3,.display){font-family:Vazirmatn,sans-serif;letter-spacing:0!important;line-height:1.3}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+[dir="rtl"] .eyebrow{font-family:Vazirmatn,sans-serif;letter-spacing:0;font-size:14px}
+.mono{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+[dir="rtl"] .mono{font-family:Vazirmatn,sans-serif;font-size:14px}
+.wrap{max-width:1320px;margin:0 auto;padding:0 var(--gutter)}
+button,input{font:inherit;color:inherit}
+
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:12px var(--gutter);display:flex;gap:8px;align-items:center;flex-wrap:wrap;font:13px Inter,sans-serif;direction:ltr}
+.bar button{background:none;border:1px solid var(--line-strong);border-radius:8px;padding:6px 12px;cursor:pointer}
+.bar button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.bar span{flex:1}
+
+main{display:none;padding:clamp(56px,9vh,104px) 0 clamp(72px,10vh,120px)}
+main.on{display:block}
+.note{color:var(--muted);font-size:13px;margin-top:56px;direction:ltr;text-align:left;font-family:Inter,sans-serif}
+h1{font-size:clamp(36px,5vw,76px);max-width:16ch;margin-top:20px}
+.lede{color:var(--muted);font-size:17px;max-width:44ch;margin-top:20px}
+.facts{display:flex;gap:10px 28px;flex-wrap:wrap;margin-top:28px;font-size:14px;color:var(--muted)}
+.facts b{color:var(--fg);font-weight:500}
+
+.field{display:block;border-bottom:1px solid var(--line-strong);padding:14px 0 10px}
+.field span{display:block;font-size:13px;color:var(--muted)}
+.field input{width:100%;background:none;border:0;outline:0;font-size:18px;padding-top:4px}
+.field:focus-within{border-color:var(--brand);box-shadow:0 1px 0 var(--brand)}
+.cta{display:inline-flex;align-items:center;gap:10px;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:16px 26px;font-size:16px;cursor:pointer}
+.small{font-size:13px;color:var(--muted)}
+
+/* day + time choosers (A, C) */
+.days{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(64px,1fr);gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.days button{background:none;border:1px solid var(--line);border-radius:12px;padding:12px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:border-color .2s,background .2s}
+.days button small{font-size:12px;color:var(--muted)}
+.days button b{font-family:Outfit,Vazirmatn,sans-serif;font-weight:300;font-size:26px;line-height:1.1}
+.days button:hover{border-color:var(--line-strong)}
+.days button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.days button[aria-pressed="true"] small{color:inherit;opacity:.7}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.slots button{background:none;border:1px solid var(--line);border-radius:10px;padding:10px 0;cursor:pointer;font-variant-numeric:tabular-nums;font-size:15px;transition:border-color .2s,background .2s}
+.slots button:hover{border-color:var(--line-strong)}
+.slots button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.step{display:flex;align-items:baseline;gap:12px;margin:0 0 16px}
+.step h3{font-size:20px;font-weight:400;letter-spacing:-.01em}
+
+/* ───────── A · pick a time (calendar is the page) ───────── */
+.a-grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(32px,6vw,96px);align-items:start}
+.a-grid>*,.a-panel>*,.c-grid>*,.c-form>*{min-width:0}
+.a-side{position:sticky;top:96px}
+.a-panel{border-top:2px solid var(--fg);padding-top:28px;display:grid;gap:40px}
+.a-two{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
+.a-sum{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:24px}
+.a-sum p{font-size:17px}
+.a-sum p b{font-weight:500;color:var(--brand-text)}
+@media (max-width:900px){.a-grid{grid-template-columns:1fr}.a-side{position:static}.a-two{grid-template-columns:1fr}}
+
+/* ───────── B · one sentence ───────── */
+.b-top{display:flex;justify-content:space-between;align-items:end;gap:32px;flex-wrap:wrap}
+.b-sentence{border-top:2px solid var(--fg);margin-top:clamp(40px,6vh,64px);padding-top:clamp(32px,5vh,56px);font-family:Outfit,sans-serif;font-weight:300;font-size:clamp(26px,3.6vw,54px);line-height:1.5;letter-spacing:-.025em;max-width:26ch}
+[dir="rtl"] .b-sentence{font-family:Vazirmatn,sans-serif;letter-spacing:0;line-height:1.8}
+.b-sentence input{background:none;border:0;border-bottom:1px solid var(--line-strong);outline:0;font:inherit;color:var(--brand-text);width:8.5ch;min-width:0;padding:0 .1em;border-radius:0}
+.b-sentence input::placeholder{color:var(--muted);opacity:.7}
+.b-sentence input:focus{border-color:var(--brand);box-shadow:0 1px 0 var(--brand)}
+.b-sentence input.w{width:11ch}
+.b-foot{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:clamp(36px,5vh,56px)}
+
+/* ───────── C · the call, then the form ───────── */
+.c-grid{display:grid;grid-template-columns:7fr 5fr;gap:clamp(32px,6vw,96px);align-items:start}
+.c-parts{list-style:none;border-top:2px solid var(--fg);margin-top:clamp(40px,6vh,64px)}
+.c-parts li{display:grid;grid-template-columns:auto 1fr;gap:6px 20px;padding:24px 0;border-bottom:1px solid var(--line)}
+.c-parts h3{font-size:clamp(20px,2vw,28px)}
+.c-parts p{grid-column:2;color:var(--muted);font-size:15px;max-width:52ch}
+.c-form{position:sticky;top:96px;border:1px solid var(--line);border-radius:14px;padding:clamp(20px,2.4vw,32px);display:grid;gap:26px;background:var(--soft)}
+.c-form .cta{justify-content:center;width:100%}
+@media (max-width:900px){.c-grid{grid-template-columns:1fr}.c-form{position:static}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <button data-p="a" aria-pressed="true">A · Pick a time</button>
+  <button data-p="b" aria-pressed="false">B · One sentence</button>
+  <button data-p="c" aria-pressed="false">C · The call, then the form</button>
+  <span></span>
+  <button id="lang">EN</button>
+  <button id="theme">Dark</button>
+</div>
+
+<template id="intro">
+  <div class="eyebrow" data-en="Technical call" data-ar="المكالمة التقنية"></div>
+  <h1 data-en="Thirty minutes with the founder." data-ar="ثلاثون دقيقة مع المؤسس."></h1>
+  <p class="lede" data-en="A technical conversation about your project, not a sales pitch. You leave with a clearer scope and an honest next step." data-ar="حديث تقني عن مشروعك، لا عرض بيع. تخرج منه بنطاق أوضح وخطوة تالية صريحة."></p>
+  <div class="facts"><span><b data-en="Free" data-ar="مجانية"></b></span><span><b data-en="No commitment" data-ar="بلا التزام"></b></span><span data-en="Cairo time · 9:00 – 18:00" data-ar="بتوقيت القاهرة · ٩:٠٠ – ١٨:٠٠"></span></div>
+</template>
+
+<!-- A -->
+<main id="a" class="on"><div class="wrap">
+  <div class="a-grid">
+    <div class="a-side" data-intro></div>
+    <div class="a-panel">
+      <div><div class="step"><span class="mono" data-en="01" data-ar="٠١"></span><h3 data-en="Pick a day" data-ar="اختر اليوم"></h3></div><div class="days" data-days></div></div>
+      <div><div class="step"><span class="mono" data-en="02" data-ar="٠٢"></span><h3 data-en="Pick a time" data-ar="اختر الوقت"></h3></div><div class="slots" data-slots></div></div>
+      <div><div class="step"><span class="mono" data-en="03" data-ar="٠٣"></span><h3 data-en="Where do we reach you?" data-ar="كيف نصل إليك؟"></h3></div>
+        <div class="a-two">
+          <label class="field"><span data-en="Name" data-ar="الاسم"></span><input autocomplete="name"></label>
+          <label class="field"><span data-en="Phone" data-ar="رقم الهاتف"></span><input inputmode="tel" dir="ltr"></label>
+        </div></div>
+      <div class="a-sum"><p data-sum></p><button class="cta" data-en="Confirm the call →" data-ar="تأكيد المكالمة ←"></button></div>
+    </div>
+  </div>
+  <p class="note">A — the calendar is the page: day strip, time buttons, two lines for you, and one sentence that reads your choice back before you confirm. No dropdowns, no popover.</p>
+</div></main>
+
+<!-- B -->
+<main id="b"><div class="wrap">
+  <div class="b-top"><div data-intro></div></div>
+  <p class="b-sentence">
+    <span data-en="My name is " data-ar="اسمي "></span><input class="w" data-ph-en="your name" data-ph-ar="اسمك" autocomplete="name"><span data-en=". Call me on " data-ar="، اتصلوا بي على "></span><input class="w" dir="ltr" inputmode="tel" placeholder="01X XXXX XXXX"><span data-en=" on " data-ar=" يوم "></span><input type="date"><span data-en=" at " data-ar=" الساعة "></span><input type="time" min="09:00" max="18:00" step="900"><span>.</span>
+  </p>
+  <div class="b-foot"><button class="cta" data-en="Confirm the call →" data-ar="تأكيد المكالمة ←"></button><span class="small" data-en="We confirm the time with you by phone." data-ar="نؤكد الموعد معك هاتفياً."></span></div>
+  <p class="note">B — the whole form is one sentence you complete. Four blanks, display size, nothing else on the fold.</p>
+</div></main>
+
+<!-- C -->
+<main id="c"><div class="wrap">
+  <div class="c-grid">
+    <div>
+      <div data-intro></div>
+      <ol class="c-parts">
+        <li><span class="mono" data-en="01" data-ar="٠١"></span><h3 data-en="What we cover" data-ar="ما نغطيه"></h3><p data-en="Project type and business goal, current technical constraints, integrations and the core workflow, timeline and launch pressure." data-ar="نوع المشروع والهدف التجاري، القيود التقنية الحالية، التكاملات وسير العمل الأساسي، الجدول الزمني وضغط الإطلاق."></p></li>
+        <li><span class="mono" data-en="02" data-ar="٠٢"></span><h3 data-en="Who it is for" data-ar="لمن هي"></h3><p data-en="Founder-led companies planning a rebuild, teams comparing custom development options, businesses that need Arabic and English done properly." data-ar="شركات يقودها المؤسس وتخطط لإعادة البناء، فرق تقارن خيارات التطوير المخصص، أعمال تحتاج العربية والإنجليزية بإتقان."></p></li>
+        <li><span class="mono" data-en="03" data-ar="٠٣"></span><h3 data-en="What you leave with" data-ar="ما تخرج به"></h3><p data-en="A proposed delivery path, the expected scope and its unknowns, whether an audit should come first, and a realistic road to a proposal." data-ar="مسار تسليم مقترح، النطاق المتوقع ومجهولاته، هل يلزم تدقيق أولاً، وطريق واقعي إلى عرض السعر."></p></li>
+      </ol>
+    </div>
+    <div class="c-form">
+      <div><div class="step"><h3 data-en="Pick a day" data-ar="اختر اليوم"></h3></div><div class="days" data-days></div></div>
+      <div><div class="step"><h3 data-en="Pick a time" data-ar="اختر الوقت"></h3></div><div class="slots" data-slots></div></div>
+      <div>
+        <label class="field"><span data-en="Name" data-ar="الاسم"></span><input autocomplete="name"></label>
+        <label class="field"><span data-en="Phone" data-ar="رقم الهاتف"></span><input inputmode="tel" dir="ltr"></label>
+      </div>
+      <button class="cta" data-en="Confirm the call →" data-ar="تأكيد المكالمة ←"></button>
+    </div>
+  </div>
+  <p class="note">C — what the call is, in three lines, beside a compact booking card that stays in view. Replaces the long "before you choose a time" text block lower on the page.</p>
+</div></main>
+
+<script>
+const $=(s,r=document)=>[...r.querySelectorAll(s)];
+const html=document.documentElement, state={day:null,time:null};
+$('[data-intro]').forEach(n=>n.append(document.getElementById('intro').content.cloneNode(true)));
+const loc=()=>html.lang==='ar'?'ar-EG':'en-GB';
+function build(){
+  const today=new Date();
+  $('[data-days]').forEach(box=>{box.innerHTML='';
+    for(let i=1;i<=14;i++){const d=new Date(today);d.setDate(d.getDate()+i);const key=d.toDateString();
+      const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',state.day===key);
+      b.innerHTML=`<small>${d.toLocaleDateString(loc(),{weekday:'short'})}</small><b>${d.toLocaleDateString(loc(),{day:'numeric'})}</b><small>${d.toLocaleDateString(loc(),{month:'short'})}</small>`;
+      b.onclick=()=>{state.day=key;state.date=d;build()};box.append(b)}});
+  $('[data-slots]').forEach(box=>{box.innerHTML='';
+    for(let h=9;h<18;h++)for(const m of [0,30]){const key=h+':'+m;const t=new Date(2026,0,1,h,m);
+      const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',state.time===key);
+      b.textContent=t.toLocaleTimeString(loc(),{hour:'numeric',minute:'2-digit'});
+      b.onclick=()=>{state.time=key;state.t=t;build()};box.append(b)}});
+  const ar=html.lang==='ar';
+  $('[data-sum]').forEach(p=>{
+    if(!state.date||!state.t){p.textContent=ar?'اختر يوماً ووقتاً.':'Pick a day and a time.';return}
+    const d=state.date.toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'}),t=state.t.toLocaleTimeString(loc(),{hour:'numeric',minute:'2-digit'});
+    p.innerHTML=ar?`مكالمة مع المؤسس · <b>${d} · ${t}</b>`:`Call with the founder · <b>${d} · ${t}</b>`});
+}
+function paint(){const l=html.lang;$('[data-en]').forEach(n=>n.textContent=n.dataset[l]);
+  $('[data-ph-en]').forEach(n=>n.placeholder=n.dataset['ph'+l[0].toUpperCase()+l[1]]);
+  document.getElementById('lang').textContent=l==='ar'?'EN':'AR';
+  document.getElementById('theme').textContent=html.dataset.theme==='dark'?'Light':'Dark';build()}
+function show(p){$('main').forEach(s=>s.classList.toggle('on',s.id===p));
+  $('.bar [data-p]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.p===p));scrollTo(0,0)}
+$('.bar [data-p]').forEach(b=>b.onclick=()=>show(b.dataset.p));
+document.getElementById('lang').onclick=()=>{const ar=html.lang==='ar';html.lang=ar?'en':'ar';html.dir=ar?'ltr':'rtl';paint()};
+document.getElementById('theme').onclick=()=>{html.dataset.theme=html.dataset.theme==='dark'?'light':'dark';paint()};
+paint();
+</script>
+</body>
+</html>

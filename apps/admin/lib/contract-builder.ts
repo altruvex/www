@@ -18,6 +18,7 @@ import {
   SCOPE_INCLUDED,
   SCOPE_NOT_INCLUDED,
   getSolutionModules,
+  paymentTriggers,
   projectTypeLabel,
 } from "./proposal-content";
 import {
@@ -31,8 +32,11 @@ import { termLabel } from "./service-lifecycle";
 import { applyVat, COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
 
 // ---- Locked layout (ported from ~/.claude/skills/altruvex-contract Step 5) ----
-const FONT_BODY = "Trebuchet MS";
-const FONT_MONO = "Courier New";
+// Altruvex Sans as installed from packages/brand-font/dist/desktop; the docx
+// names it and embeds nothing. The site has no mono, so the clause numbers and
+// figures that were Courier New share the body face.
+const FONT_BODY = "Altruvex Sans";
+const FONT_MONO = "Altruvex Sans";
 const SIZE_BODY = 21; // 10.5pt, in half-points
 const SIZE_H1 = 32; // 16pt
 const SIZE_H2 = 24; // 12pt
@@ -171,10 +175,14 @@ function paymentTable(proposal: Proposal): Table {
     second: number;
     final: number;
   };
+  // Trigger wording is the schema's, so the contract names the same milestone
+  // the pricing page and the proposal deck do. The split itself is the
+  // proposal's own, as the client accepted it.
+  const [startTrigger, milestoneTrigger, finalTrigger] = paymentTriggers();
   const rows = [
-    ["First Payment", "Upon signing (commencement deposit)", `${split.first}%`, formatCurrency((proposal.totalPrice * split.first) / 100, proposal.currency)],
-    ["Second Payment", "Upon design approval / development midpoint", `${split.second}%`, formatCurrency((proposal.totalPrice * split.second) / 100, proposal.currency)],
-    ["Final Payment", "Prior to launch (staging → live domain)", `${split.final}%`, formatCurrency((proposal.totalPrice * split.final) / 100, proposal.currency)],
+    ["First Payment", startTrigger, `${split.first}%`, formatCurrency((proposal.totalPrice * split.first) / 100, proposal.currency)],
+    ["Second Payment", milestoneTrigger, `${split.second}%`, formatCurrency((proposal.totalPrice * split.second) / 100, proposal.currency)],
+    ["Final Payment", finalTrigger, `${split.final}%`, formatCurrency((proposal.totalPrice * split.final) / 100, proposal.currency)],
   ];
 
   return new Table({

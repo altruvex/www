@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -13,12 +14,14 @@ export function NewClientForm() {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<string | null>(null);
+  const [existingId, setExistingId] = React.useState<string | null>(null);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     setBusy(true);
     setFailure(null);
+    setExistingId(null);
 
     try {
       const response = await fetch("/api/admin/clients", {
@@ -36,7 +39,11 @@ export function NewClientForm() {
         success?: boolean;
         message?: string;
         client?: { id: string };
+        existingId?: string;
       };
+      // A refused duplicate names the record that already has this phone, so
+      // the operator can open it instead of creating a second one.
+      if (data.existingId) setExistingId(data.existingId);
       if (!response.ok || !data.success || !data.client) {
         throw new Error(data.message || `Request failed (${response.status})`);
       }
@@ -78,6 +85,13 @@ export function NewClientForm() {
           impact="Nothing was saved. No duplicate record exists, so it is safe to submit again."
           detail={failure}
         />
+      )}
+      {existingId && (
+        <p className="text-meta">
+          <Link href={`/clients/${existingId}`} className="font-medium underline underline-offset-2">
+            Open the existing client
+          </Link>
+        </p>
       )}
 
       <div className="flex items-center gap-2 border-t border-border pt-3">

@@ -5,6 +5,8 @@ import { tmpdir } from "os";
 import path from "path";
 import { pathToFileURL } from "url";
 
+import { sofficeFontEnv } from "./soffice-fonts";
+
 const execFileAsync = promisify(execFile);
 
 export type RenderFailure =
@@ -59,7 +61,7 @@ export async function renderPptxToPngs(
           workDir,
           pptxPath,
         ],
-        { timeout: 60_000 },
+        { timeout: 60_000, env: await sofficeFontEnv(workDir) },
       );
     } catch (error) {
       return { ok: false, ...classify(error, "soffice") };

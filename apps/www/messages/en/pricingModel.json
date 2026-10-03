@@ -1,0 +1,227 @@
+{
+  "home": {
+    "eyebrow": "Transparent by design",
+    "title": "You see the price before you talk to us.",
+    "lead": "Our prices are published. Answer a few questions and you get your range; the proposal then fixes it as one written figure.",
+    "exampleEyebrow": "{service}, for example",
+    "figureNote": "The estimate you would see on screen — before any call, form or meeting.",
+    "facts": {
+      "start": {
+        "label": "Where it starts",
+        "note": "The published floor for any build."
+      },
+      "estimate": {
+        "label": "Your estimate",
+        "value": "A range, on screen",
+        "note": "Every answer shows what it changed."
+      },
+      "pay": {
+        "label": "What you pay",
+        "value": "One written figure",
+        "note": "Fixed in the proposal after a scope review. Only this one is binding."
+      }
+    }
+  },
+  "hero": {
+    "eyebrow": "Pricing",
+    "titleLead": "Priced from requirements,",
+    "titleAccent": "not packages.",
+    "lead": "There are no packages to pick from. A build starts from a published floor, narrows as we understand the scope, and ends in one written figure."
+  },
+  "sections": {
+    "how": {
+      "title": "How pricing works",
+      "lead": "One project, from the first conversation to the binding figure. Each stage publishes a narrower range; only the proposal fixes one number."
+    },
+    "cost": {
+      "title": "What determines cost",
+      "lead": "The estimator prices four things. Two more are settled with you in scope review, and one is billed monthly or yearly."
+    },
+    "invest": {
+      "title": "Service investment",
+      "lead": "Published figures for every service. Build ranges stay indicative until the proposal fixes one number."
+    },
+    "terms": {
+      "title": "Commercial terms",
+      "lead": "What applies to every engagement, before any proposal is written."
+    }
+  },
+  "stages": {
+    "requirements": {
+      "name": "Requirements",
+      "does": "You describe the problem and what the site or system has to do.",
+      "cap": "Not priced yet",
+      "figure": "—"
+    },
+    "scope": {
+      "name": "Scope",
+      "does": "What gets designed, engineered and integrated sets the project type.",
+      "cap": "Every build starts here"
+    },
+    "complexity": {
+      "name": "Complexity",
+      "does": "Logic, templates, states and roles place it in a published range.",
+      "cap": "Published range"
+    },
+    "estimate": {
+      "name": "Estimate",
+      "does": "Content, brand readiness and timeline adjust the range. Indicative, never a quotation.",
+      "cap": "Indicative · {weeks} weeks"
+    },
+    "proposal": {
+      "name": "Proposal",
+      "does": "Scope review confirms integrations and performance targets, then one written figure, valid {days} days.",
+      "cap": "Binding",
+      "figure": "One figure, set after scope review"
+    }
+  },
+  "spine": {
+    "was": "Narrowed from"
+  },
+  "example": {
+    "line": "Worked example — {service} · {band} complexity · {brand} · {content} · {timeline} timeline"
+  },
+  "columns": {
+    "moves": {
+      "title": "Moves your estimate",
+      "lead": "The estimator prices these four. Its range opens wide and narrows with every answer.",
+      "opening": "Opening range",
+      "floorNote": "Every build starts here",
+      "byBand": "{name}, by complexity"
+    },
+    "review": {
+      "title": "Settled in scope review",
+      "lead": "Checked with you before the proposal is written. A form can't know them, so the estimator never prices them."
+    },
+    "monthly": {
+      "title": "Billed monthly or yearly",
+      "lead": "After launch, only if you want it. Never part of the build figure."
+    },
+    "questionLabel": "Estimator · Question {n}",
+    "plansLink": "Plans in Service investment"
+  },
+  "factors": {
+    "brand": "Brand identity",
+    "content": "Content readiness",
+    "timeline": "Delivery"
+  },
+  "drivers": {
+    "scope": {
+      "name": "Scope",
+      "line": "What gets designed, engineered and integrated.",
+      "question": "What are you building?"
+    },
+    "complexity": {
+      "name": "Complexity",
+      "line": "How much logic, how many templates, states and roles.",
+      "question": "How much scope?"
+    },
+    "content": {
+      "name": "Content",
+      "line": "Whether copy, imagery and brand identity are ready.",
+      "question": "Project conditions — Brand identity, Content readiness"
+    },
+    "timeline": {
+      "name": "Timeline",
+      "line": "Urgent, standard or flexible delivery.",
+      "question": "Project conditions — Timeline"
+    },
+    "integrations": {
+      "name": "Integrations",
+      "line": "Payments, sign-in, CRM, APIs, analytics.",
+      "checked": "Which gateway, CRM or APIs — and who owns each account. What data moves between systems, and what happens when one fails.",
+      "question": "What does it need? — Payments & third-party integrations"
+    },
+    "performance": {
+      "name": "Performance",
+      "line": "Performance, accessibility, SEO and infrastructure targets.",
+      "checked": "Speed and Core Web Vitals targets. Accessibility level and SEO baseline. Hosting and infrastructure.",
+      "question": "What does it need? — Performance & SEO targets"
+    },
+    "operation": {
+      "name": "Ongoing operation",
+      "line": "Maintenance, monitoring, security and updates.",
+      "question": "What does it need? — Ongoing maintenance"
+    }
+  },
+  "register": {
+    "columns": {
+      "service": "Service",
+      "covers": "What it covers",
+      "how": "How it's priced",
+      "figure": "Figure"
+    },
+    "interface": {
+      "name": "Interface design",
+      "covers": "Interface and experience design, delivered as screens and a working design system.",
+      "how": "Per project, from the screens and flows involved",
+      "figure": "Scoped per project"
+    },
+    "development": {
+      "name": "Custom development",
+      "covers": "Websites and systems engineered from your requirements.",
+      "how": "Published range by project type and complexity; fixed in the proposal",
+      "figure": "From {floor}",
+      "more": "See all {count} published ranges",
+      "matrixHead": "Project type"
+    },
+    "audit": {
+      "name": "Technical audit",
+      "covers": "Architecture, performance and security review with a remediation roadmap, in {duration}.",
+      "how": "Fixed fee, credited to the build"
+    },
+    "maintenance": {
+      "name": "Maintenance",
+      "covers": "Updates, monitoring, backups and edit requests after launch.",
+      "how": "Monthly plan"
+    }
+  },
+  "terms": {
+    "payment": "Payment",
+    "warranty": "Warranty",
+    "warrantyNote": "{days} days after launch — defects in delivered work are fixed at no charge.",
+    "validity": "Proposal validity",
+    "ownership": "Ownership"
+  },
+  "close": {
+    "title": "Start from your requirements.",
+    "lead": "The estimator gives an indicative range in a few minutes. The proposal — the only binding figure — follows a scope review."
+  },
+  "scopeNotes": {
+    "title": "What does it need?",
+    "lead": "Tick what applies. Each one is checked with you in scope review.",
+    "badge": "Reviewed in scope — doesn't move this range"
+  },
+  "result": {
+    "driversTitle": "Scope drivers",
+    "projectType": "Project type",
+    "complexity": "Complexity",
+    "setsRange": "sets the range",
+    "cellOf": "published cell",
+    "pending": "Not answered — every option still counted",
+    "notesTitle": "Scope notes",
+    "noNotes": "None ticked yet.",
+    "confirmed": "confirmed in scope review",
+    "monthly": "billed monthly or yearly, outside this range",
+    "disclaimer": "Indicative only — not a quotation. The final price is set in a written proposal after scope review, valid for {days} days. {vat}",
+    "requestProposal": "Request a formal proposal"
+  },
+  "form": {
+    "intro": "We review your answers, confirm scope with you, and send one written figure.",
+    "phone": "Phone (WhatsApp)",
+    "required": "required",
+    "optional": "optional",
+    "name": "Name",
+    "email": "Email",
+    "company": "Company",
+    "note": "Anything we should know",
+    "attached": "Your answers and scope notes are attached to the request.",
+    "send": "Send request",
+    "errors": {
+      "phoneEmpty": "A phone number is needed so we can confirm scope with you.",
+      "phoneInvalid": "Enter a phone or WhatsApp number — digits, spaces, + and - only.",
+      "email": "Check the email address, or leave it empty."
+    },
+    "success": "Request received. We will review your answers and contact you to confirm scope."
+  }
+}

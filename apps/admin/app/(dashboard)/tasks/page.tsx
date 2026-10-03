@@ -5,6 +5,8 @@ import { prisma } from "@repo/database";
 import { Button } from "@repo/ui";
 
 import { EmptyState } from "@/components/os/empty-state";
+import { FilterChip } from "@/components/os/data-table";
+import { AlertBar } from "@/components/os/error-state";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { TasksClient, type TaskItem } from "./tasks-client";
@@ -19,9 +21,20 @@ export const dynamic = "force-dynamic";
  * answered "create" with a toast that wrote nothing — so an operator who
  * assigned work here lost it on refresh. Everything below is `ProjectTask`.
  */
-export default async function TasksPage() {
-  const [tasks, projects, users] = await Promise.all([
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string; task?: string }>;
+}) {
+  const { project: projectParam, task: taskParam } = await searchParams;
+  const projectId = projectParam?.trim() || null;
+  const taskId = taskParam?.trim() || null;
+
+  // `?project=` scopes the board and its counts to one project (the project
+  // page links here); `?task=` opens one task's sheet (entityHref for a task).
+  const [tasks, projects, users, scopeProject] = await Promise.all([
     prisma.projectTask.findMany({
+      where: projectId ? { projectId } : undefined,
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       include: {
         assignee: { select: { id: true, name: true, email: true } },
@@ -35,8 +48,12 @@ export default async function TasksPage() {
         },
       },
     }),
+    // Work is put against live projects. A closed project named in the scope
+    // is still offered, so its own tasks can be edited and re-homed.
     prisma.project.findMany({
-      where: { status: { in: ["ACTIVE", "ON_HOLD"] } },
+      where: {
+        OR: [{ status: { in: ["ACTIVE", "ON_HOLD"] } }, ...(projectId ? [{ id: projectId }] : [])],
+      },
       orderBy: { updatedAt: "desc" },
       select: {
         id: true,
@@ -50,6 +67,9 @@ export default async function TasksPage() {
       select: { id: true, name: true, email: true },
       orderBy: { name: "asc" },
     }),
+    projectId
+      ? prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
+      : null,
   ]);
 
   const now = new Date();
@@ -63,6 +83,7 @@ export default async function TasksPage() {
     phase: task.phase,
     projectId: task.project.id,
     projectName: task.project.name,
+    clientId: task.project.client.id,
     clientName: task.project.client.company || task.project.client.name || "Unnamed client",
     assigneeId: task.assignee?.id ?? null,
     assigneeName: task.assignee?.name || task.assignee?.email || null,
@@ -75,6 +96,26 @@ export default async function TasksPage() {
   const overdue = openTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now);
   const blocked = openTasks.filter((t) => t.status === "BLOCKED");
   const unassigned = openTasks.filter((t) => !t.assigneeId);
+  const missingTask = taskId != null && !items.some((t) => t.id === taskId);
+
+  // Projects the edit sheet may need that the live list leaves out: a task on
+  // a completed project still has to show its own project in the picker.
+  const projectOptions = projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    phase: p.phase,
+    clientName: p.client.company || p.client.name || "Unnamed client",
+  }));
+  for (const task of tasks) {
+    if (!projectOptions.some((p) => p.id === task.project.id)) {
+      projectOptions.push({
+        id: task.project.id,
+        name: task.project.name,
+        phase: task.project.phase,
+        clientName: task.project.client.company || task.project.client.name || "Unnamed client",
+      });
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -82,6 +123,22 @@ export default async function TasksPage() {
         title="Tasks"
         description="Work items inside a delivery project. Every task belongs to a project — a task with no project is a note, and notes belong on the client record."
       />
+
+      {projectId && (
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterChip
+            label="Project"
+            value={scopeProject?.name ?? "Unknown project"}
+            clearHref="/tasks"
+          />
+        </div>
+      )}
+
+      {missingTask && (
+        <AlertBar tone="warning" href={`/audit?entity=task&id=${taskId}`} cta="Open the audit log">
+          That task no longer exists. If it was deleted, the audit log has what it contained.
+        </AlertBar>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
@@ -110,7 +167,7 @@ export default async function TasksPage() {
         />
       </div>
 
-      {projects.length === 0 ? (
+      {projectOptions.length === 0 ? (
         <EmptyState
           icon={ListChecks}
           title="No project to put work against"
@@ -124,13 +181,10 @@ export default async function TasksPage() {
       ) : (
         <TasksClient
           items={items}
-          projects={projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            phase: p.phase,
-            clientName: p.client.company || p.client.name || "Unnamed client",
-          }))}
+          projects={projectOptions}
           users={users}
+          scopeProjectId={scopeProject ? projectId : null}
+          openTaskId={missingTask ? null : taskId}
         />
       )}
     </div>

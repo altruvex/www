@@ -624,7 +624,7 @@ export function ActivateServiceSheet({
               ? "The first term is inside the project fee, so no payment is opened now."
               : service.projectId
                 ? `Opens a pending payment for the first term on ${service.projectName ?? "the project"}.`
-                : "Not on a project — invoice the first term by hand."}
+                : "Not on a project, so no payment row is opened here — record the first term on the payments screen when you invoice it."}
           </p>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>

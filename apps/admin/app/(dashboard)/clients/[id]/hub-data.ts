@@ -1,0 +1,283 @@
+import "server-only";
+import { headers } from "next/headers";
+import { prisma, type Prisma } from "@repo/database";
+import { clientPayments, type ClientPayment } from "@/lib/client-payments";
+import { listServices, type ServiceRow } from "@/lib/client-services";
+import { deriveClientStage } from "@/lib/dashboard-data";
+import { entityHref } from "@/lib/entity-links";
+import { dueLabel, when } from "@/lib/format";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
+import { publicBaseUrlFromHeaders } from "@/lib/public-url";
+import { statusOf } from "@/lib/status";
+import { renewalView } from "@/lib/subscription-lifecycle";
+import type { Tone } from "@/lib/status";
+
+/**
+ * Everything the client hub reads, in one place.
+ *
+ * The hub is a server page over Prisma; this file keeps the query shape and the
+ * derived values (stage, overdue, attention) together so the tab components
+ * receive finished data and never re-derive a state on their own.
+ */
+
+const OPEN_TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED"] as const;
+const CLOSED_CHANGE_STATUSES = ["DELIVERED", "DECLINED", "CANCELLED"] as const;
+
+export const CLIENT_HUB_INCLUDE = {
+  contactSubmission: {
+    include: {
+      notes: {
+        include: { createdBy: { select: { name: true, email: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      tags: true,
+      meetings: true,
+    },
+  },
+  transparencyLead: true,
+  proposals: {
+    orderBy: { createdAt: "desc" },
+    include: { contract: { select: { id: true, status: true } } },
+  },
+  contracts: {
+    orderBy: { createdAt: "desc" },
+    include: { proposal: { select: { projectType: true } } },
+  },
+  projects: {
+    orderBy: { createdAt: "desc" },
+    include: {
+      payments: { orderBy: { createdAt: "asc" } },
+      contract: { select: { proposal: { select: { currency: true } } } },
+      changeRequests: {
+        orderBy: { requestedAt: "desc" },
+        select: { id: true, title: true, status: true, requestedAt: true },
+      },
+      _count: { select: { tasks: { where: { status: { in: [...OPEN_TASK_STATUSES] } } } } },
+    },
+  },
+  subscriptions: {
+    orderBy: { createdAt: "desc" },
+    include: { payments: { orderBy: { createdAt: "asc" } } },
+  },
+  products: {
+    orderBy: { createdAt: "desc" },
+    include: {
+      deployments: {
+        where: { environment: "PRODUCTION", status: "SUCCEEDED" },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { id: true, number: true, version: true, finishedAt: true, createdAt: true },
+      },
+      incidents: {
+        where: { status: { not: "RESOLVED" } },
+        orderBy: { detectedAt: "desc" },
+        select: { id: true, number: true, title: true, severity: true, status: true, detectedAt: true },
+      },
+    },
+  },
+  messages: { orderBy: { createdAt: "desc" }, take: 60 },
+  emails: { orderBy: { createdAt: "desc" }, take: 60 },
+  notes: { orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] },
+} satisfies Prisma.ClientInclude;
+
+export type HubClient = Prisma.ClientGetPayload<{ include: typeof CLIENT_HUB_INCLUDE }>;
+
+export interface AttentionItem {
+  key: string;
+  tone: Tone;
+  title: string;
+  detail: string;
+  href: string | null;
+}
+
+export interface HubEvent {
+  id: string;
+  action: string;
+  summary: string;
+  actorLabel: string;
+  entityType: string;
+  entityId: string;
+  createdAt: Date;
+}
+
+export async function loadClientHub(id: string) {
+  const client = await prisma.client.findUnique({ where: { id }, include: CLIENT_HUB_INCLUDE });
+  if (!client) return null;
+
+  // Events about this client: its own (entityType client) and the ones written
+  // on its records that carry `metadata.clientId` — proposals sent, payments
+  // recorded, contracts signed. That is how the mutation sites tag them.
+  const activityWhere: Prisma.ActivityEventWhereInput = {
+    OR: [
+      { entityType: { in: ["client", "Client"] }, entityId: id },
+      { metadata: { path: ["clientId"], equals: id } },
+    ],
+  };
+
+  const meetingScope: Prisma.MeetingWhereInput[] = [{ clientId: id }];
+  if (client.contactSubmissionId) meetingScope.push({ submissionId: client.contactSubmissionId });
+
+  const [services, meetings, recentEvents] = await Promise.all([
+    listServices({ clientId: id }),
+    prisma.meeting.findMany({
+      where: { OR: meetingScope },
+      orderBy: [{ scheduledDate: "desc" }, { scheduledTime: "desc" }],
+      take: 50,
+    }),
+    prisma.activityEvent.findMany({
+      where: activityWhere,
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        action: true,
+        summary: true,
+        actorLabel: true,
+        entityType: true,
+        entityId: true,
+        createdAt: true,
+      },
+    }),
+  ]);
+
+  const stage = deriveClientStage(client);
+  const payments = clientPayments(client);
+  const now = new Date();
+  const derivedPayments = payments.map((p) => ({
+    ...p,
+    overdue: isPaymentOverdue(p, now),
+  }));
+
+  // "Last activity" is the newest thing anyone recorded about the client; the
+  // row's own updatedAt only moves when the client record itself is edited.
+  const lastActivityAt = recentEvents[0]?.createdAt ?? client.updatedAt;
+
+  return {
+    client,
+    stage,
+    services,
+    meetings,
+    recentEvents: recentEvents as HubEvent[],
+    payments: derivedPayments,
+    lastActivityAt,
+    publicBase: publicBaseUrlFromHeaders(await headers()),
+    attention: attentionFor(client, derivedPayments, services, now),
+  };
+}
+
+export type ClientHub = NonNullable<Awaited<ReturnType<typeof loadClientHub>>>;
+export type HubPayment = ClientPayment & { overdue: boolean };
+
+export function openChangeRequests(project: HubClient["projects"][number]) {
+  return project.changeRequests.filter(
+    (cr) => !(CLOSED_CHANGE_STATUSES as readonly string[]).includes(cr.status),
+  );
+}
+
+/**
+ * What needs an operator on this client right now — the client-scoped version
+ * of Today. Every item is derived from stored rows at read time; nothing here
+ * is a flag someone has to remember to clear.
+ */
+function attentionFor(
+  client: HubClient,
+  payments: HubPayment[],
+  services: ServiceRow[],
+  now: Date,
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+
+  for (const payment of payments.filter((p) => p.overdue)) {
+    items.push({
+      key: `payment-${payment.id}`,
+      tone: "danger",
+      title: `${statusOf("paymentMilestone", payment.milestone).label} is overdue`,
+      detail: `Was due ${dueLabel(payment.dueDate)}`,
+      href: entityHref("payment", payment.id),
+    });
+  }
+
+  for (const contract of client.contracts) {
+    if (contract.status === "SENT") {
+      items.push({
+        key: `contract-${contract.id}`,
+        tone: "warning",
+        title: `${contract.proposal.projectType} contract is not signed`,
+        detail: `Created ${when(contract.createdAt)}`,
+        href: entityHref("contract", contract.id),
+      });
+    } else if (contract.status === "DRAFT") {
+      items.push({
+        key: `contract-${contract.id}`,
+        tone: "info",
+        title: `${contract.proposal.projectType} contract has not been sent`,
+        detail: `Drafted ${when(contract.createdAt)}`,
+        href: entityHref("contract", contract.id),
+      });
+    }
+  }
+
+  for (const product of client.products) {
+    for (const incident of product.incidents) {
+      items.push({
+        key: `incident-${incident.id}`,
+        tone: incident.severity === "SEV1" || incident.severity === "SEV2" ? "danger" : "warning",
+        title: `${product.name}: ${incident.title}`,
+        detail: `${statusOf("incidentStatus", incident.status).label} · opened ${when(incident.detectedAt)}`,
+        href: entityHref("incident", incident.id),
+      });
+    }
+  }
+
+  for (const sub of client.subscriptions) {
+    const view = renewalView(sub, now);
+    if (view.urgency === "overdue" || view.urgency === "due-soon" || view.urgency === "ending") {
+      items.push({
+        key: `subscription-${sub.id}`,
+        tone: view.urgency === "overdue" ? "danger" : "warning",
+        title:
+          view.urgency === "ending"
+            ? "Retainer ends without renewing"
+            : view.urgency === "overdue"
+              ? "Retainer renewal is past due"
+              : "Retainer renews soon",
+        detail: `Period ends ${dueLabel(view.renewsAt)}`,
+        href: entityHref("subscription", sub.id),
+      });
+    }
+  }
+
+  for (const service of services) {
+    if (service.state === "expired" || service.state === "urgent" || service.state === "renewing-soon") {
+      items.push({
+        key: `service-${service.id}`,
+        tone: service.state === "renewing-soon" ? "warning" : "danger",
+        title: `${service.name} ${service.state === "expired" ? "has expired" : "needs renewing"}`,
+        detail: service.expiresAt ? `Expires ${dueLabel(service.expiresAt)}` : "No expiry recorded",
+        href: entityHref("client_service", service.id),
+      });
+    }
+  }
+
+  // Email is outbound only, so only WhatsApp can leave a client waiting.
+  const lastMessage = client.messages[0];
+  if (lastMessage?.direction === "INBOUND") {
+    items.push({
+      key: "unanswered",
+      tone: "warning",
+      title: "Their last WhatsApp message has no reply",
+      detail: `Received ${when(lastMessage.createdAt)}`,
+      href: `/whatsapp/${client.id}`,
+    });
+  }
+
+  const order: Record<Tone, number> = {
+    danger: 0,
+    warning: 1,
+    progress: 2,
+    info: 3,
+    neutral: 4,
+    success: 5,
+  };
+  return items.sort((a, b) => order[a.tone] - order[b.tone]);
+}

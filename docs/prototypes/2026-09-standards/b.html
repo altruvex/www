@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B · Specimen as proof</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Theme before paint: follow the OS unless a toggle says otherwise.
+  (function () {
+    var dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* ── Tokens — copied from the live code, not picked ─────────────────────
+   packages/ui/src/styles/tokens.css  :root / .dark → n-*, background, foreground,
+     card, surface, muted-foreground, s-border, border-strong
+   apps/www/app/globals.css  .accent-world-green / .dark .accent-world-green
+     (the /standards page scopes itself accent-world-green)
+   apps/www/app/globals.css  .eyebrow, --section-y-*, --font-serif
+   apps/www/lib/motion/tokens.ts  ease.strong / gentle / smooth, duration fast /
+     base / slow / sweep, stagger tight / base, trigger.inView ("top 60%") */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --card: 0 0% 100%;
+  --surface: 0 0% 94%;
+  --muted-foreground: 0 0% 40%;
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --border-strong: hsl(var(--n-8) / 0.28);
+  /* A control's own boundary: foreground/45, never border-mid (1.5:1). */
+  --control-edge: hsl(var(--foreground) / 0.45);
+
+  /* accent-world-green (light) */
+  --local-accent: hsl(158 64% 30%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(158 64% 30% / 0.08);
+
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-vazirmatn: "Vazirmatn", sans-serif;
+
+  --section-y-top: clamp(5rem, 10vh, 8rem);
+  --section-y-bottom: clamp(5rem, 14vh, 10rem);
+
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --card: 0 0% 9%;
+  --surface: 0 0% 11%;
+  --muted-foreground: 0 0% 58%;
+  --s-border: hsl(var(--n-0) / 0.1);
+  --border-strong: hsl(0 0% 100% / 0.26);
+
+  /* .dark .accent-world-green */
+  --local-accent: hsl(158 36% 49%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(158 36% 49% / 0.1);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  transition: background-color 400ms var(--ease-smooth), color 400ms var(--ease-smooth);
+}
+[dir="rtl"] body { font-family: var(--font-vazirmatn); }
+
+.container {
+  width: 100%;
+  max-width: 1408px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+@media (min-width: 640px)  { .container { padding-inline: 32px; } }
+@media (min-width: 768px)  { .container { padding-inline: 48px; } }
+@media (min-width: 1024px) { .container { padding-inline: 64px; } }
+
+/* ── Prototype chrome (always LTR, physical sides) ───────────────────── */
+.proto-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  padding: 72px 16px 0 16px;
+  text-align: left;
+}
+@media (min-width: 640px) { .proto-label { padding: 20px 260px 0 20px; } }
+
+.toolbar { position: fixed; top: 12px; right: 12px; z-index: 50; display: flex; gap: 8px; }
+.seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  background: hsl(var(--background));
+}
+.seg button {
+  font: 500 12px/1 var(--font-inter);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 12px;
+  min-width: 44px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: color 150ms var(--ease-smooth), background-color 150ms var(--ease-smooth);
+}
+.seg button[aria-pressed="true"] { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+/* ── House type ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+[dir="rtl"] .eyebrow { font-family: var(--font-vazirmatn); letter-spacing: 0; text-transform: none; }
+
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+[dir="rtl"] .num { font-family: var(--font-vazirmatn); }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+
+.section-title {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(28px, 4.5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+[dir="rtl"] .section-title { font-family: var(--font-vazirmatn); letter-spacing: 0; line-height: 1.3; }
+
+.stub-below {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: 30vh;
+}
+.stub-below .section-title { color: hsl(var(--foreground) / 0.35); }
+[dir="rtl"] .stub-below .section-title { color: hsl(var(--muted-foreground)); }
+
+/* ── A standard: argument on one side, the sheet on the other ───────── */
+.std {
+  display: grid;
+  gap: 48px;
+  border-top: 1px solid var(--border-subtle);
+  padding-block: var(--section-y-top);
+}
+@media (min-width: 1024px) {
+  .std { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .std-text { grid-column: span 5; }
+  .std-sheet { grid-column: 7 / span 6; padding-top: 40px; }
+}
+.std-idx { color: var(--local-accent-text); }
+.std h2 {
+  margin-top: 16px;
+  max-width: 18ch;
+  font-family: var(--font-outfit);
+  font-weight: 300;
+  font-size: clamp(1.875rem, 3.4vw, 2.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+[dir="rtl"] .std h2 { font-family: var(--font-vazirmatn); font-weight: 400; letter-spacing: 0; line-height: 1.3; }
+.std-desc {
+  margin-top: 24px;
+  max-width: 52ch;
+  font-size: clamp(1.0625rem, 1.05vw, 1.125rem);
+  line-height: 1.75;
+  color: hsl(var(--muted-foreground));
+}
+.std-desc strong { font-weight: 600; color: hsl(var(--foreground)); }
+.std-desc .dim { color: hsl(var(--foreground) / 0.6); }
+[dir="rtl"] .std-desc .dim { color: hsl(var(--foreground)); }
+.built { margin-top: 40px; }
+.chips { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; list-style: none; }
+.chips li {
+  border: 1px solid var(--border-subtle);
+  background: hsl(var(--surface));
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.875rem;
+  line-height: 1.43;
+}
+
+/* ── The sheet ───────────────────────────────────────────────────────── */
+.sheet-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  border-top: 2px solid hsl(var(--foreground));
+  padding: 16px 0 8px;
+}
+.sheet-head .eyebrow { color: hsl(var(--foreground)); }
+.legend { display: flex; align-items: center; gap: 20px; font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { display: block; width: 20px; height: 8px; border-radius: 999px; }
+.legend .sw-pass { background: var(--local-accent); }
+.legend .sw-fail { background: hsl(var(--foreground) / 0.1); }
+
+.checks { list-style: none; }
+.check { border-bottom: 1px solid var(--border-subtle); padding-block: 24px 28px; }
+.check-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px; }
+.check-head h3 { font-size: 1rem; font-weight: 400; line-height: 1.4; }
+.check-head p { font-size: 1rem; font-weight: 500; white-space: nowrap; color: var(--local-accent-text); font-variant-numeric: tabular-nums; }
+@media (min-width: 768px) { .check-head h3, .check-head p { font-size: 1.0625rem; } }
+.spec { margin-top: 20px; }
+.cap { margin-top: 12px; font-size: 0.8125rem; line-height: 1.55; color: hsl(var(--muted-foreground)); max-width: 60ch; }
+.mono-s { font-family: var(--font-mono); font-size: 0.75rem; line-height: 1.4; color: hsl(var(--muted-foreground)); font-variant-numeric: tabular-nums; }
+[dir="rtl"] .mono-s { font-family: var(--font-vazirmatn); }
+
+/* The bead: the threshold as a point on the thread, like a sign-off. */
+.bead {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: hsl(var(--foreground));
+  box-shadow: 0 0 0 4px hsl(var(--background));
+}
+
+/* ── Zero: the count itself ──────────────────────────────────────────── */
+.zero { display: flex; align-items: flex-end; gap: 16px; }
+.zero-clip { overflow: hidden; padding-inline-end: 0.06em; }
+.zero-n {
+  display: block;
+  font-family: var(--font-outfit);
+  font-weight: 300;
+  font-size: 64px;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+}
+/* The Arabic-Indic zero is a dot glyph, so Arabic names the count instead. */
+[dir="rtl"] .zero-n { font-family: var(--font-vazirmatn); font-weight: 300; font-size: 52px; letter-spacing: 0; line-height: 1.25; }
+.zero .mono-s { padding-bottom: 6px; border-top: 1px solid var(--border-subtle); padding-top: 6px; flex: 1; }
+
+/* ── Coverage: a hundred lines of code ───────────────────────────────── */
+.lines { position: relative; height: 22px; display: flex; gap: 1px; align-items: center; }
+.lines i { flex: 1 1 0; min-width: 0; height: 16px; border-radius: 1px; background: hsl(var(--foreground) / 0.12); transform-origin: bottom; }
+.lines i.p { background: var(--local-accent); }
+.lines .bead { top: 50%; inset-inline-start: 80%; translate: -50% -50%; }
+[dir="rtl"] .lines .bead { translate: 50% -50%; }
+.scale-labels { position: relative; height: 16px; margin-top: 8px; }
+.scale-labels span { position: absolute; top: 0; }
+.scale-labels .s { inset-inline-start: 0; }
+.scale-labels .e { inset-inline-end: 0; }
+/* No reading exists: say so in place of a value, never imply a pass. */
+.unmeasured { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; color: hsl(var(--foreground)); }
+.unmeasured span { width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px hsl(var(--foreground)); background: repeating-linear-gradient(135deg, hsl(var(--foreground) / 0.5) 0 1px, transparent 1px 3px); }
+
+/* ── API docs: the rule as an equation ───────────────────────────────── */
+.eq { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; font-family: var(--font-mono); font-size: 0.875rem; color: hsl(var(--foreground)); }
+[dir="rtl"] .eq { font-family: var(--font-vazirmatn); }
+.eq b { font-weight: 500; font-size: 1.25rem; color: var(--local-accent-text); }
+.eq span { border-bottom: 1px solid var(--border-subtle); padding-bottom: 2px; }
+
+/* ── Lighthouse: the dial ────────────────────────────────────────────── */
+.dial { display: flex; align-items: center; gap: 24px; padding-top: 20px; }
+.dial-fig { position: relative; flex: 0 0 auto; width: 120px; height: 120px; }
+.dial svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.dial .trk { fill: none; stroke: hsl(var(--foreground) / 0.1); stroke-width: 6; }
+.dial .arc { fill: none; stroke: var(--local-accent); stroke-width: 6; stroke-linecap: butt; }
+.dial .tick0 { stroke: hsl(var(--foreground) / 0.45); stroke-width: 1; }
+.dial .dbead { fill: hsl(var(--foreground)); stroke: hsl(var(--background)); stroke-width: 4; paint-order: stroke; transform-box: fill-box; transform-origin: center; }
+[dir="rtl"] .dial .mirror { transform: scaleX(-1); transform-origin: 60px 60px; }
+.dial-read { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.dial-read b { font-family: var(--font-outfit); font-weight: 300; font-size: 34px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+[dir="rtl"] .dial-read b { font-family: var(--font-vazirmatn); letter-spacing: 0; }
+.dial-read span { margin-top: 4px; }
+.dial-zero { position: absolute; top: -26px; inset-inline-start: 50%; translate: -50% 0; }
+[dir="rtl"] .dial-zero { translate: 50% 0; }
+.dial .cap { margin-top: 0; }
+
+/* ── LCP: the load filmstrip ─────────────────────────────────────────── */
+.film { position: relative; --gap: 4px; }
+@media (min-width: 640px) { .film { --gap: 6px; } }
+/* The time track runs from the first frame's centre to the last frame's. */
+.film .trk-in { position: absolute; inset-inline: calc((100% - 8 * var(--gap)) / 18); }
+.film-rows { position: relative; }
+/* Connector from the frame column at the threshold down to its bead. */
+.film-line { position: absolute; top: -18px; height: 28px; width: 0; border-inline-start: 1px solid hsl(var(--foreground) / 0.45); }
+.film-row + .film-row { margin-top: 18px; }
+.film-row-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; margin-bottom: 8px; font-size: 0.8125rem; line-height: 1.4; }
+.film-row-head .tag { font-weight: 500; }
+.film-row-head .tag.ok { color: var(--local-accent-text); }
+.film-row-head .tag.no { color: hsl(var(--muted-foreground)); }
+.frames { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: var(--gap); }
+.frame {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 3px;
+  background: hsl(var(--card));
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  overflow: hidden;
+}
+.frame.hit { box-shadow: inset 0 0 0 2px var(--local-accent); }
+.row-fail .frame.hit { box-shadow: inset 0 0 0 2px hsl(var(--foreground)); }
+.f-in { position: absolute; inset: 12% 14%; display: flex; flex-direction: column; gap: 9%; }
+.f-in i { display: block; border-radius: 1px; background: hsl(var(--foreground) / 0.16); }
+.f-in .h { height: 8%; width: 60%; }
+.f-in .l { height: 6%; width: 100%; }
+.f-in .l.s { width: 70%; }
+.f-in .x { flex: 1; border-radius: 2px; background: hsl(var(--foreground) / 0.38); visibility: hidden; }
+.frame.lcp .f-in .x { visibility: visible; }
+.frame.hit .f-in .x { background: var(--local-accent); }
+.row-fail .frame.hit .f-in .x { background: hsl(var(--foreground) / 0.7); }
+.frame.blank .f-in { visibility: hidden; }
+/* Unpassed frames stay blank while the playhead rolls - children included,
+   since a child's visibility:visible would otherwise show through. */
+.film.rolling .frame:not(.on) .f-in,
+.film.rolling .frame:not(.on) .f-in * { visibility: hidden; }
+.film.rolling .frame.hit:not(.on) { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.playhead { position: absolute; top: -8px; bottom: -8px; width: 0; border-inline-start: 2px solid var(--local-accent); z-index: 2; opacity: 0; pointer-events: none; }
+
+.axis { position: relative; margin-top: 18px; height: 44px; }
+.axis .trk-in { top: 0; height: 100%; }
+.axis .base { position: absolute; inset-inline: 0; top: 6px; height: 8px; border-radius: 999px; background: hsl(var(--foreground) / 0.1); }
+.axis .band-clip { position: absolute; top: 6px; height: 8px; inset-inline-start: 0; width: 62.5%; border-radius: 999px; overflow: clip; }
+.band { display: block; width: 100%; height: 100%; background: var(--local-accent); }
+.band.from-end { transform-origin: right center; }
+[dir="rtl"] .band.from-end { transform-origin: left center; }
+.band.from-start { transform-origin: left center; }
+[dir="rtl"] .band.from-start { transform-origin: right center; }
+.axis .bead { top: 10px; translate: -50% -50%; }
+[dir="rtl"] .axis .bead { translate: 50% -50%; }
+.axis .t { position: absolute; top: 24px; translate: -50% 0; white-space: nowrap; }
+[dir="rtl"] .axis .t { translate: 50% 0; }
+.axis .t.line { color: hsl(var(--foreground)); font-weight: 500; }
+.live-dot {
+  position: absolute; top: 10px; width: 12px; height: 12px; border-radius: 50%;
+  translate: -50% -50%;
+  background: hsl(var(--background));
+  box-shadow: inset 0 0 0 2.5px hsl(var(--foreground));
+  z-index: 3;
+}
+[dir="rtl"] .live-dot { translate: 50% -50%; }
+.live-dot[hidden], .live[hidden] { display: none; }
+.live { margin-top: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.8125rem; line-height: 1.45; }
+.live .ring { flex: 0 0 auto; width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 2.5px hsl(var(--foreground)); }
+.live b { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ── CLS: three viewports, one shift each ────────────────────────────── */
+.cls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (min-width: 640px) { .cls { gap: 24px; } }
+.cls figure { min-width: 0; }
+.vp {
+  position: relative;
+  width: 100%;
+  max-width: 132px;
+  aspect-ratio: 3 / 5;
+  border-radius: 10px;
+  background: hsl(var(--card));
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  overflow: hidden;
+  cursor: pointer;
+}
+.vp:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 3px; }
+.vp-head { position: absolute; inset-inline: 0; top: 0; height: 20%; border-bottom: 1px solid var(--border-subtle); }
+.vp-head::before { content: ""; position: absolute; inset-inline-start: 12%; top: 42%; width: 34%; height: 14%; border-radius: 2px; background: hsl(var(--foreground) / 0.2); }
+.vp-slot { position: absolute; inset-inline: 6%; top: 20%; height: calc(var(--d) * 1%); }
+.reserved .vp-slot { outline: 1px dashed hsl(var(--foreground) / 0.45); outline-offset: -3px; }
+.vp-banner {
+  position: absolute; inset-inline: 0; top: 20%; height: calc(var(--d) * 1%);
+  transform-origin: top;
+  background: repeating-linear-gradient(135deg, hsl(var(--foreground) / 0.16) 0 3px, transparent 3px 7px);
+}
+.reserved .vp-banner { inset-inline: 6%; top: calc(20% + 1.5%); height: calc(var(--d) * 1% - 3%); border-radius: 2px; }
+.vp-content {
+  position: absolute; inset-inline: 0; top: 20%; height: 80%;
+  translate: 0 calc(var(--shift) * 1%);
+}
+.vp-content i { position: absolute; inset-inline-start: 12%; display: block; border-radius: 2px; background: hsl(var(--foreground) / 0.2); }
+.vp-content .l1 { top: 8%; width: 76%; height: 5%; }
+.vp-content .l2 { top: 17%; width: 60%; height: 5%; }
+.vp-content .l3 { top: 26%; width: 70%; height: 5%; }
+.vp-content .btn { top: 38%; width: 56%; height: 11%; border-radius: 999px; background: hsl(var(--foreground)); }
+.cls figcaption { margin-top: 12px; }
+.cls .score { display: block; font-family: var(--font-outfit); font-weight: 400; font-size: 1.375rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+[dir="rtl"] .cls .score { font-family: var(--font-vazirmatn); }
+.cls .state { display: block; margin-top: 4px; font-size: 0.8125rem; line-height: 1.35; font-weight: 500; }
+.cls .state.ok { color: var(--local-accent-text); }
+.cls .state.no { color: hsl(var(--muted-foreground)); }
+.cls .formula { display: block; margin-top: 6px; }
+.cls-foot { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.cls-foot .cap { margin-top: 0; flex: 1 1 18rem; }
+.replay {
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 0.8125rem/1 var(--font-inter);
+  color: hsl(var(--foreground));
+  background: transparent;
+  border: 1px solid var(--control-edge);
+  border-radius: 999px;
+  padding: 0 14px;
+  min-height: 36px;
+  cursor: pointer;
+  transition: background-color 150ms var(--ease-smooth), border-color 150ms var(--ease-smooth);
+}
+[dir="rtl"] .replay { font-family: var(--font-vazirmatn); }
+.replay:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .replay:hover { border-color: hsl(var(--foreground)); } }
+.replay svg { width: 14px; height: 14px; }
+[dir="rtl"] .replay svg { transform: scaleX(-1); }
+
+/* ── Contrast: the text itself, at the ratio ─────────────────────────── */
+.ctr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; list-style: none; }
+@media (min-width: 520px) { .ctr { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ctr li { position: relative; min-width: 0; padding-top: 16px; }
+.ctr .rule-clip { position: absolute; inset-inline: 0; top: 0; height: 2px; overflow: clip; background: hsl(var(--foreground) / 0.1); }
+.ctr .rule-clip .band { height: 2px; }
+.ctr li:not(.pass) .rule-clip .band { visibility: hidden; }
+.ctr .bead { top: 1px; inset-inline-start: 0; translate: -50% -50%; width: 12px; height: 12px; }
+[dir="rtl"] .ctr .bead { translate: 50% -50%; }
+.ctr .sample { font-size: 17px; line-height: 1.5; font-weight: 400; white-space: nowrap; }
+.ctr .ratio { display: block; margin-top: 10px; font-size: 1.0625rem; font-weight: 500; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.ctr li.pass .ratio { color: var(--local-accent-text); }
+.ctr .tok { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+.ctr .line-tag { display: block; margin-top: 2px; font-size: 0.8125rem; font-weight: 500; color: hsl(var(--foreground)); }
+
+/* ── Grade ladder ────────────────────────────────────────────────────── */
+.grades { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; list-style: none; }
+.grades li {
+  display: flex; align-items: center; justify-content: center;
+  height: 32px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 0.75rem; font-variant-numeric: tabular-nums;
+  background: hsl(var(--foreground) / 0.04);
+  color: hsl(var(--muted-foreground));
+}
+.grades li.p { background: var(--local-accent-soft); color: hsl(var(--foreground)); font-weight: 500; box-shadow: inset 0 0 0 1px var(--local-accent); }
+
+/* ── Weekly patching: 28 days, a run inside every 7 ──────────────────── */
+.week { position: relative; }
+.days { display: grid; grid-template-columns: repeat(28, minmax(0, 1fr)); align-items: end; height: 30px; }
+.days i { justify-self: center; display: block; width: 1px; height: 10px; background: hsl(var(--foreground) / 0.28); transform-origin: bottom; }
+.days i.run { width: 3px; height: 28px; border-radius: 2px; background: var(--local-accent); }
+.brackets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
+.brackets span { position: relative; margin-inline: 2px; padding-top: 8px; text-align: center; }
+.brackets span::before { content: ""; position: absolute; inset-inline: 0; top: 0; height: 5px; border: 1px solid hsl(var(--foreground) / 0.35); border-top: 0; }
+
+/* ── Draw-in: armed sheets hold the start state until they scroll in ─── */
+.armed [data-bead] { scale: 0; }
+.armed [data-band] { scale: 0 1; }
+.armed [data-tick] { scale: 1 0; }
+.armed [data-arc] { stroke-dasharray: 0 400; }
+.armed [data-zero] { translate: 0 105%; }
+.armed [data-grade] { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; }
+  .replay { display: none; }
+}
+</style>
+</head>
+<body class="accent-world-green">
+
+<div class="toolbar" dir="ltr" role="group" aria-label="Prototype controls">
+  <div class="seg" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="ar" aria-pressed="false" lang="ar">AR</button>
+  </div>
+  <div class="seg" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<p class="proto-label" dir="ltr">Prototype B — Specimen as proof: each benchmark drawn as the thing it measures.</p>
+
+<section id="standards" aria-label="">
+  <div class="container" id="articles"></div>
+</section>
+
+<div class="stub-below" aria-hidden="true">
+  <div class="container"><p class="section-title" data-i18n="stubBelow"></p></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ── The published benchmarks — apps/www/.../standards/pass-line.tsx ── */
+  var STANDARDS = [
+    { id: "code", checks: [
+      { id: "lint", kind: "zero" },
+      { id: "coverage", kind: "scale", min: 0, max: 100, threshold: 80, pass: "over", unit: "percent" },
+      { id: "apiDocs", kind: "rule" }
+    ] },
+    { id: "performance", checks: [
+      { id: "lighthouse", kind: "scale", min: 0, max: 100, threshold: 95, pass: "atLeast", unit: "score" },
+      { id: "lcp", kind: "scale", min: 0, max: 4, threshold: 2.5, pass: "under", unit: "seconds" },
+      { id: "cls", kind: "scale", min: 0, max: 0.25, threshold: 0.1, pass: "under", unit: "plain" }
+    ] },
+    { id: "accessibility", checks: [
+      { id: "lighthouse", kind: "scale", min: 0, max: 100, threshold: 95, pass: "atLeast", unit: "score" },
+      { id: "aria", kind: "zero" },
+      { id: "contrast", kind: "scale", min: 1, max: 21, threshold: 4.5, pass: "atLeast", unit: "ratio" }
+    ] },
+    { id: "security", checks: [
+      { id: "headers", kind: "grade", grades: ["F", "E", "D", "C", "B", "A", "A+"], passFrom: "A" },
+      { id: "cves", kind: "zero" },
+      { id: "patches", kind: "rule" }
+    ] }
+  ];
+
+  /* ── Copy: labels and category text from apps/www/messages/{en,ar}/standards.json;
+     the "spec" block is the prototype's own short specimen labels. ── */
+  var COPY = {
+    en: {
+      sectionLabel: "The standards and their pass lines",
+      builtWith: "Built with",
+      passLine: "The pass line",
+      legend: { pass: "Passes", fail: "Fails" },
+      pass: { atLeast: "{value} or higher", over: "Over {value}", under: "Under {value}", zero: "None allowed", grade: "Grade {value} or higher" },
+      unit: { seconds: "{value} s", percent: "{value}%", ratio: "{value}:1" },
+      stubBelow: "The gate",
+      categories: {
+        code: {
+          title: "Clean, Maintainable Code",
+          description: "Code is read far more often than it is written. We optimize for clarity, consistency, and maintainability - <dim>not clever shortcuts that create future debt.</dim> Strict typing catches the class of bugs that QA cycles miss, and a component-based architecture means a new developer can trace a feature from route to render without a walkthrough call. This matters commercially: the codebase you inherit at handoff is the one your next hire has to extend, and unreadable code is a recurring tax on every future change.",
+          requirements: "Strict TypeScript | Component-based architecture | Automated testing | Continuous integration",
+          checks: { lint: { label: "Lint errors" }, coverage: { label: "Test coverage" }, apiDocs: { label: "API endpoints documented", value: "Every endpoint" } }
+        },
+        performance: {
+          title: "Speed as a Revenue Driver",
+          description: "<strong>Every 100ms of latency is a conversion leak.</strong> Performance is a design constraint from day one - not an optimization pass squeezed in post-launch. We choose edge-first delivery, modern image formats, and minimal client-side JavaScript before a single screen is built, because retrofitting speed into a slow architecture means rebuilding it. <dim>A 95+ Lighthouse score is not a vanity number</dim> - it correlates directly with bounce rate and search ranking, especially on mobile connections in the markets we build for.",
+          requirements: "Edge-first delivery | Modern image formats | Minimal JS execution | Font optimization",
+          checks: { lighthouse: { label: "Lighthouse performance score" }, lcp: { label: "Largest Contentful Paint (LCP)" }, cls: { label: "Cumulative Layout Shift (CLS)" } }
+        },
+        accessibility: {
+          title: "Accessible by Default",
+          description: "<strong>If it is not accessible, it is not finished.</strong> WCAG compliance is a build requirement - not a post-launch checklist item. We audit keyboard navigation, screen reader output, and color contrast on every screen before it is marked done, the same way we check that a layout renders correctly. Treating accessibility as a late-stage patch is how teams end up retrofitting ARIA labels onto a component library that was never structured to carry them - <dim>we structure for it from the first commit instead.</dim>",
+          requirements: "Semantic HTML | WCAG 2.1 AA compliance | Keyboard accessibility | Screen reader support",
+          checks: { lighthouse: { label: "Lighthouse accessibility score" }, aria: { label: "ARIA errors" }, contrast: { label: "Text contrast ratio" } }
+        },
+        security: {
+          title: "Security from Day One",
+          description: "Trust is earned through security <strong>built in</strong> - <dim>not bolted on.</dim> CSP headers, dependency audits, and input sanitization before anything ships. We run dependency audits as part of the build pipeline, not as an annual fire drill, and authentication flows are reviewed against current OWASP guidance before launch. For e-commerce and ERP clients handling customer payment data, this is not optional hardening - it is the baseline that keeps a breach from becoming the headline.",
+          requirements: "CSP headers | Secure authentication | Sanitized inputs | Dependency audits",
+          checks: { headers: { label: "Security headers grade" }, cves: { label: "High-risk CVEs in dependencies" }, patches: { label: "Dependency patching", value: "Every week" } }
+        }
+      },
+      spec: {
+        zero: "allowed in any deploy",
+        zeroFigure: "0",
+        coverage: "Each tick is one line of code. Over 80 in every 100 must run under a test. This draws the line, not a reading.",
+        notMeasured: "Reading: not measured for this site",
+        docs: ["documented endpoints", "=", "all endpoints"],
+        dialSub: "the line",
+        dialCap: "Lighthouse scores 0–100. The line sits at 95; the arc past it is the pass side.",
+        filmPass: "Largest element paints at 2.5 s",
+        filmFail: "Largest element paints at 4 s",
+        tagLine: "on the line",
+        tagFail: "fails",
+        filmCap: "Illustration: one frame every 0.5 s; the outlined frame is where the largest element paints. Google rates up to 2.5 s good and over 4 s poor.",
+        live: "Live reading of this prototype file, from your browser: {v}",
+        liveNone: "Your browser does not report LCP, so there is no live reading here.",
+        cls: [
+          { state: "passes — space was reserved" },
+          { state: "the line" },
+          { state: "Google's “poor” line" }
+        ],
+        clsFormula: "{i} moved × {d} distance",
+        clsNone: "nothing moved",
+        clsCap: "Illustration. Score = share of the viewport that moved × how far it moved, as a share of the viewport's height.",
+        replay: "Replay the shift",
+        vpLabel: "Viewport, layout shift score {s}. Activate to replay.",
+        ctrSample: "Body text",
+        ctrLine: "the line",
+        ctrCap: "Real tokens on this page's background ({hex}), at body size. Ratios computed from their hex values, rounded down.",
+        gradeCap: "securityheaders.com grades, worst to best.",
+        weekDays: "7 days",
+        weekCap: "One patch run inside every 7 days, every week."
+      }
+    },
+    ar: {
+      sectionLabel: "المعايير وخطوط النجاح",
+      builtWith: "أدوات البناء",
+      passLine: "خط النجاح",
+      legend: { pass: "ينجح", fail: "يفشل" },
+      pass: { atLeast: "{value} أو أعلى", over: "أكثر من {value}", under: "أقل من {value}", zero: "لا يُسمح بأي منها", grade: "تقييم {value} أو أعلى" },
+      unit: { seconds: "{value} ث", percent: "{value}%", ratio: "{value}:1" },
+      stubBelow: "البوابة",
+      categories: {
+        code: {
+          title: "كود نظيف وقابل للصيانة",
+          description: "الكود يُقرأ أكثر بكثير مما يُكتب. نُحسّن للوضوح والاتساق وقابلية الصيانة - <dim>لا للحيل الذكية التي تخلق ديناً تقنياً مستقبلياً.</dim> الكتابة الصارمة بـ TypeScript تكشف فئة من الأخطاء تفوتها دورات ضمان الجودة، والبنية القائمة على المكونات تتيح لمطور جديد تتبّع ميزة من المسار إلى العرض دون اجتماع شرح. هذا مهم تجارياً: الكود الذي تستلمه عند التسليم هو ما يضطر موظفك القادم لتوسيعه، والكود غير المقروء ضريبة متكررة على كل تعديل مستقبلي.",
+          requirements: "TypeScript صارم | بنية قائمة على المكونات | اختبار آلي | تكامل مستمر",
+          checks: { lint: { label: "أخطاء lint" }, coverage: { label: "تغطية الاختبارات" }, apiDocs: { label: "توثيق نقاط API", value: "كل النقاط" } }
+        },
+        performance: {
+          title: "السرعة محرك إيرادات",
+          description: "<strong>كل ١٠٠ ميلي ثانية من التأخير خسارة في التحويل.</strong> الأداء قيد تصميمي من اليوم الأول - لا تمريرة تحسين تُحشر بعد الإطلاق. نختار التسليم من الحافة وصيغ الصور الحديثة وأقل تنفيذ JavaScript ممكن قبل بناء أي شاشة، لأن ترقيع السرعة في بنية بطيئة يعني إعادة بنائها من الصفر. <dim>درجة ٩٥+ على Lighthouse ليست رقماً للزينة</dim> - بل ترتبط مباشرة بمعدل الارتداد وترتيب البحث، خصوصاً على اتصالات الموبايل في الأسواق التي نبني لها.",
+          requirements: "تسليم من الحافة | صيغ صور حديثة | تنفيذ JavaScript خفيف | تحسين الخطوط",
+          checks: { lighthouse: { label: "درجة أداء Lighthouse" }, lcp: { label: "زمن عرض أكبر محتوى (LCP)" }, cls: { label: "إزاحة التخطيط التراكمية (CLS)" } }
+        },
+        accessibility: {
+          title: "سهولة الوصول بالافتراضي",
+          description: "<strong>إن لم يكن سهل الوصول فهو لم يكتمل.</strong> توافق WCAG متطلب بناء - لا قائمة مراجعة بعد الإطلاق. نراجع التنقل بالكيبورد وإخراج قارئ الشاشة ونسب التباين على كل شاشة قبل اعتبارها جاهزة، بالطريقة نفسها التي نتحقق بها من صحة عرض التخطيط. التعامل مع سهولة الوصول كترقيع لاحق هو ما يجعل الفرق تُضيف وسوم ARIA على مكتبة مكونات لم تُبنَ أصلاً لتحملها - <dim>نحن نبني البنية لتحملها من أول commit.</dim>",
+          requirements: "HTML دلالي | توافق WCAG 2.1 AA | إمكانية التنقل بالكيبورد | دعم قارئات الشاشة",
+          checks: { lighthouse: { label: "درجة سهولة الوصول في Lighthouse" }, aria: { label: "أخطاء ARIA" }, contrast: { label: "نسبة تباين النص" } }
+        },
+        security: {
+          title: "الأمان من اليوم الأول",
+          description: "الثقة تُكتسب بأمان <strong>مدمج</strong> <dim>لا مضاف لاحقاً.</dim> ترويسات CSP ومراجعة التبعيات وتطهير المدخلات قبل أي شيء يُطلق. نُجري مراجعة التبعيات كجزء من خط البناء، لا كتدريب سنوي عابر، ومسارات المصادقة تُراجَع وفق توجيهات OWASP الحالية قبل الإطلاق. لعملاء التجارة الإلكترونية وأنظمة ERP الذين يتعاملون مع بيانات دفع العملاء، هذا ليس تحصيناً اختيارياً - بل الحد الأدنى الذي يمنع اختراقاً من أن يصبح عنواناً صحفياً.",
+          requirements: "ترويسات CSP | مصادقة آمنة | مدخلات معقّمة | مراجعة التبعيات",
+          checks: { headers: { label: "تقييم ترويسات الأمان" }, cves: { label: "ثغرات CVE عالية الخطورة في التبعيات" }, patches: { label: "ترقيع التبعيات", value: "أسبوعيًا" } }
+        }
+      },
+      spec: {
+        zero: "المسموح في أي نشر",
+        zeroFigure: "صفر",
+        coverage: "كل علامة سطر كود. أكثر من ٨٠ من كل ١٠٠ سطر يجب أن يمر تحت اختبار. هذا رسم للخط، لا قراءة.",
+        notMeasured: "القراءة: غير مقيسة لهذا الموقع",
+        docs: ["النقاط الموثّقة", "=", "كل النقاط"],
+        dialSub: "الخط",
+        dialCap: "يقيس Lighthouse من ٠ إلى ١٠٠. الخط عند ٩٥، والقوس بعده جهة النجاح.",
+        filmPass: "أكبر عنصر يظهر عند ٢٫٥ ث",
+        filmFail: "أكبر عنصر يظهر عند ٤ ث",
+        tagLine: "على الخط",
+        tagFail: "يفشل",
+        filmCap: "توضيح: لقطة كل ٠٫٥ ث، واللقطة المحددة هي لحظة ظهور أكبر عنصر. تعتبر Google حتى ٢٫٥ ث جيدًا وما فوق ٤ ث ضعيفًا.",
+        live: "قراءة حية لهذا الملف التجريبي من متصفحك: {v}",
+        liveNone: "متصفحك لا يُبلغ عن LCP، لذا لا توجد قراءة حية هنا.",
+        cls: [
+          { state: "ينجح — المساحة محجوزة" },
+          { state: "الخط" },
+          { state: "خط «ضعيف» عند Google" }
+        ],
+        clsFormula: "{i} تحرّك × {d} مسافة",
+        clsNone: "لم يتحرك شيء",
+        clsCap: "توضيح. الدرجة = نسبة الشاشة التي تحركت × مقدار الحركة نسبةً إلى ارتفاع الشاشة.",
+        replay: "أعد الإزاحة",
+        vpLabel: "شاشة، درجة إزاحة التخطيط {s}. فعّلها لإعادة الإزاحة.",
+        ctrSample: "نص أساسي",
+        ctrLine: "الخط",
+        ctrCap: "رموز حقيقية على خلفية هذه الصفحة ({hex}) بحجم النص الأساسي. النسب محسوبة من قيم hex ومقرّبة للأسفل.",
+        gradeCap: "تقييمات securityheaders.com من الأسوأ إلى الأفضل.",
+        weekDays: "٧ أيام",
+        weekCap: "تشغيل ترقيع واحد داخل كل ٧ أيام، كل أسبوع."
+      }
+    }
+  };
+
+  /* ── Motion — apps/www/lib/motion/tokens.ts ── */
+  var M = {
+    strong: "cubic-bezier(0.23, 1, 0.32, 1)",
+    gentle: "cubic-bezier(0.65, 0, 0.35, 1)",
+    smooth: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+    fast: 400, base: 700, slow: 1000, sweep: 2600,
+    stagger: 60, tight: 40
+  };
+
+  var root = document.documentElement;
+  var articlesEl = document.getElementById("articles");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var lang = "en";
+  var drawn = {};
+  var lcpSeconds = null;
+  var lcpSupported = false;
+  var observer = null;
+  var q = new URLSearchParams(location.search);
+  var still = q.get("still") === "1";
+
+  /* ── Numbers ── */
+  var AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+  function loc(str) {
+    str = String(str);
+    if (lang !== "ar") return str;
+    return str
+      .replace(/\d/g, function (d) { return AR_DIGITS[d]; })
+      .replace(/([٠-٩])\.(?=[٠-٩])/g, "$1٫")
+      .replace(/([٠-٩])(\s*)%/g, "$1$2٪");
+  }
+  function fill(tpl, vars) {
+    return tpl.replace(/\{(\w+)\}/g, function (_, k) { return vars[k]; });
+  }
+  function unit(value, u) {
+    var c = COPY[lang];
+    var text = u === "seconds" || u === "percent" || u === "ratio" ? fill(c.unit[u], { value: String(value) }) : String(value);
+    return loc(text);
+  }
+  function passText(std, check) {
+    var c = COPY[lang];
+    switch (check.kind) {
+      case "scale": return fill(c.pass[check.pass], { value: unit(check.threshold, check.unit) });
+      case "zero": return c.pass.zero;
+      case "grade": return fill(c.pass.grade, { value: check.passFrom });
+      case "rule": return c.categories[std].checks[check.id].value;
+    }
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
+
+  /* ── Color math: token HSL → hex, alpha composited over the page ground,
+     then WCAG 2.x relative luminance and contrast ratio. ── */
+  function hslToRgb(h, s, l) {
+    s /= 100; l /= 100;
+    var k = function (n) { return (n + h / 30) % 12; };
+    var a = s * Math.min(l, 1 - l);
+    var f = function (n) { return l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); };
+    return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+  }
+  function over(fg, alpha, bg) {
+    return fg.map(function (c, i) { return Math.round(c * alpha + bg[i] * (1 - alpha)); });
+  }
+  function hex(rgb) { return "#" + rgb.map(function (c) { return c.toString(16).padStart(2, "0"); }).join(""); }
+  function lum(rgb) {
+    var v = rgb.map(function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function ratio(a, b) {
+    var la = lum(a), lb = lum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  /* Candidate text tokens per theme — packages/ui/src/styles/tokens.css
+     (:root and .dark) and apps/www/app/globals.css (.accent-world-green). */
+  var TOKENS = {
+    light: {
+      bg: { name: "--background", hsl: [0, 0, 98] },
+      list: [
+        { name: "--border-mid", hsl: [0, 0, 6], a: 0.18 },
+        { name: "--border-strong", hsl: [0, 0, 6], a: 0.28 },
+        { name: "--n-3", hsl: [0, 0, 84] },
+        { name: "--n-4", hsl: [0, 0, 65] },
+        { name: "--s-muted", hsl: [0, 0, 6], a: 0.4 },
+        { name: "--s-low", hsl: [0, 0, 6], a: 0.52 },
+        { name: "--n-5", hsl: [0, 0, 45] },
+        { name: "--muted-foreground", hsl: [0, 0, 40] },
+        { name: "--local-accent", hsl: [158, 64, 30] },
+        { name: "--n-6", hsl: [0, 0, 32] },
+        { name: "--s-mid", hsl: [0, 0, 6], a: 0.72 },
+        { name: "--n-7", hsl: [0, 0, 18] },
+        { name: "--foreground", hsl: [0, 0, 6] }
+      ]
+    },
+    dark: {
+      bg: { name: "--background", hsl: [0, 0, 7] },
+      list: [
+        { name: "--border-mid", hsl: [0, 0, 100], a: 0.14 },
+        { name: "--border-strong", hsl: [0, 0, 100], a: 0.26 },
+        { name: "--n-6", hsl: [0, 0, 32] },
+        { name: "--s-muted", hsl: [0, 0, 98], a: 0.4 },
+        { name: "--n-5", hsl: [0, 0, 45] },
+        { name: "--s-low", hsl: [0, 0, 98], a: 0.52 },
+        { name: "--local-accent", hsl: [158, 36, 49] },
+        { name: "--muted-foreground", hsl: [0, 0, 58] },
+        { name: "--n-4", hsl: [0, 0, 65] },
+        { name: "--s-mid", hsl: [0, 0, 98], a: 0.72 },
+        { name: "--n-3", hsl: [0, 0, 84] },
+        { name: "--foreground", hsl: [0, 0, 94] }
+      ]
+    }
+  };
+
+  /* Four samples near 1.5 / 3 / 4.5 / 7: the line is the weakest token that
+     still clears 4.5; the other three are the nearest real token to their target. */
+  function contrastSamples() {
+    var theme = root.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    var set = TOKENS[theme];
+    var bg = hslToRgb.apply(null, set.bg.hsl);
+    var all = set.list.map(function (t) {
+      var rgb = hslToRgb.apply(null, t.hsl);
+      if (t.a != null) rgb = over(rgb, t.a, bg);
+      return { name: t.name, rgb: rgb, hex: hex(rgb), r: ratio(rgb, bg) };
+    });
+    var used = {};
+    var line = all.filter(function (t) { return t.r >= 4.5; }).sort(function (a, b) { return a.r - b.r; })[0];
+    used[line.name] = true;
+    function nearest(target) {
+      var best = null;
+      all.forEach(function (t) {
+        if (used[t.name]) return;
+        if (!best || Math.abs(t.r - target) < Math.abs(best.r - target)) best = t;
+      });
+      used[best.name] = true;
+      return best;
+    }
+    var picks = [nearest(1.5), nearest(3), line, nearest(7)];
+    picks.forEach(function (p) { p.isLine = p === line; });
+    picks.sort(function (a, b) { return a.r - b.r; });
+    return { bgHex: hex(bg), picks: picks };
+  }
+
+  /* ── Specimens ── */
+  function zeroSpec() {
+    var s = COPY[lang].spec;
+    return '<div class="zero" aria-hidden="true"><span class="zero-clip"><span class="zero-n" data-zero>' + esc(s.zeroFigure) + '</span></span>' +
+      '<span class="mono-s">' + esc(s.zero) + '</span></div>';
+  }
+
+  function coverageSpec(check) {
+    var s = COPY[lang].spec;
+    var ticks = "";
+    for (var i = 1; i <= 100; i++) {
+      var p = i > check.threshold;
+      ticks += p ? '<i class="p" data-tick data-order="' + (i - check.threshold) + '"></i>' : "<i></i>";
+    }
+    return '<div aria-hidden="true"><div class="lines">' + ticks + '<span class="bead" data-bead></span></div>' +
+      '<div class="scale-labels mono-s"><span class="s">' + unit(check.min, check.unit) + '</span><span class="e">' + unit(check.max, check.unit) + '</span></div></div>' +
+      '<p class="unmeasured mono-s"><span aria-hidden="true"></span>' + esc(s.notMeasured) + '</p>' +
+      '<p class="cap">' + esc(s.coverage) + '</p>';
+  }
+
+  function docsSpec() {
+    var d = COPY[lang].spec.docs;
+    return '<p class="eq"><span>' + esc(d[0]) + '</span><b aria-hidden="true">' + d[1] + '</b><span>' + esc(d[2]) + '</span></p>';
+  }
+
+  function dialSpec(check) {
+    var s = COPY[lang].spec;
+    var r = 52, C = 2 * Math.PI * r;
+    var frac = (check.threshold - check.min) / (check.max - check.min);
+    var passLen = (1 - frac) * C;
+    var ang = (-90 + frac * 360) * Math.PI / 180;
+    var bx = 60 + r * Math.cos(ang), by = 60 + r * Math.sin(ang);
+    return '<div class="dial"><div class="dial-fig" aria-hidden="true">' +
+      '<span class="dial-zero mono-s ltr">' + loc("0 · 100") + '</span>' +
+      '<svg viewBox="0 0 120 120"><g class="mirror">' +
+        '<circle class="trk" cx="60" cy="60" r="' + r + '"/>' +
+        '<line class="tick0" x1="60" y1="2" x2="60" y2="14"/>' +
+        '<circle class="arc" data-arc cx="60" cy="60" r="' + r + '" transform="rotate(-90 60 60)" ' +
+          'stroke-dasharray="' + passLen.toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-frac * C).toFixed(2) + '" data-len="' + passLen.toFixed(2) + '" data-c="' + C.toFixed(2) + '"/>' +
+        '<circle class="dbead" data-bead cx="' + bx.toFixed(2) + '" cy="' + by.toFixed(2) + '" r="6"/>' +
+      '</g></svg>' +
+      '<span class="dial-read"><b>' + loc(check.threshold) + '</b><span class="mono-s">' + esc(s.dialSub) + '</span></span>' +
+      '</div><p class="cap">' + esc(s.dialCap) + '</p></div>';
+  }
+
+  function filmRow(lcpAt, tagText, tagClass, label, rowClass) {
+    var frames = "";
+    for (var i = 0; i <= 8; i++) {
+      var t = i * 0.5;
+      var cls = "frame";
+      if (t === 0) cls += " blank";
+      if (t >= lcpAt) cls += " lcp";
+      if (t === lcpAt) cls += " hit";
+      frames += '<div class="' + cls + '" data-t="' + t + '"><div class="f-in"><i class="h"></i><i class="x"></i><i class="l"></i><i class="l s"></i></div></div>';
+    }
+    return '<div class="film-row ' + rowClass + '"><div class="film-row-head"><span>' + esc(label) + '</span><span class="tag ' + tagClass + '">' + esc(tagText) + '</span></div>' +
+      '<div class="frames" aria-hidden="true">' + frames + '</div></div>';
+  }
+
+  function filmSpec(check) {
+    var s = COPY[lang].spec;
+    var pct = function (v) { return ((v - check.min) / (check.max - check.min)) * 100; };
+    var ticks = "";
+    for (var t = 0; t <= check.max; t += 1) {
+      ticks += '<span class="t mono-s" style="inset-inline-start:' + pct(t) + '%">' + unit(t, "seconds") + '</span>';
+    }
+    var livePct = lcpSeconds == null ? 0 : pct(Math.min(lcpSeconds, check.max));
+    var liveText = lcpSupported
+      ? (lcpSeconds == null ? "" : fill(esc(s.live), { v: "<b>" + unit(lcpSeconds.toFixed(2), "seconds") + "</b>" }))
+      : esc(s.liveNone);
+    return '<div class="film">' +
+      '<div class="film-rows">' +
+        '<div class="trk-in" style="top:0;bottom:0" aria-hidden="true">' +
+          '<span class="playhead" data-playhead></span>' +
+        '</div>' +
+        filmRow(2.5, s.tagLine, "ok", s.filmPass, "row-pass") +
+        filmRow(4, s.tagFail, "no", s.filmFail, "row-fail") +
+      '</div>' +
+      '<div class="axis" aria-hidden="true"><div class="trk-in">' +
+        '<span class="film-line" style="inset-inline-start:' + pct(check.threshold) + '%"></span>' +
+        '<span class="base"></span>' +
+        '<span class="band-clip" style="width:' + pct(check.threshold) + '%"><span class="band from-end" data-band></span></span>' +
+        '<span class="bead" data-bead style="inset-inline-start:' + pct(check.threshold) + '%"></span>' +
+        '<span class="live-dot" data-live-dot style="inset-inline-start:' + livePct + '%"' + (lcpSeconds == null ? " hidden" : "") + '></span>' +
+        ticks +
+      '</div></div>' +
+      '<p class="live" data-live' + (liveText ? "" : " hidden") + '>' + (lcpSupported ? '<span class="ring" aria-hidden="true"></span>' : "") + '<span data-live-text>' + liveText + '</span></p>' +
+      '<p class="cap">' + esc(s.filmCap) + '</p>' +
+      '</div>';
+  }
+
+  /* CLS by its definition: score = impact fraction × distance fraction.
+     A 60×100 viewport; a banner inserts under a header that ends at y=20 and
+     pushes everything below it down by d. The shifted region (y0..H before,
+     y0+d..H after, clipped to the viewport) unions to y0..H, so impact is
+     (H − y0) / H; distance is d / max(W, H). d is solved from the target score. */
+  var CLS_VP = { W: 60, H: 100, y0: 20 };
+  function clsCase(score) {
+    var W = CLS_VP.W, H = CLS_VP.H, y0 = CLS_VP.y0;
+    var impactIfMoved = (H - y0) / H;
+    var d = score === 0 ? 0 : (score / impactIfMoved) * Math.max(W, H);
+    var impact = d === 0 ? 0 : impactIfMoved;
+    var distance = d / Math.max(W, H);
+    return { d: d, impact: impact, distance: distance, score: impact * distance, shift: (d / (H - y0)) * 100 };
+  }
+
+  function clsSpec(check) {
+    var s = COPY[lang].spec;
+    var targets = [0, check.threshold, check.max];
+    var html = '<div class="cls">';
+    targets.forEach(function (target, i) {
+      var c = clsCase(target);
+      var scoreText = loc(c.score.toFixed(2));
+      var formula = c.d === 0 ? esc(s.clsNone) : fill(esc(s.clsFormula), { i: loc(c.impact.toFixed(2)), d: loc(c.distance.toFixed(4).replace(/0+$/, "")) });
+      var onLine = Math.abs(c.score - check.threshold) < 1e-9;
+      var stateClass = onLine ? "" : c.score < check.threshold ? "ok" : "no";
+      // Reserved space: the slot was there from the first paint, so content already sits below it.
+      var restShift = c.d === 0 ? clsCase(check.threshold).shift : c.shift;
+      html += '<figure class="' + (c.d === 0 ? "reserved" : "") + '">' +
+        '<div class="vp" tabindex="0" role="button" aria-label="' + esc(fill(s.vpLabel, { s: scoreText })) + '" data-vp style="--d:' + (c.d === 0 ? clsCase(check.threshold).d : c.d) + ';--shift:' + restShift + '" data-shift="' + c.shift + '">' +
+          '<span class="vp-head"></span><span class="vp-slot"></span><span class="vp-banner"></span>' +
+          '<span class="vp-content"><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="btn"></i></span>' +
+        '</div>' +
+        '<figcaption><span class="score">' + scoreText + '</span><span class="state ' + stateClass + '">' + esc(s.cls[i].state) + '</span><span class="formula mono-s">' + formula + '</span></figcaption>' +
+        '</figure>';
+    });
+    html += '</div><div class="cls-foot"><p class="cap">' + esc(s.clsCap) + '</p>' +
+      '<button type="button" class="replay" data-replay><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg>' + esc(s.replay) + '</button></div>';
+    return html;
+  }
+
+  function contrastInner() {
+    var s = COPY[lang].spec;
+    var data = contrastSamples();
+    var items = data.picks.map(function (p) {
+      var pass = p.r >= 4.5;
+      var shown = Math.floor(p.r * 100) / 100;
+      return '<li class="' + (pass ? "pass" : "") + '">' +
+        '<span class="rule-clip" aria-hidden="true"><span class="band from-start" data-band></span></span>' +
+        (p.isLine ? '<span class="bead" data-bead aria-hidden="true"></span>' : "") +
+        '<span class="sample" style="color:' + p.hex + '" aria-hidden="true">' + esc(s.ctrSample) + '</span>' +
+        '<span class="ratio">' + unit(shown.toFixed(2), "ratio") + '</span>' +
+        '<span class="tok mono-s ltr">' + p.name + ' ' + p.hex + '</span>' +
+        (p.isLine ? '<span class="line-tag">' + esc(s.ctrLine) + '</span>' : "") +
+        '</li>';
+    }).join("");
+    return '<ul class="ctr">' + items + '</ul><p class="cap">' + fill(esc(s.ctrCap), { hex: '<span class="ltr">' + data.bgHex + '</span>' }) + '</p>';
+  }
+  function contrastSpec() { return '<div data-contrast>' + contrastInner() + '</div>'; }
+
+  function gradeSpec(check) {
+    var s = COPY[lang].spec;
+    var first = check.grades.indexOf(check.passFrom);
+    var items = check.grades.map(function (g, i) {
+      return '<li class="' + (i >= first ? "p" : "") + '" dir="ltr" data-grade>' + g + '</li>';
+    }).join("");
+    return '<ol class="grades" aria-hidden="true">' + items + '</ol><p class="cap">' + esc(s.gradeCap) + '</p>';
+  }
+
+  function weekSpec() {
+    var s = COPY[lang].spec;
+    var days = "";
+    for (var i = 1; i <= 28; i++) {
+      days += i % 7 === 0 ? '<i class="run" data-tick data-order="' + (i / 7) + '"></i>' : "<i></i>";
+    }
+    var brackets = "";
+    for (var w = 0; w < 4; w++) brackets += '<span class="mono-s">' + esc(s.weekDays) + '</span>';
+    return '<div class="week" aria-hidden="true"><div class="days">' + days + '</div><div class="brackets">' + brackets + '</div></div>' +
+      '<p class="cap">' + esc(s.weekCap) + '</p>';
+  }
+
+  function specFor(check) {
+    if (check.kind === "zero") return zeroSpec();
+    switch (check.id) {
+      case "coverage": return coverageSpec(check);
+      case "apiDocs": return docsSpec();
+      case "lighthouse": return dialSpec(check);
+      case "lcp": return filmSpec(check);
+      case "cls": return clsSpec(check);
+      case "contrast": return contrastSpec();
+      case "headers": return gradeSpec(check);
+      case "patches": return weekSpec();
+    }
+    return "";
+  }
+
+  function marks(text) {
+    return esc(text)
+      .replace(/&lt;strong&gt;(.*?)&lt;\/strong&gt;/g, "<strong>$1</strong>")
+      .replace(/&lt;dim&gt;(.*?)&lt;\/dim&gt;/g, '<span class="dim">$1</span>');
+  }
+
+  /* ── Render ── */
+  function render() {
+    var c = COPY[lang];
+    document.getElementById("standards").setAttribute("aria-label", c.sectionLabel);
+    articlesEl.innerHTML = STANDARDS.map(function (std, index) {
+      var cat = c.categories[std.id];
+      var chips = cat.requirements.split(" | ").map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("");
+      var rows = std.checks.map(function (check) {
+        return '<li class="check" data-check="' + check.id + '"><div class="check-head"><h3>' + esc(cat.checks[check.id].label) + '</h3><p>' + esc(passText(std.id, check)) + '</p></div>' +
+          '<div class="spec">' + specFor(check) + '</div></li>';
+      }).join("");
+      var n = index + 1;
+      return '<article class="std" id="standard-' + std.id + '" aria-labelledby="t-' + std.id + '">' +
+        '<div class="std-text"><span class="eyebrow std-idx num">' + loc(n < 10 ? "0" + n : n) + '</span>' +
+          '<h2 id="t-' + std.id + '">' + esc(cat.title) + '</h2>' +
+          '<p class="std-desc">' + marks(cat.description) + '</p>' +
+          '<div class="built"><p class="eyebrow">' + esc(c.builtWith) + '</p><ul class="chips">' + chips + '</ul></div></div>' +
+        '<div class="std-sheet"><div class="sheet" data-sheet="' + std.id + '">' +
+          '<div class="sheet-head"><p class="eyebrow">' + esc(c.passLine) + '</p>' +
+            '<p class="legend" aria-hidden="true"><span><i class="sw-pass"></i>' + esc(c.legend.pass) + '</span><span><i class="sw-fail"></i>' + esc(c.legend.fail) + '</span></p></div>' +
+          '<ul class="checks">' + rows + '</ul>' +
+        '</div></div></article>';
+    }).join("");
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = c[el.getAttribute("data-i18n")]; });
+    wire();
+  }
+
+  /* ── Draw once on scroll-in ── */
+  function arm() {
+    if (observer) observer.disconnect();
+    var motion = !reduce.matches && !still && typeof Element.prototype.animate === "function";
+    var sheets = articlesEl.querySelectorAll("[data-sheet]");
+    if (!motion) return;
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        observer.unobserve(e.target);
+        draw(e.target);
+      });
+    }, { rootMargin: "0px 0px -40% 0px" }); // MOTION.trigger.inView: "top 60%"
+    sheets.forEach(function (sheet) {
+      if (drawn[sheet.dataset.sheet]) return;
+      sheet.classList.add("armed");
+      observer.observe(sheet);
+    });
+  }
+
+  function anim(el, frames, opts) {
+    return el.animate(frames, Object.assign({ fill: "backwards" }, opts));
+  }
+
+  function draw(sheet) {
+    drawn[sheet.dataset.sheet] = true;
+
+    // 1. Every threshold drops in as a bead.
+    sheet.querySelectorAll("[data-bead]").forEach(function (el, i) {
+      anim(el, [{ scale: 0 }, { scale: 1 }], { duration: M.fast, easing: M.strong, delay: i * M.stagger });
+    });
+    // 2. Pass bands grow out of their threshold, towards the side that passes.
+    sheet.querySelectorAll("[data-band]").forEach(function (el, i) {
+      anim(el, [{ scale: "0 1" }, { scale: "1 1" }], { duration: M.slow, easing: M.gentle, delay: 200 + i * M.stagger });
+    });
+    sheet.querySelectorAll("[data-arc]").forEach(function (el) {
+      var len = el.getAttribute("data-len"), C = el.getAttribute("data-c");
+      anim(el, [{ strokeDasharray: "0 " + C }, { strokeDasharray: len + " " + C }], { duration: M.slow, easing: M.gentle, delay: 200 });
+    });
+    // Lines of code and patch runs rise in order from the threshold outward.
+    sheet.querySelectorAll("[data-tick]").forEach(function (el) {
+      var o = Number(el.getAttribute("data-order")) || 1;
+      var step = el.classList.contains("run") ? M.base / 4 : 30;
+      anim(el, [{ scale: "1 0" }, { scale: "1 1" }], { duration: M.fast, easing: M.strong, delay: 200 + (o - 1) * step });
+    });
+    // Counts that must be zero: the figure rises through its clip — transform only.
+    sheet.querySelectorAll("[data-zero]").forEach(function (el) {
+      anim(el, [{ translate: "0 105%" }, { translate: "0 0" }], { duration: M.base, easing: M.strong, delay: 100 });
+    });
+    sheet.querySelectorAll("[data-grade]").forEach(function (el, i) {
+      anim(el, [{ opacity: 0 }, { opacity: 1 }], { duration: M.fast, easing: M.smooth, delay: 200 + i * M.stagger });
+    });
+
+    sheet.classList.remove("armed");
+
+    // LCP: a playhead sweeps the clock; each frame paints as it is passed.
+    sheet.querySelectorAll(".film").forEach(rollFilm);
+    // CLS: each viewport takes its shift once.
+    sheet.querySelectorAll("[data-vp]").forEach(function (vp, i) { shift(vp, 500 + i * 150); });
+  }
+
+  function rollFilm(film) {
+    var head = film.querySelector("[data-playhead]");
+    var side = root.dir === "rtl" ? "right" : "left";
+    var lead = 300;
+    film.classList.add("rolling");
+    var kf0 = { opacity: 1 }, kf1 = { opacity: 1 };
+    kf0[side] = "0%"; kf1[side] = "100%";
+    var sweep = head.animate([kf0, kf1], { duration: M.sweep, delay: lead, easing: "linear", fill: "backwards" });
+    film.querySelectorAll(".frame").forEach(function (f) {
+      var t = Number(f.dataset.t);
+      setTimeout(function () { f.classList.add("on"); }, lead + (t / 4) * M.sweep);
+    });
+    sweep.onfinish = function () {
+      head.animate([{ opacity: 1 }, { opacity: 0 }], { duration: M.fast, easing: M.smooth });
+      film.classList.remove("rolling");
+    };
+  }
+
+  function shift(vp, delay) {
+    if (reduce.matches || typeof vp.animate !== "function") return;
+    var s = Number(vp.dataset.shift);
+    var banner = vp.querySelector(".vp-banner");
+    var content = vp.querySelector(".vp-content");
+    // The layout shift itself: fast, one move — a jump, eased just enough to be seen.
+    anim(banner, [{ scale: "1 0" }, { scale: "1 1" }], { duration: M.fast, easing: M.strong, delay: delay });
+    if (s > 0) anim(content, [{ translate: "0 0" }, { translate: "0 " + s + "%" }], { duration: M.fast, easing: M.strong, delay: delay });
+  }
+
+  function wire() {
+    articlesEl.querySelectorAll("[data-replay]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        btn.closest(".check").querySelectorAll("[data-vp]").forEach(function (vp, i) { shift(vp, 250 + i * 150); });
+      });
+    });
+    articlesEl.querySelectorAll("[data-vp]").forEach(function (vp) {
+      var replay = function () { shift(vp, 250); };
+      vp.addEventListener("click", replay);
+      vp.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); replay(); } });
+      if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) vp.addEventListener("mouseenter", replay);
+    });
+  }
+
+  /* ── The one live reading: this file's own LCP, from the browser. ── */
+  function updateLive() {
+    var dot = articlesEl.querySelector("[data-live-dot]");
+    var text = articlesEl.querySelector("[data-live-text]");
+    var wrap = articlesEl.querySelector("[data-live]");
+    if (!dot || !text || lcpSeconds == null) return;
+    var max = 4;
+    dot.hidden = false;
+    dot.style.insetInlineStart = (Math.min(lcpSeconds, max) / max) * 100 + "%";
+    text.innerHTML = fill(esc(COPY[lang].spec.live), { v: "<b>" + unit(lcpSeconds.toFixed(2), "seconds") + "</b>" });
+    wrap.hidden = false;
+  }
+  try {
+    if (window.PerformanceObserver && PerformanceObserver.supportedEntryTypes && PerformanceObserver.supportedEntryTypes.indexOf("largest-contentful-paint") !== -1) {
+      lcpSupported = true;
+      new PerformanceObserver(function (list) {
+        var entries = list.getEntries();
+        var last = entries[entries.length - 1];
+        lcpSeconds = (last.renderTime || last.startTime) / 1000;
+        updateLive();
+      }).observe({ type: "largest-contentful-paint", buffered: true });
+    }
+  } catch (e) { lcpSupported = false; }
+
+  /* ── Toggles ── */
+  function setLang(next) {
+    lang = next;
+    root.lang = next;
+    root.dir = next === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-lang]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.lang === next ? "true" : "false"); });
+    render();
+    arm();
+  }
+  function setTheme(next) {
+    root.setAttribute("data-theme", next);
+    document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.themeSet === next ? "true" : "false"); });
+    // The contrast samples are measured against the ground, so they re-measure.
+    articlesEl.querySelectorAll("[data-contrast]").forEach(function (el) { el.innerHTML = contrastInner(); });
+  }
+  document.querySelectorAll("[data-lang]").forEach(function (b) { b.addEventListener("click", function () { setLang(b.dataset.lang); }); });
+  document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.addEventListener("click", function () { setTheme(b.dataset.themeSet); }); });
+
+  // For verification: ?lang=ar&theme=dark&still=1 (still = the finished sheets, no draw-in).
+  setTheme(q.get("theme") || root.getAttribute("data-theme") || "light");
+  setLang(q.get("lang") === "ar" ? "ar" : "en");
+  window.__protoB = { contrastSamples: contrastSamples, clsCase: clsCase, ratio: ratio, hslToRgb: hslToRgb };
+})();
+</script>
+</body>
+</html>

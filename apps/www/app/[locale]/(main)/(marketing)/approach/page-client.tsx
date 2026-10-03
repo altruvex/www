@@ -5,7 +5,13 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { bodyMarks, renderBodyText } from "@/components/ui/rich-text";
+import {
+  STRIKE_DRAWN,
+  STRIKE_LINE,
+  STRIKE_UNDRAWN,
+} from "@/components/ui/strike";
 import {
   MOTION,
   useSectionCardGrid,
@@ -114,6 +120,7 @@ function ContrastsSection() {
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
           secondTitle={t("titleItalic")}
+          accent="world"
           classes={{ title: "max-w-[22ch]" }}
         />
 
@@ -137,7 +144,7 @@ function ContrastsSection() {
                 className="grid gap-y-5 border-b border-border-subtle py-8 md:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)] md:gap-x-10 md:py-10 md:first:border-t"
               >
                 <span className="font-mono text-xs text-muted-foreground tabular-nums md:pt-2">
-                  {String(index + 1).padStart(2, "0")}
+                  <Num value={index + 1} pad={2} />
                 </span>
                 <div>
                   <Eyebrow className="m-0 mb-2 md:hidden">{t("label.common")}</Eyebrow>
@@ -217,7 +224,7 @@ function PrinciplesSection() {
               )}
             >
               <span className="eyebrow text-local-accent-text tabular-nums">
-                {String(index + 1).padStart(2, "0")}
+                <Num value={index + 1} pad={2} />
               </span>
               <h3 className="mt-4 text-2xl leading-tight font-medium tracking-[-0.015em] text-foreground md:text-[1.75rem]">
                 {t(`${key}.title`)}
@@ -263,10 +270,10 @@ function ConstraintsSection() {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const strikes = list.querySelectorAll("[data-strike]");
-        gsap.set(strikes, { backgroundSize: "0% 2px" });
+        gsap.set(strikes, { backgroundSize: STRIKE_UNDRAWN });
 
         const tween = gsap.to(strikes, {
-          backgroundSize: "100% 2px",
+          backgroundSize: STRIKE_DRAWN,
           duration: MOTION.duration.base,
           ease: MOTION.ease.gentle,
           stagger: MOTION.stagger.sequence,
@@ -338,12 +345,12 @@ function ConstraintsSection() {
                 className="grid grid-cols-[2.5rem_minmax(0,1fr)] border-b border-border-subtle py-5"
               >
                 <span className="pt-1 font-mono text-xs text-muted-foreground tabular-nums">
-                  {String(index + 1).padStart(2, "0")}
+                  <Num value={index + 1} pad={2} />
                 </span>
                 <p className="text-lg leading-[1.6] text-foreground md:text-xl">
                   <span
                     data-strike
-                    className="bg-[linear-gradient(var(--local-accent),var(--local-accent))] bg-size-[100%_2px] bg-position-[0_58%] bg-no-repeat box-decoration-slice rtl:bg-position-[100%_50%]"
+                    className={STRIKE_LINE}
                   >
                     {tBounds(`items.${key}`)}
                   </span>
@@ -431,7 +438,7 @@ function DirectionSection() {
               <p
                 lang="ar"
                 dir="rtl"
-                className="mt-6 text-start font-[family-name:var(--font-vazirmatn)] text-[clamp(2rem,4vw,3.5rem)] leading-[1.28] font-light tracking-normal text-foreground"
+                className="mt-6 text-start font-sans text-[clamp(2rem,4vw,3.5rem)] leading-(--lh-heading-ar) font-(--weight-ar-display-light) tracking-normal text-foreground"
               >
                 {t("specimen.ar.text")}
               </p>

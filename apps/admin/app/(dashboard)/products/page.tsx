@@ -3,6 +3,7 @@ import { Boxes } from "lucide-react";
 
 import { Button } from "@repo/ui";
 
+import { FilterChip } from "@/components/os/data-table";
 import { EmptyState } from "@/components/os/empty-state";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
@@ -22,9 +23,16 @@ export const dynamic = "force-dynamic";
  * right now" — a question `Project.liveUrl` could never answer, because a
  * project has an end date and a live site does not.
  */
-export default async function ProductsPage() {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const { client: clientParam } = await searchParams;
+  const clientId = clientParam || undefined;
+
   const [products, clients, projects] = await Promise.all([
-    listProducts(),
+    listProducts({ clientId }),
     prisma.client.findMany({
       orderBy: { createdAt: "desc" },
       select: { id: true, name: true, company: true },
@@ -39,35 +47,74 @@ export default async function ProductsPage() {
     id: c.id,
     label: c.company || c.name || "Unnamed client",
   }));
+  const filterClient = clientId
+    ? clientOptions.find((c) => c.id === clientId)
+    : null;
 
-  const rows: ProductRow[] = products.map((p) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    kind: p.kind,
-    status: p.status,
-    clientId: p.client.id,
-    clientName: p.client.company || p.client.name || "Unnamed client",
-    projectId: p.project?.id ?? null,
-    projectName: p.project?.name ?? null,
-    productionUrl: p.productionUrl,
-    stagingUrl: p.stagingUrl,
-    repositoryUrl: p.repositoryUrl,
-    framework: p.framework,
-    hostingProvider: p.hostingProvider,
-    lastDeployedAt: p.lastDeployment?.finishedAt?.toISOString() ?? null,
-    lastDeploymentNumber: p.lastDeployment?.number ?? null,
-    lastDeploymentVersion: p.lastDeployment?.version ?? null,
-    openIncidents: p.openIncidents,
-    deploymentCount: p._count.deployments,
-    hasIngestToken: p.ingestTokenHash != null,
-  }));
+  // The latest successful PRODUCTION deploy per product, with its id so the
+  // column can link to it. Same ordering as `lastProductionDeployment()` — a
+  // deploy CI never marked finished sorts last rather than first.
+  const productionDeploys = await prisma.deployment.findMany({
+    where: {
+      productId: { in: products.map((p) => p.id) },
+      environment: "PRODUCTION",
+      status: "SUCCEEDED",
+    },
+    orderBy: [
+      { productId: "asc" },
+      { finishedAt: { sort: "desc", nulls: "last" } },
+      { createdAt: "desc" },
+    ],
+    distinct: ["productId"],
+    select: {
+      id: true,
+      productId: true,
+      number: true,
+      version: true,
+      finishedAt: true,
+      createdAt: true,
+    },
+  });
+  const productionByProduct = new Map(
+    productionDeploys.map((d) => [d.productId, d]),
+  );
+
+  const rows: ProductRow[] = products.map((p) => {
+    const production = productionByProduct.get(p.id);
+    return {
+      id: p.id,
+      name: p.name,
+      slug: p.slug,
+      kind: p.kind,
+      status: p.status,
+      clientId: p.client.id,
+      clientName: p.client.company || p.client.name || "Unnamed client",
+      projectId: p.project?.id ?? null,
+      projectName: p.project?.name ?? null,
+      productionUrl: p.productionUrl,
+      stagingUrl: p.stagingUrl,
+      repositoryUrl: p.repositoryUrl,
+      framework: p.framework,
+      hostingProvider: p.hostingProvider,
+      lastProductionId: production?.id ?? null,
+      lastProductionAt: production
+        ? (production.finishedAt ?? production.createdAt).toISOString()
+        : null,
+      lastProductionNumber: production?.number ?? null,
+      lastProductionVersion: production?.version ?? null,
+      openIncidents: p.openIncidents,
+      deploymentCount: p._count.deployments,
+      hasIngestToken: p.ingestTokenHash != null,
+    };
+  });
 
   const live = rows.filter((r) => r.status === "LIVE").length;
   const withIncidents = rows.filter((r) => r.openIncidents > 0).length;
   // A live product nothing reports on is a blind spot, and worth counting
   // separately from one that simply has not shipped.
-  const unmonitored = rows.filter((r) => r.status === "LIVE" && !r.hasIngestToken).length;
+  const unmonitored = rows.filter(
+    (r) => r.status === "LIVE" && !r.hasIngestToken,
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -98,7 +145,11 @@ export default async function ProductsPage() {
           value={withIncidents}
           sub="Something is open against them"
           tone={withIncidents > 0 ? "danger" : "neutral"}
-          href={withIncidents > 0 ? "/incidents" : undefined}
+          href={
+            withIncidents > 0
+              ? `/incidents${clientId ? `?client=${clientId}` : ""}`
+              : undefined
+          }
         />
         <StatTile
           label="Unmonitored"
@@ -109,14 +160,52 @@ export default async function ProductsPage() {
         <StatTile
           label="Deployments"
           value={rows.reduce((sum, r) => sum + r.deploymentCount, 0)}
-          sub="Recorded across all products"
+          sub={
+            clientId
+              ? "Recorded for this client's products"
+              : "Recorded across all products"
+          }
+          href={clientId ? `/deployments?client=${clientId}` : "/deployments"}
         />
       </div>
 
-      {rows.length === 0 ? (
+      {clientId && (
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterChip
+            label="Client"
+            value={filterClient?.label ?? "Unknown client"}
+            clearHref="/products"
+          />
+        </div>
+      )}
+
+      {rows.length === 0 && clientId ? (
         <EmptyState
           icon={Boxes}
-          title={clientOptions.length === 0 ? "No clients to operate for" : "No products yet"}
+          title={
+            filterClient
+              ? `No products for ${filterClient.label}`
+              : "Client not found"
+          }
+          body={
+            filterClient
+              ? "Altruvex does not operate a site or app for this client yet. Add one when a build goes live, or clear the filter to see every product."
+              : "The client in this link no longer exists. Clear the filter to see every product."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href="/products">Show all products</Link>
+            </Button>
+          }
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={Boxes}
+          title={
+            clientOptions.length === 0
+              ? "No clients to operate for"
+              : "No products yet"
+          }
           body={
             clientOptions.length === 0
               ? "A product belongs to a client — it is a site or app Altruvex runs on their behalf. Add a client first, then the product they own."

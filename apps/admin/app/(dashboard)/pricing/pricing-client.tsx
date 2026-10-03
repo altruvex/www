@@ -5,6 +5,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
+import { formatMoney, maintenanceIntervalPrice } from "@repo/pricing-schema";
 import { Button, Input } from "@repo/ui";
 import { LoadingIcon } from "@repo/ui";
 import { cn } from "@/lib/utils";
@@ -15,10 +16,15 @@ export interface PricingSnapshot {
     serviceId: string; complexityId: string; serviceName: string; bandName: string;
     priceMin: number; priceMax: number; weeksMin: number; weeksMax: number;
   }[];
-  tiers: { id: string; buyerLabel: string; serviceId: string; complexityId: string; display: string }[];
+  /** Cells the public range grid publishes, unnamed. */
+  publishedRanges: number;
   maintenance: {
     id: string; name: string; price: number | null; requestsPerCycle: number | null;
     overageHourlyRate: number | null; internalHourEquivalent: number | null; status: string;
+    /** Retainers on this plan whose derived status still bills. */
+    activeRetainers: number;
+    /** What saving a new price does to those retainers — the rule the renewal code applies, in words. */
+    repriceNote: string;
   }[];
   consulting: { id: string; name: string; price: number; durationBusinessDays: number; status: string }[];
   addons: {
@@ -131,12 +137,6 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
   const [addons, setAddons] = React.useState(snapshot.addons);
   const [terms, setTerms] = React.useState(snapshot.terms);
 
-  const tierFor = React.useCallback(
-    (serviceId: string, complexityId: string) =>
-      snapshot.tiers.find((t) => t.serviceId === serviceId && t.complexityId === complexityId),
-    [snapshot.tiers],
-  );
-
   const plannedCount = addons.filter((a) => a.status !== "active").length;
 
   return (
@@ -147,7 +147,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
           value={snapshot.overridden ? "Edited here" : "Shipped defaults"}
           sub={snapshot.overridden ? "At least one value has been changed" : "Nothing overridden yet"}
         />
-        <StatTile label="Published tiers" value={snapshot.tiers.length} sub="Cards on /pricing" />
+        <StatTile label="Published ranges" value={snapshot.publishedRanges} sub="Unnamed cells on /pricing" />
         <StatTile
           label="Maintenance plans"
           value={plans.filter((p) => p.status === "active").length}
@@ -163,20 +163,19 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
 
       <Panel
         title="Project price matrix"
-        description="Service × complexity. Tier cards on /pricing read these cells — a card cannot disagree with what the estimator quotes."
+        description="Service × complexity. The public range grid, the estimator and every proposal read these cells — none of them can quote a figure this table does not carry."
       >
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-border">
-                {["Service", "Band", "Published as", "Min (EGP)", "Max (EGP)", "Weeks min", "Weeks max", ""].map((h) => (
+                {["Service", "Band", "Min (EGP)", "Max (EGP)", "Weeks min", "Weeks max", ""].map((h) => (
                   <th key={h} className="py-2 pe-3 text-meta uppercase tracking-wider text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {cells.map((cell, i) => {
-                const tier = tierFor(cell.serviceId, cell.complexityId);
                 const key = `cell:${cell.serviceId}:${cell.complexityId}`;
                 const patch = (next: Partial<typeof cell>) =>
                   setCells((prev) => prev.map((c, j) => (j === i ? { ...c, ...next } : c)));
@@ -184,13 +183,6 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                   <tr key={key} className="border-b border-border align-middle">
                     <td className="py-2 pe-3 text-base text-foreground">{cell.serviceName}</td>
                     <td className="py-2 pe-3 text-base text-muted-foreground">{cell.bandName}</td>
-                    <td className="py-2 pe-3 text-base">
-                      {tier ? (
-                        <span className="text-foreground">{tier.buyerLabel}</span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
                     {(["priceMin", "priceMax", "weeksMin", "weeksMax"] as const).map((field) => (
                       <td key={field} className="py-2 pe-3">
                         <Input
@@ -236,12 +228,23 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
               const key = `maintenance:${plan.id}`;
               const patch = (next: Partial<typeof plan>) =>
                 setPlans((prev) => prev.map((p, j) => (j === i ? { ...p, ...next } : p)));
+              // Derived from the figure being typed, so the operator sees what
+              // an override does to the yearly invoice before saving it.
+              const annual = maintenanceIntervalPrice(plan, "annual");
               return (
                 <div key={plan.id} className="space-y-2 border-b border-border pb-4 last:border-0">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium text-foreground">{plan.name}</span>
                     {plan.status !== "active" && <SoonBadge />}
                   </div>
+                  <p className="text-meta text-muted-foreground">
+                    Billed yearly:{" "}
+                    <span className="font-mono">
+                      {annual === null ? "custom quote" : `${formatMoney(annual, "en")} / year`}
+                    </span>
+                    {annual !== null && " — read-only, follows the monthly price"}
+                  </p>
+                  <p className="text-meta text-muted-foreground">{plan.repriceNote}</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <NumberField
                       label="Price (blank = custom quote)"
@@ -390,7 +393,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
 
       <Panel
         title="Commercial terms"
-        description="Published on /transparency and used by every generated contract."
+        description="Published on /pricing and used by every generated proposal and contract."
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <NumberField label="VAT %" value={Math.round(terms.vatRate * 100)}

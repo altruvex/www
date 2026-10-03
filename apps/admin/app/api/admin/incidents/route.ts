@@ -1,22 +1,8 @@
+import { recordActivity, recordChange } from "@/lib/activity-log";
+import { badRequest, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
+import { prisma } from "@repo/database";
 import { z } from "zod";
 
-import { prisma } from "@repo/database";
-
-import { recordActivity } from "@/lib/activity-log";
-import { badRequest, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
-
-/**
- * Incidents (§8).
- *
- * Unlike builds and deployments, an incident IS created by a human: it is a
- * judgement that something is wrong, and no CI system makes that call. What it
- * links to — a deployment, the logs around it — is real data from ingest, so an
- * incident is a human annotation over machine evidence rather than a free-
- * floating note.
- *
- * Status and the update timeline move together: every status change writes an
- * `IncidentUpdate`, so the timeline can never disagree with the header.
- */
 
 export const dynamic = "force-dynamic";
 
@@ -39,9 +25,17 @@ const patchSchema = z.object({
   severity: z.enum(SEVERITIES).optional(),
   ownerId: z.string().min(1).nullable().optional(),
   resolution: z.string().max(5000).nullable().optional(),
-  /** Timeline note. Required when resolving, so a fix is never unexplained. */
   update: z.string().max(5000).optional(),
+  /** The deployment suspected of causing it; null clears the link. */
+  deploymentId: z.string().min(1).nullable().optional(),
 });
+
+const ownerName = (owner: { name: string | null; email: string } | null | undefined) =>
+  owner ? owner.name || owner.email : "Unowned";
+
+const deploymentName = (
+  deployment: { number: number; environment: string } | null | undefined,
+) => (deployment ? `#${deployment.number} ${deployment.environment.toLowerCase()}` : "None");
 
 export const GET = withAdmin(async (request) => {
   const status = request.nextUrl.searchParams.get("status");
@@ -133,16 +127,24 @@ export const POST = withAdmin(async (request, { actor }) => {
   });
 
   return ok({ incident });
-});
+}, { can: ["create", "incident"] });
 
 export const PATCH = withAdmin(async (request, { actor }) => {
   const { id, update, ...patch } = await readJson(request, patchSchema);
 
   const existing = await prisma.incident.findUnique({
     where: { id },
-    include: { product: { select: { id: true, name: true } } },
+    include: {
+      product: { select: { id: true, name: true } },
+      owner: { select: { id: true, name: true, email: true } },
+      deployment: { select: { id: true, number: true, environment: true } },
+    },
   });
   if (!existing) throw notFound("That incident no longer exists.");
+
+  const statusChanged = Boolean(patch.status && patch.status !== existing.status);
+  const reopening = statusChanged && existing.status === "RESOLVED";
+  const label = `${existing.product.name} #${existing.number}`;
 
   // Resolving without saying what was wrong produces an incident history nobody
   // can learn from, so the note is required rather than encouraged.
@@ -153,30 +155,94 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
   }
 
+  // Resolve the related records once, both to refuse a foreign one and so the
+  // audit diff names people and deploys rather than ids.
+  let nextOwner = existing.owner;
+  if (patch.ownerId !== undefined && patch.ownerId !== existing.ownerId) {
+    nextOwner = patch.ownerId
+      ? await prisma.user.findUnique({
+          where: { id: patch.ownerId },
+          select: { id: true, name: true, email: true },
+        })
+      : null;
+    if (patch.ownerId && !nextOwner) throw notFound("That team member no longer exists.");
+  }
+  let nextDeployment = existing.deployment;
+  if (patch.deploymentId !== undefined && patch.deploymentId !== existing.deploymentId) {
+    if (patch.deploymentId) {
+      const found = await prisma.deployment.findUnique({
+        where: { id: patch.deploymentId },
+        select: { id: true, number: true, environment: true, productId: true },
+      });
+      if (!found) throw notFound("That deployment no longer exists.");
+      if (found.productId !== existing.productId) {
+        throw badRequest("That deployment belongs to a different product.");
+      }
+      nextDeployment = found;
+    } else {
+      nextDeployment = null;
+    }
+  }
+
+  const note = update?.trim() || patch.resolution?.trim() || "";
+  const fieldsChanged =
+    (patch.severity !== undefined && patch.severity !== existing.severity) ||
+    (patch.ownerId !== undefined && patch.ownerId !== existing.ownerId) ||
+    (patch.deploymentId !== undefined && patch.deploymentId !== existing.deploymentId) ||
+    (patch.resolution !== undefined && (patch.resolution?.trim() || null) !== existing.resolution);
+
+  // A request that changes nothing and says nothing writes nothing, and says so
+  // — the caller must not show "updated" over a no-op.
+  if (!statusChanged && !fieldsChanged && !note) {
+    return ok({ incident: existing, changed: false });
+  }
+
   const incident = await prisma.$transaction(async (tx) => {
     const updated = await tx.incident.update({
       where: { id },
       data: {
-        ...patch,
+        ...(patch.severity !== undefined ? { severity: patch.severity } : {}),
+        ...(patch.ownerId !== undefined ? { ownerId: patch.ownerId } : {}),
+        ...(patch.deploymentId !== undefined ? { deploymentId: patch.deploymentId } : {}),
+        ...(patch.resolution !== undefined
+          ? { resolution: patch.resolution?.trim() || null }
+          : {}),
+        // Resolving with only an update note: that note is what fixed it, so it
+        // becomes the resolution rather than leaving a resolved incident blank.
+        ...(patch.status === "RESOLVED" &&
+        existing.status !== "RESOLVED" &&
+        patch.resolution === undefined &&
+        update?.trim()
+          ? { resolution: update.trim() }
+          : {}),
+        ...(patch.status ? { status: patch.status } : {}),
         ...(patch.status === "RESOLVED"
           ? { resolvedAt: existing.resolvedAt ?? new Date() }
           : patch.status
             ? { resolvedAt: null }
             : {}),
-        // First move off INVESTIGATING is the acknowledgement.
+        // Reopening voids the old fix: it is kept in the timeline (it was
+        // posted as an update when the incident was resolved), but the
+        // incident no longer claims it as its resolution.
+        ...(reopening && patch.resolution === undefined ? { resolution: null } : {}),
+        // First move off INVESTIGATING is the acknowledgement. It is a fact
+        // about the past, so a later reopen does not clear it.
         ...(patch.status && patch.status !== "INVESTIGATING" && !existing.acknowledgedAt
           ? { acknowledgedAt: new Date() }
           : {}),
       },
     });
 
-    const body = update?.trim() || patch.resolution?.trim();
-    if (body || (patch.status && patch.status !== existing.status)) {
+    if (note || statusChanged) {
       await tx.incidentUpdate.create({
         data: {
           incidentId: id,
-          status: patch.status ?? null,
-          body: body || `Status moved to ${patch.status?.toLowerCase()}.`,
+          status: statusChanged ? (patch.status ?? null) : null,
+          body:
+            note ||
+            (reopening
+              ? `Reopened — moved back to ${patch.status?.toLowerCase()}.`
+              : `Status moved to ${patch.status?.toLowerCase()}.`),
           authorLabel: actor.label,
           authorId: actor.kind === "USER" ? (actor.id ?? null) : null,
         },
@@ -186,22 +252,58 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     return updated;
   });
 
-  if (patch.status && patch.status !== existing.status) {
+  if (statusChanged && patch.status) {
     await recordActivity({
-      action: patch.status === "RESOLVED" ? "incident.resolved" : "incident.updated",
+      action:
+        patch.status === "RESOLVED"
+          ? "incident.resolved"
+          : reopening
+            ? "incident.reopened"
+            : "incident.updated",
       actor,
       entityType: "incident",
       entityId: id,
-      entityLabel: `${existing.product.name} #${existing.number}`,
+      entityLabel: label,
       summary:
         patch.status === "RESOLVED"
           ? `Resolved ${existing.severity} on ${existing.product.name}: ${existing.title}`
-          : `${existing.title} moved to ${patch.status.toLowerCase()}`,
+          : reopening
+            ? `Reopened ${existing.title} as ${patch.status.toLowerCase()}`
+            : `${existing.title} moved to ${patch.status.toLowerCase()}`,
       before: { status: existing.status },
       after: { status: patch.status },
       metadata: { productId: existing.product.id },
     });
   }
 
-  return ok({ incident });
-});
+  // Severity, owner, suspected deploy and resolution text are judgements too,
+  // and each one changes who gets woken up — so they are audited, with only the
+  // fields that actually moved.
+  await recordChange({
+    action: "incident.changed",
+    actor,
+    entityType: "incident",
+    entityId: id,
+    entityLabel: label,
+    summary: `Updated ${label}: ${existing.title}`,
+    before: {
+      severity: existing.severity,
+      owner: ownerName(existing.owner),
+      deployment: deploymentName(existing.deployment),
+      resolution: existing.resolution,
+    },
+    after: {
+      severity: incident.severity,
+      owner: ownerName(nextOwner),
+      deployment: deploymentName(nextDeployment),
+      resolution: incident.resolution,
+    },
+    metadata: {
+      productId: existing.product.id,
+      ownerId: incident.ownerId,
+      deploymentId: incident.deploymentId,
+    },
+  });
+
+  return ok({ incident, changed: true });
+}, { can: ["edit", "incident"] });

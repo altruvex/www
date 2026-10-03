@@ -45,12 +45,6 @@ export const CONSULTING_PACKAGES: Readonly<
   },
 };
 
-export function publicConsultingPackages(): readonly ConsultingPackage[] {
-  return Object.values(CONSULTING_PACKAGES).filter(
-    (pkg) => pkg.status === "active",
-  );
-}
-
 /**
  * What the client gets back against the build, in money.
  *

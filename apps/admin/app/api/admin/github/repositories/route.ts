@@ -1,7 +1,3 @@
-import { NextResponse } from "next/server";
-
-import { prisma } from "@repo/database";
-
 import {
   GithubApiError,
   GithubAuthError,
@@ -11,20 +7,10 @@ import {
   listRepositories,
 } from "@/lib/github";
 import { withAdmin } from "@/lib/with-admin";
+import { prisma } from "@repo/database";
+import { NextResponse } from "next/server";
 
-/**
- * Repositories an operator can attach to a product (§26).
- *
- * Read-only, and only ever a convenience: a repository URL can still be typed
- * by hand, including one this token has never seen. The listing exists so that
- * the common case — a repository Altruvex owns — is a click instead of a
- * paste-and-hope, and so a typo cannot silently produce a product no webhook
- * will ever match.
- *
- * Each repository is returned with the product already using it, so the UI can
- * say "taken" rather than letting an operator create the ambiguity the webhook
- * receiver then has to refuse.
- */
+
 
 export const dynamic = "force-dynamic";
 
@@ -52,9 +38,6 @@ export const GET = withAdmin(async () => {
     const takenBy = new Map<string, { id: string; name: string }>();
     for (const product of products) {
       const slug = githubRepoSlug(product.repositoryUrl);
-      // First writer wins in the map, but a repository claimed twice is a
-      // problem the ingest receiver already refuses — this only has to name one
-      // of them so the operator knows to look.
       if (slug && !takenBy.has(slug)) takenBy.set(slug, { id: product.id, name: product.name });
     }
 
@@ -78,4 +61,4 @@ export const GET = withAdmin(async () => {
     }
     throw error;
   }
-});
+}, { can: ["edit", "project"] });

@@ -1,82 +1,70 @@
 "use client";
 
-import { Container } from "@/components/container";
-import { Button } from "@repo/ui";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@repo/ui";
+
+/**
+ * Served by the service worker when the network is gone. The same plane the
+ * sign-in and security screens use; the status line replaces the browser
+ * alert the previous version threw up.
+ */
 export default function OfflinePage() {
   const router = useRouter();
+  const [status, setStatus] = useState<"idle" | "checking" | "offline">("idle");
 
-  const handleRetry = () => {
-    if (navigator.onLine) {
+  function retry() {
+    setStatus("checking");
+    if (typeof navigator !== "undefined" && navigator.onLine) {
       router.refresh();
-    } else {
-      alert("Still offline. Please check your connection.");
+      return;
     }
-  };
+    setStatus("offline");
+  }
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-background">
-      <Container>
-        <div className="flex flex-col items-center justify-center text-center">
-          <div className="mb-8 relative">
-            <div
-              className={cn(
-                "w-32 h-32 rounded-full flex items-center justify-center",
-                "bg-linear-to-br from-muted to-muted/50",
-                "border border-border",
-              )}
-            >
-              <WifiOff className="w-16 h-16 text-muted-foreground" />
-            </div>
-            <div
-              className="absolute inset-0 rounded-full blur-3xl opacity-20"
-              style={{
-                background:
-                  "radial-gradient(circle, hsl(var(--primary)) 0%, transparent 70%)",
-              }}
-            />
-          </div>
-          <h1 className="mb-4 font-sans text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-foreground">
-            You&apos;re Offline
-          </h1>
-          <p className="mb-8 max-w-md text-lg text-muted-foreground">
-            It looks like you&apos;ve lost your internet connection. Check your
-            network and try again.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button
-              size="lg"
-              variant="brand"
-              onClick={handleRetry}
-              className="gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Try Again
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => window.history.back()}
-            >
-              Go Back
-            </Button>
-          </div>
-          <div className="mt-12 flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border">
-            <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
-            <p className="text-md text-muted-foreground font-mono">
-              Network Status: Offline
-            </p>
-          </div>
+    <main className="flex min-h-dvh items-center justify-center px-4 py-10">
+      <div className="w-full max-w-95">
+        <div className="mb-5 flex items-center gap-2">
+          <span className="grid size-6 shrink-0 place-items-center rounded-md bg-foreground font-sans text-meta font-semibold text-background">
+            A
+          </span>
+          <span className="font-sans text-md font-semibold tracking-tight">Altruvex</span>
+          <span className="telemetry ms-auto text-subtle-foreground">Operating system</span>
         </div>
-      </Container>
-      <div className="absolute top-20 left-10 w-32 h-32 rounded-full blur-3xl opacity-10 bg-primary animate-pulse" />
-      <div
-        className="absolute bottom-20 right-10 w-40 h-40 rounded-full blur-3xl opacity-10 bg-accent animate-pulse"
-        style={{ animationDelay: "1s" }}
-      />
-    </div>
+        <div className="plane p-5">
+          <div className="flex items-center gap-2">
+            <WifiOff className="size-4 text-muted-foreground" />
+            <h1 className="text-lg font-semibold">You are offline</h1>
+          </div>
+          <p className="mt-1 text-base text-muted-foreground">
+            This page could not be loaded because the connection dropped. Nothing you had already
+            saved is affected.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button variant="brand" className="h-9" onClick={retry} disabled={status === "checking"}>
+              <RefreshCw className="size-3.5" />
+              Try again
+            </Button>
+            <Button variant="outline" className="h-9" onClick={() => window.history.back()}>
+              Go back
+            </Button>
+          </div>
+          <p className="mt-3 flex items-center gap-2 font-mono text-micro text-subtle-foreground" role="status">
+            <span
+              className={status === "offline" ? "size-1.5 rounded-full bg-danger" : "size-1.5 rounded-full bg-border-strong"}
+              aria-hidden
+            />
+            {status === "offline"
+              ? "Still offline. Check the connection and try again."
+              : status === "checking"
+                ? "Checking the connection…"
+                : "Waiting for the connection to return."}
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }

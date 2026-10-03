@@ -1,48 +1,64 @@
 "use client";
 
-import { Num } from "@/components/ui/num";
-import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
+import { Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { bodyMarks } from "@/components/ui/rich-text";
-import {
-  HOMEPAGE_SUPPORTING_CASE_STUDIES,
-  getCommercialCta,
-} from "@/lib/config/commercial";
-import {
-  useSectionCardGrid,
-  useSectionDescription,
-  useSectionElement,
-  useSectionEyebrow,
-  useSectionTitle,
-} from "@/lib/motion";
-import { splitHeadline } from "@/lib/utils/utils";
+import { Link } from "@/i18n/navigation";
+import { HOMEPAGE_SUPPORTING_CASE_STUDIES } from "@/lib/config/commercial";
+import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { useSectionElement, useSectionEyebrow, useWordRead } from "@/lib/motion";
+import { getDomainName } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { memo } from "react";
-import { SectionHeading } from "./section-heading";
-import { WorkRecord } from "./work-record";
+import { Children, memo, type ReactNode } from "react";
 
+const [NEWLIGHT, ART_LIGHTING] = HOMEPAGE_SUPPORTING_CASE_STUDIES;
+const OWN_SITE = "altruvex-site";
+const BUILDS = [NEWLIGHT, ART_LIGHTING, OWN_SITE] as const;
+
+const FOCUS_RING =
+  "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+
+/** Text as `[data-word]` spans for useWordRead; elements pass through. */
+function readWords(node: ReactNode): ReactNode {
+  return Children.toArray(node).map((child, i) =>
+    typeof child === "string"
+      ? child.split(/(\s+)/).map((part, j) =>
+          part.trim() ? (
+            <span key={`${i}-${j}`} data-word>
+              {part}
+            </span>
+          ) : (
+            part
+          ),
+        )
+      : child,
+  );
+}
+
+/**
+ * The work as one sentence: the three builds are named in running display
+ * type and each name is the link to its case study. No list, no screenshots —
+ * the detail lives on /work. Picked from docs/prototypes/2026-10-work (D).
+ */
 export const WorkSection = memo(function WorkSection() {
-  const tW = useTranslations("work");
-  const tf = useTranslations("commercial.flagship");
-  const tCTAs = useTranslations("commercial.ctas");
-  const tCommon = useTranslations("common");
-  const stepLabel = tCommon("step");
-
-  const proofCta = getCommercialCta("realBuild");
-  const scopeCta = getCommercialCta("projectRange");
+  const t = useTranslations("work");
 
   const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle<HTMLHeadingElement>();
-  const bodyRef = useSectionDescription();
-  const recordsRef = useSectionCardGrid<HTMLOListElement>({
-    selector: "[data-work-record]",
-  });
-  const metaRef = useSectionElement();
+  const sentenceRef = useWordRead<HTMLHeadingElement>();
+  const rowRef = useSectionElement();
 
-  const { first: firstTitle, second: secondTitle } = splitHeadline(
-    `${tW("title")} ${tW("titleItalic")}`,
-  );
+  const buildLink = (slug: string) =>
+    function BuildLink(chunks: ReactNode) {
+      return (
+        <Link
+          href={`/work/${slug}`}
+          className={`rounded-ctl-sm underline decoration-foreground/30 decoration-1 underline-offset-[0.14em] rtl:underline-offset-[0.3em] transition-colors duration-(--motion-drawer) ease-smooth hover:decoration-local-accent-text ${FOCUS_RING}`}
+        >
+          {readWords(chunks)}
+        </Link>
+      );
+    };
 
   return (
     <section
@@ -51,116 +67,54 @@ export const WorkSection = memo(function WorkSection() {
       className="accent-world-green pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <SectionHeading
-          titleId="work-heading"
-          eyebrowRef={eyebrowRef}
-          titleRef={titleRef}
-          descriptionRef={bodyRef}
-          eyebrow={tW("eyebrow")}
-          firstTitle={firstTitle}
-          secondTitle={secondTitle}
-          accent="mint"
-          description={tW.rich("description", bodyMarks)}
-          className="mb-12 md:mb-16"
-        />
-        <ol ref={recordsRef} className="list-none border-b border-border-subtle">
-          {HOMEPAGE_SUPPORTING_CASE_STUDIES.map((slug, index) => (
-            <WorkRecord
-              key={slug}
-              slug={slug}
-              index={index}
-              reverse={index % 2 === 1}
-            />
-          ))}
-        </ol>
-        <div className="mt-10 flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
-          <div className="space-y-3">
-            <Eyebrow>{tW("labels.liveProof")}</Eyebrow>
-            <p className="max-w-xl text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
-              {tW("labels.liveProofBody")}
-            </p>
-          </div>
-          <CtaButtonGroup
-            primary={{ href: proofCta.href, label: tCTAs("realBuild") }}
-            secondary={{ href: scopeCta.href, label: tCTAs("projectRange") }}
-            secondaryArrow
-            className="w-full flex-col gap-3 sm:w-auto sm:flex-row lg:flex-col lg:items-stretch"
-          />
-        </div>
-
-        <FlagshipBlock metaRef={metaRef} tf={tf} stepLabel={stepLabel} />
-
-        <div className="mt-8 flex items-center gap-4 md:mt-6">
-          <div className="h-px flex-1 bg-border-subtle" />
-          <Eyebrow>{tW("labels.footer")}</Eyebrow>
+        <Eyebrow ref={eyebrowRef}>{t("selectedWork")}</Eyebrow>
+        <h2
+          ref={sentenceRef}
+          id="work-heading"
+          className="mt-8 max-w-[24ch] text-[clamp(2rem,4.4vw,4.5rem)] leading-[1.1] font-light tracking-[-0.03em] text-foreground rtl:leading-[1.45] rtl:tracking-normal"
+        >
+          {readWords(
+            t.rich("sentence", {
+              newlight: buildLink(NEWLIGHT),
+              art: buildLink(ART_LIGHTING),
+              site: buildLink(OWN_SITE),
+              em: (chunks) => <Highlight tone="world">{chunks}</Highlight>,
+            }),
+          )}
+        </h2>
+        <div
+          ref={rowRef}
+          className="mt-16 flex flex-col gap-5 border-t border-border-subtle pt-6 md:flex-row md:items-baseline md:justify-between md:gap-10"
+        >
+          <Eyebrow>{t("allLive")}</Eyebrow>
+          <ul className="flex list-none flex-wrap gap-x-8 gap-y-2">
+            {BUILDS.map((slug) => {
+              const url = getCaseStudyBySlug(slug)?.externalUrl;
+              return url ? (
+                <li key={slug}>
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    dir="ltr"
+                    className={`inline-flex min-h-6 items-center gap-1.5 rounded-ctl-sm font-mono text-sm text-muted-foreground transition-colors duration-(--motion-drawer) ease-smooth hover:text-foreground pointer-coarse:min-h-11 ${FOCUS_RING}`}
+                  >
+                    {getDomainName(url)}
+                    <span aria-hidden>↗</span>
+                  </a>
+                </li>
+              ) : null;
+            })}
+          </ul>
+          <Link
+            href="/work"
+            className={`group inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base text-foreground transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text pointer-coarse:min-h-11 ${FOCUS_RING}`}
+          >
+            {t("seeWork")}
+            <ArrowIcon className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </Container>
     </section>
   );
 });
-
-function FlagshipBlock({
-  metaRef,
-  tf,
-  stepLabel,
-}: {
-  metaRef: React.RefObject<HTMLDivElement | null>;
-  tf: ReturnType<typeof useTranslations<"commercial.flagship">>;
-  stepLabel: string;
-}) {
-  const movements = [
-    { label: tf("labels.problem"), body: tf("problem") },
-    { label: tf("labels.solution"), body: tf("solution") },
-    { label: tf("labels.outcome"), body: tf("outcome") },
-  ];
-
-  return (
-    <div
-      ref={metaRef}
-      className="mt-16 border-t border-border-subtle pt-10 md:mt-24 md:pt-16"
-    >
-      <SectionHeading
-        titleAs="h3"
-        eyebrow={tf("eyebrow")}
-        firstTitle={tf("title")}
-        description={tf("summary")}
-        className="gap-6 md:gap-8"
-        classes={{
-          title:
-            "max-w-3xl text-[clamp(1.5rem,3vw,2.5rem)] font-medium leading-[1.1] tracking-tight",
-          description:
-            "max-w-sm text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75]",
-        }}
-      />
-      <ol className="mt-12 grid list-none gap-12 md:mt-16 md:grid-cols-3 md:gap-10 lg:gap-14">
-        {movements.map((movement, index) => (
-          <li key={movement.label} className="relative">
-            <div className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className="text-[clamp(2.75rem,5vw,4rem)] font-medium leading-none tracking-[-0.06em] text-foreground/20 tabular-nums"
-              >
-                <Num value={index + 1} pad={2} />
-              </span>
-
-              <span
-                aria-hidden
-                className="mt-2 size-2 shrink-0 rounded-full bg-local-accent"
-              />
-            </div>
-
-            <div className="mt-10">
-              <Eyebrow tone="accent">
-                {stepLabel} · {movement.label}
-              </Eyebrow>
-
-              <p className="mt-4 max-w-[34ch] text-[clamp(1rem,1.05vw,1.125rem)] leading-[1.75] text-foreground/85">
-                {movement.body}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}

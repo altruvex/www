@@ -2,13 +2,13 @@ import { prisma } from "@repo/database";
 import {
   currentBillingCycle,
   daysUntilCycleEnd,
-  formatMoney,
   MAINTENANCE_PLAN_IDS,
   pricingCopy,
   type Locale,
   type MaintenancePlanId,
 } from "@repo/pricing-schema";
 
+import { billedPlanPrice, intervalPriceLabel } from "@/lib/billing-interval";
 import { getPricing } from "@/lib/pricing-store";
 
 /**
@@ -37,9 +37,15 @@ export interface PortalRequest {
 export interface PortalView {
   readonly clientName: string;
   readonly planName: string;
+  /** One invoice at the subscription's interval, or the custom-quote wording. */
   readonly planPriceLabel: string;
+  /** Localised "/ month", "/ year" — empty when the plan is quote-only. */
+  readonly planPriceSuffix: string;
   readonly isCustomQuote: boolean;
   readonly subscriptionStatus: string;
+  /** When the paid period ends: the renewal date, or the end date when auto-renew is off. */
+  readonly renewsAt: string;
+  readonly autoRenew: boolean;
   /** Null when the plan is quote-only and has no published cap. */
   readonly requestsPerCycle: number | null;
   readonly requestsUsed: number;
@@ -47,7 +53,12 @@ export interface PortalView {
   readonly overageNote: string | null;
   readonly cycleStart: string;
   readonly cycleEnd: string;
-  readonly daysUntilRenewal: number;
+  /**
+   * Days until the request allowance resets. The allowance is monthly on every
+   * interval, so this is not the renewal — an annual retainer resets its
+   * allowance eleven times before it renews once.
+   */
+  readonly daysUntilAllowanceReset: number;
   readonly requestsThisCycle: readonly PortalRequest[];
   readonly history: readonly PortalRequest[];
 }
@@ -111,15 +122,19 @@ export async function loadPortal(
   const used = thisCycle.filter((r) => r.countsToCap).length;
 
   const cap = plan.requestsPerCycle;
+  const billed = billedPlanPrice(plan, subscription.quotedMonthlyPrice);
+  const price = intervalPriceLabel(billed, subscription.billingInterval, locale);
 
   return {
     clientName:
       subscription.client.company || subscription.client.name || "Your account",
     planName: copy.maintenance[plan.id].name,
-    planPriceLabel:
-      plan.price === null ? tpl.customPrice : formatMoney(plan.price, locale),
-    isCustomQuote: plan.price === null,
+    planPriceLabel: price.price,
+    planPriceSuffix: price.suffix,
+    isCustomQuote: billed === null || billed.price === null,
     subscriptionStatus: subscription.status,
+    renewsAt: subscription.currentPeriodEnd.toISOString(),
+    autoRenew: subscription.autoRenew,
     requestsPerCycle: cap,
     requestsUsed: used,
     requestsRemaining: cap === null ? null : Math.max(cap - used, 0),
@@ -134,7 +149,7 @@ export async function loadPortal(
           ),
     cycleStart: cycle.start.toISOString(),
     cycleEnd: cycle.end.toISOString(),
-    daysUntilRenewal: daysUntilCycleEnd(cycle, now),
+    daysUntilAllowanceReset: daysUntilCycleEnd(cycle, now),
     requestsThisCycle: thisCycle.map(toPortalRequest),
     history: subscription.requests.map(toPortalRequest),
   };

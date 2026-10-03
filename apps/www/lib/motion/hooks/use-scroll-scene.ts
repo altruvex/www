@@ -1,8 +1,7 @@
 "use client";
 
 import { gsap } from "@/lib/utils/gsap";
-import { ScrollTrigger } from "@/lib/utils/gsap";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { MOTION } from "../tokens";
 import { inlineSign, readDirection } from "../utils/direction";
 import { whenMotionReady } from "../utils/ready";
@@ -46,24 +45,45 @@ function useScene<T extends HTMLElement>(setup: (root: T) => void): RefObject<T 
 
 /**
  * Word-by-word read: every `[data-word]` inside the root goes from the
- * scene's `--muted` to `--foreground` as the block scrolls through
+ * scene's `--read-dim` to `--foreground` as the block scrolls through
  * MOTION.scroll.readStart → readEnd. Colour, never opacity — split words at
  * partial alpha overlap and ghost in Arabic (the RTL alpha-ghosting fix).
+ * The tween drives `--read` (0 → 1) and globals.css mixes the two inks from
+ * it, so the words follow a theme switch instead of keeping a resolved colour.
  * Render the words with `splitWords()`.
  */
 export function useWordRead<T extends HTMLElement = HTMLParagraphElement>() {
   return useScene<T>((root) => {
-    const style = getComputedStyle(root);
-    const dim = `hsl(${style.getPropertyValue("--muted").trim()})`;
-    const ink = `hsl(${style.getPropertyValue("--foreground").trim()})`;
     gsap.fromTo(
       gsap.utils.toArray<HTMLElement>("[data-word]", root),
-      { color: dim },
+      { "--read": 0 },
       {
-        color: ink,
+        "--read": 1,
         ease: "none",
         stagger: MOTION.stagger.word,
         scrollTrigger: { trigger: root, start: MOTION.scroll.readStart, end: MOTION.scroll.readEnd, scrub: true },
+      },
+    );
+  });
+}
+
+/**
+ * Underline draw: every `[data-draw]` inside the root carries its underline
+ * as a one-pixel background (size 100% at rest), drawn from the inline start
+ * one after another once the block enters. A background, not a pseudo-element,
+ * so a phrase that wraps keeps one continuous line.
+ */
+export function useUnderlineDraw<T extends HTMLElement = HTMLParagraphElement>() {
+  return useScene<T>((root) => {
+    gsap.fromTo(
+      gsap.utils.toArray<HTMLElement>("[data-draw]", root),
+      { backgroundSize: "0% 1px" },
+      {
+        backgroundSize: "100% 1px",
+        duration: MOTION.duration.text,
+        ease: MOTION.ease.text,
+        stagger: MOTION.stagger.annotate,
+        scrollTrigger: { trigger: root, start: MOTION.trigger.latest, once: true },
       },
     );
   });
@@ -185,59 +205,4 @@ export function useTileAssemble<T extends HTMLElement = HTMLElement>() {
     });
     if (title) tl.fromTo(title, { yPercent: 110 }, { yPercent: 0, ease: MOTION.ease.text, duration: 0.2 }, 0.82);
   });
-}
-
-/**
- * A block that rises into place as it scrolls into view — travel and a slight
- * scale, no fade (it is already legible; only its position is arriving). Used
- * for a screen lifting out of a world band (the interface-design hero).
- * Scrubbed from the block's top entering the viewport to it reaching 20%.
- */
-export function useScrollRise<T extends HTMLElement = HTMLDivElement>({
-  distance = MOTION.distance.xl * 2,
-  scale = 0.94,
-}: { distance?: number; scale?: number } = {}) {
-  return useScene<T>((root) => {
-    gsap.fromTo(
-      root,
-      { y: distance, scale },
-      {
-        y: 0,
-        scale: 1,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top bottom", end: "top 20%", scrub: MOTION.scroll.scrub.assemble },
-      },
-    );
-  });
-}
-
-/**
- * Progress 0–1 through a tall runway (root top at viewport top → root bottom
- * at viewport bottom), as React state — for sticky stages whose content is
- * rendered from where the reader is (the interface-design 8-second read).
- * Not motion itself, so it runs under reduced motion too: the reader still
- * scrolls, and the stage should still say where they are.
- */
-export function useRunwayProgress<T extends HTMLElement = HTMLElement>(): { ref: RefObject<T | null>; progress: number } {
-  const ref = useRef<T | null>(null);
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    const root = ref.current;
-    if (!root) return;
-    let trigger: ScrollTrigger | null = null;
-    const off = whenMotionReady(() => {
-      trigger = ScrollTrigger.create({
-        trigger: root,
-        start: "top top",
-        end: "bottom bottom",
-        onUpdate: (self) => setProgress(self.progress),
-        onRefresh: (self) => setProgress(self.progress),
-      });
-    });
-    return () => {
-      off();
-      trigger?.kill();
-    };
-  }, []);
-  return { ref, progress };
 }

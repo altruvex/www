@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altruvex Sans A.2 proof</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+  /* Proof page, not a design surface. Measurements are filled in by window.measure(). */
+  body { margin: 0; padding: 32px 40px 80px; font: 14px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 48px 0 4px; padding-top: 16px; border-top: 1px solid #ccc; }
+  h3 { font-size: 14px; margin: 24px 0 8px; color: #444; }
+  .note { color: #555; max-width: 70em; margin: 0 0 12px; }
+  .en { font-family: var(--stack-prod-en); }
+  .ar { font-family: var(--stack-prod-ar); letter-spacing: 0; }
+  .pair { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 0 0 20px; }
+  .cell { border-top: 1px dashed #ddd; padding-top: 4px; }
+  .cell p { margin: 0; }
+  .meta { font: 12px/1.4 ui-monospace, monospace; color: #666; }
+  .meta b { color: #111; }
+  .lh-row { display: grid; grid-template-columns: 11em 1fr; gap: 16px; margin: 0 0 20px; align-items: start; }
+  .lh-row p { margin: 0; outline: 1px solid rgb(0 120 255 / .25); }
+  .lh-row .lines { background: repeating-linear-gradient(to bottom, transparent 0 calc(var(--lh-px) - 1px), rgb(0 120 255 / .25) calc(var(--lh-px) - 1px) var(--lh-px)); }
+  .collide { color: #b00; font-weight: 600; }
+  .track-row { display: grid; grid-template-columns: 13em 1fr; gap: 12px; align-items: baseline; margin: 0 0 2px; }
+  .track-row p { margin: 0; white-space: nowrap; line-height: 1.1; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans (Track A) — phase A.2 proof</h1>
+<p class="note">Production stacks: <code>--stack-prod-en</code> / <code>--stack-prod-ar</code>. Every number on this page is
+measured in this browser by <code>window.measure()</code> from canvas rasters (ink coverage and ink
+bounds; the font's own ascent/descent from canvas text metrics). Density = ink pixels ÷ (advance × font size). Ratio = AR density ÷ EN density at the EN weight.</p>
+
+<section id="weights">
+  <h2>1 · Arabic weight (step 13)</h2>
+  <p class="note">Left: English heading at its production weight. Right: the Arabic heading at 400 and at the
+  requested weight. Since Ali's choice (600 → 675, 700 → 830) the Arabic file remaps weights in its avar, so a
+  requested weight draws the chosen one; the drawn value is read from <code>dist/build-report.json</code>. The
+  candidate comparison this section showed in A.2 is kept as recorded in <code>proofs/a2/weight-candidates.json</code>.</p>
+  <div id="weight-rows"></div>
+</section>
+
+<section id="line-height">
+  <h2>2 · Arabic line height (step 16)</h2>
+  <p class="note">Blue lines mark each line box. Extremes clearance = line height − (lowest ink on line i + highest
+  ink on line i+1), in em, wherever they are along the line: negative means the extremes cross, not that they
+  touch. Contact gap = the smallest white between the two lines in any column where both have ink; overlap =
+  pixels where their ink actually overlaps (red when above zero). Overflow = ink outside the block's
+  first/last line box, in em.</p>
+  <div id="lh-rows"></div>
+</section>
+
+<section id="tracking">
+  <h2>3 · Latin tracking by weight and case (steps 14–15)</h2>
+  <p class="note">Same word, three trackings: <b>live</b> (what apps/www ships), <b>sidebearing</b> (prototype 01
+  model), <b>rhythm</b> (keeps white-between ÷ white-inside of "n" at the 400 value). Values come from
+  <code>dist/spacing-report.json</code>.</p>
+  <div id="track-rows"></div>
+</section>
+
+<script>
+const EN = {
+  h2: "Four disciplines. One delivery standard.",
+  hero: "Engineered, not assembled.",
+};
+const AR = {
+  h2: "أربعة تخصصات. معيار تسليم واحد.",
+  problem: "معظم الشركات لا تحصل على هندسة برمجية.",
+  hero: "نُهندِس، لا نُركِّب.",
+};
+const WEIGHT_ROWS = [
+  // role, px, EN text + weight, AR text, AR requested weight; cand = the A.2 candidates (config/font.yaml)
+  { role: "h2 / section title", px: 52, en: EN.h2, enW: 600, ar: AR.h2, arW: 600, cand: [650, 675, 700] },
+  { role: "h3", px: 32, en: EN.h2, enW: 600, ar: AR.problem, arW: 600, cand: [650, 675, 700] },
+  { role: "h1", px: 72, en: EN.hero, enW: 700, ar: AR.hero, arW: 700, cand: [800, 830, 850] },
+  { role: "hero (AR rtl:font-semibold)", px: 120, en: EN.hero, enW: 300, ar: AR.hero, arW: 600, cand: [650, 675, 700] },
+];
+const LINES = {
+  plain: ["معظم الشركات لا تحصل", "على هندسة برمجية حقيقية.", "بطيء حيث يهمّ، وتسليم بالاسم فقط."],
+  vocalised: ["إِنَّ الشُّرُوطَ مَكْتُوبَةٌ", "قَبْلَ التَّسْلِيمِ، لَا بَعْدَهُ.", "نُهَنْدِسُ، لَا نُرَكِّبُ."],
+  mixed: ["نستخدم Next.js 16 وPostgres", "مع (TypeScript) في كل مشروع،", "وتبقى «Altruvex» خلف كل سطر."],
+};
+const LH_ROWS = [
+  { text: "plain", lh: 1.3 }, { text: "vocalised", lh: 1.3 }, { text: "vocalised", lh: 1.5 },
+  { text: "mixed", lh: 1.3 },
+];
+const LH_PX = 52;
+const LH_WEIGHTS = [600, 700, 850];
+const CASES = { lower: "not assembled", title: "Not Assembled", caps: "NOT ASSEMBLED" };
+const TRACK_ROWS = [
+  // px, weight, live tracking in apps/www today (null = no rule at that size/weight)
+  { px: 120, w: 400, live: null }, { px: 120, w: 700, live: null }, { px: 120, w: 300, live: -0.035 },
+  { px: 72, w: 700, live: -0.03 }, { px: 52, w: 600, live: -0.02 },
+];
+
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "style" ? Object.assign(n.style, v) : n.setAttribute(k, v);
+  n.append(...kids);
+  return n;
+};
+const fmt = (v, d = 3) => (v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(d));
+
+// Ink coverage of one string, rasterised on a canvas at 1 CSS px per px.
+function density(text, family, weight, px, rtl) {
+  const c = document.createElement("canvas"), ctx = c.getContext("2d");
+  const font = `${weight} ${px}px ${family}`;
+  ctx.font = font;
+  const adv = ctx.measureText(text).width;
+  c.width = Math.ceil(adv + px); c.height = Math.ceil(px * 2.2);
+  ctx.font = font; ctx.direction = rtl ? "rtl" : "ltr"; ctx.textAlign = "left";
+  ctx.fillText(text, px / 2, px * 1.4);
+  const a = ctx.getImageData(0, 0, c.width, c.height).data;
+  let ink = 0;
+  for (let i = 3; i < a.length; i += 4) ink += a[i];
+  return { density: ink / 255 / (adv * px), advance_em: adv / px };
+}
+
+// Ink above/below the baseline, from the raster (any pixel with alpha > 0), drawn at 2x. Canvas
+// measureText's actualBoundingBox is not used: WebKit leaves out GPOS-positioned marks (harakat).
+function bounds(text, family, weight, px) {
+  const S = 2, c = document.createElement("canvas"), ctx = c.getContext("2d");
+  const font = `${weight} ${px * S}px ${family}`;
+  ctx.font = font;
+  const m = ctx.measureText(text);
+  c.width = Math.ceil(m.width + px * S * 2); c.height = Math.ceil(px * S * 4);
+  const base = px * S * 2;
+  ctx.font = font; ctx.direction = "rtl"; ctx.textAlign = "left";
+  ctx.fillText(text, px * S, base);
+  const a = ctx.getImageData(0, 0, c.width, c.height).data;
+  let top = null, bottom = null;
+  for (let y = 0; y < c.height; y++) {
+    for (let x = 0; x < c.width; x++) if (a[(y * c.width + x) * 4 + 3] > 0) { top ??= y; bottom = y + 1; break; }
+  }
+  return { inkUp: (base - top) / S, inkDown: (bottom - base) / S,
+           fontUp: m.fontBoundingBoxAscent / S, fontDown: m.fontBoundingBoxDescent / S };
+}
+
+// Two consecutive lines drawn as the page lays them out: right-aligned, one line pitch apart, at 2x.
+// Returns the smallest vertical white between them in any pixel column where both have ink, and
+// the number of pixels where the two lines' ink overlaps. This is contact, not just extremes.
+function contact(upper, lower, family, weight, px, lh) {
+  const S = 2, W = Math.ceil(px * S * 24), H = Math.ceil(px * S * (lh + 4));
+  const draw = (text, base) => {
+    const c = document.createElement("canvas"), ctx = c.getContext("2d");
+    c.width = W; c.height = H;
+    ctx.font = `${weight} ${px * S}px ${family}`; ctx.direction = "rtl"; ctx.textAlign = "right";
+    ctx.fillText(text, W - px * S, base);
+    return ctx.getImageData(0, 0, W, H).data;
+  };
+  const b1 = px * S * 2, b2 = b1 + lh * px * S;
+  const a = draw(upper, b1), b = draw(lower, b2);
+  let gap = Infinity, overlap = 0;
+  for (let x = 0; x < W; x++) {
+    let bottomA = -1, topB = -1;
+    for (let y = 0; y < H; y++) {
+      const i = (y * W + x) * 4 + 3;
+      if (a[i] > 0) bottomA = y;
+      if (b[i] > 0 && topB < 0) topB = y;
+      if (a[i] > 0 && b[i] > 0) overlap++;
+    }
+    if (bottomA >= 0 && topB >= 0) gap = Math.min(gap, (topB - bottomA - 1) / S);
+  }
+  return { gap_em: gap / px, overlap_px: overlap / (S * S) };
+}
+
+const PROD_EN = getComputedStyle(document.documentElement).getPropertyValue("--stack-prod-en").trim();
+const PROD_AR = getComputedStyle(document.documentElement).getPropertyValue("--stack-prod-ar").trim();
+
+async function loadWeights() {
+  const ws = new Set([300, 400, 500, 600, 700, 800, 850]);
+  WEIGHT_ROWS.forEach(r => ws.add(r.arW));
+  const loads = [];
+  for (const w of ws) for (const fam of ['"Altruvex Sans Latin"', '"Altruvex Sans Arabic"'])
+    loads.push(document.fonts.load(`${w} 40px ${fam}`, "a ب"));
+  await Promise.all(loads);
+  await document.fonts.ready;
+}
+
+function buildWeights() {
+  const out = [];
+  const host = document.getElementById("weight-rows");
+  for (const r of WEIGHT_ROWS) {
+    host.append(el("h3", {}, `${r.role} — ${r.px}px`));
+    const enD = density(r.en, PROD_EN, r.enW, r.px, false);
+    const row = { role: r.role, px: r.px, en_weight: r.enW, en_density: +enD.density.toFixed(4), ar: [] };
+    for (const w of new Set([400, r.arW])) {
+      const arD = density(r.ar, PROD_AR, w, r.px, true);
+      const ratio = arD.density / enD.density;
+      row.ar.push({ weight: w, drawn: DRAWN[w] ?? w, density: +arD.density.toFixed(4), ratio: +ratio.toFixed(3) });
+      const enCell = el("div", { class: "cell" },
+        el("p", { class: "en", lang: "en", style: { fontSize: r.px + "px", fontWeight: r.enW, lineHeight: 1.1 } }, r.en),
+        el("div", { class: "meta" }, `EN ${r.enW} · density ${enD.density.toFixed(3)}`));
+      const arCell = el("div", { class: "cell" },
+        el("p", { class: "ar", lang: "ar", dir: "rtl", style: { fontSize: r.px + "px", fontWeight: w, lineHeight: 1.3 } }, r.ar),
+        el("div", { class: "meta" }, el("b", {}, `AR ${w}${DRAWN[w] ? ` (draws ${DRAWN[w]})` : ""}`),
+          ` · density ${arD.density.toFixed(3)} · ratio AR÷EN `, el("b", {}, ratio.toFixed(2))));
+      host.append(el("div", { class: "pair", "data-shot": `w-${r.px}-${w}` }, enCell, arCell));
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+function buildLineHeights() {
+  const out = [];
+  const host = document.getElementById("lh-rows");
+  for (const w of LH_WEIGHTS) {
+    host.append(el("h3", {}, `${LH_PX}px, weight ${w}`));
+    for (const r of LH_ROWS) {
+      const lines = LINES[r.text];
+      const lhPx = r.lh * LH_PX;
+      const b = lines.map(t => bounds(t, PROD_AR, w, LH_PX));
+      // The baseline sits half-leading below the line box top: (lh - (fontUp + fontDown)) / 2 + fontUp.
+      const base = (lhPx - (b[0].fontUp + b[0].fontDown)) / 2 + b[0].fontUp;
+      const clearance = b.slice(1).map((n, i) => (lhPx - (b[i].inkDown + n.inkUp)) / LH_PX);
+      const touch = lines.slice(1).map((t, i) => contact(lines[i], t, PROD_AR, w, LH_PX, r.lh));
+      const minGap = Math.min(...touch.map(t => t.gap_em));
+      const overlap = touch.reduce((n, t) => n + t.overlap_px, 0);
+      const overTop = Math.max(0, b[0].inkUp - base) / LH_PX;
+      const overBottom = Math.max(0, b.at(-1).inkDown - (lhPx - base)) / LH_PX;
+      const p = el("p", { class: "ar lines", lang: "ar", dir: "rtl",
+        style: { fontSize: LH_PX + "px", fontWeight: w, lineHeight: r.lh, "--lh-px": lhPx + "px" } });
+      p.style.setProperty("--lh-px", lhPx + "px");
+      lines.forEach((t, i) => { if (i) p.append(el("br")); p.append(t); });
+      const rendered = p;  // DOM line count is checked after layout, in measure()
+      const min = Math.min(...clearance);
+      const meta = el("div", { class: "meta" }, `${r.text} · lh ${r.lh}`, el("br"),
+        `extremes clearance ${fmt(min)}em`, el("br"),
+        el("span", { class: overlap > 0 ? "collide" : "" }, `contact gap ${fmt(minGap)}em · overlap ${overlap}px`), el("br"),
+        `overflow top ${overTop.toFixed(3)} · bottom ${overBottom.toFixed(3)}em`);
+      host.append(el("div", { class: "lh-row", "data-shot": `lh-${w}-${r.text}-${r.lh}` }, meta, rendered));
+      out.push({ weight: w, text: r.text, lh: r.lh, px: LH_PX,
+        clearance_em: clearance.map(v => +v.toFixed(3)), min_clearance_em: +min.toFixed(3),
+        contact_gap_em: +minGap.toFixed(3), overlap_px: overlap,
+        overflow_top_em: +overTop.toFixed(3), overflow_bottom_em: +overBottom.toFixed(3),
+        ink_up_em: b.map(x => +(x.inkUp / LH_PX).toFixed(3)), ink_down_em: b.map(x => +(x.inkDown / LH_PX).toFixed(3)),
+        _el: rendered });
+    }
+  }
+  return out;
+}
+
+async function buildTracking() {
+  const rep = await (await fetch("../dist/spacing-report.json")).json();
+  const models = rep.tracking_em.models;
+  const host = document.getElementById("track-rows");
+  const out = [];
+  for (const r of TRACK_ROWS) {
+    const m = models[`${r.w}/${r.px}`];
+    host.append(el("h3", {}, `${r.px}px, weight ${r.w}`));
+    for (const [caseName, text] of Object.entries(CASES)) {
+      for (const [label, t] of [["live", r.live], ["sidebearing", m.sidebearing], ["rhythm", m.rhythm]]) {
+        if (t == null) continue;
+        const cr = rep.case_rhythm[`${r.w}/${r.px}`];
+        host.append(el("div", { class: "track-row", "data-shot": `t-${r.px}-${r.w}-${caseName}-${label}` },
+          el("div", { class: "meta" }, `${caseName} · ${label} ${fmt(t, 4)}em`),
+          el("p", { class: "en", lang: "en", style: { fontSize: r.px + "px", fontWeight: r.w, letterSpacing: t + "em" } }, text)));
+        out.push({ px: r.px, weight: r.w, case: caseName, model: label, tracking_em: t,
+                   rhythm_n: cr?.n ?? null, rhythm_H: cr?.H ?? null });
+      }
+    }
+  }
+  return out;
+}
+
+// Keep the promise, not the result: a measure() call that lands mid-build must not build twice.
+let built = null;
+let DRAWN = {};
+const build = () => built ??= buildOnce();
+async function buildOnce() {
+  const pairs = (await (await fetch("../dist/build-report.json")).json()).weights.arabic_avar_pairs;
+  DRAWN = Object.fromEntries(pairs.filter(([a, b]) => a !== b));
+  await loadWeights();
+  const weights = buildWeights();
+  const lineHeights = buildLineHeights();
+  const tracking = await buildTracking();
+  await document.fonts.ready;
+  return { weights, lineHeights, tracking };
+}
+
+// Entry point for tools/proof.py. Returns plain JSON.
+window.measure = async () => {
+  const { weights, lineHeights, tracking } = await build();
+  const lh = lineHeights.map(({ _el, ...r }) => {
+    // Rendered line count and line box height from the DOM, to confirm the canvas model matches layout.
+    const h = _el.getBoundingClientRect().height;
+    return { ...r, dom_height_px: +h.toFixed(2), dom_lines: Math.round(h / (r.lh * r.px)) };
+  });
+  return { userAgent: navigator.userAgent, weights, lineHeights: lh, tracking };
+};
+build();
+</script>
+</body>
+</html>

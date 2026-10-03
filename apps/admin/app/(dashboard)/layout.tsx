@@ -5,7 +5,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { MFA_SETUP_PATH, MFA_SKIP_COOKIE, mfaRequired } from "@/lib/mfa";
 import { requireAdminPage } from "@/lib/require-admin";
 import { getShellBadges } from "@/lib/shell-data";
-import { toProductRole } from "@/lib/rbac";
+import { currentRole } from "@/lib/authorize";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export default async function DashboardLayout({
   // line. The access decision is made here from the session itself, so a
   // proxy bypass in the framework never becomes an unauthenticated read of
   // the pages underneath.
-  const [session, shell] = await Promise.all([requireAdminPage(), getShellBadges()]);
+  const session = await requireAdminPage();
 
   const dbRole = (session.user as { role?: string }).role;
 
@@ -34,6 +34,14 @@ export default async function DashboardLayout({
     if (mfaRequired() || !skipped) redirect(MFA_SETUP_PATH);
   }
 
+  // Read after the access decision, not beside it: the unread count belongs to
+  // this operator, and nothing is queried for a request that is about to be
+  // redirected.
+  const shell = await getShellBadges(session.user.id);
+  // The product role narrows the nav: an assigned opsRole wins over the one
+  // derived from the sign-in role, read the same way authorize() reads it.
+  const role = await currentRole();
+
   return (
     <AppShell
       user={{
@@ -41,7 +49,7 @@ export default async function DashboardLayout({
         email: session.user.email,
         role: dbRole,
       }}
-      role={toProductRole(dbRole)}
+      role={role}
       badges={shell.badges}
       unreadCount={shell.unread}
     >

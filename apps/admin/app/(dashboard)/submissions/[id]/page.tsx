@@ -6,13 +6,16 @@ import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { DetailLayout, MetaList } from "@/components/os/detail-layout";
 import { Timeline } from "@/components/os/timeline";
-import { EmptyInline } from "@/components/os/empty-state";
+import { EntityAudit } from "@/components/os/entity-audit";
+import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
 import { statusOf } from "@/lib/status";
 import { dateTime, phone as fmtPhone } from "@/lib/format";
 import { ConvertButton } from "./convert-button";
 import { NotesPanel } from "./notes-panel";
+import { TriagePanel } from "./triage-panel";
+import { ViewedMarker } from "./viewed-marker";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +25,8 @@ export const dynamic = "force-dynamic";
  *
  * This page shows what the website received, byte for byte, plus the metadata
  * that lets you tell a real lead from a bot: locale, referrer, UTM, user agent,
- * IP. Nothing here is editable. Working the lead happens on the client record.
+ * IP. The payload is never editable; only the triage fields (status, priority,
+ * owner) are. Working the lead happens on the client record.
  */
 export default async function SubmissionDetailPage({
   params,
@@ -31,6 +35,12 @@ export default async function SubmissionDetailPage({
 }) {
   const { id } = await params;
 
+  const team = await prisma.user.findMany({
+    where: { role: { in: ["ADMIN", "SUPERADMIN"] } },
+    select: { id: true, name: true, email: true },
+    orderBy: { name: "asc" },
+  });
+
   const submission = await prisma.contactSubmission.findUnique({
     where: { id },
     include: {
@@ -38,7 +48,7 @@ export default async function SubmissionDetailPage({
       notes: { include: { createdBy: { select: { name: true, email: true } } } },
       tags: true,
       meetings: true,
-      assignedTo: { select: { name: true, email: true } },
+      assignedTo: { select: { id: true, name: true, email: true } },
     },
   });
   if (!submission) notFound();
@@ -59,6 +69,13 @@ export default async function SubmissionDetailPage({
             <MetaItem label="Received">{dateTime(submission.submittedAt)}</MetaItem>
             <MetaItem label="Locale">{submission.locale}</MetaItem>
             <MetaItem label="Phone">{fmtPhone(submission.phone)}</MetaItem>
+            {submission.client && (
+              <MetaItem label="Client">
+                <EntityLink type="client" id={submission.client.id}>
+                  {submission.client.company || submission.client.name || "Unnamed client"}
+                </EntityLink>
+              </MetaItem>
+            )}
           </>
         }
         actions={
@@ -82,9 +99,20 @@ export default async function SubmissionDetailPage({
         }
       />
 
+      {!submission.firstViewedAt && <ViewedMarker submissionId={submission.id} />}
+
       <DetailLayout
         aside={
           <>
+            <TriagePanel
+              key={`${submission.status}|${submission.priority}|${submission.assignedToId ?? ""}`}
+              submissionId={submission.id}
+              status={submission.status}
+              priority={submission.priority}
+              assignedToId={submission.assignedToId}
+              team={team.map((member) => ({ id: member.id, label: member.name || member.email }))}
+            />
+
             <Panel title="Attribution" description="How they found the site" flush>
               <MetaList
                 items={[
@@ -125,7 +153,6 @@ export default async function SubmissionDetailPage({
                       "—"
                     ),
                   },
-                  { label: "Assigned", value: submission.assignedTo?.name ?? "unassigned" },
                   {
                     label: "First opened",
                     value: submission.firstViewedAt ? dateTime(submission.firstViewedAt) : "never",
@@ -176,6 +203,8 @@ export default async function SubmissionDetailPage({
         <Panel title="Activity" flush bodyClassName="p-2">
           <Timeline events={activity} emptyLabel="Nothing beyond the submission itself." />
         </Panel>
+
+        <EntityAudit type="submission" id={submission.id} />
       </DetailLayout>
     </div>
   );

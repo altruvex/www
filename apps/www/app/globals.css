@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@repo/ui/styles";
+@import "@repo/brand-font/tokens.css";
+@import "@repo/brand-font/fallback.css";
 @source "../app/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../components/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../lib/**/*.{js,jsx,ts,tsx}";
@@ -15,9 +17,16 @@
   --color-local-accent-soft: var(--local-accent-soft);
   --color-local-accent-text: var(--local-accent-text);
 
-  --font-serif: Georgia, "Times New Roman", serif;
-
-  --radius-3xl: calc(var(--radius) + 24px);
+  /* Headings and display type are Altruvex Sans, as in the admin app.
+     --font-brand is set on :root below. */
+  --font-sans: var(--font-brand);
+  /* One face for the text of the site (Ali, 2026-10-01): body text, the small
+     labels set with font-mono and code are all Altruvex Sans; there is no
+     monospace. The Latin emphasis clause in a heading
+     (components/ui/emphasis.tsx) is the face's own drawn italic (2026-10-03),
+     which replaced the Georgia stopgap. */
+  --font-body: var(--font-brand);
+  --font-mono: var(--font-brand);
 
   /* Control family — keyed to control HEIGHT (design.md §6.1). ctl-xs is for
      elements under 24px tall (keys, inline code, tags, glyphs). */
@@ -34,7 +43,6 @@
   --radius-panel-inset: calc(var(--radius-panel-sm) - 1rem);
 
   --animate-text-gradient: text-gradient 6s linear infinite;
-  --animate-brand-kenburns: brand-kenburns 24s var(--ease-smooth) forwards;
   --animate-edge-sweep: edge-sweep var(--motion-display) var(--ease-strong) both;
 
   --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
@@ -50,11 +58,14 @@
   --motion-drawer: 300ms;
   --motion-fast: 400ms;
   --motion-base: 700ms;
+  --motion-text: 900ms;
+  --motion-slow: 1000ms;
   --motion-display: 1100ms;
+  --motion-settle: 1400ms;
+  --motion-sweep: 2600ms;
   --radius: 1rem;
   --text-body-base: clamp(17px, 1.05vw, 18px);
   --leading-body: 1.75;
-  --font-vazirmatn: "Vazirmatn", sans-serif;
   --section-y-top: clamp(5rem, 10vh, 8rem);
   --section-y-bottom: clamp(5rem, 14vh, 10rem);
 
@@ -94,6 +105,7 @@
   --secondary: 0 0% 15%;
   --secondary-foreground: 0 0% 90%;
   --muted: 0 0% 17%;
+  --read-dim: var(--muted);
   --muted-foreground: 0 0% 60%;
   --input: 0 0% 100% / 0.06;
 
@@ -127,6 +139,7 @@
   --secondary: 0 0% 94%;
   --secondary-foreground: 0 0% 25%;
   --muted: 0 0% 91%;
+  --read-dim: var(--n-4);
   --muted-foreground: 0 0% 40%;
   --input: 0 0% 94%;
 
@@ -162,6 +175,7 @@ header[data-scene="inverted"] {
   --secondary: 0 0% 16%;
   --secondary-foreground: 0 0% 90%;
   --muted: 0 0% 18%;
+  --read-dim: var(--muted);
   --muted-foreground: 0 0% 62%;
   --input: 0 0% 100% / 0.08;
 
@@ -224,6 +238,7 @@ header[data-scene="inverted"] {
   --secondary: 0 0% 92%;
   --secondary-foreground: 0 0% 25%;
   --muted: 0 0% 90%;
+  --read-dim: var(--n-4);
   --muted-foreground: 0 0% 40%;
   --input: 0 0% 94%;
 
@@ -277,10 +292,13 @@ header[data-scene="inverted"] {
 }
 
 .accent-world-orange {
-  --local-accent: hsl(27 90% 35%);
+  /* Hue 20, between the ember gradient's middle and end stops, so a filled
+     button reads as burnt orange beside the gradient instead of brown
+     (27 90% 35% did). 4.74:1 as text on the page and under --local-accent-fg. */
+  --local-accent: hsl(20 92% 40%);
   --local-accent-text: var(--local-accent);
   --local-accent-fg: hsl(var(--n-0));
-  --local-accent-soft: hsl(27 90% 35% / 0.08);
+  --local-accent-soft: hsl(20 92% 40% / 0.08);
 }
 
 .dark .accent-world-orange {
@@ -389,7 +407,9 @@ header[data-scene="inverted"] {
 
 .accent-ember,
 .accent-world-orange {
-  --grad-from: hsl(36 94% 46%);
+  /* The amber stop is as light as it can be and still reach 3:1 on the light
+     background (3.15:1); 36 94% 46% measured 2.51:1. */
+  --grad-from: hsl(34 94% 42%);
   --grad-via: hsl(24 92% 48%);
   --grad-to: hsl(12 88% 50%);
 }
@@ -456,7 +476,7 @@ header[data-scene="inverted"] {
 .dark .accent-iris,
 [data-scene="inverted"] .accent-iris {
   --grad-from: hsl(212 96% 64%);
-  --grad-via: hsl(250 92% 70%);
+  --grad-via: hsl(250 92% 73%);
   --grad-to: hsl(276 88% 72%);
 }
 
@@ -474,7 +494,9 @@ header[data-scene="inverted"] {
 }
 
 .accent-sunset {
-  --grad-from: hsl(30 94% 48%);
+  /* Orange stop darkened to reach 3:1 on the light background (3.21:1);
+     30 94% 48% measured 2.71:1. */
+  --grad-from: hsl(28 94% 45%);
   --grad-via: hsl(10 86% 54%);
   --grad-to: hsl(340 78% 54%);
 }
@@ -501,8 +523,10 @@ header[data-scene="inverted"] {
 
 .accent-mint {
   --grad-from: hsl(150 64% 38%);
-  --grad-via: hsl(168 70% 38%);
-  --grad-to: hsl(184 78% 38%);
+  /* Teal stops at 36%, not 38%, to reach 3:1 on the light background
+     (3.28:1 and 3.26:1; they measured 2.97:1 and 2.94:1). */
+  --grad-via: hsl(168 70% 36%);
+  --grad-to: hsl(184 78% 36%);
 }
 
 .dark .accent-mint,
@@ -535,7 +559,7 @@ header[data-scene="inverted"] {
 [data-scene="inverted"] .accent-neon {
   --grad-from: hsl(318 92% 64%);
   --grad-via: hsl(286 90% 68%);
-  --grad-to: hsl(244 92% 70%);
+  --grad-to: hsl(244 92% 73%);
 }
 
 .accent-candy {
@@ -551,6 +575,23 @@ header[data-scene="inverted"] {
   --grad-to: hsl(40 94% 58%);
 }
 
+/* Body-size accent (the article <Mark>). The stops above are tuned for display
+   type, where 3:1 is the bar; text at body size needs 4.5:1. Mixing each stop
+   20% toward black keeps its hue and lifts every named gradient to 4.5:1 or
+   more on the light background. Dark mode already clears 4.5:1 unmixed. */
+.body-accent {
+  --grad-body-from: color-mix(in srgb, var(--grad-from) 80%, black);
+  --grad-body-via: color-mix(in srgb, var(--grad-via) 80%, black);
+  --grad-body-to: color-mix(in srgb, var(--grad-to) 80%, black);
+}
+
+.dark .body-accent,
+[data-scene="inverted"] .body-accent {
+  --grad-body-from: var(--grad-from);
+  --grad-body-via: var(--grad-via);
+  --grad-body-to: var(--grad-to);
+}
+
 .accent-glow {
   filter: drop-shadow(0 0 18px color-mix(in oklch, var(--grad-via) 42%, transparent));
 }
@@ -563,12 +604,170 @@ header[data-scene="inverted"] {
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  /* Each split span clips its own gradient, so it needs the same measured
+     pad-and-cancel as <Accent> (components/ui/emphasis.tsx): Arabic dots and
+     marks ink past the line box. The negative margin keeps layout unchanged. */
+  padding-block: 0.36em 0.13em;
+  margin-block: -0.36em -0.13em;
 }
 
 [data-accent-italic] .m-word,
 [data-accent-italic] .m-char {
   padding-inline-end: 0.1em;
   margin-inline-end: -0.1em;
+}
+
+/* ── Photo caption ────────────────────────────────────────────────────
+   Plain white type set straight on a photo, no card (the /about stage and
+   the development + interface-design heroes), from the picked prototype
+   docs/prototypes/2026-09-about/b.html. The pool is the photo's own
+   blue-black, only as deep as a white caption needs to hold 4.5:1, and it
+   pools under the bottom-end corner where every caption lives. */
+.photo-caption-scrim {
+  --caption-scrim-x: 100%;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(60% 85% at var(--caption-scrim-x) 100%, hsl(214 30% 4% / 0.66) 0%, hsl(214 30% 4% / 0.4) 40%, hsl(214 30% 4% / 0) 78%);
+}
+
+[dir="rtl"] .photo-caption-scrim {
+  --caption-scrim-x: 0%;
+}
+
+/* useWordRead: the hook scrubs --read from 0 to 1 per word; unset (no JS,
+   reduced motion) a word rests at full ink. */
+[data-word] {
+  --read-ink: calc(var(--read, 1) * 100%);
+  color: color-mix(in srgb, hsl(var(--foreground)) var(--read-ink), hsl(var(--read-dim)));
+}
+
+/* A full-width floor under a stage's own title (the /work light stages):
+   a title runs the stage's whole width, so the corner scrim above is not
+   enough. Same ink as the caption scrim. */
+.photo-title-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, hsl(214 30% 4% / 0.84) 0%, hsl(214 30% 4% / 0.56) 32%, hsl(214 30% 4% / 0) 68%);
+}
+
+/* ── Home hero stage ──────────────────────────────────────────────────
+   components/sections/hero-section.server.tsx + hero-stage.tsx, from the
+   picked prototype docs/prototypes/2026-09-hero-v5 (A, 2026-09-28). A scene-
+   inverted island locked dark in both themes (data-scene-lock="dark"). Its
+   ground is the photo's own blue-black instead of the neutral scene ink, and
+   its ink is pure white, because the scrim below was measured against white:
+   the lightest pool that keeps every line ≥4.5:1 (the iris word ≥5:1). */
+#home .hero-stage {
+  --inverted-bg: 214 30% 4%;
+  --foreground: 0 0% 100%;
+  --ring: 0 0% 100%;
+
+  /* Framing. The fabric's light runs across the upper half and the copy
+     sits in the dark below it, so the photo is shown as shot in both
+     directions; --hero-zoom stays available for a photo that needs pushing. */
+  --hero-zoom: 1;
+  --hero-scrim-a: 0.62;
+  --hero-scrim-b: 0.4;
+  --hero-scrim-x: 0%;
+  --hero-scrim-w: 110%;
+}
+
+[dir="rtl"] #home .hero-stage {
+  --hero-scrim-x: 100%;
+}
+
+/* Slack for the motion: 12px of pointer travel each side (14px given), and
+   16% at the top for the scroll lag (the photo trails by 0.15 of the stage). */
+#home .hero-photo {
+  position: absolute;
+  z-index: -2;
+  inset: -16% -14px -14px -14px;
+  will-change: transform;
+}
+
+#home .hero-photo-img {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  display: block;
+  width: calc(100% * var(--hero-zoom));
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+/* Only as much scrim as AA needs, pooled under the copy (bottom-start). */
+#home .hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, hsl(var(--inverted-bg) / 0.55) 0, hsl(var(--inverted-bg) / 0) 150px),
+    radial-gradient(var(--hero-scrim-w) 100% at var(--hero-scrim-x) 100%, hsl(var(--inverted-bg) / var(--hero-scrim-a)) 0%, hsl(var(--inverted-bg) / var(--hero-scrim-b)) 42%, hsl(var(--inverted-bg) / 0) 78%),
+    linear-gradient(to top, hsl(var(--inverted-bg) / 0.6) 0%, hsl(var(--inverted-bg) / 0) 45%);
+}
+
+/* Tablet portrait: the copy block is taller than it is wide, so the pool
+   widens with it (the eyebrow measured 4.26:1 at 768 before this). */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  #home .hero-stage {
+    --hero-scrim-w: 170%;
+  }
+}
+
+/* Phone: the photo holds the upper stage and the copy sits on solid ink. The
+   crop window is in the photo's own coordinates, so the LTR flip mirrors it. */
+@media (max-width: 767.98px) {
+  #home .hero-photo {
+    bottom: auto;
+    height: calc(54% + 12%);
+    inset-block-start: -12%;
+  }
+
+  #home .hero-photo-img {
+    width: 100%;
+    object-position: 45% 50%;
+  }
+
+  #home .hero-scrim {
+    background:
+      linear-gradient(to bottom, hsl(var(--inverted-bg) / 0.78) 0, hsl(var(--inverted-bg) / 0.5) 64px, hsl(var(--inverted-bg) / 0) 130px),
+      linear-gradient(to top, hsl(var(--inverted-bg)) 0%, hsl(var(--inverted-bg)) 52%, hsl(var(--inverted-bg) / 0.82) 60%, hsl(var(--inverted-bg) / 0) 72%);
+  }
+}
+
+/* The secondary CTA on the photo: a glass outline pill. */
+#home .hero-glass-pill {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--foreground) / 0.4);
+  background-color: hsl(var(--foreground) / 0.06);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  #home .hero-glass-pill:hover {
+    border-color: hsl(var(--foreground) / 0.8);
+    background-color: hsl(var(--foreground) / 0.12);
+  }
+}
+
+/* The header over the hero stage (nav.tsx sets data-over-stage): its CTA
+   turns to a white pill with ink text in both themes, then back to brand
+   blue once the stage has scrolled out from under it. */
+header[data-over-stage] [data-nav-cta] {
+  background-color: hsl(var(--n-0));
+  color: hsl(var(--n-8));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  header[data-over-stage] [data-nav-cta]:hover {
+    background-color: hsl(var(--n-0) / 0.88);
+  }
 }
 
 @layer base {
@@ -602,6 +801,23 @@ header[data-scene="inverted"] {
     color: hsl(var(--foreground));
   }
 
+  /* The brand stack picks per character by family order: the page's own
+     script first, so shared characters (space, digits, brackets) come from the
+     face that sets the line. Fallbacks are the package's measured faces. */
+  :root {
+    --font-brand:
+      var(--font-brand-latin), var(--font-brand-arabic),
+      "Altruvex Sans Latin Fallback", "Altruvex Sans Arabic Fallback",
+      sans-serif;
+  }
+
+  :root[dir="rtl"] {
+    --font-brand:
+      var(--font-brand-arabic), var(--font-brand-latin),
+      "Altruvex Sans Arabic Fallback", "Altruvex Sans Latin Fallback",
+      sans-serif;
+  }
+
   html,
   body {
     min-height: 100%;
@@ -610,7 +826,7 @@ header[data-scene="inverted"] {
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: var(--font-inter);
+    font-family: var(--font-brand);
     font-size: var(--text-body-base);
     line-height: var(--leading-body);
     background-image: none;
@@ -628,10 +844,6 @@ header[data-scene="inverted"] {
     transition: opacity var(--motion-drawer) var(--ease-smooth);
   }
 
-  [data-watermark]::after {
-    content: attr(data-watermark);
-  }
-
   h1,
   h2,
   h3,
@@ -644,44 +856,43 @@ header[data-scene="inverted"] {
   }
 
   h1 {
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
     font-size: clamp(3rem, 5vw, 4.5rem);
     line-height: 1.02;
-    letter-spacing: -0.03em;
+    letter-spacing: var(--track-72-700);
     font-weight: 700;
   }
 
   h2 {
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
     font-size: clamp(2.125rem, 4vw, 3.25rem);
     line-height: 1.08;
-    letter-spacing: -0.02em;
+    letter-spacing: var(--track-32-600);
     font-weight: 600;
   }
 
   h3 {
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
     font-size: clamp(1.5rem, 2.4vw, 2rem);
     line-height: 1.15;
-    letter-spacing: -0.018em;
+    letter-spacing: var(--track-32-600);
     font-weight: 600;
   }
 
   h4 {
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
     font-size: clamp(1.25rem, 1.8vw, 1.5rem);
     line-height: 1.2;
-    letter-spacing: -0.015em;
+    letter-spacing: var(--track-24-500);
     font-weight: 500;
   }
 
   h5,
   h6 {
-    font-family: var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
   }
 
   [dir="rtl"] body {
-    font-family: var(--font-vazirmatn), var(--font-inter), sans-serif;
     line-height: 1.9;
   }
 
@@ -689,13 +900,20 @@ header[data-scene="inverted"] {
   [dir="rtl"] h2,
   [dir="rtl"] h3,
   [dir="rtl"] h4 {
-    font-family: var(--font-vazirmatn), var(--font-outfit), sans-serif;
+    font-family: var(--font-brand);
     line-height: 1.28;
     letter-spacing: 0;
   }
 
   [dir="rtl"] * {
     letter-spacing: 0 !important;
+  }
+
+  /* The footer wordmark is a Latin mark, set the same in both locales; its
+     fitted size assumes the -0.05em tracking (footer.tsx). */
+  [dir="rtl"] [data-wordmark] {
+    font-family: var(--font-brand-latin), var(--font-brand-arabic);
+    letter-spacing: -0.05em !important;
   }
 }
 
@@ -718,8 +936,7 @@ html.lenis body {
 
 @layer components {
   .eyebrow {
-    font-family:
-      var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
+    font-family: var(--font-brand);
     font-size: 0.875rem;
     line-height: 1.5;
     letter-spacing: 0.2em;
@@ -727,20 +944,36 @@ html.lenis body {
   }
 
   .section-title {
+    font-family: var(--font-brand);
     font-size: clamp(28px, 4.5vw, 52px);
     line-height: 1.08;
-    letter-spacing: -0.02em;
+    letter-spacing: var(--track-32-600);
     text-wrap: balance;
   }
 
   [dir="rtl"] .eyebrow {
-    font-family: var(--font-vazirmatn), sans-serif;
     letter-spacing: 0;
     text-transform: none;
   }
 }
 
 @layer utilities {
+  /* Arabic headings never sit tighter than 1.3. Components set LTR leading
+     (leading-[1.04], .section-title 1.08) that is too tight for Arabic ascenders
+     and marks, especially with the ex-height scale on RTL headings. In the
+     utilities layer, [dir] + element outranks a single leading-* class. */
+  [dir="rtl"] :is(h1, h2, h3, h4, .section-title) {
+    line-height: var(--lh-heading-ar);
+  }
+
+  /* A light (300) Latin display needs a slightly heavier Arabic light to match
+     its stroke (--weight-ar-display-light, from @repo/brand-font). One rule for
+     every brand-face heading that sets font-light; [dir] + element + class
+     outranks the single font-light class. */
+  [dir="rtl"] :is(h1, h2, h3, h4, .section-title).font-light {
+    font-weight: var(--weight-ar-display-light);
+  }
+
   *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -796,15 +1029,5 @@ html.lenis body {
   to {
     opacity: 0;
     transform: translateX(200%);
-  }
-}
-
-@keyframes brand-kenburns {
-  from {
-    transform: scale(1);
-  }
-
-  to {
-    transform: scale(1.045);
   }
 }

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing · C — Sentence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+.sent{padding:32px 0 56px;border-top:2px solid var(--fg);margin-top:8px}
+.sent p{font:300 clamp(2rem,5.2vw,4.6rem)/1.25 Outfit;letter-spacing:-.035em}
+html[lang="ar"] .sent p{font:400 clamp(1.9rem,4.6vw,4rem)/1.5 Vazirmatn;letter-spacing:0}
+.pick{position:relative;display:inline-block;color:var(--brand-text);border-bottom:2px solid var(--brand);padding:0 .12em;cursor:pointer}
+.pick select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
+.pick:focus-within{outline:2px solid var(--brand);outline-offset:4px}
+.out{display:grid;grid-template-columns:7fr 5fr;gap:48px;padding:32px 0 44px;border-top:1px solid var(--line);align-items:end}
+@media(max-width:900px){.out{grid-template-columns:1fr;gap:20px}}
+.out .fig{display:block;font:300 clamp(2.4rem,6vw,5.4rem)/1.05 Outfit;letter-spacing:-.04em;margin-top:10px}
+html[lang="ar"] .out .fig{font-family:Vazirmatn;letter-spacing:0;line-height:1.3}
+.out .wk{display:block;margin-top:12px;font-size:18px;color:var(--muted)}
+.out .side{display:grid;gap:16px;justify-items:start}
+.tag{display:inline-block;border:1px solid var(--brand);color:var(--brand-text);background:var(--brand-soft);border-radius:999px;padding:4px 14px;font-size:13px}
+.tag.plain{border-style:dashed;border-color:var(--line-strong);color:var(--muted);background:none}
+.all{margin:12px 0 96px}
+.all h2{font-size:1.4rem;margin-bottom:6px}
+.all table{width:100%;border-collapse:collapse;margin-top:14px;border-top:2px solid var(--fg)}
+.all th{font:400 12px "Geist Mono",monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:start;padding:12px 10px;border-bottom:1px solid var(--line-strong)}
+html[lang="ar"] .all th{font-family:Vazirmatn;letter-spacing:0;font-size:13px;text-transform:none}
+.all td{padding:0;border-bottom:1px solid var(--line)}
+.all td:first-child{padding:14px 10px;font-weight:500;font-size:14px;width:20%}
+.all button{display:block;width:100%;text-align:start;padding:14px 10px;font-size:14px;line-height:1.45;transition:background var(--m-hover)}
+.all button:hover{background:var(--brand-soft)}
+.all button.named{color:var(--brand-text);font-weight:500}
+.all button[aria-pressed="true"]{background:var(--brand);color:var(--brand-fg)}
+.all small{display:block;color:var(--muted);font-size:12px}.all button[aria-pressed="true"] small{color:#ffffffcc}
+.wrapx{overflow-x:auto}.all table{min-width:760px}
+</style></head>
+<body>
+<main class="wrap">
+  <header class="hero" id="hero"></header>
+  <section class="sent" aria-live="polite"><p id="s"></p></section>
+  <div class="out" id="out"></div>
+  <section class="all"><div class="eyebrow" id="al"></div><div class="wrapx"><table id="tbl"></table></div></section>
+</main>
+<script src="data.js"></script><script src="shared.js"></script>
+<script>
+let S = "website", B = "standard";
+P.chrome("c");
+const sel = (id, opts, cur) => `<label class="pick"><span>${opts.find((o) => o.v === cur).l}</span><select id="${id}" aria-label="${id}">${opts.map((o) => `<option value="${o.v}" ${o.v === cur ? "selected" : ""}>${o.l}</option>`).join("")}</select></label>`;
+function render() {
+  const t = P.t(); P.hero(document.getElementById("hero"));
+  const svc = P.rows().map((r) => ({ v: r.serviceId, l: r.name })), bnd = P.bands().map((b) => ({ v: b.id, l: b.label }));
+  document.getElementById("s").innerHTML = `${t.needA} ${sel("svc", svc, S)} ${t.at} ${sel("bnd", bnd, B)} ${t.scopeWord}`;
+  document.getElementById("svc").onchange = (e) => { S = e.target.value; render(); };
+  document.getElementById("bnd").onchange = (e) => { B = e.target.value; render(); };
+  const c = P.cell(S, B), tier = P.tier(c.tierId), href = tier ? tier.estimatorHref : `/transparency?projectType=${S}`;
+  document.getElementById("out").innerHTML = `<div><span class="eyebrow">${t.price}</span><span class="fig num" id="fig"></span><span class="wk num">${t.delivery} · ${c.weeksLabel}</span></div>
+    <div class="side">${tier ? `<span class="tag">${tier.buyerLabel}</span><p class="note" style="font-size:14px;max-width:38ch">${tier.idealFor}</p>` : `<span class="tag plain">${t.unnamed}</span><p class="note" style="font-size:14px;max-width:38ch">${t.unnamedNote}</p>`}
+    <a class="pill p" href="${href}">${tier ? t.ctaNamed(tier.buyerLabel) : t.cta}</a></div>`;
+  P.settle(document.getElementById("fig"), c.priceLabel);
+  document.getElementById("al").textContent = t.sentenceNote;
+  document.getElementById("tbl").innerHTML = `<thead><tr><th scope="col">${t.whatBuilt}</th>${P.bands().map((b) => `<th scope="col">${b.label}</th>`).join("")}</tr></thead><tbody>${P.rows().map((r) => `<tr><td>${r.name}</td>${r.cells.map((x) => { const tr = P.tier(x.tierId); return `<td><button class="${tr ? "named" : ""} num" data-s="${x.serviceId}" data-b="${x.complexityId}" aria-pressed="${x.serviceId === S && x.complexityId === B}">${tr ? tr.buyerLabel + "<br>" : ""}${x.priceLabel}<small>${x.weeksLabel}</small></button></td>`; }).join("")}</tr>`).join("")}</tbody>`;
+  document.querySelectorAll(".all button").forEach((b) => (b.onclick = () => { S = b.dataset.s; B = b.dataset.b; render(); }));
+}
+P.onChange(render);
+</script></body></html>

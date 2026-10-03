@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable, type Column } from "@/components/os/data-table";
+import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { money, date, dueLabel, when } from "@/lib/format";
@@ -40,16 +41,23 @@ export function ProjectsTable({ rows }: { rows: ProjectRow[] }) {
       id: "name",
       header: "Project",
       hideable: false,
-      cell: (row) => (
-        <span className="min-w-0">
-          <span className="block truncate">{row.name}</span>
-          <span className="block truncate text-meta font-normal text-subtle-foreground">
-            {row.clientName}
-          </span>
-        </span>
-      ),
+      // The first cell is wrapped in the row's own link by DataTable, so the
+      // client cannot live inside it (an <a> in an <a>); it has its own column.
+      cell: (row) => <span className="block truncate">{row.name}</span>,
       sortValue: (row) => row.name.toLowerCase(),
       searchValue: (row) => `${row.name} ${row.clientName} ${row.phase}`,
+    },
+    {
+      id: "client",
+      header: "Client",
+      width: "180px",
+      cell: (row) => (
+        <EntityLink type="client" id={row.clientId} muted className="block truncate">
+          {row.clientName}
+        </EntityLink>
+      ),
+      sortValue: (row) => row.clientName.toLowerCase(),
+      searchValue: (row) => row.clientName,
     },
     {
       id: "health",
@@ -147,7 +155,7 @@ export function ProjectsTable({ rows }: { rows: ProjectRow[] }) {
         rowHref={(row) => `/projects/${row.id}`}
         searchPlaceholder="Search projects and clients…"
         initialSort={{ columnId: "health", dir: "asc" }}
-        mobile={{ title: "name", subtitle: "phase", meta: ["health", "launch", "billing", "created"] }}
+        mobile={{ title: "name", subtitle: "client", meta: ["health", "phase", "launch", "billing"] }}
         rowActions={(row) => (
           <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
         )}

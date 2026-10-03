@@ -40,7 +40,21 @@ export function Sidebar({
     setMounted(true);
     try {
       const raw = window.localStorage.getItem("avx.nav.closed");
-      if (raw) setClosed(JSON.parse(raw) as Record<string, boolean>);
+      if (raw) {
+        // Keep only ids that are groups today. State saved under the previous
+        // IA's group ids would otherwise linger forever and be rewritten back
+        // on every toggle; a value that is not an object is discarded.
+        const parsed: unknown = JSON.parse(raw);
+        const known = new Set(GROUPS.map((g) => g.id));
+        const pruned: Record<string, boolean> = {};
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          for (const [id, value] of Object.entries(parsed)) {
+            if (known.has(id) && value === true) pruned[id] = true;
+          }
+        }
+        setClosed(pruned);
+        window.localStorage.setItem("avx.nav.closed", JSON.stringify(pruned));
+      }
     } catch { }
   }, []);
 

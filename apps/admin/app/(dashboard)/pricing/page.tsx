@@ -1,6 +1,13 @@
-import { COMPLEXITY_IDS, ORDERED_TIERS, SERVICE_IDS, pricingCopy } from "@repo/pricing-schema";
+import { prisma } from "@repo/database";
+import {
+  COMPLEXITY_IDS,
+  SERVICE_IDS,
+  investmentMatrixView,
+  pricingCopy,
+} from "@repo/pricing-schema";
 import { PageHeader } from "@/components/os/page-header";
 import { getPricing, pricingHistory } from "@/lib/pricing-store";
+import { deriveStatus, REVENUE_BEARING } from "@/lib/subscription-lifecycle";
 import { PricingClient, type PricingSnapshot } from "./pricing-client";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +24,50 @@ export const dynamic = "force-dynamic";
  * such. Nothing here invents a number.
  */
 export default async function PricingPage() {
-  const [pricing, history] = await Promise.all([getPricing(), pricingHistory(25)]);
+  const now = new Date();
+  const [pricing, history, subscriptions] = await Promise.all([
+    getPricing(),
+    pricingHistory(25),
+    prisma.maintenanceSubscription.findMany({
+      select: {
+        planId: true,
+        status: true,
+        currentPeriodEnd: true,
+        autoRenew: true,
+        trialEndsAt: true,
+        cancelledAt: true,
+        quotedMonthlyPrice: true,
+      },
+    }),
+  ]);
   const copy = pricingCopy("en");
+
+  // Retainers whose derived status still bills (trialing, active, past due,
+  // grace), per plan — the rows a price change here will actually reach.
+  const activeByPlan = new Map<string, { count: number; unquoted: number }>();
+  for (const sub of subscriptions) {
+    if (!REVENUE_BEARING.has(deriveStatus(sub, now))) continue;
+    const entry = activeByPlan.get(sub.planId) ?? { count: 0, unquoted: 0 };
+    entry.count += 1;
+    if (sub.quotedMonthlyPrice === null) entry.unquoted += 1;
+    activeByPlan.set(sub.planId, entry);
+  }
+
+  // The rule `periodAmount` in lib/maintenance-admin.ts bills by: a published
+  // plan price is what every retainer's next renewal invoice charges, and a
+  // retainer's own quoted monthly price is used only while the plan has no
+  // published price. Payments already opened keep their amount either way.
+  const repriceNote = (planId: string, price: number | null) => {
+    const active = activeByPlan.get(planId) ?? { count: 0, unquoted: 0 };
+    const retainers = `${active.count} active retainer${active.count === 1 ? "" : "s"}`;
+    if (price === null) {
+      const unquoted = active.unquoted
+        ? ` ${active.unquoted} of them have no quoted price and cannot renew until one is set.`
+        : "";
+      return `${retainers}. Custom quote: each bills its own quoted monthly price, so changing this plan's other fields re-prices none of them.${unquoted}`;
+    }
+    return `${retainers}. The published price is what each one's next renewal invoice charges (their quoted price is ignored while a price is published). Payments already opened keep their amount.`;
+  };
 
   const snapshot: PricingSnapshot = {
     cells: SERVICE_IDS.flatMap((serviceId) =>
@@ -33,13 +82,9 @@ export default async function PricingPage() {
         weeksMax: pricing.services[serviceId].weeks[complexityId].max,
       })),
     ),
-    tiers: ORDERED_TIERS.map((tier) => ({
-      id: tier.id,
-      buyerLabel: copy.tiers[tier.id].buyerLabel,
-      serviceId: tier.serviceId,
-      complexityId: tier.complexityId,
-      display: tier.display,
-    })),
+    // The public site publishes every cell unnamed; the count comes from the
+    // same view /pricing renders, so this tile cannot drift from that grid.
+    publishedRanges: investmentMatrixView("en", pricing).cellCount,
     maintenance: Object.values(pricing.maintenance).map((plan) => ({
       id: plan.id,
       name: copy.maintenance[plan.id].name,
@@ -48,6 +93,8 @@ export default async function PricingPage() {
       overageHourlyRate: plan.overageHourlyRate,
       internalHourEquivalent: plan.internalHourEquivalent,
       status: plan.status,
+      activeRetainers: activeByPlan.get(plan.id)?.count ?? 0,
+      repriceNote: repriceNote(plan.id, plan.price),
     })),
     consulting: Object.values(pricing.consulting).map((pkg) => ({
       id: pkg.id,

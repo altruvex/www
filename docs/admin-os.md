@@ -106,11 +106,14 @@ Two things in this system are computed rather than columns, and both are deliber
   board therefore cannot disagree with the documents. Four of the eight board columns are
   read-only for exactly this reason, and the board says so rather than accepting a drag and
   silently reverting it.
-- **The activity timeline** (`lib/activity.ts`) is derived from the timestamp columns that
-  already exist (`sentAt`, `readAt`, `signedAt`, `paidAt`…). A parallel event log would be
-  a second source of truth that drifts the first time a row is corrected by hand. The cost
-  is that events with no column ("Ali called them") cannot be recorded — that is what the
-  planned audit log and a Note model are for, and they *append* to this feed.
+- **The record timeline** (`lib/activity.ts`) is derived from the timestamp columns that
+  already exist (`sentAt`, `readAt`, `signedAt`, `paidAt`…), so it cannot disagree with the
+  documents. It sits beside — not instead of — the audit trail: every mutation writes an
+  `ActivityEvent` at its mutation site (`recordActivity`/`recordChange`), which is what
+  answers *who* changed *what*, *when*, and from what to what. `/audit` reads that table;
+  each detail page shows its own slice through `EntityAudit`.
+- **Payment OVERDUE, subscription PAST_DUE/GRACE/EXPIRED, service expiry and warranty** are
+  derived from dates at read time and never settable from a form.
 
 ### Permissions
 
@@ -118,14 +121,21 @@ Two things in this system are computed rather than columns, and both are deliber
 three roles onto the six product roles. The `/team` permission grid is **generated from
 that matrix**, so it cannot describe something the server does not enforce.
 
+The product role is `User.opsRole` when one is assigned, otherwise derived from the auth
+role (SUPERADMIN → OWNER, ADMIN → ADMIN); the auth role alone still decides who may sign in.
+Roles are assigned on `/team`, audited.
+
 Client-side `can()` decides whether to *render* a control. It is never the access decision:
-every server action in `app/(dashboard)/_actions/records.ts` re-authorises independently.
+every server action calls `authorize(action, subject)` (`lib/authorize.ts`), and API routes
+pass `can: [action, subject]` to `withAdmin`.
 
 ### Honesty about what does not exist
 
-Modules with no model behind them (`/tasks`, `/email`, `/invoices`, `/audit`,
-`/automations`) render `PlannedModule`: what the module will do, what must exist first, and
-where the work happens today. They are visible in the nav but demoted.
+A capability with nothing behind it says so in place — `Planned` (`components/os/planned.tsx`)
+or "Integration required" for anything that needs a provider that is not connected (card
+payments, refunds, tax). As of the OS pass no whole module is a placeholder; `/automations`
+lists the two jobs that really run (GitHub ingest, the renewal sweep) and marks the rest
+planned.
 
 They are **not** faked with mock rows. A dashboard full of invented clients teaches an
 operator to trust numbers that are not real, which is a worse outcome than an empty screen.
@@ -195,22 +205,26 @@ Two rules follow from it:
 
 ## 6. Keyboard
 
-`⌘K` / `/` command palette · `[` collapse sidebar · `?` shortcut sheet · `g` then
-`d i l k c p n o m y a s` to jump. The palette searches navigation instantly (static) and
+`⌘K` / `/` command palette · `[` collapse sidebar · `?` shortcut sheet · `g` then a key to
+jump — the list is `GOTO_SHORTCUTS` in `lib/nav.ts`, and the shortcut sheet is generated
+from it, so this doc does not repeat it. The palette searches navigation instantly (static) and
 records over the network (debounced, abortable), so it is usable the millisecond it opens.
 
 ## 7. Known gaps
 
-- No second factor. Password compromise is full compromise of this application.
-- No audit table — see §4; the derived timeline cannot show who changed a value or what it
-  was before.
-- Roles beyond ADMIN/SUPERADMIN are enforced in code but cannot be assigned until the
-  schema carries them.
+- Two-factor (TOTP + backup codes) can be required with `ADMIN_MFA_REQUIRED=true`; until it is,
+  an operator may skip enrolment in their own browser.
+- No card processor: payments are recorded by hand (`metadata.manual`), refunds and partial
+  captures read "Integration required".
+- Tax is not configured; invoices say so instead of printing a rate.
 - Signing is click-to-sign with name, timestamp and IP: evidence of assent, not a qualified
   electronic signature.
 - No free-form WhatsApp compose. Outside the 24-hour session window only approved templates
   send, and a compose box that silently fails half the time is worse than none.
-- No mail transport, so nothing is emailed.
+- Email sends only when a transport is configured (`docs/email.md`); with none, nothing is
+  sent and the settings page says so.
+- The renewal cron sweep writes notifications but no `ActivityEvent`; `/integrations`
+  infers its last run from the newest `RENEWAL_DUE` notification.
 
 ## 8. What the visual QA pass found
 
@@ -347,3 +361,25 @@ Eleven defects; all fixed.
 - Unconverted estimates linked to the page they were already on. `rowHref` may now return
   undefined per row.
 - The slide-heading inputs in the proposal builder had placeholders but no accessible name.
+
+## 11. The OS pass (2026-10) — capability map
+
+Every number on Today links to the filtered list it counts; every related record is an
+`EntityLink` resolved through `lib/entity-links.ts`; lists accept `?client=` / `?project=` /
+`?product=` and show the filter as a removable chip.
+
+| Area | Routes | What it does now |
+|---|---|---|
+| Today | `/` | Attention queue (`lib/action-center.ts`), engineering status, revenue panel (finance roles), pipeline, delivery, activity |
+| Clients | `/clients`, `/clients/[id]` | Hub with tabs: overview, deals, delivery, sites, money, conversations, meetings, notes, audit; notes are audited without their body |
+| Sales | `/leads`, `/pipeline`, `/proposals`, `/contracts`, `/documents` | Filters by stage/status/client; marking a contract SIGNED runs `handleContractSigned` |
+| Delivery | `/projects/[id]`, `/tasks`, `/calendar` | Editable project with milestones and its engineering; full task edit |
+| Engineering | `/products/[id]`, `/deployments/[id]`, `/deployments/builds/[id]`, `/logs`, `/incidents/[id]` | Read-only CI history (ingest only), log ↔ incident linking |
+| Revenue | `/payments` (Billing), `/invoices`, `/renewals`, `/maintenance/[id]`, `/services`, `/pricing`, `/analytics` | Record payment / new charge, outstanding per client per currency, persisted invoice numbers (`lib/invoice-number.ts`), retainer plan changes and confirmed status changes, first-period payment on create, audited price overrides, MRR (`lib/revenue-metrics.ts`) |
+| System | `/team`, `/settings`, `/audit`, `/integrations`, `/automations`, `/notifications` | Invite (set-password link), role assignment, own sessions, 2FA backup codes; audit filters by actor/action/entity/date with before → after; integrations and health merged |
+
+Verification for this pass: `verify:security`, `verify:lifecycle`, `verify:services`,
+`verify:change-requests`, `verify:github`, `verify:slack`, and, against a scratch database,
+`verify:engineering`, `verify:admin-api`, `verify:maintenance`, `verify:delete`,
+`verify:invoice-number`. The migration `20261003150000_os_completion` must be deployed to
+production before this code runs there.

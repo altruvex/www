@@ -4,19 +4,8 @@
     "days": "{n} {count, plural, one {day} other {days}}"
   },
   "page": {
-    "strip": {
-      "label": "One engagement, in working days",
-      "scope": {
-        "label": "Scope",
-        "min": "Smallest scope",
-        "max": "Largest scope"
-      },
-      "totalLabel": "From the first call to launch",
-      "total": "<n></n> {count, plural, one {working day} other {working days}}",
-      "legend": {
-        "other": "The other four phases"
-      },
-      "note": "Scope stretches every phase after discovery - development most. It never adds a phase, reorders one, or skips a sign-off. Both ends come from our published price ranges; a flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks, never further. Discovery counts as one day."
+    "photo": {
+      "caption": "Five phases · one owner · no skipped sign-off"
     },
     "register": {
       "eyebrow": "Phase by phase",
@@ -26,13 +15,20 @@
         "next": "Then {next} starts.",
         "last": "Then the system is yours."
       }
+    },
+    "scope": {
+      "title": "Scope stretches the phases.",
+      "titleItalic": "It never skips one.",
+      "min": "Smallest scope",
+      "max": "Largest scope",
+      "total": "<n></n> {count, plural, one {working day} other {working days}}",
+      "note": "Scope stretches every phase after discovery - development most. It never adds a phase, reorders one, or skips a sign-off. Both ends come from our published price ranges; a flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks, never further. Discovery counts as one day."
     }
   },
   "closing": {
-    "cta": "Book a Discovery Call",
     "startsHere": "Your project starts here"
   },
-  "eyebrow": "03 - Delivery Model",
+  "eyebrow": "Delivery Model",
   "flexibility": {
     "description": "These phases are a framework, not a rigid contract. Some projects need deeper discovery. Others need to ship fast. We adjust the intensity - <strong>never the discipline.</strong>",
     "title": "The process serves",
@@ -43,10 +39,7 @@
     "description": "A framework, not a formula. Every engagement follows the same backbone - calibrated to what the scope actually demands.",
     "eyebrow": "10 - Our Process",
     "title": "How we work.",
-    "titleItalic": "every time."
-  },
-  "meta": {
-    "deliverables": "Deliverables"
+    "titleItalic": "Every time."
   },
   "phases": {
     "deliverables": "Deliverables",
@@ -89,12 +82,9 @@
   },
   "subtitle": "Every project moves through discovery, wireframe, design, development and launch - <strong>with one owner responsible from start to delivery.</strong>",
   "title": "Clear phases. Accountable outcomes.",
-  "scale": {
-    "label": "Working days, drawn to scale — longest case",
-    "days": "<n></n> {count, plural, one {day} other {days}}"
-  },
   "range": {
     "days": "{min} – {max} {count, plural, one {day} other {days}}"
   },
-  "share": "<pct></pct> of the calendar"
+  "more": "See the whole process",
+  "readPhase": "Read the full phase"
 }

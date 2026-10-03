@@ -1,9 +1,11 @@
 "use client";
 
+import { SegmentedControl } from "@/components/base/segmented-control";
 import { PlanSummary } from "@/components/sections/plan-summary";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
+import { maintenancePlanHref } from "@/lib/config/commercial";
 import {
   MOTION,
   useSectionCardGrid,
@@ -14,9 +16,14 @@ import {
 } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
-import type { MaintenanceView } from "@repo/pricing-schema";
+import {
+  MAINTENANCE_ANNUAL_FREE_MONTHS,
+  type MaintenanceView,
+} from "@repo/pricing-schema";
 import { useLocale, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+
+type Billing = "monthly" | "annual";
 
 const QUOTED_TOKENS = 3;
 
@@ -51,14 +58,14 @@ function Tokens({ plan }: { plan: MaintenanceView }) {
             <li
               key={index}
               data-token
-              className="size-6 md:size-8 rounded-[0.5rem] border border-dashed border-brand/60"
+              className="size-6 md:size-8 rounded-[0.5rem] border border-dashed border-local-accent/60"
             />
           ))
         : Array.from({ length: count }, (_, index) => (
             <li
               key={index}
               data-token
-              className="flex size-6 md:size-8 items-end rounded-[0.5rem] bg-brand p-0.5 md:p-1 text-brand-foreground"
+              className="flex size-6 md:size-8 items-end rounded-[0.5rem] bg-local-accent p-0.5 md:p-1 text-local-accent-fg"
             >
               <span className="text-[9px] md:text-[10px] leading-none tabular-nums ltr:font-mono">
                 <Num value={index + 1} pad={2} />
@@ -88,6 +95,9 @@ export function MaintenancePlans({
     delay: MOTION.section.element,
   });
   const outsideRef = useSectionElement<HTMLDivElement>();
+  const billingRef = useSectionElement<HTMLDivElement>();
+
+  const [billing, setBilling] = useState<Billing>("monthly");
 
   const recommended = Math.max(
     0,
@@ -123,7 +133,7 @@ export function MaintenancePlans({
         return plan.compare[row];
       case "turnaround":
         return plan.priorityTurnaround ? (
-          <span className="font-medium text-brand-text">
+          <span className="font-medium text-local-accent-text">
             {t("plans.table.values.priority")}
           </span>
         ) : (
@@ -139,7 +149,7 @@ export function MaintenancePlans({
   const columnClass = (index: number) =>
     cn(
       "align-top relative transition-colors duration-(--motion-instant)",
-      index === recommended && "bg-brand/[0.05]"
+      index === recommended && "bg-local-accent/[0.05]"
     );
 
   const stickyLabel =
@@ -162,8 +172,29 @@ export function MaintenancePlans({
           secondTitle={t("plans.titleAccent")}
           accent="mint"
           description={t("plans.description")}
-          className="mb-12 md:mb-16"
+          className="mb-10 md:mb-12"
         />
+        <div
+          ref={billingRef}
+          className="mb-10 flex flex-col gap-3 md:mb-12 md:flex-row md:items-center md:gap-5"
+        >
+          <SegmentedControl
+            label={t("plans.billing.label")}
+            value={billing}
+            onChange={setBilling}
+            options={[
+              { value: "monthly", label: t("plans.billing.monthly") },
+              { value: "annual", label: t("plans.billing.annual") },
+            ]}
+            className="self-start"
+          />
+          <p className="max-w-[52ch] text-sm leading-snug text-muted-foreground">
+            {t("plans.billing.note", {
+              count: MAINTENANCE_ANNUAL_FREE_MONTHS,
+              n: localizeNumbers(String(MAINTENANCE_ANNUAL_FREE_MONTHS), locale),
+            })}
+          </p>
+        </div>
       </div>
       <div ref={tableRef} className="w-full">
         <div
@@ -201,14 +232,22 @@ export function MaintenancePlans({
                     >
                       <PlanSummary
                         name={plan.name}
-                        badge={t("pricing.recommended")}
                         recommended={index === recommended}
-                        price={plan.priceLabel}
-                        cycle={plan.cycleLabel}
+                        useWorldAccent
+                        price={
+                          billing === "annual" && plan.annual
+                            ? plan.annual.priceLabel
+                            : plan.priceLabel
+                        }
+                        cycle={
+                          billing === "annual" && plan.annual
+                            ? plan.annual.cycleLabel
+                            : plan.cycleLabel
+                        }
                         bestForLabel={t("plans.table.bestFor")}
                         bestFor={plan.compare.bestFor}
                         cta={{
-                          href: "/contact",
+                          href: maintenancePlanHref(plan.id, billing),
                           label: t("plans.cta", { name: plan.name }),
                         }}
                       />

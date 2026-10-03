@@ -2,12 +2,14 @@ import {
   BRAND_IDENTITY_IDS,
   COMPLEXITY_IDS,
   CONTENT_READINESS_IDS,
+  SCOPE_NOTE_IDS,
   SERVICE_IDS,
   TIMELINE_IDS,
 } from "@repo/pricing-schema";
 import { z } from "zod";
 
-import { normalizeNumeralsToEnglish } from "../utils/number";
+import { isValidPhone, normalizePhone } from "../utils/transparency-utils";
+
 type ValidationTranslator = (key: string) => string;
 
 /**
@@ -30,16 +32,12 @@ const optionalText = (max: number, message?: string) =>
 
 export const createTransparencyLeadSchema = (t: ValidationTranslator) =>
   z.object({
-    phone: z.preprocess(
-      (val) =>
-        typeof val === "string" ? normalizeNumeralsToEnglish(val) : val,
-      z
-        .string()
-        .regex(
-          /^(\+|00)?[1-9]\d{6,14}$|^01[0125]\d{8}$/,
-          t("transparency-lead.phone"),
-        ),
-    ),
+    // The same rule the form applies before it submits (one definition, in
+    // transparency-utils), stored normalised so the CRM match on phone works.
+    phone: z
+      .string({ error: t("transparency-lead.phone") })
+      .refine(isValidPhone, { error: t("transparency-lead.phone") })
+      .transform(normalizePhone),
     name: optionalText(120, t("transparency-lead.name")),
     // Optional, and deliberately so: the CRM keys on phone (see
     // `linkClientToLead`), so email is enrichment rather than identity. A
@@ -61,6 +59,15 @@ export const createTransparencyLeadSchema = (t: ValidationTranslator) =>
     // The two answers the estimator has always asked for and never kept.
     brandIdentity: z.enum(BRAND_IDENTITY_IDS).optional(),
     contentReadiness: z.enum(CONTENT_READINESS_IDS).optional(),
+    // What the visitor ticked under "What does it need?". Recorded for scope
+    // review; never priced. Deduplicated and kept in schema order so two
+    // clients sending the same ticks store the same row.
+    scopeNotes: z
+      .array(z.enum(SCOPE_NOTE_IDS), { error: t("transparency-lead.scopeNotes") })
+      .max(SCOPE_NOTE_IDS.length * 2, t("transparency-lead.scopeNotes"))
+      .default([])
+      .transform((ids) => SCOPE_NOTE_IDS.filter((id) => ids.includes(id))),
+    note: optionalText(1000, t("transparency-lead.note")),
     // Accepted so an older client keeps working, and then ignored: the figures
     // stored on the lead are recomputed server-side from the answers above.
     // A number the visitor's browser chose is not an estimate this studio made.

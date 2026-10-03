@@ -16,7 +16,7 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 const ARTICLE_CTA_MAP: Record<string, { href: string }> = {
-  "why-not-wordpress": { href: "/pricing?tier=professional" },
+  "why-not-wordpress": { href: "/pricing" },
   "technical-debt": { href: "/services/maintenance" },
   "evaluating-developers": { href: "/services/consulting" },
   "multilingual-architecture": { href: "/services/development" },

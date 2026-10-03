@@ -105,7 +105,7 @@ export const GET = withAdmin(async (request) => {
   if (clientId) where.clientId = clientId;
   if (projectId) where.projectId = projectId;
   return ok({ services: await listServices(where) });
-});
+}, { can: ["view", "project"] });
 
 export const POST = withAdmin(async (request, { actor, session }) => {
   const body = await readJson(request, createSchema);
@@ -167,7 +167,7 @@ export const POST = withAdmin(async (request, { actor, session }) => {
   });
 
   return ok({ service: toServiceRow(service) });
-});
+}, { can: ["create", "project"] });
 
 export const PATCH = withAdmin(async (request, { actor }) => {
   const body = await readJson(request, patchSchema);
@@ -388,4 +388,4 @@ export const PATCH = withAdmin(async (request, { actor }) => {
         : { opened: false, reason: billing.reason }
       : null,
   });
-});
+}, { can: ["edit", "project"] });

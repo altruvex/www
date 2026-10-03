@@ -367,14 +367,18 @@ export function useRecordDelete({
     setInstance((n) => n + 1);
   }, []);
 
+  // The key lives on an inner element: two hooks on one screen return sibling
+  // dialogs, and a key on the returned element itself would collide at 0.
   const dialog = (
-    <DeleteDialog
-      key={instance}
-      entity={entity}
-      targets={targets}
-      onClose={() => setTargets(null)}
-      onDeleted={onDeleted}
-    />
+    <React.Fragment>
+      <DeleteDialog
+        key={instance}
+        entity={entity}
+        targets={targets}
+        onClose={() => setTargets(null)}
+        onDeleted={onDeleted}
+      />
+    </React.Fragment>
   );
 
   return { request, dialog, open: targets !== null };

@@ -1,12 +1,10 @@
 /**
  * The site's text entrance, as a reusable core.
  *
- * `useText` plays this once, when its element scrolls in. Some surfaces need
- * the same entrance replayed on demand — a stage that swaps its copy as the
- * visitor scrolls, for instance. Both go through here, so a heading entering
- * on /services moves exactly like every section title on the site: the same
- * split, the same travel, scale and blur, the same ease, the same Arabic
- * rules. There is no second text animation to drift from the first.
+ * `useText` plays this once, when its element scrolls in. The split and the
+ * entrance live here, so every section title on the site moves the same way:
+ * the same split, the same travel, scale and blur, the same ease, the same
+ * Arabic rules. There is no second text animation to drift from the first.
  */
 import { gsap } from "@/lib/utils/gsap";
 import { MOTION, resolveEase, type MotionEase } from "../tokens";
@@ -110,29 +108,4 @@ export function textEnterVars(
   if (canBlur) to.filter = "blur(0px)";
 
   return { from, to };
-}
-
-/** The section-title entrance shape — what `useSectionTitle` plays. */
-const HEADING_ENTER: TextEnterShape = {
-  duration: MOTION.text.heading.duration,
-  stagger: MOTION.text.heading.stagger,
-  distance: MOTION.text.heading.distance,
-  ease: MOTION.ease.text,
-  blur: MOTION.text.heading.blur,
-};
-
-/**
- * Plays the entrance on `el` now, with no scroll trigger — for copy that
- * enters on a state change rather than on arrival. Callers own the
- * reduced-motion branch (`REDUCED_FADE` on the whole element, no split),
- * exactly as `useText` does.
- */
-export function playTextEnter(
-  el: HTMLElement,
-  shape: TextEnterShape = HEADING_ENTER,
-  splitBy: TextSplit = "word",
-): gsap.core.Tween {
-  const split = splitText(el, splitBy);
-  const { from, to } = textEnterVars(split, shape);
-  return gsap.fromTo(split.targets, from, to);
 }

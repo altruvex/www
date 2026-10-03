@@ -31,3 +31,11 @@ export function whenMotionReady(cb: () => void): () => void {
     subscribers.delete(cb);
   };
 }
+
+/**
+ * The sessionStorage key the InitialLoader sets once it has played in this
+ * session. Shared with the first-paint arrival's head script
+ * (utils/arrival.ts), which holds the arrivals while the loader is to come.
+ */
+export const INITIAL_LOAD_KEY = "Altruvex_initial_load_complete";
+

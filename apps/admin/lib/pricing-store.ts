@@ -53,8 +53,8 @@ function toBillingCycle(value: string): BillingCycle {
 
 /**
  * Rows are validated against the canonical id set at the boundary rather than
- * cast through it. A row left behind by a renamed tier is dropped here, so
- * nothing downstream has to reason about an id that no longer exists.
+ * cast through it. A row whose plan id is no longer in the schema is dropped
+ * here, so nothing downstream has to reason about an id that no longer exists.
  */
 function isMaintenanceId(value: string): value is MaintenancePlanId {
   return (MAINTENANCE_PLAN_IDS as readonly string[]).includes(value);
@@ -205,8 +205,18 @@ export async function recordChanges(
   });
 }
 
+/**
+ * The entity types the pricing route writes. `lib/maintenance-admin.ts` also
+ * writes to this log (quoted-price changes on individual retainers, keyed
+ * "maintenance_request" / "maintenance_subscription"); those are per-client
+ * commercial changes, not published-price changes, and the /pricing history
+ * must not show them as if a plan's price had moved.
+ */
+export const PUBLISHED_PRICE_ENTITY_TYPES = ["cell", "terms", "maintenance", "consulting", "addon"] as const;
+
 export async function pricingHistory(limit = 50) {
   return prisma.pricingChangeLog.findMany({
+    where: { entityType: { in: [...PUBLISHED_PRICE_ENTITY_TYPES] } },
     orderBy: { createdAt: "desc" },
     take: limit,
   });

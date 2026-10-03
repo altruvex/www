@@ -15,8 +15,6 @@ import {
 
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
-export const DropdownMenuGroup = DropdownMenuPrimitive.Group;
-export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
 export function DropdownMenuContent({
@@ -105,29 +103,5 @@ export function DropdownMenuSeparator({
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
   return (
     <DropdownMenuPrimitive.Separator className={cn(menuSeparator, className)} {...props} />
-  );
-}
-
-export function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
-  return (
-    <span className={cn("ms-auto font-mono text-micro text-subtle-foreground", className)} {...props} />
-  );
-}
-
-export function DropdownMenuSubTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger>) {
-  return <DropdownMenuPrimitive.SubTrigger className={cn(menuItem, className)} {...props} />;
-}
-
-export function DropdownMenuSubContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
-  return (
-    <DropdownMenuPrimitive.Portal>
-      <DropdownMenuPrimitive.SubContent className={cn(menuSurface, className)} {...props} />
-    </DropdownMenuPrimitive.Portal>
   );
 }

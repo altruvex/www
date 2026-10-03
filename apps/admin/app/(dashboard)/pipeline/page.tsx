@@ -1,17 +1,24 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@repo/database";
 import { KanbanSquare } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
+import { FilterChip } from "@/components/os/data-table";
 import {
   PIPELINE_STAGES,
   STAGE_PROBABILITY,
   STAGE_TONE,
   deriveClientStage,
 } from "@/lib/dashboard-data";
-import { moneyByCurrency, percent, sumByCurrency, scaleByCurrency } from "@/lib/format";
+import {
+  moneyByCurrency,
+  percent,
+  sumByCurrency,
+  scaleByCurrency,
+} from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { PipelineBoard, type PipelineCardData } from "./pipeline-board";
 import { Button } from "@repo/ui";
@@ -26,7 +33,15 @@ export const dynamic = "force-dynamic";
  * because being signed means a Contract row exists. The board says so out loud
  * rather than accepting the drag and silently reverting it.
  */
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ stage?: string }>;
+}) {
+  const { stage: stageParam } = await searchParams;
+  // Spam is kept off the board on purpose (it is not a deal), so focusing it
+  // here would silently show every column. The client list can filter it.
+  if (stageParam?.toUpperCase() === "SPAM") redirect("/clients?stage=SPAM");
   const clients = await prisma.client.findMany({
     where: { status: { notIn: ["SPAM"] } },
     select: {
@@ -38,14 +53,34 @@ export default async function PipelinePage() {
       source: true,
       updatedAt: true,
       proposals: {
-        select: { status: true, readAt: true, totalPrice: true, currency: true },
+        select: {
+          status: true,
+          readAt: true,
+          totalPrice: true,
+          currency: true,
+        },
         orderBy: { createdAt: "desc" },
         take: 1,
       },
-      contracts: { select: { status: true }, orderBy: { createdAt: "desc" }, take: 1 },
+      contracts: {
+        select: { status: true },
+        orderBy: { createdAt: "desc" },
+        take: 1,
+      },
     },
     orderBy: { updatedAt: "desc" },
   });
+
+  const columns = [
+    ...PIPELINE_STAGES.map((stage) => ({
+      id: stage as string,
+      label: statusOf("pipelineStage", stage).label,
+      tone: STAGE_TONE[stage],
+    })),
+    { id: "LOST", label: "Lost", tone: STAGE_TONE.LOST },
+  ];
+  // An unknown ?stage= is ignored rather than shown as an empty filter.
+  const focus = columns.find((c) => c.id === stageParam);
 
   const cards: PipelineCardData[] = clients.map((client) => ({
     id: client.id,
@@ -67,15 +102,19 @@ export default async function PipelinePage() {
   );
   const weighted: Record<string, number> = {};
   for (const card of openCards) {
-    const p = STAGE_PROBABILITY[card.stage as (typeof PIPELINE_STAGES)[number]] ?? 0;
-    weighted[card.currency] = (weighted[card.currency] ?? 0) + Math.round(card.value! * p);
+    const p =
+      STAGE_PROBABILITY[card.stage as (typeof PIPELINE_STAGES)[number]] ?? 0;
+    weighted[card.currency] =
+      (weighted[card.currency] ?? 0) + Math.round(card.value! * p);
   }
 
   const won = cards.filter((c) => c.stage === "SIGNED").length;
   const lost = cards.filter((c) => c.stage === "LOST").length;
   const withValue = live.filter((c) => c.value != null);
   const avgDeal = scaleByCurrency(
-    sumByCurrency(withValue.map((c) => ({ amount: c.value!, currency: c.currency }))),
+    sumByCurrency(
+      withValue.map((c) => ({ amount: c.value!, currency: c.currency })),
+    ),
     (currency) => {
       const n = withValue.filter((c) => c.currency === currency).length;
       return n ? 1 / n : 0;
@@ -102,11 +141,17 @@ export default async function PipelinePage() {
         />
         <StatTile
           label="Win rate"
-          value={percent(won + lost ? Math.round((won / (won + lost)) * 100) : 0)}
+          value={percent(
+            won + lost ? Math.round((won / (won + lost)) * 100) : 0,
+          )}
           sub={`${won} won · ${lost} lost`}
           tone={won >= lost ? "success" : "warning"}
         />
-        <StatTile label="Average deal" value={moneyByCurrency(avgDeal, true)} sub="Across proposed work" />
+        <StatTile
+          label="Average deal"
+          value={moneyByCurrency(avgDeal, true)}
+          sub="Across proposed work"
+        />
       </div>
 
       {cards.length === 0 ? (
@@ -116,30 +161,33 @@ export default async function PipelinePage() {
           body="Deals appear here as soon as a client record exists. Convert a website submission into a client, and it will show up in the New column."
           action={
             <Button asChild variant="outline">
-              <Link href="/submissions">
-                Review submissions
-              </Link>
+              <Link href="/submissions">Review submissions</Link>
             </Button>
           }
         />
       ) : (
         <>
-          <AlertBar tone="info" href="/clients" cta="Open a client to send a proposal">
-            New, Viewed, Contacted, Qualified and Lost are yours to set — drag a card, or
-            use the stage menu on it (the only way on a touch screen). The locked columns
-            are computed from the documents themselves: send a proposal or generate a
-            contract to move a deal into them.
+          <AlertBar
+            tone="info"
+            href="/clients"
+            cta="Open a client to send a proposal"
+          >
+            New, Viewed, Contacted, Qualified and Lost are yours to set — drag a
+            card, or use the stage menu on it (the only way on a touch screen).
+            The locked columns are computed from the documents themselves: send
+            a proposal or generate a contract to move a deal into them.
           </AlertBar>
+          {focus && (
+            <FilterChip
+              label="Stage"
+              value={focus.label}
+              clearHref="/pipeline"
+            />
+          )}
           <PipelineBoard
             cards={cards}
-            columns={[
-              ...PIPELINE_STAGES.map((stage) => ({
-                id: stage,
-                label: statusOf("pipelineStage", stage).label,
-                tone: STAGE_TONE[stage],
-              })),
-              { id: "LOST", label: "Lost", tone: STAGE_TONE.LOST },
-            ]}
+            columns={columns}
+            focusColumnId={focus?.id}
           />
         </>
       )}

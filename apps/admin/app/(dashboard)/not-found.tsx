@@ -9,7 +9,7 @@ export default function DashboardNotFound() {
       <EmptyState
         icon={FileQuestion}
         title="That record does not exist"
-        body="It was either deleted, or the link points at an id from another environment. Nothing here is hidden by permissions — if you can reach this application, you can see every record in it."
+        body="It was deleted, the link points at an id from another environment, or this area is outside your role — finance screens are hidden from roles that do not handle money."
         action={
           <>
             <Button asChild variant="outline">

@@ -1,7 +1,6 @@
 export * from "./lib/utils";
 
 export * from "./components/primitives/button";
-export * from "./components/primitives/card";
 export * from "./components/primitives/kbd";
 export * from "./components/primitives/separator";
 export * from "./components/primitives/surface";
@@ -19,8 +18,6 @@ export * from "./components/overlays/menu";
 export * from "./components/overlays/popover";
 export * from "./components/overlays/sheet";
 export * from "./components/overlays/tooltip";
-
-export * from "./components/navigation/tabs";
 
 export * from "./components/data-display/avatar";
 export * from "./components/data-display/badge";

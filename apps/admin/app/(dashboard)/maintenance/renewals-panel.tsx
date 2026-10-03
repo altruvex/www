@@ -1,16 +1,27 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button, Switch } from "@repo/ui";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  Button,
+  Switch,
+} from "@repo/ui";
 
+import { EntityLink } from "@/components/os/entity-link";
 import { Panel } from "@/components/os/panel";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import type { AdminSubscription } from "@/lib/maintenance-admin";
-import { date } from "@/lib/format";
+import { date, money } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +41,9 @@ import { cn } from "@/lib/utils";
 export function RenewalsPanel({ subscriptions }: { subscriptions: readonly AdminSubscription[] }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState<string | null>(null);
+  // Renewing opens the next period's invoice, so it is confirmed first — the
+  // same step the renewals screen and the retainer page ask for.
+  const [confirming, setConfirming] = React.useState<AdminSubscription | null>(null);
 
   const due = subscriptions
     .filter((s) => s.renewalUrgency !== "scheduled" && s.renewalUrgency !== "none")
@@ -81,7 +95,7 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
   return (
     <Panel
       title="Renewals"
-      description={`${due.length} retainer${due.length === 1 ? "" : "s"} need a decision`}
+      description={`${due.length} retainer${due.length === 1 ? " needs" : "s need"} a decision`}
       flush
     >
       <ul className="divide-y divide-border">
@@ -102,15 +116,13 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
 
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base font-medium">
-                  <Link
-                    href={`/clients/${sub.clientId}`}
-                    className="hover:text-brand hover:underline"
-                  >
+                  <EntityLink type="client" id={sub.clientId}>
                     {sub.clientName}
-                  </Link>
+                  </EntityLink>
                 </p>
                 <p className="truncate text-meta text-subtle-foreground">
-                  {sub.planName} · {sub.planPriceLabel} ·{" "}
+                  {sub.planName} · {sub.planPriceLabel}
+                  {sub.planPriceSuffix && ` ${sub.planPriceSuffix}`} ·{" "}
                   {sub.daysUntilRenewal < 0
                     ? `${Math.abs(sub.daysUntilRenewal)} days overdue`
                     : `in ${sub.daysUntilRenewal} days`}
@@ -125,6 +137,17 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
                 variant="dot"
                 className="shrink-0"
               />
+
+              {sub.currentPeriodPayment && (
+                <span className="flex shrink-0 items-center gap-1.5 text-meta text-subtle-foreground">
+                  {money(sub.currentPeriodPayment.amount, sub.currency)}
+                  <StatusPill
+                    registry="paymentStatus"
+                    value={sub.currentPeriodPayment.status}
+                    variant="dot"
+                  />
+                </span>
+              )}
 
               <label className="flex shrink-0 items-center gap-1.5">
                 <Switch
@@ -148,13 +171,7 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
                 variant="outline"
                 size="sm"
                 disabled={isBusy}
-                onClick={() =>
-                  send(
-                    sub.id,
-                    { action: "subscription-renew", id: sub.id },
-                    "Renewed into the next period.",
-                  )
-                }
+                onClick={() => setConfirming(sub)}
               >
                 {isBusy ? "Working…" : "Mark renewed"}
               </Button>
@@ -163,10 +180,42 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
         })}
       </ul>
 
+      {confirming && (
+        <AlertDialog open onOpenChange={(open) => !open && setConfirming(null)}>
+          <AlertDialogContent className="max-w-lg">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mark {confirming.clientName} renewed</AlertDialogTitle>
+              <AlertDialogDescription>
+                Moves the retainer into its next period and opens a pending payment of{" "}
+                {money(confirming.invoiceAmount, confirming.currency)}. No money is taken.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Not now</AlertDialogCancel>
+              <AlertDialogAction
+                variant="brand"
+                onClick={() => {
+                  const sub = confirming;
+                  setConfirming(null);
+                  void send(
+                    sub.id,
+                    { action: "subscription-renew", id: sub.id },
+                    `Renewed into the next period — ${money(sub.invoiceAmount, sub.currency)} is pending.`,
+                  );
+                }}
+              >
+                Mark renewed
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
       <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
-        &ldquo;Mark renewed&rdquo; records that the period was collected and moves the
-        retainer into the next one — it does not take a payment. No payment provider is
-        connected to this system.
+        &ldquo;Mark renewed&rdquo; moves the retainer into its next period and opens that
+        period&rsquo;s invoice as a pending payment at the plan&rsquo;s published price — a
+        quote-only plan bills from its quoted monthly price. It does not take the money: no payment
+        provider is connected, so the payment is marked paid by hand on the payments screen.
       </p>
     </Panel>
   );

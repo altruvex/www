@@ -1,5 +1,5 @@
 import { prisma, type SignatureMethod, type SignVerificationChannel } from "@repo/database";
-import { clientActor, recordActivity } from "./activity-log";
+import { clientActor, recordActivity, type Actor } from "./activity-log";
 import { servicesFromProposal } from "./client-services";
 import { proposalContentSchema } from "./proposal-schema";
 import { sendTemplateMessage } from "./whatsapp-api";
@@ -12,6 +12,12 @@ interface HandleContractSignedInput {
   baseUrl: string;
   /** Where the one-time code that authorised a link signature was delivered. */
   verification?: { via: SignVerificationChannel; to: string; hint: string };
+  /**
+   * Set when an operator records a signature by hand (paper, a scanned PDF).
+   * The audit events are then attributed to that operator, because the client
+   * did not act in this system and claiming they did would be false evidence.
+   */
+  recordedBy?: { actor: Actor; summary: string; metadata?: Record<string, unknown> };
 }
 
 /**
@@ -126,9 +132,10 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
     });
   }
 
-  // The actor is the client, not an operator: nobody at Altruvex is signed in
-  // when this runs. Recording it as SYSTEM would lose who actually signed.
-  const signer = clientActor(input.signedByName);
+  // On the public signing page the actor is the client: nobody at Altruvex is
+  // signed in when that runs, and recording it as SYSTEM would lose who signed.
+  // A hand-recorded signature is attributed to the operator who entered it.
+  const signer = input.recordedBy?.actor ?? clientActor(input.signedByName);
 
   if (contract.status !== "SIGNED") {
     await recordActivity({
@@ -137,12 +144,14 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
       entityType: "contract",
       entityId: contract.id,
       entityLabel: contract.client.company || contract.client.name || "Client",
-      summary: `${input.signedByName} signed the contract`,
+      summary: input.recordedBy?.summary ?? `${input.signedByName} signed the contract`,
       before: { status: contract.status },
       after: { status: "SIGNED" },
       metadata: {
         signatureMethod: input.signatureMethod,
+        signedByName: input.signedByName,
         clientId: contract.clientId,
+        ...(input.recordedBy?.metadata ?? {}),
         ...(input.verification
           ? { verifiedVia: input.verification.via, verifiedTo: input.verification.hint }
           : {}),

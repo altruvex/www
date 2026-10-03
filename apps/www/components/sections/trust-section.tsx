@@ -6,16 +6,18 @@ import {
   ExternalDirectionalLink,
 } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { FOUNDER_LINK } from "@/lib/config/commercial";
 import { getAllTestimonials } from "@/lib/data/testimonials";
 import {
   MOTION,
+  splitWords,
   useSectionCardGrid,
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle,
+  useUnderlineDraw,
+  useWordRead,
 } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
@@ -25,8 +27,19 @@ import type { ReactNode } from "react";
 import { memo, useEffect, useRef } from "react";
 import { SectionHeading } from "./section-heading";
 
-const SHEET_ROW =
-  "grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-6 md:grid-cols-[3.5rem_minmax(0,1fr)] lg:grid-cols-[3.5rem_minmax(0,4fr)_minmax(0,6fr)_11rem] lg:items-baseline lg:gap-x-12";
+const QUOTE_ROW =
+  "grid gap-x-12 gap-y-8 py-12 md:py-16 lg:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]";
+
+const noteMarks = {
+  mark: (chunks: ReactNode) => (
+    <span
+      data-draw
+      className="bg-linear-to-r from-local-accent-text to-local-accent-text bg-size-[100%_1px] bg-position-[0_100%] bg-no-repeat pb-0.5 rtl:bg-position-[100%_100%]"
+    >
+      {chunks}
+    </span>
+  ),
+} as const;
 
 const closingMarks = {
   strong: (chunks: ReactNode) => (
@@ -35,12 +48,20 @@ const closingMarks = {
   dim: (chunks: ReactNode) => <span className="text-white/55">{chunks}</span>,
 } as const;
 
-function RegisterDivider({ label }: { label: string }) {
+/* A client quote at display size, read word by word on scroll. */
+function ClientQuote({ text }: { text: string }) {
+  const readRef = useWordRead<HTMLQuoteElement>();
   return (
-    <div className="flex items-baseline gap-4">
-      <Eyebrow className="m-0">{label}</Eyebrow>
-      <div aria-hidden className="h-px flex-1 bg-border-subtle/60" />
-    </div>
+    <blockquote
+      ref={readRef}
+      className="max-w-[26ch] text-[clamp(1.5rem,3vw,2.875rem)] leading-[1.16] font-light tracking-[-0.028em] text-foreground rtl:leading-[1.45] rtl:tracking-normal"
+    >
+      {splitWords(text).map(({ key, word }) => (
+        <span key={key} data-word>
+          {word}
+        </span>
+      ))}
+    </blockquote>
   );
 }
 
@@ -54,12 +75,12 @@ export const TrustSection = memo(function TrustSection() {
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const bodyRef = useSectionDescription();
 
+  const noteRef = useUnderlineDraw<HTMLParagraphElement>();
+
   const registerRef = useSectionCardGrid<HTMLDivElement>({
     selector: "[data-ledger-row]",
   });
 
-  const stages = t.raw("stages") as Array<{ title: string; body: string }>;
-  const founderName = t("founder.name");
 
   const closingFrameRef = useRef<HTMLDivElement>(null);
   const closingMediaRef = useRef<HTMLDivElement>(null);
@@ -135,104 +156,54 @@ export const TrustSection = memo(function TrustSection() {
           className="mb-14 md:mb-20"
         />
         <div ref={registerRef} className="border-t-2 border-foreground">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-border-subtle py-4">
-            <h3 className="eyebrow m-0 text-foreground">
-              {t("sheet.eyebrow")}
-            </h3>
-            <p className="text-sm tabular-nums text-muted-foreground">
-              <span className="ltr:font-mono">
-                <Num value={stages.length} pad={2} />
-              </span>{" "}
-              {t("sheet.stagesLabel")} · {t("sheet.oneSignature")}
-            </p>
-          </div>
-          <div
-            aria-hidden
-            className={cn(
-              SHEET_ROW,
-              "eyebrow hidden border-b border-border-subtle py-3 text-muted-foreground lg:grid",
-            )}
-          >
-            <span>#</span>
-            <span>{t("sheet.columns.stage")}</span>
-            <span>{t("sheet.columns.commitment")}</span>
-            <span className="justify-self-end">
-              {t("sheet.columns.signedBy")}
-            </span>
-          </div>
-          <ol className="list-none">
-            {stages.map((stage, index) => (
-              <li
-                key={stage.title}
-                data-ledger-row
-                className={cn(SHEET_ROW, "border-b border-border-subtle py-7 md:py-9")}
-              >
-                <span
-                  aria-hidden
-                  className="pt-1 text-sm tabular-nums text-muted-foreground md:text-base ltr:font-mono lg:pt-0"
-                >
-                  <Num value={index + 1} pad={2} />
+          <h3 className="sr-only">{t("testimonials.eyebrow")}</h3>
+          {testimonials.map((item) => (
+            <figure
+              key={item.id}
+              data-ledger-row
+              className={cn(QUOTE_ROW, "border-b border-border-subtle")}
+            >
+              <figcaption className="order-2 flex flex-col items-start gap-1 text-sm lg:order-1">
+                <span className="text-[1.375rem] leading-snug text-foreground">
+                  {item.author}
                 </span>
-                <h4 className="text-[clamp(1.25rem,1.6vw,1.625rem)] font-medium leading-snug text-foreground">
-                  {stage.title}
-                </h4>
-                <p className="col-start-2 mt-2 max-w-[60ch] text-[clamp(0.9375rem,1vw,1.0625rem)] leading-relaxed text-muted-foreground lg:col-start-3 lg:mt-0">
-                  {stage.body}
-                </p>
-                <div className="col-start-2 mt-5 flex items-baseline gap-3 lg:col-start-4 lg:mt-0 lg:justify-self-end">
-                  <span
-                    aria-hidden
-                    className="text-sm text-muted-foreground lg:hidden"
+                <span className="text-muted-foreground">
+                  {item.role[locale]}
+                </span>
+                {item.caseStudySlug ? (
+                  <DirectionalLink
+                    href={`/work/${item.caseStudySlug}`}
+                    ariaLabel={tW("labels.readCaseStudyWith", {
+                      name: item.author,
+                    })}
+                    className="mt-3 inline-flex min-h-6 items-center text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
                   >
-                    {t("sheet.columns.signedBy")}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="min-w-20 border-b border-foreground/45 px-1 pb-1 text-center text-2xl leading-none text-foreground ltr:font-serif ltr:italic"
-                  >
-                    {t("sheet.initials")}
-                  </span>
-                  <span className="sr-only">
-                    {t("sheet.signedBy", { name: founderName })}
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-16 md:mt-20">
-            <RegisterDivider label={t("testimonials.eyebrow")} />
-          </div>
-          <div className="mt-10 grid gap-12 md:mt-12 lg:grid-cols-2 lg:gap-16">
-            {testimonials.map((item) => (
-              <figure
-                key={item.id}
-                data-ledger-row
-                className="flex flex-col justify-between"
-              >
-                <blockquote className="max-w-[52ch] text-[clamp(1.0625rem,1.35vw,1.3125rem)] leading-[1.6] text-foreground/85">
-                  {item.quote[locale]}
-                </blockquote>
-                <figcaption className="mt-6 flex flex-col items-start gap-1 border-t border-foreground/25 pt-3 text-sm">
-                  <span className="font-medium text-foreground">
-                    {item.author}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {item.role[locale]}
-                  </span>
-                  {item.caseStudySlug ? (
-                    <DirectionalLink
-                      href={`/work/${item.caseStudySlug}`}
-                      ariaLabel={tW("labels.readCaseStudyWith", {
-                        name: item.author,
-                      })}
-                      className="mt-1 inline-flex min-h-6 items-center text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
-                    >
-                      {tW("labels.viewCaseStudy")}
-                    </DirectionalLink>
-                  ) : null}
-                </figcaption>
-              </figure>
-            ))}
+                    {tW("labels.viewCaseStudy")}
+                  </DirectionalLink>
+                ) : null}
+              </figcaption>
+              <div className="order-1 lg:order-2">
+                <ClientQuote text={item.quote[locale]} />
+              </div>
+            </figure>
+          ))}
+          <div data-ledger-row className={QUOTE_ROW}>
+            <Eyebrow className="m-0">{t("note.label")}</Eyebrow>
+            <div>
+              <p
+                ref={noteRef}
+                className="max-w-[40ch] text-[clamp(1.1875rem,1.7vw,1.5625rem)] leading-normal text-foreground rtl:leading-[1.8]">
+                {t.rich("note.body", noteMarks)}
+              </p>
+              <p className="mt-9 inline-flex min-w-60 flex-col">
+                <span className="border-b border-foreground/45 px-1 pb-2.5 text-[2.125rem] leading-none text-foreground rtl:font-light">
+                  {t("founder.name")}
+                </span>
+                <span className="mt-2.5 text-sm text-muted-foreground">
+                  {t("founder.role")}
+                </span>
+              </p>
+            </div>
           </div>
         </div>
       </Container>

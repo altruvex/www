@@ -1,4 +1,5 @@
 import { prisma } from "@repo/database";
+import { cache } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
@@ -14,6 +15,8 @@ import {
   Target,
   Wallet,
 } from "lucide-react";
+import { paymentSourceLabel } from "@/lib/payment-source";
+import { calendarDaysUntil, overdueCutoff } from "@/lib/payment-overdue";
 import { deriveStatus, renewalView } from "@/lib/subscription-lifecycle";
 import {
   daysUntilExpiry,
@@ -22,6 +25,7 @@ import {
   SERVICE_SOON_DAYS,
   SERVICE_URGENT_DAYS,
 } from "@/lib/service-lifecycle";
+import { entityHref } from "@/lib/entity-links";
 import type { Tone } from "@/lib/status";
 
 /**
@@ -66,7 +70,14 @@ function ageInDays(from: Date | null | undefined) {
   return Math.max(0, Math.floor((Date.now() - new Date(from).getTime()) / DAY));
 }
 
-export async function getActionCentre(): Promise<ActionItem[]> {
+/**
+ * Memoised per request: the shell's sidebar badge and the Today page both read
+ * this list, and the badge must equal the list's length, so they share one run
+ * instead of two that could disagree by a row created in between.
+ */
+export const getActionCentre = cache(buildActionCentre);
+
+async function buildActionCentre(): Promise<ActionItem[]> {
   const now = new Date();
   const in7Days = new Date(now.getTime() + 7 * DAY);
 
@@ -129,26 +140,30 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       orderBy: { createdAt: "asc" },
       take: 25,
     }),
+    // Late from the day after the due date; due today still sits in the
+    // "due soon" list below, so the two windows meet at the same cut-off.
     prisma.payment.findMany({
-      where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: now } },
+      where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: overdueCutoff(now) } },
       select: {
         id: true,
         amount: true,
         dueDate: true,
         milestone: true,
         project: { select: { id: true, name: true } },
+        subscription: { select: { planId: true } },
       },
       orderBy: { dueDate: "asc" },
       take: 25,
     }),
     prisma.payment.findMany({
-      where: { status: "PENDING", dueDate: { gte: now, lte: in7Days } },
+      where: { status: "PENDING", dueDate: { gte: overdueCutoff(now), lte: in7Days } },
       select: {
         id: true,
         amount: true,
         dueDate: true,
         milestone: true,
         project: { select: { id: true, name: true } },
+        subscription: { select: { planId: true } },
       },
       take: 25,
     }),
@@ -330,15 +345,17 @@ export async function getActionCentre(): Promise<ActionItem[]> {
   }
 
   for (const pay of latePayments) {
-    const age = ageInDays(pay.dueDate);
+    // Days late are counted in business days, so a payment due last night is
+    // one day past due this morning, not zero.
+    const age = -calendarDaysUntil(pay.dueDate!, now);
     items.push({
       id: `pay-${pay.id}`,
       kind: "payment",
       icon: Wallet,
       tone: "danger",
-      title: `Payment overdue · ${pay.project.name}`,
+      title: `Payment overdue · ${paymentSourceLabel(pay)}`,
       detail: `${age}d past due`,
-      href: `/payments`,
+      href: entityHref("payment", pay.id) ?? "/payments",
       cta: "Chase payment",
       score: 90 + Math.min(age, 30) * 2,
       ageDays: age,
@@ -346,15 +363,15 @@ export async function getActionCentre(): Promise<ActionItem[]> {
   }
 
   for (const pay of duePayments) {
-    const days = Math.ceil((new Date(pay.dueDate!).getTime() - Date.now()) / DAY);
+    const days = calendarDaysUntil(pay.dueDate!, now);
     items.push({
       id: `paysoon-${pay.id}`,
       kind: "payment",
       icon: Wallet,
       tone: "warning",
-      title: `Payment due in ${days}d · ${pay.project.name}`,
+      title: `Payment due ${days === 0 ? "today" : `in ${days}d`} · ${paymentSourceLabel(pay)}`,
       detail: "Send the invoice before it slips",
-      href: `/payments`,
+      href: entityHref("payment", pay.id) ?? "/payments",
       cta: "Review",
       score: 45,
       ageDays: 0,
@@ -369,7 +386,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       tone: "warning",
       title: `Meeting request awaiting approval`,
       detail: `${m.title} · ${m.scheduledDate.toISOString().slice(0, 10)} ${m.scheduledTime}`,
-      href: `/calendar`,
+      href: entityHref("meeting", m.id) ?? "/calendar",
       cta: "Approve or decline",
       score: 65 + Math.min(ageInDays(m.createdAt), 5) * 5,
       ageDays: ageInDays(m.createdAt),
@@ -435,7 +452,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       tone: critical ? "danger" : "warning",
       title: `${incident.severity} · ${incident.title}`,
       detail: `${incident.product.name} · open ${age}d · ${incident.status.toLowerCase()}`,
-      href: "/incidents",
+      href: entityHref("incident", incident.id) ?? "/incidents",
       cta: "Open incident",
       // A SEV1 outranks everything else on this list, including a late payment:
       // money can wait an hour, a down production site cannot.
@@ -459,7 +476,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       tone: "danger",
       title: `Production deploy failed · ${deployment.product.name}`,
       detail: deployment.failureReason ?? `Deployment #${deployment.number}, ${age}d ago`,
-      href: `/products/${deployment.productId}?tab=deployments`,
+      href: entityHref("deployment", deployment.id) ?? `/products/${deployment.productId}`,
       cta: "Investigate",
       score: 110 - Math.min(age, 7) * 4,
       ageDays: age,
@@ -468,9 +485,27 @@ export async function getActionCentre(): Promise<ActionItem[]> {
 
   for (const sub of renewableSubscriptions) {
     const view = renewalView(sub, now);
-    if (view.urgency !== "overdue" && view.urgency !== "ending") continue;
     const effective = deriveStatus(sub, now);
     const clientLabel = sub.client.company || sub.client.name || "A client";
+    // EXPIRED is derived, so the row still reads ACTIVE/TRIALING and renewalView
+    // reports no urgency for it — the grace window has run out with nothing paid.
+    if (effective === "EXPIRED") {
+      const lapsedDays = Math.abs(view.daysUntil);
+      items.push({
+        id: `ren-${sub.id}`,
+        kind: "renewal",
+        icon: RefreshCw,
+        tone: "danger",
+        title: `Retainer expired · ${clientLabel}`,
+        detail: `${lapsedDays}d past the renewal date with no payment · grace has ended`,
+        href: entityHref("subscription", sub.id) ?? "/maintenance",
+        cta: "Renew or cancel",
+        score: 95 + Math.min(lapsedDays, 30),
+        ageDays: lapsedDays,
+      });
+      continue;
+    }
+    if (view.urgency !== "overdue" && view.urgency !== "ending") continue;
     const overdue = view.urgency === "overdue";
     items.push({
       id: `ren-${sub.id}`,
@@ -483,7 +518,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
       detail: overdue
         ? `${Math.abs(view.daysUntil)}d past the renewal date · ${effective.toLowerCase().replace("_", " ")}`
         : `Auto-renew is off — expires in ${view.daysUntil}d`,
-      href: "/maintenance",
+      href: entityHref("subscription", sub.id) ?? "/maintenance",
       cta: overdue ? "Renew or suspend" : "Review",
       score: overdue ? 90 + Math.min(Math.abs(view.daysUntil), 30) : 70,
       ageDays: overdue ? Math.abs(view.daysUntil) : 0,
@@ -504,7 +539,7 @@ export async function getActionCentre(): Promise<ActionItem[]> {
         ? `${KIND_LABEL[service.kind]} expired · ${label(service.client)}`
         : `${KIND_LABEL[service.kind]} expires in ${days}d · ${label(service.client)}`,
       detail: `${service.name}${service.provider ? ` · ${service.provider}` : ""}${remindedThisCycle(service) ? " · client reminded" : " · client not reminded yet"}`,
-      href: `/services#service-${service.id}`,
+      href: entityHref("client_service", service.id) ?? "/services",
       cta: lapsed ? "Renew now" : "Renew & invoice",
       // A lapsed domain takes the client's site and email down with it, so it
       // ranks beside a failed production deploy rather than beside a retainer.
@@ -515,5 +550,3 @@ export async function getActionCentre(): Promise<ActionItem[]> {
 
   return items.sort((a, b) => b.score - a.score);
 }
-
-export type ActionCentre = Awaited<ReturnType<typeof getActionCentre>>;

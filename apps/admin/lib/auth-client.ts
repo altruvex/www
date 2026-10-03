@@ -13,4 +13,4 @@ export const authClient = createAuthClient({
   plugins: [twoFactorClient()],
 });
 
-export const { signIn, signOut, useSession, twoFactor } = authClient;
+export const { signIn, signOut, twoFactor } = authClient;

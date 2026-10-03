@@ -43,4 +43,4 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   });
 
   return ok({ contract: updated });
-});
+}, { can: ["edit", "contract"] });

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Search, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Button,
@@ -15,8 +16,10 @@ import {
   SelectValue,
 } from "@repo/ui";
 
+import { linkLogToIncident } from "@/app/(dashboard)/_actions/engineering";
 import { useRecordDelete } from "@/components/os/delete-record";
 import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import { dateTime } from "@/lib/format";
@@ -35,14 +38,48 @@ export interface LogRow {
   deploymentNumber: number | null;
   deploymentId: string | null;
   buildNumber: number | null;
+  buildId: string | null;
+  incident: { id: string; number: number; title: string } | null;
   metadata: string | null;
+}
+
+export interface OpenIncidentOption {
+  id: string;
+  number: number;
+  title: string;
+  productId: string;
 }
 
 const LEVELS = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"];
 const ENVIRONMENTS = ["PRODUCTION", "STAGING", "PREVIEW"];
+const RANGES = [
+  { value: "1h", label: "Last hour" },
+  { value: "24h", label: "Last 24 hours" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "custom", label: "Custom range…" },
+];
 
 /** Sentinel for "no filter" — Radix Select cannot hold an empty-string value. */
 const ANY = "__any__";
+const UNLINKED = "__unlinked__";
+
+/**
+ * An ISO instant as a `datetime-local` value in the viewer's own zone. The
+ * URL carries ISO so a shared link means the same instant for everyone; the
+ * input shows it in local time because that is how people read clocks.
+ */
+function toLocalInput(iso: string): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
+
+function fromLocalInput(value: string): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
 
 /**
  * The log list.
@@ -55,23 +92,36 @@ const ANY = "__any__";
 export function LogExplorer({
   rows,
   products,
+  sources,
+  openIncidents,
   filters,
+  chips,
   hasFilters,
-  nextCursor,
-  hasMore,
+  paging,
 }: {
   rows: LogRow[];
   products: { id: string; name: string; slug: string }[];
+  sources: string[];
+  openIncidents: OpenIncidentOption[];
   filters: {
     product: string;
     level: string;
     environment: string;
     q: string;
-    requestId: string;
+    source: string;
+    range: string;
+    from: string;
+    to: string;
   };
+  /** Removable chips for every active filter, rendered on the server. */
+  chips: React.ReactNode;
   hasFilters: boolean;
-  nextCursor: string | null;
-  hasMore: boolean;
+  paging: {
+    newerHref: string | null;
+    olderHref: string | null;
+    newestHref: string | null;
+    hasMore: boolean;
+  };
 }) {
   const del = useRecordDelete({ entity: "log" });
   const router = useRouter();
@@ -79,6 +129,9 @@ export function LogExplorer({
   const searchParams = useSearchParams();
   const [query, setQuery] = React.useState(filters.q);
   const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [customOpen, setCustomOpen] = React.useState(filters.range === "custom");
+  const [fromValue, setFromValue] = React.useState(() => toLocalInput(filters.from));
+  const [toValue, setToValue] = React.useState(() => toLocalInput(filters.to));
 
   /** Any filter change resets paging — page 3 of the old filter is meaningless. */
   const apply = React.useCallback(
@@ -88,12 +141,21 @@ export function LogExplorer({
         if (!value || value === ANY) next.delete(key);
         else next.set(key, value);
       }
-      if (!("cursor" in patch)) next.delete("cursor");
+      next.delete("cursor");
+      next.delete("before");
       const qs = next.toString();
       router.push(qs ? `${pathname}?${qs}` : pathname);
     },
     [pathname, router, searchParams],
   );
+
+  const clearAll = () => {
+    setQuery("");
+    setCustomOpen(false);
+    router.push(pathname);
+  };
+
+  const showPaging = paging.newerHref || paging.olderHref || paging.newestHref;
 
   return (
     <div className="space-y-3">
@@ -118,9 +180,11 @@ export function LogExplorer({
 
           <Select
             value={filters.product || ANY}
-            onValueChange={(value) => apply({ product: value })}
+            // Sources differ per product, so a source chosen for one product
+            // would silently empty the list for another.
+            onValueChange={(value) => apply({ product: value, source: null })}
           >
-            <SelectTrigger className="w-40" aria-label="Product">
+            <SelectTrigger className="w-full sm:w-40" aria-label="Product">
               <SelectValue placeholder="All products" />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +198,7 @@ export function LogExplorer({
           </Select>
 
           <Select value={filters.level || ANY} onValueChange={(value) => apply({ level: value })}>
-            <SelectTrigger className="w-32" aria-label="Level">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-32" aria-label="Level">
               <SelectValue placeholder="All levels" />
             </SelectTrigger>
             <SelectContent>
@@ -151,7 +215,7 @@ export function LogExplorer({
             value={filters.environment || ANY}
             onValueChange={(value) => apply({ environment: value })}
           >
-            <SelectTrigger className="w-36" aria-label="Environment">
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36" aria-label="Environment">
               <SelectValue placeholder="All environments" />
             </SelectTrigger>
             <SelectContent>
@@ -164,47 +228,122 @@ export function LogExplorer({
             </SelectContent>
           </Select>
 
-          {hasFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                router.push(pathname);
-              }}
+          {(sources.length > 0 || filters.source) && (
+            <Select
+              value={filters.source || ANY}
+              onValueChange={(value) => apply({ source: value })}
             >
+              <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36" aria-label="Source">
+                <SelectValue placeholder="All sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ANY}>All sources</SelectItem>
+                {filters.source && !sources.includes(filters.source) && (
+                  <SelectItem value={filters.source}>{filters.source}</SelectItem>
+                )}
+                {sources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select
+            value={customOpen ? "custom" : filters.range || ANY}
+            onValueChange={(value) => {
+              if (value === "custom") {
+                setCustomOpen(true);
+                return;
+              }
+              setCustomOpen(false);
+              apply({ range: value, from: null, to: null });
+            }}
+          >
+            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-40" aria-label="Time range">
+              <SelectValue placeholder="Any time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ANY}>Any time</SelectItem>
+              {RANGES.map((range) => (
+                <SelectItem key={range.value} value={range.value}>
+                  {range.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {hasFilters && (
+            <Button variant="ghost" size="sm" onClick={clearAll}>
               <X className="size-3.5" />
               Clear
             </Button>
           )}
         </div>
 
-        {filters.requestId && (
-          <div className="flex items-center gap-2 border-t border-border bg-surface px-3 py-1.5">
-            <span className="telemetry text-subtle-foreground">Trace</span>
-            <span className="font-mono text-meta">{filters.requestId}</span>
-            <button
-              type="button"
-              onClick={() => apply({ requestId: null })}
-              className="text-meta text-brand hover:underline"
-            >
-              Show everything
-            </button>
+        {customOpen && (
+          <form
+            className="flex flex-wrap items-end gap-2 border-t border-border px-2 py-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const from = fromLocalInput(fromValue);
+              const to = fromLocalInput(toValue);
+              if (!from && !to) {
+                toast.error("Pick a start, an end, or both.");
+                return;
+              }
+              if (from && to && from >= to) {
+                toast.error("The start has to come before the end.");
+                return;
+              }
+              apply({ range: null, from, to });
+            }}
+          >
+            <label className="flex min-w-0 flex-1 basis-44 flex-col gap-1">
+              <span className="telemetry text-subtle-foreground">From</span>
+              <Input
+                type="datetime-local"
+                value={fromValue}
+                onChange={(event) => setFromValue(event.target.value)}
+                // The server renders this in its own zone; the browser corrects
+                // it to the viewer's on hydration.
+                suppressHydrationWarning
+              />
+            </label>
+            <label className="flex min-w-0 flex-1 basis-44 flex-col gap-1">
+              <span className="telemetry text-subtle-foreground">To</span>
+              <Input
+                type="datetime-local"
+                value={toValue}
+                onChange={(event) => setToValue(event.target.value)}
+                suppressHydrationWarning
+              />
+            </label>
+            <Button type="submit" variant="outline" size="sm">
+              Apply range
+            </Button>
+          </form>
+        )}
+
+        {chips && (
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border px-2 py-2">
+            {chips}
           </div>
         )}
       </Panel>
 
       {rows.length === 0 ? (
         <EmptyState
-          title={hasFilters ? "Nothing matches those filters" : "No logs yet"}
+          title={hasFilters ? "No lines match" : "No logs yet"}
           body={
             hasFilters
-              ? "No log line matches. Widen the level or clear the filters — the newest lines are always at the top."
+              ? "No log line matches every filter above. Remove a chip to widen the view — the newest lines are always at the top."
               : "No product has posted a log line. Logs arrive in batches from a product's runtime through the ingest endpoint; nothing is written here by the admin app."
           }
           action={
             hasFilters ? (
-              <Button variant="outline" onClick={() => router.push(pathname)}>
+              <Button variant="outline" onClick={clearAll}>
                 Clear filters
               </Button>
             ) : (
@@ -221,58 +360,88 @@ export function LogExplorer({
               const isOpen = expanded === row.id;
               return (
                 <li key={row.id}>
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(isOpen ? null : row.id)}
-                    aria-expanded={isOpen}
+                  {/* The toggle and the record links are siblings, never
+                      nested — an <a> inside a <button> is invalid HTML. */}
+                  <div
                     className={cn(
-                      "flex w-full items-start gap-2 px-3 py-1.5 text-start",
+                      "flex w-full items-start gap-2 pe-3",
                       "transition-colors duration-[var(--dur-state)] hover:bg-surface",
                       isOpen && "bg-surface",
                     )}
                   >
-                    <span className="shrink-0 pt-0.5">
-                      <StatusPill registry="logLevel" value={row.level} variant="dot" />
-                    </span>
-                    <time
-                      dateTime={row.timestamp}
-                      className="hidden shrink-0 pt-px font-mono text-meta text-subtle-foreground sm:block"
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(isOpen ? null : row.id)}
+                      aria-expanded={isOpen}
+                      className="flex min-w-0 flex-1 items-start gap-2 py-1.5 ps-3 text-start"
                     >
-                      {dateTime(row.timestamp)}
-                    </time>
-                    <span
-                      className={cn(
-                        "min-w-0 flex-1 font-mono text-meta",
-                        isOpen ? "whitespace-pre-wrap break-words" : "truncate",
-                      )}
+                      <span className="shrink-0 pt-0.5">
+                        <StatusPill registry="logLevel" value={row.level} variant="dot" />
+                      </span>
+                      <time
+                        dateTime={row.timestamp}
+                        className="hidden shrink-0 pt-px font-mono text-meta text-subtle-foreground sm:block"
+                      >
+                        {dateTime(row.timestamp)}
+                      </time>
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 font-mono text-meta",
+                          isOpen ? "whitespace-pre-wrap break-words" : "truncate",
+                        )}
+                      >
+                        {row.message}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "mt-0.5 size-3.5 shrink-0 text-subtle-foreground transition-transform duration-[var(--dur-state)]",
+                          isOpen && "rotate-180",
+                        )}
+                        aria-hidden
+                      />
+                    </button>
+                    {row.incident && (
+                      <EntityLink
+                        type="incident"
+                        id={row.incident.id}
+                        className="shrink-0 py-1.5 font-mono text-meta"
+                      >
+                        <span title={row.incident.title}>INC #{row.incident.number}</span>
+                      </EntityLink>
+                    )}
+                    <EntityLink
+                      type="product"
+                      id={row.productId}
+                      muted
+                      className="hidden max-w-40 shrink-0 truncate py-1.5 text-meta md:block"
                     >
-                      {row.message}
-                    </span>
-                    <span className="hidden shrink-0 text-meta text-subtle-foreground md:block">
                       {row.productName}
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "size-3.5 shrink-0 text-subtle-foreground transition-transform duration-[var(--dur-state)]",
-                        isOpen && "rotate-180",
-                      )}
-                      aria-hidden
-                    />
-                  </button>
+                    </EntityLink>
+                  </div>
 
                   {isOpen && (
                     <div className="space-y-2 border-t border-border bg-surface px-3 py-2.5">
                       <dl className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2 lg:grid-cols-4">
                         <Field label="Product">
-                          <Link
-                            href={`/products/${row.productId}`}
-                            className="text-brand hover:underline"
-                          >
+                          <EntityLink type="product" id={row.productId}>
                             {row.productName}
-                          </Link>
+                          </EntityLink>
                         </Field>
                         <Field label="Environment">{row.environment.toLowerCase()}</Field>
-                        <Field label="Source">{row.source ?? "—"}</Field>
+                        <Field label="Source">
+                          {row.source ? (
+                            <button
+                              type="button"
+                              onClick={() => apply({ source: row.source })}
+                              className="text-brand hover:underline"
+                              title="Show only this source"
+                            >
+                              {row.source}
+                            </button>
+                          ) : (
+                            "—"
+                          )}
+                        </Field>
                         <Field label="Time">{dateTime(row.timestamp)}</Field>
                         <Field label="Request">
                           {row.requestId ? (
@@ -290,19 +459,31 @@ export function LogExplorer({
                           )}
                         </Field>
                         <Field label="Deployment">
-                          {row.deploymentNumber != null ? (
-                            <Link
-                              href={`/products/${row.productId}?tab=deployments`}
-                              className="text-brand hover:underline"
-                            >
+                          {row.deploymentId && row.deploymentNumber != null ? (
+                            <EntityLink type="deployment" id={row.deploymentId}>
                               #{row.deploymentNumber}
-                            </Link>
+                            </EntityLink>
                           ) : (
                             "—"
                           )}
                         </Field>
                         <Field label="Build">
-                          {row.buildNumber != null ? `#${row.buildNumber}` : "—"}
+                          {row.buildId && row.buildNumber != null ? (
+                            <EntityLink type="build" id={row.buildId}>
+                              #{row.buildNumber}
+                            </EntityLink>
+                          ) : (
+                            "—"
+                          )}
+                        </Field>
+                        <Field label="Incident">
+                          {row.incident ? (
+                            <EntityLink type="incident" id={row.incident.id}>
+                              #{row.incident.number} {row.incident.title}
+                            </EntityLink>
+                          ) : (
+                            "Not linked"
+                          )}
                         </Field>
                       </dl>
 
@@ -315,10 +496,14 @@ export function LogExplorer({
                         </div>
                       )}
 
-                      {/* Log lines are ingested, not authored here, so deleting
-                          one is an owner-level override rather than a routine
-                          row action — the dialog says so before it happens. */}
-                      <div className="flex justify-end">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <IncidentLinker
+                          row={row}
+                          options={openIncidents.filter((i) => i.productId === row.productId)}
+                        />
+                        {/* Log lines are ingested, not authored here, so deleting
+                            one is an owner-level override rather than a routine
+                            row action — the dialog says so before it happens. */}
                         <Button
                           variant="destructive-ghost"
                           size="sm"
@@ -337,20 +522,93 @@ export function LogExplorer({
             })}
           </ul>
 
-          <div className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-3 py-2">
             <p className="text-meta text-subtle-foreground">
               {rows.length} line{rows.length === 1 ? "" : "s"}
-              {hasMore ? " · more available" : ""}
+              {paging.hasMore ? " · older lines available" : ""}
             </p>
-            {hasMore && nextCursor && (
-              <Button variant="outline" size="sm" onClick={() => apply({ cursor: nextCursor })}>
-                Older
-              </Button>
+            {showPaging && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {paging.newestHref && (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={paging.newestHref}>Newest</Link>
+                  </Button>
+                )}
+                {paging.newerHref && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={paging.newerHref}>Newer</Link>
+                  </Button>
+                )}
+                {paging.olderHref && (
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={paging.olderHref}>Older</Link>
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         </Panel>
       )}
       {del.dialog}
+    </div>
+  );
+}
+
+/**
+ * Marks a line as evidence for one of its product's open incidents, or drops
+ * that link. The server checks the product match again and records the change
+ * on the incident; this control only offers what it would accept.
+ */
+function IncidentLinker({ row, options }: { row: LogRow; options: OpenIncidentOption[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+
+  // The current incident may be resolved and so missing from the open list;
+  // it still has to be selectable as the current value.
+  const choices =
+    row.incident && !options.some((o) => o.id === row.incident!.id)
+      ? [{ ...row.incident, productId: row.productId }, ...options]
+      : options;
+
+  if (choices.length === 0) {
+    return (
+      <p className="text-meta text-subtle-foreground">
+        No open incident on {row.productName} to link this line to.
+      </p>
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <span className="telemetry shrink-0 text-subtle-foreground">Evidence for</span>
+      <Select
+        value={row.incident?.id ?? UNLINKED}
+        disabled={pending}
+        onValueChange={(value) => {
+          const incidentId = value === UNLINKED ? null : value;
+          startTransition(async () => {
+            const result = await linkLogToIncident({ logId: row.id, incidentId });
+            if (result.ok) {
+              toast.success(result.message);
+              router.refresh();
+            } else {
+              toast.error(result.message);
+            }
+          });
+        }}
+      >
+        <SelectTrigger className="w-56 max-w-full" aria-label="Link this line to an incident">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={UNLINKED}>Not linked</SelectItem>
+          {choices.map((incident) => (
+            <SelectItem key={incident.id} value={incident.id}>
+              #{incident.number} {incident.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -5,15 +5,14 @@
   "subtitle": "Not a summary of a quote — the structure of the real one, including the parts most agencies leave for later.",
   "document": {
     "label": "Sample quote · structure",
-    "status": "Illustrative figures. Your numbers are confirmed in discovery — this structure is not."
+    "status": "Illustrative figures. Your numbers are confirmed in scope review — this structure is not."
   },
   "clauses": {
     "scope": {
       "index": "01",
       "title": "Scope and range",
-      "body": "One tier, one fixed scope, one range. The range narrows to a single number after discovery, and it does not move upward without a signed change order.",
-      "figure": "{essentialRange} · Marketing System",
-      "note": "The range is the honest part. A single number quoted before discovery is a guess wearing the clothes of a commitment."
+      "body": "One fixed scope, one range. The range narrows to a single number after scope review, and it does not move upward without a signed change order.",
+      "note": "The range is the honest part. A single number quoted before scope review is a guess wearing the clothes of a commitment."
     },
     "schedule": {
       "index": "02",
@@ -48,21 +47,19 @@
   },
   "schedule": {
     "start": {
-      "share": "50%",
+      "share": "{paymentStart}",
       "label": "To start — secures the build window"
     },
     "milestone": {
-      "share": "30%",
-      "label": "Mid-project — design and architecture signed off"
+      "share": "{paymentMilestone}",
+      "label": "At {milestoneTrigger}"
     },
     "launch": {
-      "share": "20%",
+      "share": "{paymentFinal}",
       "label": "Before launch — due before the site goes live"
     }
   },
   "footer": {
-    "minimum": "Projects start at {minimumEngagement}.",
-    "ctaLabel": "See full pricing",
-    "footnote": "Sample document. Your quote is issued after discovery."
+    "footnote": "Sample document. Your quote is issued after scope review."
   }
 }

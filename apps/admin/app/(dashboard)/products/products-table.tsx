@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
+
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
@@ -22,9 +25,11 @@ export interface ProductRow {
   repositoryUrl: string | null;
   framework: string | null;
   hostingProvider: string | null;
-  lastDeployedAt: string | null;
-  lastDeploymentNumber: number | null;
-  lastDeploymentVersion: string | null;
+  /** The last successful PRODUCTION deploy — what the client's visitors are running. */
+  lastProductionId: string | null;
+  lastProductionAt: string | null;
+  lastProductionNumber: number | null;
+  lastProductionVersion: string | null;
   openIncidents: number;
   deploymentCount: number;
   /** False when no CI has ever been pointed at this product. */
@@ -38,16 +43,50 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
       id: "name",
       header: "Product",
       hideable: false,
+      // The row's own link wraps this cell, so client and project — which are
+      // links of their own — live in the next column rather than nested here.
       cell: (row) => (
         <span className="min-w-0">
           <span className="block truncate">{row.name}</span>
-          <span className="block truncate text-meta font-normal text-subtle-foreground">
-            {row.clientName}
+          <span className="block truncate font-mono text-meta font-normal text-subtle-foreground">
+            {row.slug}
           </span>
         </span>
       ),
       sortValue: (row) => row.name.toLowerCase(),
-      searchValue: (row) => `${row.name} ${row.slug} ${row.clientName} ${row.projectName ?? ""}`,
+      searchValue: (row) =>
+        `${row.name} ${row.slug} ${row.clientName} ${row.projectName ?? ""}`,
+    },
+    {
+      id: "client",
+      header: "Client",
+      cell: (row) => (
+        <span className="min-w-0">
+          <EntityLink
+            type="client"
+            id={row.clientId}
+            className="block truncate"
+          >
+            {row.clientName}
+          </EntityLink>
+          {row.projectId ? (
+            <EntityLink
+              type="project"
+              id={row.projectId}
+              muted
+              className="block truncate text-meta"
+            >
+              {row.projectName}
+            </EntityLink>
+          ) : (
+            <span className="block truncate text-meta text-subtle-foreground">
+              No project
+            </span>
+          )}
+        </span>
+      ),
+      sortValue: (row) => row.clientName.toLowerCase(),
+      searchValue: (row) => `${row.clientName} ${row.projectName ?? ""}`,
     },
     {
       id: "status",
@@ -55,7 +94,9 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
       width: "128px",
       cell: (row) => <StatusPill registry="productStatus" value={row.status} />,
       sortValue: (row) =>
-        ["LIVE", "IN_DEVELOPMENT", "MAINTENANCE", "PLANNED", "SUNSET"].indexOf(row.status),
+        ["LIVE", "IN_DEVELOPMENT", "MAINTENANCE", "PLANNED", "SUNSET"].indexOf(
+          row.status,
+        ),
       searchValue: (row) => statusOf("productStatus", row.status).label,
     },
     {
@@ -63,7 +104,9 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
       header: "Type",
       width: "120px",
       cell: (row) => (
-        <span className="text-muted-foreground">{statusOf("productKind", row.kind).label}</span>
+        <span className="text-muted-foreground">
+          {statusOf("productKind", row.kind).label}
+        </span>
       ),
       sortValue: (row) => row.kind,
       searchValue: (row) => statusOf("productKind", row.kind).label,
@@ -83,27 +126,35 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
     },
     {
       id: "deployed",
-      header: "Last deploy",
-      width: "160px",
+      header: "Last production deploy",
+      width: "180px",
       cell: (row) =>
-        row.lastDeployedAt ? (
-          <span className="min-w-0">
-            <span className="block truncate">{when(row.lastDeployedAt)}</span>
-            <span className="block truncate text-meta font-normal text-subtle-foreground">
-              #{row.lastDeploymentNumber}
-              {row.lastDeploymentVersion ? ` · ${row.lastDeploymentVersion}` : ""}
+        row.lastProductionId && row.lastProductionAt ? (
+          <Link
+            href={`/deployments/${row.lastProductionId}`}
+            className="group block min-w-0"
+          >
+            <span className="block truncate group-hover:underline">
+              {when(row.lastProductionAt)}
             </span>
-          </span>
+            <span className="block truncate text-meta font-normal text-subtle-foreground">
+              #{row.lastProductionNumber}
+              {row.lastProductionVersion
+                ? ` · ${row.lastProductionVersion}`
+                : ""}
+            </span>
+          </Link>
         ) : (
           // Two different kinds of "never deployed" — one is a missing pipeline,
           // the other is a product that simply has not shipped yet. Saying which
           // is the difference between a to-do and a non-event.
           <span className="text-meta text-subtle-foreground">
-            {row.hasIngestToken ? "Never" : "No CI connected"}
+            {row.hasIngestToken ? "Never to production" : "No CI connected"}
           </span>
         ),
-      sortValue: (row) => -(row.lastDeployedAt ? Date.parse(row.lastDeployedAt) : 0),
-      searchValue: (row) => row.lastDeploymentVersion ?? "",
+      sortValue: (row) =>
+        -(row.lastProductionAt ? Date.parse(row.lastProductionAt) : 0),
+      searchValue: (row) => row.lastProductionVersion ?? "",
     },
     {
       id: "stack",
@@ -112,10 +163,12 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
       defaultHidden: true,
       cell: (row) => (
         <span className="truncate text-muted-foreground">
-          {[row.framework, row.hostingProvider].filter(Boolean).join(" · ") || "—"}
+          {[row.framework, row.hostingProvider].filter(Boolean).join(" · ") ||
+            "—"}
         </span>
       ),
-      searchValue: (row) => `${row.framework ?? ""} ${row.hostingProvider ?? ""}`,
+      searchValue: (row) =>
+        `${row.framework ?? ""} ${row.hostingProvider ?? ""}`,
     },
   ];
 
@@ -127,17 +180,19 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
         columns={columns}
         rowKey={(row) => row.id}
         rowHref={(row) => `/products/${row.id}`}
-        mobile={{ title: "name", subtitle: "status", meta: ["kind", "deployed"] }}
+        mobile={{
+          title: "name",
+          subtitle: "client",
+          meta: ["status", "deployed"],
+        }}
         searchPlaceholder="Search products, clients, slugs…"
         initialSort={{ columnId: "incidents", dir: "asc" }}
         rowActions={(row) => (
-          <RowActions onDelete={() => del.request({ id: row.id, label: row.name })} />
+          <RowActions
+            onDelete={() => del.request({ id: row.id, label: row.name })}
+          />
         )}
-        empty={
-          <EmptyInline>
-            No product matches those filters.
-          </EmptyInline>
-        }
+        empty={<EmptyInline>No product matches those filters.</EmptyInline>}
       />
       {del.dialog}
     </>

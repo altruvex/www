@@ -82,6 +82,56 @@ export const MAINTENANCE_PLANS: Readonly<
   },
 };
 
+/**
+ * How often a retainer is invoiced. A plan's `price` is always the monthly
+ * figure; the interval is chosen per subscription, not per plan.
+ *
+ * Only `monthly` and `annual` are published. `quarterly` exists because the
+ * admin can record one; it carries no discount.
+ */
+export const MAINTENANCE_INTERVALS = ["monthly", "quarterly", "annual"] as const;
+export type MaintenanceInterval = (typeof MAINTENANCE_INTERVALS)[number];
+
+/**
+ * Months charged per invoice. A year paid up front is charged as ten months —
+ * two months free (ruling 2026-10-02). The annual price is derived from the
+ * monthly one and never stored, so an admin override of the monthly price
+ * moves both and the two can never drift apart.
+ *
+ * The interval changes the invoice only. The edit-request cap stays per month
+ * (`billing-cycle.ts`) on every interval: a yearly pool would let a client
+ * spend a year of requests in one month, which the caps were never sized for,
+ * and "what is left this month" is a number both sides can check.
+ */
+export const MAINTENANCE_PAID_MONTHS: Readonly<
+  Record<MaintenanceInterval, number>
+> = {
+  monthly: 1,
+  quarterly: 3,
+  annual: 10,
+};
+
+const MONTHS_COVERED: Readonly<Record<MaintenanceInterval, number>> = {
+  monthly: 1,
+  quarterly: 3,
+  annual: 12,
+};
+
+/** Months of service an interval covers without charging for them. */
+export function maintenanceFreeMonths(interval: MaintenanceInterval): number {
+  return MONTHS_COVERED[interval] - MAINTENANCE_PAID_MONTHS[interval];
+}
+
+/** EGP per invoice at `interval`, or null when the plan is quote-only. */
+export function maintenanceIntervalPrice(
+  plan: Pick<MaintenancePlan, "price">,
+  interval: MaintenanceInterval,
+): Amount | null {
+  return plan.price === null
+    ? null
+    : plan.price * MAINTENANCE_PAID_MONTHS[interval];
+}
+
 export const ORDERED_MAINTENANCE_PLANS: readonly MaintenancePlan[] =
   Object.values(MAINTENANCE_PLANS).sort((a, b) => a.order - b.order);
 

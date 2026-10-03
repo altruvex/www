@@ -1,20 +1,16 @@
-import { z } from "zod";
-
-import { prisma } from "@repo/database";
-
 import { recordActivity, recordChange } from "@/lib/activity-log";
 import { httpUrl } from "@/lib/http-url";
 import { issueToken } from "@/lib/ingest-auth";
-import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
-
-/**
- * Products — the sites and apps Altruvex operates for clients (§6).
- *
- * A product is created here by a human; its *telemetry* (builds, deployments,
- * logs) is never created here, only by CI through `/api/ingest/*`. That split
- * is the whole reason the engineering screens can be trusted: a deployment row
- * exists because a deployment happened, not because someone filled in a form.
- */
+import {
+  badRequest,
+  conflict,
+  notFound,
+  ok,
+  readJson,
+  withAdmin,
+} from "@/lib/with-admin";
+import { prisma } from "@repo/database";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -24,9 +20,20 @@ const createSchema = z.object({
   clientId: z.string().min(1),
   projectId: z.string().min(1).nullable().optional(),
   name: z.string().min(1).max(200),
-  slug: z.string().min(2).max(80).regex(SLUG, "Use lowercase words separated by hyphens."),
+  slug: z
+    .string()
+    .min(2)
+    .max(80)
+    .regex(SLUG, "Use lowercase words separated by hyphens."),
   kind: z
-    .enum(["WEBSITE", "WEB_APP", "API", "ECOMMERCE", "LANDING_PAGE", "INTERNAL_TOOL"])
+    .enum([
+      "WEBSITE",
+      "WEB_APP",
+      "API",
+      "ECOMMERCE",
+      "LANDING_PAGE",
+      "INTERNAL_TOOL",
+    ])
     .default("WEBSITE"),
   status: z
     .enum(["PLANNED", "IN_DEVELOPMENT", "LIVE", "MAINTENANCE", "SUNSET"])
@@ -38,6 +45,19 @@ const createSchema = z.object({
   hostingProvider: z.string().max(100).nullable().optional(),
 });
 
+/** How an edited field is named in the activity summary. */
+const FIELD_LABEL: Record<string, string> = {
+  name: "name",
+  projectId: "project",
+  kind: "type",
+  status: "status",
+  productionUrl: "production URL",
+  stagingUrl: "staging URL",
+  repositoryUrl: "repository",
+  framework: "framework",
+  hostingProvider: "hosting",
+};
+
 const patchSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("update"),
@@ -45,7 +65,6 @@ const patchSchema = z.discriminatedUnion("action", [
     patch: createSchema.partial().omit({ clientId: true, slug: true }),
   }),
   z.object({
-    /** Issues a new ingest token, invalidating whatever CI is currently using. */
     action: z.literal("rotate-token"),
     id: z.string().min(1),
   }),
@@ -58,9 +77,6 @@ const patchSchema = z.discriminatedUnion("action", [
 export const GET = withAdmin(async () => {
   const products = await prisma.product.findMany({
     orderBy: { updatedAt: "desc" },
-    // The screens show whether a token exists and its last four characters,
-    // never the digest itself. Omitted here so a future caller cannot pick it
-    // up by accident.
     omit: { ingestTokenHash: true },
     include: {
       client: { select: { id: true, name: true, company: true } },
@@ -68,7 +84,7 @@ export const GET = withAdmin(async () => {
     },
   });
   return ok({ products });
-});
+}, { can: ["view", "project"] });
 
 export const POST = withAdmin(async (request, { actor }) => {
   const body = await readJson(request, createSchema);
@@ -80,7 +96,10 @@ export const POST = withAdmin(async (request, { actor }) => {
   if (!client) throw notFound("That client no longer exists.");
 
   const taken = await prisma.product.findUnique({ where: { slug: body.slug } });
-  if (taken) throw conflict("That slug is already in use. Slugs identify a product to CI.");
+  if (taken)
+    throw conflict(
+      "That slug is already in use. Slugs identify a product to CI.",
+    );
 
   if (body.projectId) {
     const project = await prisma.project.findUnique({
@@ -120,7 +139,7 @@ export const POST = withAdmin(async (request, { actor }) => {
   });
 
   return ok({ product });
-});
+}, { can: ["create", "project"] });
 
 export const PATCH = withAdmin(async (request, { actor }) => {
   const body = await readJson(request, patchSchema);
@@ -147,17 +166,19 @@ export const PATCH = withAdmin(async (request, { actor }) => {
       entityLabel: existing.name,
       summary: `Issued a new ingest token for ${existing.name}${existing.ingestTokenHash ? " — the previous one stopped working" : ""}`,
     });
-
-    // The only time the plaintext token exists outside the caller's pipeline.
-    // It is not stored, so this response cannot be reproduced.
     return ok({ token: issued.token, last4: issued.last4 });
   }
 
   if (body.action === "revoke-token") {
-    if (!existing.ingestTokenHash) throw badRequest("This product has no ingest token.");
+    if (!existing.ingestTokenHash)
+      throw badRequest("This product has no ingest token.");
     await prisma.product.update({
       where: { id: existing.id },
-      data: { ingestTokenHash: null, ingestTokenLast4: null, ingestTokenIssuedAt: null },
+      data: {
+        ingestTokenHash: null,
+        ingestTokenLast4: null,
+        ingestTokenIssuedAt: null,
+      },
     });
     await recordActivity({
       action: "product.token_revoked",
@@ -188,18 +209,25 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     omit: { ingestTokenHash: true },
   });
 
+  // Name what changed in the summary, so the activity feed reads "status,
+  // production URL" rather than a bare "Updated" an operator has to open.
+  const changed = Object.keys(patch).filter(
+    (k) =>
+      existing[k as keyof typeof existing] !== patch[k as keyof typeof patch],
+  );
   await recordChange({
     action: "product.updated",
     actor,
     entityType: "product",
     entityId: existing.id,
     entityLabel: updated.name,
-    summary: `Updated ${updated.name}`,
+    summary: changed.length
+      ? `Updated ${updated.name}: ${changed.map((k) => FIELD_LABEL[k] ?? k).join(", ")}`
+      : `Updated ${updated.name}`,
     before: Object.fromEntries(
       Object.keys(patch).map((k) => [k, existing[k as keyof typeof existing]]),
     ),
     after: patch as Record<string, unknown>,
   });
-
   return ok({ product: updated });
-});
+}, { can: ["edit", "project"] });

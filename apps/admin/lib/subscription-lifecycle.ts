@@ -29,9 +29,6 @@ import type {
 /** Days a subscription stays PAST_DUE before it is escalated to GRACE. */
 export const PAST_DUE_DAYS = 7;
 
-/** Days in GRACE before the operator is told to suspend. */
-export const GRACE_DAYS = 14;
-
 /** Horizon for "renews soon" on the dashboard and the renewals view. */
 export const RENEWAL_SOON_DAYS = 30;
 
@@ -41,12 +38,6 @@ export const INTERVAL_MONTHS: Record<BillingInterval, number> = {
   MONTHLY: 1,
   QUARTERLY: 3,
   ANNUAL: 12,
-};
-
-export const INTERVAL_LABEL: Record<BillingInterval, string> = {
-  MONTHLY: "Monthly",
-  QUARTERLY: "Quarterly",
-  ANNUAL: "Annual",
 };
 
 /**
@@ -138,31 +129,6 @@ export const STATUS_LABEL: Record<MaintenanceSubscriptionStatus, string> = {
   EXPIRED: "Expired",
 };
 
-export type StatusTone = "success" | "warning" | "danger" | "neutral" | "info";
-
-export const STATUS_TONE: Record<MaintenanceSubscriptionStatus, StatusTone> = {
-  TRIALING: "info",
-  ACTIVE: "success",
-  PAST_DUE: "warning",
-  GRACE: "danger",
-  SUSPENDED: "danger",
-  PAUSED: "neutral",
-  CANCELLED: "neutral",
-  EXPIRED: "neutral",
-};
-
-/** One line saying what this status means for the operator, not for the client. */
-export const STATUS_MEANING: Record<MaintenanceSubscriptionStatus, string> = {
-  TRIALING: "Inside a trial period. Converts automatically when the trial ends.",
-  ACTIVE: "Paid and inside its current period.",
-  PAST_DUE: `Renewal date passed without a recorded payment. Escalates after ${PAST_DUE_DAYS} days.`,
-  GRACE: `Overdue beyond ${PAST_DUE_DAYS} days. Service is still running — decide whether to suspend.`,
-  SUSPENDED: "Service stopped by Altruvex. The subscription is retained.",
-  PAUSED: "Halted at the client's request, still inside a paid period.",
-  CANCELLED: "Ended by the client or by Altruvex.",
-  EXPIRED: "Ran to the end of its final period without renewing.",
-};
-
 /** Statuses that mean money is still expected from this client. */
 export const REVENUE_BEARING: ReadonlySet<MaintenanceSubscriptionStatus> = new Set([
   "TRIALING",
@@ -172,6 +138,23 @@ export const REVENUE_BEARING: ReadonlySet<MaintenanceSubscriptionStatus> = new S
 ]);
 
 export type RenewalUrgency = "overdue" | "due-soon" | "scheduled" | "ending" | "none";
+
+/**
+ * Whether a retainer belongs on the renewals screen and in its badge count.
+ *
+ * `renewalView` answers "how soon" for a revenue-bearing retainer and says
+ * "none" for everything else — which hides an EXPIRED one: auto-renew was
+ * off, the period lapsed, and nobody renewed. That is exactly the retainer an
+ * operator must still decide about (re-sign or let go), so it counts here,
+ * alongside the overdue, due-soon and ending ones. Paused, suspended and
+ * cancelled retainers were decided by hand and are left out.
+ */
+export function needsRenewalAttention(sub: LifecycleInput, now: Date = new Date()): boolean {
+  const effective = deriveStatus(sub, now);
+  if (effective === "EXPIRED") return true;
+  const { urgency } = renewalView(sub, now);
+  return urgency === "overdue" || urgency === "due-soon" || urgency === "ending";
+}
 
 export interface RenewalView {
   urgency: RenewalUrgency;
@@ -208,22 +191,6 @@ export function renewalView(
   if (daysUntil <= RENEWAL_SOON_DAYS) return { ...base, urgency: "due-soon" };
   return { ...base, urgency: "scheduled" };
 }
-
-export const URGENCY_TONE: Record<RenewalUrgency, StatusTone> = {
-  overdue: "danger",
-  "due-soon": "warning",
-  ending: "warning",
-  scheduled: "neutral",
-  none: "neutral",
-};
-
-export const URGENCY_LABEL: Record<RenewalUrgency, string> = {
-  overdue: "Overdue",
-  "due-soon": "Due soon",
-  ending: "Not renewing",
-  scheduled: "Scheduled",
-  none: "—",
-};
 
 /**
  * The period a renewal moves the subscription into.

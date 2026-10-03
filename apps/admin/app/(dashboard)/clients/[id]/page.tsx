@@ -1,50 +1,83 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@repo/database";
 import {
-  Download,
+  CalendarPlus,
   ExternalLink,
-  FileSignature,
   FileText,
+  Inbox,
   Mail,
   MessageCircle,
   Pencil,
   Phone,
   Plus,
 } from "lucide-react";
+import { Avatar, Button } from "@repo/ui";
 import { DeleteRecordButton } from "@/components/os/delete-record";
-import { PageHeader, MetaItem } from "@/components/os/page-header";
-import { Panel } from "@/components/os/panel";
-import { TabNav } from "@/components/os/tab-nav";
-import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
-import { Timeline } from "@/components/os/timeline";
-import { EmptyInline } from "@/components/os/empty-state";
-import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@repo/ui";
-import { deriveClientStage } from "@/lib/dashboard-data";
-import { documentUrl } from "@/lib/storage";
-import { buildActivity } from "@/lib/activity";
-import { statusOf } from "@/lib/status";
-import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
-import { StatusMenu, LifecycleButton } from "./client-actions";
-import { ManualStatusMenu } from "@/components/os/manual-status";
+import {
+  DetailLayout,
+  MetaList,
+  QuickActions,
+} from "@/components/os/detail-layout";
+import { EntityAudit } from "@/components/os/entity-audit";
+import { MetaItem, PageHeader } from "@/components/os/page-header";
+import { Panel, PanelLink } from "@/components/os/panel";
 import { ServicesList } from "@/components/os/services/services-list";
-import { listServices } from "@/lib/client-services";
+import { TabNav } from "@/components/os/tab-nav";
+import { Timeline } from "@/components/os/timeline";
+import { StatusPill } from "@/components/ui/badge";
+import { buildActivity } from "@/lib/activity";
 import { emailTransport } from "@/lib/email";
-import { Button } from "@repo/ui";
+import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
+import { httpUrl } from "@/lib/http-url";
+import { whatsappConfigured } from "@/lib/sign-verification";
+import { statusOf } from "@/lib/status";
+import { documentUrl } from "@/lib/storage";
+import {
+  brandLabel,
+  contentLabel,
+  scopeNoteNames,
+} from "@/lib/transparency-lead-labels";
+import { LifecycleButton, StatusMenu } from "./client-actions";
+import { ClientNotes } from "./client-notes";
+import { loadClientHub, type ClientHub } from "./hub-data";
+import {
+  ConversationsTab,
+  DealsTab,
+  DeliveryTab,
+  LeadNotes,
+  MeetingsTab,
+  MoneyTab,
+  OverviewTab,
+  SitesTab,
+  type DealLinks,
+} from "./hub-sections";
 
 export const dynamic = "force-dynamic";
 
 const TABS = [
   { id: "overview", label: "Overview" },
-  { id: "proposals", label: "Proposals" },
-  { id: "contracts", label: "Contracts" },
-  { id: "projects", label: "Projects" },
-  { id: "services", label: "Services" },
-  { id: "communication", label: "Communication" },
-  { id: "documents", label: "Documents" },
-  { id: "activity", label: "Activity" },
-];
+  { id: "deals", label: "Deals" },
+  { id: "delivery", label: "Delivery" },
+  { id: "sites", label: "Sites" },
+  { id: "money", label: "Money" },
+  { id: "conversations", label: "Conversations" },
+  { id: "meetings", label: "Meetings" },
+  { id: "notes", label: "Notes" },
+  { id: "audit", label: "Audit" },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+// Links written before the hub was regrouped keep landing on the right tab.
+const LEGACY_TABS: Record<string, TabId> = {
+  proposals: "deals",
+  contracts: "deals",
+  documents: "deals",
+  projects: "delivery",
+  services: "sites",
+  communication: "conversations",
+  activity: "audit",
+};
 
 export default async function ClientDetailPage({
   params,
@@ -55,122 +88,62 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params;
   const { tab: tabParam } = await searchParams;
-  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "overview";
+  const tab: TabId =
+    TABS.find((t) => t.id === tabParam)?.id ??
+    (tabParam ? LEGACY_TABS[tabParam] : undefined) ??
+    "overview";
 
-  const client = await prisma.client.findUnique({
-    where: { id },
-    include: {
-      contactSubmission: {
-        include: {
-          notes: { include: { createdBy: { select: { name: true, email: true } } } },
-          tags: true,
-          meetings: true,
-        },
-      },
-      transparencyLead: true,
-      proposals: { orderBy: { createdAt: "desc" }, include: { contract: { select: { id: true } } } },
-      contracts: { orderBy: { createdAt: "desc" } },
-      projects: {
-        include: {
-          payments: true,
-          contract: { select: { proposal: { select: { currency: true } } } },
-        },
-        orderBy: { createdAt: "desc" },
-      },
-      messages: { orderBy: { createdAt: "desc" } },
-    },
-  });
+  const hub = await loadClientHub(id);
+  if (!hub) notFound();
+  const { client, stage, services } = hub;
+  const name = client.company || client.name || "Unnamed client";
 
-  if (!client) notFound();
-
-  const stage = deriveClientStage(client);
-  const displayName = client.company || client.name || "Unnamed client";
-  const activity = buildActivity({
+  const derived = buildActivity({
     client,
     submission: client.contactSubmission,
     transparencyLead: client.transparencyLead,
     proposals: client.proposals,
     contracts: client.contracts,
     projects: client.projects,
-    payments: client.projects.flatMap((p) =>
-      p.payments.map((pay) => ({
-        ...pay,
-        projectId: p.id,
-        currency: p.contract.proposal.currency,
-      })),
-    ),
+    // The derived history shows a late payment as overdue, the same rule the
+    // rest of the hub reads, rather than whatever status was last stored.
+    payments: hub.payments.map((p) => ({
+      ...p,
+      status: p.overdue ? "OVERDUE" : p.status,
+    })),
     messages: client.messages,
-    meetings: client.contactSubmission?.meetings ?? [],
+    meetings: hub.meetings,
   });
 
-  const storedDocuments = [
-    ...client.proposals.flatMap((p) =>
-      [
-        p.fileUrl && { kind: "Proposal deck", url: p.fileUrl, at: p.createdAt, ref: `/proposals/${p.id}` },
-        p.pdfUrl && { kind: "Proposal PDF", url: p.pdfUrl, at: p.createdAt, ref: `/proposals/${p.id}` },
-      ].filter(Boolean),
-    ),
-    ...client.contracts.flatMap((c) =>
-      [
-        c.fileUrl && { kind: "Contract", url: c.fileUrl, at: c.createdAt, ref: `/contracts/${c.id}` },
-        c.signedFileUrl && {
-          kind: "Signed contract",
-          url: c.signedFileUrl,
-          at: c.signedAt ?? c.createdAt,
-          ref: `/contracts/${c.id}`,
-        },
-      ].filter(Boolean),
-    ),
-  ] as { kind: string; url: string; at: Date; ref: string }[];
+  const links = await dealLinks(hub);
+  const channels = {
+    emailConfigured: emailTransport() !== "none",
+    whatsappConfigured: whatsappConfigured(),
+  };
 
-  // Signed-on-read when the bucket is private; unchanged when it is public.
-  const documents = await Promise.all(
-    storedDocuments.map(async (doc) => ({ ...doc, url: (await documentUrl(doc.url)) ?? doc.url })),
-  );
-
-  const proposalPdfUrls = new Map(
-    await Promise.all(
-      client.proposals.map(
-        async (p) => [p.id, await documentUrl(p.pdfUrl)] as const,
-      ),
-    ),
-  );
-
-  const [services, clientProducts] = await Promise.all([
-    listServices({ clientId: client.id }),
-    prisma.product.findMany({
-      where: { clientId: client.id },
-      select: { id: true, name: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
-
+  const counts: Partial<Record<TabId, number>> = {
+    deals: client.proposals.length + client.contracts.length,
+    delivery: client.projects.length,
+    sites: client.products.length + services.length,
+    money: hub.payments.length,
+    conversations: client.messages.length + client.emails.length,
+    meetings: hub.meetings.length,
+    notes: client.notes.length + (client.contactSubmission?.notes.length ?? 0),
+  };
   const tabs = TABS.map((t) => ({
-    ...t,
-    count:
-      t.id === "proposals"
-        ? client.proposals.length
-        : t.id === "contracts"
-          ? client.contracts.length
-          : t.id === "projects"
-            ? client.projects.length
-            : t.id === "communication"
-              ? client.messages.length
-              : t.id === "documents"
-                ? documents.length
-                : t.id === "services"
-                  ? services.length
-                  : undefined,
+    id: t.id,
+    label: t.label,
+    count: counts[t.id],
   }));
 
   return (
     <div className="space-y-4">
       <PageHeader
-        crumbs={[{ label: "Clients", href: "/clients" }, { label: displayName }]}
+        crumbs={[{ label: "Clients", href: "/clients" }, { label: name }]}
         title={
-          <span className="flex items-center gap-2">
-            <Avatar name={displayName} size="lg" />
-            {displayName}
+          <span className="flex min-w-0 items-center gap-2">
+            <Avatar name={name} size="lg" />
+            <span className="truncate">{name}</span>
           </span>
         }
         status={
@@ -181,17 +154,30 @@ export default async function ClientDetailPage({
         }
         meta={
           <>
-            <MetaItem label="Source">{statusOf("clientSource", client.source).label}</MetaItem>
+            <MetaItem label="Source">
+              {statusOf("clientSource", client.source).label}
+            </MetaItem>
             <MetaItem label="Added">{date(client.createdAt)}</MetaItem>
-            <MetaItem label="Last activity">{when(client.updatedAt)}</MetaItem>
-            {client.industry && <MetaItem label="Industry">{client.industry}</MetaItem>}
+            <MetaItem label="Last activity">
+              {when(hub.lastActivityAt)}
+            </MetaItem>
+            {client.industry && (
+              <MetaItem label="Industry">{client.industry}</MetaItem>
+            )}
+            {client.country && (
+              <MetaItem label="Country">{client.country}</MetaItem>
+            )}
           </>
         }
         actions={
           <>
-            <StatusMenu clientId={client.id} status={client.status} priority={client.priority} />
+            <StatusMenu
+              clientId={client.id}
+              status={client.status}
+              priority={client.priority}
+            />
             <Button asChild variant="outline">
-              <Link href={`/whatsapp/${client.id}`}>
+              <Link href={`/inbox?client=${client.id}`}>
                 <MessageCircle className="size-3.5" />
                 Message
               </Link>
@@ -208,438 +194,446 @@ export default async function ClientDetailPage({
               label={client.company || client.name || client.phone}
               redirectTo="/clients"
             />
-            <Button asChild variant="brand">
-              <Link href={`/clients/${client.id}/new-proposal`}>
-                <Plus className="size-3.5" />
-                New proposal
-              </Link>
-            </Button>
+            <PrimaryAction hub={hub} />
           </>
         }
-        tabs={<TabNav tabs={tabs} active={tab} basePath={`/clients/${client.id}`} />}
+        tabs={
+          <TabNav tabs={tabs} active={tab} basePath={`/clients/${client.id}`} />
+        }
       />
 
-      <DetailLayout
-        aside={
+      <DetailLayout aside={<Aside hub={hub} />}>
+        {tab === "overview" && <OverviewTab hub={hub} derived={derived} />}
+        {tab === "deals" && (
+          <DealsTab hub={hub} links={links} channels={channels} />
+        )}
+        {tab === "delivery" && <DeliveryTab hub={hub} />}
+        {tab === "sites" && (
           <>
-            <Panel title="Details" flush>
-              <MetaList
-                items={[
-                  {
-                    label: "Phone",
-                    value: (
-                      <a href={`tel:${client.phone}`} className="font-mono text-meta hover:text-brand">
-                        {fmtPhone(client.phone)}
-                      </a>
-                    ),
-                  },
-                  {
-                    label: "Email",
-                    value: client.email ? (
-                      <a href={`mailto:${client.email}`} className="truncate hover:text-brand">
-                        {client.email}
-                      </a>
-                    ) : (
-                      "—"
-                    ),
-                  },
-                  { label: "Company", value: client.company ?? "—" },
-                  { label: "Contact", value: client.name ?? "—" },
-                  { label: "Industry", value: client.industry ?? "—" },
-                  { label: "Source", value: statusOf("clientSource", client.source).label },
-                  { label: "Created", value: dateTime(client.createdAt) },
-                  { label: "Updated", value: dateTime(client.updatedAt) },
-                  {
-                    label: "Record",
-                    value: <span className="font-mono text-micro">{client.id.slice(0, 8)}</span>,
-                    hint: "Internal record id",
-                  },
-                ]}
-              />
-            </Panel>
-
-            <Panel title="Quick actions" flush>
-              <QuickActions>
-                <Button asChild variant="outline">
-                  <a href={`tel:${client.phone}`}>
-                    <Phone className="size-3.5 text-subtle-foreground" />
-                    Call {fmtPhone(client.phone)}
-                  </a>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href={`/whatsapp/${client.id}`}>
-                    <MessageCircle className="size-3.5 text-messaging-whatsapp" />
-                    Open conversation
-                  </Link>
-                </Button>
-                {client.email && (
-                  <Button asChild variant="outline">
-                    <a href={`mailto:${client.email}`}>
-                      <Mail className="size-3.5 text-subtle-foreground" />
-                      Send email
-                    </a>
-                  </Button>
-                )}
-              </QuickActions>
-            </Panel>
-
-            {client.transparencyLead && (
-              <Panel title="Estimator quote" description="What the public site told them">
-                <dl className="space-y-1.5 text-base">
-                  <Row label="Project">{client.transparencyLead.projectType}</Row>
-                  <Row label="Complexity">{client.transparencyLead.complexity}</Row>
-                  <Row label="Quoted">
-                    <span className="font-mono text-meta tabular-nums">
-                      {money(client.transparencyLead.priceMin)} – {money(client.transparencyLead.priceMax)}
-                    </span>
-                  </Row>
-                  <Row label="Weeks">
-                    <span className="font-mono text-meta tabular-nums">
-                      {client.transparencyLead.weeksMin}–{client.transparencyLead.weeksMax}
-                    </span>
-                  </Row>
-                </dl>
-              </Panel>
-            )}
-          </>
-        }
-      >
-        {tab === "overview" && (
-          <>
-            {client.contactSubmission?.message && (
-              <Panel title="What they asked for" description="Verbatim from the website form">
-                <p className="max-w-prose whitespace-pre-wrap text-base">
-                  {client.contactSubmission.message}
-                </p>
-                {client.contactSubmission.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
-                    {client.contactSubmission.tags.map((t) => (
-                      <span
-                        key={t.id}
-                        className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
-                      >
-                        {t.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </Panel>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <Panel title="Proposals">
-                <p className="font-sans text-lg font-medium tabular-nums">{client.proposals.length}</p>
-                <p className="text-meta text-muted-foreground">
-                  {client.proposals.filter((p) => p.status === "ACCEPTED").length} accepted
-                </p>
-              </Panel>
-              <Panel title="Contracts">
-                <p className="font-sans text-lg font-medium tabular-nums">{client.contracts.length}</p>
-                <p className="text-meta text-muted-foreground">
-                  {client.contracts.filter((c) => c.status === "SIGNED").length} signed
-                </p>
-              </Panel>
-              <Panel title="Projects">
-                <p className="font-sans text-lg font-medium tabular-nums">{client.projects.length}</p>
-                <p className="text-meta text-muted-foreground">
-                  {client.projects.filter((p) => p.status === "ACTIVE").length} active
-                </p>
-              </Panel>
+            <SitesTab hub={hub} />
+            <ServicesList
+              title="Services"
+              description="Everything this client holds through Altruvex that has to be renewed"
+              services={services}
+              showProject
+              emailConfigured={channels.emailConfigured}
+              createScope={{
+                clientId: client.id,
+                projects: client.projects.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                })),
+                products: client.products.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                })),
+                currency:
+                  client.projects[0]?.contract.proposal.currency ?? "EGP",
+              }}
+            />
+            <div className="flex justify-end">
+              <PanelLink href={`/services?client=${client.id}`}>
+                In the services list
+              </PanelLink>
             </div>
-
-            <Panel title="Recent activity" flush bodyClassName="p-2">
+          </>
+        )}
+        {tab === "money" && <MoneyTab hub={hub} />}
+        {tab === "conversations" && <ConversationsTab hub={hub} />}
+        {tab === "meetings" && <MeetingsTab hub={hub} />}
+        {tab === "notes" && (
+          <>
+            <ClientNotes
+              clientId={client.id}
+              clientLabel={name}
+              notes={client.notes.map((n) => ({
+                id: n.id,
+                body: n.body,
+                authorLabel: n.authorLabel,
+                pinned: n.pinned,
+                createdAt: n.createdAt.toISOString(),
+                updatedAt: n.updatedAt.toISOString(),
+              }))}
+            />
+            <LeadNotes hub={hub} />
+          </>
+        )}
+        {tab === "audit" && (
+          <>
+            <EntityAudit type="client" id={client.id} title="Audit trail" />
+            <Panel
+              title="Record history"
+              description="Derived from the records themselves, including what happened before the audit trail existed"
+              flush
+              bodyClassName="p-2"
+            >
               <Timeline
-                events={activity.slice(0, 8)}
-                dense
+                events={derived}
                 emptyLabel="Nothing recorded for this client yet."
               />
             </Panel>
           </>
-        )}
-
-        {tab === "proposals" && (
-          <Panel title="Proposals" flush>
-            {client.proposals.length === 0 ? (
-              <EmptyInline
-                action={
-                  <Button asChild variant="brand">
-                    <Link href={`/clients/${client.id}/new-proposal`}>
-                      <Plus className="size-3.5" />
-                      Build a proposal
-                    </Link>
-                  </Button>
-                }
-              >
-                No proposal has been issued to this client. Building one prices the work
-                from the same table the public estimator uses, so the number they were
-                quoted and the number you send cannot disagree.
-              </EmptyInline>
-            ) : (
-              <ul className="rows">
-                {client.proposals.map((proposal) => (
-                  <li key={proposal.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
-                    <FileText className="size-3.5 shrink-0 text-subtle-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/proposals/${proposal.id}`} className="text-base font-medium hover:text-brand">
-                        {proposal.projectType}
-                      </Link>
-                      <p className="text-meta text-muted-foreground">
-                        {money(proposal.totalPrice, proposal.currency)} · {proposal.timelineWeeks} weeks ·
-                        valid until {date(proposal.validUntil)}
-                      </p>
-                    </div>
-                    <StatusPill registry="proposalStatus" value={proposal.status} />
-                    <div className="flex items-center gap-1.5">
-                      {proposal.status === "DRAFT" && (
-                        <LifecycleButton
-                          label="Send via WhatsApp"
-                          busyLabel="Sending…"
-                          endpoint={`/api/admin/proposals/${proposal.id}/send`}
-                          variant="brand"
-                        />
-                      )}
-                      {!proposal.contract && (
-                        <ManualStatusMenu entity="proposal" id={proposal.id} status={proposal.status} />
-                      )}
-                      {proposal.status === "ACCEPTED" && !proposal.contract && (
-                        <LifecycleButton
-                          label="Generate contract"
-                          busyLabel="Generating…"
-                          endpoint="/api/admin/contracts"
-                          body={{ proposalId: proposal.id }}
-                        />
-                      )}
-                      {proposalPdfUrls.get(proposal.id) && (
-                        <Button asChild variant="outline">
-                          <a href={proposalPdfUrls.get(proposal.id)!} target="_blank" rel="noreferrer">
-                            <Download className="size-3.5" />
-                            PDF
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        )}
-
-        {tab === "contracts" && (
-          <Panel title="Contracts" flush>
-            {client.contracts.length === 0 ? (
-              <EmptyInline>
-                No contract yet. A contract is generated from an accepted proposal, so
-                the commitment always references an offer the client actually saw.
-              </EmptyInline>
-            ) : (
-              <ul className="rows">
-                {client.contracts.map((contract) => (
-                  <li key={contract.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
-                    <FileSignature className="size-3.5 shrink-0 text-subtle-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/contracts/${contract.id}`} className="text-base font-medium hover:text-brand">
-                        Contract {contract.id.slice(0, 8).toUpperCase()}
-                      </Link>
-                      <p className="text-meta text-muted-foreground">
-                        Created {date(contract.createdAt)}
-                        {contract.signedAt && ` · signed ${date(contract.signedAt)} by ${contract.signedByName}`}
-                      </p>
-                    </div>
-                    <StatusPill registry="contractStatus" value={contract.status} />
-                    <div className="flex items-center gap-1.5">
-                      {contract.status === "DRAFT" && (
-                        <LifecycleButton
-                          label="Send for signature"
-                          busyLabel="Sending…"
-                          endpoint={`/api/admin/contracts/${contract.id}/send`}
-                          variant="brand"
-                        />
-                      )}
-                      {contract.status !== "SIGNED" && (
-                        <ManualStatusMenu entity="contract" id={contract.id} status={contract.status} />
-                      )}
-                      {contract.signToken && (
-                        <Button asChild variant="outline">
-                          <a href={`/sign/${contract.signToken}`} target="_blank" rel="noreferrer">
-                            <ExternalLink className="size-3.5" />
-                            Signing page
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        )}
-
-        {tab === "projects" && (
-          <Panel title="Projects" flush>
-            {client.projects.length === 0 ? (
-              <EmptyInline>
-                Delivery has not started. A project is created from a signed contract —
-                that is the only route in, so a project always has a commitment behind it.
-              </EmptyInline>
-            ) : (
-              <ul className="rows">
-                {client.projects.map((project) => {
-                  const paid = project.payments.filter((p) => p.status === "PAID");
-                  const total = project.payments.reduce((s, p) => s + p.amount, 0);
-                  const collected = paid.reduce((s, p) => s + p.amount, 0);
-                  return (
-                    <li key={project.id} className="px-3 py-2.5">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className="min-w-0 flex-1">
-                          <Link href={`/projects/${project.id}`} className="text-base font-medium hover:text-brand">
-                            {project.name}
-                          </Link>
-                          <p className="text-meta text-muted-foreground">
-                            {project.targetLaunchDate ? `Target ${date(project.targetLaunchDate)}` : "No target date"}
-                          </p>
-                        </div>
-                        <StatusPill registry="projectPhase" value={project.phase} variant="dot" />
-                        <StatusPill registry="projectStatus" value={project.status} />
-                      </div>
-                      {total > 0 && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
-                            <span
-                              className="block h-full rounded-full bg-success"
-                              style={{ width: `${Math.round((collected / total) * 100)}%` }}
-                            />
-                          </span>
-                          <span className="font-mono text-micro tabular-nums text-muted-foreground">
-                            {money(collected, project.contract.proposal.currency)} /{" "}
-                            {money(total, project.contract.proposal.currency)}
-                          </span>
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Panel>
-        )}
-
-        {tab === "communication" && (
-          <Panel
-            title="Conversation"
-            description="Every WhatsApp message bound to this client"
-            action={
-              <Link href={`/whatsapp/${client.id}`} className="text-meta text-muted-foreground hover:text-foreground">
-                Open thread →
-              </Link>
-            }
-            flush
-          >
-            {client.messages.length === 0 ? (
-              <EmptyInline>
-                Nothing has been sent or received. Messages sent from a proposal or a
-                contract land here automatically and stay attached to those records.
-              </EmptyInline>
-            ) : (
-              <ul className="rows">
-                {client.messages.slice(0, 30).map((message) => (
-                  <li key={message.id} className="flex gap-3 px-3 py-2.5">
-                    <span
-                      className={
-                        message.direction === "INBOUND"
-                          ? "mt-1 size-1.5 shrink-0 rounded-full bg-progress"
-                          : "mt-1 size-1.5 shrink-0 rounded-full bg-neutral"
-                      }
-                      aria-hidden
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="whitespace-pre-wrap text-base">{message.body}</p>
-                      <p className="mt-0.5 font-mono text-micro text-subtle-foreground">
-                        {message.direction === "INBOUND" ? "FROM CLIENT" : "SENT"} ·{" "}
-                        {statusOf("whatsappStatus", message.status).label} · {when(message.createdAt)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        )}
-
-        {tab === "services" && (
-          <ServicesList
-            title="Services"
-            description="Everything this client holds through Altruvex that has to be renewed"
-            services={services}
-            showProject
-            emailConfigured={emailTransport() !== "none"}
-            createScope={{
-              clientId: client.id,
-              projects: client.projects.map((p) => ({ id: p.id, name: p.name })),
-              products: clientProducts,
-              currency: client.projects[0]?.contract.proposal.currency ?? "EGP",
-            }}
-          />
-        )}
-
-        {tab === "documents" && (
-          <Panel title="Documents" description="Every file this client's records produced" flush>
-            {documents.length === 0 ? (
-              <EmptyInline>
-                No files yet. Documents are generated by the proposal and contract
-                builders — they are never uploaded loose, so every file here belongs to
-                a record you can open.
-              </EmptyInline>
-            ) : (
-              <ul className="rows">
-                {documents.map((doc) => (
-                  <li key={doc.url} className="flex items-center gap-3 px-3 py-2.5">
-                    <FileText className="size-3.5 shrink-0 text-subtle-foreground" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-medium">{doc.kind}</p>
-                      <Link href={doc.ref} className="text-meta text-muted-foreground hover:text-brand">
-                        Belongs to {doc.ref.split("/")[1].replace(/s$/, "")} {doc.ref.split("/")[2].slice(0, 8)}
-                      </Link>
-                    </div>
-                    <span className="shrink-0 font-mono text-micro text-subtle-foreground">
-                      {date(doc.at)}
-                    </span>
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-border px-2 text-meta hover:bg-surface"
-                    >
-                      <Download className="size-3" />
-                      Open
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-        )}
-
-        {tab === "activity" && (
-          <Panel
-            title="Everything that happened"
-            description="Derived from the records themselves — this cannot drift from the data"
-            flush
-            bodyClassName="p-2"
-          >
-            <Timeline events={activity} emptyLabel="Nothing recorded for this client yet." />
-          </Panel>
         )}
       </DetailLayout>
     </div>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+/**
+ * The one brand action in the header: the next commercial step for where this
+ * client stands. It follows the derived stage, so it moves on by itself as the
+ * proposal is read, the contract is sent and the contract is signed.
+ */
+function PrimaryAction({ hub }: { hub: ClientHub }) {
+  const { client, stage } = hub;
+  const latestContract = client.contracts[0];
+  const latestProposal = client.proposals[0];
+  const acceptedWithoutContract = client.proposals.find(
+    (p) => p.status === "ACCEPTED" && !p.contract,
+  );
+  const activeProject = client.projects.find((p) => p.status === "ACTIVE");
+
+  const open = (href: string, label: string) => (
+    <Button asChild variant="brand">
+      <Link href={href}>{label}</Link>
+    </Button>
+  );
+
+  if (
+    latestContract &&
+    (latestContract.status === "DRAFT" || stage === "CONTRACT_SENT")
+  ) {
+    return open(
+      `/contracts/${latestContract.id}`,
+      latestContract.status === "DRAFT"
+        ? "Send the contract"
+        : "Open the contract",
+    );
+  }
+  if (acceptedWithoutContract) {
+    return (
+      <LifecycleButton
+        label="Generate contract"
+        busyLabel="Generating…"
+        endpoint="/api/admin/contracts"
+        body={{ proposalId: acceptedWithoutContract.id }}
+        variant="brand"
+      />
+    );
+  }
+  if (
+    latestProposal &&
+    (stage === "PROPOSAL_SENT" || stage === "PROPOSAL_READ")
+  ) {
+    return open(`/proposals/${latestProposal.id}`, "Open the proposal");
+  }
+  if (latestProposal?.status === "DRAFT") {
+    return open(`/proposals/${latestProposal.id}`, "Send the proposal");
+  }
+  if (stage === "SIGNED" && activeProject) {
+    return open(`/projects/${activeProject.id}`, "Open the project");
+  }
+  return (
+    <Button asChild variant="brand">
+      <Link href={`/clients/${client.id}/new-proposal`}>
+        <Plus className="size-3.5" />
+        New proposal
+      </Link>
+    </Button>
+  );
+}
+
+function Aside({ hub }: { hub: ClientHub }) {
+  const { client } = hub;
+  const website =
+    client.website && httpUrl.safeParse(client.website).success
+      ? client.website
+      : null;
+  const lead = client.transparencyLead;
+
+  return (
+    <>
+      <Panel title="Details" flush>
+        <MetaList
+          items={[
+            {
+              label: "Phone",
+              value: (
+                <a
+                  href={`tel:${client.phone}`}
+                  className="font-mono text-meta hover:text-brand"
+                >
+                  {fmtPhone(client.phone)}
+                </a>
+              ),
+            },
+            {
+              label: "Email",
+              value: client.email ? (
+                <a
+                  href={`mailto:${client.email}`}
+                  className="truncate hover:text-brand"
+                >
+                  {client.email}
+                </a>
+              ) : (
+                "—"
+              ),
+            },
+            { label: "Contact", value: client.name ?? "—" },
+            { label: "Company", value: client.company ?? "—" },
+            { label: "Industry", value: client.industry ?? "—" },
+            {
+              label: "Website",
+              value: website ? (
+                <a
+                  href={website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex max-w-full items-center gap-1 truncate hover:text-brand"
+                >
+                  <span className="truncate">
+                    {website.replace(/^https?:\/\//, "")}
+                  </span>
+                  <ExternalLink className="size-3 shrink-0" />
+                </a>
+              ) : (
+                (client.website ?? "—")
+              ),
+            },
+            { label: "Country", value: client.country ?? "—" },
+            {
+              label: "Address",
+              value: client.address ? (
+                <span className="whitespace-pre-wrap">{client.address}</span>
+              ) : (
+                "—"
+              ),
+            },
+            {
+              label: "Billing email",
+              value: client.billingEmail ? (
+                <a
+                  href={`mailto:${client.billingEmail}`}
+                  className="truncate hover:text-brand"
+                >
+                  {client.billingEmail}
+                </a>
+              ) : (
+                "—"
+              ),
+            },
+            {
+              label: "Tax ID",
+              value: client.taxId ? (
+                <span className="font-mono text-meta">{client.taxId}</span>
+              ) : (
+                "—"
+              ),
+            },
+            {
+              label: "Source",
+              value: statusOf("clientSource", client.source).label,
+            },
+            { label: "Created", value: dateTime(client.createdAt) },
+          ]}
+        />
+      </Panel>
+
+      <Panel title="Quick actions" flush>
+        <QuickActions>
+          <Button asChild variant="outline">
+            <a href={`tel:${client.phone}`}>
+              <Phone className="size-3.5 text-subtle-foreground" />
+              Call {fmtPhone(client.phone)}
+            </a>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`/inbox?client=${client.id}`}>
+              <Inbox className="size-3.5 text-subtle-foreground" />
+              Open conversations
+            </Link>
+          </Button>
+          {client.email && (
+            <Button asChild variant="outline">
+              <a href={`mailto:${client.email}`}>
+                <Mail className="size-3.5 text-subtle-foreground" />
+                Email from your mailbox
+              </a>
+            </Button>
+          )}
+          <Button asChild variant="outline">
+            <Link href={`/calendar?new=meeting&client=${client.id}`}>
+              <CalendarPlus className="size-3.5 text-subtle-foreground" />
+              Schedule a meeting
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={`/clients/${client.id}/new-proposal`}>
+              <Plus className="size-3.5 text-subtle-foreground" />
+              New proposal
+            </Link>
+          </Button>
+          {client.contactSubmission && (
+            <Button asChild variant="outline">
+              <Link href={`/submissions/${client.contactSubmission.id}`}>
+                <FileText className="size-3.5 text-subtle-foreground" />
+                The website lead
+              </Link>
+            </Button>
+          )}
+        </QuickActions>
+      </Panel>
+
+      {lead && (
+        <Panel
+          title="Estimator quote"
+          description="What the public site told them"
+          action={
+            <PanelLink href={`/transparency?lead=${lead.id}`}>Open</PanelLink>
+          }
+        >
+          <dl className="space-y-1.5 text-base">
+            <Row label="Project">{lead.projectType}</Row>
+            <Row label="Complexity">{lead.complexity}</Row>
+            <Row label="Quoted">
+              <span className="font-mono text-meta tabular-nums">
+                {money(lead.priceMin)} – {money(lead.priceMax)}
+              </span>
+            </Row>
+            <Row label="Weeks">
+              <span className="font-mono text-meta tabular-nums">
+                {lead.weeksMin}–{lead.weeksMax}
+              </span>
+            </Row>
+            {/* Older leads predate these answers; a missing one is simply not a row. */}
+            {brandLabel(lead.brandIdentity) && (
+              <Row label="Brand">{brandLabel(lead.brandIdentity)}</Row>
+            )}
+            {contentLabel(lead.contentReadiness) && (
+              <Row label="Content">{contentLabel(lead.contentReadiness)}</Row>
+            )}
+          </dl>
+          {lead.scopeNotes.length > 0 && (
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="telemetry text-subtle-foreground">
+                Scope notes · reviewed in scope, not priced
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {scopeNoteNames(lead.scopeNotes).map((note) => (
+                  <span
+                    key={note}
+                    className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                  >
+                    {note}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {lead.note && (
+            <div className="mt-3 border-t border-border pt-3">
+              <p className="telemetry text-subtle-foreground">Their note</p>
+              <p className="mt-1.5 whitespace-pre-wrap text-base">
+                {lead.note}
+              </p>
+            </div>
+          )}
+        </Panel>
+      )}
+    </>
+  );
+}
+
+function Row({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="telemetry text-subtle-foreground">{label}</dt>
       <dd className="min-w-0 truncate text-end">{children}</dd>
     </div>
   );
+}
+
+/**
+ * Document and signing links for the Deals tab. Documents are signed on read
+ * when the bucket is private, and anything that goes into a client's message is
+ * made absolute from the public base URL, never from the request host.
+ */
+async function dealLinks(hub: ClientHub): Promise<DealLinks> {
+  const { client, publicBase } = hub;
+  const absolute = (url: string) =>
+    /^https?:\/\//.test(url)
+      ? url
+      : `${publicBase}${url.startsWith("/") ? "" : "/"}${url}`;
+
+  const proposals: DealLinks["proposals"] = {};
+  await Promise.all(
+    client.proposals.map(async (p) => {
+      const open = await documentUrl(p.pdfUrl ?? p.fileUrl);
+      if (open) proposals[p.id] = { open, absolute: absolute(open) };
+    }),
+  );
+
+  const contracts: DealLinks["contracts"] = {};
+  for (const c of client.contracts) {
+    contracts[c.id] = c.signToken ? `${publicBase}/sign/${c.signToken}` : null;
+  }
+
+  const stored = [
+    ...client.proposals.flatMap((p) => [
+      p.fileUrl
+        ? {
+            kind: "Proposal deck",
+            url: p.fileUrl,
+            at: p.createdAt,
+            type: "proposal" as const,
+            id: p.id,
+          }
+        : null,
+      p.pdfUrl
+        ? {
+            kind: "Proposal PDF",
+            url: p.pdfUrl,
+            at: p.createdAt,
+            type: "proposal" as const,
+            id: p.id,
+          }
+        : null,
+    ]),
+    ...client.contracts.flatMap((c) => [
+      c.fileUrl
+        ? {
+            kind: "Contract",
+            url: c.fileUrl,
+            at: c.createdAt,
+            type: "contract" as const,
+            id: c.id,
+          }
+        : null,
+      c.signedFileUrl
+        ? {
+            kind: "Signed contract",
+            url: c.signedFileUrl,
+            at: c.signedAt ?? c.createdAt,
+            type: "contract" as const,
+            id: c.id,
+          }
+        : null,
+    ]),
+  ].filter((d) => d !== null);
+
+  const documents = await Promise.all(
+    stored.map(async (doc) => ({
+      ...doc,
+      url: (await documentUrl(doc.url)) ?? doc.url,
+    })),
+  );
+
+  return { proposals, contracts, documents };
 }

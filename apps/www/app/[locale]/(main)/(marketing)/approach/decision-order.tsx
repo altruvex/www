@@ -1,19 +1,18 @@
 "use client";
 
 import { Eyebrow } from "@/components/ui/eyebrow";
+import { Num } from "@/components/ui/num";
 import { MOTION } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
-/** The order most builds decide things in. Ours is the same list reversed. */
 const USUAL = ["page", "features", "architecture", "data"] as const;
 const OURS = [...USUAL].reverse();
 
 type Layer = (typeof USUAL)[number];
 
-/** Horizontal centre of column `index` in a four-column row, in viewBox units. */
 const columnCentre = (index: number) => ((index + 0.5) / USUAL.length) * 100;
 
 function Row({
@@ -46,7 +45,7 @@ function Row({
           >
             <span className="flex flex-col items-center gap-1">
               <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                {String(index + 1).padStart(2, "0")}
+                <Num value={index + 1} pad={2} />
               </span>
               <span
                 className={cn(

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero v4 · Blueprint, raised</title>
+<!-- Round 3 (2026-09-27). Ali picked Blueprint but it read below Awwwards level.
+     Raised on four axes: scale (the headline is fitted to the stage — the drawing's subject),
+     real measurement (rulers, metric lines and dimensions are computed live from the page — nothing typed),
+     one built moment (the headline arrives as an outline and is inked in), and one interaction with an
+     argument that also works on touch (REJ-012):
+       X · X-ray   — a lens shows the drawing under the finished surface; the X-ray button opens it fully (touch)
+       I · Inspect — point or tap any element and it is measured like a dev tool; the headline is measured by default
+     ?v=x|i, ?lang=ar, ?motion=off. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  (function () {
+    var r = document.documentElement, q;
+    try { q = new URLSearchParams(location.search); } catch (e) { q = { get: function () { return null; } }; }
+    var reduce = false;
+    try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    if (q.get("lang") === "ar") { r.lang = "ar"; r.dir = "rtl"; }
+    r.dataset.v = (q.get("v") || "x").toLowerCase();
+    if (!reduce && q.get("motion") !== "off") r.classList.add("motion");
+  })();
+</script>
+<style>
+@property --r { syntax: "<length>"; inherits: true; initial-value: 0px; }
+/* Tokens copied from packages/ui/src/styles/tokens.css + apps/www/app/globals.css */
+:root {
+  --brand: 214 89% 48%; --brand-hover: 214 89% 41%;
+  --background: 0 0% 98%; --foreground: 0 0% 6%; --muted: 0 0% 40%;
+  --stage-ink: 214 30% 4%;
+  --iris-1: hsl(212 96% 64%); --iris-2: hsl(250 92% 70%); --iris-3: hsl(276 88% 72%);
+  --radius-panel-lg: 34px; --ctl: 12px; --gap: 12px;
+  --f-display: "Outfit", system-ui, sans-serif; --f-body: "Inter", system-ui, sans-serif;
+  --f-mono: "Geist Mono", ui-monospace, monospace; --f-ar: "Vazirmatn", sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1); --ink-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --w-60: rgb(255 255 255 / .62); --w-hair: rgb(255 255 255 / .08); --w-guide: rgb(255 255 255 / .24);
+  --inset: max(44px, 3.4vw);
+}
+[dir="rtl"] { --f-display: var(--f-ar); --f-body: var(--f-ar); }
+* { box-sizing: border-box; margin: 0; }
+html { background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--f-body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; }
+[lang="ar"] [data-en], [lang="en"] [data-ar] { display: none !important; }
+
+.nav { position: fixed; inset-inline: 0; top: 0; z-index: 20; height: 76px; display: flex; align-items: center; justify-content: space-between; padding-inline: calc(var(--inset) + var(--gap)); color: #fff; }
+.nav .logo { font-family: "Outfit", sans-serif; font-weight: 500; font-size: 20px; letter-spacing: -0.02em; }
+.nav ul { display: flex; gap: 28px; list-style: none; padding: 0; font-size: 14px; opacity: .82; }
+.nav .cta { font-size: 14px; background: hsl(var(--brand)); padding: 10px 16px; border-radius: var(--ctl); }
+@media (max-width: 860px) { .nav ul { display: none; } }
+
+.frame { padding: 8px; }
+@media (min-width: 768px) { .frame { padding: var(--gap); } }
+.stage { position: relative; isolation: isolate; overflow: clip; border-radius: var(--radius-panel-lg); background: hsl(var(--stage-ink)); color: #fff; min-height: calc(100svh - 2 * var(--gap)); touch-action: pan-y; }
+@media (max-width: 767.98px) { .stage { min-height: calc(100svh - 16px); } }
+/* one light over the drafting table — static */
+.glow { position: absolute; inset: 0; z-index: -2; background: radial-gradient(70% 60% at 85% 0%, hsl(var(--brand) / .16), transparent 70%); }
+[dir="rtl"] .glow { background: radial-gradient(70% 60% at 15% 0%, hsl(var(--brand) / .16), transparent 70%); }
+.lay { display: flex; flex-direction: column; justify-content: flex-end; padding: 128px var(--inset) clamp(32px, 5vh, 56px); min-height: inherit; }
+.content { position: relative; z-index: 2; }
+
+.guides { position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: calc(1 - var(--p, 0)); }
+.cols { position: absolute; inset: 0; padding-inline: var(--inset); display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; }
+.cols i { border-inline: 1px solid var(--w-hair); background: rgb(255 255 255 / .014); transform-origin: top; }
+@media (max-width: 767.98px) { .cols { grid-template-columns: repeat(4, 1fr); column-gap: 16px; } .cols i:nth-child(n+5) { display: none; } }
+
+/* rulers: real px, measured from the stage's start edge */
+.ruler { position: absolute; z-index: 4; pointer-events: none; font: 9.5px var(--f-mono); color: rgb(255 255 255 / .5); opacity: calc(1 - var(--p, 0)); }
+.rx { top: 84px; inset-inline: 0; height: 18px; border-bottom: 1px solid var(--w-hair);
+  background: repeating-linear-gradient(var(--rdir, to right), rgb(255 255 255 / .28) 0 1px, transparent 1px 10px) bottom / 100% 5px no-repeat,
+              repeating-linear-gradient(var(--rdir, to right), rgb(255 255 255 / .4) 0 1px, transparent 1px 50px) bottom / 100% 9px no-repeat; }
+[dir="rtl"] .rx { --rdir: to left; }
+.ry { top: 0; bottom: 0; inset-inline-start: 0; width: 18px; border-inline-end: 1px solid var(--w-hair);
+  background: repeating-linear-gradient(to bottom, rgb(255 255 255 / .28) 0 1px, transparent 1px 10px) var(--ry-side, left) / 5px 100% no-repeat,
+              repeating-linear-gradient(to bottom, rgb(255 255 255 / .4) 0 1px, transparent 1px 50px) var(--ry-side, left) / 9px 100% no-repeat; }
+[dir="rtl"] .ry { --ry-side: right; }
+.rx b, .ry b { position: absolute; font-weight: 400; }
+.rx b { top: 1px; inset-inline-start: var(--at); margin-inline-start: 3px; }
+.ry b { top: var(--at); inset-inline-start: 7px; writing-mode: vertical-rl; margin-top: 3px; }
+.mk { position: absolute; background: hsl(var(--brand)); opacity: 0; transition: opacity 200ms var(--ease); }
+.rx .mk { bottom: -1px; height: 19px; width: 1px; }
+.ry .mk { inset-inline-end: -1px; width: 19px; height: 1px; }
+.rx .band { position: absolute; bottom: -1px; height: 3px; background: hsl(var(--brand)); opacity: 0; transition: all 300ms var(--ease); }
+.ry .band { position: absolute; inset-inline-end: -1px; width: 3px; background: hsl(var(--brand)); opacity: 0; transition: all 300ms var(--ease); }
+.on .mk, .on .band { opacity: 1; }
+@media (max-width: 767.98px) { .ry { display: none; } }
+
+/* metric lines + dimension, placed by measure() */
+.metrics { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: calc(1 - var(--p, 0)); }
+.ml { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--w-guide); transform-origin: var(--from, left); }
+[dir="rtl"] .ml { --from: right; }
+.ml span, .dim span, .note { font: 10.5px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--w-60); white-space: nowrap; }
+[dir="rtl"] .ml span, [dir="rtl"] .dim span, [dir="rtl"] .note { font-family: var(--f-ar); letter-spacing: 0; font-size: 12px; text-transform: none; }
+.ml span { position: absolute; inset-inline-end: 28px; bottom: 4px; }
+.dim { position: absolute; height: 11px; border-inline: 1px solid var(--w-60); display: flex; align-items: center; justify-content: center; transform-origin: center; }
+.dim::before { content: ""; position: absolute; inset-inline: 0; top: 50%; border-top: 1px solid var(--w-guide); }
+.dim span { position: relative; background: hsl(var(--stage-ink)); padding-inline: 8px; }
+@media (max-width: 767.98px) { .ml span, .dim { display: none; } .itag em { display: none; } }
+
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--w-60); display: flex; gap: 12px; align-items: center; }
+.eyebrow::before { content: ""; width: 20px; height: 2px; background: currentColor; }
+[dir="rtl"] .eyebrow { font-family: var(--f-body); letter-spacing: 0; font-size: 15px; font-weight: 500; }
+h1 { font-family: var(--f-display); font-weight: 300; letter-spacing: -0.045em; line-height: 1.02; font-size: 120px; margin-block: 18px 30px; }
+[dir="rtl"] h1 { font-weight: 600; letter-spacing: 0; line-height: 1.2; }
+.row { display: block; width: fit-content; }
+.mask { display: block; position: relative; overflow: clip; padding-block: .02em .1em; }
+.mask > span { display: block; white-space: nowrap; }
+.ghost { color: transparent; -webkit-text-stroke: 1px rgb(255 255 255 / .55); transition: -webkit-text-stroke-color 900ms var(--ease); }
+.ink { position: absolute; inset: 0; padding-block: inherit; }
+.iris { background: linear-gradient(100deg, var(--iris-1), var(--iris-2) 55%, var(--iris-3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.dimc { color: rgb(255 255 255 / .58); }
+.bl { display: inline-block; width: 0; height: 0; }
+.built .content .ghost { -webkit-text-stroke-color: transparent; }
+
+.foot { display: grid; gap: 24px; }
+@media (min-width: 1024px) { .foot { grid-template-columns: minmax(0, 44ch) auto; justify-content: space-between; align-items: end; } }
+.sub { max-width: 44ch; font-size: 17px; line-height: 1.6; color: rgb(255 255 255 / .74); text-wrap: pretty; }
+[dir="rtl"] .sub { font-size: 18px; line-height: 1.85; max-width: 40ch; }
+.ctas { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 48px; padding-inline: 20px; border-radius: var(--ctl); font-size: 15px; font-weight: 500; transition: background 200ms var(--ease); }
+.btn-primary { background: hsl(var(--brand)); color: #fff; }
+.btn-primary:hover { background: hsl(var(--brand-hover)); }
+.btn-glass { background: rgb(255 255 255 / .08); border: 1px solid rgb(255 255 255 / .22); color: #fff; }
+.btn-glass:hover { background: rgb(255 255 255 / .14); }
+[dir="rtl"] .arrow { transform: scaleX(-1); display: inline-block; }
+
+.toggle { position: absolute; z-index: 6; bottom: 18px; inset-inline-end: var(--inset); display: inline-flex; align-items: center; gap: 8px; height: 30px; padding-inline: 12px; border-radius: 8px; border: 1px solid rgb(255 255 255 / .18); background: hsl(var(--stage-ink) / .8); color: var(--w-60); cursor: pointer; font: 11px var(--f-mono); letter-spacing: .12em; text-transform: uppercase; }
+[dir="rtl"] .toggle { font-family: var(--f-ar); letter-spacing: 0; font-size: 12.5px; }
+.toggle .dot { width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .5; }
+.toggle[aria-pressed="true"] { color: #fff; } .toggle[aria-pressed="true"] .dot { background: hsl(var(--brand)); opacity: 1; }
+.toggle:hover { color: #fff; }
+.hint { position: absolute; z-index: 6; bottom: 24px; inset-inline-end: var(--inset); }
+@media (min-width: 1024px) { .foot { padding-bottom: 20px; } }
+@media (max-width: 1023.98px) { .toggle, .hint { position: static; margin-top: 18px; width: fit-content; } }
+
+/* ── X · X-ray lens ──────────────────────────────────────────────────── */
+.xray { position: absolute; inset: 0; z-index: 3; pointer-events: none; min-height: 100%;
+  background-color: hsl(214 48% 9%);
+  background-image: linear-gradient(rgb(255 255 255 / .09) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / .09) 1px, transparent 1px),
+                    linear-gradient(rgb(255 255 255 / .035) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / .035) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px, 8px 8px, 8px 8px;
+  clip-path: circle(var(--r) at var(--x, 50%) var(--y, 50%)); transition: --r 450ms var(--ease); }
+.xray.full { transition: --r 1100ms var(--ink-ease); }
+[data-v="i"] .xray, [data-v="i"] .ring { display: none; }
+.xray .ink { display: none; }
+.xray .ghost { -webkit-text-stroke: 1px rgb(255 255 255 / .92) !important; }
+.xray .ch { outline: 1px solid hsl(var(--brand) / .7); outline-offset: -1px; background: hsl(var(--brand) / .08); }
+.xray .eyebrow, .xray .sub { color: rgb(255 255 255 / .42); outline: 1px dashed rgb(255 255 255 / .35); outline-offset: 5px; }
+.xray .btn { background: repeating-linear-gradient(135deg, hsl(var(--brand) / .45) 0 1px, transparent 1px 6px) left / 20px 100% no-repeat, repeating-linear-gradient(135deg, hsl(var(--brand) / .45) 0 1px, transparent 1px 6px) right / 20px 100% no-repeat; border: 1px dashed hsl(var(--brand)); color: rgb(255 255 255 / .8); }
+.xray .toggle, .xray .rise { opacity: 1 !important; translate: 0 0 !important; }
+.ring { position: absolute; z-index: 5; pointer-events: none; left: var(--x); top: var(--y); width: calc(var(--r) * 2); height: calc(var(--r) * 2); translate: -50% -50%; border-radius: 50%; border: 1px solid rgb(255 255 255 / .5); transition: width 450ms var(--ease), height 450ms var(--ease), opacity 300ms; opacity: 0; }
+.ring.on { opacity: 1; }
+.ring::before, .ring::after { content: ""; position: absolute; left: 50%; top: 50%; background: rgb(255 255 255 / .7); translate: -50% -50%; }
+.ring::before { width: 13px; height: 1px; } .ring::after { width: 1px; height: 13px; }
+.ring .read { position: absolute; top: 100%; left: 50%; translate: -50% 10px; font: 10.5px var(--f-mono); letter-spacing: .1em; color: #fff; white-space: nowrap; background: hsl(var(--brand)); padding: 3px 7px; border-radius: 4px; direction: ltr; }
+
+/* ── I · Inspect ─────────────────────────────────────────────────────── */
+.insp { position: absolute; inset: 0; z-index: 5; pointer-events: none; display: none; }
+[data-v="i"] .insp { display: block; }
+[data-v="x"] .i-only, [data-v="i"] .x-only { display: none !important; }
+.ibox { position: absolute; outline: 1px solid hsl(var(--brand)); background: hsl(var(--brand) / .09); transition: left 320ms var(--ease), top 320ms var(--ease), width 320ms var(--ease), height 320ms var(--ease), opacity 300ms; opacity: 0; }
+.insp.on .ibox, .insp.on .gl { opacity: 1; }
+.itag { position: absolute; bottom: calc(100% + 6px); inset-inline-start: -1px; white-space: nowrap; font: 11px var(--f-mono); letter-spacing: .04em; color: #fff; background: hsl(var(--brand)); padding: 4px 8px; border-radius: 4px; direction: ltr; }
+.itag em { font-style: normal; opacity: .8; }
+[dir="rtl"] .itag { inset-inline-start: auto; left: auto; right: -1px; }
+.gl { position: absolute; opacity: 0; transition: all 320ms var(--ease); }
+.gl.h { height: 0; border-top: 1px solid hsl(var(--brand)); }
+.gl.v { width: 0; border-inline-start: 1px solid hsl(var(--brand)); }
+.gl span { position: absolute; font: 10.5px var(--f-mono); color: #fff; background: hsl(var(--brand)); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+.gl.h span { left: 50%; translate: -50% -50%; top: 0; }
+.gl.v span { top: 50%; translate: -50% -50%; left: 0; }
+.corner { position: absolute; width: 5px; height: 5px; background: #fff; border: 1px solid hsl(var(--brand)); translate: -50% -50%; }
+
+/* ── The built moment (once): rulers → columns → metric lines → outline type → ink ── */
+.motion .cols i { transform: scaleY(0); }
+.motion .ruler { clip-path: inset(0 100% 0 0); }
+[dir="rtl"].motion .ruler { clip-path: inset(0 0 0 100%); }
+.motion .ry { clip-path: inset(0 0 100% 0) !important; }
+.motion .ml { transform: scaleX(0); }
+.motion .dim, .motion .ml span, .motion .toggle, .motion .hint { opacity: 0; }
+.motion .dim { transform: scaleX(0); }
+.motion .mask > span { translate: 0 105%; }
+.motion .content .ink { clip-path: inset(0 100% 0 0); }
+[dir="rtl"].motion .content .ink { clip-path: inset(0 0 0 100%); }
+.motion .rise { opacity: 0; translate: 0 14px; }
+.in .ruler { clip-path: inset(0 0 0 0) !important; transition: clip-path 900ms var(--ease); }
+.in .cols i { transform: none; transition: transform 1000ms var(--ease) calc(150ms + var(--c, 0) * 35ms); }
+.in .ml { transform: none; transition: transform 1100ms var(--ease) calc(450ms + var(--k, 0) * 90ms); }
+.in .ml span { opacity: 1; transition: opacity 500ms var(--ease) 1300ms; }
+.in .mask > .ghost { translate: 0 0; transition: translate 1000ms var(--ease) calc(900ms + var(--i, 0) * 120ms), -webkit-text-stroke-color 900ms var(--ease); }
+.in .mask > .ink { translate: 0 0; clip-path: inset(0 0 0 0) !important; transition: translate 1000ms var(--ease) calc(900ms + var(--i, 0) * 120ms), clip-path 1200ms var(--ink-ease) calc(1750ms + var(--i, 0) * 180ms); }
+.in .dim { opacity: 1; transform: none; transition: opacity 400ms var(--ease) 2500ms, transform 700ms var(--ease) 2500ms; }
+.in .rise { opacity: 1; translate: 0 0; transition: opacity 700ms var(--ease) calc(2300ms + var(--i, 0) * 90ms), translate 700ms var(--ease) calc(2300ms + var(--i, 0) * 90ms); }
+.in .toggle, .in .hint { opacity: 1; transition: opacity 600ms var(--ease) 2900ms; }
+.xray .mask > span { translate: 0 0 !important; }
+
+.next { padding: clamp(5rem, 10vh, 8rem) clamp(20px, 3.4vw, 52px); max-width: 1200px; }
+.next .eyebrow { color: hsl(var(--muted)); }
+.next h2 { font-family: var(--f-display); font-weight: 600; font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: -0.03em; margin-top: 18px; max-width: 18ch; }
+.switch { position: fixed; bottom: 16px; left: 50%; translate: -50% 0; z-index: 30; display: flex; gap: 4px; padding: 4px; border-radius: 16px; background: hsl(0 0% 8% / .88); backdrop-filter: blur(12px); color: #fff; font: 13px var(--f-mono); direction: ltr; white-space: nowrap; }
+.switch button, .switch a { color: inherit; background: none; border: 0; padding: 8px 12px; border-radius: 12px; cursor: pointer; opacity: .7; font-family: var(--f-mono); }
+.switch button[aria-pressed="true"] { background: #fff; color: #000; opacity: 1; }
+.switch .sep { width: 1px; background: rgb(255 255 255 / .2); margin: 6px 4px; }
+@media (max-width: 560px) { .switch button, .switch a { padding: 8px; font-size: 12px; } .switch .lbl { display: none; } }
+</style>
+</head>
+<body>
+<header class="nav">
+  <a class="logo" href="#">Altruvex</a>
+  <ul>
+    <li><span data-en>Services</span><span data-ar>الخدمات</span></li>
+    <li><span data-en>Process</span><span data-ar>المنهج</span></li>
+    <li><span data-en>Pricing</span><span data-ar>الأسعار</span></li>
+    <li><span data-en>About</span><span data-ar>من نحن</span></li>
+  </ul>
+  <a class="cta" href="#"><span data-en>Request a Scope</span><span data-ar>اطلب تحديد النطاق</span></a>
+</header>
+
+<main>
+<section class="frame">
+  <div class="stage" id="stage">
+    <div class="glow" aria-hidden="true"></div>
+    <div class="guides" aria-hidden="true"><div class="cols"><i style="--c:0"></i><i style="--c:1"></i><i style="--c:2"></i><i style="--c:3"></i><i style="--c:4"></i><i style="--c:5"></i><i style="--c:6"></i><i style="--c:7"></i><i style="--c:8"></i><i style="--c:9"></i><i style="--c:10"></i><i style="--c:11"></i></div></div>
+    <div class="ruler rx" id="rx" aria-hidden="true"><i class="mk"></i><i class="band"></i></div>
+    <div class="ruler ry" id="ry" aria-hidden="true"><i class="mk"></i><i class="band"></i></div>
+
+    <div class="lay content" id="content">
+      <p class="eyebrow rise" style="--i:0" data-inspect="eyebrow" data-k="eb"></p>
+      <h1 id="h1">
+        <span class="row" data-inspect="l1"><span class="mask"><span class="ghost" aria-hidden="true" style="--i:0"><span data-k="l1"></span><i class="bl"></i></span><span class="ink iris" style="--i:0" data-k="l1"></span></span></span>
+        <span class="row" data-inspect="l2"><span class="mask"><span class="ghost" aria-hidden="true" style="--i:1"><span data-k="l2"></span><i class="bl"></i></span><span class="ink dimc" style="--i:1" data-k="l2"></span></span></span>
+      </h1>
+      <div class="foot">
+        <p class="sub rise" style="--i:1" data-inspect="sub" data-k="sub"></p>
+        <div class="ctas rise" style="--i:2">
+          <a class="btn btn-primary" href="#" data-inspect="cta1"><span data-k="c1"></span> <span class="arrow">→</span></a>
+          <a class="btn btn-glass" href="#" data-inspect="cta2"><span data-k="c2"></span></a>
+        </div>
+      </div>
+      <p class="hint note i-only" data-k="ihint"></p>
+      <button class="toggle x-only" type="button" id="xbtn" aria-pressed="false"><span class="dot"></span><span data-k="xray"></span></button>
+    </div>
+
+    <div class="metrics" id="metrics" aria-hidden="true"></div>
+    <div class="xray lay" id="xray" aria-hidden="true" inert></div>
+    <div class="ring" id="ring" aria-hidden="true"><span class="read" id="read"></span></div>
+    <div class="insp" id="insp" aria-hidden="true">
+      <div class="ibox" id="ibox"><span class="itag" id="itag"></span></div>
+      <div class="gl h" id="gh"><span></span></div>
+      <div class="gl v" id="gv"><span></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="next">
+  <p class="eyebrow"><span data-en>01 · The problem</span><span data-ar>٠١ · المشكلة</span></p>
+  <h2><span data-en>Templates stop where your business starts.</span><span data-ar>القوالب تتوقف حيث يبدأ عملك.</span></h2>
+</section>
+<div style="height:60vh"></div>
+</main>
+
+<div class="switch" role="group" aria-label="Prototype">
+  <button data-set="v" data-val="x">X<span class="lbl"> · X-ray</span></button>
+  <button data-set="v" data-val="i">I<span class="lbl"> · Inspect</span></button>
+  <a href="../2026-09-hero-v3/index.html?v=a" title="Round 2 Blueprint, for comparison">A<span class="lbl"> · round 2</span></a>
+  <span class="sep"></span>
+  <button data-set="lang">EN/AR</button>
+  <button data-set="replay">↺</button>
+</div>
+
+<script>
+(function () {
+  var r = document.documentElement;
+  var stage = document.getElementById("stage"), content = document.getElementById("content"), h1 = document.getElementById("h1");
+  var metrics = document.getElementById("metrics"), xray = document.getElementById("xray"), ring = document.getElementById("ring"), read = document.getElementById("read");
+  var rx = document.getElementById("rx"), ry = document.getElementById("ry"), xbtn = document.getElementById("xbtn");
+  var insp = document.getElementById("insp"), ibox = document.getElementById("ibox"), itag = document.getElementById("itag"), gh = document.getElementById("gh"), gv = document.getElementById("gv");
+  var fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  var T = {
+    en: { eb: "Web engineering studio · Cairo", l1: "Engineered,", l2: "not assembled.",
+          sub: "Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.",
+          c1: "Request a Scope", c2: "See a Real Build", xray: "X-ray", ihint: "Point at anything — it is measured live",
+          cap: "cap height", xh: "x-height", base: "baseline", px: "px" },
+    ar: { eb: "استوديو هندسة ويب · القاهرة", l1: "نُهندِس،", l2: "لا نُركِّب.",
+          sub: "أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.",
+          c1: "اطلب تحديد النطاق", c2: "شاهد بناءً حقيقياً", xray: "أشعة سينية", ihint: "أشِر إلى أي عنصر — يُقاس مباشرةً",
+          cap: "ارتفاع الألف", xh: "", base: "خط القاعدة", px: "بكسل" }
+  };
+  function lang() { return r.lang === "ar" ? "ar" : "en"; }
+  function rtl() { return r.dir === "rtl"; }
+  function render() { var t = T[lang()]; document.querySelectorAll("[data-k]").forEach(function (el) { el.textContent = t[el.dataset.k]; }); }
+
+  // offset of el inside the stage, ignoring transforms (the arrival translates the type)
+  function off(el) { var x = 0, y = 0; while (el && el !== stage) { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; } return { x: x, y: y }; }
+
+  // 1 · fit the headline to the stage: the widest line fills the measure, capped by height
+  function fit() {
+    h1.style.fontSize = "100px";
+    var rows = h1.querySelectorAll(".row"), w = 0, h = 0;
+    rows.forEach(function (row) { w = Math.max(w, row.offsetWidth); h += row.offsetHeight; });
+    var cs = getComputedStyle(content), avail = content.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var rest = stage.clientHeight - 128 - 56 - content.querySelector(".eyebrow").offsetHeight - content.querySelector(".foot").offsetHeight - 48 - (innerWidth < 1024 ? 48 : 0);
+    var fs = Math.min(avail / w * 100 * 0.985, rest / h * 100, 300);
+    h1.style.fontSize = Math.max(40, Math.floor(fs)) + "px";
+  }
+
+  // 2 · rulers labelled in real px
+  function rulers() {
+    [rx, ry].forEach(function (el) { el.querySelectorAll("b").forEach(function (b) { b.remove(); }); });
+    for (var x = 100; x < stage.clientWidth - 40; x += 100) { var b = document.createElement("b"); b.style.setProperty("--at", x + "px"); b.textContent = x; rx.appendChild(b); }
+    for (var y = 100; y < stage.clientHeight - 40; y += 100) { var c = document.createElement("b"); c.style.setProperty("--at", y + "px"); c.textContent = y; ry.appendChild(c); }
+  }
+
+  // 3 · metric lines from the real font metrics (canvas), dimension from the real width
+  var ctx = document.createElement("canvas").getContext("2d");
+  function measure() {
+    metrics.innerHTML = "";
+    var t = T[lang()], cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize);
+    ctx.font = cs.fontWeight + " 100px " + cs.fontFamily;
+    var cap = ctx.measureText(lang() === "ar" ? "ا" : "H").actualBoundingBoxAscent / 100;
+    var xh = ctx.measureText("x").actualBoundingBoxAscent / 100;
+    var k = 0;
+    function line(y, label) { var d = document.createElement("div"); d.className = "ml"; d.style.top = Math.round(y) + "px"; d.style.setProperty("--k", k++); if (label) d.innerHTML = "<span>" + label + "</span>"; metrics.appendChild(d); }
+    var rows = h1.querySelectorAll(".row");
+    rows.forEach(function (row, n) {
+      var base = off(row.querySelector(".bl")).y;
+      if (n === 0) { line(base - cap * fs, t.cap); if (t.xh) line(base - xh * fs, t.xh); }
+      line(base, n === 0 ? t.base : "");
+    });
+    var r0 = rows[0], p = off(r0), w = r0.offsetWidth, base0 = off(r0.querySelector(".bl")).y;
+    var d = document.createElement("div"); d.className = "dim";
+    d.style.left = p.x + "px"; d.style.width = w + "px"; d.style.top = Math.round(base0 - cap * fs - 34) + "px";
+    var fam = cs.fontFamily.split(",")[0].replace(/"/g, "");
+    d.innerHTML = "<span>" + w + " " + t.px + " · " + fam + " " + cs.fontWeight + " · " + Math.round(fs) + " " + t.px + "</span>";
+    metrics.appendChild(d);
+  }
+
+  // 4 · X-ray: the same content, drawn — every glyph boxed, every control hatched at its padding
+  function buildXray() {
+    xray.innerHTML = "";
+    var c = content.cloneNode(true); c.removeAttribute("id"); c.classList.remove("lay"); c.style.cssText = "display:contents";
+    c.querySelectorAll("[id]").forEach(function (n) { n.removeAttribute("id"); });
+    c.querySelectorAll(".ghost > span[data-k]").forEach(function (s) {
+      var txt = s.textContent, parts = lang() === "ar" ? txt.split(/(\s+)/) : txt.split("");
+      s.innerHTML = parts.map(function (ch) { return /^\s+$/.test(ch) ? ch : '<span class="ch">' + ch.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span>"; }).join("");
+    });
+    xray.appendChild(c);
+  }
+
+  // lens follows the pointer with a short lerp that stops when it arrives (no idle loop)
+  var tx = 0, ty = 0, cx = 0, cy = 0, raf = 0, full = false;
+  function stagePt(e) { var b = stage.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top, w: b.width }; }
+  function step() {
+    cx += (tx - cx) * .22; cy += (ty - cy) * .22;
+    if (!r.classList.contains("motion") || (Math.abs(tx - cx) < .3 && Math.abs(ty - cy) < .3)) { cx = tx; cy = ty; raf = 0; } else raf = requestAnimationFrame(step);
+    stage.style.setProperty("--x", cx + "px"); stage.style.setProperty("--y", cy + "px");
+    read.textContent = "x " + Math.round(rtl() ? stage.clientWidth - cx : cx) + " · y " + Math.round(cy);
+    marks(cx, cy);
+  }
+  function marks(x, y) {
+    rx.querySelector(".mk").style.insetInlineStart = Math.round(rtl() ? stage.clientWidth - x : x) + "px";
+    ry.querySelector(".mk").style.top = Math.round(y) + "px";
+  }
+  function lensTo(e) { var p = stagePt(e); tx = p.x; ty = p.y; if (!raf) raf = requestAnimationFrame(step); }
+  function lensOn(on) { if (full) return; stage.style.setProperty("--r", on ? "170px" : "0px"); ring.classList.toggle("on", on); rx.classList.toggle("on", on); ry.classList.toggle("on", on); }
+
+  stage.addEventListener("pointermove", function (e) {
+    if (!r.classList.contains("built")) return;
+    if (r.dataset.v === "x" && e.pointerType === "mouse" && !full) { lensTo(e); lensOn(!e.target.closest(".toggle")); }
+    if (r.dataset.v === "i") inspectAt(e);
+  });
+  stage.addEventListener("pointerleave", function () { if (r.dataset.v === "x") lensOn(false); if (r.dataset.v === "i") select(h1.querySelector('[data-inspect="l1"]')); });
+  stage.addEventListener("pointerdown", function (e) { if (r.dataset.v === "i" && r.classList.contains("built")) inspectAt(e); });
+  xbtn.addEventListener("click", function () {
+    full = !full; this.setAttribute("aria-pressed", full);
+    var b = this.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    stage.style.setProperty("--x", (b.left + b.width / 2 - s.left) + "px"); stage.style.setProperty("--y", (b.top + b.height / 2 - s.top) + "px");
+    xray.classList.toggle("full", full); ring.classList.remove("on");
+    stage.style.setProperty("--r", full ? Math.hypot(s.width, s.height) + "px" : "0px");
+  });
+
+  // 5 · Inspect: what a dev tool would say, read from the element itself
+  var cur = null;
+  function inspectAt(e) { var el = document.elementFromPoint(e.clientX, e.clientY); el = el && el.closest("#content [data-inspect]"); if (el) select(el); }
+  function select(el) {
+    if (!el) return; cur = el;
+    var p = off(el), w = el.offsetWidth, h = el.offsetHeight, W = stage.clientWidth, H = stage.clientHeight;
+    var cs = getComputedStyle(el.matches(".row") ? h1 : el), fam = cs.fontFamily.split(",")[0].replace(/"/g, "");
+    var what = { eyebrow: "p.eyebrow", l1: "h1 › line 1", l2: "h1 › line 2", sub: "p.sub", cta1: "a.button", cta2: "a.button" }[el.dataset.inspect];
+    var spec = el.dataset.inspect.indexOf("cta") === 0 ? "height " + h + " · radius " + parseFloat(cs.borderRadius) + " · pad " + parseFloat(cs.paddingLeft)
+             : fam + " " + cs.fontWeight + " · " + Math.round(parseFloat(cs.fontSize)) + "/" + Math.round(parseFloat(cs.lineHeight) || parseFloat(cs.fontSize));
+    itag.innerHTML = what + " <em>· " + w + " × " + h + " · " + spec + "</em>";
+    ibox.style.cssText = "left:" + p.x + "px;top:" + p.y + "px;width:" + w + "px;height:" + h + "px";
+    var cy = p.y + h / 2, sx = rtl() ? p.x + w : 0, dx = rtl() ? W - p.x - w : p.x;
+    gh.style.cssText = "left:" + sx + "px;top:" + cy + "px;width:" + dx + "px"; gh.firstChild.textContent = dx;
+    var bx = p.x + Math.min(w / 2, 60), dy = H - p.y - h;
+    gv.style.cssText = "left:" + bx + "px;top:" + (p.y + h) + "px;height:" + dy + "px"; gv.firstChild.textContent = dy;
+    insp.classList.add("on");
+    rx.classList.add("on"); ry.classList.add("on");
+    var band = rx.querySelector(".band"); band.style.insetInlineStart = (rtl() ? W - p.x - w : p.x) + "px"; band.style.width = w + "px";
+    var bandY = ry.querySelector(".band"); bandY.style.top = p.y + "px"; bandY.style.height = h + "px";
+    rx.querySelector(".mk").style.opacity = 0; ry.querySelector(".mk").style.opacity = 0;
+  }
+  document.addEventListener("focusin", function (e) { if (r.dataset.v === "i" && e.target.closest && e.target.closest("#content [data-inspect]")) select(e.target.closest("[data-inspect]")); });
+
+  function modeReset() {
+    full = false; xbtn.setAttribute("aria-pressed", "false"); xray.classList.remove("full"); stage.style.setProperty("--r", "0px"); ring.classList.remove("on");
+    insp.classList.remove("on"); rx.classList.remove("on"); ry.classList.remove("on");
+    rx.querySelector(".mk").style.opacity = ""; ry.querySelector(".mk").style.opacity = "";
+    if (r.dataset.v === "i" && r.classList.contains("built")) select(h1.querySelector('[data-inspect="l1"]'));
+  }
+
+  function layout() { fit(); rulers(); measure(); buildXray(); if (cur && r.dataset.v === "i" && r.classList.contains("built")) select(cur); }
+
+  var builtT;
+  function arrive() {
+    clearTimeout(builtT);
+    r.classList.remove("in", "built"); modeReset();
+    void r.offsetWidth;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { r.classList.add("in"); }); });
+    builtT = setTimeout(function () { r.classList.add("built"); modeReset(); }, r.classList.contains("motion") ? 3200 : 0);
+  }
+  var ticking = false;
+  addEventListener("scroll", function () { if (ticking) return; ticking = true; requestAnimationFrame(function () { r.style.setProperty("--p", Math.min(1, scrollY / (innerHeight * .6)).toFixed(3)); ticking = false; }); }, { passive: true });
+  var rt; addEventListener("resize", function () { clearTimeout(rt); rt = setTimeout(layout, 120); });
+
+  function sync() {
+    document.querySelectorAll('[data-set="v"]').forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.val === r.dataset.v); });
+    var q = new URLSearchParams(location.search); q.set("v", r.dataset.v); q.set("lang", lang()); history.replaceState(null, "", "?" + q);
+  }
+  document.querySelector(".switch").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    var k = b.dataset.set;
+    if (k === "v") { r.dataset.v = b.dataset.val; sync(); modeReset(); return; }
+    if (k === "lang") { var ar = lang() !== "ar"; r.lang = ar ? "ar" : "en"; r.dir = ar ? "rtl" : "ltr"; render(); }
+    sync(); scrollTo(0, 0); layout(); arrive();
+  });
+
+  render(); sync();
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(function () { layout(); arrive(); });
+  setTimeout(function () { if (!r.classList.contains("in")) { layout(); arrive(); } }, 3000); // failsafe
+})();
+</script>
+</body>
+</html>

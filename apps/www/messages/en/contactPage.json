@@ -2,7 +2,6 @@
   "eyebrow": "Contact",
   "heroTitle": "Bring the real problem —",
   "heroTitleItalic": "not the polished brief.",
-  "heroDescription": "A focused briefing is enough to surface the real constraint, establish a realistic scope, and determine if a deeper technical partnership is warranted.",
   "lines": {
     "heading": "Direct lines",
     "emailLabel": "Email",
@@ -10,25 +9,13 @@
     "whatsappLabel": "WhatsApp",
     "whatsappValue": "Message us on WhatsApp",
     "whatsappNote": "Fastest reply",
-    "locationLabel": "Base",
     "address1": "Cairo, Egypt",
     "address2": "Remote worldwide",
     "localTime": "It is {time} in Cairo now."
   },
   "phoneValue": "+20 102 312 5493",
-  "responseTime": "Within 24 hours on business days. For a faster reply, message us on WhatsApp.",
   "callLead": "Prefer to talk first?",
   "scheduleCall": "Book a technical call",
-  "socialLabel": "Elsewhere",
-  "social": {
-    "linkedin": "LinkedIn",
-    "x": "X",
-    "instagram": "Instagram",
-    "github": "GitHub",
-    "dribbble": "Dribbble",
-    "threads": "Threads",
-    "facebook": "Facebook"
-  },
   "letter": {
     "heading": "Write the brief",
     "toLabel": "To",
@@ -45,6 +32,7 @@
     "serviceConsulting": "Technical Consulting",
     "serviceMaintenance": "Maintenance & Support",
     "messageLabel": "The problem",
+    "planMessage": "I'd like to start the {plan} maintenance plan, billed {billing, select, annual {yearly} other {monthly}}.",
     "messagePlaceholder": "What are you building, what is not working, or what decision do you need clarity on?",
     "count": "{count} of {max} characters",
     "submit": "Send the brief",

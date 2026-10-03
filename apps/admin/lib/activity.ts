@@ -1,15 +1,8 @@
 import type { TimelineEvent } from "@/components/os/timeline";
 import { money, titleCaseSafe } from "@/lib/activity-helpers";
+import { retainerLabel } from "@/lib/payment-source";
 import { statusOf } from "@/lib/status";
-
-export type ActivityCategory =
-  | "all"
-  | "messages"
-  | "proposals"
-  | "contracts"
-  | "clients"
-  | "payments"
-  | "meetings";
+import { entityHref } from "@/lib/entity-links";
 
 export interface ActivitySources {
   client?: {
@@ -74,9 +67,11 @@ export interface ActivitySources {
     status: string;
     paidAt: Date | null;
     dueDate: Date | null;
-    projectId: string;
+    /** Null for a retainer period, which belongs to a subscription. */
+    projectId: string | null;
     currency?: string;
     project?: { name: string; client?: { name: string | null; company: string | null } | null } | null;
+    subscription?: { planId: string } | null;
   }[];
   messages?: {
     id: string;
@@ -321,7 +316,8 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
   for (const pay of sources.payments ?? []) {
     if (pay.paidAt) {
       const clientName = getClientLabel(pay.project?.client);
-      const projName = pay.project?.name;
+      const projName =
+        pay.project?.name ?? (pay.subscription ? retainerLabel(pay.subscription) : undefined);
       push({
         id: `pay-${pay.id}`,
         at: pay.paidAt,
@@ -335,7 +331,7 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
         ]
           .filter(Boolean)
           .join(" · "),
-        href: `/projects/${pay.projectId}`,
+        href: entityHref("payment", pay.id) ?? "/payments",
         category: "payments",
       });
     }

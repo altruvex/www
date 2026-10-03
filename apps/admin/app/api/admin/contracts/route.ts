@@ -1,22 +1,15 @@
 import { randomBytes } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@repo/database";
-import { recordActivity, userActor } from "@/lib/activity-log";
-import { requireAdminSession } from "@/lib/require-admin";
+import { recordActivity } from "@/lib/activity-log";
+import { withAdmin } from "@/lib/with-admin";
 import { buildContractDocx } from "@/lib/contract-builder";
 import { signLinkExpiry } from "@/lib/sign-window";
 import { upload } from "@/lib/storage";
 
-export async function GET(request: NextRequest) {
+export const GET = withAdmin(async (request) => {
   try {
-    if (!(await requireAdminSession(request))) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
@@ -39,22 +32,14 @@ export async function GET(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { can: ["view", "contract"] });
 
 const createContractSchema = z.object({
   proposalId: z.string().uuid(),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withAdmin(async (request, { actor }) => {
   try {
-    const session = await requireAdminSession(request);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const body = await request.json();
     const { proposalId } = createContractSchema.parse(body);
 
@@ -86,6 +71,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Audited at creation, before the document is built: a failed build below
+    // still leaves this contract row behind, and the trail must account for it.
+    await recordActivity({
+      action: "contract.created",
+      actor,
+      entityType: "contract",
+      entityId: contract.id,
+      entityLabel: proposal.client.name || proposal.client.company,
+      summary: `Generated a contract for ${proposal.client.name || proposal.client.company || "a client"}`,
+      metadata: { clientId: proposal.clientId, proposalId: proposal.id },
+    });
+
     try {
       const docxBuffer = await buildContractDocx({ ...contract, proposal, client: proposal.client });
       const fileUrl = await upload(
@@ -97,16 +94,6 @@ export async function POST(request: NextRequest) {
       const updated = await prisma.contract.update({
         where: { id: contract.id },
         data: { fileUrl },
-      });
-
-      await recordActivity({
-        action: "contract.created",
-        actor: userActor(session),
-        entityType: "contract",
-        entityId: contract.id,
-        entityLabel: proposal.client.name || proposal.client.company,
-        summary: `Generated a contract for ${proposal.client.name || proposal.client.company || "a client"}`,
-        metadata: { clientId: proposal.clientId, proposalId: proposal.id },
       });
 
       return NextResponse.json({ success: true, contract: updated }, { status: 201 });
@@ -140,4 +127,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { can: ["create", "contract"] });

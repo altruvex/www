@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altruvex Sans A.4 regressions</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+  /* Test page, not a design surface. Driven by tools/regress.py; numbers come from window.* below. */
+  body { margin: 0; padding: 24px 32px 80px; font: 14px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 40px 0 4px; padding-top: 16px; border-top: 1px solid #ccc; }
+  .note { color: #555; max-width: 70em; margin: 0 0 12px; }
+  .meta { font: 12px/18px ui-monospace, monospace; color: #666; margin: 16px 0 0; height: 18px; }
+
+  /* One case = three stacked variants of identical geometry. Every height here is a whole CSS px so
+     the variants sit a whole number of device pixels apart and their rasters line up exactly. */
+  .case { width: max-content; }
+  .v { box-sizing: border-box; white-space: nowrap; overflow: visible; }
+
+  /* The Accent itself: apps/www/components/ui/emphasis.tsx (Accent; defaults gradient="brand",
+     direction="r", no animation), resolved through the compiled Tailwind utilities in
+     apps/www/.next/static/chunks/*.css:
+       inline-block      → display: inline-block                     (emphasis.tsx:152)
+       bg-clip-text      → -webkit-background-clip: text; background-clip: text   (emphasis.tsx:156)
+       text-transparent  → color: #0000                              (emphasis.tsx:156)
+       bg-linear-to-r / rtl:bg-linear-to-l → linear-gradient(to right|left in oklab, stops)  (emphasis.tsx:40)
+       from/via/to-(--grad-*) → the three stops at 0% / 50% / 100%   (emphasis.tsx:159)
+     Stop colours: .accent-brand, apps/www/app/globals.css:377-383 (light theme).
+     pt-[0.36em] pb-[0.13em] pe-[0.02em] -mt-[0.36em] -mb-[0.13em] -me-[0.02em] (emphasis.tsx): the painted
+     box grows by the padding and the negative margin cancels it in layout (inline-block; on display:inline
+     vertical padding and margin never affect the line, so the vertical pair is inert there). The
+     declarations on .acc below MIRROR those six classes: tests/test_regress.py reads emphasis.tsx and
+     fails if they differ, so edit both together. No box-decoration-break.
+     SectionHeading overrides the display to inline at md+ when the accent sits on its own line
+     (apps/www/components/sections/section-heading.tsx), so both displays are run. */
+  .acc { --grad-from: hsl(214 90% 44%); --grad-via: hsl(224 84% 50%); --grad-to: hsl(236 80% 56%);
+    padding-block: 0.36em 0.13em; padding-inline-end: 0.02em;
+    margin-block: -0.36em -0.13em; margin-inline-end: -0.02em; }
+  .acc.nofix { padding-block: 0; padding-inline-end: 0; margin-block: 0; margin-inline-end: 0; }   /* layout probe only: the component before the fix */
+  .acc.real, .acc.black { -webkit-background-clip: text; background-clip: text; color: #0000; }
+  /* Tailwind's own fallback order: plain interpolation first, then oklab where it parses. */
+  .acc.real { background-image: linear-gradient(to right, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);
+    background-image: linear-gradient(to right in oklab, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%); }
+  [dir="rtl"] .acc.real { background-image: linear-gradient(to left, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%);
+    background-image: linear-gradient(to left in oklab, var(--grad-from) 0%, var(--grad-via) 50%, var(--grad-to) 100%); }
+  /* Variant (a): identical clip, solid black paint. Variant (b): plain black ink, no clip. */
+  .acc.black { background-image: linear-gradient(#000, #000); }
+  .acc.plain { color: #000; }
+
+  #numbers p { margin: 4px 0; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans (Track A) — A.4 regressions (steps 21–22)</h1>
+
+<section>
+  <h2>1 · Accent gradient keeps Arabic marks (step 21)</h2>
+  <p class="note">Each case is drawn three times with identical CSS: the real Accent gradient, the same clip painting
+  solid black, and plain black ink with no clip. Clipped pixels = ink in the plain copy that the clipped black copy
+  does not paint. Heading context: section-title — EN line-height 1.08, letter-spacing −0.02em
+  (apps/www/app/globals.css:847-851); AR line-height 1.3 (globals.css:866-868). Measured by tools/regress.py.</p>
+  <div id="accent"></div>
+</section>
+
+<section>
+  <h2>1b · The fix does not move layout</h2>
+  <p class="note">Each heading is laid out twice with identical text and width: the Accent as it was (padding and margin 0,
+  class nofix) and as it is now. Height, line count and the Accent's own line boxes must match. Mobile block mode is
+  SectionHeading's <code>mt-2 block</code>, whose top margin there is calc(0.5rem − 0.36em).
+  Read by tools/regress.py through window.layout().</p>
+  <div id="layout"></div>
+</section>
+
+<section id="numbers">
+  <h2>2 · Number and price glyphs (step 22)</h2>
+  <p class="note">Filled at test time from @repo/pricing-schema by tools/regress.py. Nothing on this page is a stored price.</p>
+</section>
+
+<script>
+// Arabic headings get Arabic (plus one mixed with a Latin word, as brand names are); English headings
+// get Latin only, since an English page never draws Arabic in an English heading.
+const TEXTS = {
+  ar: {
+    fi: "في",
+    fiyy: "فيّ",
+    vocalised: "إِنَّ الشُّرُوطَ مَكْتُوبَةٌ",
+    dots: "بيت، في بيئة، يبني",
+    punct: "لماذا؟ هنا؛ وهناك، الآن",
+    mixed: "موقع Gypsy يبني",
+  },
+  en: {
+    descenders: "gypsy jumpy, quality",
+    ascenders: "Built, owned, Åfl Éfj",
+    marks: "Ünïcode Çedilla Ñandú",
+  },
+};
+const SIZES = [48, 96, 120];
+const WEIGHTS = [400, 700];
+const DISPLAYS = ["inline-block", "inline"];
+// Heading context per stack: family variable, direction, language, line-height, letter-spacing.
+const STACKS = {
+  "prod-ar": { fam: "--stack-prod-ar", dir: "rtl", lang: "ar", lh: 1.3, ls: "0" },
+  "prod-en": { fam: "--stack-prod-en", dir: "ltr", lang: "en", lh: 1.08, ls: "-0.02em" },
+  "live-ar": { fam: "--stack-live-ar", dir: "rtl", lang: "ar", lh: 1.3, ls: "0" },
+  "live-en": { fam: "--stack-live-en", dir: "ltr", lang: "en", lh: 1.08, ls: "-0.02em" },
+};
+const VARIANTS = ["real", "black", "plain"];
+
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) k === "style" ? Object.assign(n.style, v) : n.setAttribute(k, v);
+  n.append(...kids);
+  return n;
+};
+
+const CASES = [];
+function buildAccent() {
+  const host = document.getElementById("accent");
+  for (const [stack, s] of Object.entries(STACKS))
+    for (const px of SIZES) for (const w of WEIGHTS) for (const display of DISPLAYS)
+      for (const [key, text] of Object.entries(TEXTS[s.lang])) {
+        const id = `${stack}-${px}-${w}-${display}-${key}`;
+        const pad = Math.ceil(px * 0.7), h = Math.ceil(px * 3), side = Math.ceil(px * 0.5);
+        const row = el("div", { class: "case", id: `c-${id}`, "data-shot": id, style: { padding: `0 ${side}px` } });
+        for (const v of VARIANTS) {
+          const span = el("span", { class: `acc ${v}`, style: { display } }, text);
+          row.append(el("div", { class: `v v-${v}`, dir: s.dir, lang: s.lang, style: {
+            height: h + "px", paddingTop: pad + "px", fontFamily: `var(${s.fam})`, fontSize: px + "px",
+            fontWeight: w, lineHeight: s.lh, letterSpacing: s.ls, textAlign: "start" } }, span));
+        }
+        host.append(el("div", { class: "meta" }, id), row);
+        CASES.push({ id, stack, px, weight: w, display, text: key });
+      }
+}
+
+async function decode(b64) {
+  const img = new Image();
+  img.src = "data:image/png;base64," + b64;
+  await img.decode();
+  const c = document.createElement("canvas");
+  c.width = img.width; c.height = img.height;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0);
+  return ctx.getImageData(0, 0, c.width, c.height);
+}
+
+// Darkness 0 (white) .. 255 (black) at device pixel (x, y) of the row image.
+const dark = (d, x, y) => { const i = (y * d.width + x) * 4; return 255 - (d.data[i] + d.data[i + 1] + d.data[i + 2]) / 3; };
+
+// INK: a pixel at least half covered. CLIP: plain copy is ink and the clipped copy is under a quarter
+// of that darkness — a whole missing pixel, not an antialiasing difference along a shared edge.
+const INK = 128;
+
+// A pixel of the clipped copy within one device pixel darkens to `min` or more: the plain pixel is there,
+// only rastered one pixel over (WebKit places a clipped text run on a slightly different subpixel).
+const nearInk = (d, x, y, min) => {
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const xx = x + dx, yy = y + dy;
+    if (xx >= 0 && xx < d.width && yy >= 0 && yy < d.height && dark(d, xx, yy) >= min) return true;
+  }
+  return false;
+};
+
+// Compares the plain and black-clip variants of one case from a screenshot of its row.
+window.clipped = async (id, b64) => {
+  const d = await decode(b64);
+  const row = document.getElementById(`c-${id}`), r0 = row.getBoundingClientRect();
+  const S = devicePixelRatio;  // not d.width / r0.width: a fractional row width would skew every offset
+  const vs = Object.fromEntries(VARIANTS.map(v => [v, row.querySelector(`.v-${v}`)]));
+  const top = v => Math.round((vs[v].getBoundingClientRect().top - r0.top) * S);
+  const H = Math.round(vs.plain.getBoundingClientRect().height * S);
+  const span = vs.plain.firstChild.getBoundingClientRect();
+  const px = parseFloat(getComputedStyle(vs.plain).fontSize);
+  const spanTop = (span.top - vs.plain.getBoundingClientRect().top) * S, spanBottom = spanTop + span.height * S;
+  const tp = top("plain"), tb = top("black"), tr = top("real");
+  let ink = 0, strict = 0, clip = 0, realInk = 0, inkTop = H, inkBottom = -1, cTop = H, cBottom = -1, cLeft = d.width, cRight = -1, edge = false;
+  for (let y = 0; y < H; y++) for (let x = 0; x < d.width; x++) {
+    const p = dark(d, x, tp + y), b = dark(d, x, tb + y);
+    if (dark(d, x, tr + y) >= 32) realInk++;
+    if (p < INK) continue;
+    ink++; inkTop = Math.min(inkTop, y); inkBottom = Math.max(inkBottom, y);
+    if (y < 2 || y >= H - 2 || x < 2 || x >= d.width - 2) edge = true;
+    if (b < p / 4) { strict++; if (nearInk(d, x, tb + y, p / 4)) continue; clip++; cTop = Math.min(cTop, y); cBottom = Math.max(cBottom, y); cLeft = Math.min(cLeft, x); cRight = Math.max(cRight, x); }
+  }
+  const em = v => +(v / S / px).toFixed(3);
+  return {
+    scale: S, ink_px: ink, clipped_px: clip, clipped_strict_px: strict, real_ink_px: realInk, touches_edge: edge,
+    // Ink beyond the Accent's own box (its background painting area), in em of the font size.
+    ink_above_box_em: em(Math.max(0, spanTop - inkTop)), ink_below_box_em: em(Math.max(0, inkBottom + 1 - spanBottom)),
+    clip_rows_em: clip ? [em(cTop - spanTop), em(cBottom + 1 - spanTop)] : null,
+    // Columns of the clipped pixels relative to the Accent's left edge, and its width, in em.
+    clip_cols_em: clip ? [em(cLeft - (span.left - r0.left) * S), em(cRight + 1 - (span.left - r0.left) * S)] : null,
+    box_width_em: em(span.width * S),
+  };
+};
+
+// Layout probe: the heading box before (class nofix) and after the fix, per stack, display and width.
+const LAYOUT_COPY = {
+  ar: ["بناء موقع يملكه فريقك", "بيت في بيئة يبني، فيّ إِنَّ الشُّرُوطَ", "ثم نهاية"],
+  en: ["Build the site your team owns,", "gypsy jumpy quality, Qy-ready and", "then the end"],
+};
+window.layout = () => {
+  const host = document.getElementById("layout");
+  const out = [];
+  for (const stack of ["prod-ar", "prod-en"]) {
+    const s = STACKS[stack];
+    const [pre, mid, post] = LAYOUT_COPY[s.lang];
+    for (const mode of ["inline-block", "inline", "block"])
+      for (const width of [280, 900]) {
+        const rec = { id: `${stack}-${mode}-${width}` };
+        for (const variant of ["before", "after"]) {
+          const mt = mode === "block" ? (variant === "after" ? "calc(0.5rem - 0.36em)" : "0.5rem") : "";
+          const acc = el("span", { class: `acc ${variant === "before" ? "nofix" : ""}`,
+            style: { display: mode, ...(mt ? { marginTop: mt } : {}) } }, mid);
+          const h = el("div", { dir: s.dir, lang: s.lang, style: { width: width + "px", boxSizing: "border-box",
+            fontFamily: `var(${s.fam})`, fontSize: "40px", lineHeight: s.lh, letterSpacing: s.ls,
+            border: "1px solid #ddd", margin: "8px 0" } }, pre + " ", acc, " " + post);
+          host.append(h);
+          // Text rects are the glyph content areas: padding on the Accent does not change them (a range
+          // over an element also returns that element's padded border box, so walk text nodes only).
+          const top0 = h.getBoundingClientRect().top;
+          const tops = (node) => {
+            const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT), out = [];
+            for (let t = node.nodeType === 3 ? node : w.nextNode(); t; t = w.nextNode()) {
+              const r = document.createRange(); r.selectNodeContents(t);
+              out.push(...[...r.getClientRects()].map(q => +(q.top - top0).toFixed(2)));
+              if (node.nodeType === 3) break;
+            }
+            return out;
+          };
+          rec[variant] = { height: h.getBoundingClientRect().height,
+            lines: new Set(tops(h).map(Math.round)).size,
+            accent_text_tops: tops(acc.firstChild) };
+        }
+        out.push(rec);
+      }
+  }
+  return out;
+};
+
+// ---- step 22 ----------------------------------------------------------------------------------
+// data: { amounts, usd, usdRaw, vat, site: { en: [...], ar: [...] } }, resolved by tools/regress.py
+// from @repo/pricing-schema at run time. Returns codepoints and measurements only, never the strings.
+function samples(data, loc) {
+  const tag = loc === "ar" ? "ar-EG" : "en";
+  const nf = (o) => new Intl.NumberFormat(tag, o);
+  const out = {
+    "intl-plain": [...data.amounts, ...data.usd].map(a => nf().format(a)),
+    "intl-decimal": data.usdRaw.map(a => nf({ minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a)),
+    "intl-percent": [nf({ style: "percent" }).format(data.vat)],
+    "site": data.site[loc],
+  };
+  for (const cur of ["EGP", "USD"]) for (const disp of ["symbol", "narrowSymbol", "code", "name"]) {
+    const vals = cur === "EGP" ? data.amounts : data.usd;
+    out[`intl-${cur}-${disp}`] = vals.map(a => nf({ style: "currency", currency: cur, currencyDisplay: disp }).format(a));
+  }
+  return out;
+}
+
+function measureChar(ch, stackVar, weight) {
+  const stack = getComputedStyle(document.documentElement).getPropertyValue(stackVar).trim();
+  const bare = stack.replace(/,\s*sans-serif$/, "");
+  const c = document.createElement("canvas"), ctx = c.getContext("2d", { willReadFrequently: true });
+  const PX = 100;
+  c.width = PX * 3; c.height = PX * 3;
+  const width = (fam) => { ctx.font = `${weight} ${PX}px ${fam}`; return ctx.measureText(ch).width; };
+  const adv = width(stack);
+  ctx.font = `${weight} ${PX}px ${stack}`;
+  ctx.fillText(ch, PX, PX * 2);
+  const a = ctx.getImageData(0, 0, c.width, c.height).data;
+  let ink = 0;
+  for (let i = 3; i < a.length; i += 4) if (a[i] > 0) ink++;
+  // A character the prod families draw measures the same whatever generic family follows them;
+  // one they lack falls through to that generic and usually changes width.
+  const mono = width(`${bare}, monospace`), serif = width(`${bare}, serif`);
+  return { advance_em: +(adv / PX).toFixed(4), ink_px: ink, fallback_differs: Math.abs(mono - serif) > 0.01 };
+}
+
+window.numbers = async (data) => {
+  const host = document.getElementById("numbers");
+  const out = {};
+  for (const loc of ["ar", "en"]) {
+    const stackVar = `--stack-prod-${loc}`;
+    const byKind = samples(data, loc);
+    const cps = {};
+    for (const [kind, strs] of Object.entries(byKind)) {
+      host.append(el("p", { class: "num", "data-num": `${loc}-${kind}`, dir: loc === "ar" ? "rtl" : "ltr", lang: loc,
+        style: { fontFamily: `var(${stackVar})`, fontSize: "24px" } }, strs.join("  ")));
+      for (const s of strs) for (const ch of s) {
+        const k = "U+" + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, "0");
+        (cps[k] ??= { kinds: [] }).kinds.includes(kind) || cps[k].kinds.push(kind);
+      }
+    }
+    for (const [k, v] of Object.entries(cps)) {
+      const ch = String.fromCodePoint(parseInt(k.slice(2), 16));
+      Object.assign(v, measureChar(ch, stackVar, 400));
+    }
+    out[loc] = { kinds: Object.keys(byKind), codepoints: cps };
+  }
+  return out;
+};
+
+async function loadFonts() {
+  const fams = ['"Altruvex Sans Latin"', '"Altruvex Sans Arabic"', '"Live Outfit"', '"Live Vazirmatn"'];
+  await Promise.all(fams.flatMap(f => WEIGHTS.map(w => document.fonts.load(`${w} 40px ${f}`, "a ب ١"))));
+  await document.fonts.ready;
+}
+
+window.ready = (async () => { buildAccent(); await loadFonts(); return CASES; })();
+</script>
+</body>
+</html>

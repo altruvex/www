@@ -1,72 +1,160 @@
 "use client";
 
 import { Num } from "@/components/ui/num";
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Accent } from "@/components/ui/emphasis";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { WorkRecord } from "@/components/sections/work-record";
-import { CASE_STUDIES } from "@/lib/data/case-studies";
+import { Link } from "@/i18n/navigation";
+import { HOMEPAGE_SUPPORTING_CASE_STUDIES } from "@/lib/config/commercial";
+import { getCaseStudyBySlug, type CaseStudyRecord } from "@/lib/data/case-studies";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
-import { useSectionCardGrid } from "@/lib/motion";
+import { useMediaSettle } from "@/lib/motion";
+import { getDomainName } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { memo, useMemo } from "react";
+import Image from "next/image";
+import { memo } from "react";
+
+/* One brand-mood photograph per build — light on a material, since two of
+   the three clients sell lighting. Mood, never a picture of the client's site. */
+const STAGE_PHOTOS: Record<CaseStudyRecord["slug"], string> = {
+  "newlight-lighting-store": "/brand/mood/single-lamp-dark-wall.webp",
+  "art-lighting-store": "/brand/mood/blue-light-streaks.webp",
+  "altruvex-site": "/brand/mood/green-folds.webp",
+};
+
+const OWN_SITE: CaseStudyRecord["slug"] = "altruvex-site";
+
+/* Client builds first, our own site last — the order the homepage sentence
+   names them in. */
+const STAGES = [...HOMEPAGE_SUPPORTING_CASE_STUDIES, OWN_SITE]
+  .map(getCaseStudyBySlug)
+  .filter((cs): cs is CaseStudyRecord => cs !== null);
+
+const LINK =
+  "inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base outline-none transition-colors duration-(--motion-drawer) ease-smooth focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11";
 
 export default memo(function WorkIndexPage() {
   const t = useTranslations("work");
-  const recordsRef = useSectionCardGrid<HTMLOListElement>({
-    selector: "[data-work-record]",
-  });
-
-  const projects = useMemo(() => CASE_STUDIES, []);
 
   return (
     <>
       <section className="accent-world-green min-h-screen pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
-          <div>
-            {/* The homepage hero's stack: eyebrow, h1 at the same scale with
-                its accent line, one paragraph - on load, not on scroll. */}
-            <div className="mb-16">
-              <HeroReveal delay={0.2} className="mb-6">
-                <Eyebrow>{t("selectedWork")}</Eyebrow>
-              </HeroReveal>
-              <HeroHeadline
-                as="h1"
-                className="mb-7 max-w-176 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
-              >
-                <span className="block">{t("title")}</span>
-                <Accent gradient="mint">{t("titleItalic")}</Accent>
-              </HeroHeadline>
-              <HeroReveal delay={0.5} className="max-w-2xl">
-                <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
-                  {t.rich("description", bodyMarks)}
-                </p>
-              </HeroReveal>
-            </div>
-            <div className="mb-16 max-w-2xl space-y-5 text-base leading-relaxed text-s-mid">
-              <p>{t.rich("intro.paragraph1", bodyMarks)}</p>
-              <p>{t.rich("intro.paragraph2", bodyMarks)}</p>
-            </div>
-            <div className="flex items-center gap-4 mb-2">
-              <span className="text-sm leading-normal text-s-low tabular-nums">
-                <Num value={projects.length} pad={2} /> {t("projectsLabel")}
-              </span>
-              <div className="flex-1 h-px bg-border-subtle" />
-            </div>
-            <ol ref={recordsRef} className="list-none border-b border-border-subtle">
-              {projects.map((cs, index) => (
-                <WorkRecord key={cs.slug} slug={cs.slug} index={index} />
-              ))}
-            </ol>
+          {/* The homepage hero's stack: eyebrow, h1 at the same scale with
+              its accent line, one paragraph - on load, not on scroll. */}
+          <div className="mb-16">
+            <HeroReveal delay={0.2} className="mb-6">
+              <Eyebrow>{t("selectedWork")}</Eyebrow>
+            </HeroReveal>
+            <HeroHeadline
+              as="h1"
+              className="mb-7 max-w-176 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+            >
+              <span className="block">{t("title")}</span>
+              <Accent gradient="world">{t("titleItalic")}</Accent>
+            </HeroHeadline>
+            <HeroReveal delay={0.5} className="max-w-2xl">
+              <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
+                {t.rich("description", bodyMarks)}
+              </p>
+            </HeroReveal>
           </div>
+          <ol className="list-none space-y-20 md:space-y-28">
+            {STAGES.map((cs, index) => (
+              <WorkStage key={cs.slug} build={cs} first={index === 0} />
+            ))}
+          </ol>
         </Container>
       </section>
-      <WorkEndCta nextIndex={projects.length + 1} />
+      <WorkEndCta nextIndex={STAGES.length + 1} />
     </>
   );
 });
+
+/**
+ * One build as a light stage: a dark inset photograph carrying only the
+ * build's identity (who, what, that it is live); the summary and the two
+ * links sit beneath it on the page ground. The full problem → built → outcome
+ * account is the case study's job, not the index's. Picked from
+ * docs/prototypes/2026-10-work (E).
+ */
+function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean }) {
+  const { slug, externalUrl } = build;
+  const t = useTranslations("work");
+  const tCase = useTranslations("caseStudies");
+  /* Only the first stage is near the fold on load, so only it opens. */
+  const stageRef = useMediaSettle<HTMLDivElement>({ open: first, delay: 0.6 });
+
+  return (
+    <li>
+      <div
+        ref={stageRef}
+        className="relative aspect-[4/5] overflow-hidden rounded-panel-lg sm:aspect-[16/10] lg:aspect-[21/9]"
+      >
+        <div data-settle-img className="absolute inset-0 will-change-transform">
+          <Image
+            src={STAGE_PHOTOS[slug]}
+            alt=""
+            fill
+            priority={first}
+            sizes="(min-width: 1408px) 1280px, 100vw"
+            quality={75}
+            draggable={false}
+            className="select-none object-cover"
+          />
+        </div>
+        <div aria-hidden className="photo-title-scrim" />
+        <p className="absolute end-5 top-5 inline-flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-xs leading-none text-white sm:end-8 sm:top-8">
+          <span aria-hidden className="size-1.5 rounded-full bg-white" />
+          {t(slug === OWN_SITE ? "labels.thisSite" : "labels.live")}
+        </p>
+        <div className="absolute inset-x-5 bottom-5 sm:inset-x-8 sm:bottom-8">
+          <p className="eyebrow text-white/80">
+            {tCase(`${slug}.client`)} · {tCase(`${slug}.year`)}
+          </p>
+          <h2 className="mt-3 max-w-[20ch] text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-light tracking-[-0.03em] text-white rtl:leading-[1.4] rtl:tracking-normal">
+            {t(`stages.${slug}.title`)}
+          </h2>
+        </div>
+      </div>
+      <div className="mt-6 flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-12">
+        <p className="max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
+          {tCase(`${slug}.summary`)}
+        </p>
+        <div className="flex shrink-0 flex-wrap items-center gap-x-8 gap-y-3">
+          <Link
+            href={`/work/${slug}`}
+            aria-label={t("labels.readCaseStudyWith", { name: t(`stages.${slug}.title`) })}
+            className={`group ${LINK} text-foreground hover:text-local-accent-text`}
+          >
+            {t("labels.viewCaseStudy")}
+            <ArrowIcon className="h-3.5 w-3.5" />
+          </Link>
+          {externalUrl && (
+            <a
+              href={externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${LINK} text-muted-foreground hover:text-foreground`}
+            >
+              {t.rich("labels.visitSite", {
+                domain: () => (
+                  <span dir="ltr" className="ltr:font-mono">
+                    {getDomainName(externalUrl)}
+                  </span>
+                ),
+              })}
+              <span aria-hidden>↗</span>
+            </a>
+          )}
+        </div>
+      </div>
+    </li>
+  );
+}
 
 /**
  * The record list continues into the close: the next number is set as an

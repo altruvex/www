@@ -20,9 +20,6 @@ export const GITHUB_EVENT_HEADER = "x-github-event";
 export const GITHUB_DELIVERY_HEADER = "x-github-delivery";
 export const GITHUB_SIGNATURE_HEADER = "x-hub-signature-256";
 
-/** The events this receiver acts on. Anything else is acknowledged and dropped. */
-export const HANDLED_EVENTS = ["ping", "workflow_run", "deployment_status"] as const;
-
 /**
  * Verifies GitHub's HMAC over the exact bytes received.
  *

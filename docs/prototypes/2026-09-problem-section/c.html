@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C · Drawn rows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Theme before paint: follow the OS unless a toggle says otherwise.
+  (function () {
+    var dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* ── Tokens — same shell as a.html (copied from the live code, not picked) ──
+   packages/ui/src/styles/tokens.css  :root / .dark
+   apps/www/app/globals.css  .accent-world-orange / .dark .accent-world-orange */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
+
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted-foreground: 0 0% 40%;
+  --surface: 0 0% 94%;
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --control-edge: hsl(var(--foreground) / 0.45);
+
+  /* accent-world-orange (light) */
+  --local-accent: hsl(27 90% 35%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-vazirmatn: "Vazirmatn", sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  --section-y-top: clamp(5rem, 10vh, 8rem);
+  --section-y-bottom: clamp(5rem, 14vh, 10rem);
+
+  /* House ease for this prototype. */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --d-fast: 200ms;
+  --d-mid: 320ms;
+  --d-slow: 500ms;
+  --d-draw: 700ms;
+  --draw-step: 60ms;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --muted-foreground: 0 0% 58%;
+  --surface: 0 0% 11%;
+  --s-border: hsl(var(--n-0) / 0.1);
+
+  /* .dark .accent-world-orange */
+  --local-accent: hsl(27 78% 61%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 400ms var(--ease), color 400ms var(--ease);
+}
+[dir="rtl"] body { font-family: var(--font-vazirmatn); }
+
+.container {
+  width: 100%;
+  max-width: 1408px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+@media (min-width: 640px)  { .container { padding-inline: 32px; } }
+@media (min-width: 768px)  { .container { padding-inline: 48px; } }
+@media (min-width: 1024px) { .container { padding-inline: 64px; } }
+
+/* ── Prototype chrome (always LTR, physical sides) ───────────────────── */
+.proto-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  padding: 72px 16px 0 16px;
+  text-align: left;
+}
+@media (min-width: 640px) { .proto-label { padding: 20px 260px 0 20px; } }
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  display: flex;
+  gap: 8px;
+}
+.seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  background: hsl(var(--background));
+}
+.seg button {
+  font: 500 12px/1 var(--font-inter);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 12px;
+  min-width: 44px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: color var(--d-fast) var(--ease), background-color var(--d-fast) var(--ease);
+}
+.seg button[aria-pressed="true"] {
+  background: hsl(var(--foreground));
+  color: hsl(var(--background));
+}
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+/* ── House type ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+[dir="rtl"] .eyebrow {
+  font-family: var(--font-vazirmatn);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.section-title {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(28px, 4.5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+[dir="rtl"] .section-title {
+  font-family: var(--font-vazirmatn);
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+/* Highlight: serif italic in LTR; bold sans, upright, in RTL. */
+.hl {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 300;
+}
+[dir="rtl"] .hl {
+  font-family: var(--font-vazirmatn);
+  font-style: normal;
+  font-weight: 700;
+}
+.hl-soft { color: hsl(var(--foreground) / 0.45); }
+[dir="rtl"] .hl-soft { color: hsl(var(--muted-foreground)); }
+.title-second { display: block; margin-top: 0.5rem; }
+@media (min-width: 768px) { .title-second { margin-top: 0; } }
+
+.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+[dir="rtl"] .num { font-family: var(--font-vazirmatn); }
+
+/* ── Context stubs ───────────────────────────────────────────────────── */
+.stub-above { padding-top: 48px; padding-bottom: 48px; }
+.stub-above .rule { height: 2px; background: hsl(var(--foreground)); }
+.stub-above p { padding-top: 16px; font-size: 0.9375rem; color: hsl(var(--muted-foreground)); }
+
+.stub-below {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: 40vh;
+}
+.stub-below .section-title { color: hsl(var(--foreground) / 0.35); }
+
+/* ── The section ─────────────────────────────────────────────────────── */
+.problem {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: var(--section-y-bottom);
+}
+.heading { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 3.5rem; }
+@media (min-width: 768px) { .heading { margin-bottom: 5rem; } }
+
+/* The register: 2px ledger-head-rule opens it, 1px hairlines close each row. */
+.rows {
+  list-style: none;
+  border-top: 2px solid hsl(var(--foreground));
+}
+
+/* Below lg: frame + title on one line, description underneath, all start-aligned. */
+.row {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-areas:
+    "frame head"
+    "desc  desc";
+  align-items: center;
+  column-gap: 1.25rem;
+  row-gap: 1.25rem;
+  padding-block: 2rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+@media (min-width: 640px) { .row { padding-block: 2.5rem; column-gap: 1.75rem; } }
+
+/* lg+: [frame 7rem] [flex gap] [title, end-aligned] [description]. */
+@media (min-width: 1024px) {
+  .row {
+    grid-template-columns: 7rem minmax(1rem, 1fr) minmax(12rem, 16rem) minmax(0, 30rem);
+    grid-template-areas: "frame . head desc";
+    align-items: start;
+    column-gap: 2.5rem;
+    padding-block: 3.5rem;
+  }
+}
+@media (min-width: 1280px) { .row { padding-block: 4rem; } }
+
+.head { grid-area: head; min-width: 0; }
+@media (min-width: 1024px) { .head { text-align: end; } }
+
+.idx {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.375rem;
+}
+[dir="rtl"] .idx { letter-spacing: 0; font-size: 0.875rem; }
+
+.title {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(1.375rem, 1.1rem + 0.6vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+  text-wrap: balance;
+}
+[dir="rtl"] .title {
+  font-family: var(--font-vazirmatn);
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
+}
+
+.desc {
+  grid-area: desc;
+  max-width: 44ch;
+  font-size: 0.9375rem;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+@media (min-width: 768px) { .desc { font-size: 1rem; } }
+@media (min-width: 1024px) { .desc { padding-top: 1.625rem; } } /* sits on the title's line, below the index */
+[dir="rtl"] .desc { line-height: 1.8; }
+
+/* ── The frame: static 1px outline, a different shape per row ────────── */
+.frame {
+  grid-area: frame;
+  width: 5rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--control-edge);
+  display: block;
+  padding: 8%;
+  transition: border-color var(--d-mid) var(--ease);
+}
+@media (min-width: 1024px) { .frame { width: 7rem; } }
+
+.frame[data-shape="1"] { border-radius: 28px; }
+.frame[data-shape="2"] { border-radius: 50% 50% 0 0; padding-top: 16%; }
+.frame[data-shape="3"] { border-radius: 0 0 28px 28px; }
+.frame[data-shape="4"] { border-inline-end-width: 0; }
+.frame[data-shape="5"] { border-radius: 28px; border-start-end-radius: 0; }
+@media (max-width: 1023.98px) {
+  .frame[data-shape="1"], .frame[data-shape="5"] { border-radius: 20px; }
+  .frame[data-shape="5"] { border-start-end-radius: 0; }
+  .frame[data-shape="3"] { border-radius: 0 0 20px 20px; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover .frame { border-color: hsl(var(--foreground)); }
+}
+
+/* ── The drawings ────────────────────────────────────────────────────── */
+.drawing { width: 100%; height: 100%; overflow: visible; display: block; }
+[dir="rtl"] .drawing[data-flip] { transform: scaleX(-1); }
+
+.drawing path {
+  fill: none;
+  stroke: hsl(var(--foreground) / 0.7);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: stroke var(--d-mid) var(--ease);
+}
+.drawing path.occlude { fill: hsl(var(--background)); transition: fill 400ms var(--ease), stroke var(--d-mid) var(--ease); }
+.drawing path.accent { stroke: var(--local-accent); }
+.drawing path.accent.bold { stroke-width: 3; }
+
+/* Undrawn: dash fully offset. Opacity steps (not fades) at each path's own
+   delay, so a round cap never leaves a dot at the start before it draws. */
+.js .drawing path {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+.js .row.drawn .drawing path {
+  stroke-dashoffset: 0;
+  opacity: 1;
+  transition:
+    stroke-dashoffset var(--d-draw) var(--ease) calc(var(--i) * var(--draw-step)),
+    opacity 0s linear calc(var(--i) * var(--draw-step)),
+    fill 400ms var(--ease),
+    stroke var(--d-mid) var(--ease);
+}
+.js .row.drawn .drawing path.accent { transition-delay: calc(var(--i) * var(--draw-step) + 120ms); }
+
+/* ── Closing line ────────────────────────────────────────────────────── */
+.closing {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-top: 2rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+.closing .hl { color: hsl(var(--foreground)); font-size: 1.0625rem; }
+.closing .line { flex: 1 1 2rem; height: 1px; background: var(--border-subtle); min-width: 2rem; }
+@media (min-width: 1024px) { .closing { margin-top: 2.5rem; font-size: 1rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar" dir="ltr" role="group" aria-label="Prototype controls">
+  <div class="seg" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="ar" aria-pressed="false" lang="ar">AR</button>
+  </div>
+  <div class="seg" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<p class="proto-label" dir="ltr">Prototype C — Drawn rows</p>
+
+<!-- Stub: the thin end of the hero, so the section is judged in place. -->
+<div class="container stub-above" aria-hidden="true">
+  <div class="rule"></div>
+  <p data-i18n="stubAbove"></p>
+</div>
+
+<section class="problem" aria-labelledby="problem-title">
+  <div class="container">
+    <div class="heading">
+      <p class="eyebrow" data-i18n="eyebrow"></p>
+      <h2 id="problem-title" class="section-title">
+        <span data-i18n="title"></span>
+        <em class="hl hl-soft title-second" data-i18n="titleSecond"></em>
+      </h2>
+    </div>
+
+    <ol class="rows" id="rows"></ol>
+
+    <p class="closing">
+      <span><span data-i18n="closing"></span> <em class="hl" data-i18n="closingHl"></em></span>
+      <span class="line" aria-hidden="true"></span>
+    </p>
+  </div>
+</section>
+
+<!-- Stub: the next section's heading. -->
+<div class="stub-below" aria-hidden="true">
+  <div class="container">
+    <p class="section-title" data-i18n="stubBelow"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  document.documentElement.classList.add("js");
+
+  var COPY = {
+    en: {
+      stubAbove: "This page, measured in your browser",
+      eyebrow: "The Industry Problem",
+      title: "Most businesses aren't getting engineering.",
+      titleSecond: "They're getting templates.",
+      rows: [
+        { title: "A template, sold as custom", desc: "The same theme your competitors bought, with your logo swapped in. Nothing on it is yours to change." },
+        { title: "Slow where it counts", desc: "Fast on the office Wi‑Fi it was demoed on. Your visitors arrive on phones, on mobile data." },
+        { title: "A handover in name only", desc: "A password and a zip file. No documentation, no architecture, no record of why anything was built the way it was." },
+        { title: "Built for the approval meeting", desc: "Made to be signed off, not to grow. Every new feature costs more than the one before it." },
+        { title: "No engineer on the line", desc: "A coordinator relays your questions to a team you never meet. Every technical answer waits for the relay." }
+      ],
+      closing: "Every row above is what we're built to",
+      closingHl: "undo.",
+      stubBelow: "03 — What you actually own"
+    },
+    ar: {
+      stubAbove: "هذه الصفحة، مقيسة في متصفحك",
+      eyebrow: "مشكلة الصناعة",
+      title: "معظم الشركات لا تحصل على هندسة برمجية.",
+      titleSecond: "هي تحصل على قوالب جاهزة.",
+      rows: [
+        { title: "قالب يُباع على أنه تصميم خاص", desc: "القالب نفسه الذي اشتراه منافسوك، مع تبديل الشعار فقط. لا شيء فيه تستطيع تغييره بنفسك." },
+        { title: "بطيء حيث يهمّ", desc: "سريع على شبكة المكتب التي عُرض عليها. أما زوّارك فيصلون من هواتفهم عبر بيانات الجوال." },
+        { title: "تسليم بالاسم فقط", desc: "كلمة مرور وملف مضغوط. لا توثيق، ولا معمارية، ولا سجلّ يشرح لماذا بُني أي شيء على هذا النحو." },
+        { title: "مبنيّ لاجتماع الموافقة", desc: "صُنع ليُعتمد، لا لينمو. كل خاصية جديدة تكلّف أكثر من التي قبلها." },
+        { title: "لا مهندس على الخط", desc: "منسّق ينقل أسئلتك إلى فريق لا تلتقيه. كل إجابة تقنية تنتظر من ينقلها." }
+      ],
+      closing: "كل ما سبق هو ما بُنينا",
+      closingHl: "لإصلاحه.",
+      stubBelow: "٠٣ — ما تملكه فعلًا"
+    }
+  };
+
+  /* ── Drawing primitives (viewBox 0 0 96 96) ─────────────────────────── */
+  function rect(x, y, w, h, r) {
+    r = r || 0;
+    if (!r) return "M" + x + " " + y + "H" + (x + w) + "V" + (y + h) + "H" + x + "Z";
+    return "M" + (x + r) + " " + y + "H" + (x + w - r) + "A" + r + " " + r + " 0 0 1 " + (x + w) + " " + (y + r) +
+      "V" + (y + h - r) + "A" + r + " " + r + " 0 0 1 " + (x + w - r) + " " + (y + h) +
+      "H" + (x + r) + "A" + r + " " + r + " 0 0 1 " + x + " " + (y + h - r) +
+      "V" + (y + r) + "A" + r + " " + r + " 0 0 1 " + (x + r) + " " + y + "Z";
+  }
+  function circle(cx, cy, r) {
+    return "M" + (cx - r) + " " + cy + "a" + r + " " + r + " 0 1 0 " + (2 * r) + " 0a" + r + " " + r + " 0 1 0 " + (-2 * r) + " 0";
+  }
+  function line(x1, y1, x2, y2) { return "M" + x1 + " " + y1 + "L" + x2 + " " + y2; }
+
+  // A page wireframe: frame, logo + nav, divider, block, three lines.
+  function page(dx, dy, accentLogo) {
+    var out = [
+      { d: rect(14 + dx, 16 + dy, 44, 56, 3), cls: dx ? "occlude" : "" },
+      { d: line(28 + dx, 23 + dy, 52 + dx, 23 + dy) },
+      { d: line(14 + dx, 30 + dy, 58 + dx, 30 + dy) },
+      { d: rect(19 + dx, 35 + dy, 34, 12, 1.5) },
+      { d: line(19 + dx, 53 + dy, 53 + dx, 53 + dy) + line(19 + dx, 59 + dy, 47 + dx, 59 + dy) + line(19 + dx, 65 + dy, 50 + dx, 65 + dy) }
+    ];
+    var logo = { d: rect(19 + dx, 20 + dy, 6, 6, 1) };
+    if (accentLogo) { logo.cls = "accent"; out.push(logo); } else { out.splice(1, 0, logo); }
+    return out;
+  }
+
+  // Each drawing: an ordered list of paths; the accent is always last.
+  var DRAWINGS = [
+    // 01 — two identical pages; only the second one's logo is "yours".
+    { flip: false, paths: page(0, 0, false).concat(page(22, 10, true)) },
+    // 02 — a phone with a loading bar that stops at ~35%.
+    { flip: true, paths: [
+      { d: rect(31, 10, 34, 76, 6) },
+      { d: line(44, 17, 52, 17) },
+      { d: line(38, 30, 58, 30) + line(38, 36, 51, 36) },
+      { d: line(38, 56, 58, 56) },
+      { d: line(44, 79, 52, 79) },
+      { d: line(38, 56, 45, 56) + circle(45, 56, 1.6), cls: "accent bold" }
+    ] },
+    // 03 — a document zipped shut, a key beside it.
+    { flip: false, paths: [
+      { d: rect(12, 12, 44, 72, 3) },
+      { d: line(34, 18, 34, 78) },
+      { d: [24, 30, 36, 42, 48, 54, 60, 66, 72].map(function (y, k) {
+          return k % 2 ? line(34, y, 39, y) : line(29, y, 34, y);
+        }).join("") },
+      { d: circle(75, 26, 7) + line(75, 33, 75, 72) + line(75, 60, 81, 60) + line(75, 67, 80, 67), cls: "accent" }
+    ] },
+    // 04 — five stepped bars rising start → end.
+    { flip: true, paths: [
+      { d: line(6, 82, 90, 82) },
+      { d: "M11 82V70H21V82" },
+      { d: "M27 82V60H37V82" },
+      { d: "M43 82V48H53V82" },
+      { d: "M59 82V34H69V82" },
+      { d: "M75 82V16H85V82", cls: "accent" }
+    ] },
+    // 05 — you, three relays, the engineer; the last hop is broken.
+    { flip: true, paths: [
+      { d: circle(13, 38, 6.5) + "M1 64a12 12 0 0 1 24 0" },
+      { d: line(26, 52, 31, 52) },
+      { d: circle(34, 52, 3) },
+      { d: line(37, 52, 45, 52) },
+      { d: circle(48, 52, 3) },
+      { d: line(51, 52, 59, 52) },
+      { d: circle(62, 52, 3) },
+      { d: circle(83, 38, 6.5) + "M71 64a12 12 0 0 1 24 0" },
+      { d: line(65, 52, 67.5, 52) + line(70, 52, 72, 52), cls: "accent" }
+    ] }
+  ];
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+  var root = document.documentElement;
+  var rowsEl = document.getElementById("rows");
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var lang = "en";
+
+  function digits(str) {
+    return lang === "ar" ? String(str).replace(/\d/g, function (d) { return ARABIC_DIGITS[d]; }) : String(str);
+  }
+  function pad(n) { return digits(n < 10 ? "0" + n : String(n)); }
+
+  function buildDrawing(spec) {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    svg.setAttribute("viewBox", "0 0 96 96");
+    svg.setAttribute("class", "drawing");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    if (spec.flip) svg.setAttribute("data-flip", "");
+    spec.paths.forEach(function (p, i) {
+      var path = document.createElementNS(SVG_NS, "path");
+      path.setAttribute("d", p.d);
+      path.setAttribute("pathLength", "1");
+      if (p.cls) path.setAttribute("class", p.cls);
+      path.style.setProperty("--i", i);
+      svg.appendChild(path);
+    });
+    return svg;
+  }
+
+  // Rows are built once; a language switch only swaps text, so drawn state survives.
+  var rowEls = DRAWINGS.map(function (spec, i) {
+    var li = document.createElement("li");
+    li.className = "row";
+
+    var frame = document.createElement("div");
+    frame.className = "frame";
+    frame.dataset.shape = String(i + 1);
+    frame.setAttribute("aria-hidden", "true");
+    frame.appendChild(buildDrawing(spec));
+
+    var head = document.createElement("div");
+    head.className = "head";
+    var idx = document.createElement("span");
+    idx.className = "idx num";
+    idx.setAttribute("aria-hidden", "true");
+    var h3 = document.createElement("h3");
+    h3.className = "title";
+    head.appendChild(idx);
+    head.appendChild(h3);
+
+    var desc = document.createElement("p");
+    desc.className = "desc";
+
+    li.appendChild(frame);
+    li.appendChild(head);
+    li.appendChild(desc);
+    rowsEl.appendChild(li);
+    return { li: li, idx: idx, title: h3, desc: desc };
+  });
+
+  function applyCopy() {
+    var c = COPY[lang];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = c[el.getAttribute("data-i18n")];
+    });
+    rowEls.forEach(function (r, i) {
+      r.idx.textContent = pad(i + 1);
+      r.title.textContent = c.rows[i].title;
+      r.desc.textContent = c.rows[i].desc;
+    });
+  }
+
+  function setLang(next) {
+    lang = next;
+    root.lang = next;
+    root.dir = next === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.lang === next ? "true" : "false");
+    });
+    applyCopy();
+  }
+
+  function setTheme(next) {
+    root.setAttribute("data-theme", next);
+    document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.themeSet === next ? "true" : "false");
+    });
+  }
+
+  function drawAll() { rowEls.forEach(function (r) { r.li.classList.add("drawn"); }); }
+
+  // One signature motion: each row's drawing draws itself once, on entry.
+  if (reduce.matches || !("IntersectionObserver" in window)) {
+    drawAll();
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.classList.add("drawn");
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.35 });
+    rowEls.forEach(function (r) { io.observe(r.li); });
+  }
+  reduce.addEventListener && reduce.addEventListener("change", function (e) { if (e.matches) drawAll(); });
+
+  document.querySelectorAll("[data-lang]").forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+  document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.dataset.themeSet); });
+  });
+
+  setTheme(root.getAttribute("data-theme") || "light");
+  setLang("en");
+})();
+</script>
+</body>
+</html>

@@ -16,7 +16,7 @@ interface SectionHeadingProps {
   accent?: HeadingAccent;
   accentDirection?: GradientDirection;
   accentAnimate?: boolean | AccentAnimation;
-  /** Keep the serif-italic second clause but paint it in the section's world
+  /** Keep the emphasis second clause but paint it in the section's world
       gradient instead of dimmed ink. Ignored when `accent` is set, and on
       `theme="surface"`, which has no world to wear. */
   italicWorld?: boolean;
@@ -120,7 +120,7 @@ export function SectionHeading({
                     secondTitleBreak &&
                     (isSurface
                       ? ""
-                      : "mt-2 block md:mt-0 md:inline"),
+                      : "mt-[calc(0.5rem-0.36em)] block md:mt-0 md:inline"),
                     classes?.secondTitle,
                   )}
                 >

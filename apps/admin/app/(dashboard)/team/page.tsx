@@ -1,122 +1,196 @@
 import { prisma } from "@repo/database";
-import { headers } from "next/headers";
 import { Check, Minus } from "lucide-react";
-import { auth } from "@/lib/auth";
+import { Avatar } from "@repo/ui";
+
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
-import { AlertBar } from "@/components/os/error-state";
 import { DeleteRecordButton } from "@/components/os/delete-record";
-import { Avatar } from "@repo/ui";
 import { ToneBadge } from "@/components/ui/badge";
+import { getOperator } from "@/lib/authorize";
+import { emailTransport } from "@/lib/email";
+import { dateTime, when } from "@/lib/format";
 import {
   ACTIONS,
+  ROLES,
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
   SUBJECTS,
   can,
-  toProductRole,
+  resolveRole,
 } from "@/lib/rbac";
-import type { Role } from "@/lib/nav";
-import { dateTime, when } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+import { AccessLinkButton } from "./access-link-button";
+import { InviteMember } from "./invite-member";
+import { RoleSelect } from "./role-select";
+import { MemberSessions, type SessionRow } from "./session-list";
 
 export const dynamic = "force-dynamic";
 
-const ROLES: Role[] = ["OWNER", "ADMIN", "SALES", "PM", "FINANCE", "VIEWER"];
-
+/**
+ * People, roles and sessions. Everything an operator can do here is a server
+ * action in `_actions/team.ts` that re-checks the capability; the page only
+ * decides what to draw. Nothing on it is a secret: the session token is
+ * compared on the server and never sent, and a member's second factor is
+ * shown as on or off, never as a key or a code.
+ */
 export default async function TeamPage() {
-  const [session, users, sessions] = await Promise.all([
-    auth.api.getSession({ headers: await headers() }),
+  const now = new Date();
+  const [operator, users, sessions] = await Promise.all([
+    getOperator(),
     prisma.user.findMany({
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        opsRole: true,
         createdAt: true,
-        emailVerified: true,
+        lastLoginAt: true,
+        twoFactorEnabled: true,
+        accounts: { where: { providerId: "credential" }, select: { id: true } },
       },
       orderBy: { createdAt: "asc" },
     }),
     prisma.session.findMany({
-      where: { expiresAt: { gt: new Date() } },
-      select: { userId: true, updatedAt: true, ipAddress: true },
+      where: { expiresAt: { gt: now } },
+      select: {
+        id: true,
+        userId: true,
+        token: true,
+        ipAddress: true,
+        userAgent: true,
+        createdAt: true,
+        updatedAt: true,
+        expiresAt: true,
+      },
+      orderBy: { updatedAt: "desc" },
     }),
   ]);
 
-  const currentId = session?.user?.id;
-  const lastSeen = new Map<string, Date>();
+  const me = operator?.session.user.id;
+  const myToken = operator?.session.session.token;
+  const myRole = operator?.role;
+  const canInvite = can(myRole, "create", "team");
+  const canManage = can(myRole, "edit", "team");
+  const canRemove = can(myRole, "delete", "team");
+  const transportConfigured = emailTransport() !== "none";
+
+  // The token decides which row is "this browser", then stays on the server.
+  const sessionsByUser = new Map<string, SessionRow[]>();
   for (const s of sessions) {
-    const existing = lastSeen.get(s.userId);
-    if (!existing || s.updatedAt > existing) lastSeen.set(s.userId, s.updatedAt);
+    const row: SessionRow = {
+      id: s.id,
+      ipAddress: s.ipAddress,
+      userAgent: s.userAgent,
+      createdAt: s.createdAt.toISOString(),
+      updatedAt: s.updatedAt.toISOString(),
+      expiresAt: s.expiresAt.toISOString(),
+      current: s.token === myToken,
+    };
+    sessionsByUser.set(s.userId, [...(sessionsByUser.get(s.userId) ?? []), row]);
   }
 
-  const admins = users.filter((u) => u.role === "ADMIN" || u.role === "SUPERADMIN");
+  const members = users.map((user) => ({
+    ...user,
+    productRole: resolveRole(user),
+    hasPassword: user.accounts.length > 0,
+    sessions: sessionsByUser.get(user.id) ?? [],
+  }));
+  const owners = members.filter((m) => m.productRole === "OWNER").length;
+  const withTwoFactor = members.filter((m) => m.twoFactorEnabled).length;
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Team"
         description="People, roles, and exactly what each role may do. The permission grid below is the real matrix the server enforces, not a description of it."
+        actions={canInvite ? <InviteMember transportConfigured={transportConfigured} allowOwner={myRole === "OWNER"} /> : undefined}
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatTile label="People" value={users.length} sub="Accounts in the system" />
-        <StatTile label="With admin access" value={admins.length} sub="Can reach this application" />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile label="People" value={members.length} sub="Accounts in the system" />
+        <StatTile label="Owners" value={owners} sub="Can manage people and settings" tone={owners === 1 ? "warning" : "neutral"} />
         <StatTile
           label="Signed in now"
-          value={lastSeen.size}
-          sub={lastSeen.size ? "Active sessions" : "Nobody"}
-          tone={lastSeen.size ? "success" : "neutral"}
+          value={sessionsByUser.size}
+          sub={sessionsByUser.size ? `${sessions.length} active session${sessions.length === 1 ? "" : "s"}` : "Nobody"}
+          tone={sessionsByUser.size ? "success" : "neutral"}
+        />
+        <StatTile
+          label="Two-factor on"
+          value={`${withTwoFactor} / ${members.length}`}
+          sub={withTwoFactor === members.length ? "Everyone" : "Not everyone"}
+          tone={withTwoFactor === members.length ? "success" : "warning"}
         />
       </div>
 
-      <AlertBar tone="info" href="/settings?tab=security" cta="Security settings">
-        The database currently stores three roles (USER, ADMIN, SUPERADMIN). The six
-        product roles below are mapped onto those in <code className="font-mono text-micro">lib/rbac.ts</code> —
-        SUPERADMIN is Owner, ADMIN is Admin. Sales, PM, Finance and Viewer are defined
-        and enforced in code, but no user can hold them until the schema carries them.
-      </AlertBar>
-
-      <Panel title="People" flush>
+      <Panel
+        title="People"
+        description={
+          canManage
+            ? "Roles take effect at the member's next request. You cannot change your own."
+            : "Roles are changed by an owner."
+        }
+        flush
+      >
         <ul className="rows">
-          {users.map((user) => {
-            const productRole = toProductRole(user.role);
-            const seen = lastSeen.get(user.id);
+          {members.map((member) => {
+            const self = member.id === me;
+            const label = member.name ?? member.email;
             return (
-              <li key={user.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
-                <Avatar name={user.name ?? user.email} size="lg" />
-                <div className="min-w-0 flex-1">
+              <li key={member.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
+                <Avatar name={label} size="lg" />
+                <div className="min-w-0 flex-1 basis-48">
                   <p className="flex items-center gap-2 truncate text-base font-medium">
-                    {user.name ?? "Unnamed"}
-                    {user.id === currentId && (
-                      <span className="telemetry text-subtle-foreground">you</span>
-                    )}
+                    {member.name ?? "Unnamed"}
+                    {self && <span className="telemetry text-subtle-foreground">you</span>}
                   </p>
-                  <p className="truncate text-meta text-muted-foreground">{user.email}</p>
+                  <p className="truncate text-meta text-muted-foreground">{member.email}</p>
                 </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {!member.hasPassword && (
+                    <ToneBadge tone="warning">Invited — no password yet</ToneBadge>
+                  )}
+                  <ToneBadge tone={member.twoFactorEnabled ? "success" : "neutral"}>
+                    {member.twoFactorEnabled ? "2FA on" : "2FA off"}
+                  </ToneBadge>
+                </div>
+
                 <div className="text-end">
                   <p className="font-mono text-micro text-subtle-foreground">
-                    {seen ? `active ${when(seen)}` : "no active session"}
+                    {member.lastLoginAt ? `last sign-in ${when(member.lastLoginAt)}` : "never signed in"}
                   </p>
-                  <p className="font-mono text-micro text-subtle-foreground">
-                    joined {dateTime(user.createdAt)}
-                  </p>
+                  <p className="font-mono text-micro text-subtle-foreground">joined {dateTime(member.createdAt)}</p>
                 </div>
-                <ToneBadge tone={productRole ? "info" : "neutral"}>
-                  {productRole ? ROLE_LABELS[productRole] : user.role}
-                </ToneBadge>
+
+                <MemberSessions
+                  userId={member.id}
+                  label={label}
+                  sessions={member.sessions}
+                  canRevoke={self || canManage}
+                  own={self}
+                />
+
+                {canManage && !self ? (
+                  <RoleSelect userId={member.id} role={member.productRole} allowOwner={myRole === "OWNER"} />
+                ) : (
+                  <ToneBadge tone={member.productRole ? "info" : "neutral"}>
+                    {member.productRole ? ROLE_LABELS[member.productRole] : member.role}
+                  </ToneBadge>
+                )}
+
+                {canManage && transportConfigured && (
+                  <AccessLinkButton userId={member.id} kind={member.hasPassword ? "reset" : "invite"} />
+                )}
+
                 {/* Removing people is an Owner action, and the server refuses
                     the two cases that would lock this app: your own account,
                     and the last superadmin. */}
-                {user.id !== currentId && (
-                  <DeleteRecordButton
-                    entity="user"
-                    id={user.id}
-                    label={user.name ?? user.email}
-                    size="icon-sm"
-                  >
+                {canRemove && !self && (
+                  <DeleteRecordButton entity="user" id={member.id} label={label} size="icon-sm">
                     {null}
                   </DeleteRecordButton>
                 )}

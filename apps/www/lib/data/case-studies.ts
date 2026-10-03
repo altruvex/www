@@ -8,13 +8,10 @@ type CaseStudyMetric = {
   value: string;
 };
 
-const CASE_STUDY_SLUGS = [
-  "altruvex-site",
-  "art-lighting-store",
-  "newlight-lighting-store",
-] as const;
-
-type CaseStudySlug = (typeof CASE_STUDY_SLUGS)[number];
+type CaseStudySlug =
+  | "altruvex-site"
+  | "art-lighting-store"
+  | "newlight-lighting-store";
 
 export type CaseStudyRecord = {
   client: LocalizedValue;
@@ -30,8 +27,6 @@ export type CaseStudyRecord = {
       design, and a new project appears on its page by being tagged here. */
   services: readonly ServiceSlug[];
   externalUrl?: string;
-  /** Base path for production screenshots; `-light.png`/`-dark.png` are appended. */
-  screenshot?: string;
 };
 
 export const CASE_STUDIES: CaseStudyRecord[] = [
@@ -150,7 +145,6 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     year: "2024",
     services: [],
     externalUrl: "https://www.artlighting-eg.com",
-    screenshot: "/projects/artlighting-eg.com",
   },
   {
     client: {
@@ -210,16 +204,11 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     year: "2024",
     services: [],
     externalUrl: "https://www.newlight-eg.com/",
-    screenshot: "/projects/newlight-eg.com",
   },
 ];
 
 export function getAllCaseStudies() {
   return CASE_STUDIES;
-}
-
-export function getCaseStudiesForService(service: ServiceSlug) {
-  return CASE_STUDIES.filter((caseStudy) => caseStudy.services.includes(service));
 }
 
 export function getCaseStudyBySlug(slug: string): CaseStudyRecord | null {

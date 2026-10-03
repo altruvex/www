@@ -160,7 +160,7 @@ export const whyUsSchema = z.object({
 });
 
 // A section's standing copy: the mono eyebrow, and the heading split into
-// its bold lead-in and the one Georgia-italic accent word. The split is the
+// its bold lead-in and the one light-italic accent word. The split is the
 // design — the accent word is a separate field so it can never be lost by
 // someone editing the heading as one string.
 export const sectionHeadingSchema = z.object({
@@ -332,21 +332,9 @@ export const proposalContentSchema = z
     }
   });
 
-export type ProposalMeta = z.infer<typeof proposalMetaSchema>;
 export type Problem = z.infer<typeof problemSchema>;
-export type SolutionModule = z.infer<typeof solutionModuleSchema>;
-export type PerformanceTarget = z.infer<typeof performanceTargetSchema>;
-export type PerformanceScore = z.infer<typeof performanceScoreSchema>;
-export type TimelinePhase = z.infer<typeof timelinePhaseSchema>;
-export type InvestmentItem = z.infer<typeof investmentItemSchema>;
-export type PaymentScheduleRow = z.infer<typeof paymentScheduleSchema>;
-export type KeyTerm = z.infer<typeof keyTermSchema>;
 export type Discount = z.infer<typeof discountSchema>;
 export type ProposalService = z.infer<typeof proposalServiceSchema>;
-export type WhyUs = z.infer<typeof whyUsSchema>;
-export type SectionHeading = z.infer<typeof sectionHeadingSchema>;
-export type ProposalSections = z.infer<typeof sectionsSchema>;
-export type ProposalLabels = z.infer<typeof labelsSchema>;
 export type ProposalContent = z.infer<typeof proposalContentSchema>;
 
 export interface CompanyDetails {

@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altruvex Sans A.4 optical proof</title>
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="../dist/web/tokens.css">
+<style>
+  /* Proof page, not a design surface. Every number is filled in by window.measure(); no verdicts. */
+  body { margin: 0; padding: 32px 40px 80px; font: 14px/1.5 system-ui, sans-serif; color: #111; background: #fff; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 48px 0 4px; padding-top: 16px; border-top: 1px solid #ccc; }
+  h3 { font-size: 13px; margin: 0 0 6px; font-weight: 600; }
+  .note { color: #111; max-width: 72em; margin: 0 0 12px; }
+  .block { border-top: 1px solid #ddd; padding: 10px 0 18px; }
+  .en { font-family: var(--stack-prod-en); line-height: 1.2; }
+  .ar { font-family: var(--stack-prod-ar); letter-spacing: 0; line-height: var(--lh-heading-ar); }
+  .ar.voc { line-height: var(--lh-vocalised); }
+  .spec { margin: 0; }
+  .line { margin: 0 0 10px; }
+  .meta { font: 12px/1.4 ui-monospace, monospace; color: #111; margin: 2px 0 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px 48px; align-items: flex-start; }
+  .optic { position: relative; display: inline-block; padding: 0 16px; }
+  .optic .glyph { margin: 0 12px; }
+  .optic .bl { display: inline-block; width: 0; height: 0; }
+  .hair { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid rgb(0 0 0 / .35); pointer-events: none; }
+</style>
+</head>
+<body>
+<h1>Altruvex Sans (Track A) — phase A.4 optical proof</h1>
+<p class="note">Production stacks <code>--stack-prod-en</code> / <code>--stack-prod-ar</code>; spacing from
+<code>dist/web/tokens.css</code>. Latin tracking is the token whose size is the largest one at or below the font size
+(the token file's rule); Arabic is never tracked. Ink top / bottom = highest ink above and lowest ink below the
+alphabetic baseline, in em, from a 2x canvas raster (any pixel with alpha &gt; 0; resolution 1 ÷ (2 × font size)
+em, so 0.021em at 24px). Density = ink ÷ (advance × font
+size), advance including tracking. AR÷EN = AR density ÷ EN density in the same block. AR weights are requested
+weights; "draws" is the drawn weight read from <code>dist/build-report.json</code>. Latin line height 1.2 is a page
+value (no Latin token exists).</p>
+
+<section id="optical">
+  <h2>1 · Optical relations (step 26)</h2>
+  <p class="note">Hairlines in the first block of each size: measured top of ink of H, l and ا, then the baseline.</p>
+  <div id="optical-rows"></div>
+</section>
+
+<section id="display">
+  <h2>2 · Display tracking by case (step 15)</h2>
+  <p class="note">One token per size and weight for every case; no case-specific tracking is applied.</p>
+  <div id="display-rows"></div>
+</section>
+
+<script>
+const OPTICAL_SIZES = [24, 48, 96];
+const DISPLAY_SIZES = [52, 72, 96, 120, 136];
+const DISPLAY_WEIGHTS = [400, 600, 700];
+const CASES = { lower: "not assembled", title: "Not Assembled", caps: "NOT ASSEMBLED" };
+const AR_DISPLAY = "هندسة، لا تجميع.";
+const AR_WORD = "العربية";
+
+// Section 1 blocks. Each line: [key, lang, weight, html]; html may wrap a foreign word in a span.
+const arSpan = t => `<span lang="ar" dir="rtl" class="ar-in">${t}</span>`;
+const enSpan = t => `<span lang="en" dir="ltr" class="en-in">${t}</span>`;
+const OPTICAL = [
+  { kind: "mass", title: "Arabic vertical mass vs Latin", lines: [
+    ["en", "en", 400, "One delivery standard."], ["ar", "ar", 400, "معيار تسليم واحد."]] },
+  { kind: "mixed", title: "Mixed-script headings", lines: [
+    ["en_ar", "en", 600, `Built for ${arSpan(AR_WORD)} too.`],
+    ["ar_next", "ar", 600, `نبني على ${enSpan("Next.js 16")}`],
+    ["ar_brand", "ar", 600, `هذا موقع ${enSpan("Altruvex")}`]] },
+  { kind: "dots", title: "Arabic dots", lines: [["ar", "ar", 400, "بيت يبني في ثبت"]] },
+  { kind: "punct", title: "Punctuation", lines: [
+    ["ar", "ar", 400, "«نعم»، لماذا؟ هنا؛ هناك!"], ["en", "en", 400, "Yes, why? Here. There!"]] },
+  { kind: "voc", title: "Vocalised Arabic", lines: [
+    ["ar_voc", "ar", 400, "إِنَّ الشُّرُوطَ مَكْتُوبَةٌ"], ["ar", "ar", 400, "إن الشروط مكتوبة"]] },
+  { kind: "brackets", title: "Brackets in both directions", lines: [
+    ["ar", "ar", 400, `(أولى) [ثانية] «ثالثة» (${enSpan("Next.js")})`],
+    ["en", "en", 400, `(first) [second] «third» (${arSpan(AR_WORD)})`]] },
+  { kind: "numbers", title: "Numbers and separators", lines: [
+    ["en", "en", 400, "0123456789 3.14"], ["ar", "ar", 400, "٠١٢٣٤٥٦٧٨٩ ٣٫١٤ ٬"]] },
+  { kind: "inline", title: "English inside Arabic, Arabic inside English", lines: [
+    ["ar_en", "ar", 400, `نكتب بـ ${enSpan("TypeScript")} يوميًا`],
+    ["en_ar", "en", 400, `Written in ${arSpan(AR_WORD)} daily.`]] },
+];
+
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  n.append(...kids);
+  return n;
+};
+const r3 = v => +v.toFixed(3), r4 = v => +v.toFixed(4);
+const f3 = v => v.toFixed(3);
+const root = getComputedStyle(document.documentElement);
+const PROD_EN = root.getPropertyValue("--stack-prod-en").trim();
+const PROD_AR = root.getPropertyValue("--stack-prod-ar").trim();
+const ARABIC = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+
+let TRACK_SIZES = [], DRAWN = {};
+
+// Token bucket: the largest token size at or below px (tokens.css header).
+function trackToken(px, w) {
+  const size = TRACK_SIZES.filter(s => s <= px).at(-1);
+  const name = `--track-${size}-${w}`;
+  return { name, em: parseFloat(root.getPropertyValue(name)) };
+}
+
+// Raster of one string at 2x: ink above/below the alphabetic baseline and total ink in CSS px².
+// Canvas measureText's actualBoundingBox is not used: WebKit leaves out GPOS-positioned marks.
+function raster(text, family, weight, px, rtl) {
+  const S = 2, c = document.createElement("canvas"), ctx = c.getContext("2d");
+  const font = `${weight} ${px * S}px ${family}`;
+  ctx.font = font;
+  const adv = ctx.measureText(text).width;
+  c.width = Math.ceil(adv + px * S * 2); c.height = Math.ceil(px * S * 4);
+  const base = px * S * 2.5;
+  ctx.font = font; ctx.direction = rtl ? "rtl" : "ltr"; ctx.textAlign = "left";
+  ctx.fillText(text, px * S, base);
+  const a = ctx.getImageData(0, 0, c.width, c.height).data;
+  let top = null, bottom = null, ink = 0;
+  for (let y = 0; y < c.height; y++) {
+    let row = 0;
+    for (let x = 0; x < c.width; x++) row += a[(y * c.width + x) * 4 + 3];
+    if (row > 0) { top ??= y; bottom = y + 1; }
+    ink += row;
+  }
+  return { top_em: (base - top) / S / px, bottom_em: (bottom - base) / S / px,
+           ink: ink / 255 / (S * S), advance_px: adv / S };
+}
+
+// One specimen line: renders it, measures it, returns [element, record].
+function line(block, key, lang, weight, html, px) {
+  const rtl = lang === "ar";
+  const p = el("p", { class: `spec ${lang}${key.endsWith("voc") ? " voc" : ""}`, lang, dir: rtl ? "rtl" : "ltr" });
+  p.innerHTML = html;
+  p.style.fontSize = px + "px";
+  p.style.fontWeight = weight;
+  const text = p.textContent;
+  let track = null;
+  if (!rtl) {
+    track = trackToken(px, weight);
+    p.style.letterSpacing = `var(${track.name})`;
+    p.querySelectorAll(".ar-in").forEach(s => { s.style.letterSpacing = "0"; s.style.fontFamily = "var(--stack-prod-ar)"; });
+  } else {
+    p.querySelectorAll(".en-in").forEach(s => { s.style.fontFamily = "var(--stack-prod-en)"; });
+  }
+  const lh = rtl ? (key.endsWith("voc") ? "--lh-vocalised" : "--lh-heading-ar") : null;
+  const r = raster(text, rtl ? PROD_AR : PROD_EN, weight, px, rtl);
+  // Tracking is applied to every non-Arabic character of a Latin line (the Arabic word is untracked).
+  const tracked = track ? [...text].filter(ch => !ARABIC.test(ch)).length * track.em * px : 0;
+  const advance = r.advance_px + tracked;
+  const rec = { block, line: key, lang, px, weight, drawn: rtl ? (DRAWN[weight] ?? weight) : weight,
+    tracking_token: track?.name ?? null, tracking_em: track ? track.em : 0,
+    line_height_token: lh, line_height: lh ? parseFloat(root.getPropertyValue(lh)) : 1.2,
+    ink_top_em: r3(r.top_em), ink_bottom_em: r3(r.bottom_em),
+    density: r4(r.ink / (advance * px)), advance_em: r3(advance / px) };
+  const meta = el("div", { class: "meta" }, metaText(rec));
+  return [el("div", { class: "line" }, p, meta), rec];
+}
+
+function metaText(r) {
+  const w = r.lang === "ar" ? `AR ${r.weight}${r.drawn !== r.weight ? ` (draws ${r.drawn})` : ""}` : `EN ${r.weight}`;
+  const tr = r.tracking_token ? `${r.tracking_token} ${r.tracking_em}em` : "tracking 0";
+  const lh = r.line_height_token ? `lh ${r.line_height_token} ${r.line_height}` : `lh ${r.line_height} (page)`;
+  return `${r.line} · ${w} · ${r.px}px · ${tr} · ${lh} · ink top ${f3(r.ink_top_em)} bottom ${f3(r.ink_bottom_em)}em`
+    + ` · density ${r.density.toFixed(4)} · advance ${f3(r.advance_em)}em`;
+}
+
+// AR÷EN density for every AR line against every EN line in the block.
+function ratios(recs) {
+  const out = {};
+  for (const a of recs.filter(r => r.lang === "ar"))
+    for (const e of recs.filter(r => r.lang === "en")) out[`${a.line}/${e.line}`] = r3(a.density / e.density);
+  return out;
+}
+const ratioText = rs => Object.keys(rs).length
+  ? "AR÷EN density " + Object.entries(rs).map(([k, v]) => `${k} ${v.toFixed(3)}`).join(" · ") : "";
+
+// H, l and alef side by side; hairlines at their measured ink tops and the baseline, placed after layout.
+function verticalBlock(px) {
+  const id = `v-${px}`, w = 400;
+  const box = el("div", { class: "optic" });
+  const glyphs = [["H", "en"], ["l", "en"], ["ا", "ar"]];
+  const recs = glyphs.map(([g, lang]) => {
+    const r = raster(g, lang === "ar" ? PROD_AR : PROD_EN, w, px, lang === "ar");
+    const s = el("span", { class: `glyph ${lang}`, lang }, g);
+    s.style.fontSize = px + "px";
+    box.append(s);
+    return { block: id, line: g === "ا" ? "alef" : g, lang, px, weight: w, drawn: w,
+             ink_top_em: r3(r.top_em), ink_bottom_em: r3(r.bottom_em) };
+  });
+  const bl = el("span", { class: "bl" });
+  box.append(bl);
+  const [H, l, alef] = recs;
+  const extra = { alef_over_H: r3(alef.ink_top_em / H.ink_top_em), alef_over_l: r3(alef.ink_top_em / l.ink_top_em) };
+  const meta = el("div", { class: "meta" },
+    `EN 400 / AR 400 · ${px}px · ink top H ${f3(H.ink_top_em)} · l ${f3(l.ink_top_em)} · alef ${f3(alef.ink_top_em)}em`
+    + ` · alef÷H ${f3(extra.alef_over_H)} · alef÷l ${f3(extra.alef_over_l)} · alef bottom ${f3(alef.ink_bottom_em)}em`);
+  const node = el("div", { class: "block", "data-shot": id },
+    el("h3", {}, `Cap H, ascender l, alef — ${px}px`), box, meta);
+  const place = () => {
+    const top = box.getBoundingClientRect().top, base = bl.getBoundingClientRect().top - top;
+    for (const y of [...recs.map(r => base - r.ink_top_em * px), base]) {
+      const h = el("div", { class: "hair" });
+      h.style.top = y.toFixed(2) + "px";
+      box.append(h);
+    }
+  };
+  return { node, place, rec: { id, section: "optical", kind: "vertical", px, lines: recs, ...extra } };
+}
+
+function buildOptical() {
+  const host = document.getElementById("optical-rows"), out = [], after = [];
+  for (const px of OPTICAL_SIZES) {
+    const v = verticalBlock(px);
+    host.append(v.node); after.push(v.place); out.push(v.rec);
+    for (const b of OPTICAL) {
+      const id = `${b.kind}-${px}`;
+      const made = b.lines.map(([key, lang, w, html]) => line(id, key, lang, w, html, px));
+      const recs = made.map(m => m[1]), rs = ratios(recs);
+      host.append(el("div", { class: "block", "data-shot": id }, el("h3", {}, `${b.title} — ${px}px`),
+        ...made.map(m => m[0]), el("div", { class: "meta" }, ratioText(rs))));
+      out.push({ id, section: "optical", kind: b.kind, px, lines: recs, ratios: rs });
+    }
+  }
+  return { out, after };
+}
+
+function buildDisplay() {
+  const host = document.getElementById("display-rows"), out = [];
+  for (const px of DISPLAY_SIZES) for (const w of DISPLAY_WEIGHTS) {
+    const id = `d-${px}-${w}`;
+    const en = Object.entries(CASES).map(([k, t]) => line(id, k, "en", w, t, px));
+    const ar = line(id, "ar", "ar", w, AR_DISPLAY, px);
+    const recs = [...en.map(m => m[1]), ar[1]], rs = ratios(recs);
+    host.append(el("div", { class: "block", "data-shot": id }, el("h3", {}, `${px}px · weight ${w}`),
+      el("div", { class: "row" }, el("div", {}, ...en.map(m => m[0])), el("div", {}, ar[0])),
+      el("div", { class: "meta" }, ratioText(rs))));
+    out.push({ id, section: "display", px, weight: w, lines: recs, ratios: rs });
+  }
+  return out;
+}
+
+// The page builds on load and tools/optical.py calls measure() as soon as fonts are ready, which
+// can land mid-build: keep the promise, not the result, so the blocks are built once.
+let built = null;
+const build = () => built ??= buildOnce();
+async function buildOnce() {
+  const [report, tokens] = await Promise.all([
+    fetch("../dist/build-report.json").then(r => r.json()), fetch("../dist/web/tokens.css").then(r => r.text())]);
+  DRAWN = Object.fromEntries(report.weights.arabic_avar_pairs.filter(([a, b]) => a !== b));
+  TRACK_SIZES = [...new Set([...tokens.matchAll(/--track-(\d+)-\d+:/g)].map(m => +m[1]))].sort((a, b) => a - b);
+  const loads = [];
+  for (const w of [400, 600, 700]) for (const fam of ['"Altruvex Sans Latin"', '"Altruvex Sans Arabic"'])
+    loads.push(document.fonts.load(`${w} 40px ${fam}`, "aH ب"));
+  await Promise.all(loads);
+  await document.fonts.ready;
+  const optical = buildOptical();
+  const display = buildDisplay();
+  await document.fonts.ready;
+  optical.after.forEach(f => f());
+  return { blocks: [...optical.out, ...display] };
+}
+
+// Entry point for tools/optical.py. Returns plain JSON.
+window.measure = async () => {
+  const { blocks } = await build();
+  const shots = [...document.querySelectorAll("[data-shot]")].map(n => n.getAttribute("data-shot"));
+  return { userAgent: navigator.userAgent, drawn: DRAWN, track_sizes: TRACK_SIZES, shots, blocks };
+};
+build();
+</script>
+</body>
+</html>

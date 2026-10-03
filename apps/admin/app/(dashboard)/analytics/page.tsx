@@ -4,13 +4,18 @@ import { StatTile } from "@/components/os/stat-tile";
 import { EmptyInline } from "@/components/os/empty-state";
 import { BarChart, ColumnChart, HeroNumber } from "@/components/os/chart";
 import { getAnalytics } from "@/lib/analytics-data";
+import { ANNUAL_BILLING_NOTE, getRevenueMetrics } from "@/lib/revenue-metrics";
+import { RETAINER_CURRENCY } from "@/lib/payment-source";
 import { statusOf } from "@/lib/status";
 import { money, moneyByCurrency, percent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function AnalyticsPage() {
-  const data = await getAnalytics();
+  const [data, revenue] = await Promise.all([
+    getAnalytics(),
+    getRevenueMetrics(),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -19,11 +24,116 @@ export default async function AnalyticsPage() {
         description="Metrics that change a decision. Anything that would only ever be looked at is deliberately not here."
       />
 
+      {/* ---- revenue -------------------------------------------------- */}
+      <section className="space-y-3">
+        <h2 className="telemetry text-subtle-foreground">Recurring revenue</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <StatTile
+            label="MRR (contracted)"
+            value={moneyByCurrency(revenue.contractedMrr, true) || "0"}
+            sub={
+              revenue.activeRetainers
+                ? `${revenue.activeRetainers} active retainer${revenue.activeRetainers === 1 ? "" : "s"} at their monthly rate${
+                    revenue.unpricedRetainers
+                      ? ` · ${revenue.unpricedRetainers} unpriced`
+                      : ""
+                  }`
+                : "No active retainers"
+            }
+            tone={revenue.activeRetainers ? "success" : "neutral"}
+          />
+          <StatTile
+            label="MRR (billed)"
+            value={moneyByCurrency(revenue.billedMrr, true) || "0"}
+            sub={ANNUAL_BILLING_NOTE}
+          />
+          <StatTile
+            label="Outstanding"
+            value={moneyByCurrency(revenue.outstanding, true) || "0"}
+            sub={`${revenue.outstandingCount} unpaid payment${revenue.outstandingCount === 1 ? "" : "s"}`}
+            tone={
+              revenue.overdueCount
+                ? "danger"
+                : revenue.outstandingCount
+                  ? "warning"
+                  : "neutral"
+            }
+            href="/payments?tab=outstanding"
+          />
+          <StatTile
+            label="Overdue"
+            value={revenue.overdueCount}
+            sub={
+              revenue.overdueCount
+                ? moneyByCurrency(revenue.overdue, true)
+                : "Nothing late"
+            }
+            tone={revenue.overdueCount ? "danger" : "success"}
+            href="/payments?status=overdue"
+          />
+        </div>
+        {revenue.byPlan.length > 0 && (
+          <Panel
+            title="By plan"
+            description="Active retainers per plan, priced the way their renewal invoices are."
+          >
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Plan", "Active", "Contracted / mo", "Billed / mo"].map(
+                    (h) => (
+                      <th
+                        key={h}
+                        className="py-2 pe-3 text-meta uppercase tracking-wider text-muted-foreground"
+                      >
+                        {h}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {revenue.byPlan.map((plan) => (
+                  <tr
+                    key={plan.planId}
+                    className="border-b border-border last:border-0"
+                  >
+                    <td className="py-2 pe-3 text-base text-foreground">
+                      {plan.planName}
+                    </td>
+                    <td className="py-2 pe-3 font-mono text-meta tabular-nums">
+                      {plan.activeRetainers}
+                      {plan.unpriced ? (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {plan.unpriced} unpriced
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="py-2 pe-3 font-mono text-meta tabular-nums">
+                      {money(plan.contractedMrr, RETAINER_CURRENCY)}
+                    </td>
+                    <td className="py-2 font-mono text-meta tabular-nums">
+                      {money(plan.billedMrr, RETAINER_CURRENCY)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Panel>
+        )}
+      </section>
+
       {/* ---- sales ---------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Sales</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatTile label="Win rate" value={percent(data.sales.winRate)} sub={`${data.sales.accepted} of ${data.sales.proposalsSent} sent`} tone={data.sales.winRate >= 50 ? "success" : "warning"} />
+          <StatTile
+            label="Win rate"
+            value={percent(data.sales.winRate)}
+            sub={`${data.sales.accepted} of ${data.sales.proposalsSent} sent`}
+            tone={data.sales.winRate >= 50 ? "success" : "warning"}
+          />
           <StatTile
             label="Average deal"
             value={moneyByCurrency(data.sales.avgDealByCurrency, true)}
@@ -31,9 +141,15 @@ export default async function AnalyticsPage() {
           />
           <StatTile
             label="Sales cycle"
-            value={data.sales.avgCycle != null ? `${data.sales.avgCycle}d` : "—"}
+            value={
+              data.sales.avgCycle != null ? `${data.sales.avgCycle}d` : "—"
+            }
             sub="Sent to accepted"
-            tone={data.sales.avgCycle != null && data.sales.avgCycle > 21 ? "warning" : "neutral"}
+            tone={
+              data.sales.avgCycle != null && data.sales.avgCycle > 21
+                ? "warning"
+                : "neutral"
+            }
           />
           <StatTile
             label="Won value"
@@ -50,8 +166,8 @@ export default async function AnalyticsPage() {
           >
             {data.signedByMonth.every((m) => m.value === 0) ? (
               <EmptyInline>
-                Nothing has been signed in the last twelve months, so there is no series
-                to draw. This chart appears with the first signature.
+                Nothing has been signed in the last twelve months, so there is
+                no series to draw. This chart appears with the first signature.
               </EmptyInline>
             ) : (
               <ColumnChart
@@ -60,14 +176,16 @@ export default async function AnalyticsPage() {
                   id: m.key,
                   label: m.label,
                   value: m.value,
-                  display: money(m.value, m.currency || "EGP", { compact: true }),
+                  display: money(m.value, m.currency || "EGP", {
+                    compact: true,
+                  }),
                 }))}
               />
             )}
             {data.signedByMonth.some((m) => m.mixed) && (
               <p className="mt-2 text-meta text-warning">
-                Some months contain more than one currency; the chart plots the largest and
-                the rest are excluded rather than added.
+                Some months contain more than one currency; the chart plots the
+                largest and the rest are excluded rather than added.
               </p>
             )}
           </Panel>
@@ -78,8 +196,9 @@ export default async function AnalyticsPage() {
           >
             {data.cashByMonth.every((m) => m.value === 0) ? (
               <EmptyInline>
-                No payments recorded as received yet. Signed value and cash collected are
-                different numbers, which is why they are two charts.
+                No payments recorded as received yet. Signed value and cash
+                collected are different numbers, which is why they are two
+                charts.
               </EmptyInline>
             ) : (
               <ColumnChart
@@ -88,23 +207,30 @@ export default async function AnalyticsPage() {
                   id: m.key,
                   label: m.label,
                   value: m.value,
-                  display: money(m.value, m.currency || "EGP", { compact: true }),
+                  display: money(m.value, m.currency || "EGP", {
+                    compact: true,
+                  }),
                 }))}
               />
             )}
             {data.cashByMonth.some((m) => m.mixed) && (
               <p className="mt-2 text-meta text-warning">
-                Some months contain more than one currency; the chart plots the largest and
-                the rest are excluded rather than added.
+                Some months contain more than one currency; the chart plots the
+                largest and the rest are excluded rather than added.
               </p>
             )}
           </Panel>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Panel title="Where the money comes from" description="Leads by source, and how many closed">
+          <Panel
+            title="Where the money comes from"
+            description="Leads by source, and how many closed"
+          >
             {data.sources.length === 0 ? (
-              <EmptyInline>No clients yet, so no source has a track record.</EmptyInline>
+              <EmptyInline>
+                No clients yet, so no source has a track record.
+              </EmptyInline>
             ) : (
               <div className="space-y-3">
                 <BarChart
@@ -117,7 +243,9 @@ export default async function AnalyticsPage() {
                   }))}
                 />
                 <div className="border-t border-border pt-3">
-                  <p className="telemetry mb-1.5 text-subtle-foreground">Closed from that source</p>
+                  <p className="telemetry mb-1.5 text-subtle-foreground">
+                    Closed from that source
+                  </p>
                   <BarChart
                     data={data.sources.map((source, i) => ({
                       id: `${source.source}-won`,
@@ -134,7 +262,10 @@ export default async function AnalyticsPage() {
             )}
           </Panel>
 
-          <Panel title="What actually closes" description="Proposals quoted vs accepted, by project type">
+          <Panel
+            title="What actually closes"
+            description="Proposals quoted vs accepted, by project type"
+          >
             {data.projectTypes.length === 0 ? (
               <EmptyInline>No proposals issued yet.</EmptyInline>
             ) : (
@@ -156,22 +287,41 @@ export default async function AnalyticsPage() {
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Clients</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <StatTile label="Total clients" value={data.clientsMetrics.total} sub="Every record" />
-          <StatTile label="Converted" value={data.clientsMetrics.won} sub="At least one signed contract" tone={data.clientsMetrics.won ? "success" : "neutral"} />
+          <StatTile
+            label="Total clients"
+            value={data.clientsMetrics.total}
+            sub="Every record"
+          />
+          <StatTile
+            label="Converted"
+            value={data.clientsMetrics.won}
+            sub="At least one signed contract"
+            tone={data.clientsMetrics.won ? "success" : "neutral"}
+          />
           <StatTile
             label="Repeat business"
             value={data.clientsMetrics.repeat}
-            sub={data.clientsMetrics.repeat ? "More than one signed contract" : "None yet"}
+            sub={
+              data.clientsMetrics.repeat
+                ? "More than one signed contract"
+                : "None yet"
+            }
             tone={data.clientsMetrics.repeat ? "success" : "neutral"}
           />
           <StatTile
             label="Average client value"
-            value={moneyByCurrency(data.clientsMetrics.avgValueByCurrency, true)}
+            value={moneyByCurrency(
+              data.clientsMetrics.avgValueByCurrency,
+              true,
+            )}
             sub="Accepted value per won client"
           />
         </div>
 
-        <Panel title="New clients by month" description="Volume of demand entering the system">
+        <Panel
+          title="New clients by month"
+          description="Volume of demand entering the system"
+        >
           <ColumnChart
             seriesIndex={3}
             data={data.leadsByMonth.map((m) => ({
@@ -196,15 +346,34 @@ export default async function AnalyticsPage() {
                 ? `${data.delivery.late} late · ${data.delivery.undated} launched with no target`
                 : `${data.delivery.launched} launched, ${data.delivery.late} late`
             }
-            tone={data.delivery.onTimePct >= 80 ? "success" : data.delivery.launched ? "warning" : "neutral"}
+            tone={
+              data.delivery.onTimePct >= 80
+                ? "success"
+                : data.delivery.launched
+                  ? "warning"
+                  : "neutral"
+            }
           />
           <StatTile
             label="Average duration"
-            value={data.delivery.avgDurationWeeks != null ? `${data.delivery.avgDurationWeeks}w` : "—"}
+            value={
+              data.delivery.avgDurationWeeks != null
+                ? `${data.delivery.avgDurationWeeks}w`
+                : "—"
+            }
             sub="Project start to launch"
           />
-          <StatTile label="Active projects" value={data.delivery.active} sub="In delivery now" tone={data.delivery.active ? "progress" : "neutral"} />
-          <StatTile label="Projects all time" value={data.delivery.total} sub="Including completed" />
+          <StatTile
+            label="Active projects"
+            value={data.delivery.active}
+            sub="In delivery now"
+            tone={data.delivery.active ? "progress" : "neutral"}
+          />
+          <StatTile
+            label="Projects all time"
+            value={data.delivery.total}
+            sub="Including completed"
+          />
         </div>
       </section>
 
@@ -230,7 +399,11 @@ export default async function AnalyticsPage() {
             <HeroNumber
               value={percent(
                 data.website.estimates
-                  ? Math.round((data.website.estimatesConverted / data.website.estimates) * 100)
+                  ? Math.round(
+                      (data.website.estimatesConverted /
+                        data.website.estimates) *
+                        100,
+                    )
                   : 0,
               )}
               label="Estimator conversion"

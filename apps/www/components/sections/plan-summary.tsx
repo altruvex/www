@@ -28,6 +28,7 @@ export function PlanSummary({
   bestForLabel,
   bestFor,
   cta,
+  useWorldAccent = false,
   recommended = false,
   size = "lg",
 }: {
@@ -43,12 +44,20 @@ export function PlanSummary({
   bestForLabel?: ReactNode;
   bestFor: ReactNode;
   cta: { href: string; label: ReactNode; ariaLabel?: string };
+  /** When set, badge and recommended CTA use the section's --local-accent
+      (e.g. the green world) instead of the brand blue.  Opt-in so the default
+      (brand-always) behaviour stays in place everywhere else. */
+  useWorldAccent?: boolean;
   recommended?: boolean;
   /** `md` fits a price range into a four-column card grid. */
   size?: "lg" | "md";
 }) {
+  const pillClasses = useWorldAccent
+    ? "rounded-full bg-local-accent px-2.5 py-0.5 text-[10px] font-medium text-local-accent-fg md:text-xs"
+    : "rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-medium text-brand-foreground md:text-xs";
+
   const pill = (
-    <span className="rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-medium text-brand-foreground md:text-xs">
+    <span className={pillClasses}>
       {badge}
     </span>
   );
@@ -110,7 +119,7 @@ export function PlanSummary({
       </div>
       <MagneticButton
         asChild
-        variant={recommended ? "primary" : "secondary"}
+        variant={recommended ? (useWorldAccent ? "accent" : "primary") : "secondary"}
         className="group mt-5 w-full min-h-11"
       >
         <Link href={cta.href} aria-label={cta.ariaLabel}>

@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/os/empty-state";
 import { StatTile } from "@/components/os/stat-tile";
 import { scoreLead } from "@/lib/lead-score";
 import { deriveClientStage } from "@/lib/dashboard-data";
+import { IntakeTabs, LEAD_STAGES, LEAD_STATUS_PREFILTER } from "./intake-tabs";
 import { LeadsTable, type LeadRow } from "./leads-table";
 import { Button } from "@repo/ui";
 
@@ -22,7 +23,10 @@ export const dynamic = "force-dynamic";
 export default async function LeadsPage() {
   const [clients, unconvertedSubmissions, unconvertedEstimates] = await Promise.all([
     prisma.client.findMany({
-      where: { status: { in: ["NEW", "VIEWED", "CONTACTED", "QUALIFIED"] } },
+      // A prefilter only. The stored status never becomes PROPOSAL_SENT / WON, so a
+      // client with a proposal out still matches here — the derived stage below is
+      // what decides whether the row is still a lead.
+      where: { status: { in: LEAD_STATUS_PREFILTER } },
       select: {
         id: true,
         name: true,
@@ -45,14 +49,29 @@ export default async function LeadsPage() {
           },
         },
         transparencyLead: {
-          select: { priceMin: true, priceMax: true, projectType: true, timeline: true },
+          select: {
+            priceMin: true,
+            priceMax: true,
+            projectType: true,
+            timeline: true,
+          },
         },
+        // Latest first, one row: deriveClientStage only reads the newest of each.
         proposals: {
-          select: { status: true, readAt: true, totalPrice: true, currency: true },
+          select: {
+            status: true,
+            readAt: true,
+            totalPrice: true,
+            currency: true,
+          },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
-        contracts: { select: { status: true }, orderBy: { createdAt: "desc" }, take: 1 },
+        contracts: {
+          select: { status: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
         // Inbound only. Counting every message would mean our own proposal send
         // raised the lead's score — the score would measure our activity, not theirs.
         messages: { where: { direction: "INBOUND" }, select: { id: true } },
@@ -60,68 +79,73 @@ export default async function LeadsPage() {
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.contactSubmission.count({ where: { client: null, status: { not: "SPAM" } } }),
+    prisma.contactSubmission.count({
+      where: { client: null, status: { not: "SPAM" } },
+    }),
     prisma.transparencyLead.count({ where: { client: null } }),
   ]);
 
-  const rows: LeadRow[] = clients.map((client) => {
-    const { score, reasons } = scoreLead({
-      budget: client.contactSubmission?.budget ?? null,
-      timeline:
-        client.contactSubmission?.projectTimeline ?? client.transparencyLead?.timeline ?? null,
-      source: client.source,
-      serviceInterest: client.contactSubmission?.serviceInterest ?? null,
-      hasCompany: Boolean(client.company),
-      hasEmail: Boolean(client.email),
-      messageLength: client.contactSubmission?.message?.length ?? 0,
-      estimatorPriceMax: client.transparencyLead?.priceMax ?? null,
-      proposalCount: client.proposals.length,
-      readProposal: Boolean(client.proposals[0]?.readAt),
-      inboundMessages: client.messages.length,
+  const rows: LeadRow[] = clients
+    .filter((client) => (LEAD_STAGES as readonly string[]).includes(deriveClientStage(client)))
+    .map((client) => {
+      const { score, reasons } = scoreLead({
+        budget: client.contactSubmission?.budget ?? null,
+        timeline:
+          client.contactSubmission?.projectTimeline ?? client.transparencyLead?.timeline ?? null,
+        source: client.source,
+        serviceInterest: client.contactSubmission?.serviceInterest ?? null,
+        hasCompany: Boolean(client.company),
+        hasEmail: Boolean(client.email),
+        messageLength: client.contactSubmission?.message?.length ?? 0,
+        estimatorPriceMax: client.transparencyLead?.priceMax ?? null,
+        proposalCount: client.proposals.length,
+        readProposal: Boolean(client.proposals[0]?.readAt),
+        inboundMessages: client.messages.length,
+      });
+
+      return {
+        id: client.id,
+        name: client.name,
+        company: client.company,
+        phone: client.phone,
+        email: client.email,
+        industry: client.industry,
+        source: client.source,
+        status: client.status,
+        priority: client.priority,
+        createdAt: client.createdAt.toISOString(),
+        updatedAt: client.updatedAt.toISOString(),
+        budget: client.contactSubmission?.budget ?? null,
+        timeline:
+          client.contactSubmission?.projectTimeline ?? client.transparencyLead?.timeline ?? null,
+        serviceInterest: client.contactSubmission?.serviceInterest ?? null,
+        utmSource: client.contactSubmission?.utmSource ?? null,
+        estimateMin: client.transparencyLead?.priceMin ?? null,
+        estimateMax: client.transparencyLead?.priceMax ?? null,
+        stage: deriveClientStage(client),
+        score,
+        scoreReasons: reasons,
+        messageCount: client._count.messages,
+        inboundCount: client.messages.length,
+      };
     });
 
-    return {
-      id: client.id,
-      name: client.name,
-      company: client.company,
-      phone: client.phone,
-      email: client.email,
-      industry: client.industry,
-      source: client.source,
-      status: client.status,
-      priority: client.priority,
-      createdAt: client.createdAt.toISOString(),
-      updatedAt: client.updatedAt.toISOString(),
-      budget: client.contactSubmission?.budget ?? null,
-      timeline:
-        client.contactSubmission?.projectTimeline ?? client.transparencyLead?.timeline ?? null,
-      serviceInterest: client.contactSubmission?.serviceInterest ?? null,
-      utmSource: client.contactSubmission?.utmSource ?? null,
-      estimateMin: client.transparencyLead?.priceMin ?? null,
-      estimateMax: client.transparencyLead?.priceMax ?? null,
-      stage: deriveClientStage(client),
-      score,
-      scoreReasons: reasons,
-      messageCount: client._count.messages,
-      inboundCount: client.messages.length,
-    };
-  });
-
-  const uncontacted = rows.filter((r) => r.status === "NEW" || r.status === "VIEWED").length;
-  const qualified = rows.filter((r) => r.status === "QUALIFIED").length;
+  const uncontacted = rows.filter((r) => r.stage === "NEW" || r.stage === "VIEWED").length;
+  const qualified = rows.filter((r) => r.stage === "QUALIFIED").length;
   const hot = rows.filter((r) => r.score >= 65).length;
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Leads"
+        tabs={<IntakeTabs active="leads" />}
         description="Demand that has not become an opportunity yet. A lead leaves this list the moment a proposal is sent."
         meta={
           unconvertedSubmissions + unconvertedEstimates > 0 ? (
             <span>
               {unconvertedSubmissions + unconvertedEstimates} website submission
-              {unconvertedSubmissions + unconvertedEstimates === 1 ? "" : "s"} not yet
-              converted into a lead ·{" "}
+              {unconvertedSubmissions + unconvertedEstimates === 1 ? "" : "s"} not yet converted
+              into a lead ·{" "}
               <Link href="/submissions" className="text-brand hover:underline">
                 review them
               </Link>
@@ -138,8 +162,18 @@ export default async function LeadsPage() {
           sub={uncontacted ? "Nobody has replied yet" : "All contacted"}
           tone={uncontacted > 0 ? "danger" : "success"}
         />
-        <StatTile label="Qualified" value={qualified} sub="Ready for a proposal" tone={qualified ? "progress" : "neutral"} />
-        <StatTile label="Score ≥ 65" value={hot} sub="Worth calling today" tone={hot ? "success" : "neutral"} />
+        <StatTile
+          label="Qualified"
+          value={qualified}
+          sub="Ready for a proposal"
+          tone={qualified ? "progress" : "neutral"}
+        />
+        <StatTile
+          label="Score ≥ 65"
+          value={hot}
+          sub="Worth calling today"
+          tone={hot ? "success" : "neutral"}
+        />
       </div>
 
       {rows.length === 0 ? (
@@ -148,16 +182,13 @@ export default async function LeadsPage() {
           title="No open leads"
           body={
             <>
-              Every lead has either been qualified into an opportunity or closed out.
-              New leads land here automatically when a website submission is converted
-              into a client record.
+              Every lead has either been qualified into an opportunity or closed out. New leads land
+              here automatically when a website submission is converted into a client record.
             </>
           }
           action={
             <Button asChild variant="outline">
-              <Link href="/submissions">
-                Review website submissions
-              </Link>
+              <Link href="/submissions">Review website submissions</Link>
             </Button>
           }
         />

@@ -1,6 +1,7 @@
 import { prisma } from "@repo/database";
 import { deriveClientStage } from "@/lib/dashboard-data";
 import { scaleByCurrency, sumByCurrency } from "@/lib/format";
+import { paymentCurrency } from "@/lib/payment-source";
 
 const MONTHS = 12;
 
@@ -138,7 +139,7 @@ export async function getAnalytics() {
     payments.map((p) => ({
       at: p.paidAt,
       amount: p.amount,
-      currency: p.project.contract.proposal.currency,
+      currency: paymentCurrency(p),
     })),
   );
   const leadsByMonth = bucket(clients.map((c) => ({ at: c.createdAt, amount: 1 })));
@@ -282,5 +283,3 @@ export async function getAnalytics() {
     },
   };
 }
-
-export type Analytics = Awaited<ReturnType<typeof getAnalytics>>;

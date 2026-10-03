@@ -1,5 +1,12 @@
 import { ADDONS, type Addon } from "./addons";
-import { computeAddonPrice, type AddonPrice } from "./compute";
+import {
+  calculateEstimate,
+  computeAddonPrice,
+  estimateSpan,
+  minimumEngagementFrom,
+  WORKED_EXAMPLE_INPUT,
+  type AddonPrice,
+} from "./compute";
 import { consultingCreditAmount, CONSULTING_PACKAGES } from "./consulting";
 import { pricingCopy, type MaintenanceCompare } from "./copy/index";
 import {
@@ -8,32 +15,44 @@ import {
   formatMoney,
   formatNumber,
   formatPercent,
+  formatPercentLabel,
   formatRange,
+  formatSignedPercent,
   formatWeeks,
 } from "./format";
 import {
   COMPLEXITY_IDS,
+  SCOPE_NOTE_IDS,
   SERVICE_IDS,
   type AddonId,
   type ComplexityId,
   type ConsultingPackageId,
   type MaintenancePlanId,
+  type ScopeNoteId,
   type ServiceId,
-  type TierId,
 } from "./ids";
 import {
   MAINTENANCE_PLANS,
+  maintenanceFreeMonths,
+  maintenanceIntervalPrice,
   publicMaintenancePlans,
   type MaintenancePlan,
 } from "./maintenance";
-import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE } from "./modifiers";
-import { minimumEngagement } from "./services";
-import { ORDERED_TIERS, tierEstimatorQuery, TIERS } from "./tiers";
-import { resolvePricing, type ResolvedPricing } from "./overrides";
+import {
+  COMMERCIAL_TERMS,
+  FACTOR_GROUP_IDS,
+  FACTOR_GROUPS,
+  NEUTRAL_FACTOR,
+  PRICING_DRIVERS,
+  USD_EXCHANGE_RATE,
+  type FactorGroupId,
+  type PricingDriverEffect,
+  type PricingDriverId,
+} from "./modifiers";
+import { DEFAULT_PRICING, type ResolvedPricing } from "./overrides";
 import {
   MAX_DELIVERY_WEEKS,
   type Locale,
-  type PriceRange,
   type WeekRange,
 } from "./types";
 
@@ -52,153 +71,49 @@ import {
  * enforceable rather than aspirational.
  */
 
-export interface TierView {
-  readonly id: TierId;
-  readonly name: string;
-  readonly buyerLabel: string;
-  readonly internalLabel: string;
-  readonly priceLabel: string;
-  /** Wording for the delivery window, e.g. "Delivery". */
-  readonly timelineLabel: string;
-  /** The window itself, e.g. "3–5 weeks". Always a range, never a "from". */
-  readonly timelineValue: string;
-  readonly idealFor: string;
-  readonly notIncluded: string;
-  readonly features: readonly string[];
-  readonly nextStep: string;
-  readonly ctaLabel: string;
-  readonly estimatorHref: string;
-  readonly highlight: boolean;
-}
-
-/** Shipped defaults, resolved once. The fallback for every view below. */
-const DEFAULT_PRICING: ResolvedPricing = resolvePricing();
-
-/** A tier's cell, read out of whichever pricing set the caller supplied. */
-export function tierRangeFrom(
-  tierId: TierView["id"],
-  pricing: ResolvedPricing,
-): PriceRange {
-  const tier = TIERS[tierId];
-  return pricing.services[tier.serviceId].price[tier.complexityId];
-}
-
 /**
- * The same cell's delivery window.
- *
- * Read from the resolved set for the same reason the price is: an operator who
- * moves a cell's weeks in the admin app moves the card with it, so the tier a
- * buyer reads and the estimate they get one click later cannot disagree about
- * how long the work takes.
+ * Shipped defaults, resolved once. The fallback for every view below; defined
+ * in `overrides.ts` so the estimate engine shares it without an import cycle.
  */
-export function tierWeeksFrom(
-  tierId: TierView["id"],
-  pricing: ResolvedPricing,
-): WeekRange {
-  const tier = TIERS[tierId];
-  return pricing.services[tier.serviceId].weeks[tier.complexityId];
-}
+export { DEFAULT_PRICING };
 
-/**
- * The published delivery ceiling, as a sentence.
- *
- * Rendered next to the tier cards so the cap is stated where the windows are,
- * not only inside the estimator a click away.
- */
-export function deliveryCeilingLabel(
-  locale: Locale,
-  pricing: ResolvedPricing = DEFAULT_PRICING,
-): string {
-  const span = deliveryWindowFrom(pricing);
-  return fillTemplate(pricingCopy(locale).tierTemplates.ceiling, {
-    windowMin: formatNumber(span.min, locale),
-    windowMax: formatNumber(span.max, locale),
-    ceiling: formatNumber(MAX_DELIVERY_WEEKS, locale),
-  });
-}
-
-export function tierViews(
-  locale: Locale,
-  pricing: ResolvedPricing = DEFAULT_PRICING,
-): readonly TierView[] {
-  const copy = pricingCopy(locale);
-
-  return ORDERED_TIERS.map((tier) => {
-    const range = tierRangeFrom(tier.id, pricing);
-    const weeks = tierWeeksFrom(tier.id, pricing);
-    const text = copy.tiers[tier.id];
-
-    return {
-      id: tier.id,
-      name: text.name,
-      buyerLabel: text.buyerLabel,
-      internalLabel: text.internalLabel,
-      priceLabel:
-        tier.display === "from"
-          ? formatFrom(range.min, locale)
-          : formatRange(range, locale),
-      timelineLabel: copy.tierTemplates.timelineLabel,
-      timelineValue: fillTemplate(copy.tierTemplates.timelineValue, {
-        weeks: formatWeeks(weeks.min, weeks.max, locale),
-      }),
-      idealFor: text.idealFor,
-      notIncluded: text.notIncluded,
-      features: text.features,
-      nextStep: text.nextStep,
-      ctaLabel: text.ctaLabel,
-      estimatorHref: `/transparency?${tierEstimatorQuery(tier.id)}`,
-      highlight: tier.highlight,
-    };
-  });
-}
-
-export interface PriceCellView {
+export interface InvestmentCellView {
   readonly serviceId: ServiceId;
   readonly complexityId: ComplexityId;
   /** The cell's range, e.g. "40,000 – 75,000 EGP". Always a range. */
   readonly priceLabel: string;
   /** The cell's delivery window, e.g. "3–5 weeks". */
   readonly weeksLabel: string;
-  /** The marketed package that names this cell, or null when none does. */
-  readonly tierId: TierId | null;
 }
 
-export interface PriceMatrixRowView {
+export interface InvestmentMatrixRowView {
   readonly serviceId: ServiceId;
   readonly name: string;
   readonly description: string;
   /** One cell per complexity band, in `COMPLEXITY_IDS` order. */
-  readonly cells: readonly PriceCellView[];
+  readonly cells: readonly InvestmentCellView[];
 }
 
-export interface PriceMatrixView {
-  readonly bands: readonly { readonly id: ComplexityId; readonly label: string }[];
-  readonly rows: readonly PriceMatrixRowView[];
+export interface InvestmentMatrixView {
+  readonly bands: readonly {
+    readonly id: ComplexityId;
+    readonly label: string;
+  }[];
+  readonly rows: readonly InvestmentMatrixRowView[];
   /** Cells in the grid, so copy can count them instead of hardcoding it. */
   readonly cellCount: number;
-  readonly tierCount: number;
 }
 
 /**
- * The whole service matrix, as `/pricing` draws it.
- *
- * The tiers are four cells of this grid given names; drawing the grid itself
- * is what makes that visible — a buyer sees the package in the context of the
- * cells around it, and sees that the cells nobody named are published too.
- * Every figure resolves from the same set `tierViews` reads, so a named cell
- * and the package it opens cannot disagree.
+ * The published range grid: a buyer reads project type × complexity and a
+ * range, nothing else. This is the grid the service investment register
+ * discloses under Custom development.
  */
-export function priceMatrixView(
+export function investmentMatrixView(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
-): PriceMatrixView {
+): InvestmentMatrixView {
   const copy = pricingCopy(locale);
-
-  const tierAt = (serviceId: ServiceId, complexityId: ComplexityId) =>
-    ORDERED_TIERS.find(
-      (tier) =>
-        tier.serviceId === serviceId && tier.complexityId === complexityId,
-    )?.id ?? null;
 
   const rows = SERVICE_IDS.map((serviceId) => {
     const service = pricing.services[serviceId];
@@ -212,10 +127,9 @@ export function priceMatrixView(
           serviceId,
           complexityId,
           priceLabel: formatRange(service.price[complexityId], locale),
-          weeksLabel: fillTemplate(copy.tierTemplates.timelineValue, {
+          weeksLabel: fillTemplate(copy.investment.weeksValue, {
             weeks: formatWeeks(weeks.min, weeks.max, locale),
           }),
-          tierId: tierAt(serviceId, complexityId),
         };
       }),
     };
@@ -225,15 +139,325 @@ export function priceMatrixView(
     bands: COMPLEXITY_IDS.map((id) => ({ id, label: copy.bands[id] })),
     rows,
     cellCount: SERVICE_IDS.length * COMPLEXITY_IDS.length,
-    tierCount: ORDERED_TIERS.length,
   };
 }
 
-export function minimumEngagementLabel(
+export const SERVICE_INVESTMENT_IDS = [
+  "design",
+  "development",
+  "audit",
+  "maintenance",
+] as const;
+export type ServiceInvestmentId = (typeof SERVICE_INVESTMENT_IDS)[number];
+
+export interface ServiceInvestmentRowView {
+  readonly id: ServiceInvestmentId;
+  readonly name: string;
+  readonly covers: string;
+  readonly how: string;
+  /**
+   * The row's figure cell: "Scoped per project" for design, "From {floor}"
+   * for development, the audit fee, and the lowest plan for maintenance.
+   */
+  readonly figureLabel: string;
+  /** True when the figure is words, not a number (design). */
+  readonly isScopedPerProject: boolean;
+  /** Development only: the twelve published ranges behind "From {floor}". */
+  readonly matrix: InvestmentMatrixView | null;
+  /** Audit only: fee, duration and the credit rule. */
+  readonly audit: ConsultingView | null;
+  /** Maintenance only: the plans, custom-quote plan included. */
+  readonly plans: readonly MaintenanceView[] | null;
+}
+
+/**
+ * The service investment register: one row per service line, as `/pricing`
+ * and every service page print it.
+ *
+ * Interface design carries no figure by decision — it is scoped per project.
+ * Development quotes the engagement floor and discloses the grid behind it;
+ * the audit quotes its fixed fee and the credit; maintenance quotes its plans.
+ * Every number resolves from the same set the estimator reads.
+ */
+export function serviceInvestmentViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
+): readonly ServiceInvestmentRowView[] {
+  const copy = pricingCopy(locale).investment;
+  const cycle = pricingCopy(locale).maintenanceTemplates.perCycle;
+
+  const matrix = investmentMatrixView(locale, pricing);
+  const audit = consultingView("technical-audit", locale, pricing);
+  const plans = maintenanceViews(locale, pricing);
+
+  const pricedPlans = Object.values(pricing.maintenance).filter(
+    (plan) => plan.status === "active" && plan.price !== null,
+  );
+  const lowestPlan = pricedPlans.reduce<(typeof pricedPlans)[number] | null>(
+    (lowest, plan) =>
+      lowest === null || (plan.price as number) < (lowest.price as number)
+        ? plan
+        : lowest,
+    null,
+  );
+
+  return [
+    {
+      id: "design",
+      name: copy.design.name,
+      covers: copy.design.covers,
+      how: copy.design.how,
+      figureLabel: copy.design.figure,
+      isScopedPerProject: true,
+      matrix: null,
+      audit: null,
+      plans: null,
+    },
+    {
+      id: "development",
+      name: copy.development.name,
+      covers: copy.development.covers,
+      how: copy.development.how,
+      figureLabel: formatFrom(minimumEngagementFrom(pricing), locale),
+      isScopedPerProject: false,
+      matrix,
+      audit: null,
+      plans: null,
+    },
+    {
+      id: "audit",
+      name: copy.audit.name,
+      covers: copy.audit.covers,
+      how: copy.audit.how,
+      figureLabel: audit.priceLabel,
+      isScopedPerProject: false,
+      matrix: null,
+      audit,
+      plans: null,
+    },
+    {
+      id: "maintenance",
+      name: copy.maintenance.name,
+      covers: copy.maintenance.covers,
+      how: copy.maintenance.how,
+      figureLabel:
+        lowestPlan === null
+          ? ""
+          : `${formatFrom(lowestPlan.price as number, locale)} ${cycle[lowestPlan.billingCycle]}`,
+      isScopedPerProject: false,
+      matrix: null,
+      audit: null,
+      plans,
+    },
+  ];
+}
+
+export interface WorkedExampleView {
+  /** The five answers behind every figure below. */
+  readonly input: typeof WORKED_EXAMPLE_INPUT;
+  /** The answers as words, for the example's caption line. */
+  readonly serviceLabel: string;
+  readonly bandLabel: string;
+  readonly brandLabel: string;
+  readonly contentLabel: string;
+  readonly timelineLabel: string;
+  /** "From 22,000 EGP" — the engagement floor. */
+  readonly floorLabel: string;
+  /** The published cell the answers land in, e.g. "40,000 – 75,000 EGP". */
+  readonly cellLabel: string;
+  /** The estimate after conditions, e.g. "45,000 – 85,000 EGP". */
+  readonly estimateLabel: string;
+  /** Weeks after conditions, e.g. "3–6". */
+  readonly weeksLabel: string;
+  readonly validityDays: number;
+  readonly validityDaysLabel: string;
+}
+
+/**
+ * The worked example, fully computed.
+ *
+ * The pricing pages walk a buyer from requirements to proposal on one example
+ * project. Every figure in that walkthrough comes from here, computed from
+ * `WORKED_EXAMPLE_INPUT` against the same pricing the estimator uses, so the
+ * example can never show a number the estimator would not.
+ */
+export function workedExampleView(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): WorkedExampleView {
+  const copy = pricingCopy(locale);
+  const input = WORKED_EXAMPLE_INPUT;
+  const cell = pricing.services[input.serviceId].price[input.complexityId];
+  const estimate = calculateEstimate(input, pricing);
+  const factorLabel = (group: FactorGroupId, option: string) =>
+    copy.factors.groups[group].options[option]?.label ?? option;
+
+  return {
+    input,
+    serviceLabel: copy.services[input.serviceId].name,
+    bandLabel: copy.bands[input.complexityId],
+    brandLabel: factorLabel("brand", input.brandIdentity ?? "complete"),
+    contentLabel: factorLabel("content", input.contentReadiness ?? "provide"),
+    timelineLabel: factorLabel("timeline", input.timeline),
+    floorLabel: formatFrom(minimumEngagementFrom(pricing), locale),
+    cellLabel: formatRange(cell, locale),
+    estimateLabel: formatRange(
+      { min: estimate.minPrice, max: estimate.maxPrice },
+      locale,
+    ),
+    weeksLabel: formatWeeks(estimate.minWeeks, estimate.maxWeeks, locale),
+    validityDays: pricing.terms.proposalValidityDays,
+    validityDaysLabel: formatNumber(pricing.terms.proposalValidityDays, locale),
+  };
+}
+
+export interface FactorOptionView {
+  readonly id: string;
+  readonly label: string;
+  /** The raw price factor, e.g. 1.15. */
+  readonly factor: number;
+  /** The price change as words: "+15%", "no change", "−5%". */
+  readonly deltaLabel: string;
+  readonly isNeutral: boolean;
+}
+
+export interface FactorGroupView {
+  readonly id: FactorGroupId;
+  readonly label: string;
+  /** In the order the estimator asks them. */
+  readonly options: readonly FactorOptionView[];
+  /** Lowest to highest delta, e.g. "−5% … +15%" or "no change … +12%". */
+  readonly spanLabel: string;
+}
+
+/** The separator between the two ends of a factor span. */
+const SPAN_SEPARATOR = " … ";
+
+function factorDeltaLabel(
+  factor: number,
+  locale: Locale,
+  noChange: string,
 ): string {
-  return formatFrom(lowestCell(pricing), locale);
+  return factor === 1 ? noChange : formatSignedPercent(factor - 1, locale);
+}
+
+/**
+ * The priced conditions, as percents a buyer can read.
+ *
+ * Turns the multipliers in `modifiers.ts` into per-option delta labels and a
+ * span per group. These are the only numbers the "what determines cost"
+ * explanation may print, and they are computed from the factors the estimate
+ * engine multiplies by — the explanation cannot drift from the engine.
+ */
+export function factorViews(locale: Locale): readonly FactorGroupView[] {
+  const copy = pricingCopy(locale).factors;
+
+  return FACTOR_GROUP_IDS.map((id) => {
+    const group = FACTOR_GROUPS[id];
+    const text = copy.groups[id];
+
+    const options = group.optionIds.map((optionId) => {
+      const factor = (group.factors[optionId] ?? NEUTRAL_FACTOR).price;
+      return {
+        id: optionId,
+        label: text.options[optionId]?.label ?? optionId,
+        factor,
+        deltaLabel: factorDeltaLabel(factor, locale, copy.noChange),
+        isNeutral: factor === 1,
+      };
+    });
+
+    const sorted = [...options].sort((a, b) => a.factor - b.factor);
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+
+    return {
+      id,
+      label: text.label,
+      options,
+      spanLabel:
+        first && last
+          ? `${first.deltaLabel}${SPAN_SEPARATOR}${last.deltaLabel}`
+          : "",
+    };
+  });
+}
+
+export interface PricingDriverView {
+  readonly id: PricingDriverId;
+  readonly effect: PricingDriverEffect;
+  /** The factor groups that explain this driver's percents; empty for reviewed and monthly items. */
+  readonly groups: readonly FactorGroupView[];
+  /**
+   * The driver's overall span across its groups, or null when nothing priced
+   * is attached (a matrix axis, a reviewed item, a monthly plan).
+   */
+  readonly spanLabel: string | null;
+}
+
+/**
+ * What determines cost, one row per driver, with the real percents attached
+ * where a driver is a priced condition. Wording is app copy; the structure and
+ * every number are this package's.
+ */
+export function pricingDriverViews(
+  locale: Locale,
+): readonly PricingDriverView[] {
+  const groups = factorViews(locale);
+  const noChange = pricingCopy(locale).factors.noChange;
+
+  return PRICING_DRIVERS.map((driver) => {
+    const attached = driver.factorGroups
+      .map((id) => groups.find((g) => g.id === id))
+      .filter((g): g is FactorGroupView => g !== undefined);
+
+    const options = attached.flatMap((g) => g.options);
+    const sorted = [...options].sort((a, b) => a.factor - b.factor);
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+
+    return {
+      id: driver.id,
+      effect: driver.effect,
+      groups: attached,
+      spanLabel:
+        first && last
+          ? `${factorDeltaLabel(first.factor, locale, noChange)}${SPAN_SEPARATOR}${factorDeltaLabel(last.factor, locale, noChange)}`
+          : null,
+    };
+  });
+}
+
+export interface ScopeNoteView {
+  readonly id: ScopeNoteId;
+  readonly name: string;
+  readonly description: string;
+}
+
+/** The unpriced scope notes a buyer can tick, in display order. */
+export function scopeNoteViews(locale: Locale): readonly ScopeNoteView[] {
+  const copy = pricingCopy(locale).scopeNotes;
+  return SCOPE_NOTE_IDS.map((id) => ({
+    id,
+    name: copy[id].name,
+    description: copy[id].description,
+  }));
+}
+
+/**
+ * The widest range the estimator publishes before any answer, as labels.
+ * The estimator opens on this and every pricing page that says "from … to …"
+ * about the whole offer reads it.
+ */
+export function estimateSpanLabels(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): { readonly priceLabel: string; readonly weeksLabel: string } {
+  const span = estimateSpan({}, pricing);
+  return {
+    priceLabel: formatRange({ min: span.minPrice, max: span.maxPrice }, locale),
+    weeksLabel: formatWeeks(span.minWeeks, span.maxWeeks, locale),
+  };
 }
 
 /**
@@ -256,9 +480,7 @@ export function deliveryWindowFrom(
 
 /** The engagement floor: the lowest published cell in the matrix. */
 function lowestCell(pricing: ResolvedPricing): number {
-  return Math.min(
-    ...Object.values(pricing.services).map((s) => s.price.basic.min),
-  );
+  return minimumEngagementFrom(pricing);
 }
 
 /**
@@ -290,6 +512,14 @@ export interface MaintenanceView {
   /** Formatted price, or the locale's "Custom" wording when quote-only. */
   readonly priceLabel: string;
   readonly cycleLabel: string;
+  /**
+   * The same plan paid a year up front: the yearly figure and its cycle
+   * wording. Null when quote-only.
+   */
+  readonly annual: {
+    readonly priceLabel: string;
+    readonly cycleLabel: string;
+  } | null;
   readonly isCustomQuote: boolean;
   /** Descriptive bullets plus the templated scope and portal lines. */
   readonly features: readonly string[];
@@ -337,6 +567,22 @@ function maintenanceFeatures(
   return features;
 }
 
+function annualView(
+  plan: MaintenancePlan,
+  locale: Locale,
+): MaintenanceView["annual"] {
+  const price = maintenanceIntervalPrice(plan, "annual");
+  if (price === null) return null;
+
+  return {
+    priceLabel: formatMoney(price, locale),
+    cycleLabel: pricingCopy(locale).maintenanceTemplates.perCycle.annual,
+  };
+}
+
+/** Months a year paid up front does not charge for — for "{n} months free" copy. */
+export const MAINTENANCE_ANNUAL_FREE_MONTHS = maintenanceFreeMonths("annual");
+
 export function maintenanceViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -353,6 +599,7 @@ export function maintenanceViews(
       priceLabel:
         plan.price === null ? tpl.customPrice : formatMoney(plan.price, locale),
       cycleLabel: plan.price === null ? "" : tpl.perCycle[plan.billingCycle],
+      annual: annualView(plan, locale),
       isCustomQuote: plan.price === null,
       features: maintenanceFeatures(plan, locale),
       overageNote:
@@ -533,6 +780,72 @@ export function termsView(
   };
 }
 
+export interface PaymentMilestoneView {
+  /** The share as a number, e.g. 50. */
+  readonly percent: number;
+  /** The share as text, e.g. "50%" / "٥٠٪". */
+  readonly percentLabel: string;
+  /** The milestone sentence, e.g. "50% to start". */
+  readonly label: string;
+}
+
+export interface PaymentScheduleView {
+  /** In `paymentSplit` order: start, development milestone, before launch. */
+  readonly milestones: readonly [
+    PaymentMilestoneView,
+    PaymentMilestoneView,
+    PaymentMilestoneView,
+  ];
+  /** The middle trigger on its own: "a development milestone". */
+  readonly milestoneTrigger: string;
+  /** "All figures exclude VAT at 14%." */
+  readonly vatExcluded: string;
+  readonly ownership: string;
+  /** "30 days from the date of issue." */
+  readonly validity: string;
+  readonly validityDays: number;
+  readonly validityDaysLabel: string;
+}
+
+/**
+ * The payment schedule and the terms that travel with a figure.
+ *
+ * The three milestones are `paymentSplit` joined to the trigger copy, so the
+ * pricing page, the FAQ, a proposal and a contract all describe the same
+ * schedule in the same words — and an edit to the split moves all of them.
+ */
+export function paymentScheduleView(
+  locale: Locale,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): PaymentScheduleView {
+  const t = pricingCopy(locale).terms;
+  const terms = pricing.terms;
+
+  const milestone = (index: 0 | 1 | 2): PaymentMilestoneView => {
+    const percent = terms.paymentSplit[index];
+    const percentLabel = formatPercentLabel(percent / 100, locale);
+    return {
+      percent,
+      percentLabel,
+      label: fillTemplate(t.paymentTriggers[index], { p: percentLabel }),
+    };
+  };
+
+  return {
+    milestones: [milestone(0), milestone(1), milestone(2)],
+    milestoneTrigger: t.milestoneTrigger,
+    vatExcluded: fillTemplate(t.vatExcluded, {
+      rate: formatPercent(terms.vatRate, locale),
+    }),
+    ownership: t.ownership,
+    validity: fillTemplate(t.validity, {
+      days: formatNumber(terms.proposalValidityDays, locale),
+    }),
+    validityDays: terms.proposalValidityDays,
+    validityDaysLabel: formatNumber(terms.proposalValidityDays, locale),
+  };
+}
+
 /**
  * Named figures for prose interpolation.
  *
@@ -556,13 +869,19 @@ export function pricingTokens(
     // What that fee is worth against a build. Prose that states the credit
     // quotes this, so the sentence cannot outlive the rule it describes.
     auditCredit: formatMoney(consultingCreditAmount(audit), locale),
-    essentialRange: formatRange(tierRangeFrom("essential", pricing), locale),
+    // The website/basic cell: the smallest build the matrix publishes.
+    essentialRange: formatRange(pricing.services.website.price.basic, locale),
     maintenanceEssential:
       essential.price === null ? "" : formatMoney(essential.price, locale),
     maintenanceProfessional:
       professional.price === null
         ? ""
         : formatMoney(professional.price, locale),
+    // The same plans paid a year up front. Derived, so the FAQ's yearly figure
+    // moves with the monthly one.
+    maintenanceEssentialAnnual: annualView(essential, locale)?.priceLabel ?? "",
+    maintenanceProfessionalAnnual:
+      annualView(professional, locale)?.priceLabel ?? "",
     minimumEngagement: formatMoney(lowestCell(pricing), locale),
     revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
     vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
@@ -575,6 +894,26 @@ export function pricingTokens(
     deliveryWeeksMin: formatNumber(deliveryWindowFrom(pricing).min, locale),
     deliveryWeeksMax: formatNumber(deliveryWindowFrom(pricing).max, locale),
     deliveryCeilingWeeks: formatNumber(MAX_DELIVERY_WEEKS, locale),
+    // The payment schedule. Prose that names a milestone quotes these, so the
+    // FAQ, the terms page and a contract cannot split the same price
+    // three different ways.
+    paymentStart: formatPercentLabel(
+      COMMERCIAL_TERMS.paymentSplit[0] / 100,
+      locale,
+    ),
+    paymentMilestone: formatPercentLabel(
+      COMMERCIAL_TERMS.paymentSplit[1] / 100,
+      locale,
+    ),
+    paymentFinal: formatPercentLabel(
+      COMMERCIAL_TERMS.paymentSplit[2] / 100,
+      locale,
+    ),
+    milestoneTrigger: pricingCopy(locale).terms.milestoneTrigger,
+    proposalValidityDays: formatNumber(
+      COMMERCIAL_TERMS.proposalValidityDays,
+      locale,
+    ),
   };
 }
 

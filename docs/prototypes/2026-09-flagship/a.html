@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A · Case file</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Theme before paint: follow the OS unless a toggle says otherwise.
+  (function () {
+    var dark = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  })();
+</script>
+<style>
+/* ── Tokens — shell copied from 2026-09-problem-section/c.html ──────────
+   packages/ui/src/styles/tokens.css  :root / .dark
+   apps/www/app/globals.css  .accent-world-green / .dark .accent-world-green
+   apps/www/app/globals.css  --radius: 1rem → --radius-ctl: var(--radius) */
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted-foreground: 0 0% 40%;
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --control-edge: hsl(var(--foreground) / 0.45);
+  --radius-ctl: 1rem;
+
+  /* accent-world-green (light) */
+  --local-accent: hsl(158 64% 30%);
+  --local-accent-text: var(--local-accent);
+
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-vazirmatn: "Vazirmatn", sans-serif;
+
+  --section-y-top: clamp(5rem, 10vh, 8rem);
+  --section-y-bottom: clamp(5rem, 14vh, 10rem);
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --d-fast: 200ms;
+  --d-mid: 320ms;
+  --d-slow: 500ms;
+  --d-draw: 700ms;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --muted-foreground: 0 0% 58%;
+  --s-border: hsl(var(--n-0) / 0.1);
+
+  /* .dark .accent-world-green */
+  --local-accent: hsl(158 36% 49%);
+  --local-accent-text: var(--local-accent);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 400ms var(--ease), color 400ms var(--ease);
+}
+[dir="rtl"] body { font-family: var(--font-vazirmatn); }
+
+.container {
+  width: 100%;
+  max-width: 1408px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+@media (min-width: 640px)  { .container { padding-inline: 32px; } }
+@media (min-width: 768px)  { .container { padding-inline: 48px; } }
+@media (min-width: 1024px) { .container { padding-inline: 64px; } }
+
+/* ── Prototype chrome (always LTR, physical sides) ───────────────────── */
+.proto-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+  padding: 72px 16px 0 16px;
+  text-align: left;
+}
+@media (min-width: 640px) { .proto-label { padding: 20px 260px 0 20px; } }
+
+.toolbar { position: fixed; top: 12px; right: 12px; z-index: 50; display: flex; gap: 8px; }
+.seg {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  background: hsl(var(--background));
+}
+.seg button {
+  font: 500 12px/1 var(--font-inter);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 12px;
+  min-width: 44px;
+  min-height: 32px;
+  cursor: pointer;
+  transition: color var(--d-fast) var(--ease), background-color var(--d-fast) var(--ease);
+}
+.seg button[aria-pressed="true"] { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.seg button:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 2px; }
+
+/* ── House type ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+[dir="rtl"] .eyebrow { font-family: var(--font-vazirmatn); letter-spacing: 0; text-transform: none; }
+
+.section-title {
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(28px, 4.5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+[dir="rtl"] .section-title { font-family: var(--font-vazirmatn); letter-spacing: 0; line-height: 1.3; }
+
+.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+[dir="rtl"] .num { font-family: var(--font-vazirmatn); }
+
+/* ── Context stubs ───────────────────────────────────────────────────── */
+.stub-above { padding-top: 48px; padding-bottom: 72px; }
+.stub-above p { font-size: 0.9375rem; color: hsl(var(--muted-foreground)); max-width: 60ch; }
+.stub-above .ghosts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.stub-above .ghost {
+  font-size: 0.875rem;
+  line-height: 1;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+  color: hsl(var(--foreground));
+}
+.stub-below {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: 40vh;
+}
+.stub-below .section-title { color: hsl(var(--foreground) / 0.35); }
+
+/* ── The case file ───────────────────────────────────────────────────── */
+.flagship { padding-bottom: var(--section-y-bottom); }
+
+/* The record opens with the ledger-head rule. */
+.file { border-top: 2px solid hsl(var(--foreground)); }
+
+.file-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding-top: 1.25rem;
+}
+
+/* "Live — you're on it": the page itself is the exhibit. */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  border-radius: 999px;
+}
+[dir="rtl"] .live { font-family: var(--font-vazirmatn); font-size: 0.875rem; letter-spacing: 0; }
+.live:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 4px; }
+.dot {
+  position: relative;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--local-accent);
+}
+/* One soft ring, once, when the chip enters — never a loop. */
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--local-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.live.pulse .dot::after { animation: ring 1400ms var(--ease) 200ms 1 both; }
+@keyframes ring {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
+.file-title {
+  margin-top: clamp(2.5rem, 5vw, 4rem);
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+[dir="rtl"] .file-title { font-family: var(--font-vazirmatn); font-weight: 500; letter-spacing: 0; line-height: 1.35; max-width: 20ch; }
+
+.problem-line {
+  margin-top: 1.25rem;
+  max-width: 52ch;
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+[dir="rtl"] .problem-line { line-height: 1.8; }
+
+/* The register: three facts as hairline rows. */
+.facts { list-style: none; margin-top: clamp(3rem, 6vw, 4.5rem); }
+
+.fact {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  grid-template-areas:
+    "idx label"
+    "text text";
+  column-gap: 0.75rem;
+  row-gap: 0.75rem;
+  align-items: baseline;
+  padding-block: 1.75rem;
+}
+@media (min-width: 640px) { .fact { padding-block: 2.25rem; } }
+@media (min-width: 1024px) {
+  .fact {
+    grid-template-columns: 3rem 16rem minmax(0, 1fr);
+    grid-template-areas: "idx label text";
+    column-gap: 2rem;
+    padding-block: 2.75rem;
+  }
+}
+
+/* Each row's hairline is its own element so it can draw start → end. */
+.fact-rule {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: var(--border-subtle);
+  transform-origin: left center;
+}
+[dir="rtl"] .fact-rule { transform-origin: right center; }
+
+.fact-idx {
+  grid-area: idx;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  letter-spacing: 0.08em;
+  color: hsl(var(--muted-foreground));
+}
+[dir="rtl"] .fact-idx { letter-spacing: 0; font-size: 0.9375rem; }
+
+.fact-label {
+  grid-area: label;
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(1.25rem, 1.1rem + 0.4vw, 1.5rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+  text-wrap: balance;
+}
+[dir="rtl"] .fact-label { font-family: var(--font-vazirmatn); font-weight: 500; letter-spacing: 0; line-height: 1.5; }
+
+.fact-body { grid-area: text; min-width: 0; }
+.fact-text {
+  max-width: 56ch;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+@media (min-width: 1024px) { .fact-text { font-size: 1.125rem; } }
+[dir="rtl"] .fact-text { line-height: 1.85; }
+
+/* Readout tokens — the pass lines, in the hero's readout voice. */
+.readouts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.125rem; list-style: none; }
+.readout {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--control-edge);
+  border-radius: var(--radius-ctl);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.readout .k { letter-spacing: 0.08em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+.readout .v { color: hsl(var(--foreground)); }
+[dir="rtl"] .readout .v { font-family: var(--font-vazirmatn); font-size: 0.8125rem; }
+
+.measured {
+  display: inline-block;
+  margin-top: 0.875rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--local-accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  text-decoration-color: color-mix(in srgb, var(--local-accent) 40%, transparent);
+  transition: text-decoration-color var(--d-fast) var(--ease);
+}
+.measured:hover { text-decoration-color: var(--local-accent); }
+.measured:focus-visible, .read:focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 3px; border-radius: 2px; }
+
+/* Footer of the record. */
+.file-foot {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+}
+.file-foot .fact-rule { top: 0; }
+
+.read {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 44px;
+  font-family: var(--font-outfit);
+  font-size: 1.125rem;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+}
+[dir="rtl"] .read { font-family: var(--font-vazirmatn); font-weight: 500; }
+.read .label {
+  padding-bottom: 2px;
+  background-image:
+    linear-gradient(hsl(var(--foreground)), hsl(var(--foreground))),
+    linear-gradient(hsl(var(--foreground) / 0.25), hsl(var(--foreground) / 0.25));
+  background-repeat: no-repeat;
+  background-size: 0% 1px, 100% 1px;
+  background-position: left bottom, left bottom;
+  transition: background-size var(--d-slow) var(--ease);
+}
+[dir="rtl"] .read .label { background-position: right bottom, right bottom; }
+.read .arrow { display: inline-block; transition: transform var(--d-mid) var(--ease); }
+@media (hover: hover) and (pointer: fine) {
+  .read:hover .label { background-size: 100% 1px, 100% 1px; }
+  .read:hover .arrow { transform: translateX(4px); }
+  [dir="rtl"] .read:hover .arrow { transform: translateX(-4px); }
+}
+.read:focus-visible .label { background-size: 100% 1px, 100% 1px; }
+
+/* ── Motion: rule draws, then (LTR only) text rises 8px ──────────────── */
+.motion .fact-rule { transform: scaleX(0); }
+.motion .reveal-row.in .fact-rule {
+  transform: scaleX(1);
+  transition: transform var(--d-draw) var(--ease);
+}
+[dir="ltr"].motion .fact-copy { opacity: 0; transform: translateY(8px); }
+[dir="ltr"].motion .reveal-row.in .fact-copy {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--d-slow) var(--ease) 380ms, transform var(--d-slow) var(--ease) 380ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    animation: none !important;
+  }
+}
+</style>
+</head>
+<body id="top">
+
+<div class="toolbar" dir="ltr" role="group" aria-label="Prototype controls">
+  <div class="seg" role="group" aria-label="Language">
+    <button type="button" data-lang="en" aria-pressed="true">EN</button>
+    <button type="button" data-lang="ar" aria-pressed="false" lang="ar">AR</button>
+  </div>
+  <div class="seg" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-pressed="true">Light</button>
+    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+  </div>
+</div>
+
+<p class="proto-label" dir="ltr">Prototype A — Case file</p>
+
+<!-- Stub: the tail of the Work section, so the block is judged in place. -->
+<div class="container stub-above" aria-hidden="true">
+  <p data-i18n="stubAbove"></p>
+  <div class="ghosts">
+    <span class="ghost" data-i18n="ghost1"></span>
+    <span class="ghost" data-i18n="ghost2"></span>
+  </div>
+</div>
+
+<section class="flagship" aria-labelledby="flagship-title">
+  <div class="container">
+    <article class="file">
+      <div class="file-head">
+        <p class="eyebrow" data-i18n="eyebrow"></p>
+        <a class="live" id="live" href="#top">
+          <span class="dot" aria-hidden="true"></span>
+          <span data-i18n="live"></span>
+        </a>
+      </div>
+
+      <h3 id="flagship-title" class="file-title"><span id="title"></span></h3>
+      <p class="problem-line" data-i18n="problem"></p>
+
+      <ol class="facts" id="facts"></ol>
+
+      <div class="file-foot reveal-row">
+        <span class="fact-rule" aria-hidden="true"></span>
+        <a class="read" href="#case-study">
+          <span class="label" data-i18n="read"></span>
+          <span class="arrow" aria-hidden="true" data-i18n="arrow"></span>
+        </a>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Stub: the next section's heading. -->
+<div class="stub-below" aria-hidden="true">
+  <div class="container">
+    <p class="section-title" data-i18n="stubBelow"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var COPY = {
+    en: {
+      stubAbove: "Two production builds are live today - inspect the sites, then read the case studies for scope and architecture.",
+      ghost1: "Visit project",
+      ghost2: "Read the case study",
+      eyebrow: "Flagship case study",
+      live: "Live — you're on it",
+      titleHtml: "Altruvex.com — the site had to be its own proof.",
+      problem: "An engineering studio with no track record can't borrow credibility. The site had to earn it on its own.",
+      facts: [
+        { label: "Two languages, as equals", text: "Arabic and English built as one system — not a translated copy. Switch the language at the top and the layout follows." },
+        { label: "Measured, not claimed", text: "Held to the pass lines we publish: Lighthouse 95+, largest paint under 2.5 s, layout shift under 0.1. The top of this page measures them in your browser." },
+        { label: "The budget question, answered first", text: "A price estimator that gives an honest range before anyone gets on a call." }
+      ],
+      readouts: [["Lighthouse", "≥ 95"], ["LCP", "< 2.5 s"], ["CLS", "< 0.1"]],
+      measured: "Measured at the top of this page ↑",
+      read: "Read the case study",
+      arrow: "→",
+      stubBelow: "05 — Trust"
+    },
+    ar: {
+      stubAbove: "بناءان إنتاجيان يعملان اليوم - افحص المواقع ثم اقرأ دراسات الحالة للنطاق والبنية.",
+      ghost1: "زيارة المشروع",
+      ghost2: "اقرأ دراسة الحالة",
+      eyebrow: "دراسة الحالة الرئيسية",
+      live: "مباشر — أنت عليه الآن",
+      titleHtml: "<bdi>Altruvex.com</bdi> — كان على الموقع أن يكون دليله بنفسه.",
+      problem: "استوديو هندسي بلا سجل أعمال لا يستطيع أن يستعير المصداقية. كان على الموقع أن يكسبها بنفسه.",
+      facts: [
+        { label: "لغتان على قدم المساواة", text: "العربية والإنجليزية مبنيّتان كنظام واحد — لا نسخة مترجمة. بدّل اللغة في الأعلى وسيتبعها التخطيط." },
+        { label: "مقيس، لا مُدّعى", text: "يخضع لخطوط النجاح التي ننشرها: Lighthouse ‏95+، وأكبر عرض أقل من ٢٫٥ ثانية، واهتزاز التخطيط أقل من ٠٫١. أعلى هذه الصفحة يقيسها في متصفحك." },
+        { label: "سؤال الميزانية، مُجاب أولًا", text: "مقدّر أسعار يعطي نطاقًا صادقًا قبل أي مكالمة." }
+      ],
+      readouts: [["Lighthouse", "≥ ٩٥"], ["LCP", "< ٢٫٥ ث"], ["CLS", "< ٠٫١"]],
+      measured: "مقيسة في أعلى هذه الصفحة ↑",
+      read: "اقرأ دراسة الحالة",
+      arrow: "←",
+      stubBelow: "٠٥ — الثقة"
+    }
+  };
+
+  var ARABIC_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+  var root = document.documentElement;
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var lang = "en";
+
+  function pad(n) {
+    var s = n < 10 ? "0" + n : String(n);
+    return lang === "ar" ? s.replace(/\d/g, function (d) { return ARABIC_DIGITS[d]; }) : s;
+  }
+
+  // Rows are built once; a language switch only swaps text, so drawn state survives.
+  var factsEl = document.getElementById("facts");
+  var rows = [0, 1, 2].map(function (i) {
+    var li = document.createElement("li");
+    li.className = "fact reveal-row";
+    li.innerHTML =
+      '<span class="fact-rule" aria-hidden="true"></span>' +
+      '<span class="fact-idx num fact-copy" aria-hidden="true"></span>' +
+      '<h4 class="fact-label fact-copy"></h4>' +
+      '<div class="fact-body fact-copy"><p class="fact-text"></p></div>';
+    factsEl.appendChild(li);
+    var r = {
+      li: li,
+      idx: li.querySelector(".fact-idx"),
+      label: li.querySelector(".fact-label"),
+      text: li.querySelector(".fact-text"),
+      body: li.querySelector(".fact-body")
+    };
+    if (i === 1) {
+      r.readouts = document.createElement("ul");
+      r.readouts.className = "readouts";
+      r.body.appendChild(r.readouts);
+      r.measured = document.createElement("a");
+      r.measured.className = "measured";
+      r.measured.href = "#top";
+      r.body.appendChild(r.measured);
+    }
+    return r;
+  });
+
+  function applyCopy() {
+    var c = COPY[lang];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = c[el.getAttribute("data-i18n")];
+    });
+    document.getElementById("title").innerHTML = c.titleHtml;
+    rows.forEach(function (r, i) {
+      r.idx.textContent = pad(i + 1);
+      r.label.textContent = c.facts[i].label;
+      r.text.textContent = c.facts[i].text;
+      if (r.readouts) {
+        // Pills follow the page direction: in RTL the Latin metric sits first (right),
+        // and "<" mirrors as bidi intends, so the token reads as Arabic reads.
+        r.readouts.innerHTML = c.readouts.map(function (p) {
+          return '<li class="readout"><span class="k">' + p[0] + '</span><span class="v">' + p[1] + "</span></li>";
+        }).join("");
+        r.measured.textContent = c.measured;
+      }
+    });
+  }
+
+  function setLang(next) {
+    lang = next;
+    root.lang = next;
+    root.dir = next === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.lang === next ? "true" : "false");
+    });
+    applyCopy();
+  }
+
+  function setTheme(next) {
+    root.setAttribute("data-theme", next);
+    document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.themeSet === next ? "true" : "false");
+    });
+  }
+
+  // One motion idea: rows enter in order — the rule draws, then the text rises (LTR).
+  var revealRows = Array.prototype.slice.call(document.querySelectorAll(".reveal-row"));
+  var live = document.getElementById("live");
+  function showAll() { revealRows.forEach(function (r) { r.classList.add("in"); }); }
+
+  if (reduce.matches || !("IntersectionObserver" in window)) {
+    showAll();
+  } else {
+    root.classList.add("motion");
+    var queue = [];
+    var busy = false;
+    function next() {
+      if (!queue.length) { busy = false; return; }
+      busy = true;
+      queue.shift().classList.add("in");
+      setTimeout(next, 180); // stagger so rows landing together still read in order
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.filter(function (e) { return e.isIntersecting; })
+        .sort(function (a, b) { return revealRows.indexOf(a.target) - revealRows.indexOf(b.target); })
+        .forEach(function (e) { queue.push(e.target); io.unobserve(e.target); });
+      if (!busy) next();
+    }, { threshold: 0.3 });
+    revealRows.forEach(function (r) { io.observe(r); });
+
+    var pio = new IntersectionObserver(function (entries) {
+      if (entries[0].isIntersecting) { live.classList.add("pulse"); pio.disconnect(); }
+    }, { threshold: 1 });
+    pio.observe(live);
+  }
+  reduce.addEventListener && reduce.addEventListener("change", function (e) {
+    if (e.matches) { root.classList.remove("motion"); showAll(); }
+  });
+
+  document.querySelectorAll("[data-lang]").forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+  document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.dataset.themeSet); });
+  });
+
+  setTheme(root.getAttribute("data-theme") || "light");
+  setLang("en");
+})();
+</script>
+</body>
+</html>

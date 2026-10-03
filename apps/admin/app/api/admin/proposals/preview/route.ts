@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdminSession } from "@/lib/require-admin";
+import { NextResponse } from "next/server";
+import { withAdmin } from "@/lib/with-admin";
 import { buildProposalPptx } from "@/lib/proposal-builder";
 import { renderPptxToPngs } from "@/lib/pptx-to-images";
 import { getCompanySettings } from "@/lib/company-settings";
@@ -9,15 +9,8 @@ import { ProposalQaError, runProposalContentGate } from "@/lib/proposal-qa";
  * Renders unsaved form state to slide images so the admin can see the deck
  * before committing to a generate. Nothing is persisted here.
  */
-export async function POST(request: NextRequest) {
+export const POST = withAdmin(async (request) => {
   try {
-    if (!(await requireAdminSession(request))) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
     const body = await request.json();
 
     let content;
@@ -90,4 +83,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
+}, { can: ["create", "proposal"] });

@@ -6,11 +6,9 @@ const envSchema = z.object({
   BETTER_AUTH_SECRET: z.string().min(1),
   BETTER_AUTH_URL: z.string().url().optional(),
   ADMIN_SECRET: z.string().optional(),
-  ADMIN_SECRET_PEPPER: z.string().optional(),
   ADMIN_EMAIL: z.string().email().optional(),
   WHATSAPP_ACCESS_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
-  WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().optional(),
   WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().optional(),
   WHATSAPP_APP_SECRET: z.string().optional(),
   WHATSAPP_API_VERSION: z.string().optional(),
@@ -45,11 +43,29 @@ const envSchema = z.object({
   // The admin app's own address. Only used to make Slack messages clickable —
   // without it they still send, just without links.
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
+  // Any S3-compatible bucket (Neon, R2, S3, MinIO); read by lib/storage.ts,
+  // which documents the order the three sets of names are tried in. First,
+  // Neon's block exactly as its console hands it out:
+  AWS_ENDPOINT_URL_S3: z.string().url().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_REGION: z.string().optional(),
+  // The same values under names no host reserves (Vercel claims AWS_*).
+  STORAGE_ENDPOINT: z.string().url().optional(),
+  STORAGE_REGION: z.string().optional(),
+  STORAGE_ACCESS_KEY_ID: z.string().optional(),
+  STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+  STORAGE_BUCKET: z.string().optional(),
+  STORAGE_PUBLIC_URL: z.string().optional(),
+  STORAGE_PRIVATE: z.enum(["true", "false"]).optional(),
+  // The names above before they were provider-neutral. Still read as a
+  // fallback so an unrenamed deployment keeps its bucket.
   R2_ACCOUNT_ID: z.string().optional(),
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),
   R2_PUBLIC_URL: z.string().optional(),
+  R2_PRIVATE: z.enum(["true", "false"]).optional(),
   // Wiring the admin app to the public site's cache. Both optional: without
   // them a price change still saves and still reaches the site, just on the
   // public cache's own timer rather than immediately.

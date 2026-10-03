@@ -5,52 +5,71 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { VercelAnalytics } from "@/components/shared/vercel-analytics";
 import { routing } from "@/i18n/routing";
 import "@/lib/config/env";
+import { ARRIVAL_CSS, ARRIVAL_HOLD_SCRIPT } from "@/lib/motion/utils/arrival";
 import { buildGlobalSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { pricingTokens, type Locale } from "@repo/pricing-schema";
 import { cn } from "@/lib/utils/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Geist_Mono, Inter, Outfit, Vazirmatn } from "next/font/google";
+import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
 
-// No `weight` array: these are all variable fonts, so next/font serves one
-// variable file per family (full wght axis) instead of a static file per
-// weight — fewer requests, and intermediate weights (500 in Inter) render
-// for real instead of being browser-synthesized.
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic"],
-  variable: "--font-vazirmatn",
-  display: "swap",
+// Altruvex Sans (packages/brand-font) is the only face the site loads: headings,
+// body text and labels, in both scripts (Ali, 2026-10-01). Two
+// families, one per script; globals.css orders them per locale into
+// --font-brand. adjustFontFallback is off because the package ships its own
+// fallback faces, measured per script (dist/web/fallback.css), which
+// next/font's single Arial fallback cannot match for Arabic.
+//
+// display: "optional", not "swap" (Ali, 2026-09-30): a heading must never
+// change line count after first paint. The fallback is fitted to the corpus
+// average, so a short balanced heading near a wrap boundary can still differ by
+// a line (measured in dist/font-loading-report.json). With "optional" the page
+// keeps whichever face it painted with; the preload below is what makes that
+// face the brand one on a normal connection. Both preloads stay on every
+// locale: without them "optional" would drop to the fallback on first visits.
+//
+// The Latin family carries the drawn italic (packages/brand-font/tools/italic.py,
+// 2026-10-03) at the two weights the site sets in italic: 300 for the emphasis
+// clause in headings (components/ui/emphasis.tsx) and 400 for italic in body
+// text. Both are preloaded with the upright, since headings sit above the fold
+// and "optional" would otherwise keep a synthetic slant on first visits.
+const brandLatin = localFont({
+  src: [
+    {
+      path: "../../node_modules/@repo/brand-font/dist/web/AltruvexSansLatin-VF.woff2",
+      weight: "100 900",
+      style: "normal",
+    },
+    {
+      path: "../../node_modules/@repo/brand-font/dist/web/AltruvexSansLatin-Italic-300.woff2",
+      weight: "300",
+      style: "italic",
+    },
+    {
+      path: "../../node_modules/@repo/brand-font/dist/web/AltruvexSansLatin-Italic-400.woff2",
+      weight: "400",
+      style: "italic",
+    },
+  ],
+  variable: "--font-brand-latin",
+  display: "optional",
+  adjustFontFallback: false,
   preload: true,
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
+const brandArabic = localFont({
+  src: "../../node_modules/@repo/brand-font/dist/web/AltruvexSansArabic-VF.woff2",
+  weight: "100 900",
+  variable: "--font-brand-arabic",
+  display: "optional",
+  adjustFontFallback: false,
   preload: true,
 });
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-  preload: true,
-});
-
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-  // Mono is only rendered on the contact/error pages (mono labels), never in
-  // the initial viewport of the primary routes — but it's applied to <body> on
-  // every page. Preloading it would put it on the critical path site-wide and
-  // compete with the real LCP fonts (Outfit/Inter/Vazirmatn). Load on demand.
-  preload: false,
-});
 
 type Props = {
   children: React.ReactNode;
@@ -59,13 +78,6 @@ type Props = {
 
 export default async function RootLayout({ children, params }: Props) {
   const { locale } = await params;
-  // Vazirmatn is defined on every locale: English pages still print Arabic
-  // (the language switcher names "العربية" in its own script). The arabic
-  // subset's unicode-range means a page without Arabic glyphs never fetches it.
-  const primaryFontVariable =
-    locale === "ar"
-      ? vazirmatn.variable
-      : cn(inter.variable, vazirmatn.variable);
 
   if (!hasLocale(routing.locales, locale)) {
     notFound();
@@ -84,15 +96,20 @@ export default async function RootLayout({ children, params }: Props) {
       lang={locale}
       suppressHydrationWarning
       dir={locale === "ar" ? "rtl" : "ltr"}
+      // On <html>, not <body>: --font-brand is resolved on :root, where
+      // Tailwind's preflight reads --font-sans.
+      className={cn(brandLatin.variable, brandArabic.variable)}
     >
-      <head />
+      <head>
+        {/* First-paint arrivals (lib/motion/utils/arrival.ts): the hold runs
+            during parse, before the page paints. */}
+        <script dangerouslySetInnerHTML={{ __html: ARRIVAL_HOLD_SCRIPT }} />
+        <style dangerouslySetInnerHTML={{ __html: ARRIVAL_CSS }} />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
           "min-h-screen flex flex-col antialiased overflow-x-auto",
-          primaryFontVariable,
-          outfit.variable,
-          geistMono.variable,
         )}
       >
         <a

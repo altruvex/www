@@ -15,7 +15,19 @@ export default async function EditClientPage({
 
   const client = await prisma.client.findUnique({
     where: { id },
-    select: { id: true, name: true, phone: true, email: true, company: true, industry: true },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      email: true,
+      company: true,
+      industry: true,
+      website: true,
+      country: true,
+      address: true,
+      billingEmail: true,
+      taxId: true,
+    },
   });
 
   if (!client) notFound();
@@ -43,6 +55,11 @@ export default async function EditClientPage({
               email: client.email ?? "",
               company: client.company ?? "",
               industry: client.industry ?? "",
+              website: client.website ?? "",
+              country: client.country ?? "",
+              address: client.address ?? "",
+              billingEmail: client.billingEmail ?? "",
+              taxId: client.taxId ?? "",
             }}
           />
         </Panel>

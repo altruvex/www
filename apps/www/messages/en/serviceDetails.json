@@ -23,14 +23,6 @@
         "title": "Technical consulting questions"
       }
     },
-    "cta": {
-      "auditLink": "Or Start with the Audit",
-      "button": "Book a Strategy Session",
-      "description": "Spend 30 minutes mapping your constraints. You will leave with a clear technical direction — <strong>no commitment required.</strong>",
-      "eyebrow": "Ready to Decide",
-      "title": "Not sure",
-      "titleAccent": "which direction to build?"
-    },
     "audit": {
       "hero": {
         "eyebrow": "Technical consulting & web audits",
@@ -39,69 +31,8 @@
         "subtitle": "Evidence-based technical direction for engineering teams.",
         "description": "A <strong>fixed-scope, evidence-based decision layer</strong> for teams facing a rebuild, a slow platform, or an unclear technical direction."
       },
-      "register": {
-        "eyebrow": "01 — What an audit produces",
-        "title": "The order",
-        "titleAccent": "is the product.",
-        "description": "Anyone can hand you a list of problems. The audit hands you the sequence — what to fix first, what can safely wait, and why. Three passes over the same eighteen checks.",
-        "axisLabel": "Order the register",
-        "columns": {
-          "rank": "Rank",
-          "check": "What is examined",
-          "leverage": "Leverage · risk / effort"
-        },
-        "weights": "R{risk} / E{effort}",
-        "orders": {
-          "found": {
-            "label": "As found",
-            "axis": "The order the scan produces them in",
-            "verdict": "As found. The bars are scattered — nothing here tells you where to start."
-          },
-          "risk": {
-            "label": "By risk",
-            "axis": "Worst first — where most audits stop",
-            "verdict": "By risk. Worst first, and still ragged: the top row is the heaviest job on the list, and the fourth carries the same risk for a fraction of the work."
-          },
-          "sequence": {
-            "label": "Audit order",
-            "axis": "Risk removed per unit of effort",
-            "verdict": "Audit order. The bars fall as a staircase, because this is the only ordering the measure agrees with. It is also the only one you can start on a Monday."
-          }
-        },
-        "honesty": "These are the check classes a technical audit covers — not findings invented for a client who does not exist. Risk and effort are 1–5 bands, and the ordering rule is computed in front of you rather than asserted.",
-        "areas": {
-          "architecture": "Architecture",
-          "performance": "Performance",
-          "security": "Security",
-          "search": "Search",
-          "delivery": "Delivery",
-          "data": "Data",
-          "integrations": "Integrations",
-          "ownership": "Ownership"
-        },
-        "checks": {
-          "deployCoupling": "Deployment coupling across teams",
-          "dataOwnership": "Service and data ownership boundaries",
-          "platformLockIn": "Framework and platform lock-in",
-          "webVitals": "Core Web Vitals on real devices",
-          "serverResponse": "Server response time and cache strategy",
-          "payloadWeight": "Payload weight and third-party scripts",
-          "authSessions": "Authentication and session handling",
-          "exposedSurface": "Exposed surface and secret handling",
-          "dependencies": "Dependency vulnerabilities",
-          "indexability": "Indexability and the rendering path",
-          "structuredData": "Structured data and metadata coverage",
-          "analytics": "Analytics and event integrity",
-          "pipeline": "Build pipeline and rollback path",
-          "environmentParity": "Environment parity",
-          "contentModel": "Content model and migration risk",
-          "backupRestore": "Backup and restore, actually tested",
-          "integrationFailure": "Third-party failure modes",
-          "accountControl": "Repository, domain and account control"
-        }
-      },
       "curve": {
-        "eyebrow": "02 — The case for deciding early",
+        "eyebrow": "01 — The case for deciding early",
         "title": "The same decision,",
         "titleAccent": "priced four times.",
         "description": "A wrong architecture costs almost nothing to change while it is still a sentence, and almost everything once it is live. The audit is a flat line drawn across that curve at the only point where it is still cheap.",
@@ -127,17 +58,18 @@
         }
       },
       "channels": {
-        "eyebrow": "03 — Technical consulting scope",
-        "title": "Six channels.",
-        "titleAccent": "One scan plan.",
-        "description": "Every channel the audit opens, drawn as a scale with the stops it makes on it. Select one to read what is examined and what comes back.",
-        "readoutLabel": "Channel {index}",
-        "examinesLabel": "What is examined",
+        "eyebrow": "02 — What the audit answers",
+        "title": "Six questions.",
+        "titleAccent": "Six written answers.",
+        "description": "Every channel the audit opens ends in a question you can already ask today — and an answer, written down, that stays with you whether you build with us or not.",
+        "questionLabel": "The question",
+        "examinesLabel": "What we look at",
         "returnsLabel": "What comes back",
-        "honesty": "The marks are the stops on a scan plan, not readings from anybody's system. Nothing here simulates a measurement we have not taken.",
+        "honesty": "These are the questions the scope answers, not answers about your system. Those are written only after we have looked.",
         "items": {
           "architecture": {
             "name": "Architecture",
+            "question": "Do we rebuild, or repair what we have?",
             "examines": [
               "Current stack, hosting and deployment flow",
               "Service and data ownership boundaries",
@@ -151,6 +83,7 @@
           },
           "performance": {
             "name": "Performance",
+            "question": "Why is it slow — and which fix is worth paying for?",
             "examines": [
               "Core Web Vitals measured on real devices",
               "Server response time and cache strategy",
@@ -164,6 +97,7 @@
           },
           "security": {
             "name": "Security",
+            "question": "Where could someone get in today?",
             "examines": [
               "Authentication and session handling",
               "Exposed surface and secret handling",
@@ -177,6 +111,7 @@
           },
           "searchData": {
             "name": "Search & data",
+            "question": "Why can’t search see what we publish?",
             "examines": [
               "Indexability and the rendering path",
               "Structured data and metadata coverage",
@@ -190,6 +125,7 @@
           },
           "delivery": {
             "name": "Delivery",
+            "question": "Can the team ship without holding its breath?",
             "examines": [
               "Build pipeline and rollback path",
               "Environment parity",
@@ -203,6 +139,7 @@
           },
           "ownership": {
             "name": "Ownership",
+            "question": "Do we own this system, or rent it?",
             "examines": [
               "Repository, domain and account control",
               "Licences and third-party terms",
@@ -224,20 +161,7 @@
       }
     }
   },
-  "ctaPrimary": "Scope Your Project",
   "development": {
-    "cta": {
-      "description": "We take over the engineering layer so you can focus on your <strong>actual business outcomes</strong> - without the technical debt of a rushed build.",
-      "eyebrow": "02 - Product Engineering",
-      "terminal": {
-        "ready": "Waiting on your brief.",
-        "step1": "Scope reply within one business day",
-        "step2": "Technical call on architecture and risk",
-        "step3": "Fixed quote - one number, in writing"
-      },
-      "title": "Ready to build",
-      "titleAccent": "the system you will own?"
-    },
     "description": "We build custom dashboards, portals, and operational flows that <strong>remove human friction from delivery</strong> so your team can focus on growth, not administrative overhead.",
     "studio": {
       "title": "Engineered to outlast",
@@ -280,141 +204,11 @@
           "value": "2",
           "text": "Arabic and English in one codebase and one release — never a translated afterthought."
         }
-      },
-      "cta": {
-        "eyebrow": "Next step",
-        "title": "Ready to build what you'll",
-        "titleAccent": "own?",
-        "description": "Scope reply within one business day. One number, in writing, before any work starts."
       }
-    },
-    "subtitle": "Build the internal system your team actually needs - not the one easiest to spec.",
-    "techStack": {
-      "categories": {
-        "Database": "Database",
-        "Deployment": "Deployment",
-        "Framework": "Framework",
-        "Language": "Language",
-        "ORM": "ORM",
-        "Runtime": "Runtime",
-        "Server": "Server",
-        "Styling": "Styling",
-        "UI Library": "UI Library"
-      },
-      "diagramLabel": "Service architecture diagram - select a node to inspect dependencies",
-      "dragHint": "Drag to explore architecture",
-      "eyebrow": "The Stack",
-      "footer": "{count} Technologies - ALTRUVEX",
-      "inspect": "Select a technology node to inspect",
-      "nodes": {
-        "nextjs": {
-          "description": "Full-stack React framework powering every project. App Router, server components, ISR, and edge runtime in one coherent system.",
-          "highlights": [
-            "App Router",
-            "Server Actions",
-            "Edge Runtime"
-          ]
-        },
-        "nodejs": {
-          "description": "Server runtime for API routes, background jobs, webhooks, and serverless functions. Non-blocking I/O at the core.",
-          "highlights": [
-            "API routes",
-            "Edge functions",
-            "Streaming SSR"
-          ]
-        },
-        "postgresql": {
-          "description": "Production-grade relational database. ACID compliant, with JSON column support, full-text search, and row-level security.",
-          "highlights": [
-            "ACID compliant",
-            "JSON columns",
-            "Row-level security"
-          ]
-        },
-        "prisma": {
-          "description": "Type-safe database client - schema is the single source of truth, TypeScript types generated automatically. No raw SQL drift.",
-          "highlights": [
-            "Type-safe queries",
-            "Migrations",
-            "Schema-first"
-          ]
-        },
-        "react": {
-          "description": "Component-based UI layer. Every interface is composable, reusable, and predictably state-driven with concurrent rendering.",
-          "highlights": [
-            "Server Components",
-            "Suspense",
-            "Concurrent Mode"
-          ]
-        },
-        "tailwind": {
-          "description": "Utility-first CSS with design tokens baked in. Fast iteration, zero dead styles in production builds, and first-class dark mode.",
-          "highlights": [
-            "Design tokens",
-            "JIT compiler",
-            "Dark mode"
-          ]
-        },
-        "typescript": {
-          "description": "Strict type safety across the entire codebase - APIs, database queries, and UI components all share a single type system.",
-          "highlights": [
-            "Strict mode",
-            "Zero implicit any",
-            "Shared types"
-          ]
-        },
-        "vercel": {
-          "description": "Cloud platform for serverless deployment, automated CI/CD pipelines, dynamic edge scaling, and instant global delivery.",
-          "highlights": [
-            "Serverless",
-            "CI/CD Pipeline",
-            "Global Edge"
-          ]
-        },
-        "vps": {
-          "description": "Virtual Private Server for fully custom infrastructure, dedicated resources, and high-performance server configurations.",
-          "highlights": [
-            "Dedicated CPU",
-            "Root Access",
-            "Custom Nginx"
-          ]
-        }
-      },
-      "subtitle": "No trend-chasing. Every dependency earns its place in the architecture.",
-      "title": "Deliberate Technology Choices",
-      "titleItalic": "every tool, chosen with intent."
-    },
-    "title": "Custom Development",
-    "titleItalic": "built to scale."
+    }
   },
   "maintenance": {
     "description": "<strong>Dependable, proactive support</strong> for live systems that need regular updates, monitoring, and a technical partner who understands the codebase.",
-    "features": {
-      "01": {
-        "description": "Issues detected and resolved before users encounter them - <dim>not after a support ticket arrives.</dim>",
-        "title": "Proactive Monitoring"
-      },
-      "02": {
-        "description": "Dependency updates, CVE monitoring, and security hardening on a defined cycle - <dim>not when a breach forces the issue.</dim>",
-        "title": "Security Patching"
-      },
-      "03": {
-        "description": "Regular Core Web Vitals checks and bundle analysis to prevent the gradual performance drift that quietly erodes conversion.",
-        "title": "Performance Upkeep"
-      },
-      "04": {
-        "description": "Fast turnaround on copy changes, minor feature additions, and configuration updates - <dim>without opening a new project engagement.</dim>",
-        "title": "Content & Feature Updates"
-      },
-      "05": {
-        "description": "Daily encrypted backups with a tested recovery process - not a checkbox, something that <strong>actually works when you need it.</strong>",
-        "title": "Automated Backups"
-      },
-      "06": {
-        "description": "Direct access to the engineering team for critical issues - with response times that match the severity.",
-        "title": "Priority Support Channel"
-      }
-    },
     "pricing": {
       "eyebrow": "Maintenance Plans",
       "notes": {
@@ -430,48 +224,62 @@
           "label": "Scope Limit",
           "value": "Maintenance plans cover system stability and small updates. Major features, rebuilds, or new page systems are scoped and priced separately."
         }
-      },
-      "recommended": "Recommended"
+      }
     },
-    "subtitle": "Focus on the business. We handle the system.",
     "title": "Maintenance & Support",
     "titleItalic": "built for reliability.",
     "hero": {
       "eyebrow": "Maintenance retainer",
-      "calendarLabel": "One example month on the {plan} plan. Each mark is one time the work is done.",
-      "calendarNote": "Illustrative cadence from the plan — not a record of a real client's month.",
-      "legend": {
-        "daily": {
-          "when": "Every day",
-          "what": "We watch your site and back it up"
+      "month": {
+        "eyebrow": "What a month looks like",
+        "title": "Most of it happens",
+        "titleAccent": "without you asking.",
+        "description": "One ordinary month on the {plan} plan: what we do on a schedule, what we do if something breaks, and the one thing you do — only when you want to.",
+        "ours": {
+          "label": "Our part",
+          "heading": "Everything that keeps the site up.",
+          "items": {
+            "daily": {
+              "when": "Every day",
+              "what": "We watch your site and check last night's backup."
+            },
+            "weekly": {
+              "when": "Every week",
+              "what": "We give the whole site a check-up."
+            },
+            "monthly": {
+              "when": "Every month",
+              "what": "We write down how the site performed, and how safe it is."
+            },
+            "incident": {
+              "when": "If something breaks",
+              "what": "It goes to the front of our queue."
+            }
+          }
         },
-        "weekly": {
-          "when": "Every week",
-          "what": "We run a full health check"
+        "yours": {
+          "label": "Your part",
+          "heading": "One thing, and only when you want.",
+          "request": "Send us a change when you need one.",
+          "requestNote": "Up to {n} a month — new text, a new image, a small edit. Each goes ahead of other work.",
+          "quiet": "The rest of the month, there is nothing for you to remember. If you spot something wrong before we do, tell us — that is the only other thing we will ever ask."
         },
-        "monthly": {
-          "when": "Once a month",
-          "what": "You get a performance and security report"
-        },
-        "requests": {
-          "what": "Changes you can send us",
-          "when": "Up to {n}, on any day you need"
-        }
-      },
-      "calendarTitle": "What we do for your system, every month",
-      "countHeader": "Times this month",
-      "day": "Day",
-      "dayN": "Day {n}"
+        "honesty": "An example month drawn from the plan's terms — not a record of a real client's month."
+      }
     },
     "plans": {
       "title": "Scope is counted in requests —",
       "titleAccent": "never in hours.",
       "description": "One request is a content or image swap, or a minor section edit. Both sides can count it — nobody argues over a stopwatch.",
       "requests": "{count, plural, one {{n} edit request a month} other {{n} edit requests a month}}",
-      "custom": "Quoted for your system",
-      "priority": "Priority turnaround",
       "outside": "Outside every plan",
       "cta": "Start with {name}",
+      "billing": {
+        "label": "Billing period",
+        "monthly": "Monthly",
+        "annual": "Annual",
+        "note": "Pay for the year up front and {count, plural, one {{n} month is} other {{n} months are}} free. Edit requests still reset every month."
+      },
       "table": {
         "caption": "The three maintenance plans compared",
         "bestFor": "Best for",
@@ -495,22 +303,6 @@
     }
   },
   "webDesign": {
-    "cta": {
-      "description": "We will review your current design, identify what is suppressing conversions, and map the right next step - in a <strong>free 30-minute call.</strong> No generic redesign deck - you leave the call knowing exactly which screens are costing you leads and why.",
-      "eyebrow": "Ready to Start",
-      "title": "Need an interface",
-      "titleAccent": "that actually converts?",
-      "tokens": {
-        "colors": "Colors",
-        "colorsSub": "Palette and contrast, measured",
-        "label": "What the call reviews",
-        "layout": "Layout",
-        "layoutSub": "Grid and breakpoints, per screen",
-        "monoLabel": "Mono Label",
-        "typography": "Typography",
-        "typographySub": "Scale and hierarchy, per locale"
-      }
-    },
     "lab": {
       "hero": {
         "eyebrow": "Interface design",
@@ -547,55 +339,10 @@
           },
           {
             "title": "Readable by everyone.",
-            "body": "WCAG 2.1 AA contrast and structure, checked in Arabic and in English — a requirement of the design, not a fix after launch."
+            "body": "WCAG 2.1 AA contrast and structure, checked in Arabic and in English — a requirement of the design, not a fix after launch."
           }
         ]
-      },
-      "close": {
-        "eyebrow": "Next step",
-        "title": "Need an interface that",
-        "titleAccent": "converts?",
-        "description": "We review your current design against these rules, find what suppresses conversion and map the next step — in a free 30-minute call."
       }
-    },
-    "description": "We translate your offer into sharper hierarchy, clearer messaging, and a direct conversion path so the site <strong>qualifies buyers before your team picks up the phone.</strong>",
-    "process": "<strong>Design here is not a visual layer applied after the build plan is set</strong> - it is the build plan. We start from the user flow a real buyer takes, from first scroll to the action you actually want, and only then decide what each screen needs to say. That is why these systems hold up after launch: every spacing and contrast decision was made to support one job, not to look good in an isolated mockup. <dim>Identity, typography, and component states ship as a system your team can extend</dim>, not a one-off Figma file that drifts the first time someone edits it without us.",
-    "features": {
-      "01": {
-        "description": "Every page structure is designed to guide the visitor toward a specific action - <dim>not just present information and hope they decide.</dim>",
-        "title": "Conversion-Focused Layouts"
-      },
-      "02": {
-        "description": "We map user journeys before designing screens, so every interface decision is grounded in how people actually navigate.",
-        "title": "User Flow Engineering"
-      },
-      "03": {
-        "description": "Typography, spacing, and contrast calibrated so the most important element always commands attention first.",
-        "title": "Precise Visual Hierarchy"
-      },
-      "04": {
-        "description": "Design that extends your visual identity into a consistent system - <dim>not a snapshot that drifts six months after launch.</dim>",
-        "title": "Identity System Alignment"
-      },
-      "05": {
-        "description": "No bloated assets or motion for its own sake. Every visual decision is measured by its impact on load time and Core Web Vitals.",
-        "title": "Performance-Aware Design"
-      },
-      "06": {
-        "description": "WCAG 2.1 AA compliance built into the design system - <dim>not patched in after development closes.</dim>",
-        "title": "Accessibility Compliance"
-      }
-    },
-    "subtitle": "A website a buyer understands in eight seconds - or it is costing you revenue.",
-    "title": "Interface Design",
-    "titleItalic": "built to convert.",
-    "showcaseEyebrow": "Work Selection",
-    "showcaseTitle": "Design that sells.",
-    "showcaseTitleItalic": "No generic patterns.",
-    "showcaseSubtitle": "Every screen is a conversion opportunity, designed around your actual business outcomes."
-  },
-  "whatWeOffer": "What's Built",
-  "whatWeOfferEyebrow": "Included",
-  "whatWeOfferItalic": "in every engagement.",
-  "whatWeOfferSubtitle": "Scoped to what your system needs - nothing more."
+    }
+  }
 }

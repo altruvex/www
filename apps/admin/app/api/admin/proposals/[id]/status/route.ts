@@ -86,4 +86,4 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   });
 
   return ok({ proposal: updated });
-});
+}, { can: ["edit", "proposal"] });

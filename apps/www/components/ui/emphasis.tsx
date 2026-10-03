@@ -20,12 +20,6 @@ export type AccentGradient = (typeof ACCENT_GRADIENTS)[number];
 
 export const WORLD_ACCENT = "world" as const;
 
-export const HEADING_ACCENTS = {
-  blue: { primary: "brand", alt: "ocean", hero: "iris" },
-  orange: { primary: "ember", alt: "sunset" },
-  green: { primary: "forest", alt: "mint" },
-} as const;
-
 export type HeadingAccent =
   | typeof WORLD_ACCENT
   | "brand"
@@ -51,11 +45,11 @@ export type GradientDirection = keyof typeof DIRECTION_CLASSES;
 
 export type AccentAnimation = "shimmer" | "sweep";
 
-export type AccentSpeed = keyof typeof MOTION.accent.shimmer;
+type AccentSpeed = keyof typeof MOTION.accent.shimmer;
 
 type AccentStyle = CSSProperties & { "--text-gradient-duration"?: string };
 
-export interface AccentProps extends ComponentPropsWithoutRef<"span"> {
+interface AccentProps extends ComponentPropsWithoutRef<"span"> {
   gradient?: AccentGradient | typeof WORLD_ACCENT | (string & {});
   direction?: GradientDirection;
   animate?: boolean | AccentAnimation;
@@ -77,18 +71,17 @@ const HIGHLIGHT_TONES = {
   soft: "text-foreground/45 rtl:text-muted-foreground",
   surface: "text-s-mid",
   contrast: "text-foreground",
-  /* The serif-italic clause wearing its section's world gradient instead of a
+  /* The italic clause wearing its section's world gradient instead of a
      dimmed ink. Only meaningful inside an `accent-world-*` wrapper; it keeps
-     the italic face on purpose, so the site's composed voice survives and only
-     the colour changes. `box-decoration-break: clone` gives each wrapped line
+     the italic face, only the colour changes. `box-decoration-break: clone` gives each wrapped line
      the whole gradient rather than one line starting mid-sweep. */
   world:
     "accent-world bg-clip-text text-transparent from-(--grad-from) via-(--grad-via) to-(--grad-to) bg-linear-to-r rtl:bg-linear-to-l [box-decoration-break:clone] [-webkit-box-decoration-break:clone] pe-[0.08em]",
 } as const;
 
-export type HighlightTone = keyof typeof HIGHLIGHT_TONES;
+type HighlightTone = keyof typeof HIGHLIGHT_TONES;
 
-export interface HighlightProps extends ComponentPropsWithoutRef<"em"> {
+interface HighlightProps extends ComponentPropsWithoutRef<"em"> {
   tone?: HighlightTone;
 }
 
@@ -102,7 +95,12 @@ export const Highlight = forwardRef<HTMLElement, HighlightProps>(
         // tear into transparent fragments.
         {...(tone === "world" ? { "data-accent-grad": "", "data-accent-italic": "" } : {})}
         className={cn(
-          "font-serif italic font-light",
+          // The drawn italic of Altruvex Sans for the Latin emphasis clause
+          // (2026-10-03), replacing the Georgia stopgap of 2026-10-02 (a
+          // mechanically slanted Altruvex Sans had been judged worse than
+          // Georgia). Arabic has no italic, so Arabic emphasis stays the brand
+          // face in bold.
+          "italic font-light",
           HIGHLIGHT_TONES[tone],
           "rtl:font-sans rtl:not-italic rtl:font-bold",
           className,
@@ -154,6 +152,16 @@ export const Accent = forwardRef<HTMLSpanElement, AccentProps>(
             ? "text-local-accent-text"
             : cn(
                 "bg-clip-text text-transparent",
+                // background-clip:text paints only inside the element's box, and the box is the
+                // line box (inline-block) or the font's content area (inline), both shallower than
+                // Arabic ink: dots under yeh/beh and deep descenders below, shadda/fatha above, and
+                // a Latin descender's tail past the end of a tracked-in line. Each value is the
+                // measured need in the brand fonts (Altruvex Sans, line-height 1.3 AR / 1.08 EN,
+                // 48-120px, weights 400/700) plus a hair; the equal negative margin cancels it so
+                // the layout box does not move. packages/brand-font/proofs/a4-regress.html mirrors
+                // these six classes and tests/test_regress.py fails when they differ. A caller that
+                // sets its own top margin must subtract the top pad (section-heading.tsx does).
+                "pt-[0.36em] pb-[0.13em] pe-[0.02em] -mt-[0.36em] -mb-[0.13em] -me-[0.02em]",
                 DIRECTION_CLASSES[direction],
                 accentClass,
                 accentClass && "from-(--grad-from) via-(--grad-via) to-(--grad-to)",

@@ -2,7 +2,6 @@
   "eyebrow": "تواصل معنا",
   "heroTitle": "اطرح المشكلة الحقيقية —",
   "heroTitleItalic": "لا العرض المنمَّق.",
-  "heroDescription": "جلسة نقاش مركّزة تكفي لتحديد العوائق الحقيقية، ورسم الملامح الأولية للنطاق، وتقييم ما إذا كان مشروعك يتطلب تدخلاً تقنياً أعمق.",
   "lines": {
     "heading": "خطوط مباشرة",
     "emailLabel": "البريد الإلكتروني",
@@ -10,25 +9,13 @@
     "whatsappLabel": "واتساب",
     "whatsappValue": "راسلنا على واتساب",
     "whatsappNote": "أسرع رد",
-    "locationLabel": "مقرنا",
     "address1": "القاهرة، مصر",
     "address2": "عن بُعد حول العالم",
     "localTime": "الساعة الآن {time} في القاهرة."
   },
   "phoneValue": "+20 102 312 5493",
-  "responseTime": "خلال ٢٤ ساعة في أيام العمل. للرد الأسرع، راسلنا على واتساب.",
   "callLead": "تفضّل الحديث أولاً؟",
   "scheduleCall": "احجز مكالمة تقنية",
-  "socialLabel": "تجدنا أيضاً على",
-  "social": {
-    "linkedin": "لينكد إن",
-    "x": "إكس",
-    "instagram": "إنستغرام",
-    "github": "جيت هب",
-    "dribbble": "دريبل",
-    "threads": "ثريدز",
-    "facebook": "فيسبوك"
-  },
   "letter": {
     "heading": "اكتب رسالتك",
     "toLabel": "إلى",
@@ -45,6 +32,7 @@
     "serviceConsulting": "الاستشارات التقنية",
     "serviceMaintenance": "الصيانة والدعم",
     "messageLabel": "المشكلة",
+    "planMessage": "أريد البدء بخطة الصيانة «{plan}»، بفوترة {billing, select, annual {سنوية} other {شهرية}}.",
     "messagePlaceholder": "ما الذي تبنيه، ما الذي لا يعمل، أو القرار الذي تحتاج وضوحاً بشأنه؟",
     "count": "{count} من {max} حرف",
     "submit": "أرسل الرسالة",

@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ZodError, type ZodType } from "zod";
 
 import { userActor, type Actor } from "@/lib/activity-log";
+import type { Role } from "@/lib/nav";
+import { permitted, resolveRole, type Capability } from "@/lib/rbac";
 import { requireAdminSession } from "@/lib/require-admin";
 
 /**
@@ -22,6 +24,8 @@ import { requireAdminSession } from "@/lib/require-admin";
 export interface AdminContext<P = Record<string, string>> {
   session: NonNullable<Awaited<ReturnType<typeof requireAdminSession>>>;
   actor: Actor;
+  /** The caller's product role (lib/rbac.ts), for decisions finer than `can`. */
+  role: Role | undefined;
   params: P;
 }
 
@@ -30,17 +34,33 @@ export type AdminHandler<P> = (
   context: AdminContext<P>,
 ) => Promise<NextResponse> | NextResponse;
 
+export interface WithAdminOptions {
+  /**
+   * Capabilities the caller's product role must hold, e.g. `["edit", "payment"]`
+   * or several. A caller who is an admin but lacks one gets a 403; omitting it
+   * keeps the route open to every admin, as before.
+   */
+  can?: Capability | Capability[];
+}
+
 const unauthorized = () =>
   NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
+const forbidden = () =>
+  NextResponse.json({ success: false, message: "Not permitted" }, { status: 403 });
+
 /**
- * Wraps a route handler in the admin session check.
+ * Wraps a route handler in the admin session check, and optionally in a
+ * capability check on top of it.
  *
  * Next passes `{ params }` as the second argument to a route handler; params
  * are a promise in the App Router, so they are awaited here once rather than in
  * every handler.
  */
-export function withAdmin<P = Record<string, string>>(handler: AdminHandler<P>) {
+export function withAdmin<P = Record<string, string>>(
+  handler: AdminHandler<P>,
+  options: WithAdminOptions = {},
+) {
   return async (
     request: NextRequest,
     ctx?: { params?: Promise<P> },
@@ -48,10 +68,13 @@ export function withAdmin<P = Record<string, string>>(handler: AdminHandler<P>) 
     const session = await requireAdminSession(request);
     if (!session) return unauthorized();
 
+    const role = resolveRole(session.user as { role?: string | null; opsRole?: string | null });
+    if (!permitted(role, options.can)) return forbidden();
+
     const params = ctx?.params ? await ctx.params : ({} as P);
 
     try {
-      return await handler(request, { session, actor: userActor(session), params });
+      return await handler(request, { session, actor: userActor(session), role, params });
     } catch (error) {
       if (error instanceof ZodError) {
         return NextResponse.json(

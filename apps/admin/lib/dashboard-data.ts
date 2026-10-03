@@ -1,6 +1,7 @@
 import { prisma } from "@repo/database";
-import { buildActivity } from "@/lib/activity";
+import { normalizeEntityType } from "@/lib/entity-links";
 import { sumByCurrency } from "@/lib/format";
+import { overdueCutoff } from "@/lib/payment-overdue";
 import type { Tone } from "@/lib/status";
 
 const DAY = 86_400_000;
@@ -81,29 +82,32 @@ export function deriveClientStage(client: StageInput): DerivedStage {
   return "NEW";
 }
 
-export async function getDashboardData() {
+/** Audit entity kinds that carry money; hidden from roles that cannot see finance. */
+const FINANCE_ENTITIES = new Set(["payment", "subscription", "client_service"]);
+
+const OPEN_TASK = ["TODO", "IN_PROGRESS", "BLOCKED"] as const;
+
+export async function getDashboardData({ finance }: { finance: boolean }) {
   const now = new Date();
+  const in7Days = new Date(now.getTime() + 7 * DAY);
+  const in30Days = new Date(now.getTime() + 30 * DAY);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const in14Days = new Date(now.getTime() + 14 * DAY);
 
   const [
     openProposals,
     signedThisMonth,
     signedPrevMonth,
-    paymentsDueSoon,
     paymentsOverdue,
-    paymentsPaidThisMonth,
-    proposalsEverSent,
+    acceptedProposals,
     clientsForFunnel,
-    transparencyLeads,
-    utmGroups,
     activeProjectsByPhase,
-    projects,
-    recentProposals,
-    recentContracts,
-    recentMessages,
-    recentClients,
+    upcomingLaunches,
+    newLeads,
+    contractsAwaitingSignature,
+    tasksDue,
+    tasksDueCount,
+    recentEvents,
   ] = await Promise.all([
     prisma.proposal.findMany({
       where: { status: { notIn: ["REJECTED", "EXPIRED"] }, contract: null },
@@ -118,7 +122,7 @@ export async function getDashboardData() {
       select: { proposal: { select: { totalPrice: true, currency: true } } },
     }),
     prisma.payment.findMany({
-      where: { status: "PENDING", dueDate: { gte: now, lte: in14Days } },
+      where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: overdueCutoff(now) } },
       select: {
         id: true,
         amount: true,
@@ -131,36 +135,14 @@ export async function getDashboardData() {
             contract: { select: { proposal: { select: { currency: true } } } },
           },
         },
+        subscription: { select: { planId: true } },
       },
       orderBy: { dueDate: "asc" },
     }),
-    prisma.payment.findMany({
-      where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: now } },
-      select: {
-        id: true,
-        amount: true,
-        dueDate: true,
-        milestone: true,
-        project: {
-          select: {
-            id: true,
-            name: true,
-            contract: { select: { proposal: { select: { currency: true } } } },
-          },
-        },
-      },
-      orderBy: { dueDate: "asc" },
-    }),
-    prisma.payment.findMany({
-      where: { status: "PAID", paidAt: { gte: startOfMonth } },
-      select: {
-        amount: true,
-        project: { select: { contract: { select: { proposal: { select: { currency: true } } } } } },
-      },
-    }),
+    // Accepted proposals with both timestamps: the sales-cycle length.
     prisma.proposal.findMany({
-      where: { status: { not: "DRAFT" } },
-      select: { deliveredAt: true, readAt: true, sentAt: true, respondedAt: true, status: true },
+      where: { status: "ACCEPTED", sentAt: { not: null }, respondedAt: { not: null } },
+      select: { sentAt: true, respondedAt: true },
     }),
     prisma.client.findMany({
       select: {
@@ -177,70 +159,54 @@ export async function getDashboardData() {
         contracts: { select: { status: true }, orderBy: { createdAt: "desc" }, take: 1 },
       },
     }),
-    prisma.transparencyLead.findMany({ select: { convertedAt: true } }),
-    prisma.contactSubmission.groupBy({ by: ["utmSource"], _count: { _all: true } }),
     prisma.project.groupBy({
       by: ["phase"],
       where: { status: "ACTIVE" },
       _count: { _all: true },
     }),
+    // Active projects not yet launched: the launch list, late ones included.
     prisma.project.findMany({
+      where: { status: "ACTIVE", actualLaunchDate: null, targetLaunchDate: { lte: in30Days } },
+      orderBy: { targetLaunchDate: "asc" },
+      select: { id: true, name: true, targetLaunchDate: true },
+    }),
+    // Same definition as the sidebar's Leads badge, so the tile and the
+    // badge never show two different numbers for one queue.
+    prisma.client.count({ where: { status: { in: ["NEW", "VIEWED"] } } }),
+    prisma.contract.count({ where: { status: "SENT" } }),
+    // Open tasks due within a week, overdue ones included — the late ones are
+    // the reason to look.
+    prisma.projectTask.findMany({
+      where: { status: { in: [...OPEN_TASK] }, dueDate: { lte: in7Days } },
+      orderBy: { dueDate: "asc" },
+      take: 6,
       select: {
         id: true,
-        name: true,
+        title: true,
         status: true,
-        phase: true,
-        stagingUrl: true,
-        targetLaunchDate: true,
-        actualLaunchDate: true,
-        createdAt: true,
+        dueDate: true,
+        project: { select: { id: true, name: true } },
       },
     }),
-    // --- the recent-activity feed ---------------------------------------
-    prisma.proposal.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 12,
-      select: {
-        id: true,
-        createdAt: true,
-        sentAt: true,
-        deliveredAt: true,
-        readAt: true,
-        respondedAt: true,
-        status: true,
-        totalPrice: true,
-        currency: true,
-        validUntil: true,
-      },
+    prisma.projectTask.count({
+      where: { status: { in: [...OPEN_TASK] }, dueDate: { lte: in7Days } },
     }),
-    prisma.contract.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 8,
-      select: {
-        id: true,
-        createdAt: true,
-        status: true,
-        signedAt: true,
-        signedByName: true,
-        onboardingMessageSentAt: true,
-      },
-    }),
-    prisma.whatsAppMessage.findMany({
+    // --- the persisted audit trail --------------------------------------
+    // Over-fetched so that dropping finance rows for a non-finance role still
+    // leaves a full feed.
+    prisma.activityEvent.findMany({
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: finance ? 12 : 30,
       select: {
         id: true,
-        direction: true,
-        body: true,
+        action: true,
+        actorLabel: true,
+        entityType: true,
+        entityId: true,
+        entityLabel: true,
+        summary: true,
         createdAt: true,
-        status: true,
-        templateName: true,
       },
-    }),
-    prisma.client.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: { id: true, name: true, company: true, source: true, createdAt: true },
     }),
   ]);
 
@@ -273,44 +239,16 @@ export async function getDashboardData() {
   const decided = won + lost;
   const winRate = decided ? Math.round((won / decided) * 100) : 0;
 
-  const sentCount = proposalsEverSent.length;
-  const deliveredCount = proposalsEverSent.filter((p) => p.deliveredAt).length;
-  const readCount = proposalsEverSent.filter((p) => p.readAt).length;
-  const respondedCount = proposalsEverSent.filter((p) => p.respondedAt).length;
-
-  const cycles = proposalsEverSent
-    .filter((p) => p.sentAt && p.respondedAt && p.status === "ACCEPTED")
-    .map((p) => (p.respondedAt!.getTime() - p.sentAt!.getTime()) / DAY);
+  const cycles = acceptedProposals.map((p) => (p.respondedAt!.getTime() - p.sentAt!.getTime()) / DAY);
   const avgCycleDays = cycles.length
     ? Math.round(cycles.reduce((a, b) => a + b, 0) / cycles.length)
     : null;
 
-  /* ---- project health -------------------------------------------------
-     Health is derived, not stored: a project is At risk when its target
-     launch has passed with no staging URL, Blocked when it is ON_HOLD. */
-  const health = { healthy: 0, atRisk: 0, blocked: 0, completed: 0 };
-  const atRiskProjects: typeof projects = [];
-  for (const p of projects) {
-    if (p.status === "COMPLETED") health.completed++;
-    else if (p.status === "ON_HOLD") health.blocked++;
-    else if (
-      p.status === "ACTIVE" &&
-      p.targetLaunchDate &&
-      p.targetLaunchDate < now &&
-      !p.actualLaunchDate
-    ) {
-      health.atRisk++;
-      atRiskProjects.push(p);
-    } else if (p.status === "ACTIVE") health.healthy++;
-  }
-
-  const convertedLeads = transparencyLeads.filter((l) => l.convertedAt).length;
-
-  const activity = buildActivity({
-    proposals: recentProposals,
-    contracts: recentContracts,
-    messages: recentMessages,
-  }).slice(0, 12);
+  const activity = (
+    finance
+      ? recentEvents
+      : recentEvents.filter((e) => !FINANCE_ENTITIES.has(normalizeEntityType(e.entityType) ?? ""))
+  ).slice(0, 12);
 
   /**
    * Month-over-month delta, but ONLY when both months are in one and the same
@@ -344,13 +282,6 @@ export async function getDashboardData() {
         return Math.round(((cur.total - prev.total) / prev.total) * 100);
       })(),
     },
-    cashCollectedThisMonth: sumByCurrency(
-      paymentsPaidThisMonth.map((p) => ({
-        amount: p.amount,
-        currency: p.project.contract.proposal.currency,
-      })),
-    ),
-    paymentsDueSoon,
     paymentsOverdue,
     pipeline: {
       stages: PIPELINE_STAGES.map((stage) => ({ stage, count: stageCounts[stage] ?? 0 })),
@@ -362,32 +293,75 @@ export async function getDashboardData() {
       winRate,
       avgCycleDays,
     },
-    proposalRates: {
-      sent: sentCount,
-      delivered: deliveredCount,
-      read: readCount,
-      responded: respondedCount,
-      deliveredPct: sentCount ? Math.round((deliveredCount / sentCount) * 100) : 0,
-      readPct: sentCount ? Math.round((readCount / sentCount) * 100) : 0,
-      respondedPct: sentCount ? Math.round((respondedCount / sentCount) * 100) : 0,
-    },
-    transparency: {
-      total: transparencyLeads.length,
-      converted: convertedLeads,
-      convertedPct: transparencyLeads.length
-        ? Math.round((convertedLeads / transparencyLeads.length) * 100)
-        : 0,
-    },
-    utmSources: utmGroups
-      .map((g) => ({ source: g.utmSource ?? "(direct / none)", count: g._count._all }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 6),
-    activeProjectsByPhase,
-    projectHealth: health,
-    atRiskProjects,
-    recentClients,
+    activeProjectsByPhase: activeProjectsByPhase
+      .map((row) => ({ phase: row.phase, count: row._count._all }))
+      .filter((row) => row.count > 0),
+    upcomingLaunches: upcomingLaunches.slice(0, 5),
+    upcomingLaunchCount: upcomingLaunches.length,
+    newLeads,
+    contractsAwaitingSignature,
+    tasksDue,
+    tasksDueCount,
     activity,
   };
 }
 
-export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
+/**
+ * Today → engineering: what is broken or changed in the running estate.
+ * Read-only, and separate from getDashboardData so the page can skip it
+ * cheaply for an estate with no products.
+ */
+export async function getTodayEngineering(now: Date = new Date()) {
+  const dayAgo = new Date(now.getTime() - DAY);
+
+  const [products, incidentsBySeverity, lastProductionDeploys, failedBuilds, failedBuildCount] =
+    await Promise.all([
+      prisma.product.count(),
+      prisma.incident.groupBy({
+        by: ["severity"],
+        where: { status: { not: "RESOLVED" } },
+        _count: { _all: true },
+      }),
+      // One row per product: its newest successful PRODUCTION deploy — what the
+      // client's visitors are running, not a preview of a branch.
+      prisma.deployment.findMany({
+        where: { environment: "PRODUCTION", status: "SUCCEEDED" },
+        orderBy: [{ finishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+        distinct: ["productId"],
+        take: 6,
+        select: {
+          id: true,
+          number: true,
+          version: true,
+          finishedAt: true,
+          createdAt: true,
+          product: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.build.findMany({
+        where: { status: "FAILED", createdAt: { gte: dayAgo } },
+        orderBy: { createdAt: "desc" },
+        take: 4,
+        select: {
+          id: true,
+          number: true,
+          branch: true,
+          createdAt: true,
+          product: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.build.count({ where: { status: "FAILED", createdAt: { gte: dayAgo } } }),
+    ]);
+
+  const severity = { SEV1: 0, SEV2: 0, SEV3: 0, SEV4: 0 } as Record<string, number>;
+  for (const row of incidentsBySeverity) severity[row.severity] = row._count._all;
+
+  return {
+    isEmpty: products === 0,
+    openIncidents: Object.values(severity).reduce((a, b) => a + b, 0),
+    incidentsBySeverity: severity,
+    lastProductionDeploys,
+    failedBuilds,
+    failedBuildCount,
+  };
+}

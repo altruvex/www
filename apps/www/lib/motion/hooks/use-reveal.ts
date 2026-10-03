@@ -74,26 +74,13 @@ export function revealFrom(
 
 type RevealShape = Required<Omit<RevealConfig, "trigger" | "once">>;
 
-/** A reveal config resolved against the hook's own defaults. */
-export function revealShape(config: RevealConfig = {}): RevealShape {
-  return {
-    direction: config.direction ?? DEFAULTS.direction,
-    delay: config.delay ?? DEFAULTS.delay,
-    duration: config.duration ?? DEFAULTS.duration,
-    distance: config.distance ?? DEFAULTS.distance,
-    ease: config.ease ?? DEFAULTS.ease,
-    anticipate: config.anticipate ?? DEFAULTS.anticipate,
-    scrub: config.scrub ?? DEFAULTS.scrub,
-  };
-}
-
 /**
  * The site's reveal, as a reusable core: sets the from-state and plays the
  * entrance (with the anticipation beat when asked). `useReveal` passes a
- * scroll trigger; a surface replaying a reveal on a state change passes none
- * and it plays now. Full-motion tier only — callers own reduced motion.
+ * scroll trigger; without one it plays now. Full-motion tier only — callers
+ * own reduced motion.
  */
-export function playRevealEnter(
+function playRevealEnter(
   el: HTMLElement,
   shape: RevealShape,
   scrollTrigger?: ScrollTrigger.Vars,
@@ -195,9 +182,8 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
             }
 
             // ── Full-motion tier ─────────────────────────────────────────
-            // The tween itself lives in `playRevealEnter`, shared with
-            // surfaces that replay a reveal on demand. This hook adds only
-            // the scroll trigger.
+            // The tween itself lives in `playRevealEnter`. This hook adds
+            // only the scroll trigger.
             playRevealEnter(
               el,
               { direction, delay, duration, distance, ease, anticipate, scrub },

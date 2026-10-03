@@ -1,20 +1,38 @@
 import Link from "next/link";
-import { AlertTriangle, MessageCircle } from "lucide-react";
+import { AlertTriangle, Mail, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusPill } from "@/components/ui/badge";
+import { EntityLink } from "@/components/os/entity-link";
 import { Avatar } from "@repo/ui";
 import { when, truncate } from "@/lib/format";
-import type { Thread } from "@/lib/threads";
+import type { Channel, ConversationThread, Thread } from "@/lib/threads";
 
-export function ThreadList({ threads }: { threads: Thread[] }) {
+const CHANNEL = {
+  whatsapp: { label: "WhatsApp", icon: MessageCircle },
+  email: { label: "Email", icon: Mail },
+} as const;
+
+/**
+ * A plain WhatsApp thread opens its WhatsApp page; a unified one brings its own
+ * `href` (and the channels it spans).
+ *
+ * The row is one big target (the preview link stretches over it), with the
+ * client's name layered above as its own link — nesting the two would be an
+ * <a> inside an <a>, which breaks hydration.
+ */
+export function ThreadList({ threads }: { threads: (Thread | ConversationThread)[] }) {
   return (
     <ul className="rows">
-      {threads.map((thread) => (
-        <li key={thread.clientId}>
-          <Link
-            href={`/whatsapp/${thread.clientId}`}
+      {threads.map((thread) => {
+        const unified = "channels" in thread;
+        const href = unified ? thread.href : `/whatsapp/${thread.clientId}`;
+        const channels: Channel[] = unified ? thread.channels : ["whatsapp"];
+        const lastChannel: Channel = unified ? thread.lastChannel : "whatsapp";
+        return (
+          <li
+            key={thread.clientId}
             className={cn(
-              "flex items-start gap-3 px-3 py-2.5 transition-colors duration-[var(--dur-state)]",
+              "relative flex items-start gap-3 px-3 py-2.5 transition-colors duration-[var(--dur-state)]",
               "hover:bg-surface/70",
               thread.unanswered && "bg-warning/[0.05]",
             )}
@@ -22,22 +40,47 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
             <Avatar name={thread.clientName} size="md" className="mt-0.5" />
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate text-base font-medium">{thread.clientName}</span>
+                <EntityLink
+                  type="client"
+                  id={thread.clientId}
+                  className="relative z-10 min-w-0 truncate text-base font-medium"
+                >
+                  {thread.clientName}
+                </EntityLink>
                 <span className="shrink-0 font-mono text-micro tabular-nums text-subtle-foreground">
                   {when(thread.lastAt)}
                 </span>
               </div>
-              <p className="mt-0.5 truncate text-meta text-muted-foreground">
+              <Link
+                href={href}
+                className="mt-0.5 block truncate rounded-xs text-meta text-muted-foreground after:absolute after:inset-0 after:content-['']"
+              >
                 <span className="text-subtle-foreground">
                   {thread.lastDirection === "INBOUND" ? "" : "You: "}
                 </span>
+                {unified && channels.length > 1 && (
+                  <span className="text-subtle-foreground">
+                    {CHANNEL[lastChannel].label} ·{" "}
+                  </span>
+                )}
                 {truncate(thread.lastMessage, 90)}
-              </p>
+              </Link>
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 <StatusPill registry="submissionStatus" value={thread.stage} variant="dot" />
-                <span className="inline-flex items-center gap-1 font-mono text-micro text-subtle-foreground">
-                  <MessageCircle className="size-2.5" aria-hidden />
-                  {thread.total}
+                {channels.map((channel) => {
+                  const Icon = CHANNEL[channel].icon;
+                  return (
+                    <span
+                      key={channel}
+                      className="inline-flex items-center gap-1 font-mono text-micro text-subtle-foreground"
+                    >
+                      <Icon className="size-2.5" aria-hidden />
+                      {CHANNEL[channel].label}
+                    </span>
+                  );
+                })}
+                <span className="font-mono text-micro tabular-nums text-subtle-foreground">
+                  {thread.total} {thread.total === 1 ? "message" : "messages"}
                 </span>
                 {thread.unanswered && (
                   <span className="rounded-sm border border-warning/25 bg-warning/10 px-1.5 py-px text-micro font-medium text-warning">
@@ -52,9 +95,9 @@ export function ThreadList({ threads }: { threads: Thread[] }) {
                 )}
               </div>
             </div>
-          </Link>
-        </li>
-      ))}
+          </li>
+        );
+      })}
     </ul>
   );
 }

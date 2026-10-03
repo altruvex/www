@@ -4,7 +4,7 @@ import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { ArrowIcon } from "@/components/shared/directional-link";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
-import { MOTION } from "@/lib/motion";
+import { MOTION, useThemeSwitch } from "@/lib/motion";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
@@ -87,7 +87,8 @@ export function CommandPalette({
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const switchTheme = useThemeSwitch();
   const [, startTransition] = useTransition();
 
   const isRTL = locale === "ar";
@@ -256,7 +257,7 @@ export function CommandPalette({
     (item: PaletteItem) => {
       trackEvent("command_palette_select", { id: item.id });
       if (item.action === "theme") {
-        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        switchTheme(resolvedTheme === "dark" ? "light" : "dark");
         return; // stay open — the theme change is the feedback
       }
       if (item.action === "language") {
@@ -283,7 +284,7 @@ export function CommandPalette({
         animateClose();
       }
     },
-    [setTheme, resolvedTheme, locale, router, pathname, params, animateClose],
+    [switchTheme, resolvedTheme, locale, router, pathname, params, animateClose],
   );
 
   // ── Keyboard model: focus stays in the input (trap), arrows move the

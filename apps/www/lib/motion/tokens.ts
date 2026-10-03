@@ -1,3 +1,5 @@
+import { THEME_CROSSFADE } from "@repo/ui/theme-switch";
+
 /**
  * Motion tokens — the single source of truth for every duration, easing
  * curve, spring, travel distance, stagger and scroll-trigger position used by
@@ -110,11 +112,8 @@ export const MOTION = {
   distance: {
     xs: 8,
     sm: 16,
-    /** Body-copy reveal. */
-    body: 20,
     md: 24,
     lg: 40,
-    xl: 64,
   },
 
   /** Stagger between siblings (seconds). */
@@ -126,6 +125,9 @@ export const MOTION = {
     /** Hero headline words. */
     display: 0.07,
     loose: 0.08,
+    /** Between whole headline lines arriving at first paint (utils/arrival.ts):
+        roughly one line's worth of word stagger. */
+    line: 0.12,
     /** Between marks on an annotated document (the consulting brief):
         slow enough to read each mark land before the next. */
     annotate: 0.15,
@@ -156,12 +158,8 @@ export const MOTION = {
   /** Parallax speeds (fraction of viewport travel) and scrub lag. */
   parallax: {
     slow: 0.15,
-    base: 0.3,
-    fast: 0.5,
     /** Seconds of scrub catch-up. */
     scrub: 1.5,
-    /** Multiplier from `speed` to percent travel. */
-    travelScale: 20,
   },
 
   /**
@@ -205,7 +203,6 @@ export const MOTION = {
   /** Text-reveal shapes per role. Consumed by presets + section hooks. */
   text: {
     heading: { byWord: true, blur: true, duration: 1.1, stagger: 0.05, distance: 40 },
-    subheading: { byLine: true, blur: false, duration: 0.9, stagger: 0.04, distance: 24 },
     body: { duration: 0.8, distance: 20 },
     element: { direction: "up" as const, duration: 0.7, distance: 16 },
     card: { duration: 0.7, stagger: 0.08, distance: 24 },
@@ -220,27 +217,10 @@ export const MOTION = {
     eyebrow: 0,
     description: 0.15,
     element: 0.25,
-    scrollHint: 0.45,
   },
 
   /** Anticipation beat shape (design-principles M2). */
   anticipation: { travel: 0.08, durationShare: 0.18, opacity: 0.35 },
-
-  loader: {
-    shaderReveal: 2.2,
-    textReveal: 1.8,
-    charReveal: 1.4,
-    label: 1.2,
-    holdScale: 1.6,
-    shaderExit: 1.4,
-    textExit: 1.1,
-    containerFade: 0.8,
-    charStaggerEach: 0.08,
-    charExitStaggerEach: 0.04,
-    orbMin: 4,
-    orbMax: 6,
-    orbStaggerEach: 0.5,
-  },
 
   accent: {
     // Gradient shimmer loop (CSS keyframe pan) - seconds per cycle.
@@ -251,6 +231,12 @@ export const MOTION = {
     sweepRatio: 1.25,
     sweepDelay: 0.12,
   },
+
+  /**
+   * Theme switch crossfade — `{ duration (s), easing }`. Defined once
+   * in @repo/ui/theme-switch so admin and www switch on the same clock.
+   */
+  theme: THEME_CROSSFADE,
 
   lenis: {
     duration: 0.9,

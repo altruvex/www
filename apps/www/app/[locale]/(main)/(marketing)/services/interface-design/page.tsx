@@ -1,6 +1,7 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
+import { ServiceInvestmentLine } from "../_shared/service-investment-line";
 import PageClient from "./page-client";
 
 const metaKey: RouteMetaKey = "serviceInterfaceDesign";
@@ -25,7 +26,9 @@ export default async function InterfaceDesignServicePage({
   return (
     <>
       <JsonLd schemas={buildPageSchemas(locale, metaKey)} />
-      <PageClient />
+      <PageClient
+        investment={<ServiceInvestmentLine serviceId="design" locale={locale} />}
+      />
     </>
   );
 }

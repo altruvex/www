@@ -9,8 +9,6 @@ import {
   menuIndicator,
   menuItem,
   menuItemIndented,
-  menuLabel,
-  menuSeparator,
   menuSurface,
 } from "../overlays/menu";
 
@@ -23,7 +21,6 @@ import {
  */
 
 export const Select = SelectPrimitive.Root;
-export const SelectGroup = SelectPrimitive.Group;
 /** Wrapped, not re-exported: the trigger's clamp/shrink rules key off this slot. */
 export function SelectValue(props: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
@@ -94,15 +91,6 @@ export function SelectContent({
   );
 }
 
-export function SelectLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
-  return (
-    <SelectPrimitive.Label data-slot="select-label" className={cn(menuLabel, className)} {...props} />
-  );
-}
-
 export function SelectItem({
   className,
   children,
@@ -121,19 +109,6 @@ export function SelectItem({
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
-  );
-}
-
-export function SelectSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
-  return (
-    <SelectPrimitive.Separator
-      data-slot="select-separator"
-      className={cn(menuSeparator, "pointer-events-none", className)}
-      {...props}
-    />
   );
 }
 

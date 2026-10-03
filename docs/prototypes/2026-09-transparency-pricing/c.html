@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C · Three documents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+<style>
+/* ---------- the paper: the one place a box is earned (a sheet genuinely is a document) ---------- */
+.c-paper{background:color-mix(in srgb,var(--surface) 42%,var(--bg));border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:0 1px 0 var(--line),0 22px 44px -34px rgba(0,0,0,.28)}
+.stamp{font:500 10px/1 "Geist Mono",ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line-strong);border-radius:6px;padding:5px 8px;white-space:nowrap}
+.stamp.bind{color:var(--fg);border-color:var(--fg)}
+html[lang="ar"] .stamp{font:500 12px/1 Vazirmatn,sans-serif;letter-spacing:0;text-transform:none;padding:5px 9px}
+
+/* signature: sheets slide into register as they enter (transform only — never opacity on display type) */
+.c-reg{--s:1}
+html[dir="rtl"] .c-reg{--s:-1}
+.c-slide{transition:transform 1s var(--ease-strong)}
+.c-slide:nth-child(1){--dy:34px;--rot:-1.6deg;transition-delay:0ms}
+.c-slide:nth-child(2){--dy:64px;--rot:1.1deg;transition-delay:130ms}
+.c-slide:nth-child(3){--dy:18px;--rot:2deg;transition-delay:260ms}
+html.motion .c-reg:not(.in) .c-slide{transform:translate3d(0,var(--dy),0) rotate(calc(var(--rot) * var(--s)))}
+@media(prefers-reduced-motion:reduce){.c-slide{transition:none}}
+
+/* ---------- homepage compact form: three sheet thumbnails + one-line answers ---------- */
+.c-th{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:28px 32px}
+.c-th li{display:flex;flex-direction:column;gap:18px;min-width:0}
+.c-mini{min-height:188px;padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.c-mini .mh{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.c-mini .fig{font-size:clamp(1.15rem,1.55vw,1.45rem);line-height:1.2}
+.c-mini .fig.prop{font-size:clamp(1rem,1.2vw,1.15rem);line-height:1.35;max-width:18ch}
+.c-mini .ml{margin-top:auto;display:grid;gap:9px}
+.c-mini .ml i{display:block;height:1px;background:var(--line)}
+.c-mini .ml i:nth-child(2){width:78%}.c-mini .ml i:nth-child(3){width:54%}
+.c-tt{display:flex;align-items:baseline;gap:10px}
+.c-tt .ix{font-size:12px;color:var(--muted)}
+.c-tt h3{font-size:clamp(1.15rem,1.5vw,1.35rem);line-height:1.25;letter-spacing:-.015em}
+.c-th p{color:var(--muted);font-size:14px;line-height:1.55;max-width:38ch;margin-top:-8px}
+.c-ex{margin-top:14px}
+@media(max-width:900px){
+  .c-th{grid-template-columns:1fr;gap:0;padding-block:0;border-bottom:0}
+  .c-th li{padding-block:22px 24px;border-bottom:1px solid var(--line)}
+  .c-mini{min-height:0}
+}
+
+/* ---------- 01 + 02: three documents in register ---------- */
+.sec-head .dim{color:var(--muted)}
+.c-ex2{padding:0 0 22px;margin-inline-start:calc(4.5rem + 24px)}
+@media(max-width:900px){.c-ex2{margin-inline-start:0}}
+.c-sheets{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);grid-template-rows:repeat(5,auto);gap:0 24px;border-top:2px solid var(--fg);padding-top:32px}
+/* subgrid keeps the three sheets' rows in register: headers, questions and figures share one line */
+.c-sheet{grid-row:span 5;display:grid;grid-template-rows:subgrid;row-gap:0;padding:0 26px;min-width:0}
+.c-hd{display:flex;align-items:center;gap:10px;padding-block:20px 16px;border-bottom:1px solid var(--line)}
+.c-hd .ix{font-size:12px;color:var(--muted)}
+.c-hd .stamp{margin-inline-start:auto}
+.c-q{padding-block:22px 4px}
+.c-q h3{font-size:clamp(1.4rem,1.9vw,1.8rem);line-height:1.15}
+.c-q .re{margin-top:10px;font-size:13px;color:var(--muted)}
+.c-q .re b{font-weight:500;color:var(--fg)}
+.c-fg{display:flex;flex-direction:column;gap:8px;padding-block:22px 22px;border-bottom:1px solid var(--line)}
+.c-fg .lb{font-size:12px;color:var(--muted)}
+.c-fg .fig{font-size:clamp(1.6rem,2.2vw,2.2rem);line-height:1.12}
+.c-fg .fig.prop{font-size:clamp(1.2rem,1.55vw,1.45rem);line-height:1.3;max-width:18ch}
+.c-fg .cap{font:400 11px/1.4 "Geist Mono",ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.c-fg .cap.bind{color:var(--fg)}
+html[lang="ar"] .c-fg .cap{font:400 13px/1.4 Vazirmatn,sans-serif;letter-spacing:0;text-transform:none}
+.c-bd{padding-block:18px 22px;font-size:14px;line-height:1.6}
+.c-bd .model{color:var(--fg);max-width:40ch}
+.c-kv{margin-top:18px;border-top:1px solid var(--line)}
+.c-kv>div{display:grid;grid-template-columns:minmax(0,7.5rem) minmax(0,1fr);gap:4px 14px;padding-block:11px;border-bottom:1px solid var(--line)}
+.c-kv dt{color:var(--muted);font-size:13px}
+.c-kv dd{font-size:14px}
+.c-kv dd ol{list-style:none;display:grid;gap:3px}
+.c-kv dd ol .fig{font-size:16px;margin-inline-end:6px}
+.c-bd .fine{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6}
+.c-ft{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 14px;padding-block:6px 10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.c-ft a{min-height:44px;display:inline-flex;align-items:center;color:var(--fg);border-bottom:1px solid var(--line-strong);line-height:1.2}
+.c-ft a:hover{border-bottom-color:var(--fg)}
+
+/* estimate sheet ledger: the seven drivers live in the margin, against the line they act on */
+.c-led{margin-top:2px}
+.c-led .lg{font-size:12px;color:var(--muted);padding-bottom:10px}
+.c-ent{display:grid;grid-template-columns:7rem minmax(0,1fr);gap:0 14px}
+.c-mn{border-inline-end:1px solid var(--line-strong);padding-block:12px;padding-inline-end:12px;display:flex;flex-direction:column;gap:10px}
+.c-note{display:flex;flex-direction:column;gap:2px;font-size:13px;line-height:1.3}
+.c-note .dn{display:flex;align-items:center;gap:7px;font-weight:500}
+.c-note .tg{font:400 10px/1.3 "Geist Mono",ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-inline-start:14px}
+html[lang="ar"] .c-note .tg{font:400 12px/1.3 Vazirmatn,sans-serif;letter-spacing:0;text-transform:none}
+.mk{width:7px;height:7px;border-radius:999px;flex:none;border:1px solid var(--fg)}
+.mk.moves{background:var(--fg)}
+.mk.review{background:transparent}
+.mk.monthly{background:transparent;border-style:dashed;border-color:var(--muted)}
+.c-lines{display:flex;flex-direction:column}
+.c-ln{display:flex;justify-content:space-between;align-items:baseline;gap:6px 14px;padding-block:12px;border-bottom:1px solid var(--line);min-width:0}
+.c-ln .k{min-width:0}
+.c-ln .k small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.45}
+.c-ln .v{white-space:nowrap;font-variant-numeric:tabular-nums;text-align:end}
+.c-ln .v.soft{color:var(--muted);font-size:13px;white-space:normal;max-width:11ch}
+.c-ent.flag .c-ln{border-bottom-style:dashed}
+.c-legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.45}
+.c-legend span{display:inline-flex;align-items:center;gap:7px}
+.c-plans{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:4px;font-size:12px;color:var(--muted)}
+.c-plans b{font-weight:500;color:var(--fg)}
+
+@media(max-width:1100px){
+  .c-sheets{grid-template-columns:minmax(0,1fr);grid-template-rows:none;gap:20px}
+  .c-sheet{grid-row:auto;display:flex;flex-direction:column}
+  .c-ft{margin-top:auto}
+}
+@media(max-width:560px){
+  .c-sheet{padding:0 18px}
+  .c-ent{grid-template-columns:minmax(0,1fr)}
+  .c-mn{border-inline-end:0;border-inline-start:2px solid var(--line-strong);padding:10px 0 2px;padding-inline-start:10px;flex-direction:row;flex-wrap:wrap;gap:6px 16px;margin-top:10px}
+  .c-note .tg{padding-inline-start:0}
+  .c-note{flex-direction:row;align-items:center;gap:8px}
+  .c-kv>div{grid-template-columns:minmax(0,1fr)}
+  .c-ln .v.soft{max-width:none}
+}
+</style></head>
+<body>
+<script src="data.js"></script><script src="shared.js"></script>
+<script>
+X.addCopy({
+  en: { c: {
+    lead: "The same project, answered three times. Each document resolves more than the one before it, and only the last one binds.",
+    tag: { moves: "Priced", review: "Scope review", monthly: "Monthly" },
+    price: {
+      type: "Pricing line", stamp: "Published", q: "How does Altruvex charge?",
+      ans: "From a published floor, narrowed by scope, fixed in writing.",
+      re: "For", reV: "Any custom build",
+      lb: "Starting point",
+      model: "Every custom build starts from this published floor. Scope and complexity place it in a published range; the proposal fixes one figure.",
+      knows: "Known", knowsV: "That it is a custom build.",
+      notYet: "Not known yet", notYetV: "Scope, complexity, content, timeline, integrations, performance.",
+      where: "Published on this page", link: "Service investment",
+    },
+    est: {
+      type: "Estimate sheet", stamp: "Indicative", q: "What might my project require?",
+      ans: "An indicative range and timeline, from the drivers that actually move it.",
+      lb: "Indicative range", range: "Published range",
+      legendT: "Margin notes — the seven cost drivers",
+      reviewVal: "Confirmed in review", monthlyVal: "Monthly plan",
+      after: "Maintenance after launch", afterSub: "Separate from the build figure",
+      fine: "Indicative, never a quotation. Integrations and performance targets are confirmed in scope review; ongoing operation is billed monthly, only if you want it.",
+      where: "From the estimator, in a few minutes", link: "Open the estimator",
+    },
+    prop: {
+      type: "Proposal cover", stamp: "Binding", q: "What exactly will it cost?",
+      ans: "One binding figure, written after a scope review.",
+      lb: "Project figure", cap: "Binding · valid {n} days",
+      build: "Build", content: "Content", timeline: "Timeline", confirmed: "Confirmed in review",
+      valid: "Validity", validV: "{n} days from the date of issue",
+      payment: "Payment", own: "Ownership",
+      fine: "Figures exclude VAT, which is added at contract stage.",
+      where: "After a scope review", link: "Discuss your requirements",
+    },
+    re: "Prepared for", reV: "Your project",
+  } },
+  ar: { c: {
+    lead: "المشروع نفسه، مُجاباً عنه ثلاث مرات. كل وثيقة أوضح من التي قبلها، والأخيرة وحدها ملزمة.",
+    tag: { moves: "مسعَّر", review: "مراجعة النطاق", monthly: "شهري" },
+    price: {
+      type: "ورقة الأسعار", stamp: "منشورة", q: "كيف تسعّر Altruvex؟",
+      ans: "من حدّ أدنى منشور، يضيق مع نطاق العمل، ويُثبَّت كتابةً.",
+      re: "تنطبق على", reV: "أي مشروع بناء مخصص",
+      lb: "نقطة البداية",
+      model: "كل مشروع بناء مخصص يبدأ من هذا الحد الأدنى المنشور. نطاق العمل ودرجة التعقيد يضعانه في نطاق سعري منشور، ثم يثبّت عرض السعر رقماً واحداً.",
+      knows: "المعروف", knowsV: "أنه مشروع بناء مخصص.",
+      notYet: "غير المعروف بعد", notYetV: "نطاق العمل، التعقيد، المحتوى، الجدول الزمني، التكاملات، الأداء.",
+      where: "منشورة في هذه الصفحة", link: "أسعار الخدمات",
+    },
+    est: {
+      type: "ورقة التقدير", stamp: "استرشادية", q: "ماذا قد يتطلب مشروعي؟",
+      ans: "نطاق استرشادي ومدة تقريبية، من العوامل التي تحرّكهما فعلاً.",
+      lb: "النطاق الاسترشادي", range: "النطاق المنشور",
+      legendT: "الهوامش — عوامل التكلفة السبعة",
+      reviewVal: "يُؤكَّد في المراجعة", monthlyVal: "خطة شهرية",
+      after: "الصيانة بعد الإطلاق", afterSub: "منفصلة عن رقم البناء",
+      fine: "تقدير استرشادي، وليس عرض سعر. التكاملات ومستهدفات الأداء تُؤكَّد في مراجعة النطاق، والتشغيل المستمر يُحتسب شهرياً، وفقط إن أردته.",
+      where: "من المقدّر، خلال دقائق", link: "افتح المقدّر",
+    },
+    prop: {
+      type: "غلاف عرض السعر", stamp: "ملزم", q: "كم سيكلّف بالضبط؟",
+      ans: "رقم واحد ملزم، يُكتب بعد مراجعة النطاق.",
+      lb: "رقم المشروع", cap: "ملزم · صالح {n} يوماً",
+      build: "البناء", content: "المحتوى", timeline: "الجدول الزمني", confirmed: "يُؤكَّد في المراجعة",
+      valid: "الصلاحية", validV: "{n} يوماً من تاريخ الإصدار",
+      payment: "الدفعات", own: "الملكية",
+      fine: "الأرقام لا تشمل ضريبة القيمة المضافة، وتُضاف في مرحلة العقد.",
+      where: "بعد مراجعة النطاق", link: "ناقش متطلباتك معنا",
+    },
+    re: "مُعَدّ لـ", reV: "مشروعك",
+  } },
+});
+
+/* the worked example, read once from AX (never typed) */
+function ex() {
+  const D = X.D, e = D.example.input, c = X.c, row = D.matrix.rows.find((r) => r.serviceId === e.serviceId);
+  return {
+    D, e,
+    build: `${row.name} · ${c.bands[e.complexityId]}`,
+    brand: { label: c.factorOpt.brand[e.brandIdentity], price: D.factors.brand[e.brandIdentity].price },
+    content: { label: c.factorOpt.content[e.contentReadiness], price: D.factors.content[e.contentReadiness].price },
+    timeline: { label: c.factorOpt.timeline[e.timeline], price: D.factors.timeline[e.timeline].price },
+    weeks: X.digits(D.example.weeks),
+    days: X.num(D.proposalValidityDays),
+  };
+}
+const SHEETS = ["price", "est", "prop"];
+
+/* homepage compact form: three thumbnails, each with its one-line answer */
+function homeThumbs() {
+  const c = X.c.c, x = ex(), s = X.c.stages;
+  const figs = {
+    price: X.fig(x.D.minimumEngagement, { delay: 200 }),
+    est: X.fig(x.D.example.estimate, { cls: "fig-d", delay: 330 }),
+    prop: `<span class="fig prop">${X.esc(s.proposal.fig)}</span>`,
+  };
+  const items = SHEETS.map((k, i) => `<li class="c-slide">
+  <div class="c-mini c-paper"><div class="mh"><span class="eyebrow">${X.esc(c[k].type)}</span><span class="stamp${k === "prop" ? " bind" : ""}">${X.esc(c[k].stamp)}</span></div>${figs[k]}<span class="ml" aria-hidden="true"><i></i><i></i><i></i></span></div>
+  <div class="c-tt"><span class="ix mono num">${X.ix(i + 1)}</span><h3>${X.esc(c[k].q)}</h3></div>
+  <p>${X.esc(c[k].ans)}</p>
+</li>`).join("");
+  return `<ol class="c-th c-reg">${items}</ol><p class="note c-ex">${X.esc(X.exampleLine())}</p>`;
+}
+
+function note(d) {
+  return `<span class="c-note"><span class="dn"><span class="mk ${d.cls}" aria-hidden="true"></span>${X.esc(d.name)}</span><span class="tg">${X.esc(X.c.c.tag[d.cls])}</span></span>`;
+}
+function line(k, sub, v, soft) {
+  return `<div class="c-ln"><span class="k">${k}${sub ? `<small>${sub}</small>` : ""}</span><span class="v${soft ? " soft" : ""}">${v}</span></div>`;
+}
+function ent(notes, lines, flag) {
+  return `<div class="c-ent${flag ? " flag" : ""}"><div class="c-mn">${notes.map(note).join("")}</div><div class="c-lines">${lines.join("")}</div></div>`;
+}
+
+function sheetHead(k, i) {
+  const c = X.c.c[k];
+  return `<div class="c-hd"><span class="ix mono num">${X.ix(i + 1)}</span><span class="eyebrow">${X.esc(c.type)}</span><span class="stamp${k === "prop" ? " bind" : ""}">${X.esc(c.stamp)}</span></div>`;
+}
+function sheetFoot(k, href) {
+  const c = X.c.c[k];
+  return `<div class="c-ft"><span>${X.esc(c.where)}</span><a href="${X.esc(href)}">${X.esc(c.link)}</a></div>`;
+}
+
+function sheets() {
+  const C = X.c, c = C.c, x = ex(), dr = Object.fromEntries(X.drivers().map((d) => [d.id, d])), s = C.stages, esc = X.esc;
+
+  const price = `<article class="c-sheet c-paper c-slide" aria-labelledby="c-q1">
+${sheetHead("price", 0)}
+<div class="c-q"><h3 id="c-q1">${esc(c.price.q)}</h3><p class="re">${esc(c.price.re)} <b>${esc(c.price.reV)}</b></p></div>
+<div class="c-fg"><span class="lb">${esc(c.price.lb)}</span>${X.fig(x.D.minimumEngagement)}<span class="cap">${esc(s.scope.cap)}</span></div>
+<div class="c-bd"><p class="model">${esc(c.price.model)}</p>
+<dl class="c-kv"><div><dt>${esc(c.price.knows)}</dt><dd>${esc(c.price.knowsV)}</dd></div><div><dt>${esc(c.price.notYet)}</dt><dd>${esc(c.price.notYetV)}</dd></div></dl></div>
+${sheetFoot("price", "#investment")}
+</article>`;
+
+  const plans = X.plans().map((p) => `<span>${esc(p.name)} <b>${esc(p.price)}</b>${p.cycle ? " " + esc(p.cycle) : ""}</span>`).join("");
+  const ledger = [
+    ent([dr.scope, dr.complexity], [line(esc(x.build), esc(c.est.range), esc(x.D.example.cell))]),
+    ent([dr.content], [line(esc(x.brand.label), null, esc(x.brand.price)), line(esc(x.content.label), null, esc(x.content.price))]),
+    ent([dr.timeline], [line(esc(x.timeline.label), null, esc(x.timeline.price))]),
+    ent([dr.integrations], [line(esc(dr.integrations.desc), null, esc(c.est.reviewVal), true)], true),
+    ent([dr.performance], [line(esc(dr.performance.desc), null, esc(c.est.reviewVal), true)], true),
+    ent([dr.operation], [line(esc(c.est.after), `${esc(c.est.afterSub)}<span class="c-plans">${plans}</span>`, esc(c.est.monthlyVal), true)], true),
+  ].join("");
+  const legend = ["moves", "review", "monthly"].map((k) => `<span><span class="mk ${k}" aria-hidden="true"></span>${esc(C.cls[k])}</span>`).join("");
+  const est = `<article class="c-sheet c-paper c-slide" aria-labelledby="c-q2">
+${sheetHead("est", 1)}
+<div class="c-q"><h3 id="c-q2">${esc(c.est.q)}</h3><p class="re">${esc(c.re)} <b>${esc(c.reV)}</b></p></div>
+<div class="c-fg"><span class="lb">${esc(c.est.lb)}</span>${X.fig(x.D.example.estimate, { cls: "fig-d" })}<span class="cap">${esc(X.fill(s.estimate.cap, { weeks: x.weeks }))}</span></div>
+<div class="c-bd"><div class="c-led"><p class="lg">${esc(c.est.legendT)}</p>${ledger}</div>
+<div class="c-legend">${legend}</div><p class="fine">${esc(c.est.fine)}</p></div>
+${sheetFoot("est", X.href("estimator.html"))}
+</article>`;
+
+  const pay = x.D.paymentSplit.map((p, i) => `<li>${X.fill(esc(C.terms.pay[i]), { p: `<span class="fig">${esc(X.pct(p))}</span>` })}</li>`).join("");
+  const kv = [
+    [c.prop.build, esc(x.build)],
+    [c.prop.content, `${esc(x.brand.label)} · ${esc(x.content.label)}`],
+    [c.prop.timeline, esc(x.timeline.label)],
+    [c.prop.confirmed, `${esc(dr.integrations.name)} · ${esc(dr.performance.name)}`],
+    [c.prop.valid, esc(X.fill(c.prop.validV, { n: x.days }))],
+    [c.prop.payment, `<ol>${pay}</ol>`],
+    [c.prop.own, esc(C.terms.ownershipNote)],
+  ].map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("");
+  const prop = `<article class="c-sheet c-paper c-slide" aria-labelledby="c-q3">
+${sheetHead("prop", 2)}
+<div class="c-q"><h3 id="c-q3">${esc(c.prop.q)}</h3><p class="re">${esc(c.re)} <b>${esc(c.reV)}</b></p></div>
+<div class="c-fg"><span class="lb">${esc(c.prop.lb)}</span><span class="fig prop">${esc(s.proposal.fig)}</span><span class="cap bind">${esc(X.fill(c.prop.cap, { n: x.days }))}</span></div>
+<div class="c-bd"><dl class="c-kv" style="margin-top:0">${kv}</dl><p class="fine">${esc(c.prop.fine)}</p></div>
+${sheetFoot("prop", "#")}
+</article>`;
+
+  const sc = C.sec;
+  return `<section class="sec" id="how" aria-labelledby="h-how">
+<div class="sec-head"><span class="ix mono num">${X.ix(1)}–${X.ix(2)}</span><h2 id="h-how">${esc(sc.how)}<br><span class="dim">${esc(sc.what)}</span></h2><p>${esc(c.lead)}</p></div>
+<p class="note c-ex2">${esc(X.exampleLine())}</p>
+<div class="c-sheets c-reg">${price}${est}${prop}</div></section>`;
+}
+
+X.boot({
+  active: "c",
+  render: () => X.homeSection({ index: 7, device: homeThumbs() }) + X.pricingHero() + sheets() + X.register() + X.terms() + X.closeBand(),
+  /* signature: the sheets start slightly out of register and slide into alignment as the set enters */
+  mount(root) {
+    X.reveal(root.querySelectorAll(".c-reg"), (el) => el.classList.add("in"), { threshold: 0.2 });
+  },
+});
+</script>
+</body></html>

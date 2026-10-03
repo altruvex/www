@@ -1,6 +1,7 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils/utils";
@@ -17,6 +18,9 @@ export function AuditLeadCapture({
   className,
 }: AuditLeadCaptureProps) {
   const t = useTranslations("auditLead");
+  // The description quotes the audit fee and its credit; both come from the
+  // resolved pricing, so the copy carries {tokens} and is filled here.
+  const fillTokens = useFillPricingTokens();
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -83,7 +87,7 @@ export function AuditLeadCapture({
             {t("title")}
           </h3>
           <p className="text-sm text-foreground/60 leading-relaxed mb-6 max-w-xl">
-            {t("description")}
+            {fillTokens(t.raw("description"))}
           </p>
           <div className="mb-6 grid grid-cols-3 gap-3 max-w-md">
             {[

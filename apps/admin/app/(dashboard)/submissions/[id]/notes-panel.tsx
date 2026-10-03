@@ -3,13 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { MessageSquarePlus, Send, CornerDownLeft } from "lucide-react";
+import { Send } from "lucide-react";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
 import { Button } from "@repo/ui";
 import { Textarea } from "@repo/ui";
 import { EmptyInline } from "@/components/os/empty-state";
-import { dateTime, when, initials } from "@/lib/format";
+import { dateTime, when } from "@/lib/format";
 import { addSubmissionNote } from "@/app/(dashboard)/_actions/records";
 
 export interface NoteItem {

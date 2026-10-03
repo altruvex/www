@@ -1,0 +1,4721 @@
+{
+  "chromium": {
+    "blocks": [
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-24",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "H",
+            "px": 24,
+            "weight": 400
+          },
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "l",
+            "px": 24,
+            "weight": 400
+          },
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "alef",
+            "px": 24,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "section": "optical"
+      },
+      {
+        "id": "mass-24",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.771,
+            "block": "mass-24",
+            "density": 0.2424,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-24",
+            "density": 0.1981,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.817
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-24",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.481,
+            "block": "mixed-24",
+            "density": 0.3061,
+            "drawn": 600,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.792,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.014,
+            "tracking_token": "--track-24-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-24",
+            "density": 0.2844,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-24",
+            "density": 0.3071,
+            "drawn": 675,
+            "ink_bottom_em": 0.375,
+            "ink_top_em": 0.833,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar_brand/en_ar": 1.003,
+          "ar_next/en_ar": 0.929
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-24",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-24",
+            "density": 0.19,
+            "drawn": 400,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.792,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-24",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-24",
+            "density": 0.2065,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.689,
+            "block": "punct-24",
+            "density": 0.2222,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.929
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-24",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-24",
+            "density": 0.2725,
+            "drawn": 400,
+            "ink_bottom_em": 0.438,
+            "ink_top_em": 1.229,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-24",
+            "density": 0.2301,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-24",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-24",
+            "density": 0.2492,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.958,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.79,
+            "block": "brackets-24",
+            "density": 0.2417,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 1.031
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-24",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.967,
+            "block": "numbers-24",
+            "density": 0.2705,
+            "drawn": 400,
+            "ink_bottom_em": 0.021,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-24",
+            "density": 0.1921,
+            "drawn": 400,
+            "ink_bottom_em": 0.25,
+            "ink_top_em": 0.708,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.71
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-24",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-24",
+            "density": 0.2179,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.505,
+            "block": "inline-24",
+            "density": 0.2384,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar_en/en_ar": 0.914
+        },
+        "section": "optical"
+      },
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-48",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "H",
+            "px": 48,
+            "weight": 400
+          },
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "l",
+            "px": 48,
+            "weight": 400
+          },
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "alef",
+            "px": 48,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "section": "optical"
+      },
+      {
+        "id": "mass-48",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.639,
+            "block": "mass-48",
+            "density": 0.2299,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-48",
+            "density": 0.1862,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.81
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-48",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.406,
+            "block": "mixed-48",
+            "density": 0.2951,
+            "drawn": 600,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.781,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-48",
+            "density": 0.2711,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-48",
+            "density": 0.2936,
+            "drawn": 675,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.823,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar_brand/en_ar": 0.995,
+          "ar_next/en_ar": 0.919
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-48",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-48",
+            "density": 0.1769,
+            "drawn": 400,
+            "ink_bottom_em": 0.49,
+            "ink_top_em": 0.792,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-48",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-48",
+            "density": 0.1937,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.557,
+            "block": "punct-48",
+            "density": 0.2105,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.92
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-48",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-48",
+            "density": 0.253,
+            "drawn": 400,
+            "ink_bottom_em": 0.448,
+            "ink_top_em": 1.219,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-48",
+            "density": 0.2156,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-48",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-48",
+            "density": 0.233,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.948,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.628,
+            "block": "brackets-48",
+            "density": 0.2285,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 1.02
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-48",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.877,
+            "block": "numbers-48",
+            "density": 0.2575,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-48",
+            "density": 0.1798,
+            "drawn": 400,
+            "ink_bottom_em": 0.24,
+            "ink_top_em": 0.708,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.698
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-48",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-48",
+            "density": 0.2041,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.397,
+            "block": "inline-48",
+            "density": 0.2264,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar_en/en_ar": 0.902
+        },
+        "section": "optical"
+      },
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-96",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.698,
+            "lang": "en",
+            "line": "H",
+            "px": 96,
+            "weight": 400
+          },
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "l",
+            "px": 96,
+            "weight": 400
+          },
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.719,
+            "lang": "ar",
+            "line": "alef",
+            "px": 96,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "section": "optical"
+      },
+      {
+        "id": "mass-96",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.331,
+            "block": "mass-96",
+            "density": 0.2293,
+            "drawn": 400,
+            "ink_bottom_em": 0.203,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-96",
+            "density": 0.1791,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.719,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.781
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-96",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.226,
+            "block": "mixed-96",
+            "density": 0.2935,
+            "drawn": 600,
+            "ink_bottom_em": 0.286,
+            "ink_top_em": 0.781,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-96",
+            "density": 0.2638,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-96",
+            "density": 0.2858,
+            "drawn": 675,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.823,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar_brand/en_ar": 0.974,
+          "ar_next/en_ar": 0.899
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-96",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-96",
+            "density": 0.1694,
+            "drawn": 400,
+            "ink_bottom_em": 0.484,
+            "ink_top_em": 0.786,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-96",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-96",
+            "density": 0.1862,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.734,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.249,
+            "block": "punct-96",
+            "density": 0.2098,
+            "drawn": 400,
+            "ink_bottom_em": 0.203,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.888
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-96",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-96",
+            "density": 0.242,
+            "drawn": 400,
+            "ink_bottom_em": 0.438,
+            "ink_top_em": 1.214,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-96",
+            "density": 0.2071,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.734,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-96",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-96",
+            "density": 0.2234,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.938,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.25,
+            "block": "brackets-96",
+            "density": 0.2265,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.745,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.986
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-96",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.667,
+            "block": "numbers-96",
+            "density": 0.2558,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-96",
+            "density": 0.1727,
+            "drawn": 400,
+            "ink_bottom_em": 0.234,
+            "ink_top_em": 0.698,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.675
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-96",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-96",
+            "density": 0.1964,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.734,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.145,
+            "block": "inline-96",
+            "density": 0.2239,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar_en/en_ar": 0.877
+        },
+        "section": "optical"
+      },
+      {
+        "id": "d-52-400",
+        "lines": [
+          {
+            "advance_em": 6.135,
+            "block": "d-52-400",
+            "density": 0.2401,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.412,
+            "block": "d-52-400",
+            "density": 0.2465,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.694,
+            "block": "d-52-400",
+            "density": 0.2597,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.712,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-52-400",
+            "density": 0.1906,
+            "drawn": 400,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.731,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.734,
+          "ar/lower": 0.794,
+          "ar/title": 0.773
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-52-600",
+        "lines": [
+          {
+            "advance_em": 6.3,
+            "block": "d-52-600",
+            "density": 0.3126,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.594,
+            "block": "d-52-600",
+            "density": 0.3211,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.864,
+            "block": "d-52-600",
+            "density": 0.3445,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-52-600",
+            "density": 0.2604,
+            "drawn": 675,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.779,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.756,
+          "ar/lower": 0.833,
+          "ar/title": 0.811
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-52-700",
+        "lines": [
+          {
+            "advance_em": 6.421,
+            "block": "d-52-700",
+            "density": 0.3429,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.72,
+            "block": "d-52-700",
+            "density": 0.3525,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.998,
+            "block": "d-52-700",
+            "density": 0.3807,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-52-700",
+            "density": 0.2872,
+            "drawn": 830,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.808,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.754,
+          "ar/lower": 0.838,
+          "ar/title": 0.815
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-72-400",
+        "lines": [
+          {
+            "advance_em": 5.953,
+            "block": "d-72-400",
+            "density": 0.2432,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.23,
+            "block": "d-72-400",
+            "density": 0.2492,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.512,
+            "block": "d-72-400",
+            "density": 0.2615,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-72-400",
+            "density": 0.1866,
+            "drawn": 400,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.714,
+          "ar/lower": 0.767,
+          "ar/title": 0.749
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-72-600",
+        "lines": [
+          {
+            "advance_em": 6.144,
+            "block": "d-72-600",
+            "density": 0.3166,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.438,
+            "block": "d-72-600",
+            "density": 0.3248,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.708,
+            "block": "d-72-600",
+            "density": 0.347,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-72-600",
+            "density": 0.2567,
+            "drawn": 675,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.778,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.74,
+          "ar/lower": 0.811,
+          "ar/title": 0.79
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-72-700",
+        "lines": [
+          {
+            "advance_em": 6.278,
+            "block": "d-72-700",
+            "density": 0.3469,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.736,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.577,
+            "block": "d-72-700",
+            "density": 0.356,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.736,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.855,
+            "block": "d-72-700",
+            "density": 0.3834,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-72-700",
+            "density": 0.2835,
+            "drawn": 830,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.799,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.739,
+          "ar/lower": 0.817,
+          "ar/title": 0.796
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-96-400",
+        "lines": [
+          {
+            "advance_em": 5.953,
+            "block": "d-96-400",
+            "density": 0.24,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.23,
+            "block": "d-96-400",
+            "density": 0.246,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.512,
+            "block": "d-96-400",
+            "density": 0.2585,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-96-400",
+            "density": 0.1842,
+            "drawn": 400,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.724,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.713,
+          "ar/lower": 0.768,
+          "ar/title": 0.749
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-96-600",
+        "lines": [
+          {
+            "advance_em": 6.144,
+            "block": "d-96-600",
+            "density": 0.3138,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.438,
+            "block": "d-96-600",
+            "density": 0.3219,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.708,
+            "block": "d-96-600",
+            "density": 0.3441,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-96-600",
+            "density": 0.2542,
+            "drawn": 675,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.781,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.739,
+          "ar/lower": 0.81,
+          "ar/title": 0.79
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-96-700",
+        "lines": [
+          {
+            "advance_em": 6.278,
+            "block": "d-96-700",
+            "density": 0.3442,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.577,
+            "block": "d-96-700",
+            "density": 0.3533,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.856,
+            "block": "d-96-700",
+            "density": 0.3806,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-96-700",
+            "density": 0.2811,
+            "drawn": 830,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.797,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.739,
+          "ar/lower": 0.817,
+          "ar/title": 0.796
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-120-400",
+        "lines": [
+          {
+            "advance_em": 5.992,
+            "block": "d-120-400",
+            "density": 0.2362,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.269,
+            "block": "d-120-400",
+            "density": 0.2423,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.551,
+            "block": "d-120-400",
+            "density": 0.2553,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-120-400",
+            "density": 0.1827,
+            "drawn": 400,
+            "ink_bottom_em": 0.362,
+            "ink_top_em": 0.725,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.716,
+          "ar/lower": 0.773,
+          "ar/title": 0.754
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-120-600",
+        "lines": [
+          {
+            "advance_em": 6.17,
+            "block": "d-120-600",
+            "density": 0.3105,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.464,
+            "block": "d-120-600",
+            "density": 0.3186,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.734,
+            "block": "d-120-600",
+            "density": 0.3411,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-120-600",
+            "density": 0.2527,
+            "drawn": 675,
+            "ink_bottom_em": 0.358,
+            "ink_top_em": 0.779,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.741,
+          "ar/lower": 0.814,
+          "ar/title": 0.793
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-120-700",
+        "lines": [
+          {
+            "advance_em": 6.304,
+            "block": "d-120-700",
+            "density": 0.3409,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.603,
+            "block": "d-120-700",
+            "density": 0.35,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.882,
+            "block": "d-120-700",
+            "density": 0.3776,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-120-700",
+            "density": 0.2796,
+            "drawn": 830,
+            "ink_bottom_em": 0.358,
+            "ink_top_em": 0.8,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.74,
+          "ar/lower": 0.82,
+          "ar/title": 0.799
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-136-400",
+        "lines": [
+          {
+            "advance_em": 5.992,
+            "block": "d-136-400",
+            "density": 0.2287,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.269,
+            "block": "d-136-400",
+            "density": 0.2346,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.551,
+            "block": "d-136-400",
+            "density": 0.2477,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.706,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-136-400",
+            "density": 0.1766,
+            "drawn": 400,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.721,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.713,
+          "ar/lower": 0.772,
+          "ar/title": 0.753
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-136-600",
+        "lines": [
+          {
+            "advance_em": 6.17,
+            "block": "d-136-600",
+            "density": 0.3033,
+            "drawn": 600,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.464,
+            "block": "d-136-600",
+            "density": 0.3114,
+            "drawn": 600,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.734,
+            "block": "d-136-600",
+            "density": 0.334,
+            "drawn": 600,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-136-600",
+            "density": 0.2466,
+            "drawn": 675,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.776,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.738,
+          "ar/lower": 0.813,
+          "ar/title": 0.792
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-136-700",
+        "lines": [
+          {
+            "advance_em": 6.305,
+            "block": "d-136-700",
+            "density": 0.3341,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.728,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.604,
+            "block": "d-136-700",
+            "density": 0.343,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.728,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.881,
+            "block": "d-136-700",
+            "density": 0.3704,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-136-700",
+            "density": 0.2736,
+            "drawn": 830,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.794,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.739,
+          "ar/lower": 0.819,
+          "ar/title": 0.798
+        },
+        "section": "display",
+        "weight": 700
+      }
+    ],
+    "drawn": {
+      "600": 675,
+      "700": 830
+    },
+    "shots": [
+      "v-24",
+      "mass-24",
+      "mixed-24",
+      "dots-24",
+      "punct-24",
+      "voc-24",
+      "brackets-24",
+      "numbers-24",
+      "inline-24",
+      "v-48",
+      "mass-48",
+      "mixed-48",
+      "dots-48",
+      "punct-48",
+      "voc-48",
+      "brackets-48",
+      "numbers-48",
+      "inline-48",
+      "v-96",
+      "mass-96",
+      "mixed-96",
+      "dots-96",
+      "punct-96",
+      "voc-96",
+      "brackets-96",
+      "numbers-96",
+      "inline-96",
+      "d-52-400",
+      "d-52-600",
+      "d-52-700",
+      "d-72-400",
+      "d-72-600",
+      "d-72-700",
+      "d-96-400",
+      "d-96-600",
+      "d-96-700",
+      "d-120-400",
+      "d-120-600",
+      "d-120-700",
+      "d-136-400",
+      "d-136-600",
+      "d-136-700"
+    ],
+    "track_sizes": [
+      24,
+      32,
+      72,
+      120
+    ],
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+    "version": "153.0.8010.12"
+  },
+  "firefox": {
+    "not_run": "BrowserType.launch: Failed to launch the browser process. Firefox exits 1 with 'Could not find profile folder' before it reads -profile: its profile service needs ~/Library/Application Support/Firefox, which exists but is refused to this process (EPERM on listing) on macOS 27.0 (Darwin 27.0.0); the folder belongs to the installed /Applications/Firefox.app, and mkdir of that exact name was refused before it existed (a sibling name was creatable). A fresh download (playwright install --force), quarantine removal, a resolved profile path, XRE_PROFILE_PATH and a copy of the app under another application name do not change it. Firefox cannot start here (no security setting was changed to test further)."
+  },
+  "webkit": {
+    "blocks": [
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-24",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "H",
+            "px": 24,
+            "weight": 400
+          },
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "l",
+            "px": 24,
+            "weight": 400
+          },
+          {
+            "block": "v-24",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "alef",
+            "px": 24,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "section": "optical"
+      },
+      {
+        "id": "mass-24",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.771,
+            "block": "mass-24",
+            "density": 0.2444,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-24",
+            "density": 0.2,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.818
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-24",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.481,
+            "block": "mixed-24",
+            "density": 0.3084,
+            "drawn": 600,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.792,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.014,
+            "tracking_token": "--track-24-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-24",
+            "density": 0.2863,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-24",
+            "density": 0.3091,
+            "drawn": 675,
+            "ink_bottom_em": 0.375,
+            "ink_top_em": 0.833,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar_brand/en_ar": 1.002,
+          "ar_next/en_ar": 0.928
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-24",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-24",
+            "density": 0.1913,
+            "drawn": 400,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.792,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-24",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-24",
+            "density": 0.2082,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.689,
+            "block": "punct-24",
+            "density": 0.224,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.929
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-24",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-24",
+            "density": 0.2744,
+            "drawn": 400,
+            "ink_bottom_em": 0.458,
+            "ink_top_em": 1.208,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-24",
+            "density": 0.2313,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-24",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-24",
+            "density": 0.2511,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.958,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.79,
+            "block": "brackets-24",
+            "density": 0.2436,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 1.031
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-24",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.967,
+            "block": "numbers-24",
+            "density": 0.2729,
+            "drawn": 400,
+            "ink_bottom_em": 0.021,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-24",
+            "density": 0.1937,
+            "drawn": 400,
+            "ink_bottom_em": 0.25,
+            "ink_top_em": 0.708,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar/en": 0.71
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-24",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-24",
+            "density": 0.2194,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 24,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.505,
+            "block": "inline-24",
+            "density": 0.2405,
+            "drawn": 400,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 24,
+            "tracking_em": -0.016,
+            "tracking_token": "--track-24-400",
+            "weight": 400
+          }
+        ],
+        "px": 24,
+        "ratios": {
+          "ar_en/en_ar": 0.912
+        },
+        "section": "optical"
+      },
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-48",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "H",
+            "px": 48,
+            "weight": 400
+          },
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "l",
+            "px": 48,
+            "weight": 400
+          },
+          {
+            "block": "v-48",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "alef",
+            "px": 48,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "section": "optical"
+      },
+      {
+        "id": "mass-48",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.639,
+            "block": "mass-48",
+            "density": 0.2309,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-48",
+            "density": 0.1871,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.81
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-48",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.406,
+            "block": "mixed-48",
+            "density": 0.2962,
+            "drawn": 600,
+            "ink_bottom_em": 0.292,
+            "ink_top_em": 0.781,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-48",
+            "density": 0.2722,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-48",
+            "density": 0.2945,
+            "drawn": 675,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.823,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar_brand/en_ar": 0.994,
+          "ar_next/en_ar": 0.919
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-48",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-48",
+            "density": 0.1776,
+            "drawn": 400,
+            "ink_bottom_em": 0.49,
+            "ink_top_em": 0.792,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-48",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-48",
+            "density": 0.1947,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.557,
+            "block": "punct-48",
+            "density": 0.2115,
+            "drawn": 400,
+            "ink_bottom_em": 0.208,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.921
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-48",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-48",
+            "density": 0.2541,
+            "drawn": 400,
+            "ink_bottom_em": 0.448,
+            "ink_top_em": 1.208,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-48",
+            "density": 0.2163,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-48",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-48",
+            "density": 0.2342,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.948,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.628,
+            "block": "brackets-48",
+            "density": 0.2295,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.75,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 1.02
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-48",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.877,
+            "block": "numbers-48",
+            "density": 0.2587,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-48",
+            "density": 0.1806,
+            "drawn": 400,
+            "ink_bottom_em": 0.24,
+            "ink_top_em": 0.708,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar/en": 0.698
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-48",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-48",
+            "density": 0.2049,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.74,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 48,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.397,
+            "block": "inline-48",
+            "density": 0.2274,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 48,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          }
+        ],
+        "px": 48,
+        "ratios": {
+          "ar_en/en_ar": 0.901
+        },
+        "section": "optical"
+      },
+      {
+        "alef_over_H": 1.03,
+        "alef_over_l": 1,
+        "id": "v-96",
+        "kind": "vertical",
+        "lines": [
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.698,
+            "lang": "en",
+            "line": "H",
+            "px": 96,
+            "weight": 400
+          },
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "l",
+            "px": 96,
+            "weight": 400
+          },
+          {
+            "block": "v-96",
+            "drawn": 400,
+            "ink_bottom_em": 0,
+            "ink_top_em": 0.719,
+            "lang": "ar",
+            "line": "alef",
+            "px": 96,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "section": "optical"
+      },
+      {
+        "id": "mass-96",
+        "kind": "mass",
+        "lines": [
+          {
+            "advance_em": 9.331,
+            "block": "mass-96",
+            "density": 0.2201,
+            "drawn": 400,
+            "ink_bottom_em": 0.203,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.676,
+            "block": "mass-96",
+            "density": 0.172,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.719,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.781
+        },
+        "section": "optical"
+      },
+      {
+        "id": "mixed-96",
+        "kind": "mixed",
+        "lines": [
+          {
+            "advance_em": 8.226,
+            "block": "mixed-96",
+            "density": 0.2853,
+            "drawn": 600,
+            "ink_bottom_em": 0.286,
+            "ink_top_em": 0.776,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 8.228,
+            "block": "mixed-96",
+            "density": 0.256,
+            "drawn": 675,
+            "ink_bottom_em": 0.5,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar_next",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          },
+          {
+            "advance_em": 8.188,
+            "block": "mixed-96",
+            "density": 0.2776,
+            "drawn": 675,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.818,
+            "lang": "ar",
+            "line": "ar_brand",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar_brand/en_ar": 0.973,
+          "ar_next/en_ar": 0.897
+        },
+        "section": "optical"
+      },
+      {
+        "id": "dots-96",
+        "kind": "dots",
+        "lines": [
+          {
+            "advance_em": 7.145,
+            "block": "dots-96",
+            "density": 0.1618,
+            "drawn": 400,
+            "ink_bottom_em": 0.484,
+            "ink_top_em": 0.781,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "punct-96",
+        "kind": "punct",
+        "lines": [
+          {
+            "advance_em": 10.316,
+            "block": "punct-96",
+            "density": 0.1787,
+            "drawn": 400,
+            "ink_bottom_em": 0.333,
+            "ink_top_em": 0.734,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.249,
+            "block": "punct-96",
+            "density": 0.2012,
+            "drawn": 400,
+            "ink_bottom_em": 0.203,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.888
+        },
+        "section": "optical"
+      },
+      {
+        "id": "voc-96",
+        "kind": "voc",
+        "lines": [
+          {
+            "advance_em": 7.466,
+            "block": "voc-96",
+            "density": 0.2306,
+            "drawn": 400,
+            "ink_bottom_em": 0.438,
+            "ink_top_em": 1.208,
+            "lang": "ar",
+            "line": "ar_voc",
+            "line_height": 1.5,
+            "line_height_token": "--lh-vocalised",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 7.466,
+            "block": "voc-96",
+            "density": 0.1986,
+            "drawn": 400,
+            "ink_bottom_em": 0.313,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {},
+        "section": "optical"
+      },
+      {
+        "id": "brackets-96",
+        "kind": "brackets",
+        "lines": [
+          {
+            "advance_em": 12.331,
+            "block": "brackets-96",
+            "density": 0.2139,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.938,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 12.25,
+            "block": "brackets-96",
+            "density": 0.2171,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.985
+        },
+        "section": "optical"
+      },
+      {
+        "id": "numbers-96",
+        "kind": "numbers",
+        "lines": [
+          {
+            "advance_em": 6.667,
+            "block": "numbers-96",
+            "density": 0.2457,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "en",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 8.095,
+            "block": "numbers-96",
+            "density": 0.1656,
+            "drawn": 400,
+            "ink_bottom_em": 0.234,
+            "ink_top_em": 0.698,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/en": 0.674
+        },
+        "section": "optical"
+      },
+      {
+        "id": "inline-96",
+        "kind": "inline",
+        "lines": [
+          {
+            "advance_em": 10.488,
+            "block": "inline-96",
+            "density": 0.1882,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar_en",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          },
+          {
+            "advance_em": 9.145,
+            "block": "inline-96",
+            "density": 0.215,
+            "drawn": 400,
+            "ink_bottom_em": 0.281,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "en_ar",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar_en/en_ar": 0.875
+        },
+        "section": "optical"
+      },
+      {
+        "id": "d-52-400",
+        "lines": [
+          {
+            "advance_em": 6.136,
+            "block": "d-52-400",
+            "density": 0.241,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.412,
+            "block": "d-52-400",
+            "density": 0.2475,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.678,
+            "block": "d-52-400",
+            "density": 0.2614,
+            "drawn": 400,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.712,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.022,
+            "tracking_token": "--track-32-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-52-400",
+            "density": 0.1913,
+            "drawn": 400,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.731,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.732,
+          "ar/lower": 0.794,
+          "ar/title": 0.773
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-52-600",
+        "lines": [
+          {
+            "advance_em": 6.3,
+            "block": "d-52-600",
+            "density": 0.3135,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.594,
+            "block": "d-52-600",
+            "density": 0.322,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.848,
+            "block": "d-52-600",
+            "density": 0.3461,
+            "drawn": 600,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.019,
+            "tracking_token": "--track-32-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-52-600",
+            "density": 0.2611,
+            "drawn": 675,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.779,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.754,
+          "ar/lower": 0.833,
+          "ar/title": 0.811
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-52-700",
+        "lines": [
+          {
+            "advance_em": 6.421,
+            "block": "d-52-700",
+            "density": 0.3438,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.721,
+            "block": "d-52-700",
+            "density": 0.3533,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.74,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.983,
+            "block": "d-52-700",
+            "density": 0.3824,
+            "drawn": 700,
+            "ink_bottom_em": 0.019,
+            "ink_top_em": 0.731,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 52,
+            "tracking_em": -0.018,
+            "tracking_token": "--track-32-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-52-700",
+            "density": 0.2877,
+            "drawn": 830,
+            "ink_bottom_em": 0.365,
+            "ink_top_em": 0.808,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 52,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 52,
+        "ratios": {
+          "ar/caps": 0.752,
+          "ar/lower": 0.837,
+          "ar/title": 0.814
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-72-400",
+        "lines": [
+          {
+            "advance_em": 5.953,
+            "block": "d-72-400",
+            "density": 0.244,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.23,
+            "block": "d-72-400",
+            "density": 0.25,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.496,
+            "block": "d-72-400",
+            "density": 0.2628,
+            "drawn": 400,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-72-400",
+            "density": 0.1873,
+            "drawn": 400,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.729,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.713,
+          "ar/lower": 0.768,
+          "ar/title": 0.749
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-72-600",
+        "lines": [
+          {
+            "advance_em": 6.144,
+            "block": "d-72-600",
+            "density": 0.3172,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.438,
+            "block": "d-72-600",
+            "density": 0.3254,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.692,
+            "block": "d-72-600",
+            "density": 0.3484,
+            "drawn": 600,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-72-600",
+            "density": 0.2573,
+            "drawn": 675,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.778,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.739,
+          "ar/lower": 0.811,
+          "ar/title": 0.791
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-72-700",
+        "lines": [
+          {
+            "advance_em": 6.278,
+            "block": "d-72-700",
+            "density": 0.3475,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.736,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.577,
+            "block": "d-72-700",
+            "density": 0.3567,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.736,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.84,
+            "block": "d-72-700",
+            "density": 0.3849,
+            "drawn": 700,
+            "ink_bottom_em": 0.014,
+            "ink_top_em": 0.722,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 72,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-72-700",
+            "density": 0.284,
+            "drawn": 830,
+            "ink_bottom_em": 0.361,
+            "ink_top_em": 0.799,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 72,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 72,
+        "ratios": {
+          "ar/caps": 0.738,
+          "ar/lower": 0.817,
+          "ar/title": 0.796
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-96-400",
+        "lines": [
+          {
+            "advance_em": 5.953,
+            "block": "d-96-400",
+            "density": 0.2304,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.23,
+            "block": "d-96-400",
+            "density": 0.2363,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.496,
+            "block": "d-96-400",
+            "density": 0.2497,
+            "drawn": 400,
+            "ink_bottom_em": 0.01,
+            "ink_top_em": 0.708,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.036,
+            "tracking_token": "--track-72-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-96-400",
+            "density": 0.1766,
+            "drawn": 400,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.724,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.707,
+          "ar/lower": 0.766,
+          "ar/title": 0.747
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-96-600",
+        "lines": [
+          {
+            "advance_em": 6.144,
+            "block": "d-96-600",
+            "density": 0.3049,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.438,
+            "block": "d-96-600",
+            "density": 0.3128,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.692,
+            "block": "d-96-600",
+            "density": 0.3359,
+            "drawn": 600,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.031,
+            "tracking_token": "--track-72-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-96-600",
+            "density": 0.2467,
+            "drawn": 675,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.776,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.734,
+          "ar/lower": 0.809,
+          "ar/title": 0.789
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-96-700",
+        "lines": [
+          {
+            "advance_em": 6.278,
+            "block": "d-96-700",
+            "density": 0.3356,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.577,
+            "block": "d-96-700",
+            "density": 0.3446,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.839,
+            "block": "d-96-700",
+            "density": 0.3727,
+            "drawn": 700,
+            "ink_bottom_em": 0.016,
+            "ink_top_em": 0.719,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 96,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-72-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-96-700",
+            "density": 0.2737,
+            "drawn": 830,
+            "ink_bottom_em": 0.359,
+            "ink_top_em": 0.797,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 96,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 96,
+        "ratios": {
+          "ar/caps": 0.734,
+          "ar/lower": 0.816,
+          "ar/title": 0.794
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-120-400",
+        "lines": [
+          {
+            "advance_em": 5.992,
+            "block": "d-120-400",
+            "density": 0.2289,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.269,
+            "block": "d-120-400",
+            "density": 0.2348,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.535,
+            "block": "d-120-400",
+            "density": 0.2484,
+            "drawn": 400,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.704,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-120-400",
+            "density": 0.1767,
+            "drawn": 400,
+            "ink_bottom_em": 0.362,
+            "ink_top_em": 0.721,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.711,
+          "ar/lower": 0.772,
+          "ar/title": 0.753
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-120-600",
+        "lines": [
+          {
+            "advance_em": 6.17,
+            "block": "d-120-600",
+            "density": 0.3036,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.725,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.464,
+            "block": "d-120-600",
+            "density": 0.3116,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.725,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.718,
+            "block": "d-120-600",
+            "density": 0.3348,
+            "drawn": 600,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-120-600",
+            "density": 0.2467,
+            "drawn": 675,
+            "ink_bottom_em": 0.358,
+            "ink_top_em": 0.775,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.737,
+          "ar/lower": 0.813,
+          "ar/title": 0.792
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-120-700",
+        "lines": [
+          {
+            "advance_em": 6.305,
+            "block": "d-120-700",
+            "density": 0.3342,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.604,
+            "block": "d-120-700",
+            "density": 0.3432,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.729,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.865,
+            "block": "d-120-700",
+            "density": 0.3714,
+            "drawn": 700,
+            "ink_bottom_em": 0.013,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 120,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-120-700",
+            "density": 0.2737,
+            "drawn": 830,
+            "ink_bottom_em": 0.358,
+            "ink_top_em": 0.796,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 120,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 120,
+        "ratios": {
+          "ar/caps": 0.737,
+          "ar/lower": 0.819,
+          "ar/title": 0.797
+        },
+        "section": "display",
+        "weight": 700
+      },
+      {
+        "id": "d-136-400",
+        "lines": [
+          {
+            "advance_em": 5.992,
+            "block": "d-136-400",
+            "density": 0.2289,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 6.269,
+            "block": "d-136-400",
+            "density": 0.2348,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.535,
+            "block": "d-136-400",
+            "density": 0.2484,
+            "drawn": 400,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.706,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.033,
+            "tracking_token": "--track-120-400",
+            "weight": 400
+          },
+          {
+            "advance_em": 7.542,
+            "block": "d-136-400",
+            "density": 0.1767,
+            "drawn": 400,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.721,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 400
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.711,
+          "ar/lower": 0.772,
+          "ar/title": 0.753
+        },
+        "section": "display",
+        "weight": 400
+      },
+      {
+        "id": "d-136-600",
+        "lines": [
+          {
+            "advance_em": 6.17,
+            "block": "d-136-600",
+            "density": 0.3036,
+            "drawn": 600,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 6.464,
+            "block": "d-136-600",
+            "density": 0.3116,
+            "drawn": 600,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.724,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.718,
+            "block": "d-136-600",
+            "density": 0.3348,
+            "drawn": 600,
+            "ink_bottom_em": 0.011,
+            "ink_top_em": 0.717,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.029,
+            "tracking_token": "--track-120-600",
+            "weight": 600
+          },
+          {
+            "advance_em": 7.628,
+            "block": "d-136-600",
+            "density": 0.2467,
+            "drawn": 675,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.776,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 600
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.737,
+          "ar/lower": 0.813,
+          "ar/title": 0.792
+        },
+        "section": "display",
+        "weight": 600
+      },
+      {
+        "id": "d-136-700",
+        "lines": [
+          {
+            "advance_em": 6.305,
+            "block": "d-136-700",
+            "density": 0.3342,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.728,
+            "lang": "en",
+            "line": "lower",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 6.603,
+            "block": "d-136-700",
+            "density": 0.3432,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.728,
+            "lang": "en",
+            "line": "title",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.865,
+            "block": "d-136-700",
+            "density": 0.3714,
+            "drawn": 700,
+            "ink_bottom_em": 0.015,
+            "ink_top_em": 0.721,
+            "lang": "en",
+            "line": "caps",
+            "line_height": 1.2,
+            "line_height_token": null,
+            "px": 136,
+            "tracking_em": -0.027,
+            "tracking_token": "--track-120-700",
+            "weight": 700
+          },
+          {
+            "advance_em": 7.665,
+            "block": "d-136-700",
+            "density": 0.2737,
+            "drawn": 830,
+            "ink_bottom_em": 0.36,
+            "ink_top_em": 0.794,
+            "lang": "ar",
+            "line": "ar",
+            "line_height": 1.3,
+            "line_height_token": "--lh-heading-ar",
+            "px": 136,
+            "tracking_em": 0,
+            "tracking_token": null,
+            "weight": 700
+          }
+        ],
+        "px": 136,
+        "ratios": {
+          "ar/caps": 0.737,
+          "ar/lower": 0.819,
+          "ar/title": 0.797
+        },
+        "section": "display",
+        "weight": 700
+      }
+    ],
+    "drawn": {
+      "600": 675,
+      "700": 830
+    },
+    "shots": [
+      "v-24",
+      "mass-24",
+      "mixed-24",
+      "dots-24",
+      "punct-24",
+      "voc-24",
+      "brackets-24",
+      "numbers-24",
+      "inline-24",
+      "v-48",
+      "mass-48",
+      "mixed-48",
+      "dots-48",
+      "punct-48",
+      "voc-48",
+      "brackets-48",
+      "numbers-48",
+      "inline-48",
+      "v-96",
+      "mass-96",
+      "mixed-96",
+      "dots-96",
+      "punct-96",
+      "voc-96",
+      "brackets-96",
+      "numbers-96",
+      "inline-96",
+      "d-52-400",
+      "d-52-600",
+      "d-52-700",
+      "d-72-400",
+      "d-72-600",
+      "d-72-700",
+      "d-96-400",
+      "d-96-600",
+      "d-96-700",
+      "d-120-400",
+      "d-120-600",
+      "d-120-700",
+      "d-136-400",
+      "d-136-600",
+      "d-136-700"
+    ],
+    "track_sizes": [
+      24,
+      32,
+      72,
+      120
+    ],
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+    "version": "26.6"
+  }
+}

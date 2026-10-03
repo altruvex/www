@@ -21,3 +21,12 @@ export function splitHeadline(value: string): {
     second: words.slice(splitAt).join(" "),
   };
 }
+
+/** A URL's bare host for display: no scheme, no `www.`. */
+export function getDomainName(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}

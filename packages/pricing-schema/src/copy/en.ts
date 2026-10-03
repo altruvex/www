@@ -3,7 +3,7 @@ import type { PricingCopy } from "./types";
 /**
  * EN copy for every priced entity.
  *
- * Names and descriptions live next to the numbers they describe so a tier
+ * Names and descriptions live next to the numbers they describe so a plan
  * cannot be renamed in one surface and not another. Page chrome — headings,
  * eyebrows, FAQ prose — stays in the app's next-intl catalogue; only copy that
  * names or describes a priced thing belongs here.
@@ -36,90 +36,9 @@ export const EN_COPY: PricingCopy = {
     },
   },
   bands: {
-    basic: "Essential",
-    standard: "Professional",
-    premium: "Flagship",
-  },
-  tiers: {
-    essential: {
-      name: "Marketing System",
-      buyerLabel: "Simple Marketing Site",
-      internalLabel: "Focused launch scope",
-      idealFor:
-        "For a focused launch or compact marketing site that needs custom design, speed, lead capture, and room to grow.",
-      notIncluded:
-        "No advanced CMS workflows, dashboards, or payment flows - see Full Marketing Site or E-commerce Platform.",
-      features: [
-        "Custom launch page or compact site structure",
-        "Responsive UI implementation across key devices",
-        "Lead capture forms and analytics baseline",
-        "SEO, performance, and deployment setup",
-        "Domain, SSL, and base hosting setup",
-      ],
-      nextStep: "Next step: open Transparency and define the launch scope.",
-      ctaLabel: "Get Launch Estimate",
-    },
-    professional: {
-      name: "Business Platform",
-      buyerLabel: "Full Marketing Site",
-      internalLabel: "Marketing plus operations",
-      idealFor:
-        "For businesses that need repeatable content operations, multilingual UX, and practical integrations with their tools.",
-      notIncluded:
-        "No full product catalog, deep commerce operations, or custom internal product logic - see E-commerce Platform or Business Web System.",
-      features: [
-        "Everything in Simple Marketing Site",
-        "CMS setup for repeatable content workflows",
-        "Bilingual structure with QA across key journeys",
-        "One key integration such as CRM, booking, or auth",
-        "Technical discovery, architecture, and analytics plan",
-      ],
-      nextStep:
-        "Next step: open Transparency and map the workflows and integrations.",
-      ctaLabel: "Get Growth Estimate",
-    },
-    ecommerce: {
-      name: "Commerce Engine",
-      buyerLabel: "E-commerce Platform",
-      internalLabel: "Storefront plus operations",
-      idealFor:
-        "For stores that need catalog, checkout, payments, shipping, order operations, and reliable performance.",
-      notIncluded:
-        "No internal ERP replacement or complex product logic - scope those in Business Web System or a custom quote.",
-      features: [
-        "Commerce architecture and product catalog model",
-        "Checkout flow with payment gateway planning",
-        "Inventory, shipping, and order management foundations",
-        "Revenue-focused performance and analytics setup",
-        "Operational handoff for managing products and orders",
-      ],
-      nextStep: "Next step: open Transparency and scope the commerce path.",
-      ctaLabel: "Get Commerce Estimate",
-    },
-    flagship: {
-      name: "Custom Infrastructure",
-      buyerLabel: "Business Web System",
-      internalLabel: "Operations and workflows",
-      idealFor:
-        "For portals, dashboards, and operational systems that need custom workflows beyond a marketing site.",
-      notIncluded: "",
-      features: [
-        "Custom product discovery and architecture",
-        "Dashboards, portals, or workflow engines",
-        "Role-based access and business logic",
-        "Multiple integrations and data flows",
-        "Phased delivery roadmap with infrastructure planning",
-      ],
-      nextStep:
-        "Next step: open Transparency and map dashboards, portals, or internal logic.",
-      ctaLabel: "Book Architecture Call",
-    },
-  },
-  tierTemplates: {
-    timelineLabel: "Delivery",
-    timelineValue: "{weeks} weeks",
-    ceiling:
-      "{windowMin}–{windowMax} weeks across the price matrix. A flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks - never further. Anything larger ships in phases.",
+    basic: "Contained",
+    standard: "Standard",
+    premium: "Extensive",
   },
   maintenance: {
     essential: {
@@ -184,6 +103,11 @@ export const EN_COPY: PricingCopy = {
       monthly: "/ month",
       annual: "/ year",
       one_time: "one-time",
+    },
+    perInterval: {
+      monthly: "/ month",
+      quarterly: "/ quarter",
+      annual: "/ year",
     },
   },
   consulting: {
@@ -250,5 +174,96 @@ export const EN_COPY: PricingCopy = {
     markupLabel: "Margin",
     totalLabel: "You pay",
     pendingLabel: "Pricing pending",
+    vatExcluded: "All figures exclude VAT at {rate}%.",
+    paymentTriggers: [
+      "{p} to start",
+      "{p} at a development milestone",
+      "{p} before production launch",
+    ],
+    milestoneTrigger: "a development milestone",
+    ownership: "Code, designs and accounts pass to you at final payment.",
+    validity: "{days} days from the date of issue.",
+  },
+  factors: {
+    groups: {
+      timeline: {
+        label: "Delivery",
+        options: {
+          urgent: { label: "Urgent" },
+          standard: { label: "Standard" },
+          flexible: { label: "Flexible" },
+        },
+      },
+      brand: {
+        label: "Brand identity",
+        options: {
+          complete: { label: "Brand ready" },
+          partial: { label: "Partial brand" },
+          scratch: { label: "No brand yet" },
+        },
+      },
+      content: {
+        label: "Content readiness",
+        options: {
+          provide: { label: "You provide content" },
+          "need-help": { label: "Content help" },
+          unsure: { label: "Not sure yet" },
+        },
+      },
+    },
+    noChange: "no change",
+  },
+  scopeNotes: {
+    cms: {
+      name: "Content management (CMS)",
+      description: "Edit pages and posts yourself.",
+    },
+    auth: {
+      name: "Sign-in & accounts",
+      description: "Customer or staff accounts, with roles.",
+    },
+    "payments-integrations": {
+      name: "Payments & third-party integrations",
+      description: "Payment gateway, CRM, APIs, analytics.",
+    },
+    bilingual: {
+      name: "Arabic + English",
+      description: "Both languages, right-to-left done properly.",
+    },
+    "performance-seo": {
+      name: "Performance & SEO targets",
+      description:
+        "Speed, accessibility and search targets written into scope.",
+    },
+    maintenance: {
+      name: "Ongoing maintenance",
+      description: "A monthly plan after launch, billed separately.",
+    },
+  },
+  investment: {
+    design: {
+      name: "Interface design",
+      covers:
+        "Interface and experience design, delivered as screens and a working design system.",
+      how: "Per project, from the screens and flows involved",
+      figure: "Scoped per project",
+    },
+    development: {
+      name: "Custom development",
+      covers: "Websites and systems engineered from your requirements.",
+      how: "Published range by project type and complexity; fixed in the proposal",
+    },
+    audit: {
+      name: "Technical audit",
+      covers:
+        "Architecture, performance and security review with a remediation roadmap.",
+      how: "Fixed fee, credited to the build",
+    },
+    maintenance: {
+      name: "Maintenance",
+      covers: "Updates, monitoring, backups and edit requests after launch.",
+      how: "Monthly plan",
+    },
+    weeksValue: "{weeks} weeks",
   },
 };

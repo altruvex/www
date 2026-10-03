@@ -23,4 +23,4 @@ export const GET = withAdmin(async (request) => {
         }
       : result,
   });
-});
+}, { can: ["create", "project"] });

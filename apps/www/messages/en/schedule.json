@@ -1,13 +1,18 @@
 {
   "back": "Back",
   "eyebrow": "14 - Technical Call",
+  "facts": {
+    "free": "Free",
+    "hours": "9:00 AM – 6:00 PM",
+    "noCommitment": "No commitment"
+  },
   "form": {
     "date": {
       "errorFuture": "Date must be within the next 3 months",
       "errorPast": "Date must be today or in the future",
       "errorRequired": "Please select a date",
       "label": "Preferred Date",
-      "placeholder": "Select a date"
+      "placeholder": "pick a day"
     },
     "message": {
       "label": "Message (Optional)",
@@ -23,17 +28,14 @@
       "label": "Phone Number",
       "placeholder": "01X XXXX XXXX"
     },
-    "riskReversal": "Free 30-min call · No commitment · Direct founder access",
     "time": {
-      "availableHours": "Available: 9:00 AM – 6:00 PM (15-minute intervals)",
       "error": "Please select a time",
       "errorPast": "That time has already passed today. Pick a later time.",
       "label": "Preferred Time",
-      "placeholder": "Select a time",
-      "hourPlaceholder": "Hour",
-      "minutePlaceholder": "Min"
+      "placeholder": "pick a time"
     }
   },
+  "sentence": "My name is <name></name>. Call me on <phone></phone> on <date></date> at <time></time>.",
   "seo": {
     "body": "A discovery call is not a sales script. It is a focused technical conversation for founders, operators, and teams that need to understand whether a custom website, portal, ecommerce platform, or internal web system is the right next move.",
     "eyebrow": "Before you choose a time",
@@ -93,13 +95,12 @@
     "title": "A technical call with a clear purpose"
   },
   "submit": {
-    "button": "Confirm Meeting",
+    "button": "Confirm the call",
     "errorGeneric": "Something went wrong. Please try again.",
     "errorNetwork": "Network error. Check your connection and try again.",
     "submitting": "Scheduling...",
     "success": "Booked. Check your inbox for the confirmation."
   },
-  "subtitle": "The right move when the project is real, the stakes are meaningful, and you need <strong>a clearer technical path before committing.</strong>",
-  "title": "Use the call to",
-  "titleAccent": "pressure-test the scope live."
+  "subtitle": "A technical conversation about your project, not a sales pitch. You leave with <strong>a clearer scope and an honest next step.</strong>",
+  "title": "Thirty minutes with the founder."
 }

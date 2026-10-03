@@ -3,14 +3,14 @@
   "approach": "منهجيتنا",
   "closeMenu": "إغلاق القائمة",
   "contact": "تواصل معنا",
-  "getStarted": "احصل على تقدير",
+  "getStarted": "قدّر مشروعك",
   "how-we-work": "كيف نعمل",
   "language": "اللغة",
   "openMenu": "فتح القائمة",
   "pricing": "التسعير",
   "primaryLabel": "التنقل الرئيسي",
   "process": "آلية العمل",
-  "schedule": "احجز موعداً",
+  "schedule": "ناقش متطلباتك معنا",
   "services": "خدماتنا",
   "theme": "المظهر",
   "themeLight": "فاتح",
@@ -22,5 +22,26 @@
   "work": "أعمالنا",
   "commandPalette": "البحث والأوامر",
   "menuTitle": "القائمة",
-  "menuDescription": "التنقل في الموقع وإعدادات اللغة والمظهر."
+  "menuDescription": "التنقل في الموقع وإعدادات اللغة والمظهر.",
+  "index": "الفهرس",
+  "pages": "الصفحات",
+  "method": "طريقة عملنا",
+  "directLines": "تواصل مباشر",
+  "standards": "معاييرنا",
+  "faq": "الأسئلة الشائعة",
+  "settings": "الإعدادات",
+  "darkMode": "الوضع الداكن",
+  "desc": {
+    "work": "مشاريع مختارة",
+    "services": "ما نبنيه ونرعاه",
+    "method": "كيف يسير المشروع",
+    "pricing": "أسعار منشورة",
+    "about": "الاستوديو والفريق",
+    "contact": "راسلنا"
+  },
+  "all": {
+    "work": "كل الأعمال",
+    "services": "كل الخدمات"
+  },
+  "subpages": "صفحات {name}"
 }

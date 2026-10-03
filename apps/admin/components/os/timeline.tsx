@@ -1,5 +1,5 @@
 import { dateTime, when } from "@/lib/format";
-import { toneDot, type Tone } from "@/lib/status";
+import { toneClasses, toneDot, type Tone } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { format, isToday, isYesterday } from "date-fns";
 import type { LucideIcon } from "lucide-react";
@@ -55,15 +55,6 @@ export interface TimelineEvent {
   /** Activity taxonomy for category filtering */
   category?: string;
 }
-
-export const toneBadgeStyles: Record<Tone, string> = {
-  neutral: "bg-muted/60 text-muted-foreground border-border/60",
-  info: "bg-info/10 text-info border-info/20",
-  progress: "bg-progress/10 text-progress border-progress/20",
-  warning: "bg-warning/10 text-warning border-warning/20",
-  danger: "bg-danger/10 text-danger border-danger/20",
-  success: "bg-success/10 text-success border-success/20",
-};
 
 export function Timeline({
   events,
@@ -202,7 +193,9 @@ function TimelineItem({
         <div
           className={cn(
             "relative z-10 flex size-7 items-center justify-center rounded-md border",
-            toneBadgeStyles[event.tone],
+            // The same tone classes every pill uses, so a timeline icon and a
+            // status pill for one state can never drift apart.
+            toneClasses[event.tone],
           )}
         >
           <Icon className="size-3.5" aria-hidden />

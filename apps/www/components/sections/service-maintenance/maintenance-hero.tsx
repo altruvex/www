@@ -3,59 +3,31 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Num } from "@/components/ui/num";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { getCommercialCta } from "@/lib/config/commercial";
 import {
-  MOTION,
-  resolveTrigger,
+  useSectionCardGrid,
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
-  whenMotionReady,
 } from "@/lib/motion";
-import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { localizeNumbers } from "@/lib/utils/number";
-import { cn } from "@/lib/utils/utils";
 import type { MaintenanceView } from "@repo/pricing-schema";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
 
 
-const DAYS = 30;
-const WEEK = 7;
-const DAY_LIST = Array.from({ length: DAYS }, (_, index) => index + 1);
-const AXIS_DAYS = [1, 8, 15, 22, 30] as const;
-const CADENCE_PLAN = "professional";
+/**
+ * The plan whose terms the example month is drawn from. Its promises —
+ * daily monitoring and backup review, weekly checks, a monthly report,
+ * priority incident handling, and a capped number of priority edit
+ * requests — come from `@repo/pricing-schema`, never from this file.
+ */
+const MONTH_PLAN = "professional";
 
-const isWeekly = (day: number) => (day - 1) % WEEK === 0;
-function requestDays(count: number): Set<number> {
-  const days = new Set<number>();
-  for (let index = 0; index < count; index += 1) {
-    days.add(Math.round(((index + 0.5) * DAYS) / count));
-  }
-  return days;
-}
-
-type LaneId = "daily" | "weekly" | "monthly" | "requests";
-
-function Mark({ lane }: { lane: LaneId }) {
-  switch (lane) {
-    case "daily":
-      return <span className="block size-1.5 rounded-full bg-current" />;
-    case "weekly":
-      return <span className="block h-5 w-1.5 rounded-full bg-current" />;
-    case "monthly":
-      return (
-        <span className="block h-7 w-2.5 rounded-full bg-current" />
-      );
-    case "requests":
-      return (
-        <span className="block size-3 rounded-full border-[1.5px] border-current" />
-      );
-  }
-}
+/** What we do without being asked, in the order it recurs. */
+const OURS = ["daily", "weekly", "monthly", "incident"] as const;
 
 export function MaintenanceHero({
   plans,
@@ -65,128 +37,21 @@ export function MaintenanceHero({
   const t = useTranslations("serviceDetails.maintenance");
   const tCTAs = useTranslations("commercial.ctas");
   const locale = useLocale();
-  const projectRangeCta = getCommercialCta("projectRange");
+  const enquiryCta = getCommercialCta("maintenanceEnquiry");
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const descRef = useSectionDescription<HTMLParagraphElement>();
   const ctaRef = useSectionElement<HTMLDivElement>();
-  const scoreTitleRef = useSectionTitle<HTMLHeadingElement>({
-    delay: MOTION.section.description,
-  });
-  const scoreLabelRef = useSectionDescription<HTMLParagraphElement>({
-    delay: MOTION.section.description + MOTION.stagger.loose,
-  });
-  const lanesRef = useSectionElement<HTMLDivElement>({
-    delay: MOTION.section.element,
+  const monthEyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
+  const monthTitleRef = useSectionTitle<HTMLHeadingElement>();
+  const monthDescRef = useSectionDescription<HTMLParagraphElement>();
+  const splitRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-month-part]",
   });
 
-  const scoreRef = useRef<HTMLDivElement>(null);
-
-  const plan = plans.find((candidate) => candidate.id === CADENCE_PLAN);
+  const plan = plans.find((candidate) => candidate.id === MONTH_PLAN);
   const requests = plan?.requestsPerCycle ?? null;
-  const slots = requests === null ? new Set<number>() : requestDays(requests);
-
-  const lanes: ReadonlyArray<{ id: LaneId; has: (day: number) => boolean }> = [
-    { id: "daily", has: () => true },
-    { id: "weekly", has: isWeekly },
-    { id: "monthly", has: (day) => day === DAYS },
-    ...(requests === null
-      ? []
-      : [{ id: "requests" as const, has: (day: number) => slots.has(day) }]),
-  ];
-  const laneCount = (lane: (typeof lanes)[number]): number =>
-    DAY_LIST.filter(lane.has).length;
-
-  const dayLabel = useRef<(day: number) => string>(() => "");
-  useEffect(() => {
-    dayLabel.current = (day: number) =>
-      t("hero.dayN", { n: localizeNumbers(String(day), locale) });
-  }, [t, locale]);
-  useEffect(() => {
-    const score = scoreRef.current;
-    if (!score) return;
-
-    const marks = Array.from(
-      score.querySelectorAll<HTMLElement>("[data-mark-day]"),
-    );
-    const playhead = score.querySelector<HTMLElement>("[data-playhead]");
-    const dayTag = score.querySelector<HTMLElement>("[data-day-tag]");
-
-    const lightUpTo = (day: number) => {
-      marks.forEach((mark) => {
-        mark.dataset.lit = String(Number(mark.dataset.markDay) <= day);
-      });
-    };
-
-    let ctx: gsap.Context | null = null;
-    const off = whenMotionReady(() => {
-      ctx = gsap.context(() => {
-        const mm = gsap.matchMedia();
-
-        mm.add(
-          {
-            motion: "(prefers-reduced-motion: no-preference)",
-            reduced: "(prefers-reduced-motion: reduce)",
-          },
-          (context) => {
-            const { reduced } = context.conditions as { reduced: boolean };
-
-            if (reduced) {
-              lightUpTo(DAYS);
-              return;
-            }
-
-            lightUpTo(0);
-            const clock = { day: 0 };
-            let shown = 0;
-
-            const place = () => {
-              if (playhead) {
-                playhead.style.insetInlineStart = `${(clock.day / DAYS) * 100}%`;
-              }
-              const whole = Math.floor(clock.day);
-              if (whole !== shown) {
-                shown = whole;
-                lightUpTo(whole);
-                if (dayTag) {
-                  dayTag.textContent = dayLabel.current(Math.max(1, whole));
-                }
-              }
-            };
-            ScrollTrigger.create({
-              trigger: score,
-              start: resolveTrigger("inView"),
-              once: true,
-              onEnter: () => {
-                gsap
-                  .timeline()
-                  .set(playhead, { opacity: 1 })
-                  .to(clock, {
-                    day: DAYS,
-                    duration: MOTION.duration.sweep,
-                    ease: MOTION.ease.gentle,
-                    onUpdate: place,
-                  })
-                  .to(playhead, {
-                    opacity: 0,
-                    duration: MOTION.duration.fast,
-                    ease: MOTION.ease.smooth,
-                  });
-              },
-            });
-            return () => {
-              lightUpTo(DAYS);
-            };
-          },
-        );
-      }, score);
-    });
-    return () => {
-      off();
-      ctx?.revert();
-    };
-  }, []);
 
   return (
     <section
@@ -222,12 +87,12 @@ export function MaintenanceHero({
               <CtaButtonGroup
                 primaryVariant="accent"
                 primary={{
-                  href: projectRangeCta.href,
-                  label: tCTAs("projectRange"),
-                }}
-                secondary={{
                   href: "#pricing",
                   label: tCTAs("maintenancePlans"),
+                }}
+                secondary={{
+                  href: enquiryCta.href,
+                  label: tCTAs("maintenanceEnquiry"),
                 }}
                 secondaryArrow
                 className="sm:flex-wrap"
@@ -236,119 +101,85 @@ export function MaintenanceHero({
           </div>
         </div>
         {plan ? (
-          <figure
-            aria-labelledby="maintenance-score-title"
-            className="mt-20 border-t border-border-subtle pt-10 md:mt-24 md:pt-12"
-          >
-            <div className="max-w-3xl">
-              <h2
-                ref={scoreTitleRef}
-                id="maintenance-score-title"
-                className="text-[clamp(1.5rem,2.4vw,2.25rem)] font-normal leading-tight tracking-[-0.02em] text-foreground rtl:tracking-normal"
-              >
-                {t("hero.calendarTitle")}
-              </h2>
-              <p
-                ref={scoreLabelRef}
-                className="mt-3 text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground"
-              >
-                {t("hero.calendarLabel", { plan: plan.name })}
-              </p>
-            </div>
-            <div ref={lanesRef} className="mt-12 md:mt-14">
-              <div ref={scoreRef} className="relative">
-                <div className="grid gap-2 border-b border-border-subtle pb-3 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-end lg:gap-8">
-                  <span className="text-xs text-muted-foreground">
-                    {t("hero.countHeader")}
-                  </span>
-                  <div
-                    aria-hidden
-                    className="grid grid-cols-30 text-micro tabular-nums text-muted-foreground"
-                  >
-                    {DAY_LIST.map((day) => (
-                      <span key={day} className="whitespace-nowrap text-center">
-                        {(AXIS_DAYS as readonly number[]).includes(day) ? (
-                          <>
-                            <span className="max-lg:hidden">
-                              {t("hero.day")}{" "}
-                            </span>
-                            <Num value={day} />
-                          </>
-                        ) : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <ul className="mt-6 list-none space-y-6 md:space-y-7">
-                  {lanes.map((lane) => (
+          <div className="mt-24 border-t border-border-subtle pt-20 md:mt-32 md:pt-28">
+            <SectionHeading
+              titleId="maintenance-month-heading"
+              eyebrowRef={monthEyebrowRef}
+              titleRef={monthTitleRef}
+              descriptionRef={monthDescRef}
+              eyebrow={t("hero.month.eyebrow")}
+              firstTitle={t("hero.month.title")}
+              secondTitle={t("hero.month.titleAccent")}
+              italicWorld
+              description={t("hero.month.description", { plan: plan.name })}
+            />
+
+            {/* Our column is full and yours holds one thing: the empty space
+                under "Your part" is the argument, so it is never filled. */}
+            <div
+              ref={splitRef}
+              className="mt-14 grid border-t border-border md:mt-20 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
+            >
+              <div data-month-part className="pt-8 lg:pe-[clamp(2rem,4vw,4rem)]">
+                <Eyebrow className="m-0">{t("hero.month.ours.label")}</Eyebrow>
+                <h3 className="mt-3 text-[clamp(1.5rem,2.4vw,2rem)] font-light leading-tight tracking-[-0.02em] text-foreground rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("hero.month.ours.heading")}
+                </h3>
+                <ul className="mt-7 list-none border-t border-border-subtle">
+                  {OURS.map((id) => (
                     <li
-                      key={lane.id}
-                      className="grid gap-3 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-center lg:gap-8"
+                      key={id}
+                      className="grid gap-1 border-b border-border-subtle py-5 sm:grid-cols-[minmax(7.5rem,11rem)_minmax(0,1fr)] sm:items-baseline sm:gap-8"
                     >
-                      <div className="flex items-center gap-4">
-                        <span className="w-14 shrink-0 translate-y-0.5 text-[clamp(1.75rem,2.4vw,2.25rem)] font-light leading-none tabular-nums text-local-accent-text">
-                          <Num value={laneCount(lane)} />
-                        </span>
-                        <p className="min-w-0 text-[0.9375rem] leading-snug text-balance text-foreground">
-                          {t(`hero.legend.${lane.id}.what`)}
-                          <span className="block text-sm text-muted-foreground">
-                            {t(`hero.legend.${lane.id}.when`, {
-                              n: localizeNumbers(
-                                String(laneCount(lane)),
-                                locale,
-                              ),
-                            })}
-                          </span>
-                        </p>
-                      </div>
-                      <div
-                        aria-hidden
-                        className="grid h-9 grid-cols-30 items-center"
-                      >
-                        {DAY_LIST.map((day) =>
-                          lane.has(day) ? (
-                            <span
-                              key={day}
-                              data-mark-day={day}
-                              data-lit="true"
-                              className={cn(
-                                "flex justify-center transition-colors duration-(--motion-drawer) ease-smooth motion-reduce:transition-none",
-                                "text-foreground/15 data-[lit=true]:text-local-accent",
-                              )}
-                            >
-                              <Mark lane={lane.id} />
-                            </span>
-                          ) : (
-                            <span key={day} />
-                          ),
-                        )}
-                      </div>
+                      <span className="text-base text-local-accent-text">
+                        {t(`hero.month.ours.items.${id}.when`)}
+                      </span>
+                      <span className="text-[1.0625rem] leading-normal text-foreground">
+                        {t(`hero.month.ours.items.${id}.what`)}
+                      </span>
                     </li>
                   ))}
                 </ul>
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0 hidden lg:inset-s-96 lg:inset-e-0 lg:block"
-                >
-                  <span
-                    data-playhead
-                    className="absolute inset-y-0 w-0 opacity-0"
-                    style={{ insetInlineStart: "0%" }}
-                  >
-                    <span className="absolute inset-s-0 top-9 bottom-0 w-0.5 -translate-x-1/2 rounded-full bg-local-accent rtl:translate-x-1/2" />
-                    <span className="absolute inset-s-0 bottom-0 size-2 -translate-x-1/2 rounded-full bg-local-accent rtl:translate-x-1/2" />
-                    <span
-                      data-day-tag
-                      className="absolute inset-s-0 top-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-local-accent px-2 py-0.5 text-micro leading-4 text-local-accent-fg rtl:translate-x-1/2"
-                    />
-                  </span>
-                </div>
+              </div>
+
+              <div
+                data-month-part
+                className="mt-12 pt-8 lg:mt-0 lg:border-s lg:border-border lg:ps-[clamp(2rem,4vw,4rem)]"
+              >
+                <Eyebrow className="m-0">{t("hero.month.yours.label")}</Eyebrow>
+                <h3 className="mt-3 text-[clamp(1.5rem,2.4vw,2rem)] font-light leading-tight tracking-[-0.02em] text-foreground rtl:leading-[1.4] rtl:tracking-normal">
+                  {t("hero.month.yours.heading")}
+                </h3>
+                {requests !== null ? (
+                  <div className="mt-7 border-y border-border-subtle py-5">
+                    <p className="text-balance text-[clamp(1.5rem,2.4vw,2.125rem)] font-light leading-[1.2] tracking-[-0.02em] text-foreground rtl:leading-[1.45] rtl:tracking-normal">
+                      {t("hero.month.yours.request")}
+                    </p>
+                    <div aria-hidden className="mt-4 flex gap-2.5">
+                      {Array.from({ length: requests }, (_, index) => (
+                        <span
+                          key={index}
+                          className="size-5 rounded-full border-[1.5px] border-local-accent"
+                        />
+                      ))}
+                    </div>
+                    <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                      {t("hero.month.yours.requestNote", {
+                        n: localizeNumbers(String(requests), locale),
+                      })}
+                    </p>
+                  </div>
+                ) : null}
+                <p className="mt-8 max-w-104 text-[0.9375rem] leading-relaxed text-muted-foreground">
+                  {t("hero.month.yours.quiet")}
+                </p>
               </div>
             </div>
-            <figcaption className="mt-8 text-xs leading-relaxed text-muted-foreground">
-              {t("hero.calendarNote")}
-            </figcaption>
-          </figure>
+
+            <p className="mt-12 max-w-2xl text-xs leading-relaxed text-muted-foreground">
+              {t("hero.month.honesty")}
+            </p>
+          </div>
         ) : null}
       </Container>
     </section>

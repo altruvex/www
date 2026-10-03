@@ -1,4 +1,4 @@
-import { ADDONS, type Addon, type AddonCategory, type MarkupType } from "./addons";
+import { ADDONS, type Addon, type MarkupType } from "./addons";
 import { CONSULTING_PACKAGES, type ConsultingPackage } from "./consulting";
 import type {
   AddonId,
@@ -116,7 +116,7 @@ function isoDate(value: string): `${number}-${number}-${number}` {
  * Applies overrides to the shipped defaults.
  *
  * Nothing is mutated and unknown ids are ignored rather than throwing: a row
- * left behind by a renamed tier must not be able to break a pricing page.
+ * left behind by a renamed id must not be able to break a pricing page.
  */
 export function resolvePricing(
   overrides: PricingOverrides = {},
@@ -222,7 +222,11 @@ export function resolvePricing(
   return { services, maintenance, consulting, addons, terms, exchangeRate, overridden };
 }
 
-/** Category is fixed by the add-on's identity and is never overridden. */
-export function addonCategory(id: AddonId): AddonCategory {
-  return ADDONS[id].category;
-}
+/**
+ * Shipped defaults, resolved once. The fallback for every view and for the
+ * estimate engine when a caller has no datastore to read overrides from.
+ *
+ * Lives here rather than in `views.ts` because `compute.ts` needs it too, and
+ * views already import compute — defining it there would close a cycle.
+ */
+export const DEFAULT_PRICING: ResolvedPricing = resolvePricing();

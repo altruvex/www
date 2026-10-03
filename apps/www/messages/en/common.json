@@ -25,11 +25,6 @@
         "title": "Already live?",
         "titleAccent": "Keep it that way."
       },
-      "pricing": {
-        "body": "Pick the scope that matches, adjust what is in it, and read the range before anyone talks to you. When the range works, book the call.",
-        "title": "The tier names the build.",
-        "titleAccent": "The estimator prices it."
-      },
       "standards": {
         "body": "The technical audit measures an existing build against the same four benchmarks and returns a written list of what fails and why - before any rebuild is on the table.",
         "title": "Hold your current site",
@@ -52,6 +47,5 @@
   "legalContact": {
     "label": "Questions about this document?",
     "body": "Write to us and a person answers - not an auto-reply."
-  },
-  "step": "Step"
+  }
 }

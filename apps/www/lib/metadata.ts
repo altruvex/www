@@ -221,28 +221,28 @@ export const PAGE_METADATA = {
   },
   transparency: {
     ar: {
-      breadcrumb: "الشفافية",
+      breadcrumb: "تقدير المشروع",
       description:
-        "حدّد نطاق موقع مخصص أو بوابة أو بناء منتج قبل أول مكالمة. استخدم تجربة الشفافية من Altruvex المبنية على التعقيد الهندسي الحقيقي.",
+        "أجب عن بضعة أسئلة عن مشروعك لتحصل على مدى تقريبي للسعر والمدة. التقدير استرشادي، ويثبّت عرض السعر الرقم بعد مراجعة النطاق.",
       keywords: [
         "تقدير تكلفة تطوير موقع",
-        "تسعير تطوير ويب مخصص",
-        "شفافية مشروع Next.js",
-        "نطاق بوابة أعمال",
+        "حاسبة تكلفة موقع مخصص",
+        "تقدير مشروع Next.js",
+        "مدة تطوير موقع",
       ],
-      title: "الشفافية في نطاق وتكلفة البناء",
+      title: "قدّر مشروعك: مدى السعر والمدة",
     },
     en: {
-      breadcrumb: "Transparency",
+      breadcrumb: "Project Estimator",
       description:
-        "Scope the range for a custom website, portal, or product build before the first call. Use Altruvex's Transparency experience based on real engineering complexity.",
+        "Answer a few questions about your project to see an indicative price range and timeline. The estimate is not a quotation; a proposal sets the figure after scope review.",
       keywords: [
-        "transparent web development scoping",
+        "web project estimator",
         "custom web project estimate",
-        "next.js project pricing",
+        "website cost estimate",
         "portal build estimate",
       ],
-      title: "Transparent Custom Web Build Scoping",
+      title: "Project Estimator: Custom Web Price Range",
     },
     path: "/transparency",
   },
@@ -332,26 +332,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "التسعير",
       description:
-        "شاهد كيف تحدد Altruvex نطاق أنظمة المواقع والبوابات وبناء المنتجات المخصصة. قارن نطاقات التعاون وحدد خطوتك التالية.",
+        "كيف تسعّر Altruvex تطوير الويب المخصص: من المتطلبات لا من الباقات. ما الذي يحدد التكلفة، وكيف تُدفع، وما الذي تعنيه الأرقام المنشورة.",
       keywords: [
         "تسعير تطوير ويب مخصص",
-        "تسعير وكالة Next.js",
-        "نطاق بناء بوابات",
-        "تكلفة أنظمة المواقع",
+        "تكلفة تطوير موقع مخصص",
+        "كيف تُسعَّر مشاريع الويب",
+        "جدول دفع مشروع ويب",
       ],
-      title: "تسعير تطوير مواقع ويب مخصصة ونماذج التعاون",
+      title: "كيف نسعّر تطوير الويب المخصص",
     },
     en: {
       breadcrumb: "Pricing",
       description:
-        "See how Altruvex scopes custom website systems, portals, and product builds. Compare engagement ranges and qualify your next step.",
+        "How Altruvex prices custom web development: from requirements, not packages. What moves the cost, how payment is scheduled, and what the published figures mean.",
       keywords: [
-        "web engineering pricing",
-        "custom web development cost",
-        "next.js agency pricing",
-        "portal engagement model",
+        "custom web development pricing",
+        "custom website cost",
+        "how web projects are priced",
+        "web project payment schedule",
       ],
-      title: "Web Engineering Pricing & Engagements",
+      title: "How We Price Custom Web Development",
     },
     path: "/pricing",
   },
@@ -457,26 +457,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "التطوير المخصص",
       description:
-        "استعن بوكالة تطوير Next.js لبناء بوابات ومنتجات ولوحات تحكم وأنظمة مواقع ويب مخصصة ثنائية اللغة مصممة للتوسع والسرعة والتسليم النظيف.",
+        "مواقع وبوابات ولوحات تحكم ومنتجات ويب تُبنى من متطلباتك بـ Next.js، ثنائية اللغة، وتُسلَّم بالكود الكامل. النطاق المنشور يبدأ من رقم معلن ويُثبَّت في عرض السعر.",
       keywords: [
         "وكالة تطوير Next.js",
         "بناء بوابات أعمال",
         "تطوير منتجات ويب مخصصة",
         "أنظمة مواقع ويب مخصصة ثنائية اللغة",
       ],
-      title: "التطوير المخصص: بوابات ومنتجات Next.js",
+      title: "التطوير المخصص للمواقع والمنتجات",
     },
     en: {
       breadcrumb: "Custom Development",
       description:
-        "Hire a Next.js development agency for portals, product builds, dashboards, and bilingual web systems engineered for scale and clean handoff.",
+        "Websites, portals, dashboards, and product builds made from your requirements in Next.js, bilingual, handed over with full source code. Ranges start from a stated floor.",
       keywords: [
         "next.js development agency",
         "custom portal development",
         "technical web engineering agency",
         "bilingual product development",
       ],
-      title: "Custom Development: Next.js Portals & Products",
+      title: "Custom Development for Websites & Products",
     },
     path: "/services/development",
   },
@@ -484,26 +484,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "تصميم الواجهات",
       description:
-        "صمّم واجهات تركّز على التحويل وأنظمة مكونات وتجارب عربية/إنجليزية مع مواصفات جاهزة للتنفيذ وإمكانية وصول مدروسة.",
+        "تصميم واجهات وأنظمة مكونات وتجارب عربية وإنجليزية، يُسلَّم شاشات ونظام تصميم جاهزاً للتنفيذ. يُسعَّر لكل مشروع حسب الشاشات ومسارات الاستخدام.",
       keywords: [
         "تصميم واجهات مخصصة",
         "تصميم أنظمة مكونات",
         "واجهة استخدام ثنائية اللغة",
         "تصميم UI قابل للتنفيذ",
       ],
-      title: "تصميم الواجهات: هندسة واجهات مواقع مخصصة",
+      title: "تصميم الواجهات وأنظمة المكونات",
     },
     en: {
       breadcrumb: "Interface Design",
       description:
-        "Design conversion-focused interfaces, component systems, and bilingual website experiences with implementation-ready UI engineering.",
+        "Interface design, component systems, and bilingual experiences, delivered as screens and a design system ready to build. Scoped per project.",
       keywords: [
         "custom ui engineering",
         "interface design cairo",
         "design systems agency",
         "bilingual interface design",
       ],
-      title: "Interface Design: Custom UI Engineering Services",
+      title: "Interface Design & Component Systems",
     },
     path: "/services/interface-design",
   },

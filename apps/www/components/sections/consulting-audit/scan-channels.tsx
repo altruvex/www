@@ -2,31 +2,38 @@
 
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
-import { SCAN_CHANNELS } from "@/lib/config/audit-checks";
-import { cn } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useSectionCardGrid } from "@/lib/motion";
+import { useLocale, useTranslations } from "next-intl";
 import { AuditSection } from "./audit-section";
 
+/** The channels an audit opens, in the order the scope is written. */
+const CHANNELS = [
+  "architecture",
+  "performance",
+  "security",
+  "searchData",
+  "delivery",
+  "ownership",
+] as const;
+
 /**
- * "Six channels. One scan plan."
+ * "Six questions. Six written answers."
  *
- * Cyan is the consulting world because consulting is diagnosis read off an
- * instrument, so the channels are drawn as scales with the stops on them. The
- * marks are **the plan** — where the attention goes — and never readings from
- * anybody's system; the section says so on the page, because a diagram that
- * looked like live measurement would be the fake dashboard this site refuses.
+ * It turns each channel the audit opens into the question an owner already
+ * asks, and sets it beside what comes back in
+ * writing. Every row is visible at once — a ledger to read, not a control to
+ * operate — and what gets looked at is demoted to one quiet line under the
+ * question, because it is the method, not the product.
  *
- * Selecting a channel reads out what is examined and what comes back, which is
- * the real scope copy the old two-column split used to carry as prose.
+ * The questions describe the scope, never a client's system; the note under
+ * the ledger says so.
  */
 export function ScanChannels() {
   const t = useTranslations("serviceDetails.consulting.audit.channels");
-  const [active, setActive] = useState(0);
-
-  const channel = SCAN_CHANNELS[active]!;
-  const examines = t.raw(`items.${channel.id}.examines`) as string[];
-  const returns = t.raw(`items.${channel.id}.returns`) as string[];
+  const separator = useLocale() === "ar" ? "، " : " · ";
+  const ledgerRef = useSectionCardGrid<HTMLOListElement>({
+    selector: "[data-channel-row]",
+  });
 
   return (
     <AuditSection
@@ -38,84 +45,74 @@ export function ScanChannels() {
       description={t("description")}
       note={t("honesty")}
     >
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:gap-14">
-          <ul className="list-none border-t border-border-subtle">
-            {SCAN_CHANNELS.map((item, index) => {
-              const selected = index === active;
-              return (
-                <li key={item.id} className="border-b border-border-subtle">
-                  <button
-                    type="button"
-                    aria-selected={selected}
-                    role="tab"
-                    onClick={() => setActive(index)}
-                    onFocus={() => setActive(index)}
-                    className="grid w-full grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 py-4 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <span className="eyebrow pt-2 text-muted-foreground">
-                      <Num value={index + 1} pad={2} />
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[clamp(1.15rem,2vw,1.6rem)] font-light tracking-[-0.02em] transition-colors duration-(--motion-hover) rtl:tracking-normal",
-                        selected ? "text-foreground" : "text-muted-foreground",
-                      )}
+      <div
+        aria-hidden
+        className="hidden gap-x-10 border-b border-border pb-4 lg:grid lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
+      >
+        <Eyebrow className="col-span-2 m-0">{t("questionLabel")}</Eyebrow>
+        <Eyebrow className="m-0">{t("returnsLabel")}</Eyebrow>
+      </div>
+
+      <ol ref={ledgerRef} className="list-none">
+        {CHANNELS.map((id, index) => {
+          const examines = t.raw(`items.${id}.examines`) as string[];
+          const returns = t.raw(`items.${id}.returns`) as string[];
+
+          return (
+            <li
+              key={id}
+              data-channel-row
+              className="grid gap-x-10 gap-y-6 border-b border-border-subtle py-[clamp(1.75rem,3vw,2.5rem)] lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
+            >
+              <span
+                aria-hidden
+                className="hidden text-sm tabular-nums text-muted-foreground lg:block ltr:font-mono"
+              >
+                <Num value={index + 1} pad={2} />
+              </span>
+
+              <div>
+                <Eyebrow tone="accent" className="m-0">
+                  <span className="text-muted-foreground lg:hidden">
+                    <Num value={index + 1} pad={2} />
+                    {" — "}
+                  </span>
+                  {t(`items.${id}.name`)}
+                </Eyebrow>
+                <h3 className="mt-3 text-balance text-[clamp(1.625rem,3vw,2.625rem)] font-light leading-[1.1] tracking-[-0.025em] text-foreground rtl:leading-[1.4] rtl:tracking-normal">
+                  {t(`items.${id}.question`)}
+                </h3>
+                <p className="mt-4 max-w-[60ch] text-sm leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {t("examinesLabel")}:
+                  </span>{" "}
+                  {examines.join(separator)}
+                </p>
+              </div>
+
+              <div>
+                <Eyebrow className="mb-3 lg:sr-only">{t("returnsLabel")}</Eyebrow>
+                <ul className="list-none border-t border-border-subtle lg:mt-1.5">
+                  {returns.map((item) => (
+                    <li
+                      key={item}
+                      className="grid grid-cols-[1.5rem_minmax(0,1fr)] border-b border-border-subtle py-3 text-base leading-normal text-foreground"
                     >
-                      {t(`items.${item.id}.name`)}
-                    </span>
-
-                    {/* the channel's scale, and the stops the audit makes on it */}
-                    <span className="relative col-start-2 mt-2 block h-6" aria-hidden>
                       <span
-                        className={cn(
-                          "absolute inset-x-0 bottom-3 block h-px transition-colors duration-(--motion-hover)",
-                          selected ? "bg-local-accent" : "bg-border-subtle",
-                        )}
-                      />
-                      {item.stops.map((stop, stopIndex) => (
-                        <span
-                          key={stop}
-                          style={{ insetInlineStart: `${stop * 100}%` }}
-                          className={cn(
-                            "absolute bottom-1.5 block w-px origin-bottom transition-colors duration-(--motion-hover)",
-                            item.deep.includes(stopIndex) ? "h-[22px] w-0.5" : "h-[13px]",
-                            selected ? "bg-local-accent" : "bg-border-subtle",
-                          )}
-                        />
-                      ))}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          <div className="self-start rounded-panel-md border border-border-subtle p-6 lg:sticky lg:top-24">
-            <Eyebrow>{t("readoutLabel", { index: String(active + 1).padStart(2, "0") })}</Eyebrow>
-            <h3 className="mt-2.5 text-[clamp(1.3rem,2.2vw,1.9rem)] font-light tracking-[-0.03em] text-foreground rtl:tracking-normal">
-              {t(`items.${channel.id}.name`)}
-            </h3>
-
-            <Readout label={t("examinesLabel")} items={examines} />
-            <Readout label={t("returnsLabel")} items={returns} />
-          </div>
-        </div>
+                        aria-hidden
+                        className="inline-block text-local-accent-text rtl:-scale-x-100"
+                      >
+                        →
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
     </AuditSection>
-  );
-}
-
-function Readout({ label, items }: { label: string; items: string[] }) {
-  return (
-    <>
-      <Eyebrow className="mt-6 mb-2.5">{label}</Eyebrow>
-      <ul className="grid list-none gap-2.5">
-        {items.map((item) => (
-          <li key={item} className="flex gap-3 text-sm leading-relaxed text-muted-foreground">
-            <span aria-hidden className="mt-2 size-[5px] shrink-0 rounded-full bg-local-accent" />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </>
   );
 }

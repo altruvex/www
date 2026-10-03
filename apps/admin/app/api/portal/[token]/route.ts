@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { clientIpFromHeaders, enforceRateLimit, prisma } from "@repo/database";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
 
 export async function GET(
   request: NextRequest,
@@ -59,7 +60,9 @@ export async function GET(
         payments: project.payments.map((payment) => ({
           milestone: payment.milestone,
           amount: payment.amount,
-          status: payment.status,
+          // Same rule as the admin screens: late from the day after the due date.
+          status:
+            payment.status === "PENDING" && isPaymentOverdue(payment) ? "OVERDUE" : payment.status,
           dueDate: payment.dueDate,
           paidAt: payment.paidAt,
         })),

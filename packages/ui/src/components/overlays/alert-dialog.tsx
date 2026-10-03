@@ -19,7 +19,6 @@ import { buttonVariants } from "../primitives/button";
  */
 
 export const AlertDialog = AlertDialogPrimitive.Root;
-export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 export const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
 export function AlertDialogOverlay({
@@ -41,10 +40,26 @@ export function AlertDialogOverlay({
   );
 }
 
+/** Elements that already own Enter: they act on it themselves. */
+const OWNS_ENTER = "textarea, button, a, select, summary, [role='combobox'], [contenteditable='true']";
+
 export function AlertDialogContent({
   className,
+  onKeyDown,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
+  // Enter runs the dialog's primary action, as it does in a native dialog.
+  const confirmOnEnter = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(event);
+    if (event.defaultPrevented || event.key !== "Enter") return;
+    if (event.nativeEvent.isComposing || event.shiftKey || event.metaKey || event.ctrlKey || event.altKey) return;
+    if ((event.target as HTMLElement).closest(OWNS_ENTER)) return;
+    const action = event.currentTarget.querySelector<HTMLButtonElement>('[data-slot="alert-dialog-action"]');
+    if (!action || action.disabled) return;
+    event.preventDefault();
+    action.click();
+  };
+
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
@@ -53,6 +68,7 @@ export function AlertDialogContent({
       <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4">
         <AlertDialogPrimitive.Content
           data-slot="alert-dialog-content"
+          onKeyDown={confirmOnEnter}
           className={cn(
             "pointer-events-auto grid w-full max-w-md gap-3",
             "rounded-lg border border-border bg-card p-4 text-foreground shadow-[var(--elev-2)]",
@@ -118,6 +134,7 @@ export function AlertDialogAction({
 }) {
   return (
     <AlertDialogPrimitive.Action
+      data-slot="alert-dialog-action"
       className={cn(buttonVariants({ variant }), className)}
       {...props}
     />

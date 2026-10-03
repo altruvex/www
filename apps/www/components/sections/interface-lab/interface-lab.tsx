@@ -1,7 +1,6 @@
 "use client";
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { DisplayClose } from "@/components/sections/display-close";
 import { Container } from "@/components/shared/container";
 import { Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -69,15 +68,17 @@ function LabHero() {
               className="object-cover"
             />
           </div>
+          <div aria-hidden className="photo-caption-scrim max-sm:hidden" />
           <HeroReveal
             delay={0.9}
-            className="liquid-glass-panel relative m-3 rounded-panel-sm p-5 sm:absolute sm:inset-s-6 sm:bottom-6 sm:m-0 sm:max-w-80"
+            className="relative pt-4 sm:absolute sm:end-6 sm:bottom-6 sm:max-w-[30ch] sm:pt-0 sm:text-end rtl:sm:max-w-[34ch]"
           >
-            <Tick />
-            <p className="mt-3 text-sm leading-snug text-foreground">{s("card")}</p>
+            <p className="text-[clamp(1.125rem,1.7vw,1.5rem)] font-light leading-[1.25] tracking-[-0.02em] text-foreground sm:text-white rtl:leading-[1.6] rtl:tracking-normal">
+              {s("card")}
+            </p>
             <a
               href="#disciplines"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-ctl-sm text-sm font-medium text-local-accent-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-ctl-sm text-sm font-medium text-local-accent-text underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-white sm:underline"
             >
               {s("cardLink")}
               <span aria-hidden>↓</span>
@@ -164,19 +165,4 @@ function StackedRows() {
   );
 }
 
-function LabClose() {
-  const s = useTranslations("serviceDetails.webDesign.lab.close");
-  return (
-    <DisplayClose
-      id="ifd-close-heading"
-      eyebrow={s("eyebrow")}
-      title={s("title")}
-      titleAccent={s("titleAccent")}
-      description={s("description")}
-      primary="technicalCall"
-      secondary="projectRange"
-    />
-  );
-}
-
-export { LabClose, LabHero, StackedRows };
+export { LabHero, StackedRows };

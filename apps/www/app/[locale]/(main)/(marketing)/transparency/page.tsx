@@ -1,9 +1,7 @@
-import { TransparencyMeasuresDetailsSection } from "@/components/sections/transparency-measures-details-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
-import { publicAddonViews, termsView, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
@@ -27,8 +25,6 @@ export default async function TransparencyPage({
 }) {
   const { locale } = await params;
   const pricing = await getPublicPricing();
-  const terms = termsView(locale as Locale, pricing);
-  const addons = publicAddonViews(locale as Locale, pricing);
 
   const t = await getTranslations({ locale, namespace: "transparency.faq" });
   const faqEntries = ["1", "2", "3", "4"].map((key) => ({
@@ -44,8 +40,12 @@ export default async function TransparencyPage({
           ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
-      <PageClient terms={terms} addons={addons} />
-      <TransparencyMeasuresDetailsSection />
+      {/* Only the slice the estimator engine reads crosses to the client, so
+          the figure a visitor sees is the one the lead API recomputes on the
+          server — and nothing else in the resolved set is serialised. */}
+      <PageClient
+        pricing={{ services: pricing.services, terms: pricing.terms }}
+      />
     </>
   );
 }

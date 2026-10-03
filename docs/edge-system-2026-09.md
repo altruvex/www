@@ -39,7 +39,7 @@ This was produced by a classifier that reads every `rounded-*`, `border-*`, `div
 either to a token (`panel-*`, `ctl-*`, `rounded-full`/`none`, a 1px side,
 `border-border-subtle`/`-mid`, `transparent`/`current`, focus/hover states) or to a named exception.
 
-**714 edge classes in 78 files: 602 → token, 112 → named exception, 0 unexplained.**
+**642 edge classes in 73 files: 538 → token, 104 → named exception, 0 unexplained.**
 One file is pending (§5).
 
 | Page / section | File | Edges | → token | → named exception | Status |
@@ -85,9 +85,6 @@ One file is pending (§5).
 | Section · /process | `c/base/segmented-control.tsx` | 2 | 2 | — | ✓ |
 | Section · /services/consulting | `c/sections/consulting-brief-section.tsx` | 14 | 8 | status-edge ×3, text-highlight (open) ×1, accent-side-rule ×2 | ✓ |
 |  | `c/sections/technical-section.tsx` | 2 | 2 | — | ✓ |
-| Section · /services/development | `c/sections/pipeline-section.tsx` | 17 | 16 | status-edge ×1 | ✓ |
-|  | `c/sections/tech-dna-section.tsx` | 9 | 9 | — | ✓ |
-| Section · /services/interface-design | `c/sections/ui-playground-section.tsx` | 33 | 32 | ink (control outline / diagram) ×1 | ✓ |
 | Section · /services/maintenance | `c/sections/service-maintenance/maintenance-hero.tsx` | 11 | 10 | diagram/glyph ×1 | ✓ |
 |  | `c/sections/service-maintenance/maintenance-plans.tsx` | 16 | 12 | diagram/glyph ×3, accent/selected ×1 | ✓ |
 | Section · /transparency | `c/sections/transparency-chapter.tsx` | 2 | 2 | — | ✓ |
@@ -97,8 +94,6 @@ One file is pending (§5).
 | Section · /writing/[slug] | `c/sections/audit-lead-capture.tsx` | 9 | 8 | status-edge ×1 | ✓ |
 | Section · site nav (via the language switcher) | `c/base/language-switcher-base.tsx` | 1 | 1 | — | ✓ |
 |  | `c/base/theme-toggle-base.tsx` | 1 | 1 | — | ✓ |
-|  | `c/sections/boundary-section.tsx` | 5 | 2 | diagram/glyph ×2, accent/selected ×1 | ✓ |
-|  | `c/sections/hero-readout.tsx` | 8 | 5 | ledger-head-rule ×2, ink (control outline / diagram) ×1 | ✓ |
 |  | `c/sections/ownership-stack-section.tsx` | 21 | 15 | accent/selected ×4, diagram/glyph ×2 | ✓ |
 |  | `c/sections/problem-section.tsx` | 7 | 7 | — | ✓ |
 |  | `c/sections/process-section.tsx` | 1 | 1 | — | ✓ |
@@ -127,12 +122,12 @@ One file is pending (§5).
 
 | exception | count | why it is justified | where |
 |---|---:|---|---|
-| ledger-head-rule | 17 sites | D1: it marks the start of a register; thinning it would erase the ledger reading | `(marketing)/approach/page-client.tsx`, `(marketing)/contact/page-client.tsx`, `(marketing)/how-we-work/page-client.tsx`, `(marketing)/pricing/page-client.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/process/page-client.tsx`, `(marketing)/process/phase-strip.tsx`, `(marketing)/schedule/page-client.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/standards/pass-line.tsx`, `c/legal/legal-page-layout.tsx`, `c/sections/hero-readout.tsx`, `c/sections/page-hero.tsx`, `c/sections/trust-section.tsx` |
+| ledger-head-rule | 15 sites | D1: it marks the start of a register; thinning it would erase the ledger reading | `(marketing)/approach/page-client.tsx`, `(marketing)/contact/page-client.tsx`, `(marketing)/how-we-work/page-client.tsx`, `(marketing)/pricing/page-client.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/process/page-client.tsx`, `(marketing)/process/phase-strip.tsx`, `(marketing)/schedule/page-client.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/standards/pass-line.tsx`, `c/legal/legal-page-layout.tsx`, `c/sections/page-hero.tsx`, `c/sections/trust-section.tsx` |
 | accent-side-rule | 5 | D7: a quote or note mark, not a separator; logical side only | `(marketing)/about/name-principle.tsx`, `c/mdx/mdx-components.tsx`, `c/mdx/quote.tsx`, `c/sections/consulting-brief-section.tsx` |
-| status-edge | 16 | D8: the tint carries meaning (error, success, warning, info) | `(marketing)/schedule/page-client.tsx`, `(utility)/offline/page-client.tsx`, `c/interactive/exit-intent-modal.tsx`, `c/mdx/callout.tsx`, `c/sections/audit-lead-capture.tsx`, `c/sections/consulting-brief-section.tsx`, `c/sections/pipeline-section.tsx` |
-| accent / selected | 18 | selection and active states (price cell, plan glyphs, diagram accents); an interactive state, not a resting edge | `(marketing)/about/name-principle.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/[slug]/page-client.tsx`, `c/mdx/callout.tsx`, `c/mdx/mdx-components.tsx`, `c/mdx/quote.tsx`, `c/sections/boundary-section.tsx`, `c/sections/ownership-stack-section.tsx`, `c/sections/service-maintenance/maintenance-plans.tsx`, `c/sections/transparency-estimator/instrument.tsx`, `c/sections/transparency-estimator/questions.tsx` |
-| ink (control outline / diagram) | 18 | MagneticButton's secondary and filled outlines (a control boundary needs more than 10% ink, see the border-mid contrast trap) and drawn diagram nodes | `(marketing)/about/handoff-chain.tsx`, `(marketing)/how-we-work/page-client.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/page-client.tsx`, `app/[locale]/error.tsx`, `c/magnetic-button.tsx`, `c/sections/hero-readout.tsx`, `c/sections/transparency-estimator/questions.tsx`, `c/sections/trust-section.tsx`, `c/sections/ui-playground-section.tsx` |
-| diagram / glyph | 15 | drawings (connectors, brackets, markers, swatches, icon strokes), not UI edges; 2px and dashed strokes are allowed here | `(marketing)/about/name-principle.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/services/interface-design/page-client.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/page-client.tsx`, `c/sections/boundary-section.tsx`, `c/sections/ownership-stack-section.tsx`, `c/sections/service-maintenance/maintenance-hero.tsx`, `c/sections/service-maintenance/maintenance-plans.tsx` |
+| status-edge | 15 | D8: the tint carries meaning (error, success, warning, info) | `(marketing)/schedule/page-client.tsx`, `(utility)/offline/page-client.tsx`, `c/interactive/exit-intent-modal.tsx`, `c/mdx/callout.tsx`, `c/sections/audit-lead-capture.tsx`, `c/sections/consulting-brief-section.tsx` |
+| accent / selected | 17 | selection and active states (price cell, plan glyphs, diagram accents); an interactive state, not a resting edge | `(marketing)/about/name-principle.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/[slug]/page-client.tsx`, `c/mdx/callout.tsx`, `c/mdx/mdx-components.tsx`, `c/mdx/quote.tsx`, `c/sections/ownership-stack-section.tsx`, `c/sections/service-maintenance/maintenance-plans.tsx`, `c/sections/transparency-estimator/instrument.tsx`, `c/sections/transparency-estimator/questions.tsx` |
+| ink (control outline / diagram) | 16 | MagneticButton's secondary and filled outlines (a control boundary needs more than 10% ink, see the border-mid contrast trap) and drawn diagram nodes | `(marketing)/about/handoff-chain.tsx`, `(marketing)/how-we-work/page-client.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/page-client.tsx`, `app/[locale]/error.tsx`, `c/magnetic-button.tsx`, `c/sections/transparency-estimator/questions.tsx`, `c/sections/trust-section.tsx` |
+| diagram / glyph | 13 | drawings (connectors, brackets, markers, swatches, icon strokes), not UI edges; 2px and dashed strokes are allowed here | `(marketing)/about/name-principle.tsx`, `(marketing)/pricing/price-grid.tsx`, `(marketing)/services/interface-design/page-client.tsx`, `(marketing)/standards/page-client.tsx`, `(marketing)/work/page-client.tsx`, `c/sections/ownership-stack-section.tsx`, `c/sections/service-maintenance/maintenance-hero.tsx`, `c/sections/service-maintenance/maintenance-plans.tsx` |
 | logo tile | 3 | the mark's corner scales with the mark (`rounded-xl`/`2xl`/`[1.25rem]` on 28–44px tiles) | `c/shared/altruvex-logo.tsx` |
 | glass | 1 | a grid living on a liquid-glass panel keeps the glass line colour | `c/sections/transparency-measures-details-section.tsx` |
 | state (radio) | 1 | a 2px ring on a radio is its selection state | `c/sections/transparency-estimator/questions.tsx` |

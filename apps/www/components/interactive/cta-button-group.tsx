@@ -18,6 +18,8 @@ type CtaButtonGroupProps = {
   stacked?: boolean;
   /** "pill" rounds both buttons fully, matching the header's own CTA. */
   shape?: "default" | "pill";
+  /** Extra classes for the secondary button (the homepage hero's glass pill). */
+  secondaryClassName?: string;
   className?: string;
   ref?: Ref<HTMLDivElement>;
 };
@@ -29,6 +31,7 @@ export function CtaButtonGroup({
   secondaryArrow = false,
   stacked = false,
   shape = "default",
+  secondaryClassName,
   className,
   ref,
 }: CtaButtonGroupProps) {
@@ -65,7 +68,7 @@ export function CtaButtonGroup({
           asChild
           size="lg"
           variant="secondary"
-          className={cn(width, radius, secondaryArrow && "group")}
+          className={cn(width, radius, secondaryArrow && "group", secondaryClassName)}
         >
           <Link href={secondary.href}>
             {secondaryArrow ? (

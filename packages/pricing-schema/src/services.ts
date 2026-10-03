@@ -84,10 +84,6 @@ export const SERVICES: Readonly<Record<ServiceId, Service>> = {
   },
 };
 
-export function getService(id: ServiceId): Service {
-  return SERVICES[id];
-}
-
 /** The lowest published figure across the whole matrix — the engagement floor. */
 export function minimumEngagement(): number {
   return Math.min(

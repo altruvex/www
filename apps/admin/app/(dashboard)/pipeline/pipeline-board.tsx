@@ -33,9 +33,12 @@ const DERIVED_REASON: Record<string, string> = {
 export function PipelineBoard({
   cards,
   columns,
+  focusColumnId,
 }: {
   cards: PipelineCardData[];
   columns: { id: string; label: string; tone: Tone }[];
+  /** `?stage=` from the URL, already validated against `columns` by the page. */
+  focusColumnId?: string;
 }) {
   const router = useRouter();
 
@@ -92,6 +95,7 @@ export function PipelineBoard({
         meta: <StatusPill registry="priority" value={card.priority} variant="dot" />,
       }))}
       onMove={onMove}
+      focusColumnId={focusColumnId}
       emptyColumnLabel="No deals"
       label="Pipeline board, scroll sideways for more stages"
     />

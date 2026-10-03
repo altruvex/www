@@ -23,7 +23,7 @@ apps/admin -> imports @repo/ui
 Public exports come from the package root:
 
 ```tsx
-import { Button, Card, Field, Input, Select, Sheet, TooltipProvider } from "@repo/ui";
+import { Button, Field, Input, Select, Sheet, TooltipProvider } from "@repo/ui";
 ```
 
 Prefer root imports over deep imports so the package can evolve without spreading internal paths through the apps.
@@ -54,7 +54,6 @@ Liquid Glass is centralized in `src/styles/liquid-glass.css`.
 Use the shared material classes and component variants:
 
 ```tsx
-<Card variant="glass" />
 <Surface variant="glass" />
 <Button variant="glass" />
 ```

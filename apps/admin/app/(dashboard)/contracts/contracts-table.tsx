@@ -1,6 +1,9 @@
 "use client";
 
+import { FileSignature } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date } from "@/lib/format";
@@ -19,28 +22,42 @@ export interface ContractRow {
   signedAt: string | null;
   signedByName: string | null;
   onboardingSent: boolean;
-  hasProject: boolean;
-  signToken: string | null;
+  /** The project delivering this contract, when one was created. */
+  projectId: string | null;
+  projectName: string | null;
 }
 
 export function ContractsTable({ rows }: { rows: ContractRow[] }) {
   const del = useRecordDelete({ entity: "contract" });
   const columns: Column<ContractRow>[] = [
+    // Column 0 is the contract's own identity (scope + reference): DataTable
+    // wraps it in the row link, so the client link cannot live here.
+    {
+      id: "contract",
+      header: "Contract",
+      hideable: false,
+      cell: (row) => (
+        <span className="truncate">
+          {row.projectType}
+          <span className="ms-1.5 font-mono text-micro text-subtle-foreground">
+            {row.id.slice(0, 8).toUpperCase()}
+          </span>
+        </span>
+      ),
+      sortValue: (row) => row.projectType,
+      searchValue: (row) => `${row.projectType} ${row.id.slice(0, 8)} ${row.signedByName ?? ""}`,
+    },
     {
       id: "client",
       header: "Client",
-      hideable: false,
-      cell: (row) => <span className="truncate">{row.clientName}</span>,
+      width: "180px",
+      cell: (row) => (
+        <EntityLink type="client" id={row.clientId} muted className="truncate">
+          {row.clientName}
+        </EntityLink>
+      ),
       sortValue: (row) => row.clientName.toLowerCase(),
-      searchValue: (row) => `${row.clientName} ${row.projectType} ${row.signedByName ?? ""}`,
-    },
-    {
-      id: "scope",
-      header: "Scope",
-      width: "160px",
-      cell: (row) => <span className="truncate text-muted-foreground">{row.projectType}</span>,
-      sortValue: (row) => row.projectType,
-      minWidth: "lg",
+      searchValue: (row) => row.clientName,
     },
     {
       id: "value",
@@ -78,16 +95,18 @@ export function ContractsTable({ rows }: { rows: ContractRow[] }) {
     {
       id: "delivery",
       header: "Delivery",
-      width: "128px",
+      width: "160px",
       cell: (row) =>
-        row.hasProject ? (
-          <span className="text-success">Project created</span>
+        row.projectId ? (
+          <EntityLink type="project" id={row.projectId} className="truncate">
+            {row.projectName ?? "Project"}
+          </EntityLink>
         ) : row.status === "SIGNED" ? (
           <span className="text-danger">No project yet</span>
         ) : (
           <span className="text-subtle-foreground">—</span>
         ),
-      sortValue: (row) => (row.hasProject ? 2 : row.status === "SIGNED" ? 0 : 1),
+      sortValue: (row) => (row.projectId ? 2 : row.status === "SIGNED" ? 0 : 1),
       minWidth: "xl",
     },
     {
@@ -132,11 +151,17 @@ export function ContractsTable({ rows }: { rows: ContractRow[] }) {
         rowHref={(row) => `/contracts/${row.id}`}
         searchPlaceholder="Search contracts by client or signatory…"
         initialSort={{ columnId: "created", dir: "desc" }}
-        mobile={{ title: "client", subtitle: "scope", meta: ["status", "value", "signed", "delivery"] }}
+        mobile={{ title: "contract", subtitle: "client", meta: ["status", "value", "signed", "delivery"] }}
         rowActions={(row) => (
           <RowActions onDelete={() => del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })} />
         )}
-        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No contracts.</div>}
+        empty={
+          <EmptyState
+            icon={FileSignature}
+            title="No contracts in this view"
+            body="Nothing here matches the current view. Contracts are generated from accepted proposals."
+          />
+        }
       />
       {del.dialog}
     </>

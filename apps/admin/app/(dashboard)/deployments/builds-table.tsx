@@ -3,15 +3,18 @@
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
+import { duration } from "./shared";
 
 export interface BuildRow {
   id: string;
   number: number;
   productId: string;
   productName: string;
+  clientId: string;
   clientName: string;
   environment: string;
   status: string;
@@ -25,45 +28,69 @@ export interface BuildRow {
   at: string;
 }
 
-function duration(ms: number | null): string {
-  if (ms == null) return "—";
-  if (ms < 1000) return `${ms}ms`;
-  const seconds = Math.round(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, "0")}s`;
-}
-
-export function BuildsTable({ rows }: { rows: BuildRow[] }) {
+export function BuildsTable({
+  rows,
+  toolbar,
+  empty,
+}: {
+  rows: BuildRow[];
+  toolbar?: React.ReactNode;
+  empty: React.ReactNode;
+}) {
   const del = useRecordDelete({ entity: "build" });
   const columns: Column<BuildRow>[] = [
     {
-      id: "product",
+      // The identity column is the row's link (DataTable wraps it), so it holds
+      // no links of its own; product and client get their own column below.
+      id: "build",
       header: "Build",
       hideable: false,
+      width: "160px",
       cell: (row) => (
         <span className="min-w-0">
-          <span className="block truncate">
-            {row.productName}
-            <span className="ms-1.5 font-mono text-meta text-subtle-foreground">
-              #{row.number}
-            </span>
-          </span>
-          <span className="block truncate text-meta font-normal text-subtle-foreground">
-            {row.branch ?? "no branch"} · {row.clientName}
+          <span className="block truncate font-mono">#{row.number}</span>
+          <span className="block truncate font-mono text-meta font-normal text-subtle-foreground">
+            {row.branch ?? "no branch"}
           </span>
         </span>
       ),
-      sortValue: (row) => row.productName.toLowerCase(),
+      sortValue: (row) => -row.number,
       searchValue: (row) =>
-        `${row.productName} ${row.clientName} ${row.branch ?? ""} ${row.commitMessage ?? ""} ${row.commitSha ?? ""}`,
+        `#${row.number} ${row.branch ?? ""} ${row.commitMessage ?? ""} ${row.commitSha ?? ""}`,
+    },
+    {
+      id: "product",
+      header: "Product",
+      cell: (row) => (
+        <span className="block min-w-0 truncate">
+          <EntityLink type="product" id={row.productId}>
+            {row.productName}
+          </EntityLink>
+          <span className="text-subtle-foreground"> · </span>
+          <EntityLink
+            type="client"
+            id={row.clientId}
+            muted
+            className="text-meta"
+          >
+            {row.clientName}
+          </EntityLink>
+        </span>
+      ),
+      sortValue: (row) => row.productName.toLowerCase(),
+      searchValue: (row) => `${row.productName} ${row.clientName}`,
     },
     {
       id: "status",
       header: "Status",
       width: "124px",
-      cell: (row) => <StatusPill registry="buildStatus" value={row.status} variant="dot" />,
+      cell: (row) => (
+        <StatusPill registry="buildStatus" value={row.status} variant="dot" />
+      ),
       sortValue: (row) =>
-        ["FAILED", "RUNNING", "QUEUED", "CANCELLED", "SUCCEEDED"].indexOf(row.status),
+        ["FAILED", "RUNNING", "QUEUED", "CANCELLED", "SUCCEEDED"].indexOf(
+          row.status,
+        ),
       searchValue: (row) => statusOf("buildStatus", row.status).label,
     },
     {
@@ -79,7 +106,8 @@ export function BuildsTable({ rows }: { rows: BuildRow[] }) {
           )}
         </span>
       ),
-      searchValue: (row) => `${row.commitMessage ?? ""} ${row.failureReason ?? ""}`,
+      searchValue: (row) =>
+        `${row.commitMessage ?? ""} ${row.failureReason ?? ""}`,
     },
     {
       id: "duration",
@@ -108,7 +136,9 @@ export function BuildsTable({ rows }: { rows: BuildRow[] }) {
       header: "When",
       width: "120px",
       align: "end",
-      cell: (row) => <span className="text-muted-foreground">{when(row.at)}</span>,
+      cell: (row) => (
+        <span className="text-muted-foreground">{when(row.at)}</span>
+      ),
       sortValue: (row) => -Date.parse(row.at),
     },
   ];
@@ -120,14 +150,28 @@ export function BuildsTable({ rows }: { rows: BuildRow[] }) {
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        rowHref={(row) => `/products/${row.productId}?tab=builds`}
-        mobile={{ title: "product", subtitle: "status", meta: ["duration", "at"] }}
+        rowHref={(row) => `/deployments/builds/${row.id}`}
+        mobile={{
+          title: "build",
+          subtitle: "product",
+          meta: ["status", "duration", "at"],
+        }}
         searchPlaceholder="Search product, branch, commit…"
         initialSort={{ columnId: "at", dir: "asc" }}
         rowActions={(row) => (
-          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.productName} · build ${row.number}` })} />
+          <RowActions
+            onDelete={() =>
+              del.request({
+                id: row.id,
+                label: `${row.productName} · build ${row.number}`,
+              })
+            }
+          />
         )}
-        empty={<EmptyInline>No build matches those filters.</EmptyInline>}
+        // The list is one cursor page; DataTable's own pager would page inside it.
+        pageSize={null}
+        toolbar={toolbar}
+        empty={<EmptyInline>{empty}</EmptyInline>}
       />
       {del.dialog}
     </>

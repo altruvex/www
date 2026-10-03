@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Homepage process — prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* The homepage process section sits inside the services wrapper's inverted scene:
+   near-black ground in the light site, paper in the dark site (globals.css:70–91, s-* at 112/145).
+   Accent = brand blue (local-accent default, globals.css:74). Lengths = processPhases({min:2,max:8}),
+   the same numbers /process renders (10 – 40 working days). */
+:root {
+  --bg: hsl(0 0% 9%);
+  --high: hsl(0 0% 100% / .92);
+  --mid: hsl(0 0% 100% / .58);
+  --line: hsl(0 0% 100% / .1);
+  --line-strong: hsl(0 0% 100% / .18);
+  --trace: hsl(0 0% 100% / .16);
+  --accent: hsl(214 89% 52%);
+  --accent-text: hsl(214 95% 72%);
+  --neighbour: hsl(0 0% 100% / .04);
+  --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --section-y: clamp(6rem, 11vw, 10rem);
+}
+html[data-theme="dark"] {
+  --bg: hsl(0 0% 98%);
+  --high: hsl(0 0% 8% / .9);
+  --mid: hsl(0 0% 8% / .68);
+  --line: hsl(0 0% 8% / .1);
+  --line-strong: hsl(0 0% 8% / .2);
+  --trace: hsl(0 0% 8% / .18);
+  --accent: hsl(214 89% 48%);
+  --accent-text: hsl(214 89% 40%);
+  --neighbour: hsl(0 0% 8% / .03);
+}
+* { box-sizing: border-box; }
+html { -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--bg); color: var(--high); font-family: Inter, system-ui, sans-serif; overflow-x: clip; }
+[dir="rtl"] body { font-family: Vazirmatn, Inter, sans-serif; }
+h2, h3 { font-family: Outfit, sans-serif; margin: 0; }
+[dir="rtl"] :is(h2, h3) { font-family: Vazirmatn, Outfit, sans-serif; letter-spacing: 0 !important; line-height: 1.4 !important; }
+p, ul, ol { margin: 0; padding: 0; }
+ol, ul { list-style: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 84rem; margin: 0 auto; padding-inline: clamp(1.25rem, 4vw, 3rem); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.eyebrow { font-family: "Geist Mono", ui-monospace, monospace; font-size: .8125rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mid); }
+[dir="rtl"] .eyebrow { font-family: Vazirmatn, sans-serif; letter-spacing: 0; font-size: .875rem; }
+.mono { font-family: "Geist Mono", monospace; font-variant-numeric: tabular-nums; }
+[dir="rtl"] .mono { font-family: Vazirmatn, sans-serif; }
+.mid { color: var(--mid); }
+.acc { color: var(--accent-text); }
+.rv { opacity: 0; transform: translateY(18px); transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth); transition-delay: calc(var(--i, 0) * 80ms); }
+.rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
+
+/* ── prototype chrome ── */
+.bar { position: fixed; inset-block-start: 12px; inset-inline: 12px; z-index: 60; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none; }
+.bar > * { pointer-events: auto; }
+.seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: hsl(0 0% 12% / .85); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); }
+.seg button { padding: 7px 12px; border-radius: 9px; color: hsl(0 0% 80%); font: 500 13px/1 Inter, sans-serif; }
+.seg button[aria-pressed="true"] { background: #fff; color: hsl(0 0% 8%); }
+details.note { position: fixed; inset-block-end: 12px; inset-inline-start: 12px; z-index: 60; max-width: 30rem; padding: 12px 14px; border-radius: 12px; background: hsl(0 0% 12% / .92); backdrop-filter: blur(12px); border: 1px solid hsl(0 0% 100% / .1); color: hsl(0 0% 82%); font: 400 12.5px/1.5 Inter, sans-serif; direction: ltr; text-align: left; }
+details.note summary { cursor: pointer; font-weight: 500; color: #fff; }
+details.note b { color: #fff; font-weight: 500; }
+
+/* neighbour: the last services row, so the idiom can be compared */
+.neighbour { padding-block: 5rem 0; }
+.neighbour .row { display: grid; grid-template-columns: 3rem 1fr auto; gap: 1rem; align-items: baseline; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding-block: 1.75rem; }
+.neighbour .name { font: 400 clamp(1.5rem, 2.6vw, 2.25rem)/1.15 Outfit, sans-serif; letter-spacing: -.02em; }
+.pill { display: inline-flex; align-items: center; gap: .5rem; height: 2.5rem; padding-inline: 1.1rem; border-radius: 10px; border: 1px solid var(--line-strong); font-size: .9375rem; }
+
+/* section heading — the homepage SectionHeading on surface theme */
+.sec { padding-block: var(--section-y); }
+.head { display: grid; gap: 1.5rem; margin-bottom: clamp(3.5rem, 6vw, 5rem); }
+@media (min-width: 1024px) { .head { grid-template-columns: 7fr 5fr; align-items: end; column-gap: 4rem; } }
+.head h2 { font-size: clamp(2.5rem, 5.2vw, 4.75rem); line-height: 1.02; letter-spacing: -.035em; font-weight: 600; }
+.head h2 .soft { display: block; color: var(--mid); }
+.head .lede { font-size: clamp(1.0625rem, 1.2vw, 1.1875rem); line-height: 1.65; color: var(--mid); max-width: 44ch; }
+.head .lede strong { color: var(--high); font-weight: 500; }
+
+/* shared chart bits */
+.scale-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 2rem; padding-bottom: 1rem; }
+.ruler { position: relative; height: 1.25rem; margin-bottom: .5rem; }
+.ruler span { position: absolute; top: 0; font-size: .75rem; color: var(--mid); white-space: nowrap; transform: translateX(-50%); }
+[dir="rtl"] .ruler span { transform: translateX(50%); }
+.ruler span.last { transform: translateX(-100%); }
+[dir="rtl"] .ruler span.last { transform: translateX(100%); }
+.ruler span.first { transform: none; }
+@media (max-width: 767px) { .ruler span.midtick { display: none; } }
+.fill { display: block; width: 100%; height: 100%; border-radius: inherit; transform-origin: left; transform: scaleX(var(--drawn, 1)); }
+[dir="rtl"] .fill { transform-origin: right; }
+.js .fill { --drawn: 0; }
+.js .drawn .fill { --drawn: 1; transition: transform var(--dur, 1s) linear; }
+@media (prefers-reduced-motion: reduce) { .js .fill { --drawn: 1; transition: none !important; } }
+.foot { margin-top: clamp(3rem, 5vw, 4rem); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem 3rem; }
+.foot p { max-width: 52ch; font-size: clamp(1.0625rem, 1.5vw, 1.25rem); }
+.more { display: inline-flex; align-items: center; gap: .6rem; height: 2.75rem; padding-inline: 1.25rem; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 500; font-size: .9375rem; }
+.arrow { display: inline-block; transition: transform .3s var(--ease-strong); }
+[dir="rtl"] .arrow { transform: scaleX(-1); }
+a:hover .arrow { transform: translateX(3px); }
+[dir="rtl"] a:hover .arrow { transform: scaleX(-1) translateX(3px); }
+
+/* ── A · One calendar, five sign-offs ── */
+.a-track { position: relative; height: 1rem; }
+.a-seg { position: absolute; top: 0; height: 100%; padding-inline: 2px; }
+.a-seg > span { display: block; height: 100%; border-radius: 999px; overflow: clip; background: var(--line); }
+.a-seg .fill { background: var(--trace); }
+.a-seg.build .fill { background: var(--accent); }
+.a-gate { position: absolute; top: 50%; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); box-shadow: 0 0 0 2px var(--high); transform: translate(-50%, -50%) scale(var(--g, 1)); transition: transform .5s var(--ease-strong); transition-delay: var(--gd, 0s); z-index: 1; }
+[dir="rtl"] .a-gate { transform: translate(50%, -50%) scale(var(--g, 1)); }
+.js .a-chart:not(.drawn) .a-gate { --g: 0; }
+.a-verbs { position: relative; height: 3.25rem; margin-top: .9rem; }
+.a-verb { position: absolute; top: 0; transform: translateX(-50%); text-align: center; white-space: nowrap; }
+[dir="rtl"] .a-verb { transform: translateX(50%); }
+.a-verb.end { transform: translateX(-100%); text-align: end; }
+[dir="rtl"] .a-verb.end { transform: translateX(100%); }
+.a-verb .v { display: block; font-size: .9375rem; color: var(--high); }
+.a-verb .n { display: block; font-size: .6875rem; color: var(--mid); margin-top: .2rem; }
+@media (max-width: 767px) { .a-verb .v { display: none; } .a-verbs { height: 1.5rem; } }
+.a-rows { margin-top: clamp(2.5rem, 4vw, 3.5rem); border-top: 1px solid var(--line-strong); }
+.a-rows a { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; gap: .35rem 1rem; align-items: baseline; padding-block: 1.25rem; border-bottom: 1px solid var(--line); transition: color .25s var(--ease-smooth); }
+@media (min-width: 900px) { .a-rows a { grid-template-columns: 3rem 11rem minmax(0, 1fr) 10rem 7.5rem 1.5rem; padding-block: 1.5rem; } }
+.a-rows a:hover { color: var(--accent-text); }
+.a-rows .nm { font: 400 clamp(1.25rem, 1.8vw, 1.5rem)/1.2 Outfit, sans-serif; letter-spacing: -.015em; }
+.a-rows .hd { color: var(--mid); font-size: .9375rem; grid-column: 2 / -1; }
+.a-rows .role { font-size: .875rem; color: var(--mid); grid-column: 2 / -1; }
+@media (min-width: 900px) { .a-rows .hd, .a-rows .role, .a-rows .ln { grid-column: auto; } .a-rows .ln { text-align: end; } }
+.a-rows .ln { font-size: .875rem; color: var(--mid); grid-column: 2 / -1; }
+.a-rows .role b { color: var(--accent-text); font-weight: 500; }
+.a-rows .ar { display: none; }
+@media (min-width: 900px) { .a-rows .ar { display: block; text-align: end; color: var(--mid); } }
+
+/* ── B · Staircase, gated ── */
+.b-rows > li { display: block; }
+.b-rows a { display: grid; gap: 1.25rem 2rem; padding-bottom: clamp(2.75rem, 4vw, 3.75rem); }
+@media (min-width: 1024px) { .b-rows a { grid-template-columns: 3fr 5fr 4fr; } }
+.b-rows .build a { padding-bottom: clamp(3.5rem, 6vw, 5.5rem); }
+.b-track { position: relative; height: 1.5rem; grid-column: 1 / -1; }
+.b-thread { position: absolute; top: 50%; inset-inline-end: 0; border-top: 2px dotted var(--trace); transform: translateY(-50%); }
+.b-bead { position: absolute; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: var(--bg); box-shadow: 0 0 0 2px var(--trace); transform: translate(-50%, -50%); }
+[dir="rtl"] .b-bead { transform: translate(50%, -50%); }
+.b-bead.gate { width: 12px; height: 12px; box-shadow: 0 0 0 2px var(--high); }
+.b-done, .b-now { position: absolute; top: 50%; transform: translateY(-50%); border-radius: 999px; overflow: clip; }
+.b-done { height: 6px; background: var(--trace); }
+.b-now { height: 12px; }
+.b-now .fill { background: var(--high); }
+.build .b-now .fill { background: var(--accent); }
+.build .b-now { box-shadow: 0 0 0 5px color-mix(in oklab, var(--accent) 16%, transparent); }
+.b-meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: baseline; }
+@media (min-width: 1024px) { .b-meta { flex-direction: column; } }
+.b-meta .nm { font-family: "Geist Mono", monospace; font-size: .8125rem; letter-spacing: .2em; text-transform: uppercase; color: var(--mid); }
+[dir="rtl"] .b-meta .nm { font-family: Vazirmatn, sans-serif; letter-spacing: 0; font-size: .9375rem; }
+.b-meta .len { font-weight: 500; font-size: .9375rem; }
+.b-meta .share { color: var(--accent-text); font-size: .9375rem; }
+.b-rows h3 { font-weight: 500; font-size: clamp(1.5rem, 2vw, 1.75rem); line-height: 1.15; letter-spacing: -.02em; max-width: 22ch; transition: color .25s var(--ease-smooth); }
+.b-rows .build h3 { font-size: clamp(1.875rem, 2.8vw, 2.5rem); line-height: 1.1; }
+.b-rows a:hover h3 { color: var(--accent-text); }
+.b-gate { align-self: end; border-top: 1px solid var(--line); padding-top: 1rem; display: grid; gap: .35rem; }
+.b-gate .who { font-family: "Geist Mono", monospace; font-size: .75rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-text); }
+[dir="rtl"] .b-gate .who { font-family: Vazirmatn, sans-serif; letter-spacing: 0; font-size: .875rem; }
+.b-gate .then { font-size: .9375rem; }
+
+/* ── C · The index is the calendar ── */
+.c-rows { border-top: 1px solid var(--line-strong); }
+.c-rows a { position: relative; display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) auto; gap: .5rem 1rem; align-items: baseline; padding-block: clamp(1.4rem, 2.4vw, 2rem) clamp(1.6rem, 2.6vw, 2.25rem); }
+@media (min-width: 900px) { .c-rows a { grid-template-columns: 3rem minmax(0, 1fr) 10rem 9rem 1.5rem; } }
+.c-rows .nm { font: 400 clamp(1.75rem, 3.4vw, 3rem)/1.05 Outfit, sans-serif; letter-spacing: -.03em; transition: color .25s var(--ease-smooth); }
+.c-rows a:hover .nm { color: var(--accent-text); }
+.c-rows .role, .c-rows .ar { display: none; }
+@media (min-width: 900px) { .c-rows .role { display: block; font-size: .875rem; color: var(--mid); } .c-rows .ar { display: block; text-align: end; color: var(--mid); } }
+.c-rows .role b { color: var(--accent-text); font-weight: 500; }
+.c-rows .len { font-size: .9375rem; color: var(--mid); text-align: end; }
+.c-rows .hd { grid-column: 2 / -1; max-height: 0; overflow: clip; color: var(--mid); font-size: .9375rem; transition: max-height .45s var(--ease-strong); }
+.c-rows a:hover .hd, .c-rows a:focus-visible .hd { max-height: 3rem; }
+@media (hover: none) { .c-rows .hd { max-height: none; } }
+/* the row's bottom edge is its bar: a hairline across the calendar, the phase's days drawn solid on it */
+.c-edge { position: absolute; inset-inline: 0; bottom: 0; height: 1px; background: var(--line); }
+.c-edge .bar-at { position: absolute; bottom: -1.5px; height: 4px; border-radius: 999px; overflow: clip; }
+.c-edge .bar-at .fill { background: var(--high); }
+.c-rows .build .bar-at .fill { background: var(--accent); }
+.c-edge .tick { position: absolute; bottom: -4px; width: 1px; height: 9px; background: var(--trace); }
+.c-sum { margin-top: 1rem; display: flex; justify-content: space-between; gap: 1rem; font-size: .8125rem; color: var(--mid); }
+</style>
+</head>
+<body>
+<div class="bar">
+  <div class="seg" id="opt"><button data-v="a" aria-pressed="true">A · One calendar</button><button data-v="b" aria-pressed="false">B · Staircase, gated</button><button data-v="c" aria-pressed="false">C · Index = calendar</button></div>
+  <div style="display:flex;gap:8px">
+    <div class="seg" id="lang"><button data-v="en" aria-pressed="true">EN</button><button data-v="ar" aria-pressed="false">AR</button></div>
+    <div class="seg" id="theme"><button data-v="light" aria-pressed="true">Site light</button><button data-v="dark" aria-pressed="false">Site dark</button></div>
+  </div>
+</div>
+<details class="note"><summary id="note-title">Notes</summary><div id="note-body" style="margin-top:.5rem"></div></details>
+<main id="root"></main>
+
+<script>
+document.documentElement.classList.add("js");
+/* processPhases({ min: 2, max: 8 }) — the same numbers /process shows: 10 – 40 working days. */
+const PHASES = [
+  { key: "discovery", min: 1, max: 1, unit: "session" },
+  { key: "wireframe", min: 2, max: 5, unit: "days" },
+  { key: "design", min: 2, max: 7, unit: "days" },
+  { key: "development", min: 3, max: 22, unit: "days" },
+  { key: "launch", min: 2, max: 5, unit: "days" },
+];
+const BUILD = "development";
+const ar = n => String(n).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+
+/* Existing keys: process.{eyebrow,title,subtitle,scale.label,share,footer,phases.*,meta.deliverables}
+   and process.page.register.gate.*. Strings marked NEW do not exist yet. */
+const COPY = {
+  en: {
+    eyebrow: "Delivery Model", title: "Clear phases.", titleSoft: "Accountable outcomes.",
+    subtitle: "Every project moves through discovery, wireframe, design, development and launch - <strong>with one owner responsible from start to delivery.</strong>",
+    scale: "Working days, drawn to scale — longest case",
+    smallest: n => `Smallest scope: ${n} days. Same phases, same sign-offs.`, // NEW
+    share: p => `${p}% of the calendar`,
+    footer: "A clear system before implementation. A working product after delivery.",
+    more: "Every phase, in full", // NEW
+    yourRole: "Your role", signoff: "Your sign-off", // signoff NEW
+    gateNext: n => `Then ${n} starts.`, gateLast: "Then the system is yours.",
+    session: "1 session", days: n => `${n} ${n === 1 ? "day" : "days"}`, range: (a, b) => `${a} – ${b} days`,
+    daysUnit: n => `${n} days`,
+    phases: {
+      discovery: { title: "Discovery", headline: "Understand the problem before proposing a solution.", role: "Share" },
+      wireframe: { title: "Wireframe", headline: "Define the system before the interface.", role: "Approve" },
+      design: { title: "Design", headline: "Agree on the whole design before a line of code.", role: "Review" },
+      development: { title: "Development", headline: "Build the system behind the idea.", role: "Review" },
+      launch: { title: "Launch", headline: "Turn the system into something ready to operate.", role: "Launch" },
+    },
+    nbName: "Technical Consulting", nbCta: "Explore",
+  },
+  ar: {
+    eyebrow: "نموذج التسليم", title: "مراحل واضحة.", titleSoft: "نتائج محددة المسؤولية.",
+    subtitle: "كل مشروع يمر بخمس مراحل: استكشاف، تصميم أولي، تصميم، تطوير، وإطلاق - <strong>تحت إشراف مسؤول واحد من البداية حتى التسليم.</strong>",
+    scale: "أيام العمل بمقياس حقيقي — في أطول الحالات",
+    smallest: n => `أصغر نطاق: ${n} أيام. المراحل نفسها، والاعتمادات نفسها.`,
+    share: p => `${p}٪ من الجدول الزمني`,
+    footer: "نظام واضح قبل التنفيذ. منتج فعّال بعد التسليم.",
+    more: "كل مرحلة بالتفصيل",
+    yourRole: "دورك", signoff: "اعتمادك",
+    gateNext: n => `ثم تبدأ مرحلة ${n}.`, gateLast: "ثم يصبح النظام ملكك.",
+    session: "جلسة واحدة", days: n => n === 1 ? "يوم واحد" : n === 2 ? "يومان" : n <= 10 ? `${ar(n)} أيام` : `${ar(n)} يومًا`,
+    range: (a, b) => `${a} – ${b} يوم`,
+    daysUnit: n => `${n} يوم عمل`,
+    phases: {
+      discovery: { title: "الاستكشاف", headline: "نفهم المشكلة قبل أن نقترح أي حل.", role: "شارك" },
+      wireframe: { title: "التصميم الأولي", headline: "نُعرّف النظام قبل الواجهة.", role: "اعتمد" },
+      design: { title: "التصميم", headline: "نتفق على التصميم كاملًا قبل سطر كود واحد.", role: "راجع" },
+      development: { title: "التطوير", headline: "نبني النظام خلف الفكرة.", role: "راجع" },
+      launch: { title: "الإطلاق", headline: "نُجهّز النظام ليعمل فعليًا.", role: "أطلق" },
+    },
+    nbName: "الاستشارات التقنية", nbCta: "استكشف",
+  },
+};
+
+const state = { v: "a", lang: "en", theme: "light" };
+const num = n => state.lang === "ar" ? ar(n) : String(n);
+const idx = i => num(String(i + 1).padStart(2, "0"));
+const len = (c, p) => p.unit === "session" ? c.session : p.min === p.max ? c.days(p.min) : c.range(num(p.min), num(p.max));
+const TOTAL = PHASES.reduce((s, p) => s + p.max, 0);
+const MIN_TOTAL = PHASES.reduce((s, p) => s + p.min, 0);
+let day = 0;
+const PLACED = PHASES.map(p => { const o = { ...p, start: day / TOTAL * 100, width: p.max / TOTAL * 100, startDay: day }; day += p.max; return o; });
+const BOUNDS = [0, ...PLACED.map(p => p.startDay + p.max)];
+const pct = v => `${v}%`;
+const href = p => `/process#phase-${p.key}`;
+/* a calendar does not ease: draw time is proportional to the days (SIG-022) */
+const dur = p => (.6 + (p.max / TOTAL) * 2 * .8).toFixed(2) + "s";
+
+function head(c) {
+  return `<div class="head">
+    <div><p class="eyebrow rv">${c.eyebrow}</p>
+      <h2 class="rv" style="--i:1;margin-top:1.25rem">${c.title}<span class="soft">${c.titleSoft}</span></h2></div>
+    <p class="lede rv" style="--i:2">${c.subtitle}</p></div>`;
+}
+function ruler() {
+  return `<div class="ruler mono" aria-hidden="true">${BOUNDS.map((d, i) => {
+    const last = i === BOUNDS.length - 1;
+    const cls = i === 0 ? "first" : last ? "last" : "midtick";
+    return `<span class="${cls}" style="inset-inline-start:${pct(d / TOTAL * 100)}">${last ? COPY[state.lang].daysUnit(num(d)) : num(d)}</span>`;
+  }).join("")}</div>`;
+}
+function scaleLabel(c) {
+  return `<div class="scale-label"><p class="eyebrow">${c.scale}</p><p class="mid" style="font-size:.9375rem">${c.smallest(num(MIN_TOTAL))}</p></div>`;
+}
+function foot(c) {
+  return `<div class="foot rv"><p>${c.footer}</p><a class="more" href="/process">${c.more} <span class="arrow">→</span></a></div>`;
+}
+function neighbour(c) {
+  return `<div class="neighbour"><div class="wrap"><div class="row">
+    <span class="mono mid" style="font-size:.8125rem">${num("04")}</span><span class="name">${c.nbName}</span><span class="pill">${c.nbCta} <span class="arrow">→</span></span></div></div></div>`;
+}
+
+/* ── A ── */
+function renderA(c) {
+  const segs = PLACED.map(p => `<div class="a-seg ${p.key === BUILD ? "build" : ""}" style="inset-inline-start:${pct(p.start)};width:${pct(p.width)}"><span><span class="fill" style="--dur:${dur(p)}"></span></span></div>`).join("");
+  const gates = PLACED.map((p, i) => `<span class="a-gate" style="inset-inline-start:${pct(p.start + p.width)};--gd:${(.3 + i * .15).toFixed(2)}s"></span>`).join("");
+  const verbs = PLACED.map((p, i) => `<span class="a-verb ${i === PLACED.length - 1 ? "end" : ""}" style="inset-inline-start:${pct(p.start + p.width)}"><span class="v">${c.phases[p.key].role}</span><span class="n mono">${idx(i)}</span></span>`).join("");
+  const rows = PLACED.map((p, i) => {
+    const ph = c.phases[p.key];
+    return `<li class="rv" style="--i:${i}"><a href="${href(p)}">
+      <span class="mono mid" style="font-size:.8125rem">${idx(i)}</span>
+      <span class="nm">${ph.title}</span>
+      <span class="hd">${ph.headline}</span>
+      <span class="role">${c.yourRole} · <b>${ph.role}</b></span>
+      <span class="ln">${len(c, p)}</span>
+      <span class="ar"><span class="arrow">→</span></span></a></li>`;
+  }).join("");
+  return `${neighbour(c)}<section class="sec"><div class="wrap">${head(c)}
+    ${scaleLabel(c)}${ruler()}
+    <div class="a-chart" data-draw><div class="a-track" aria-hidden="true">${segs}${gates}</div>
+      <div class="a-verbs" aria-hidden="true">${verbs}</div></div>
+    <p class="eyebrow" style="margin-top:.25rem">● ${c.signoff}</p>
+    <ol class="a-rows">${rows}</ol>
+    ${foot(c)}</div></section>`;
+}
+
+/* ── B ── */
+function renderB(c) {
+  const rows = PLACED.map((p, i) => {
+    const ph = c.phases[p.key], next = PLACED[i + 1];
+    const isBuild = p.key === BUILD;
+    const done = PLACED.slice(0, i).map(d => `<span class="b-done" style="inset-inline-start:calc(${pct(d.start)} + 2px);width:calc(${pct(d.width)} - 4px)"></span>`).join("");
+    const beads = BOUNDS.map((d, j) => `<span class="b-bead ${j === i + 1 ? "gate" : ""}" style="inset-inline-start:${pct(d / TOTAL * 100)}"></span>`).join("");
+    return `<li class="${isBuild ? "build" : ""}" data-draw><a href="${href(p)}">
+      <div class="b-track" aria-hidden="true">
+        <span class="b-thread" style="inset-inline-start:${pct(p.start + p.width)}"></span>
+        ${done}
+        <span class="b-now" style="inset-inline-start:calc(${pct(p.start)} + 2px);width:calc(${pct(p.width)} - 4px)"><span class="fill" style="--dur:${dur(p)}"></span></span>
+        ${beads}
+      </div>
+      <div class="b-meta"><span style="display:flex;gap:.75rem;align-items:baseline"><span class="mono acc" style="font-size:.875rem">${idx(i)}</span><span class="nm">${ph.title}</span></span>
+        <span class="len">${len(c, p)}</span>
+        ${isBuild ? `<span class="share">${c.share(num(Math.round(p.max / TOTAL * 100)))}</span>` : ""}</div>
+      <h3>${ph.headline}</h3>
+      <div class="b-gate"><span class="who">${c.yourRole} · ${ph.role}</span>
+        <span class="then">${next ? c.gateNext(c.phases[next.key].title) : c.gateLast}</span></div>
+    </a></li>`;
+  }).join("");
+  return `${neighbour(c)}<section class="sec"><div class="wrap">${head(c)}
+    ${scaleLabel(c)}${ruler()}
+    <ol class="b-rows">${rows}</ol>
+    ${foot(c)}</div></section>`;
+}
+
+/* ── C ── */
+function renderC(c) {
+  const rows = PLACED.map((p, i) => {
+    const ph = c.phases[p.key];
+    const ticks = BOUNDS.map(d => `<span class="tick" style="inset-inline-start:${pct(d / TOTAL * 100)}"></span>`).join("");
+    return `<li class="${p.key === BUILD ? "build" : ""}" data-draw><a href="${href(p)}">
+      <span class="mono mid" style="font-size:.8125rem">${idx(i)}</span>
+      <span class="nm">${ph.title}</span>
+      <span class="role">${c.yourRole} · <b>${ph.role}</b></span>
+      <span class="len mono">${len(c, p)}</span>
+      <span class="ar"><span class="arrow">→</span></span>
+      <span class="hd">${ph.headline}</span>
+      <span class="c-edge" aria-hidden="true">${ticks}<span class="bar-at" style="inset-inline-start:${pct(p.start)};width:${pct(p.width)}"><span class="fill" style="--dur:${dur(p)}"></span></span></span>
+    </a></li>`;
+  }).join("");
+  return `${neighbour(c)}<section class="sec"><div class="wrap">${head(c)}
+    ${scaleLabel(c)}${ruler()}
+    <ol class="c-rows">${rows}</ol>
+    ${foot(c)}</div></section>`;
+}
+
+const NOTES = {
+  a: `<b>Kept:</b> the Gantt drawn to scale (SIG-022, must survive) and the same numbers /process renders (10 – 40 days). <b>Change:</b> the five tracks collapse to ONE calendar, and each phase boundary becomes a bead labelled with <i>your</i> verb (Share · Approve · Review · Review · Launch). That is /process's claim, "no phase starts before your part is done", said as a drawing. Below it, the hairline index /process opens with, and each row deep-links to its chapter (Kott Studio's "index + one link out" homepage structure, text-checked). Descriptions and deliverables leave the homepage; they live on /process only, so the two can't drift. <b>Contradictions removed:</b> the homepage no longer re-tells each phase, it states the smallest scope next to the longest, and it links to /process.`,
+  b: `<b>Closest to today.</b> The staircase Gantt stays as it is: one track per row, earlier phases as a trace, this phase solid, development the only change of pace with its "55% of the calendar". Each row's description and deliverables are replaced by /process's <i>gate line</i> ("Your role · Approve — Then Design starts."), and the bead that closes the phase is emphasised as the sign-off. Each row links to its /process chapter. Longest ~1.4× the height of A/C. Same contradiction fixes as A.`,
+  c: `<b>Most compact.</b> The homepage becomes a doorway: the same hairline index /process opens with, but each row's bottom hairline IS its bar. The phase's days are drawn solid on it at their true position, with boundary ticks, so reading down the rows you read the Gantt. The headline opens on hover (always shown on touch). About 60% of today's height. The risk: the drawing is thin, so the "build is most of the calendar" claim is quieter than in A/B.`,
+};
+
+function draw() {
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add(e.target.matches("[data-draw]") ? "drawn" : "in");
+    io.unobserve(e.target);
+  }), { rootMargin: "0px 0px -18% 0px" });
+  document.querySelectorAll(".rv, [data-draw]").forEach(el => io.observe(el));
+}
+function render() {
+  const c = COPY[state.lang];
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+  document.documentElement.dataset.theme = state.theme;
+  document.getElementById("root").innerHTML = { a: renderA, b: renderB, c: renderC }[state.v](c);
+  document.getElementById("note-title").textContent = "Notes — " + document.querySelector(`#opt [data-v="${state.v}"]`).textContent;
+  document.getElementById("note-body").innerHTML = NOTES[state.v];
+  draw();
+}
+function seg(id, key) {
+  document.querySelectorAll(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    state[key] = b.dataset.v;
+    document.querySelectorAll(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", x === b));
+    const y = key === "v" ? 0 : scrollY; render(); scrollTo(0, y);
+  }));
+}
+seg("opt", "v"); seg("lang", "lang"); seg("theme", "theme");
+document.addEventListener("click", e => { if (e.target.closest("a[href^='/process']")) e.preventDefault(); });
+render();
+</script>
+</body>
+</html>

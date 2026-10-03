@@ -18,7 +18,7 @@ import {
 } from "@/lib/motion";
 import { useProcessPhases } from "@/lib/use-process-phases";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
-import { localizeNumbers, normalizeNumeralsToEnglish } from "@/lib/utils/number";
+import { formatIndex, localizeNumbers, normalizeNumeralsToEnglish } from "@/lib/utils/number";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { CHECK_COUNT } from "../standards/pass-line";
@@ -229,7 +229,7 @@ function Row({
   return (
     <li className="grid gap-x-10 gap-y-3 border-b border-border-subtle py-7 md:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1.15fr)] md:py-9">
       <span className="font-mono text-xs text-local-accent-text tabular-nums md:pt-1.5">
-        {localizeNumbers(String(index + 1).padStart(2, "0"), locale)}
+        {formatIndex(index + 1, 2, locale)}
       </span>
       <div>
         <h3 className="text-lg leading-snug text-foreground md:text-xl">{question}</h3>
@@ -331,7 +331,7 @@ function ClosingSection() {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("description")}
-      primary={{ href: getCommercialCta("technicalCall").href, label: t("schedule") }}
+      primary="technicalCall"
       secondary={{ href: getCommercialCta("realBuild").href, label: t("work") }}
     />
   );

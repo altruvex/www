@@ -50,8 +50,12 @@ const SAMPLE: Record<string, () => Promise<string | null>> = {
   maintenanceRequest: async () =>
     (await prisma.maintenanceRequest.findFirst({ select: { id: true } }))?.id ??
     null,
+  clientService: async () =>
+    (await prisma.clientService.findFirst({ select: { id: true } }))?.id ?? null,
   note: async () =>
     (await prisma.contactNote.findFirst({ select: { id: true } }))?.id ?? null,
+  clientNote: async () =>
+    (await prisma.clientNote.findFirst({ select: { id: true } }))?.id ?? null,
   notification: async () =>
     (await prisma.notification.findFirst({ select: { id: true } }))?.id ?? null,
   user: async () =>
@@ -73,7 +77,7 @@ async function readOnlyPass() {
       continue;
     }
     try {
-      const plan = await DELETABLES[entity]!.plan(id);
+      const plan = await DELETABLES[entity]!.plan(id, { userId: null });
       const ok =
         plan !== null &&
         typeof plan.label === "string" &&
@@ -93,6 +97,7 @@ async function readOnlyPass() {
   // A missing row must read as "already gone", not throw.
   const gone = await DELETABLES.client!.plan(
     "00000000-0000-4000-8000-000000000000",
+    { userId: null },
   );
   check(
     gone === null,
@@ -145,8 +150,22 @@ async function cascadePass() {
   await prisma.projectTask.create({
     data: { projectId: project.id, title: stamp },
   });
+  // A retainer and one of its period invoices: a payment with no project.
+  const subscription = await prisma.maintenanceSubscription.create({
+    data: {
+      clientId: client.id,
+      planId: "essential",
+      status: "CANCELLED",
+      currentPeriodEnd: new Date(Date.now() + 86_400_000),
+    },
+    select: { id: true },
+  });
+  const retainerPayment = await prisma.payment.create({
+    data: { subscriptionId: subscription.id, milestone: "RETAINER_RENEWAL", amount: 1 },
+    select: { id: true },
+  });
 
-  const plan = await DELETABLES.client!.plan(client.id);
+  const plan = await DELETABLES.client!.plan(client.id, { userId: null });
   check(plan !== null, "the fixture client has a plan");
   const count = (label: string) =>
     plan?.impact.find((i) => i.label === label)?.count ?? 0;
@@ -163,8 +182,8 @@ async function cascadePass() {
     `plan counts 1 project (saw ${count("Projects")})`,
   );
   check(
-    count("Payments") === 1,
-    `plan counts 1 payment (saw ${count("Payments")})`,
+    count("Payments") === 2,
+    `plan counts the project payment and the retainer payment (saw ${count("Payments")})`,
   );
   check(
     count("Delivery tasks") === 1,
@@ -175,7 +194,7 @@ async function cascadePass() {
     "a signed contract makes the client a soft block, not a hard one",
   );
 
-  const contractPlan = await DELETABLES.contract!.plan(contract.id);
+  const contractPlan = await DELETABLES.contract!.plan(contract.id, { userId: null });
   check(
     contractPlan?.block != null,
     "a signed contract blocks its own deletion",
@@ -202,6 +221,10 @@ async function cascadePass() {
   check(
     (await prisma.payment.count({ where: { projectId: project.id } })) === 0,
     "payments are gone",
+  );
+  check(
+    (await prisma.payment.count({ where: { id: retainerPayment.id } })) === 0,
+    "the retainer payment went with the client",
   );
   check(
     (await prisma.projectTask.count({ where: { projectId: project.id } })) ===

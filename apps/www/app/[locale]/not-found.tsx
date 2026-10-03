@@ -1,6 +1,5 @@
 "use client";
 
-import { BrandImage } from "@/components/shared/brand-image";
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -13,23 +12,6 @@ export default function NotFoundPage() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        style={{
-          maskImage:
-            "radial-gradient(110% 110% at 80% 30%, black 0%, transparent 60%)",
-          WebkitMaskImage:
-            "radial-gradient(110% 110% at 80% 30%, black 0%, transparent 60%)",
-        }}
-      >
-        <BrandImage
-          slot="notFound"
-          fill
-          sizes="100vw"
-          className="opacity-30 dark:opacity-40"
-        />
-      </div>
       <div
         aria-hidden
         className="pointer-events-none select-none absolute bottom-0 ltr:right-0 rtl:left-0 font-sans font-semibold leading-none"

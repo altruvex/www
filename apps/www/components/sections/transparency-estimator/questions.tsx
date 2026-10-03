@@ -2,10 +2,18 @@
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { cn } from "@/lib/utils/utils";
+import type { ScopeNoteId, ScopeNoteView } from "@repo/pricing-schema";
 import { Check } from "lucide-react";
 import { type ComponentPropsWithoutRef } from "react";
 import { useRadioKeys } from "./hooks";
 import type { AnswerMap, QuestionDef, QuestionKey, Translator } from "./types";
+
+/** The step heading level: h2 under the page's h1, h3 under the home h2. */
+export type HeadingLevel = 2 | 3;
+
+
+const STEP_TITLE =
+  "mt-4 text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-foreground";
 
 function Dial({
   selected = false,
@@ -55,6 +63,7 @@ function OptionRows({
   selected,
   onSelect,
   t,
+  titleFor,
   className,
 }: {
   base: string;
@@ -62,6 +71,8 @@ function OptionRows({
   selected: string | null;
   onSelect: (val: string) => void;
   t: Translator;
+  /** Overrides the catalogue title, for options the schema names. */
+  titleFor?: (option: string) => string;
   className?: string;
 }) {
   const { refs, onKeyDown } = useRadioKeys(question.options, onSelect);
@@ -113,7 +124,9 @@ function OptionRows({
                     : "text-foreground/85 group-hover:text-foreground",
                 )}
               >
-                {t(`${base}.options.${option}.title`)}
+                {titleFor
+                  ? titleFor(option)
+                  : t(`${base}.options.${option}.title`)}
               </span>
               <span className="block max-w-[58ch] text-sm leading-relaxed text-muted-foreground">
                 {t(`${base}.options.${option}.description`)}
@@ -202,6 +215,8 @@ export function BuildQuestion({
   onSelect,
   t,
   num,
+  headingLevel,
+  titleFor,
 }: {
   index: number;
   stage: string | null;
@@ -210,9 +225,12 @@ export function BuildQuestion({
   selected: string | null;
   onSelect: (val: string) => void;
   t: Translator;
-  num: (n: string | number) => string;
+  num: (n: string | number, pad?: number) => string;
+  headingLevel: HeadingLevel;
+  titleFor?: (option: string) => string;
 }) {
   const base = `steps.${question.msg}`;
+  const Heading = headingLevel === 2 ? "h2" : "h3";
 
   return (
     <div className="scroll-mt-40">
@@ -227,16 +245,13 @@ export function BuildQuestion({
         <header className="lg:col-span-4">
           <span
             aria-hidden
-            className="eyebrow text-micro leading-none tabular-nums text-local-accent-text ltr:font-mono"
+            className="eyebrow text-micro leading-none tabular-nums text-muted-foreground ltr:font-mono"
           >
-            {num(String(index).padStart(2, "0"))}
+            {num(index, 2)}
           </span>
-          <h3
-            id={`question-${question.key}`}
-            className="mt-4 text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-foreground"
-          >
+          <Heading id={`question-${question.key}`} className={STEP_TITLE}>
             {t(`${base}.title`)}
-          </h3>
+          </Heading>
           <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-muted-foreground">
             {t.rich(`${base}.hint`, bodyMarks)}
           </p>
@@ -247,6 +262,7 @@ export function BuildQuestion({
           selected={selected}
           onSelect={onSelect}
           t={t}
+          titleFor={titleFor}
           className="mt-7 lg:col-span-8 lg:mt-0"
         />
       </section>
@@ -259,23 +275,26 @@ function ConditionControl({
   selected,
   onSelect,
   t,
+  headingLevel,
 }: {
   question: QuestionDef;
   selected: string | null;
   onSelect: (val: string) => void;
   t: Translator;
+  headingLevel: HeadingLevel;
 }) {
   const base = `steps.${question.msg}`;
   const groupId = `condition-${question.key}`;
+  const Heading = headingLevel === 2 ? "h3" : "h4";
 
   return (
     <div className="py-7 first:pt-0 last:pb-0">
-      <h4
+      <Heading
         id={groupId}
         className="text-[0.9375rem] font-medium leading-snug text-foreground"
       >
         {t(`${base}.title`)}
-      </h4>
+      </Heading>
       <Segmented
         base={base}
         labelledBy={groupId}
@@ -295,18 +314,24 @@ function ConditionControl({
 }
 
 export function ConditionsBlock({
+  index,
   questions,
   answers,
   onSelect,
   t,
   num,
+  headingLevel,
 }: {
+  index: number;
   questions: readonly QuestionDef[];
   answers: AnswerMap;
   onSelect: (key: QuestionKey, value: string) => void;
   t: Translator;
-  num: (n: string | number) => string;
+  num: (n: string | number, pad?: number) => string;
+  headingLevel: HeadingLevel;
 }) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
+
   return (
     <div className="scroll-mt-40">
       <StageRule
@@ -317,17 +342,11 @@ export function ConditionsBlock({
         <div className="lg:col-span-4">
           <span
             aria-hidden
-            className="eyebrow text-micro leading-none tabular-nums text-local-accent-text ltr:font-mono"
+            className="eyebrow text-micro leading-none tabular-nums text-muted-foreground ltr:font-mono"
           >
-            {num("03")}
-            <span className="text-muted-foreground">
-              {" – "}
-              {num("05")}
-            </span>
+            {num(index, 2)}
           </span>
-          <h3 className="mt-4 text-[clamp(1.35rem,1.9vw,1.7rem)] font-medium leading-[1.15] tracking-[-0.02em] text-balance text-foreground">
-            {t("stages.conditionsTitle")}
-          </h3>
+          <Heading className={STEP_TITLE}>{t("stages.conditionsTitle")}</Heading>
           <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-muted-foreground">
             {t("stages.conditionsBody")}
           </p>
@@ -340,10 +359,120 @@ export function ConditionsBlock({
               selected={answers[question.key]}
               onSelect={(val) => onSelect(question.key, val)}
               t={t}
+              headingLevel={headingLevel}
             />
           ))}
         </div>
       </div>
     </div>
+  );
+}
+/**
+ * Step 03, "What does it need?" — the capabilities scope review has to confirm.
+ *
+ * A checklist, never a price input: the schema publishes no figure for these,
+ * so ticking one records it for the request and the PDF and leaves the range
+ * exactly where it was. The badge says so before anyone has to wonder.
+ */
+export function ScopeNotesStep({
+  index,
+  title,
+  lead,
+  badge,
+  notes,
+  selected,
+  onToggle,
+  num,
+  headingLevel,
+}: {
+  index: number;
+  title: string;
+  lead: string;
+  badge: string;
+  notes: readonly ScopeNoteView[];
+  selected: readonly ScopeNoteId[];
+  onToggle: (id: ScopeNoteId) => void;
+  num: (n: string | number, pad?: number) => string;
+  headingLevel: HeadingLevel;
+}) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
+  const titleId = "question-scope-notes";
+
+  return (
+    <section
+      aria-labelledby={titleId}
+      className="scroll-mt-40 border-t border-border-subtle pt-10 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16"
+    >
+      <header className="lg:col-span-4">
+        <span
+          aria-hidden
+          className="eyebrow text-micro leading-none tabular-nums text-muted-foreground ltr:font-mono"
+        >
+          {num(index, 2)}
+        </span>
+        <Heading id={titleId} className={STEP_TITLE}>
+          {title}
+        </Heading>
+        <p className="mt-3 max-w-[42ch] text-sm leading-relaxed text-muted-foreground">
+          {lead}
+        </p>
+        <p className="mt-4 inline-flex rounded-full border border-border-subtle px-3 py-1 text-xs text-muted-foreground">
+          {badge}
+        </p>
+      </header>
+      <div
+        role="group"
+        aria-labelledby={titleId}
+        className="mt-7 grid gap-px overflow-hidden border-y border-border-subtle bg-border-subtle sm:grid-cols-2 lg:col-span-8 lg:mt-0"
+      >
+        {notes.map((note) => {
+          const isChecked = selected.includes(note.id);
+
+          return (
+            <button
+              key={note.id}
+              type="button"
+              role="checkbox"
+              aria-checked={isChecked}
+              onClick={() => onToggle(note.id)}
+              className={cn(
+                "group flex w-full cursor-pointer items-start gap-4 px-5 py-5 text-start outline-none transition-colors duration-(--motion-instant) ease-smooth sm:px-6",
+                "focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+                "active:bg-surface",
+                isChecked
+                  ? "bg-local-accent-soft"
+                  : "bg-background hover:bg-surface/70",
+              )}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-sm border-2 transition-colors duration-(--motion-instant) ease-smooth",
+                  isChecked
+                    ? "border-local-accent bg-local-accent"
+                    : "border-foreground/45 bg-background group-hover:border-foreground/70",
+                )}
+              >
+                <Check
+                  strokeWidth={3}
+                  className={cn(
+                    "size-3 text-background transition-opacity duration-(--motion-instant)",
+                    isChecked ? "opacity-100" : "opacity-0",
+                  )}
+                />
+              </span>
+              <span className="grid min-w-0 flex-1 gap-1">
+                <span className="block text-[0.9375rem] font-medium text-foreground">
+                  {note.name}
+                </span>
+                <span className="block text-sm leading-relaxed text-muted-foreground">
+                  {note.description}
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }

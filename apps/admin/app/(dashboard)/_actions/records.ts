@@ -1,21 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { prisma } from "@repo/database";
 import { PALETTE } from "@repo/ui/palette";
-import { auth } from "@/lib/auth";
-import { toProductRole, can, type Subject, type Action } from "@/lib/rbac";
+import { authorize } from "@/lib/authorize";
 import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
-
-async function authorize(action: Action, subject: Subject) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const role = toProductRole((session?.user as { role?: string } | undefined)?.role);
-  if (!can(role, action, subject)) {
-    throw new Error(`Not permitted: ${action} ${subject}`);
-  }
-  return session;
-}
 
 const CLIENT_STATUSES = [
   "NEW",
@@ -159,71 +148,28 @@ export async function moveClientStage(clientId: string, stage: string) {
   revalidatePath("/clients");
 }
 
-export async function setSubmissionStatus(submissionId: string, status: string) {
-  const session = await authorize("edit", "lead");
-  if (!CLIENT_STATUSES.includes(status as ClientStatus)) {
-    throw new Error(`Unknown status: ${status}`);
-  }
-  const before = await prisma.contactSubmission.findUnique({
-    where: { id: submissionId },
-    select: { status: true, name: true },
-  });
-  await prisma.contactSubmission.update({
-    where: { id: submissionId },
-    data: {
-      status: status as ClientStatus,
-      ...(status === "CONTACTED" ? { firstContactedAt: new Date() } : {}),
-    },
-  });
-  await recordChange({
-    action: "submission.status_changed",
-    actor: userActor(session),
-    entityType: "submission",
-    entityId: submissionId,
-    entityLabel: before?.name,
-    summary: `Status moved to ${status.replace("_", " ").toLowerCase()}`,
-    before: { status: before?.status },
-    after: { status },
-  });
-  revalidatePath("/submissions");
-  revalidatePath(`/submissions/${submissionId}`);
-}
-
-export async function markSubmissionViewed(submissionId: string) {
-  const session = await authorize("view", "lead");
-  const result = await prisma.contactSubmission.updateMany({
-    where: { id: submissionId, firstViewedAt: null },
-    data: { firstViewedAt: new Date(), status: "VIEWED" },
-  });
-  if (result.count > 0) {
-    await recordActivity({
-      action: "submission.viewed",
-      actor: userActor(session),
-      entityType: "submission",
-      entityId: submissionId,
-      summary: "Opened for the first time",
-    });
-  }
-  revalidatePath("/submissions");
-}
-
-const PAYMENT_STATUSES = ["PENDING", "PAID", "OVERDUE", "WAIVED"] as const;
+// OVERDUE is not settable: it is derived from the due date (lib/payment-overdue.ts).
+// A hand-set OVERDUE would stay overdue after the date moved, and a hand-cleared
+// one would hide a payment that is genuinely late.
+const PAYMENT_STATUSES = ["PENDING", "PAID", "WAIVED"] as const;
 type PaymentStatusValue = (typeof PAYMENT_STATUSES)[number];
 
 export async function setPaymentStatus(paymentId: string, status: string) {
   const session = await authorize("edit", "payment");
   if (!PAYMENT_STATUSES.includes(status as PaymentStatusValue)) {
-    throw new Error(`Unknown payment status: ${status}`);
+    throw new Error(`Payment status cannot be set to ${status}`);
   }
   const before = await prisma.payment.findUnique({
     where: { id: paymentId },
-    select: { status: true, amount: true, milestone: true },
+    select: { status: true, amount: true, milestone: true, paidAt: true },
   });
+  if (!before) throw new Error("Payment not found");
   await prisma.payment.update({
     where: { id: paymentId },
     data: {
       status: status as PaymentStatusValue,
-      paidAt: status === "PAID" ? new Date() : null,
+      // Re-marking a paid row keeps the date it was actually paid.
+      paidAt: status === "PAID" ? (before.status === "PAID" ? before.paidAt : new Date()) : null,
     },
   });
   await recordChange({
@@ -297,13 +243,15 @@ export async function setProjectPhase(projectId: string, phase: string) {
   }
   const before = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { phase: true, name: true },
+    select: { phase: true, name: true, actualLaunchDate: true },
   });
   await prisma.project.update({
     where: { id: projectId },
     data: {
       phase: phase as ProjectPhaseValue,
-      ...(phase === "LAUNCHED" ? { actualLaunchDate: new Date() } : {}),
+      // The launch happened once. Re-picking LAUNCHED (after stepping back to QA
+      // for a fix, say) must not move the recorded launch date.
+      ...(phase === "LAUNCHED" && !before?.actualLaunchDate ? { actualLaunchDate: new Date() } : {}),
     },
   });
   await recordChange({
@@ -361,13 +309,57 @@ export async function setProjectStatus(projectId: string, status: string) {
   revalidatePath(`/projects/${projectId}`);
 }
 
+/**
+ * Notifications are per person: writers fan out one row per admin, so marking
+ * read is scoped to the signed-in user — one operator clearing their inbox must
+ * not clear everybody else's.
+ */
 export async function markNotificationsRead() {
-  await authorize("view", "client");
-  await prisma.notification.updateMany({
-    where: { read: false },
+  const session = await authorize("view", "notification");
+  const { count } = await prisma.notification.updateMany({
+    where: { userId: session.user.id, read: false },
     data: { read: true, readAt: new Date() },
   });
+  if (count > 0) {
+    await recordActivity({
+      action: "notification.read_all",
+      actor: userActor(session),
+      entityType: "user",
+      entityId: session.user.id,
+      entityLabel: session.user.name ?? session.user.email,
+      summary: `Marked ${count} notification${count === 1 ? "" : "s"} read`,
+      metadata: { count },
+    });
+  }
   revalidatePath("/notifications");
+  revalidatePath("/", "layout");
+}
+
+export async function markNotificationRead(notificationId: string) {
+  const session = await authorize("view", "notification");
+  // Scoped to the signed-in person's own row: the id alone is not enough,
+  // because the same fact fans out as one row per admin.
+  const row = await prisma.notification.findFirst({
+    where: { id: notificationId, userId: session.user.id, read: false },
+    select: { id: true, title: true },
+  });
+  if (!row) return;
+  await prisma.notification.update({
+    where: { id: row.id },
+    data: { read: true, readAt: new Date() },
+  });
+  await recordActivity({
+    action: "notification.read",
+    actor: userActor(session),
+    entityType: "notification",
+    entityId: row.id,
+    entityLabel: row.title,
+    summary: "Marked read",
+    before: { read: false },
+    after: { read: true },
+  });
+  revalidatePath("/notifications");
+  revalidatePath("/", "layout");
 }
 
 /**
@@ -398,6 +390,16 @@ export async function convertSubmissionToClient(submissionId: string) {
       await prisma.client.update({
         where: { id: existing.id },
         data: { contactSubmissionId: submission.id },
+      });
+      await recordActivity({
+        action: "client.submission_linked",
+        actor: userActor(session),
+        entityType: "client",
+        entityId: existing.id,
+        entityLabel: submission.name,
+        summary: "Linked a form submission to this existing client (same phone)",
+        before: { contactSubmissionId: null },
+        after: { contactSubmissionId: submission.id },
       });
     }
     revalidatePath("/submissions");
@@ -454,12 +456,23 @@ export async function convertEstimateToClient(leadId: string) {
         where: { id: existing.id },
         data: { transparencyLeadId: lead.id },
       });
+      await recordActivity({
+        action: "client.estimate_linked",
+        actor: userActor(session),
+        entityType: "client",
+        entityId: existing.id,
+        entityLabel: lead.name,
+        summary: "Linked an estimator lead to this existing client (same phone)",
+        before: { transparencyLeadId: null },
+        after: { transparencyLeadId: lead.id },
+      });
     }
     await prisma.transparencyLead.update({
       where: { id: lead.id },
       data: { convertedAt: new Date() },
     });
     revalidatePath("/transparency");
+    revalidatePath("/leads");
     return { clientId: existing.id, created: false };
   }
 
@@ -530,8 +543,12 @@ export async function updateCompanyProfile(data: {
     entityId: "default",
     entityLabel: "Company profile",
     summary: "Updated company profile",
-    before: before ?? {},
-    after,
+    // Only the profile fields: the whole row would also diff updatedAt and
+    // the invoice counter, neither of which this edit changed.
+    before: before
+      ? { phone: before.phone, email: before.email, website: before.website, brandColor: before.brandColor, brandColorDark: before.brandColorDark }
+      : {},
+    after: { phone: after.phone, email: after.email, website: after.website, brandColor: after.brandColor, brandColorDark: after.brandColorDark },
   });
   revalidatePath("/settings");
   return { success: true };

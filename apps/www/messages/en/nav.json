@@ -3,14 +3,14 @@
   "approach": "Approach",
   "closeMenu": "Close menu",
   "contact": "Contact",
-  "getStarted": "Get an Estimate",
+  "getStarted": "Estimate your project",
   "how-we-work": "How We Work",
   "language": "Language",
   "openMenu": "Open menu",
   "pricing": "Pricing",
   "primaryLabel": "Primary",
   "process": "Process",
-  "schedule": "Schedule",
+  "schedule": "Discuss your requirements",
   "services": "Services",
   "theme": "Theme",
   "themeLight": "Light",
@@ -22,5 +22,26 @@
   "work": "Work",
   "commandPalette": "Search & commands",
   "menuTitle": "Menu",
-  "menuDescription": "Site navigation, language and theme settings."
+  "menuDescription": "Site navigation, language and theme settings.",
+  "index": "Index",
+  "pages": "Pages",
+  "method": "Method",
+  "directLines": "Direct lines",
+  "standards": "Standards",
+  "faq": "FAQ",
+  "settings": "Settings",
+  "darkMode": "Dark theme",
+  "desc": {
+    "work": "Selected projects",
+    "services": "What we build and look after",
+    "method": "How a project runs",
+    "pricing": "Published prices",
+    "about": "Who we are",
+    "contact": "Write to us"
+  },
+  "all": {
+    "work": "All work",
+    "services": "All services"
+  },
+  "subpages": "{name} pages"
 }

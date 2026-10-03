@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hero 1 · One line, two languages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Inter:wght@400;500&family=Geist+Mono:wght@400;500&family=Vazirmatn:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Before paint: theme (OS unless toggled), .js, and — only when motion is
+  // allowed — the pending state that holds the entrance's first frame. Nothing
+  // paints and then hides: the hidden state exists from the first paint.
+  (function () {
+    var root = document.documentElement;
+    var dark = false, reduce = false;
+    try { dark = window.matchMedia("(prefers-color-scheme: dark)").matches; } catch (e) {}
+    try { reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    var q = new URLSearchParams(location.search);
+    if (q.get("theme")) dark = q.get("theme") === "dark";
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+    root.classList.add("js");
+    if (!reduce && q.get("motion") !== "off") root.classList.add("motion-pending");
+  })();
+</script>
+<style>
+/* ── Tokens — copied from the live code, not picked ─────────────────────
+   packages/ui/src/styles/tokens.css  :root / .dark
+   apps/www/app/globals.css  .accent-world-blue, .accent-iris (hero accent),
+   .accent-world-orange (next section stub) */
+@property --g1 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --g2 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --g3 { syntax: "<color>"; inherits: true; initial-value: transparent; }
+
+:root {
+  --n-0: 0 0% 98%;
+  --n-8: 0 0% 6%;
+  --brand: 214 89% 48%;
+  --brand-hover: 214 89% 41%;
+  --brand-fg: var(--n-0);
+
+  --background: var(--n-0);
+  --foreground: var(--n-8);
+  --muted-foreground: 0 0% 40%;
+  /* The echo script: lighter than Dim so the active line's "not Y" half still
+     reads as part of the headline, yet ≥3:1 as large text (≈3.5:1 on n-0). */
+  --echo: 0 0% 54%;
+  --s-border: hsl(var(--n-8) / 0.1);
+  --border-subtle: var(--s-border);
+  --control-edge: hsl(var(--foreground) / 0.45);
+
+  /* accent-world-blue (light) */
+  --local-accent: hsl(214 90% 43%);
+  --local-accent-text: var(--local-accent);
+  /* accent-iris (light) */
+  --iris-1: hsl(218 86% 48%);
+  --iris-2: hsl(250 76% 58%);
+  --iris-3: hsl(272 72% 56%);
+  /* accent-world-orange (light), for the next section's stub */
+  --orange-text: hsl(27 90% 35%);
+
+  --font-outfit: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-vazirmatn: "Vazirmatn", sans-serif;
+
+  --section-y-top: clamp(5rem, 10vh, 8rem);
+  --nav-h: 64px;
+  --bar-h: 44px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --d-fast: 200ms;
+  --d-theme: 400ms;
+
+  /* The display size, shared by both scripts so they read as one line. */
+  --disp: clamp(3.5rem, 9vw, 8.25rem); /* 9.5rem cap collided at ≥1600px: the container stops at 1408, the type kept growing */
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --background: 0 0% 7%;
+  --foreground: 0 0% 94%;
+  --muted-foreground: 0 0% 58%;
+  --echo: 0 0% 43%;             /* ≈3.8:1 on 7% */
+  --s-border: hsl(var(--n-0) / 0.1);
+  --brand-fg: var(--n-0);
+
+  --local-accent: hsl(214 95% 64%);
+  --iris-1: hsl(212 96% 64%);
+  --iris-2: hsl(250 92% 70%);
+  --iris-3: hsl(276 88% 72%);
+  --orange-text: hsl(27 78% 61%);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { overflow-x: clip; }
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-inter);
+  font-size: 17px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+  transition: background-color var(--d-theme) var(--ease), color var(--d-theme) var(--ease);
+}
+[dir="rtl"] body { font-family: var(--font-vazirmatn); }
+
+.container {
+  width: 100%;
+  max-width: 1408px;
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+@media (min-width: 640px)  { .container { padding-inline: 32px; } }
+@media (min-width: 768px)  { .container { padding-inline: 48px; } }
+@media (min-width: 1024px) { .container { padding-inline: 64px; } }
+
+/* ── Prototype chrome (always LTR, physical sides) ───────────────────── */
+.proto-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  min-height: var(--bar-h);
+  padding: 6px 12px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+.proto-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+.toolbar { display: flex; gap: 8px; }
+.seg {
+  display: flex;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--control-edge);
+}
+.seg button {
+  font: 500 12px/1 var(--font-inter);
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 11px;
+  min-width: 40px;
+  cursor: pointer;
+  transition: color var(--d-fast) var(--ease), background-color var(--d-fast) var(--ease);
+}
+.seg button[aria-pressed="true"] { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.seg button:focus-visible, .nav a:focus-visible, .nav button:focus-visible, .pill:focus-visible {
+  outline: 2px solid hsl(var(--brand)); outline-offset: 2px;
+}
+
+/* ── Stub nav — mirrors components/layout/nav.tsx at rest ────────────── */
+.nav { height: var(--nav-h); }
+.nav-row {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+@media (min-width: 1024px) {
+  .nav-row { display: grid; grid-template-columns: 1fr auto 1fr; }
+}
+.wordmark {
+  justify-self: start;
+  font: 500 17px/1 var(--font-outfit);
+  letter-spacing: 0.16em;
+  color: hsl(var(--foreground));
+  text-decoration: none;
+  direction: ltr;
+}
+.nav-links { display: none; list-style: none; gap: 4px; }
+@media (min-width: 1024px) { .nav-links { display: flex; } }
+.nav-links a {
+  display: flex; align-items: center; height: 40px; padding-inline: 14px;
+  font-size: 14px; font-weight: 500; line-height: 1;
+  color: hsl(var(--foreground) / 0.7);
+  text-decoration: none; border-radius: 10px;
+  transition: color var(--d-fast) var(--ease);
+}
+.nav-links a:hover { color: hsl(var(--foreground)); }
+.nav-end { justify-self: end; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 36px; min-width: 36px; padding-inline: 8px;
+  font: 500 13px/1 var(--font-inter);
+  color: hsl(var(--foreground) / 0.7);
+  background: none; border: 0; border-radius: 10px; cursor: pointer;
+}
+.icon-btn:hover { color: hsl(var(--foreground)); }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn .ar-glyph { font-family: var(--font-vazirmatn); font-size: 15px; }
+.nav-sep { width: 1px; height: 16px; margin-inline: 8px; background: hsl(var(--foreground) / 0.18); }
+.nav-cta {
+  display: inline-flex; align-items: center; height: 36px; padding-inline: 16px;
+  border-radius: 999px; font-size: 14px; font-weight: 500; line-height: 1;
+  background: hsl(var(--foreground)); color: hsl(var(--background)); text-decoration: none;
+}
+.desk-only { display: none; }
+.mob-only { display: inline-flex; }
+@media (min-width: 1024px) { .desk-only { display: inline-flex; } .mob-only { display: none; } }
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.hero {
+  min-height: calc(100dvh - var(--nav-h) - var(--bar-h));
+  display: flex;
+}
+.hero > .container {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  row-gap: clamp(1.5rem, 3vh, 2.5rem);
+  padding-top: clamp(1.5rem, 4vh, 3rem);
+  padding-bottom: clamp(2rem, 6vh, 4rem);
+}
+
+.eyebrow {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--local-accent-text);
+}
+.eyebrow::before {                        /* world tick */
+  content: ""; width: 20px; height: 2px; flex: none; background: currentColor;
+}
+[dir="rtl"] .eyebrow { font-family: var(--font-vazirmatn); letter-spacing: 0; text-transform: none; font-size: 0.9375rem; }
+
+/* The band: always physical (dir=ltr) — English holds the left edge, Arabic
+   the right, in both page locales. Each script keeps its own direction. */
+.band {
+  display: grid;
+  align-content: center;
+  font-size: var(--disp);
+}
+.script { grid-area: 1 / 1; min-width: 0; }
+.script-en { justify-self: start; text-align: left; }
+/* Arabic line 1 sits on English line 2 — the two blocks share ~30% of the band. */
+.script-ar { justify-self: end; text-align: right; margin-top: 0.86em; }
+
+.lines { font-size: 1em; font-weight: inherit; }
+.line { display: block; white-space: nowrap; }
+.script-en .lines {
+  font-family: var(--font-outfit);
+  font-weight: 300;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+.script-ar .lines {
+  font-family: var(--font-vazirmatn);
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.wm { display: inline-block; }            /* word mask (clip-path target) */
+.wi { display: inline-block; }            /* word ink (transform target) */
+
+/* Colour is the only thing a locale switch moves. */
+.script .wi {
+  color: hsl(var(--echo));
+  transition: color var(--d-theme) var(--ease);
+}
+.script.is-active .wi { color: hsl(var(--foreground)); }
+.script.is-active .dim .wi { color: hsl(var(--muted-foreground)); }
+
+.wi.acc {
+  --g1: hsl(var(--echo)); --g2: hsl(var(--echo)); --g3: hsl(var(--echo));
+  background-image: linear-gradient(100deg, var(--g1), var(--g2) 55%, var(--g3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* background-clip:text only paints inside the box: pad it past the
+     descenders (the g of Engineered) and cancel the pad with margin. */
+  padding: 0.14em 0.06em;
+  margin: -0.14em -0.06em;
+  transition: --g1 var(--d-theme) var(--ease), --g2 var(--d-theme) var(--ease), --g3 var(--d-theme) var(--ease);
+}
+.script.is-active .wi.acc { --g1: var(--iris-1); --g2: var(--iris-2); --g3: var(--iris-3); }
+
+/* Bottom-start: sub + actions, in the page locale's direction. */
+.foot { display: grid; gap: 1.5rem; justify-items: start; }
+.sub {
+  max-width: 52ch;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  text-wrap: pretty;
+}
+[dir="rtl"] .sub { font-size: 1.1875rem; line-height: 1.85; max-width: 48ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 48px; padding-inline: 24px; border-radius: 999px;
+  font-size: 15px; font-weight: 500; line-height: 1; text-decoration: none; white-space: nowrap;
+  transition: background-color var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease), color var(--d-fast) var(--ease);
+}
+.pill-primary { background: hsl(var(--brand)); color: hsl(var(--brand-fg)); }
+.pill-primary:hover { background: hsl(var(--brand-hover)); }
+.pill-outline { border: 1px solid var(--control-edge); color: hsl(var(--foreground)); }
+.pill-outline:hover { border-color: hsl(var(--foreground)); }
+
+/* ── Mobile: stack — active script first, the echo beneath at 60% ────── */
+@media (max-width: 767.98px) {
+  .hero { min-height: 0; }
+  .hero > .container { grid-template-rows: auto auto auto; row-gap: 2rem; padding-top: 2rem; padding-bottom: 3.5rem; }
+  .band {
+    display: flex; flex-direction: column; gap: 1rem;
+    font-size: clamp(2.75rem, 12vw, 3.5rem);
+  }
+  .script-ar { margin-top: 0; }
+  .script.is-active { order: -1; }
+  .script:not(.is-active) .lines { font-size: 0.6em; }
+  .actions { width: 100%; flex-direction: column; }
+  .pill { width: 100%; }
+  .foot { justify-items: stretch; }
+}
+
+/* ── Next section stub, so the hand-off can be judged ─────────────────── */
+.next {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--section-y-top);
+  padding-bottom: 30vh;
+}
+.next .eyebrow { color: var(--orange-text); }
+.section-title {
+  margin-top: 0.75rem;
+  font-family: var(--font-outfit);
+  font-weight: 400;
+  font-size: clamp(28px, 4.5vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+[dir="rtl"] .section-title { font-family: var(--font-vazirmatn); letter-spacing: 0; line-height: 1.3; }
+
+/* ── Entrance: the pending first frame (only when motion is allowed) ─── */
+.motion-pending .en-words .wm { clip-path: inset(-30% -8% -30% 100%); }
+.motion-pending .ar-words .wm { clip-path: inset(-30% 100% -30% -8%); }
+.motion-pending[dir="ltr"] .hero .eyebrow,
+.motion-pending[dir="ltr"] .hero .sub,
+.motion-pending[dir="ltr"] .hero .pill { opacity: 0; }
+.motion-pending[dir="rtl"] .hero .eyebrow,
+.motion-pending[dir="rtl"] .hero .sub,
+.motion-pending[dir="rtl"] .hero .pill { clip-path: inset(0 0 0 100%); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="proto-bar" dir="ltr">
+  <p class="proto-label">Prototype 1 — One line, two languages · draft copy</p>
+  <div class="toolbar" role="group" aria-label="Prototype controls">
+    <div class="seg" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="ar" aria-pressed="false" lang="ar">AR</button>
+    </div>
+    <div class="seg" role="group" aria-label="Theme">
+      <button type="button" data-theme-set="light" aria-pressed="true">Light</button>
+      <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+</div>
+
+<header class="nav">
+  <div class="container nav-row">
+    <a class="wordmark" href="#" aria-label="Altruvex home">ALTRUVEX</a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="#" data-i18n="navWork"></a></li>
+        <li><a href="#" data-i18n="navServices"></a></li>
+        <li><a href="#" data-i18n="navPricing"></a></li>
+        <li><a href="#" data-i18n="navAbout"></a></li>
+        <li><a href="#" data-i18n="navContact"></a></li>
+      </ul>
+    </nav>
+    <div class="nav-end">
+      <button type="button" class="icon-btn" data-lang-toggle aria-label="Switch language"><span data-i18n="navLang"></span></button>
+      <button type="button" class="icon-btn" data-theme-toggle aria-label="Toggle theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+      </button>
+      <span class="nav-sep desk-only" aria-hidden="true"></span>
+      <a class="nav-cta desk-only" href="#" data-i18n="navCta"></a>
+      <button type="button" class="icon-btn mob-only" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 9h16M4 15h16"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero accent-world-blue" aria-labelledby="hero-title">
+    <div class="container">
+      <p class="eyebrow" data-i18n="eyebrow"></p>
+
+      <!-- Physical band. The active locale's block is the <h1>; the other is an
+           aria-hidden echo. setLang() swaps the tag, not the words. -->
+      <div class="band" dir="ltr">
+        <div class="script script-en is-active" data-script="en">
+          <h1 class="lines en-words" id="hero-title" lang="en" dir="ltr"><span class="line"><span class="wm"><span class="wi acc">Engineered,</span></span></span> <span class="line dim"><span class="wm"><span class="wi">not</span></span> <span class="wm"><span class="wi">assembled.</span></span></span></h1>
+        </div>
+        <div class="script script-ar" data-script="ar">
+          <p class="lines ar-words" lang="ar" dir="rtl" aria-hidden="true"><span class="line"><span class="wm"><span class="wi acc">نُهندِس،</span></span></span> <span class="line dim"><span class="wm"><span class="wi">لا</span></span> <span class="wm"><span class="wi">نُركِّب.</span></span></span></p>
+        </div>
+      </div>
+
+      <div class="foot">
+        <p class="sub" data-i18n="sub"></p>
+        <div class="actions">
+          <a class="pill pill-primary" href="#" data-i18n="ctaPrimary"></a>
+          <a class="pill pill-outline" href="#" data-i18n="ctaSecondary"></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="next" aria-hidden="true">
+    <div class="container">
+      <p class="eyebrow" data-i18n="nextEyebrow"></p>
+      <p class="section-title" data-i18n="nextTitle"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  var COPY = {
+    en: {
+      navWork: "Work", navServices: "Services", navPricing: "Pricing", navAbout: "About", navContact: "Contact",
+      navLang: "ع", navCta: "Get an Estimate",
+      eyebrow: "Web engineering studio · Cairo",
+      sub: "Custom web systems, built in Cairo in Arabic and English — for businesses whose website carries revenue.",
+      ctaPrimary: "Request a Scope →",
+      ctaSecondary: "See a Real Build →",
+      nextEyebrow: "The Industry Problem",
+      nextTitle: "Most businesses aren't getting engineering."
+    },
+    ar: {
+      navWork: "أعمالنا", navServices: "خدماتنا", navPricing: "التسعير", navAbout: "من نحن", navContact: "تواصل معنا",
+      navLang: "EN", navCta: "احصل على تقدير",
+      eyebrow: "استوديو هندسة ويب · القاهرة",
+      sub: "أنظمة ويب مخصصة نبنيها في القاهرة بالعربية والإنجليزية — للشركات التي يحمل موقعها إيراداتها.",
+      ctaPrimary: "اطلب تحديد النطاق ←",
+      ctaSecondary: "شاهد بناءً حقيقيًا ←",
+      nextEyebrow: "مشكلة الصناعة",
+      nextTitle: "معظم الشركات لا تحصل على هندسة برمجية."
+    }
+  };
+
+  var root = document.documentElement;
+  var lang = "en";
+  var EASE = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+
+  function applyCopy() {
+    var c = COPY[lang];
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = c[el.getAttribute("data-i18n")];
+    });
+  }
+
+  // Swap which block is the <h1>. Words are moved, not rebuilt, so an entrance
+  // in flight keeps running; colour then transitions on the persistent spans.
+  function retag(block, tag) {
+    var el = block.querySelector(".lines");
+    if (el.tagName.toLowerCase() === tag) return;
+    var next = document.createElement(tag);
+    for (var i = 0; i < el.attributes.length; i++) next.setAttribute(el.attributes[i].name, el.attributes[i].value);
+    while (el.firstChild) next.appendChild(el.firstChild);
+    el.replaceWith(next);
+  }
+
+  function setLang(next) {
+    lang = next;
+    root.lang = next;
+    root.dir = next === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("[data-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.lang === next ? "true" : "false");
+    });
+    applyCopy();
+
+    document.querySelectorAll(".script").forEach(function (block) {
+      var active = block.dataset.script === next;
+      retag(block, active ? "h1" : "p");
+      var lines = block.querySelector(".lines");
+      if (active) { lines.id = "hero-title"; lines.removeAttribute("aria-hidden"); }
+      else { lines.removeAttribute("id"); lines.setAttribute("aria-hidden", "true"); }
+    });
+    void document.body.offsetWidth;          // settle the moved spans' before-state
+    document.querySelectorAll(".script").forEach(function (block) {
+      block.classList.toggle("is-active", block.dataset.script === next);
+    });
+  }
+
+  function setTheme(next) {
+    root.setAttribute("data-theme", next);
+    document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+      b.setAttribute("aria-pressed", b.dataset.themeSet === next ? "true" : "false");
+    });
+  }
+
+  document.querySelectorAll("[data-lang]").forEach(function (b) {
+    b.addEventListener("click", function () { setLang(b.dataset.lang); });
+  });
+  document.querySelector("[data-lang-toggle]").addEventListener("click", function () { setLang(lang === "en" ? "ar" : "en"); });
+  document.querySelectorAll("[data-theme-set]").forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.dataset.themeSet); });
+  });
+  document.querySelector("[data-theme-toggle]").addEventListener("click", function () {
+    setTheme(root.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  });
+
+  var q = new URLSearchParams(location.search);
+  setTheme(root.getAttribute("data-theme") || "light");
+  setLang(q.get("lang") === "ar" ? "ar" : "en");
+
+  /* ── The one motion idea: both lines assemble from the centre outward ──
+     English sits left of centre and is read left→right, so each word slides
+     LEFT out of its centre-side edge; Arabic mirrors it and slides RIGHT.
+     Clip + transform only (never opacity on Arabic display type). Total ≤1.2s. */
+  function entrance() {
+    if (!root.classList.contains("motion-pending")) return;
+    var anims = [];
+    var WORD = 700, STEP = 60;
+
+    function words(sel, fromClip, sign) {
+      document.querySelectorAll(sel + " .wm").forEach(function (wm, i) {
+        var wi = wm.firstElementChild;
+        var d = parseFloat(getComputedStyle(wi).fontSize) * 0.32 * sign;
+        anims.push(wm.animate(
+          [{ clipPath: fromClip }, { clipPath: "inset(-30% -8% -30% -8%)" }],
+          { duration: WORD, delay: i * STEP, easing: EASE, fill: "backwards" }));
+        anims.push(wi.animate(
+          [{ transform: "translateX(" + d + "px)" }, { transform: "none" }],
+          { duration: WORD, delay: i * STEP, easing: EASE, fill: "backwards" }));
+      });
+    }
+    words(".en-words", "inset(-30% -8% -30% 100%)", 1);
+    words(".ar-words", "inset(-30% 100% -30% -8%)", -1);
+
+    var rtl = root.dir === "rtl";
+    var eyebrow = document.querySelector(".hero .eyebrow");
+    var tail = [eyebrow].concat([].slice.call(document.querySelectorAll(".hero .sub, .hero .pill")));
+    tail.forEach(function (el, i) {
+      var delay = el === eyebrow ? 0 : 520 + (i - 1) * STEP;
+      var kf = rtl
+        ? [{ clipPath: "inset(0 0 0 100%)" }, { clipPath: "inset(0 0 0 0)" }]
+        : [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }];
+      if (el === eyebrow && !rtl) kf = [{ opacity: 0 }, { opacity: 1 }];
+      anims.push(el.animate(kf, { duration: el === eyebrow ? 500 : 520, delay: delay, easing: EASE, fill: "backwards" }));
+    });
+
+    // Animations now hold the first frame themselves; drop the CSS hold.
+    root.classList.remove("motion-pending");
+    window.__heroAnims = anims;
+  }
+
+  function start() {
+    var fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    var cap = new Promise(function (r) { setTimeout(r, 700); });
+    Promise.race([fonts, cap]).then(function () { requestAnimationFrame(entrance); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
+})();
+</script>
+</body>
+</html>

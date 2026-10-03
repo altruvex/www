@@ -1,9 +1,40 @@
 import {
   COMMERCIAL_TERMS,
+  DEFAULT_PRICING,
+  paymentScheduleView,
   pricingCopy,
-  type ComplexityId,
+  type ResolvedPricing,
   type ServiceId,
 } from "@repo/pricing-schema";
+
+/**
+ * The three payment triggers, in `paymentSplit` order, without their figures.
+ *
+ * The schema sentence is "{percent} at a development milestone"; a proposal
+ * deck and a contract print the percent in its own column, so the trigger is
+ * that sentence with the figure removed. Reading it from the schema is what
+ * keeps the pricing page, the deck and the signed contract naming the same
+ * milestone — none of them types "design approval" or "midpoint" on its own.
+ */
+export function paymentTriggers(
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): [string, string, string] {
+  const { milestones } = paymentScheduleView("en", pricing);
+  const wording = (index: 0 | 1 | 2): string => {
+    const milestone = milestones[index];
+    const words = milestone.label.replace(milestone.percentLabel, "").trim();
+    return words.charAt(0).toUpperCase() + words.slice(1);
+  };
+  return [wording(0), wording(1), wording(2)];
+}
+
+/** The PAYMENT key term: the schedule in one line, figures from the schema. */
+export function paymentTermText(
+  pricing: ResolvedPricing = DEFAULT_PRICING,
+): string {
+  const { milestones } = paymentScheduleView("en", pricing);
+  return `${milestones.map((m) => m.label).join(" · ")}. No deposit = no project start.`;
+}
 
 export interface ProblemCard {
   title: string;
@@ -240,10 +271,6 @@ export function projectTypeLabel(projectType: ServiceId): string {
   return pricingCopy("en").services[projectType].documentName;
 }
 
-export function complexityLabel(complexity: ComplexityId): string {
-  return pricingCopy("en").bands[complexity];
-}
-
 export const CONTACT = {
   phone: "+20 102 312 5493",
   email: "hello@altruvex.com",
@@ -272,7 +299,7 @@ export const SCOPE_NOT_INCLUDED = [
 
 export const STANDARD_TERMS: [string, string][] = [
   ["VALIDITY", `Proposal valid for ${COMMERCIAL_TERMS.proposalValidityDays} days from the proposal date.`],
-  ["PAYMENT", `${COMMERCIAL_TERMS.paymentSplit[0]}% to start · ${COMMERCIAL_TERMS.paymentSplit[1]}% at milestone · ${COMMERCIAL_TERMS.paymentSplit[2]}% before launch. No deposit = no project start.`],
+  ["PAYMENT", paymentTermText()],
   ["TIMELINE", "Starts after first payment + confirmed brief."],
   ["LAUNCH", "Client reviews on Altruvex staging; live domain pointed after final payment."],
   ["CONTENT", "Client provides all text, images, brand assets, and access credentials."],

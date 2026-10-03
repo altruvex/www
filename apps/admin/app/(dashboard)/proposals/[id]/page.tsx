@@ -8,6 +8,8 @@ import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
 import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
 import { Timeline } from "@/components/os/timeline";
+import { EntityAudit } from "@/components/os/entity-audit";
+import { EntityLink } from "@/components/os/entity-link";
 import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
@@ -29,6 +31,8 @@ import { headers } from "next/headers";
 import { SendDocument } from "@/components/os/send-document";
 import { proposalDraft } from "@/lib/email-templates";
 import { emailTransport } from "@/lib/email";
+import { publicBaseUrlFromHeaders } from "@/lib/public-url";
+import { whatsappConfigured } from "@/lib/sign-verification";
 
 export const dynamic = "force-dynamic";
 
@@ -71,11 +75,14 @@ export default async function ProposalDetailPage({
   // client would ever notice.
   const docUrl = await documentUrl(proposal.pdfUrl ?? proposal.fileUrl);
   const pdfUrl = await documentUrl(proposal.pdfUrl);
-  const requestHeaders = await headers();
-  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
-  const scheme = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
+  // Client-facing, so the base is the configured public origin
+  // (BETTER_AUTH_URL), never the request host — same rule as the send route.
   const absoluteDoc =
-    docUrl && /^https?:\/\//.test(docUrl) ? docUrl : docUrl ? `${scheme}://${host}${docUrl}` : "";
+    docUrl && /^https?:\/\//.test(docUrl)
+      ? docUrl
+      : docUrl
+        ? `${publicBaseUrlFromHeaders(await headers())}${docUrl.startsWith("/") ? "" : "/"}${docUrl}`
+        : "";
   const draft = proposalDraft(proposal.client.name, absoluteDoc);
 
   // `createdBy` stores a user id. Showing the raw uuid in the sidebar leaks an
@@ -144,6 +151,11 @@ export default async function ProposalDetailPage({
         status={<StatusPill registry="proposalStatus" value={proposal.status} />}
         meta={
           <>
+            <MetaItem label="Client">
+              <EntityLink type="client" id={proposal.clientId}>
+                {clientName}
+              </EntityLink>
+            </MetaItem>
             <MetaItem label="Value">{money(proposal.totalPrice, proposal.currency)}</MetaItem>
             {reduction > 0 && (
               <MetaItem label={discountLabel}>
@@ -173,9 +185,7 @@ export default async function ProposalDetailPage({
                 defaultBody={draft.body}
                 clientEmail={proposal.client.email}
                 emailConfigured={emailTransport() !== "none"}
-                whatsappConfigured={Boolean(
-                  process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
-                )}
+                whatsappConfigured={whatsappConfigured()}
               />
             )}
             {!proposal.contract && (
@@ -203,7 +213,7 @@ export default async function ProposalDetailPage({
             expiresIn < 0 ? (
               <AlertBar
                 tone="danger"
-                href={`/clients/${proposal.clientId}/new-proposal`}
+                href={`/clients/${proposal.clientId}/new-proposal?from=${proposal.id}`}
                 cta="Reissue the proposal"
               >
                 {`This proposal expired ${Math.abs(expiresIn)} day${Math.abs(expiresIn) === 1 ? "" : "s"} ago. The price is no longer committed — reissue it before the client accepts.`}
@@ -231,9 +241,9 @@ export default async function ProposalDetailPage({
                   {
                     label: "Client",
                     value: (
-                      <Link href={`/clients/${proposal.clientId}`} className="hover:text-brand">
+                      <EntityLink type="client" id={proposal.clientId}>
                         {clientName}
-                      </Link>
+                      </EntityLink>
                     ),
                   },
                   { label: "Scope", value: proposal.projectType },
@@ -241,6 +251,7 @@ export default async function ProposalDetailPage({
                   { label: "Accent", value: `${proposal.accentName} (${proposal.colorWorld})` },
                   { label: "Created", value: dateTime(proposal.createdAt) },
                   { label: "Sent", value: proposal.sentAt ? dateTime(proposal.sentAt) : "—" },
+                  { label: "Delivered", value: proposal.deliveredAt ? dateTime(proposal.deliveredAt) : "—" },
                   { label: "Read", value: proposal.readAt ? dateTime(proposal.readAt) : "—" },
                   { label: "Answered", value: proposal.respondedAt ? dateTime(proposal.respondedAt) : "—" },
                   {
@@ -528,9 +539,12 @@ export default async function ProposalDetailPage({
         )}
 
         {tab === "activity" && (
-          <Panel title="Activity" flush bodyClassName="p-2">
-            <Timeline events={activity} emptyLabel="Nothing recorded for this proposal." />
-          </Panel>
+          <>
+            <Panel title="Activity" flush bodyClassName="p-2">
+              <Timeline events={activity} emptyLabel="Nothing recorded for this proposal." />
+            </Panel>
+            <EntityAudit type="proposal" id={proposal.id} />
+          </>
         )}
       </DetailLayout>
     </div>

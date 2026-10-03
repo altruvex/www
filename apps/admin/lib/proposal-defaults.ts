@@ -6,13 +6,19 @@ import {
   getTimelinePhases,
   getWeeklyLoad,
   getDefaultLineItems,
+  paymentTermText,
+  paymentTriggers,
   projectTypeLabel,
   SCOPE_INCLUDED,
   SCOPE_NOT_INCLUDED,
   STANDARD_TERMS,
 } from "./proposal-content";
 import { NO_DISCOUNT, type ProposalContent } from "./proposal-schema";
-import { COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
+import {
+  DEFAULT_PRICING,
+  type ResolvedPricing,
+  type ServiceId,
+} from "@repo/pricing-schema";
 
 // Starting point for a new proposal's content. This is a SEED for the Admin
 // form only — the generator never reads it. Once a proposal is saved, its
@@ -80,13 +86,19 @@ const DEFAULT_LABELS = {
   servicesNote: "Billed separately from the project fee, per term, at the price shown.",
 };
 
-// Percentages come from the schema so a proposal and the contract generated
-// from it cannot disagree about the milestone split.
-const DEFAULT_PAYMENT_SCHEDULE = [
-  { label: "First Payment", trigger: "Upon signing + confirmed brief", percent: COMMERCIAL_TERMS.paymentSplit[0] },
-  { label: "Second Payment", trigger: "Upon design approval by client", percent: COMMERCIAL_TERMS.paymentSplit[1] },
-  { label: "Final Payment", trigger: "Before launch (staging review)", percent: COMMERCIAL_TERMS.paymentSplit[2] },
-];
+// Percentages and trigger wording both come from the schema, so a proposal,
+// the contract generated from it and the public pricing page cannot disagree
+// about the milestone split or about what the middle milestone is.
+const PAYMENT_LABELS = ["First Payment", "Second Payment", "Final Payment"] as const;
+
+function defaultPaymentSchedule(pricing: ResolvedPricing) {
+  const triggers = paymentTriggers(pricing);
+  return PAYMENT_LABELS.map((label, i) => ({
+    label,
+    trigger: triggers[i] as string,
+    percent: pricing.terms.paymentSplit[i] as number,
+  }));
+}
 
 export interface DefaultContentInput {
   clientName: string;
@@ -100,8 +112,15 @@ export interface DefaultContentInput {
   validityDays?: number;
 }
 
+/**
+ * `pricing` is the resolved set (override ?? default) the calling surface can
+ * reach; the admin new-proposal page passes what `lib/pricing-store` resolved
+ * so the seeded split and validity match the estimate beside them. Callers
+ * with no datastore get the shipped defaults.
+ */
 export function buildDefaultProposalContent(
   input: DefaultContentInput,
+  pricing: ResolvedPricing = DEFAULT_PRICING,
 ): ProposalContent {
   const phases = getTimelinePhases(input.projectType, input.timelineWeeks);
   const scheduledWeeks = phases.reduce((sum, phase) => sum + phase.weeks, 0);
@@ -116,7 +135,7 @@ export function buildDefaultProposalContent(
       clientCompany: input.clientCompany,
       projectLabel: `Custom ${input.industry?.trim() || projectTypeLabel(input.projectType)} Platform`,
       proposalDate: date.toISOString().slice(0, 10),
-      validityDays: input.validityDays ?? COMMERCIAL_TERMS.proposalValidityDays,
+      validityDays: input.validityDays ?? pricing.terms.proposalValidityDays,
       currency: input.currency,
     },
     labels: { ...DEFAULT_LABELS, cover: { ...DEFAULT_LABELS.cover } },
@@ -152,7 +171,7 @@ export function buildDefaultProposalContent(
     // Empty by default: a domain or hosting line is added when this client
     // actually needs one, with the price for that one registrar and term.
     services: [],
-    paymentSchedule: DEFAULT_PAYMENT_SCHEDULE.map((row) => ({ ...row })),
+    paymentSchedule: defaultPaymentSchedule(pricing),
     scopeIncluded: [...SCOPE_INCLUDED],
     scopeNotIncluded: [...SCOPE_NOT_INCLUDED],
     keyTerms: STANDARD_TERMS.map(([label, value]) => ({
@@ -160,7 +179,11 @@ export function buildDefaultProposalContent(
       value:
         label === "TIMELINE"
           ? `Starts after first payment + confirmed brief. ${scheduledWeeks} weeks to launch.`
-          : value,
+          : label === "PAYMENT"
+            ? paymentTermText(pricing)
+            : label === "VALIDITY"
+              ? `Proposal valid for ${pricing.terms.proposalValidityDays} days from the proposal date.`
+              : value,
     })),
     whyUs: {
       ...DEFAULT_WHY_US,

@@ -1,29 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@repo/database";
-import { recordChange, userActor } from "@/lib/activity-log";
-import { requireAdminSession } from "@/lib/require-admin";
-import { sendTemplateMessage } from "@/lib/whatsapp-api";
-import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
+import { recordChange } from "@/lib/activity-log";
 import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
+import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
 import { ensureLink, proposalDraft } from "@/lib/email-templates";
-import { readOptionalDraft } from "@/lib/read-draft";
-import { SHARED_URL_TTL_SECONDS, documentUrl } from "@/lib/storage";
 import { toAbsoluteUrl } from "@/lib/public-url";
+import { readOptionalDraft } from "@/lib/read-draft";
+import { withAdmin } from "@/lib/with-admin";
+import { SHARED_URL_TTL_SECONDS, documentUrl } from "@/lib/storage";
+import { sendTemplateMessage } from "@/lib/whatsapp-api";
+import { prisma } from "@repo/database";
+import { NextResponse } from "next/server";
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export const POST = withAdmin<{ id: string }>(async (request, { actor, params }) => {
   try {
-    const session = await requireAdminSession(request);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const { id } = await params;
+    const { id } = params;
 
     const proposal = await prisma.proposal.findUnique({
       where: { id },
@@ -75,7 +64,7 @@ export async function POST(
 
         await recordChange({
           action: "proposal.sent",
-          actor: userActor(session),
+          actor,
           entityType: "proposal",
           entityId: proposal.id,
           entityLabel: proposal.client.name || proposal.client.company,
@@ -132,7 +121,7 @@ export async function POST(
 
       await recordChange({
         action: "proposal.sent",
-        actor: userActor(session),
+        actor,
         entityType: "proposal",
         entityId: proposal.id,
         entityLabel: proposal.client.name || proposal.client.company,
@@ -166,4 +155,4 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+}, { can: ["send", "proposal"] });

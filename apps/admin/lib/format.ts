@@ -1,4 +1,5 @@
 import { formatDistanceToNowStrict, isToday, isYesterday, format } from "date-fns";
+import { calendarDaysUntil } from "@/lib/payment-overdue";
 
 /**
  * Money. Always tabular, always with an explicit currency — this app deals in
@@ -87,11 +88,14 @@ export function when(value: Date | string | null | undefined) {
   return formatDistanceToNowStrict(d, { addSuffix: true });
 }
 
-/** Signed day delta against now. Negative = overdue. */
+/**
+ * Signed day delta against now, in whole business days. Negative = overdue.
+ * Calendar days, not rounded hours: something due at 02:05 today is "due
+ * today" all day, which is what the overdue rule for payments says too.
+ */
 export function daysFromNow(value: Date | string | null | undefined) {
   if (!value) return null;
-  const ms = new Date(value).getTime() - Date.now();
-  return Math.round(ms / 86_400_000);
+  return calendarDaysUntil(value);
 }
 
 export function dueLabel(value: Date | string | null | undefined) {
@@ -101,11 +105,6 @@ export function dueLabel(value: Date | string | null | undefined) {
   if (days === 0) return "Due today";
   if (days === 1) return "Due tomorrow";
   return `Due in ${days}d`;
-}
-
-/** Short id for display: the first block of a uuid, uppercased. */
-export function shortId(id: string) {
-  return id.split("-")[0].toUpperCase();
 }
 
 export function initials(name?: string | null, fallback = "??") {

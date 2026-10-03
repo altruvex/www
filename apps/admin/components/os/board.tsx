@@ -55,6 +55,7 @@ export function Board({
   onMove,
   emptyColumnLabel = "Nothing here",
   label = "Board",
+  focusColumnId,
 }: {
   columns: BoardColumn[];
   cards: BoardCard[];
@@ -62,6 +63,12 @@ export function Board({
   emptyColumnLabel?: string;
   /** Names the horizontal scroll region for screen readers and keyboard users. */
   label?: string;
+  /**
+   * A stage the caller arrived for (`/pipeline?stage=NEW`). It is outlined,
+   * brought into view on mount, and on the stacked layout it is the only stage
+   * open by default. An id that matches no column is ignored.
+   */
+  focusColumnId?: string;
 }) {
   const [dragging, setDragging] = React.useState<string | null>(null);
   const [over, setOver] = React.useState<string | null>(null);
@@ -69,6 +76,18 @@ export function Board({
   const [moved, setMoved] = React.useState<Record<string, string>>({});
   // Stack layout only. Absent = the default (open when the stage holds deals).
   const [openStages, setOpenStages] = React.useState<Record<string, boolean>>({});
+
+  const focusId = columns.some((c) => c.id === focusColumnId) ? focusColumnId : undefined;
+
+  // Desktop only in effect: the scroller is display:none below md, where
+  // scrollIntoView is a no-op and the stacked layout opens the stage instead.
+  // "nearest" keeps the page itself from jumping vertically.
+  React.useEffect(() => {
+    if (!focusId) return;
+    document
+      .getElementById(`board-column-${focusId}`)
+      ?.scrollIntoView({ inline: "start", block: "nearest" });
+  }, [focusId]);
 
   const locked = React.useMemo(
     () => new Set(columns.filter((c) => c.locked).map((c) => c.id)),
@@ -181,9 +200,7 @@ export function Board({
             <select
               value={columnOf(card)}
               disabled={cardLocked}
-              aria-label={
-                cardLocked ? `Stage of ${card.title}` : `Move ${card.title} to stage`
-              }
+              aria-label={cardLocked ? `Stage of ${card.title}` : `Move ${card.title} to stage`}
               title={
                 cardLocked
                   ? "This stage is computed from the records, so it cannot be set by hand."
@@ -228,21 +245,23 @@ export function Board({
       <div className="space-y-2 md:hidden">
         {columns.map((column) => {
           const columnCards = cardsIn(column.id);
-          const open = openStages[column.id] ?? columnCards.length > 0;
+          const open =
+            openStages[column.id] ?? (focusId ? column.id === focusId : columnCards.length > 0);
           const panelId = `board-stage-${column.id}`;
           return (
             <section
               key={column.id}
-              className="overflow-hidden rounded-lg border border-border bg-surface/50"
+              className={cn(
+                "overflow-hidden rounded-lg border bg-surface/50",
+                column.id === focusId ? "border-foreground/45" : "border-border",
+              )}
             >
               <h3>
                 <button
                   type="button"
                   aria-expanded={open}
                   aria-controls={panelId}
-                  onClick={() =>
-                    setOpenStages((s) => ({ ...s, [column.id]: !open }))
-                  }
+                  onClick={() => setOpenStages((s) => ({ ...s, [column.id]: !open }))}
                   className={cn(
                     "flex min-h-11 w-full items-center gap-2 px-3 py-2 text-start",
                     "transition-colors duration-[var(--dur-state)] hover:bg-surface",
@@ -256,7 +275,10 @@ export function Board({
                     )}
                     aria-hidden
                   />
-                  <span className={cn("size-1.5 shrink-0 rounded-full", toneDot[column.tone])} aria-hidden />
+                  <span
+                    className={cn("size-1.5 shrink-0 rounded-full", toneDot[column.tone])}
+                    aria-hidden
+                  />
                   <span className="telemetry min-w-0 truncate text-foreground">{column.label}</span>
                   {column.locked && (
                     <Lock className="size-3 shrink-0 text-subtle-foreground" aria-hidden />
@@ -280,9 +302,7 @@ export function Board({
                   </p>
                 )}
                 {columnCards.length === 0 ? (
-                  <p className="px-1.5 py-3 text-meta text-subtle-foreground">
-                    {emptyColumnLabel}
-                  </p>
+                  <p className="px-1.5 py-3 text-meta text-subtle-foreground">{emptyColumnLabel}</p>
                 ) : (
                   <div className="space-y-1.5">{columnCards.map(renderCard)}</div>
                 )}
@@ -316,6 +336,8 @@ export function Board({
             return (
               <section
                 key={column.id}
+                id={`board-column-${column.id}`}
+                aria-current={column.id === focusId ? "true" : undefined}
                 aria-label={`${column.label}, ${columnCards.length} ${
                   columnCards.length === 1 ? "card" : "cards"
                 }`}
@@ -338,7 +360,10 @@ export function Board({
                   setDragging(null);
                 }}
                 className={cn(
-                  "flex w-[248px] shrink-0 snap-start flex-col rounded-lg border border-border bg-surface/50",
+                  "flex w-[248px] shrink-0 snap-start flex-col rounded-lg border bg-surface/50",
+                  column.id === focusId
+                    ? "border-foreground/45 ring-1 ring-foreground/20"
+                    : "border-border",
                   "transition-colors duration-[var(--dur-state)]",
                   over === column.id && !column.locked && "border-brand bg-brand-soft",
                   refusing && "border-danger/40 bg-danger/[0.05]",

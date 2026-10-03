@@ -1,0 +1,27 @@
+/* Faces and stacks shared by the proof pages. Served from the repo root by tools/browser.py.
+
+   prod   = the two production families from dist/web, stacked per language (Track A).
+   proto  = prototype 01 (frozen), one family split by unicode-range. Reference only.
+   live   = what apps/www ships today (Outfit + Vazirmatn, full upstream files). Reference only. */
+
+@font-face { font-family: "Altruvex Sans Latin"; src: url("../dist/web/AltruvexSansLatin-VF.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Altruvex Sans Arabic"; src: url("../dist/web/AltruvexSansArabic-VF.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+
+@font-face { font-family: "Proto01"; src: url("../../../docs/prototypes/2026-09-altruvex-sans/fonts/AltruvexSans-Latin-proto.woff2") format("woff2"); font-weight: 100 900; font-display: block;
+  unicode-range: U+0000-05FF, U+1E00-1FFF, U+2000-200B, U+2012-206F, U+2070-22FF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Proto01"; src: url("../../../docs/prototypes/2026-09-altruvex-sans/fonts/AltruvexSans-Arabic-x10625-proto.woff2") format("woff2"); font-weight: 100 900; font-display: block;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFF, U+200C-200F, U+2010-2011, U+204F, U+2E41, U+25CC; }
+
+@font-face { font-family: "Live Outfit"; src: url("../../../docs/prototypes/2026-09-altruvex-sans/fonts/Outfit-today.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+@font-face { font-family: "Live Vazirmatn"; src: url("../../../docs/prototypes/2026-09-altruvex-sans/fonts/Vazirmatn-today.woff2") format("woff2"); font-weight: 100 900; font-display: block; }
+
+:root {
+  /* Production: language-aware two-family stacks. The first family wins every character it has. */
+  --stack-prod-en: "Altruvex Sans Latin", "Altruvex Sans Arabic", sans-serif;
+  --stack-prod-ar: "Altruvex Sans Arabic", "Altruvex Sans Latin", sans-serif;
+  --stack-proto: "Proto01", sans-serif;
+  --stack-live-en: "Live Outfit", sans-serif;
+  --stack-live-ar: "Live Vazirmatn", "Live Outfit", sans-serif;
+}
+
+html { line-height: 1.5; }

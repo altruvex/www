@@ -59,8 +59,8 @@ We treat all reports seriously. If the issue is confirmed, we will:
 ## Hardening decisions
 
 These are the choices this codebase has made, and the reason each one is the
-way it is. The audit they came from is `SECURITY_AUDIT.md`; the steps that live
-outside the repository are `SECURITY_TODO.md`.
+way it is. The audit they came from (2026-09-11) and its list of steps that live
+outside the repository are not kept in this repository.
 
 **Authorization is decided twice, never once.** `proxy.ts` refuses a
 non-admin before a page renders, and `app/(dashboard)/layout.tsx` decides again

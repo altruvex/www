@@ -33,6 +33,10 @@ function LoginForm() {
   // account carries a second factor; no session exists until the code verifies.
   const [needsCode, setNeedsCode] = useState(false);
   const [code, setCode] = useState("");
+  // A backup code replaces the authenticator code, not the password. Each one
+  // works once; the server marks it spent, this page never stores it.
+  const [useBackup, setUseBackup] = useState(false);
+  const codeReady = useBackup ? code.length >= 8 : code.length === 6;
 
   const handleRememberMeChange = (checked: boolean | "indeterminate") => {
     setRememberMe(checked === true);
@@ -79,11 +83,15 @@ function LoginForm() {
 
     startTransition(async () => {
       try {
-        const { error: verifyError } = await twoFactor.verifyTotp({ code });
+        const { error: verifyError } = useBackup
+          ? await twoFactor.verifyBackupCode({ code })
+          : await twoFactor.verifyTotp({ code });
         if (verifyError) {
           setError(
             verifyError.message ||
-              "That code is not correct. Check the clock on your phone and try again.",
+              (useBackup
+                ? "That backup code is not correct, or it has already been used."
+                : "That code is not correct. Check the clock on your phone and try again."),
           );
           return;
         }
@@ -109,22 +117,39 @@ function LoginForm() {
           <div className="plane p-5">
             <h1 className="text-lg font-semibold">Enter your code</h1>
             <p className="mt-1 text-base text-muted-foreground">
-              Your password was accepted. Type the six-digit code from your authenticator app, or
-              one of your backup codes.
+              {useBackup
+                ? "Your password was accepted. Type one of the backup codes you saved when you set up two-factor. Each works once."
+                : "Your password was accepted. Type the six-digit code from your authenticator app."}
             </p>
             <form onSubmit={handleCode} className="mt-5 space-y-3">
-              <Field label="Six-digit code">
-                <Input
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="000000"
-                  className="h-9 tracking-[0.3em]"
-                  autoFocus
-                  required
-                />
-              </Field>
+              {useBackup ? (
+                <Field label="Backup code">
+                  <Input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 24))}
+                    inputMode="text"
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="xxxxx-xxxxx"
+                    className="h-9 font-mono"
+                    autoFocus
+                    required
+                  />
+                </Field>
+              ) : (
+                <Field label="Six-digit code">
+                  <Input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    className="h-9 tracking-[0.3em]"
+                    autoFocus
+                    required
+                  />
+                </Field>
+              )}
               {error && (
                 <p
                   className="rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
@@ -137,12 +162,23 @@ function LoginForm() {
                 type="submit"
                 variant="brand"
                 className="h-9 w-full"
-                disabled={isPending || code.length !== 6}
+                disabled={isPending || !codeReady}
                 aria-busy={isPending}
               >
                 {isPending && <LoadingIcon size="sm" />}
                 {isPending ? "Verifying…" : "Verify and sign in"}
               </Button>
+              <button
+                type="button"
+                className="block text-meta text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                onClick={() => {
+                  setUseBackup((value) => !value);
+                  setCode("");
+                  setError("");
+                }}
+              >
+                {useBackup ? "Use the authenticator app instead" : "Lost the phone? Use a backup code"}
+              </button>
             </form>
           </div>
         ) : (

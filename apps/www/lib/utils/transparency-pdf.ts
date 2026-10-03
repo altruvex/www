@@ -1,10 +1,11 @@
+import type { ResolvedPricing } from "@repo/pricing-schema";
 import { css, PALETTE } from "@repo/ui/palette";
 import { SITE_CONFIG } from "../metadata";
 import { localizeNumbers } from "./number";
 import {
   fillScopeTokens,
+  type DeliverableBand,
   type DeliverableProject,
-  type DeliverableTier,
   type TransparencyTranslator,
 } from "./transparency-utils";
 
@@ -12,7 +13,7 @@ import {
  * Everything only needed to build and render the estimate PDF.
  *
  * Split out of `transparency-utils.ts` so this module can be dynamically
- * imported on its own: `mapProjectType`/`validatePhone`/`fillScopeTokens` are
+ * imported on its own: `mapProjectType`/`isValidPhone`/`fillScopeTokens` are
  * needed the moment the estimator renders, but the ~600 lines below — the
  * bilingual per-answer copy, the deliverables catalogue, and the HTML/canvas
  * PDF renderer — are needed only once a visitor has answered all five
@@ -50,6 +51,78 @@ interface ProposalNarrative {
   closing: { ar: string; en: string };
 }
 
+/**
+ * The faces the estimate document draws with, adopted from the page that
+ * renders it. The site sets everything in Altruvex Sans (@repo/brand-font), so
+ * display, body and the label stack (English labels, email and domain) all
+ * resolve to the page's `--font-brand`.
+ */
+interface PdfFonts {
+  /** The page's `@font-face` rules for those families, with absolute URLs. */
+  faces: string;
+  display: string;
+  body: string;
+  mono: string;
+}
+
+const GENERIC_STACK = "sans-serif";
+
+function familyNames(stack: string): string[] {
+  return stack
+    .split(",")
+    .map((name) => name.trim().replace(/^(['"])(.*)\1$/, "$2"))
+    .filter(Boolean);
+}
+
+/**
+ * Reads the fonts for the PDF from the live page.
+ *
+ * Adopted, not linked: the site's CSP is `font-src 'self'`
+ * (lib/config/csp.ts), which the doc.write() iframe inherits, so a Google
+ * Fonts @import there never loads; and next/font already self-hosts every
+ * face the site uses under hashed same-origin URLs. Copying the page's own
+ * `@font-face` rules gives the document the exact files the page has already
+ * fetched: no second copy, no build step, no third party, and no family name
+ * typed here. Relative URLs are resolved against their stylesheet, and
+ * `font-display` becomes `block`: the document waits for its fonts before it
+ * is captured, so a face must never be skipped the way `optional` allows.
+ */
+export function collectPdfFonts(): PdfFonts {
+  const display =
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--font-brand")
+      .replace(/\s+/g, " ")
+      .trim() || GENERIC_STACK;
+  const body = getComputedStyle(document.body).fontFamily || GENERIC_STACK;
+  const mono = display;
+  const wanted = new Set(familyNames(`${display},${body},${mono}`));
+
+  const faces: string[] = [];
+  for (const sheet of Array.from(document.styleSheets)) {
+    let rules: CSSRuleList;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      continue; // a cross-origin sheet; the site's own fonts are never in one
+    }
+    const base = sheet.href ?? document.baseURI;
+    for (const rule of Array.from(rules)) {
+      if (!(rule instanceof CSSFontFaceRule)) continue;
+      const [family] = familyNames(rule.style.getPropertyValue("font-family"));
+      if (!family || !wanted.has(family)) continue;
+      faces.push(
+        rule.cssText
+          .replace(
+            /url\(\s*(['"]?)([^'")]+)\1\s*\)/g,
+            (_, _quote, url: string) => `url("${new URL(url, base).href}")`,
+          )
+          .replace(/font-display:\s*[\w-]+/, "font-display: block"),
+      );
+    }
+  }
+  return { faces: faces.join("\n"), display, body, mono };
+}
+
 function pickLang(obj: { ar: string; en: string }, locale: string): string {
   return locale.startsWith("ar") ? obj.ar : obj.en;
 }
@@ -62,49 +135,6 @@ function escapeHtml(input: string): string {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
 }
-
-/**
- * Year-2 hosting renewal, in EGP per year, by scope tier.
- *
- * Not a margin line — it is what the stack a project of that size actually
- * runs on costs to keep up for a year. Recalibrated with the 2026-09 pricing
- * pass: the old top figure equalled a whole entry-level engagement, which made
- * the PDF read as if the site cost as much to host as it did to build.
- */
-const HOSTING_RENEWAL: Record<DeliverableTier, number> = {
-  small: 3_500,
-  medium: 6_000,
-  large: 9_500,
-  enterprise: 15_000,
-};
-
-const TIER_LABELS: Record<DeliverableTier, string> = {
-  small: "Focused (Essential)",
-  medium: "Connected (Professional)",
-  large: "Operational (Premium)",
-  enterprise: "Enterprise Ecosystem",
-};
-
-const PROJECT_LABELS: Record<DeliverableProject, string> = {
-  corporate: "Corporate Experience",
-  ecommerce: "E-Commerce Solution",
-  custom: "Custom Web Application",
-  performance: "Performance & SEO Overhaul",
-};
-
-/**
- * Fallbacks for the PDF, used only when the message catalogue has no entry.
- *
- * They state the same delivery ceiling the catalogue does. A fallback that
- * promised "3+ months" while every other surface capped at twelve weeks was a
- * contradiction waiting for the one render that reached it.
- */
-const TIMELINE_LABELS: Record<string, string> = {
-  urgent: "Urgent - compressed sprint",
-  soon: "Standard - 4–8 weeks",
-  flexible: "Extended - up to 12 weeks",
-  standard: "Standard - balanced pace",
-};
 
 const PROJECT_COPY: Record<DeliverableProject, { ar: string; en: string }> = {
   ecommerce: {
@@ -125,41 +155,18 @@ const PROJECT_COPY: Record<DeliverableProject, { ar: string; en: string }> = {
   },
 };
 
-const TIER_COPY: Record<DeliverableTier, { ar: string; en: string }> = {
-  small: {
-    ar: "اخترت الباقة الأساسية - الخيار الصح إذا كنت في مرحلة الإطلاق أو تريد التحقق من الفكرة قبل الاستثمار الكبير. ستحصل على نظام متكامل وجاهز بنطاق محدد بوضوح، يمكن توسيعه لاحقاً.",
-    en: "You chose the Essential tier - the right call if you're in launch mode or validating your concept before a larger investment. You get a complete, production-ready system with a clearly defined scope that can scale later.",
-  },
-  medium: {
-    ar: "اخترت الباقة الاحترافية - الأكثر طلباً لأنها تُحقق التوازن الأمثل بين الجودة والتكلفة. ستحصل على نظام متكامل يدعم النمو الفعلي لعملك، مع تكاملات ومميزات لا توجد في الباقة الأساسية.",
-    en: "You chose the Professional tier - the most requested because it hits the sweet spot between quality and cost. You get a full-featured system built to support real business growth, with integrations the Essential tier doesn't cover.",
-  },
-  large: {
-    ar: "اخترت الباقة المتميزة - يعني أنك تبني لتدوم. تصميم مخصص بالكامل، أداء هندسي عالٍ، ودعم موسع بعد الإطلاق. مشروعك في هذه الباقة يُصبح أصلاً حقيقياً لشركتك لا مجرد موقع.",
-    en: "You chose the Premium tier - you're building to last. Fully custom design, high-performance engineering, and extended post-launch support. At this level, your project becomes a genuine business asset, not just a website.",
-  },
-  enterprise: {
-    ar: "اخترت الباقة المؤسسية - حجم عملك يستحق بنية تحتية لا تقبل التسوية. فريق متخصص، تكاملات مع أنظمتك الحالية (ERP, POS, CRM)، وSLA يضمن استمرارية العمل ٢٤/٧.",
-    en: "You chose the Enterprise tier - your business scale demands infrastructure that accepts no compromise. A dedicated team, integrations with your existing systems (ERP, POS, CRM), and an SLA that guarantees 24/7 business continuity.",
-  },
-};
-
 const TIMELINE_COPY: Record<string, { ar: string; en: string }> = {
   urgent: {
     ar: "اخترت التسليم السريع - يعني لديك موعد حرج أو فرصة سوق لا تنتظر. سنُعيد تصميم نطاق العمل حول تاريخك لا العكس، مع تحديد ما يُطلق أولاً وما يأتي في المرحلة الثانية.",
     en: "You chose fast delivery - you have a critical deadline or a market window that won't stay open. We'll engineer the scope around your date, not the other way around - identifying what launches first and what follows in a second phase.",
-  },
-  soon: {
-    ar: "اخترت التوقيت المتوازن - وهو الأذكى في معظم الحالات. يمنحنا وقتاً كافياً لاكتشاف المتطلبات بدقة، بناء نظام متين، واختباره جيداً قبل الإطلاق دون ضغط غير ضروري.",
-    en: "You chose a balanced timeline - the smartest choice in most cases. It gives us enough time to gather requirements precisely, build a solid system, and test it thoroughly before launch without unnecessary pressure.",
   },
   standard: {
     ar: "اخترت التوقيت المتوازن - وهو الأذكى في معظم الحالات. يمنحنا وقتاً كافياً لاكتشاف المتطلبات بدقة، بناء نظام متين، واختباره جيداً قبل الإطلاق دون ضغط غير ضروري.",
     en: "You chose a balanced timeline - the smartest choice in most cases. It gives us enough time to gather requirements precisely, build a solid system, and test it thoroughly before launch without unnecessary pressure.",
   },
   flexible: {
-    ar: "اخترت المرونة في التوقيت - وهذه ميزة هندسية حقيقية. وقت أوسع داخل سقف الاثني عشر أسبوعاً يعني اختباراً أعمق، وتحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
-    en: "You chose a flexible timeline - a genuine engineering advantage. A wider window inside the same 12-week ceiling means deeper testing, more performance refinement, and a system built to hold up long-term without needing a rebuild.",
+    ar: "اخترت المرونة في التوقيت - وهذه ميزة هندسية حقيقية. وقت أوسع داخل سقف التسليم نفسه يعني اختباراً أعمق، وتحسيناً أكثر في الأداء، ونظاماً يصمد على المدى البعيد دون حاجة لإعادة بناء.",
+    en: "You chose a flexible timeline - a genuine engineering advantage. A wider window inside the same delivery ceiling means deeper testing, more performance refinement, and a system built to hold up long-term without needing a rebuild.",
   },
 };
 
@@ -188,56 +195,25 @@ const CONTENT_COPY: Record<string, { ar: string; en: string }> = {
     en: "You'll need content help - we'll include a content strategy session early in the project to define exactly what's needed.",
   },
   unsure: {
-    ar: "المحتوى لا يزال في طور التخطيط - هذا طبيعي في المراحل الأولى. سنُحدد الاحتياجات الفعلية خلال جلسة الاكتشاف.",
-    en: "Content is still being planned - that's normal at this stage. We'll define the actual needs during the discovery session.",
+    ar: "المحتوى لا يزال في طور التخطيط - هذا طبيعي في المراحل الأولى. سنُحدد الاحتياجات الفعلية خلال مراجعة النطاق.",
+    en: "Content is still being planned - that's normal at this stage. We'll define the actual needs during scope review.",
   },
 };
 
-const DEADLINE_COPY: Record<string, { ar: string; en: string }> = {
-  urgent: {
-    ar: "لديك موعد في أقل من ٤ أسابيع - سنُركز فوراً على المتطلبات الحرجة ونُطلق النسخة الأولى أولاً.",
-    en: "You have a deadline under 4 weeks - we'll focus immediately on critical requirements and launch a first version first.",
-  },
-  "1month": {
-    ar: "لديك شهر واحد - جدول ضيق لكنه قابل للتنفيذ مع تحديد نطاق عمل واضح من اليوم الأول.",
-    en: "You have one month - a tight but achievable schedule with a clearly defined scope from day one.",
-  },
-  "2months": {
-    ar: "لديك شهران - توقيت جيد يتيح دورة تصميم وتطوير متكاملة مع هامش للاختبار.",
-    en: "You have two months - a solid timeline that allows a complete design-and-development cycle with room for testing.",
-  },
-  flexible: {
-    ar: "التوقيت مرن - ميزة تتيح لنا التركيز على الجودة وليس السرعة فقط، مع تسليم خلال ١٢ أسبوعاً على الأكثر.",
-    en: "Your timeline is flexible - an advantage that lets us focus on quality, not just speed, with handover inside 12 weeks either way.",
-  },
-};
-
-const CLOSING_COPY: Record<DeliverableProject, { ar: string; en: string }> = {
-  ecommerce: {
-    ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية مكالمة اكتشاف مجانية لمدة ٣٠ دقيقة نُحدد فيها النطاق الدقيق ونُقدم لك عرض سعر نهائياً ملزماً.",
-    en: "This estimate is built on your actual selections. Next step is a free 30-minute discovery call where we define the exact scope and give you a binding final quote.",
-  },
-  corporate: {
-    ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية مكالمة اكتشاف مجانية لمدة ٣٠ دقيقة نُحدد فيها النطاق الدقيق ونُقدم لك عرض سعر نهائياً ملزماً.",
-    en: "This estimate is built on your actual selections. Next step is a free 30-minute discovery call where we define the exact scope and give you a binding final quote.",
-  },
-  custom: {
-    ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية مكالمة اكتشاف مجانية لمدة ٣٠ دقيقة نُحدد فيها المتطلبات التقنية الفعلية.",
-    en: "This estimate is built on your actual selections. Next step is a free 30-minute discovery call where we nail down the actual technical requirements.",
-  },
-  performance: {
-    ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية تدقيق أولي مجاني نوضح فيه حجم المشكلة الحالية في موقعك.",
-    en: "This estimate is built on your actual selections. Next step is a free initial audit where we show you exactly how much performance your current site is leaving on the table.",
-  },
+/**
+ * The document's last word. The range is indicative; the binding figure is
+ * set in a written proposal after scope review — never promised here.
+ */
+const CLOSING_COPY = {
+  ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية: نراجع النطاق معك، ثم نرسل عرضاً مكتوباً واحداً بالرقم المُلزِم.",
+  en: "This estimate is built on your actual selections. Next, we review scope with you, then send one written proposal with the binding figure.",
 };
 
 interface NarrativeParams {
   projectType: DeliverableProject;
-  tier: DeliverableTier;
   timelineKey: string;
   brandIdentity?: string | null;
   contentReadiness?: string | null;
-  deadlineUrgency?: string | null;
 }
 
 function generateProposalNarrative(p: NarrativeParams): ProposalNarrative {
@@ -245,10 +221,6 @@ function generateProposalNarrative(p: NarrativeParams): ProposalNarrative {
     {
       label: { ar: "نوع المشروع", en: "Project type" },
       message: PROJECT_COPY[p.projectType],
-    },
-    {
-      label: { ar: "مستوى الباقة", en: "Scope tier" },
-      message: TIER_COPY[p.tier],
     },
     {
       label: { ar: "توقيت التسليم", en: "Delivery timeline" },
@@ -268,207 +240,43 @@ function generateProposalNarrative(p: NarrativeParams): ProposalNarrative {
       message: CONTENT_COPY[p.contentReadiness],
     });
 
-  if (p.deadlineUrgency && DEADLINE_COPY[p.deadlineUrgency])
-    insights.push({
-      label: { ar: "الجدول الزمني", en: "Deadline" },
-      message: DEADLINE_COPY[p.deadlineUrgency],
-    });
-
   return {
     headline: {
       ar: "لماذا هذه الخطة مناسبة لك",
       en: "Why this plan fits your needs",
     },
     insights,
-    closing: CLOSING_COPY[p.projectType],
+    closing: CLOSING_COPY,
   };
 }
-
-const DELIVERABLES: Record<
-  DeliverableProject,
-  Record<DeliverableTier, string[]>
-> = {
-  ecommerce: {
-    small: [
-      "Catalog setup for a focused store (up to 50 SKUs)",
-      "Product pages, categories, and basic filtering",
-      "Checkout with one payment method such as Paymob or cash on delivery",
-      "Order notifications and a simple order-status flow",
-      "Mobile-first storefront implementation",
-      "Essential SEO, analytics, and launch tracking",
-      "Multilingual-ready structure where the scope requires it",
-      "{warrantyDays}-day launch assurance for critical fixes",
-    ],
-    medium: [
-      "Larger catalog with variants, bundles, or collections",
-      "Improved checkout flow and customer account basics",
-      "One core operational integration such as payment, shipping, or ERP-lite sync",
-      "Promotions, coupon codes, and merchandising controls",
-      "CMS support for landing pages, blog, or campaign content",
-      "Multilingual storefront and QA where required",
-      "Analytics, pixels, and search-readiness setup",
-      "{warrantyDays}-day launch assurance with structured handover",
-    ],
-    large: [
-      "Everything in Professional",
-      "Richer storefront UX, search, and merchandising logic",
-      "Multiple operational workflows such as payments, shipping, and inventory coordination",
-      "Customer accounts, returns, or post-purchase flows where required",
-      "Custom reporting surfaces for key commerce metrics",
-      "Performance pass for higher traffic and heavier catalogs",
-      "Infrastructure planning for scale, CDN, and backup strategy",
-      "{warrantyDays}-day launch assurance plus rollout support",
-    ],
-    enterprise: [
-      "Custom commerce architecture for complex operational needs",
-      "ERP, POS, warehouse, or multi-system integration planning",
-      "Role-based back-office workflows and approvals",
-      "Multi-brand, multi-store, or regional rollout requirements",
-      "Security review, release process, and environment strategy",
-      "Infrastructure design quoted to actual traffic and operational load",
-      "Phased roadmap for post-launch expansion",
-      "Hypercare window after launch, then ongoing support quoted separately",
-    ],
-  },
-  corporate: {
-    small: [
-      "Discovery-led sitemap and page structure",
-      "Up to 6 core pages with custom UI implementation",
-      "Contact or lead form with email routing",
-      "Responsive build with strong performance fundamentals",
-      "Basic SEO setup, analytics, and search console readiness",
-      "Multilingual-ready structure where the scope calls for it",
-      "Deployment and launch checklist",
-      "{warrantyDays}-day launch assurance for critical fixes",
-    ],
-    medium: [
-      "Everything in Essential",
-      "Expanded page system with reusable sections",
-      "CMS or blog setup for ongoing content updates",
-      "One lead-flow integration such as CRM, booking, or advanced forms",
-      "Full Multilingual implementation and QA where required",
-      "Tracking, SEO, and conversion event setup",
-      "Structured handover for internal marketing teams",
-      "{warrantyDays}-day launch assurance with post-launch review",
-    ],
-    large: [
-      "Everything in Professional",
-      "Richer storytelling sections, motion, and case-study structure",
-      "Advanced lead routing, gated content, or light account workflows",
-      "Calendar, CRM, or operations integration where needed",
-      "Performance hardening for heavier content and higher traffic",
-      "Reusable design system for future landing pages",
-      "Launch planning across environments and stakeholders",
-      "{warrantyDays}-day launch assurance plus rollout support",
-    ],
-    enterprise: [
-      "Custom corporate platform with portal or secure stakeholder areas",
-      "Role-based access, document flows, or approval workflows",
-      "Multi-site or multi-brand architecture planning",
-      "Deeper CRM / ERP / internal system integration",
-      "Security review, permissions model, and environment strategy",
-      "Infrastructure quoted to real traffic and operational needs",
-      "Phased roadmap for future modules and rollout",
-      "Hypercare window after launch, then ongoing support quoted separately",
-    ],
-  },
-  custom: {
-    small: [
-      "Discovery-scoped MVP around one core workflow",
-      "Authentication, basic roles, and protected routes",
-      "Admin-facing screens for essential operations",
-      "Core data model, API, and database setup",
-      "Responsive web app UI for desktop and mobile",
-      "Basic notifications or status updates where required",
-      "Deployment, environment setup, and documentation baseline",
-      "{warrantyDays}-day launch assurance for critical fixes",
-    ],
-    medium: [
-      "Everything in Essential",
-      "Multi-role workflows and richer admin controls",
-      "One or two business-critical integrations",
-      "Reporting, exports, uploads, or dashboard modules where needed",
-      "QA coverage for key business flows",
-      "Documentation and handover for product ownership",
-      "Launch plan with staging and production readiness",
-      "{warrantyDays}-day launch assurance with post-launch review",
-    ],
-    large: [
-      "Everything in Professional",
-      "Advanced workflow logic, approvals, or automation rules",
-      "Background jobs, queues, or webhook-driven processes where required",
-      "Audit logs, exports, and operational reporting",
-      "Performance and security hardening for heavier usage",
-      "Multi-environment rollout with CI/CD planning",
-      "Technical roadmap for phase-two growth",
-      "Hypercare window after launch",
-    ],
-    enterprise: [
-      "Platform architecture for multi-team or multi-tenant operation",
-      "Advanced permissions, auditability, and operational controls",
-      "Multiple integrations, data pipelines, or system-to-system workflows",
-      "Infrastructure, CI/CD, and release management design",
-      "Security review and deployment governance",
-      "Phased rollout across teams, regions, or business units",
-      "Operational documentation and training handover",
-      "Ongoing product support quoted separately after launch",
-    ],
-  },
-  performance: {
-    small: [
-      "Baseline Lighthouse and Core Web Vitals audit",
-      "Findings summary across the highest-impact pages",
-      "Image, asset, and script bottleneck review",
-      "Up to 5 priority fixes applied",
-      "Clear before/after measurements",
-      "Written remediation roadmap",
-      "One debrief session",
-    ],
-    medium: [
-      "Everything in Essential",
-      "Up to 10 priority fixes across frontend performance issues",
-      "Caching, script loading, and rendering-path improvements",
-      "Third-party tag audit and cleanup recommendations",
-      "Analytics review to protect measurement accuracy",
-      "Validation pass after implementation",
-      "Short post-audit support window",
-    ],
-    large: [
-      "Everything in Professional",
-      "Broader implementation across frontend, server, and delivery layers",
-      "Load testing and performance budgeting for key flows",
-      "Database or API bottleneck review where relevant",
-      "Monitoring baseline for ongoing performance visibility",
-      "Stakeholder-ready report with next-phase priorities",
-      "30-day observation period after optimization",
-    ],
-    enterprise: [
-      "Performance program for complex or high-traffic systems",
-      "Cross-stack review spanning frontend, backend, and infrastructure",
-      "SLA-oriented benchmarking and target definition",
-      "Release-risk review for major traffic or launch events",
-      "Operational reporting for engineering and leadership",
-      "Optimization roadmap phased by business impact",
-      "Retainer or ongoing monitoring quoted separately",
-    ],
-  },
-};
 
 interface PDFParams {
   locale: string;
   t: TransparencyTranslator;
   projectType: DeliverableProject;
-  tier: DeliverableTier;
+  /** The legacy band id the deliverable lists are filed under. */
+  band: DeliverableBand;
+  /** The schema's service name — with `bandLabel`, the document's label. */
+  serviceLabel: string;
+  bandLabel: string;
+  timelineLabel: string;
+  /** The timeline answer's id, which picks the narrative's timeline note. */
   timelineKey: string;
+  /** Names of the scope notes the visitor ticked, in schema order. */
+  scopeNotes: readonly string[];
+  /** Indicative-only line with validity and the VAT sentence, filled. */
+  disclaimer: string;
+  /** The pricing the estimate was computed from (warranty window). */
+  pricing: ResolvedPricing;
+  /** From `collectPdfFonts()` on the page that renders the document. */
+  fonts: PdfFonts;
   priceMin: number;
   priceMax: number;
   weeksMin: number;
   weeksMax: number;
-  phone: string;
   name: string;
   brandIdentity?: string | null;
   contentReadiness?: string | null;
-  deadlineUrgency?: string | null;
 }
 
 export function buildPDFHtml(p: PDFParams): string {
@@ -492,46 +300,70 @@ export function buildPDFHtml(p: PDFParams): string {
     year: "numeric",
   }).format(new Date());
 
-  const rawItems = p.t.raw?.(
-    `pdfContent.deliverables.${p.projectType}.${p.tier}`,
+  const asStrings = (raw: unknown): string[] =>
+    Array.isArray(raw)
+      ? raw.filter((item): item is string => typeof item === "string")
+      : [];
+  const listed = asStrings(
+    p.t.raw?.(`pdfContent.deliverables.${p.projectType}.${p.band}`),
   );
   const items = (
-    Array.isArray(rawItems) && rawItems.length > 0
-      ? rawItems.filter((item): item is string => typeof item === "string")
-      : DELIVERABLES[p.projectType][p.tier] || []
-  ).map((item) => fillScopeTokens(item, p.locale));
+    listed.length > 0
+      ? listed
+      : asStrings(p.t.raw?.("results.fallbackDeliverables"))
+  ).map((item) => fillScopeTokens(item, p.locale, p.pricing));
 
-  const hosting = HOSTING_RENEWAL[p.tier];
   const half = Math.ceil(items.length / 2);
   const col1 = items.slice(0, half);
   const col2 = items.slice(half);
 
-  const lblProjectType =
-    p.t(`pdfContent.projectLabels.${p.projectType}`) ||
-    PROJECT_LABELS[p.projectType];
-  const lblTier = p.t(`pdfContent.tierLabels.${p.tier}`) || TIER_LABELS[p.tier];
-  const lblTimelineFull =
-    p.t(`pdfContent.timelineLabels.${p.timelineKey}`) ||
-    TIMELINE_LABELS[p.timelineKey] ||
-    p.timelineKey;
-  const lblTimeline = lblTimelineFull.split("-")[0].trim();
-  const tTier = p.t("pdfContent.tier", { tier: lblTier });
+  // Label = service + band, both named by the schema (R13).
+  const lblProjectType = escapeHtml(p.serviceLabel);
+  const lblBand = escapeHtml(p.bandLabel);
+  const lblTimeline = escapeHtml(p.timelineLabel);
 
   const narrative = generateProposalNarrative({
     projectType: p.projectType,
-    tier: p.tier,
     timelineKey: p.timelineKey,
     brandIdentity: p.brandIdentity,
     contentReadiness: p.contentReadiness,
-    deadlineUrgency: p.deadlineUrgency,
   });
   const L = (obj: { ar: string; en: string }) => pickLang(obj, p.locale);
 
-  const fontBody = isRtl ? "'Tajawal', sans-serif" : "'Inter', sans-serif";
-  const fontDisplay = isRtl ? "'Tajawal', sans-serif" : "'Outfit', sans-serif";
+  // Escaped: the stacks carry double quotes and go into style="…" attributes.
+  const fontBody = escapeHtml(p.fonts.body);
+  const scopeNoteRows =
+    p.scopeNotes.length > 0
+      ? p.scopeNotes
+          .map(
+            (n) => `
+      <div style="padding:7px 0;border-bottom:1px solid ${PDF.hairline};font-family:${fontBody};font-size:11.5px;color:${PDF.body};">${escapeHtml(n)}</div>`,
+          )
+          .join("")
+      : `<div style="padding:7px 0;font-family:${fontBody};font-size:11.5px;color:${PDF.muted};">${escapeHtml(p.t("pdfContent.noScopeNotes"))}</div>`;
+  const fontDisplay = escapeHtml(p.fonts.display);
+  const fontMono = escapeHtml(p.fonts.mono);
+  // Small labels. EN: mono, tracked, capitals. AR: the body face at tracking 0 and no
+  // case transform — letter-spacing pulls Arabic letters apart, and they must join.
+  const labelStyle = (tracking: string) =>
+    isRtl
+      ? `font-family:${fontBody};letter-spacing:0;text-transform:none;`
+      : `font-family:${fontMono};letter-spacing:${tracking};text-transform:uppercase;`;
+  // Untracked secondary text that carries translated copy: mono in EN, body face in AR.
+  const monoText = `font-family:${isRtl ? fontBody : fontMono};`;
+  // Latin-only strings (email, domain) stay mono in both locales, isolated as LTR.
+  const latinMono = `font-family:${fontMono};direction:ltr;unicode-bidi:isolate;`;
   const safeName = p.name ? escapeHtml(p.name) : "";
   const clientName =
     safeName || escapeHtml(p.t("pdfContent.prospectiveClient"));
+  // The typed name is isolated in <bdi>: a Latin name inside the Arabic sentence ("Acme Co.")
+  // otherwise loses its own trailing punctuation to the far side. Placed after escaping the
+  // sentence so the (already escaped) name is not escaped twice.
+  // U+E000 (private use): survives escapeHtml and never occurs in copy.
+  const NAME_SLOT = "\uE000";
+  const confidentialLine = escapeHtml(
+    p.t("pdfContent.confidential", { name: NAME_SLOT }),
+  ).replace(NAME_SLOT, `<bdi>${clientName}</bdi>`);
 
   const mkCol = (arr: string[]) =>
     arr
@@ -548,36 +380,36 @@ export function buildPDFHtml(p: PDFParams): string {
 
   const hdr = (label: string, sub: string) => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:16px;border-bottom:1.5px solid ${PDF.ink};margin-bottom:20px;">
-      <span style="font-family:'Outfit',sans-serif;font-size:17px;font-weight:600;letter-spacing:.14em;color:${PDF.ink};">ALTRUVEX</span>
+      <span style="font-family:${fontDisplay};font-size:17px;font-weight:600;letter-spacing:.14em;color:${PDF.ink};">ALTRUVEX</span>
       <div style="text-align:${alignRight};">
-        <span style="font-family:monospace;font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:${PDF.muted};display:block;margin-bottom:2px;">${label}</span>
-        <span style="font-family:monospace;font-size:11px;color:${PDF.body};">${sub}</span>
+        <span style="${labelStyle(".22em")}font-size:8px;color:${PDF.muted};display:block;margin-bottom:2px;">${label}</span>
+        <span style="${monoText}font-size:11px;color:${PDF.body};">${sub}</span>
       </div>
     </div>`;
 
   const sCard = (l: string, v: string) => `
     <div style="padding:12px 14px;border:1px solid ${PDF.hairline};border-radius:4px;background:${PDF.paper};text-align:${alignLeft};">
-      <span style="font-family:monospace;font-size:7.5px;letter-spacing:.22em;text-transform:uppercase;color:${PDF.muted};display:block;margin-bottom:4px;">${l}</span>
+      <span style="${labelStyle(".22em")}font-size:7.5px;color:${PDF.muted};display:block;margin-bottom:4px;">${l}</span>
       <span style="font-family:${fontDisplay};font-size:12px;font-weight:500;color:${PDF.ink};">${v}</span>
     </div>`;
 
   const secHead = (lbl: string) => `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <span style="font-family:monospace;font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:${PDF.muted};white-space:nowrap;">${lbl}</span>
+      <span style="${labelStyle(".25em")}font-size:8px;color:${PDF.muted};white-space:nowrap;">${lbl}</span>
       <div style="flex:1;height:1px;background:${PDF.hairline};"></div>
     </div>`;
 
   const foot = (pg: string, disc: string) => `
     <div style="border-top:1px solid ${PDF.hairline};padding-top:11px;display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;">
-      <div style="font-family:monospace;font-size:7.5px;color:${PDF.faint};max-width:68%;line-height:1.6;text-align:${alignLeft};">${disc}</div>
-      <span style="font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;letter-spacing:.12em;color:${PDF.faint};direction:ltr;unicode-bidi:isolate;">${pg}</span>
+      <div style="${monoText}font-size:7.5px;color:${PDF.faint};max-width:68%;line-height:1.6;text-align:${alignLeft};">${disc}</div>
+      <span style="font-family:${fontDisplay};font-size:11px;font-weight:600;letter-spacing:.12em;color:${PDF.faint};direction:ltr;unicode-bidi:isolate;">${pg}</span>
     </div>`;
 
   const narrativeRows = narrative.insights
     .map(
       (ins) => `
     <div style="padding:9px 12px;border:1px solid ${PDF.hairline};border-radius:4px;background:${PDF.paper};text-align:${alignLeft};">
-      <span style="font-family:monospace;font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;color:${PDF.faint};display:block;margin-bottom:3px;">${L(ins.label)}</span>
+      <span style="${labelStyle(".2em")}font-size:7.5px;color:${PDF.faint};display:block;margin-bottom:3px;">${L(ins.label)}</span>
       <span style="font-family:${fontBody};font-size:11px;color:${PDF.body};line-height:1.65;">${L(ins.message)}</span>
     </div>`,
     )
@@ -589,10 +421,10 @@ export function buildPDFHtml(p: PDFParams): string {
 <meta charset="UTF-8"/>
 <title>${p.t("pdf.label")} · ALTRUVEX · ${today}</title>
 <style data-pdf-style="true">
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Outfit:wght@300;400;500;600&family=Tajawal:wght@400;500;700&display=swap');
+  ${p.fonts.faces}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{
-    font-family:${fontBody};
+    font-family:${p.fonts.body};
     background:${PDF.paperDeep};
     -webkit-print-color-adjust:exact;
     print-color-adjust:exact;
@@ -618,16 +450,16 @@ export function buildPDFHtml(p: PDFParams): string {
 </head>
 <body>
 <div class="page">
-  ${hdr(p.t("pdf.label"), `${today}${safeName ? ` · ${safeName}` : ""}`)}
+  ${hdr(p.t("pdf.label"), `${today}${safeName ? ` · <bdi>${safeName}</bdi>` : ""}`)}
   <div style="background:${PDF.ink};border-radius:5px;padding:20px 24px;margin-bottom:18px;">
-    <span style="font-family:monospace;font-size:8px;letter-spacing:.25em;text-transform:uppercase;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.engineeringBeyond")}</span>
+    <span style="${labelStyle(".25em")}font-size:8px;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.engineeringBeyond")}</span>
     <div style="font-family:${fontDisplay};font-size:24px;font-weight:500;color:${PDF.paper};line-height:1.2;margin-bottom:6px;">${lblProjectType}</div>
-    <div style="font-family:monospace;font-size:12px;color:${PDF.muted};">${tTier} &nbsp;·&nbsp; ${lblTimelineFull}</div>
+    <div style="${monoText}font-size:12px;color:${PDF.muted};">${lblBand}${lblTimeline ? ` &nbsp;·&nbsp; ${lblTimeline}` : ""}</div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
     ${sCard(p.t("pdfContent.projectType"), lblProjectType)}
-    ${sCard(p.t("pdfContent.scopeTier"), lblTier)}
+    ${sCard(p.t("pdfContent.band"), lblBand)}
     ${sCard(p.t("pdfContent.deliveryMode"), lblTimeline)}
   </div>
 
@@ -639,50 +471,39 @@ export function buildPDFHtml(p: PDFParams): string {
   ${secHead(p.t("pdfContent.investmentEstimate"))}
   <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:10px;margin-bottom:16px;">
     <div style="padding:18px 20px;background:${PDF.paper};border:1px solid ${PDF.rule};border-radius:4px;">
-      <span style="font-family:monospace;font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.totalRange")}</span>
+      <span style="${labelStyle(".2em")}font-size:7.5px;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.totalRange")}</span>
       <div style="font-family:${fontDisplay};font-size:28px;font-weight:500;letter-spacing:-.02em;color:${PDF.ink};line-height:1.1;">${f(p.priceMin)}</div>
       <div style="font-size:13px;color:${PDF.muted};margin-top:3px;">- ${f(p.priceMax)}</div>
-      <span style="font-family:monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:${PDF.faint};margin-top:10px;display:block;">${p.t("pdfContent.inclDomain")}</span>
     </div>
     <div style="padding:18px 20px;background:${PDF.panel};border-radius:4px;">
-      <span style="font-family:monospace;font-size:7.5px;letter-spacing:.2em;text-transform:uppercase;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.estimatedDelivery")}</span>
+      <span style="${labelStyle(".2em")}font-size:7.5px;color:${PDF.muted};display:block;margin-bottom:8px;">${p.t("pdfContent.estimatedDelivery")}</span>
       <div style="font-family:${fontDisplay};font-size:28px;font-weight:500;letter-spacing:-.02em;color:${PDF.ink};line-height:1.1;">${localizeNumbers(p.weeksMin.toString(), p.locale)}–${localizeNumbers(p.weeksMax.toString(), p.locale)}</div>
       <div style="font-size:12px;color:${PDF.muted};margin-top:3px;">${p.t("pdfContent.weeksFromKickoff")}</div>
-      <span style="font-family:monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:${PDF.faint};margin-top:10px;display:block;">${p.t("pdfContent.discoverySeparate")}</span>
     </div>
   </div>
 
-  ${secHead(p.t("pdfContent.infraIncluded"))}
-  <div style="display:flex;gap:12px;padding:13px 16px;background:${PDF.panel};border-radius:4px;margin-bottom:16px;">
-    <div style="width:6px;height:6px;border-radius:50%;background:${PDF.brand};margin-top:3px;flex-shrink:0;"></div>
-    <div>
-      <span style="font-family:monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:${PDF.brand};display:block;margin-bottom:3px;">${p.t("pdfContent.whatsCovered")}</span>
-      <span style="font-size:11.5px;color:${PDF.body};line-height:1.65;font-family:${fontBody};">
-        ${p.t("pdfContent.infraDetails")}<br/>
-        <strong style="font-weight:600;display:block;margin-top:3px;">${p.t("pdfContent.renewalFromYear2", { amount: f(hosting) })}</strong>
-      </span>
-    </div>
-  </div>
+  ${secHead(p.t("pdfContent.scopeNotes"))}
+  <div style="margin-bottom:16px;">${scopeNoteRows}</div>
 
   <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:${PDF.ink};border-radius:4px;margin-bottom:16px;">
     <div>
       <div style="font-family:${fontDisplay};font-size:15px;font-weight:500;color:${PDF.paper};margin-bottom:3px;">${p.t("pdfContent.readyToMoveForward")}</div>
-      <div style="font-family:monospace;font-size:11px;color:${PDF.muted};">${p.t("pdfContent.bookCall")}</div>
+      <div style="${monoText}font-size:11px;color:${PDF.muted};">${p.t("pdfContent.nextStep")}</div>
     </div>
     <div style="text-align:${alignRight};">
-      <span style="font-family:monospace;font-size:12px;color:${PDF.paper};display:block;margin-bottom:2px;">${SITE_CONFIG.email}</span>
-      <span style="font-family:monospace;font-size:11px;color:${PDF.muted};">altruvex.com</span>
+      <span style="${latinMono}font-size:12px;color:${PDF.paper};display:block;margin-bottom:2px;">${SITE_CONFIG.email}</span>
+      <span style="${latinMono}font-size:11px;color:${PDF.muted};">altruvex.com</span>
     </div>
   </div>
 
-  ${foot("ALTRUVEX · 1 / 2", p.t("pdfContent.estimateValid"))}
+  ${foot("ALTRUVEX · 1 / 2", escapeHtml(p.disclaimer))}
 </div>
 <div class="page">
-  ${hdr(p.t("pdfContent.scopeOfDeliverables"), `${lblProjectType} · ${lblTier}`)}
+  ${hdr(p.t("pdfContent.scopeOfDeliverables"), `${lblProjectType} · ${lblBand}`)}
 
   <div style="padding:14px 0 18px;">
     <p style="font-family:${fontDisplay};font-size:22px;font-weight:400;letter-spacing:-.02em;color:${PDF.ink};margin-bottom:4px;">${p.t("pdfContent.whatsIncluded")}</p>
-    <p style="font-family:monospace;font-size:12px;color:${PDF.muted};">${p.t("pdfContent.deliverablesCount", { count: localizeNumbers(items.length.toString(), p.locale), tier: lblTier })}</p>
+    <p style="${monoText}font-size:12px;color:${PDF.muted};">${p.t("pdfContent.deliverablesCount", { count: localizeNumbers(items.length.toString(), p.locale), band: lblBand })}</p>
   </div>
 
   ${secHead(p.t("pdfContent.fullDeliverablesList"))}
@@ -697,25 +518,13 @@ export function buildPDFHtml(p: PDFParams): string {
       ${[
         [p.t("pdfContent.phase1Title"), p.t("pdfContent.phase1Desc")],
         [p.t("pdfContent.phase2Title"), p.t("pdfContent.phase2Desc")],
-        [
-          p.t("pdfContent.phase3Title"),
-          p.t("pdfContent.phase3Desc", {
-            min: localizeNumbers(
-              Math.max(p.weeksMin - 3, 1).toString(),
-              p.locale,
-            ),
-            max: localizeNumbers(
-              Math.max(p.weeksMax - 3, 1).toString(),
-              p.locale,
-            ),
-          }),
-        ],
+        [p.t("pdfContent.phase3Title"), p.t("pdfContent.phase3Desc")],
         [p.t("pdfContent.phase4Title"), p.t("pdfContent.phase4Desc")],
       ]
         .map(
           ([phase, desc]) => `
         <div style="padding:12px 15px;border:1px solid ${PDF.hairline};border-radius:4px;background:${PDF.paper};">
-          <p style="font-family:monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:${PDF.muted};margin-bottom:5px;">${phase}</p>
+          <p style="${labelStyle(".2em")}font-size:8px;color:${PDF.muted};margin-bottom:5px;">${phase}</p>
           <p style="font-size:11.5px;color:${PDF.body};line-height:1.55;font-family:${fontBody};">${desc}</p>
         </div>`,
         )
@@ -723,7 +532,7 @@ export function buildPDFHtml(p: PDFParams): string {
     </div>
   </div>
 
-  ${foot("ALTRUVEX · 2 / 2", escapeHtml(p.t("pdfContent.confidential", { name: clientName })))}
+  ${foot("ALTRUVEX · 2 / 2", confidentialLine)}
 </div>
 
 </body>

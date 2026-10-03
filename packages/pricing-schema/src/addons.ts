@@ -98,7 +98,7 @@ export const ADDONS: Readonly<Record<AddonId, Addon>> = {
    * Schema and composition only — no renewal automation, no scheduled job, no
    * billing consolidation is wired in this pass, by design. It renders in
    * admin with a SOON badge and is filtered off every client-facing surface by
-   * `publicAddons()` until its status becomes `active`.
+   * `publicAddonViews()` until its status becomes `active`.
    */
   "managed-bundle": {
     id: "managed-bundle",
@@ -114,13 +114,3 @@ export const ADDONS: Readonly<Record<AddonId, Addon>> = {
     lastUpdated: "2026-09-06",
   },
 };
-
-/** Add-ons a client may see. Everything `planned` stays internal. */
-export function publicAddons(): readonly Addon[] {
-  return Object.values(ADDONS).filter((addon) => addon.status === "active");
-}
-
-/** Everything admin may see, including roadmap placeholders. */
-export function allAddons(): readonly Addon[] {
-  return Object.values(ADDONS);
-}

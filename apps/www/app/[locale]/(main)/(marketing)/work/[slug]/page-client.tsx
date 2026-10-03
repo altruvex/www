@@ -109,7 +109,8 @@ export default function WorkCaseStudyPageClient({
                   className="absolute inset-x-0 top-0 h-px bg-local-accent/40 transition-all duration-(--motion-drawer) group-hover/metric:bg-local-accent"
                 />
                 <p className="font-sans font-light text-local-accent-text leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
-                  {metric.value}
+                  {/* Isolated: "Lighthouse 95+" in an RTL card otherwise shows its "+" on the far left. */}
+                  <bdi>{metric.value}</bdi>
                 </p>
                 <Eyebrow tone="accent">{metric.label}</Eyebrow>
               </div>

@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils/utils";
 import { type KeyboardEvent, type ReactNode, useRef } from "react";
 
-export interface SegmentedOption<T extends string> {
+interface SegmentedOption<T extends string> {
   value: T;
   label: ReactNode;
   /** BCP 47 tag when the label is written in another language than the page. */

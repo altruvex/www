@@ -120,8 +120,13 @@ export function PortalClient({
               {portal.planName}
               <span className="ms-2 font-mono text-base text-muted-foreground">
                 {portal.planPriceLabel}
-                {!portal.isCustomQuote && " / month"}
+                {portal.planPriceSuffix && ` ${portal.planPriceSuffix}`}
               </span>
+            </p>
+            {/* The paid period, not the allowance window: on a yearly plan
+                the two are a year apart. */}
+            <p className="mt-1 text-meta text-muted-foreground">
+              {portal.autoRenew ? "Renews on" : "Ends on"} {dateOf(portal.renewsAt)}
             </p>
           </div>
           {portal.subscriptionStatus !== "ACTIVE" && (
@@ -137,8 +142,9 @@ export function PortalClient({
               This cycle
             </p>
             <p className="text-meta text-muted-foreground">
-              {dateOf(portal.cycleStart)} – {dateOf(portal.cycleEnd)} · renews in{" "}
-              {portal.daysUntilRenewal} day{portal.daysUntilRenewal === 1 ? "" : "s"}
+              {dateOf(portal.cycleStart)} – {dateOf(portal.cycleEnd)} · allowance resets in{" "}
+              {portal.daysUntilAllowanceReset} day
+              {portal.daysUntilAllowanceReset === 1 ? "" : "s"}
             </p>
           </div>
 

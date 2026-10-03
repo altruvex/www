@@ -9,6 +9,7 @@ import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { ToneBadge } from "@/components/ui/badge";
 import { when } from "@/lib/format";
+import { CRON_JOBS } from "@/lib/cron-jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ const WIRED: Wired[] = [
     ],
     source: "app/api/whatsapp/webhook/route.ts",
     actions: [],
-    note: "Runs only while the webhook signature secret is configured — see System health.",
+    note: "Runs only while the webhook signature secret is configured — see Integrations.",
   },
   {
     id: "whatsapp-status",
@@ -92,6 +93,32 @@ const WIRED: Wired[] = [
     actions: ["deployment.succeeded", "deployment.failed"],
   },
   {
+    id: "github-ingest",
+    name: "GitHub workflow run or deployment → build and deployment records",
+    trigger: "GitHub delivers a workflow_run or deployment_status webhook for a linked repository",
+    does: [
+      "Verifies the delivery signature and attributes it to the product that owns the repository",
+      "Writes the build or deployment through the same ingest writers CI uses",
+      "Moves the product to LIVE when a production deployment succeeds",
+    ],
+    source: "app/api/ingest/github/route.ts",
+    actions: ["build.succeeded", "build.failed", "deployment.succeeded", "deployment.failed"],
+    note: "Builds and deployments posted directly by a pipeline through /api/ingest/* record the same actions, so this count covers both routes.",
+  },
+  {
+    id: "renewal-sweep",
+    name: "Scheduled sweep → renewal notifications",
+    trigger: `${CRON_JOBS[0]!.scheduleText} (${CRON_JOBS[0]!.schedule}), called by the platform cron with CRON_SECRET`,
+    does: [
+      "Finds client services entering a renewal window",
+      "Writes one notification per admin per fact, keyed so a re-run never duplicates it",
+      "Posts the due list to Slack when a webhook is configured",
+    ],
+    source: CRON_JOBS[0]!.source,
+    actions: [],
+    note: "The sweep writes no activity event of its own; the Integrations screen infers its last run from the newest renewal notification. Reminding the client is still a person's decision, sent from the service's page.",
+  },
+  {
     id: "pricing-revalidate",
     name: "Price changed → public site cache dropped",
     trigger: "A price override is saved on the pricing screen",
@@ -112,8 +139,8 @@ const PLANNED = [
     blocked: "Acceptance is currently recorded by an operator, not by the client. A client-side accept action has to exist before this can trigger on anything.",
   },
   {
-    name: "Renewal due → reminder to the client",
-    blocked: "There is no outbound mail integration, and WhatsApp template messages need approved templates per message type.",
+    name: "Renewal due → reminder sent to the client automatically",
+    blocked: "Mail transport exists and a reminder can be sent from the service's page, but sending one unasked needs an agreed cadence per client and an approved WhatsApp template per message type. Until then a person decides, and the send is recorded.",
   },
   {
     name: "Payment overdue → escalation",
@@ -175,7 +202,7 @@ export default async function AutomationsPage() {
           value={totalRuns}
           sub="From the activity log"
           tone={totalRuns > 0 ? "success" : "neutral"}
-          href={totalRuns > 0 ? "/activity" : undefined}
+          href={totalRuns > 0 ? "/audit" : undefined}
         />
         <StatTile
           label="Untracked"
@@ -268,16 +295,13 @@ export default async function AutomationsPage() {
       <Panel title="Where automatic changes show up">
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm">
-            <Link href="/activity">
-              Activity feed
+            <Link href="/audit">
+              Audit log
               <ArrowRight className="size-3.5" />
             </Link>
           </Button>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/audit">Audit log</Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/health">Integration health</Link>
+            <Link href="/integrations">Integrations and health</Link>
           </Button>
         </div>
       </Panel>

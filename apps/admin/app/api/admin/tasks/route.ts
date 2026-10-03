@@ -50,6 +50,8 @@ const createSchema = z.object({
 
 const patchSchema = z.object({
   id: z.string().min(1),
+  /** Moving a task to another project. Every task belongs to exactly one. */
+  projectId: z.string().min(1).optional(),
   title: z.string().min(1).max(300).optional(),
   detail: z.string().max(5000).nullable().optional(),
   status: z.enum(STATUSES).optional(),
@@ -77,7 +79,7 @@ export const GET = withAdmin(async (request) => {
     },
   });
   return ok({ tasks });
-});
+}, { can: ["view", "project"] });
 
 export const POST = withAdmin(async (request, { actor, session }) => {
   const body = await readJson(request, createSchema);
@@ -125,7 +127,7 @@ export const POST = withAdmin(async (request, { actor, session }) => {
   });
 
   return ok({ task });
-});
+}, { can: ["create", "project"] });
 
 export const PATCH = withAdmin(async (request, { actor }) => {
   const { id, ...patch } = await readJson(request, patchSchema);
@@ -135,6 +137,17 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     include: { project: { select: { id: true, name: true } } },
   });
   if (!existing) throw notFound("That task no longer exists.");
+
+  const target =
+    patch.projectId && patch.projectId !== existing.projectId
+      ? await prisma.project.findUnique({
+          where: { id: patch.projectId },
+          select: { id: true, name: true },
+        })
+      : null;
+  if (patch.projectId && patch.projectId !== existing.projectId && !target) {
+    throw notFound("That project no longer exists.");
+  }
 
   const task = await prisma.projectTask.update({
     where: { id },
@@ -159,16 +172,17 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     entityType: "task",
     entityId: id,
     entityLabel: task.title,
-    summary:
-      patch.status && patch.status !== existing.status
+    summary: target
+      ? `Moved "${task.title}" from ${existing.project.name} to ${target.name}`
+      : patch.status && patch.status !== existing.status
         ? `Moved "${task.title}" to ${patch.status.replace("_", " ").toLowerCase()}`
         : `Updated "${task.title}"`,
     before: Object.fromEntries(
       Object.keys(patch).map((k) => [k, existing[k as keyof typeof existing]]),
     ),
     after: patch as Record<string, unknown>,
-    metadata: { projectId: existing.project.id },
+    metadata: { projectId: target?.id ?? existing.project.id },
   });
 
   return ok({ task });
-});
+}, { can: ["edit", "project"] });

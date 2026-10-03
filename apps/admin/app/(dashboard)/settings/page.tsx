@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@repo/database";
+import { Button } from "@repo/ui";
 import { getCompanySettings } from "@/lib/company-settings";
+import { getInvoiceNumbering } from "@/lib/invoice-number";
+import { getOperator } from "@/lib/authorize";
+import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac";
 import { mfaRequired } from "@/lib/mfa";
+import { emailTransport } from "@/lib/email";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { TabNav } from "@/components/os/tab-nav";
@@ -11,9 +17,10 @@ import { AlertBar } from "@/components/os/error-state";
 import { optionsOf, toneDot } from "@/lib/status";
 import { PROJECT_PHASE_ORDER } from "@/lib/status";
 import { PIPELINE_STAGES } from "@/lib/dashboard-data";
-import { dateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { CompanyProfileEditor } from "./company-profile-editor";
+import { InvoicePrefixEditor } from "./invoice-prefix-editor";
+import { EndAllSessionsButton, SessionList, type SessionRow } from "../team/session-list";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +31,22 @@ const TABS = [
   { id: "security", label: "Security" },
 ];
 
+const SECONDS_PER_DAY = 24 * 60 * 60;
+
+/** The session life as configured in `lib/auth.ts`, in days, read rather than retyped. */
+function sessionLifeDays(): number | null {
+  const seconds = auth.options.session?.expiresIn;
+  return typeof seconds === "number" ? Math.round(seconds / SECONDS_PER_DAY) : null;
+}
+
+/**
+ * Every claim on this page is read from the thing it describes: the session
+ * life from the auth config, the mail transport from the environment, the
+ * invoice numbering from the settings row, the sessions from the session
+ * table. The previous version carried a "Known gaps" list that was mostly
+ * untrue by the time it was read (no second factor, no audit table), which is
+ * the opposite of what a settings screen is for.
+ */
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -32,22 +55,48 @@ export default async function SettingsPage({
   const { tab: tabParam } = await searchParams;
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "organization";
 
-  const [company, sessions, users] = await Promise.all([
+  const operator = await getOperator();
+  const me = operator?.session.user.id ?? null;
+  const myToken = operator?.session.session.token;
+  const canEditSettings = can(operator?.role, "edit", "settings");
+  const now = new Date();
+
+  const [company, numbering, mySessions, liveSessions, users] = await Promise.all([
     getCompanySettings(),
-    prisma.session.findMany({
-      where: { expiresAt: { gt: new Date() } },
-      select: {
-        id: true,
-        ipAddress: true,
-        userAgent: true,
-        updatedAt: true,
-        expiresAt: true,
-        user: { select: { name: true, email: true } },
-      },
-      orderBy: { updatedAt: "desc" },
-    }),
+    getInvoiceNumbering(),
+    me
+      ? prisma.session.findMany({
+          where: { userId: me, expiresAt: { gt: now } },
+          select: {
+            id: true,
+            token: true,
+            ipAddress: true,
+            userAgent: true,
+            createdAt: true,
+            updatedAt: true,
+            expiresAt: true,
+          },
+          orderBy: { updatedAt: "desc" },
+        })
+      : Promise.resolve([]),
+    prisma.session.count({ where: { expiresAt: { gt: now } } }),
     prisma.user.count(),
   ]);
+
+  // The token decides which row is "this browser", then stays on the server.
+  const sessionRows: SessionRow[] = mySessions.map((s) => ({
+    id: s.id,
+    ipAddress: s.ipAddress,
+    userAgent: s.userAgent,
+    createdAt: s.createdAt.toISOString(),
+    updatedAt: s.updatedAt.toISOString(),
+    expiresAt: s.expiresAt.toISOString(),
+    current: s.token === myToken,
+  }));
+  const otherSessions = sessionRows.filter((s) => !s.current).length;
+
+  const transport = emailTransport();
+  const sessionDays = sessionLifeDays();
 
   return (
     <div className="space-y-4">
@@ -95,14 +144,47 @@ export default async function SettingsPage({
             </div>
           </Panel>
 
-          <Panel title="Where these values live" className="lg:col-span-2">
+          <Panel
+            title="Invoice numbering"
+            description="Prefix plus a counter that only moves when a payment is invoiced"
+            flush
+          >
+            <MetaList
+              items={[
+                {
+                  label: "Next number",
+                  value: <span className="font-mono text-meta">{numbering.next}</span>,
+                },
+                {
+                  label: "Issued so far",
+                  value: String(numbering.invoiceSequence),
+                },
+              ]}
+            />
+            <div className="border-t border-border p-3">
+              <InvoicePrefixEditor initialPrefix={numbering.invoicePrefix} canEdit={canEditSettings} />
+              <p className="mt-2 max-w-prose text-meta text-muted-foreground">
+                A number is assigned once, when a payment is invoiced, and is never reused —
+                changing the prefix affects invoices issued from now on, not the ones already
+                numbered. The counter has no edit control because a hand-set counter is how two
+                invoices end up sharing a number.
+                {!canEditSettings && " Only an owner or admin can change the prefix."}
+              </p>
+            </div>
+          </Panel>
+
+          <Panel title="Where these values live">
             <p className="max-w-prose text-base text-muted-foreground">
               A single <code className="font-mono text-micro">CompanySettings</code> row,
               id <code className="font-mono text-micro">default</code>, seeded on first use
-              from the values the proposal generator already shipped with. Editing them here
-              is deliberately not wired up yet: they feed generated legal and commercial
-              documents, so the edit path needs an approval step and a version record before
-              it exists. Change them in the database until then.
+              from the values the proposal generator shipped with. The profile and the
+              invoice prefix are edited on this page by an owner or admin; every change is
+              written to the{" "}
+              <Link href="/audit?entity=settings" className="underline underline-offset-2">
+                audit log
+              </Link>{" "}
+              with the value it replaced. Documents already generated keep the values they
+              were generated with.
             </p>
           </Panel>
         </div>
@@ -216,7 +298,7 @@ export default async function SettingsPage({
           </Panel>
           <Panel
             title="Message and email templates"
-            description="Partly live, partly planned"
+            description="What each channel can send today"
             className="lg:col-span-2"
             flush
           >
@@ -237,14 +319,18 @@ export default async function SettingsPage({
                 detail="The what-happens-now message. The most valuable automation in the system."
               />
               <TemplateRow
-                name="Email — everything"
-                state="planned"
-                detail="Blocked on a mail transport. See Integrations."
+                name="Email — proposal, contract, change-request quote, renewal reminder"
+                state={transport === "none" ? "unconfigured" : "live"}
+                detail={
+                  transport === "none"
+                    ? "The wording exists in lib/email-templates.ts and is editable per send, but no mail transport is configured, so nothing is sent. See Integrations."
+                    : `Plain-text drafts from lib/email-templates.ts, editable per send and recorded as EmailMessage rows. Sending through ${transport === "resend" ? "Resend" : "SMTP"}.`
+                }
               />
               <TemplateRow
                 name="Invoice document"
                 state="planned"
-                detail="Blocked on an Invoice model. Payments exist; invoices as documents do not."
+                detail={`Payments are numbered (${numbering.next} is next) and carry an issue date, but no invoice document is generated yet. There is no Invoice model; the number lives on the payment.`}
               />
             </ul>
           </Panel>
@@ -254,10 +340,10 @@ export default async function SettingsPage({
       {tab === "security" && (
         <div className="space-y-4">
           <AlertBar tone="info" href="/audit" cta="See the audit trail">
-            Access to this application is gated at the edge: the proxy refuses every
-            request without an ADMIN or SUPERADMIN session before a page renders. Server
-            actions re-check permission independently — the UI deciding what to draw is
-            never the access decision.
+            Access to this application is decided twice: the proxy refuses every request
+            without an ADMIN or SUPERADMIN session before a page renders, and the dashboard
+            layout decides again from the session. Server actions re-check the capability
+            independently — the UI deciding what to draw is never the access decision.
           </AlertBar>
 
           <div className="grid gap-4 lg:grid-cols-2">
@@ -265,8 +351,11 @@ export default async function SettingsPage({
               <MetaList
                 items={[
                   { label: "Auth", value: "Better Auth, email + password" },
-                  { label: "Sign-up", value: "Disabled — accounts are seeded" },
-                  { label: "Session life", value: "7 days" },
+                  { label: "Sign-up", value: "Disabled — members are invited from Team" },
+                  {
+                    label: "Session life",
+                    value: sessionDays ? `${sessionDays} days, extended daily while in use` : "Not readable from the auth config",
+                  },
                   {
                     label: "2FA",
                     value: (
@@ -275,8 +364,15 @@ export default async function SettingsPage({
                       </Link>
                     ),
                   },
-                  { label: "Users", value: String(users) },
-                  { label: "CSP", value: "Enforced, no external script origins" },
+                  {
+                    label: "Members",
+                    value: (
+                      <Link href="/team" className="underline underline-offset-2">
+                        {users} — roles and invitations
+                      </Link>
+                    ),
+                  },
+                  { label: "CSP", value: "Enforced, per-request nonce, no external script origins" },
                   { label: "Frame options", value: "DENY" },
                   { label: "HSTS", value: "1 year, preload" },
                 ]}
@@ -284,41 +380,29 @@ export default async function SettingsPage({
             </Panel>
 
             <Panel
-              title="Active sessions"
-              description="Every signed-in browser right now"
+              title="Your sessions"
+              description="Every browser signed in as you. Ending one signs that browser out."
+              action={
+                me ? <EndAllSessionsButton userId={me} count={otherSessions} own /> : undefined
+              }
               flush
             >
-              {sessions.length === 0 ? (
-                <p className="px-3 py-6 text-base text-muted-foreground">No active sessions.</p>
-              ) : (
-                <ul className="rows">
-                  {sessions.map((session) => (
-                    <li key={session.id} className="px-3 py-2.5">
-                      <p className="truncate text-base font-medium">
-                        {session.user.name ?? session.user.email}
-                      </p>
-                      <p className="truncate font-mono text-micro text-subtle-foreground">
-                        {session.ipAddress ?? "no ip"} · expires {dateTime(session.expiresAt)}
-                      </p>
-                      {session.userAgent && (
-                        <p className="mt-0.5 truncate text-meta text-muted-foreground">
-                          {session.userAgent.slice(0, 80)}
-                        </p>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <SessionList sessions={sessionRows} canRevoke={me !== null} />
+              <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
+                {liveSessions} active session{liveSessions === 1 ? "" : "s"} across the team.{" "}
+                <Link href="/team" className="underline underline-offset-2 hover:text-foreground">
+                  Other members’ sessions are managed from Team.
+                </Link>
+              </p>
             </Panel>
           </div>
 
           <Panel title="Known gaps" description="Stated rather than hidden">
             <ul className="space-y-2">
               {[
-                "No second factor. Password compromise is currently full compromise of this application.",
-                "No audit table. The activity timeline is derived from records, which cannot show who changed a value or what it was before.",
-                "Roles beyond ADMIN/SUPERADMIN are enforced in code but cannot be assigned until the schema carries them.",
                 "Signing is click-to-sign with IP and timestamp — evidence of assent, not a qualified electronic signature.",
+                "A sign-in from a new device is not announced to the member. The session list above is where to look.",
+                "Email delivery is recorded as accepted by the transport, never as delivered — there is no provider webhook.",
               ].map((gap) => (
                 <li key={gap} className="flex gap-2 text-base">
                   <span className="mt-1.5 size-1 shrink-0 rounded-full bg-warning" aria-hidden />
@@ -326,12 +410,14 @@ export default async function SettingsPage({
                 </li>
               ))}
             </ul>
-            <Link
-              href="/health"
-              className="mt-3 inline-flex text-base text-brand hover:underline"
-            >
-              System health →
-            </Link>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link href="/integrations">Integrations and health</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/audit?entity=settings">Settings changes</Link>
+              </Button>
+            </div>
           </Panel>
         </div>
       )}
@@ -361,17 +447,17 @@ function TemplateRow({
   detail,
 }: {
   name: string;
-  state: "live" | "planned";
+  state: "live" | "planned" | "unconfigured";
   detail: string;
 }) {
   return (
     <li className="flex items-center gap-3 px-3 py-2.5">
       <div className="min-w-0 flex-1">
         <p className="truncate text-base font-medium">{name}</p>
-        <p className="truncate text-meta text-muted-foreground">{detail}</p>
+        <p className="text-meta text-muted-foreground">{detail}</p>
       </div>
-      <ToneBadge tone={state === "live" ? "success" : "neutral"}>
-        {state === "live" ? "Live" : "Planned"}
+      <ToneBadge tone={state === "live" ? "success" : state === "unconfigured" ? "warning" : "neutral"}>
+        {state === "live" ? "Live" : state === "unconfigured" ? "Not configured" : "Planned"}
       </ToneBadge>
     </li>
   );

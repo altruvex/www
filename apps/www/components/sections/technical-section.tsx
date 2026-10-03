@@ -6,8 +6,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { accentWorldClass, serviceWorld } from "@/lib/config/accent-world";
 import { cn } from "@/lib/utils/utils";
-import { Container } from "../shared/container";
-import { Eyebrow } from "../ui/eyebrow";
 import { FaqSectionView } from "./faq-section";
 import { plainFaqItems } from "@/lib/faq";
 
