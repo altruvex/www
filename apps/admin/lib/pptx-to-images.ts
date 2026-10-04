@@ -70,7 +70,7 @@ export async function renderPptxToPngs(
       return { ok: false, ...classify(error, "pdftoppm") };
     }
 
-    const files = (await readdir(workDir))
+    const files = (await readdir(/*turbopackIgnore: true*/ workDir))
       .filter((name) => name.startsWith("slide-") && name.endsWith(".png"))
       .sort((a, b) => pageNumber(a) - pageNumber(b));
 
@@ -83,7 +83,7 @@ export async function renderPptxToPngs(
     }
 
     const images = await Promise.all(
-      files.map((name) => readFile(path.join(workDir!, name))),
+      files.map((name) => readFile(/*turbopackIgnore: true*/ path.join(/*turbopackIgnore: true*/ workDir!, name))),
     );
     return { ok: true, images };
   } catch (error) {

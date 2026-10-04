@@ -1,0 +1,88 @@
+FONTLOG for Altruvex Sans (Track A)
+===================================
+
+This file records the changes made to the original Font Software, as the SIL Open Font
+License 1.1 asks of a Modified Version.
+
+
+Basic font information
+----------------------
+
+Altruvex Sans (Track A) is an interim Modified Version of two OFL fonts, published as two
+separate web families:
+
+  Altruvex Sans Latin   derived from Outfit v1.100      (OFL-Outfit.txt)
+  Altruvex Sans Arabic  derived from Vazirmatn v33.003  (OFL-Vazirmatn.txt)
+
+It is not a proprietary or custom-drawn typeface. No glyph was drawn, synthesized or edited.
+Both families remain under the SIL Open Font License 1.1. Neither family uses a Reserved Font
+Name: neither upstream OFL.txt declares one.
+
+Upstream sources, as pinned in config/font.yaml (google/fonts commit
+8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5):
+
+  Outfit[wght].ttf     sha256 fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade
+                       upstream Outfitio/Outfit-Fonts @ 902773808eb372f70fb34e8946dd1ffe604efc79
+  Vazirmatn[wght].ttf  sha256 696249a2c74b39ffdef55de4df2809c5b639d3ff80d618d8160a095d2fd49dca
+                       upstream rastikerdar/vazirmatn @ 14f8686945b97ac535bdb144a7c3794431d894d2
+
+
+Third-party provenance inside Vazirmatn
+---------------------------------------
+
+Vazirmatn's own name record 10 states that its first version was based on DejaVu 2.35
+(public domain), and that its non-Arabic (Latin) glyphs and data come from Roboto Variable
+v3.004 under the Apache License 2.0. Altruvex Sans Arabic keeps that record unchanged. It
+contains no Latin letters, but it does keep Vazirmatn's space, no-break space, thin space,
+narrow no-break space, ( ) [ ] and « ». Whether any of those came from Roboto has not been
+established, so the Apache License 2.0 text ships alongside as a precaution
+(licenses/Apache-2.0.txt, added 2026-09-30).
+
+
+ChangeLog
+---------
+
+2026-09-29  0.1.0
+
+  Altruvex Sans Latin (from Outfit v1.100)
+  - Renamed: name IDs 1, 4 and 16 (family), 6 and 25 (PostScript), 3 (unique ID).
+  - Name ID 0: appended "Modifications Copyright 2026 Altruvex." The upstream copyright is kept.
+  - Removed the Mac-platform name records (platformID 1, name IDs 257-266). The Windows records
+    carry the same strings and are kept.
+  - head.modified set to a fixed build timestamp.
+  - Packaged as WOFF2.
+  - Nothing else: every glyph, outline, variation delta, advance, cmap entry and layout table
+    is Outfit's. The cmap is exactly Outfit's.
+
+  Altruvex Sans Arabic (from Vazirmatn v33.003)
+  - Subset to the Arabic script ranges (U+0600-06FF, 0750-077F, 0870-089F, 08A0-08FF,
+    FB50-FDFF, FE70-FEFF), U+200C-200F, U+2010-2011, U+25CC, and, from Vazirmatn itself,
+    U+0020, U+00A0, U+2009, U+202F, ( ) [ ] « ». All layout features and name records are kept.
+    Codepoints in those ranges that Vazirmatn does not have (for example U+061C, U+204F,
+    U+2E41) are left out. They are not added.
+  - Scaled by k = 1.0625, so the Arabic alef matches Outfit's ascender. Outlines, advances,
+    variation deltas, metrics variations, kerning and anchors are all multiplied by k. The
+    units-per-em stays 2048. Vertical metrics (hhea, OS/2 typo and win) are Vazirmatn's, times k.
+  - Renamed: name IDs 1, 4 (family), 6 (PostScript), 3 (unique ID).
+  - Name ID 0: appended "Modifications Copyright 2026 Altruvex." The upstream copyright and
+    name ID 10 are kept.
+  - head.modified set to a fixed build timestamp.
+  - Packaged as WOFF2.
+  - Weight axis remap (avar only): a requested weight 600 draws Vazirmatn's 675 and 700 draws
+    830, so Arabic ink density sits closer to Outfit's at the same CSS weight (chosen by Ali
+    from the A.2 proof). 500 and below are unchanged; 800 draws about 865; 900 stays 900.
+    The remap is composed into Vazirmatn's own avar. Outlines and variation deltas are not
+    touched: every drawn weight is one Vazirmatn already has.
+  - OS/2 xAvgCharWidth recalculated for the subset and the scale (FontBakery flagged the
+    carried-over value).
+
+Every build is checked glyph by glyph against the upstream source (tools/integrity.py). The
+check fails on any added, deleted or modified glyph beyond the subset and the k scaling.
+
+
+Acknowledgements
+----------------
+
+Outfit: The Outfit Project Authors; designed by Rodrigo Fuenzalida, fragTYPE
+(https://github.com/Outfitio/Outfit-Fonts).
+Vazirmatn: The Vazirmatn Project Authors, Saber Rastikerdar (https://github.com/rastikerdar/vazirmatn).
