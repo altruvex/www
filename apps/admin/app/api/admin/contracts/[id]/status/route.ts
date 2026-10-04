@@ -7,15 +7,6 @@ import { signLinkExpiry } from "@/lib/sign-window";
 import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 import { channelPhrase, manualMetadata, manualRecordFields } from "@/lib/manual-record";
 
-/**
- * Sets a contract's status by hand — sent from a personal inbox, signed on
- * paper, declined on a call. See `lib/manual-record.ts`.
- *
- * SIGNED goes through `handleContractSigned`, the same trigger the public
- * signing page uses, so a hand-recorded signature still opens the project and
- * its payment schedule exactly once. A signed contract is a record of
- * something that happened: nothing here moves it back.
- */
 const schema = z
   .object({
     status: z.enum(["DRAFT", "SENT", "SIGNED", "DECLINED", "EXPIRED"]),
@@ -56,8 +47,6 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
   const who = label || "the client";
 
   if (input.status === "SIGNED") {
-    // The operator is the actor on the contract.signed event itself, with the
-    // manual metadata, so the audit trail never claims the client signed here.
     const { contract: updated } = await handleContractSigned({
       contractId: contract.id,
       signedByName: input.signedByName!,
@@ -78,10 +67,6 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
     where: { id: contract.id },
     data: {
       status: input.status,
-      // Sending is what keeps a sign link alive, whoever did the sending. An
-      // operator who mailed the contract themselves has just handed the client
-      // a link, so the window restarts here exactly as it does on the system
-      // send path.
       ...(input.status === "SENT" ? { signTokenExpiresAt: signLinkExpiry() } : {}),
     },
   });

@@ -5,13 +5,6 @@ import { money } from "@/lib/format";
 import type { ProposalService } from "@/lib/proposal-schema";
 import { annualised, KIND_LABEL, perTermLabel, termLabel } from "@/lib/service-lifecycle";
 
-/**
- * The recurring services a proposal or contract commits to, read-only.
- *
- * This is the document's promise, not the live record: after signing, each
- * becomes a tracked service whose price and dates can move. The link to the
- * live rows says so rather than letting the two be mistaken for one another.
- */
 export function ServiceTermsPanel({
   services,
   currency,
@@ -19,7 +12,6 @@ export function ServiceTermsPanel({
 }: {
   services: ProposalService[];
   currency: string;
-  /** Where the tracked services live, once signing has opened them. */
   liveHref?: string;
 }) {
   if (services.length === 0) return null;
@@ -47,7 +39,11 @@ export function ServiceTermsPanel({
               </span>
               <span className="telemetry ms-2 text-subtle-foreground">{KIND_LABEL[service.kind]}</span>
               <span className="block text-meta text-muted-foreground">
-                {[service.provider || null, termLabel(service.termMonths), service.firstTermIncluded ? "first term in the project fee" : null]
+                {[
+                  service.provider || null,
+                  termLabel(service.termMonths),
+                  service.termMonths !== null && service.firstTermIncluded ? "first term in the project fee" : null,
+                ]
                   .filter(Boolean)
                   .join(" · ")}
               </span>

@@ -1,20 +1,5 @@
 import { z } from "zod";
 
-/**
- * Recording by hand what happened outside the system.
- *
- * The automated paths (email, WhatsApp template, click-to-sign) are the
- * default, but a deal cannot be held hostage by an unconfigured transport: a
- * proposal handed over in a meeting, or a contract sent from a personal inbox,
- * still has to move the record forward.
- *
- * The honesty rule still holds. A manual record never creates an
- * `EmailMessage` or `WhatsAppMessage` row and never claims the system sent
- * anything — it writes the new status and an audit event marked `manual: true`
- * with the channel the operator named, so `/audit` reads "recorded by hand as
- * sent in person", not "sent".
- */
-
 export const MANUAL_CHANNELS = [
   "IN_PERSON",
   "PERSONAL_WHATSAPP",
@@ -33,10 +18,8 @@ export const MANUAL_CHANNEL_LABELS: Record<ManualChannel, string> = {
   OTHER: "Other",
 };
 
-/** Fields every manual record carries, whatever the entity. */
 export const manualRecordFields = {
   channel: z.enum(MANUAL_CHANNELS).optional(),
-  /** When it actually happened. Defaults to now; never in the future. */
   occurredAt: z.coerce
     .date()
     .optional()
@@ -46,7 +29,6 @@ export const manualRecordFields = {
   note: z.string().trim().max(500).optional(),
 };
 
-/** The metadata block written into the audit event for a manual record. */
 export function manualMetadata(input: {
   channel?: ManualChannel;
   occurredAt?: Date;

@@ -1,11 +1,5 @@
 import { prisma } from "@repo/database";
 
-/**
- * §12 — a conversation is not a list of messages, it is a list of messages
- * BOUND TO A BUSINESS ENTITY. Every thread here is keyed by client, and every
- * message carries the proposal or contract it was sent about, so "what did we
- * tell them about the price" is one click from the deal, not a search.
- */
 export interface Thread {
   clientId: string;
   clientName: string;
@@ -60,31 +54,17 @@ export async function getThreads(): Promise<Thread[]> {
       };
     })
     .sort((a, b) => {
-      // Unanswered first: this list exists to stop people being left hanging.
       if (a.unanswered !== b.unanswered) return a.unanswered ? -1 : 1;
       return b.lastAt.getTime() - a.lastAt.getTime();
     });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Unified conversations (WhatsApp + email)                                    */
-/* -------------------------------------------------------------------------- */
-
 export type Channel = "whatsapp" | "email";
 
-/**
- * One row per client across both channels. Email is outbound only today — there
- * is no inbound mail ingestion — so an email can never *be* the thing a client
- * is waiting on; `unanswered` is therefore decided by WhatsApp alone. An email
- * we sent after their WhatsApp question does not clear it: they asked on one
- * channel and nothing on that channel has answered.
- */
 export interface ConversationThread extends Thread {
   channels: Channel[];
   lastChannel: Channel;
-  /** When the client's oldest still-unanswered WhatsApp message arrived. */
   waitingSince: Date | null;
-  /** Where the row opens: the one channel's page, or the merged view when both are used. */
   href: string;
 }
 
@@ -101,7 +81,6 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
         orderBy: { createdAt: "desc" },
         select: { body: true, direction: true, createdAt: true, status: true },
       },
-      // No body: it can be long and the list only needs the subject.
       emails: {
         orderBy: { createdAt: "desc" },
         select: { subject: true, createdAt: true, status: true },
@@ -115,13 +94,10 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
     const lastWa = wa[0];
     const lastMail = mail[0];
 
-    // The newest message overall, whichever channel carried it.
     const mailIsLast = Boolean(lastMail && (!lastWa || lastMail.createdAt > lastWa.createdAt));
     const lastAt = mailIsLast ? lastMail!.createdAt : lastWa!.createdAt;
     const lastMessage = mailIsLast ? lastMail!.subject : lastWa!.body;
 
-    // WhatsApp is newest-first: walk the run of inbound messages at the top.
-    // Its oldest entry is when the client started waiting.
     let waitingSince: Date | null = null;
     for (const message of wa) {
       if (message.direction !== "INBOUND") break;
@@ -159,9 +135,6 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
 
   return threads.sort((a, b) => {
     if (a.unanswered !== b.unanswered) return a.unanswered ? -1 : 1;
-    // Among the unanswered, the longest wait goes first: the thread closest to
-    // a missed reply matters more than the one that just arrived, and a newest-
-    // first order would keep burying the same neglected client under fresh ones.
     if (a.unanswered && b.unanswered) {
       return a.waitingSince!.getTime() - b.waitingSince!.getTime();
     }
@@ -169,11 +142,6 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
   });
 }
 
-/**
- * The numbers on the channel tabs. Cheap on purpose — two grouped maxima and one
- * count instead of loading every message — because every Inbox/WhatsApp/Email
- * page renders them.
- */
 export async function getChannelCounts(): Promise<{ unanswered: number; failedEmails: number }> {
   const [inbound, outbound, failedEmails] = await Promise.all([
     prisma.whatsAppMessage.groupBy({
@@ -201,20 +169,17 @@ export interface ConversationItem {
   channel: Channel;
   direction: "INBOUND" | "OUTBOUND";
   at: Date;
-  /** Email only. */
   subject: string | null;
   body: string;
   status: string;
   failed: boolean;
   failureReason: string | null;
-  /** Email only: the address it went to. */
   toAddress: string | null;
   templateName: string | null;
   relatedProposalId: string | null;
   relatedContractId: string | null;
 }
 
-/** A client's whole conversation, oldest first, both channels merged. */
 export async function getClientConversation(clientId: string) {
   const client = await prisma.client.findUnique({
     where: { id: clientId },

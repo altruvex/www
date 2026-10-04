@@ -1,4 +1,7 @@
 import type { LucideIcon } from "lucide-react";
+
+import { can } from "@/lib/rbac";
+import { pageDecision, ROUTE_GATES, type RouteGate } from "@/lib/route-gates";
 import {
   BarChart3,
   Bell,
@@ -34,18 +37,6 @@ import {
   Wallet,
 } from "lucide-react";
 
-/**
- * The information architecture.
- *
- * `state` is the honesty valve. This app is built against a real Prisma schema;
- * modules with no model behind them are marked "planned" and render a spec page
- * that says what they will do and what has to exist first. They are NOT hidden
- * (the operator needs to see where the system is going) and they are NOT faked
- * with mock rows (a screen full of invented clients is worse than an empty one).
- *
- * Progressive disclosure: `primary` items sit at the top level always. Group
- * children collapse; a group auto-expands when the current route is inside it.
- */
 export type NavState = "live" | "planned";
 
 export interface NavItem {
@@ -53,11 +44,8 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   state: NavState;
-  /** Shown in the palette and on the planned page. */
   blurb: string;
-  /** Dot in the sidebar: a count fetched by the shell. */
   badgeKey?: BadgeKey;
-  /** Roles allowed to see it. Empty = everyone signed in. */
   roles?: Role[];
 }
 
@@ -83,17 +71,6 @@ export type BadgeKey =
 const FINANCE_ROLES: Role[] = ["OWNER", "ADMIN", "FINANCE"];
 const ADMIN_ROLES: Role[] = ["OWNER", "ADMIN"];
 
-/**
- * The OS is organised by the question the operator is asking, not by table:
- * "what needs me today", "who are we selling to", "what are we delivering",
- * "is it running", "are we being paid", "how is the system set up".
- *
- * Merged surfaces (2026-10 OS pass): WhatsApp + Email are channels inside
- * Inbox; form submissions + estimator leads are tabs of Leads; invoices are a
- * tab of Billing; system health lives in Integrations; the derived activity
- * feed gave way to the persisted audit log. Their routes still exist — they
- * are reached from the tabs and the palette (`SECONDARY`), not the sidebar.
- */
 export const PRIMARY: NavItem[] = [
   {
     href: "/",
@@ -321,10 +298,6 @@ export const GROUPS: NavGroup[] = [
   },
 ];
 
-/**
- * Live surfaces that are not in the sidebar: tabs of a merged page, or tools
- * reached from a record. The palette and the breadcrumb still know them.
- */
 export const SECONDARY: NavItem[] = [
   {
     href: "/actions",
@@ -386,7 +359,6 @@ export const NOTIFICATIONS_ITEM: NavItem = {
   blurb: "Everything the system wanted to tell you",
 };
 
-/** Flat list — used by the command palette and breadcrumb resolution. */
 export const ALL_NAV_ITEMS: NavItem[] = [
   ...PRIMARY,
   ...GROUPS.flatMap((g) => g.items),
@@ -409,22 +381,17 @@ export function groupFor(pathname: string): NavGroup | undefined {
 }
 
 export function canSee(item: NavItem, role: Role | undefined): boolean {
+  const gate = (ROUTE_GATES as Record<string, RouteGate | undefined>)[item.href];
+  if (gate) return pageDecision(role, gate.required, gate.roles);
   if (!item.roles || item.roles.length === 0) return true;
   if (!role) return false;
   return item.roles.includes(role);
 }
 
-/** Finance figures (cash, balances, overdue amounts) follow the Billing rule. */
 export function canSeeFinance(role: Role | undefined): boolean {
   return role != null && FINANCE_ROLES.includes(role);
 }
 
-/**
- * The `g` + key chords. One table: the shell's key handler and the shortcuts
- * sheet both read it, so a chord can never work without being listed, or be
- * listed without working. A chord to a route the role cannot see is dropped by
- * both, the same way the sidebar drops the item.
- */
 export interface GotoShortcut {
   key: string;
   href: string;
@@ -450,10 +417,30 @@ export const GOTO_SHORTCUTS: GotoShortcut[] = [
   { key: "s", href: "/settings", label: "Settings" },
 ];
 
-/** The chords this role may use — filtered by the nav item each one opens. */
 export function gotoShortcutsFor(role: Role | undefined): GotoShortcut[] {
   return GOTO_SHORTCUTS.filter((shortcut) => {
     const item = ALL_NAV_ITEMS.find((i) => i.href === shortcut.href);
     return !item || canSee(item, role);
   });
+}
+
+export interface CreateShortcut {
+  key: string;
+  href: string;
+  label: string;
+}
+
+export function createShortcutsFor(role: Role | undefined): CreateShortcut[] {
+  const all: Array<CreateShortcut & { allowed: boolean }> = [
+    { key: "t", href: "/tasks?new=task", label: "New task", allowed: can(role, "create", "project") },
+    { key: "m", href: "/calendar?new=meeting", label: "New meeting", allowed: can(role, "create", "meeting") },
+    { key: "c", href: "/clients/new", label: "New client", allowed: can(role, "create", "client") },
+    {
+      key: "p",
+      href: "/payments?new=charge",
+      label: "New payment charge",
+      allowed: can(role, "create", "payment") && canSeeFinance(role),
+    },
+  ];
+  return all.filter((s) => s.allowed).map(({ key, href, label }) => ({ key, href, label }));
 }

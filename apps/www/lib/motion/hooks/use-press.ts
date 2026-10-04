@@ -8,27 +8,12 @@ import { readMotionEnv } from "../utils/env";
 import { createSpring } from "../utils/spring";
 
 export interface PressConfig {
-  /** Scale at full press. Default 0.97. */
   scale?: number;
-  /** Spring used while pressing down. Default `MOTION.spring.press`. */
   pressSpring?: SpringConfig | MotionSpring;
-  /** Spring used on release. Default `MOTION.spring.release` (one soft overshoot). */
   releaseSpring?: SpringConfig | MotionSpring;
-  /** Mirror the press for keyboard Enter/Space so keyboard users get parity. Default true. */
   keyboard?: boolean;
 }
 
-/**
- * Tactile press: scale-down on press, spring back on release.
- *
- * - One `scale` spring, retuned between the press and release physics so a
- *   release mid-press-in continues from the live velocity instead of
- *   restarting — the detail that makes a button feel like an object.
- * - Pointer AND keyboard: Enter/Space mirror the press on focusable elements;
- *   losing focus or the pointer mid-press releases. Click semantics untouched.
- * - Reduced motion: scale is movement, so the press becomes an opacity dip
- *   (`MOTION.reduced.pressOpacity`) — feedback survives, motion doesn't.
- */
 export function usePress<T extends HTMLElement = HTMLButtonElement>(
   config: PressConfig = {},
 ): RefObject<T | null> {
@@ -55,7 +40,6 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
       (el as unknown as { disabled?: boolean }).disabled === true ||
       el.getAttribute("aria-disabled") === "true";
 
-    // ── Reduced tier: opacity dip, no transform ──────────────────────────
     const dim = (to: number) =>
       gsap.to(el, {
         opacity: to,
@@ -64,10 +48,6 @@ export function usePress<T extends HTMLElement = HTMLButtonElement>(
         overwrite: "auto",
       });
 
-    // ── Full tier: single scale spring, retuned per phase ────────────────
-    // Two setters, not `quickSetter(el, "scale")`: CSSPlugin aliases `scale`
-    // to "scaleX,scaleY" before quickSetter resolves it, and the comma form
-    // falls through to a generic property setter that writes nothing.
     let spring: ReturnType<typeof createSpring> | null = null;
     if (!reduce) {
       const setX = gsap.quickSetter(el, "scaleX") as (v: number) => void;

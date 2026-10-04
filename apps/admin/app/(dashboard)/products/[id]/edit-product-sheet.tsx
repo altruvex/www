@@ -54,22 +54,11 @@ export interface EditableProduct {
 
 type Draft = Omit<EditableProduct, "id">;
 
-/**
- * Editing a product's identity and where it runs.
- *
- * The client and slug are not here on purpose: the slug is how CI names this
- * product at the ingest endpoint, and moving a product to another client would
- * carry its deploy history with it. Both are fixed at creation.
- *
- * Only the fields that changed are sent, so the audit entry the server writes
- * describes the edit that was made — not every field the form happened to hold.
- */
 export function EditProductSheet({
   product,
   projects,
 }: {
   product: EditableProduct;
-  /** Projects of this product's client only — the server rejects any other. */
   projects: { id: string; name: string }[];
 }) {
   const [open, setOpen] = React.useState(false);
@@ -79,7 +68,6 @@ export function EditProductSheet({
         <Pencil className="size-3.5" />
         Edit
       </Button>
-      {/* Remounted per opening so the form starts from the saved values. */}
       {open && (
         <Form
           product={product}
@@ -118,8 +106,6 @@ function Form({
     setDraft((prev) => ({ ...prev, [key]: value }));
   }
 
-  // Blank optional text means "none", stored as null — never an empty string,
-  // which would read as a value that happens to be invisible.
   const normalized: Draft = {
     ...draft,
     name: draft.name.trim(),

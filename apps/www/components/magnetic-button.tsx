@@ -132,26 +132,17 @@ export const MagneticButton = forwardRef<
         "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
       filled:
         "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground",
-      // Consumes the section-scoped --local-accent so the same button renders
-      // the active section's color world. Threshold/conversion moments only.
       accent:
         "bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
     };
 
-    /* Both sizes step with the viewport; the floor stays at 44px+ so the
-       touch target holds on the smallest screens. */
     const sizes: Record<ButtonSize, string> = {
-      // Compact bars (the header). Touch devices still get the 44px floor.
       sm: "min-h-10 px-5 text-sm pointer-coarse:min-h-11",
       default:
         "min-h-11 min-w-11 px-5 py-2 text-sm sm:min-h-12 sm:min-w-12 sm:px-6 sm:py-2.5",
       lg: "min-h-12 min-w-12 px-6 py-3 text-[15px] sm:px-7 lg:min-h-14 lg:px-8 lg:py-3.5 lg:text-base",
     };
 
-    /* Every size is a pill. The corner used to track each size's height
-       through the ctl-* tokens; buttons are now fully rounded in both apps
-       (the shared Button primitive does the same). Shared with the ripple
-       layer, which in the asChild path sits outside the button. */
     const radii: Record<ButtonSize, string> = {
       sm: "rounded-full",
       default: "rounded-full",
@@ -186,11 +177,7 @@ export const MagneticButton = forwardRef<
         />
       ));
 
-    // asChild: render the consumer's element (e.g. <Link>) as the interactive
-    // root so we never produce invalid <button><a> nesting. The magnetic/press
-    // refs and styles are merged onto that element. Ripples live in a wrapper
-    // sibling so Slot still receives exactly one slottable child.
-    if (asChild) {
+    if (asChild && React.isValidElement(children)) {
       return (
         <span className="relative inline-flex">
           <Slot

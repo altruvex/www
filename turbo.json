@@ -3,6 +3,7 @@
   "ui": "tui",
   "globalPassThroughEnv": [
     "DATABASE_URL",
+    "DIRECT_DATABASE_URL",
     "BETTER_AUTH_SECRET",
     "BETTER_AUTH_URL",
     "ADMIN_SECRET",
@@ -61,6 +62,7 @@
       ],
       "env": [
         "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
         "ADMIN_SECRET",
@@ -147,7 +149,8 @@
         "^build"
       ],
       "env": [
-        "DATABASE_URL"
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",

@@ -10,7 +10,6 @@ const CATALOGUE: Readonly<Record<Locale, PricingCopy>> = {
   ar: AR_COPY,
 };
 
-/** Unknown locales fall back to EN rather than throwing mid-render. */
 export function pricingCopy(locale: string): PricingCopy {
   return locale === "ar" ? CATALOGUE.ar : CATALOGUE.en;
 }

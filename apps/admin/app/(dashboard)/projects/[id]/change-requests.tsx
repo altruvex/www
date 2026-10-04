@@ -21,13 +21,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   Field,
+  Hint,
   Input,
   LoadingIcon,
   SegmentedControl,
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  Textarea,
 } from "@repo/ui";
 
-import { Panel } from "@/components/os/panel";
+import { useSheetSide } from "@/app/(dashboard)/calendar/sheet-shell";
 import { EmptyInline } from "@/components/os/empty-state";
+import { DateField } from "@/components/os/date-field";
 import { StatusPill } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { date, money } from "@/lib/format";
@@ -52,16 +62,6 @@ import {
   type ActionResult,
 } from "@/app/(dashboard)/_actions/change-requests";
 
-/**
- * Change requests on one project — paid one-off work for a client with no
- * maintenance retainer (rules: `lib/change-requests.ts`).
- *
- * Each row shows exactly one next step as a button, because a request always
- * has one obvious next move (quote it, record the answer, start, deliver); the
- * rarer moves sit in the overflow menu. Nothing here sends anything to the
- * client — the dialogs say so where it matters.
- */
-
 export interface ChangeRequestRow {
   id: string;
   title: string;
@@ -75,9 +75,8 @@ export interface ChangeRequestRow {
   billedAmount: number | null;
   requestedAt: string;
   deliveredAt: string | null;
-  /** Whether the request date falls inside the warranty window. */
   warrantyEligible: boolean;
-  payment: { status: string } | null;
+  payment: { id: string; status: string } | null;
   quoteToken: string | null;
   quoteSentAt: string | null;
   quoteSentVia: string | null;
@@ -87,9 +86,7 @@ export interface ChangeRequestRow {
   clientResponseNote: string | null;
 }
 
-/** What sending a quote needs from the server: where links point, and what can deliver today. */
 export interface QuoteSending {
-  /** Null when no public base URL can be built (BETTER_AUTH_URL unset in production). */
   baseUrl: string | null;
   validityDays: number;
   clientName: string | null;
@@ -107,18 +104,14 @@ type Dialog =
   | { kind: "deliver"; row: ChangeRequestRow }
   | { kind: "cancel"; row: ChangeRequestRow };
 
-const FIELD_LABEL = "block text-meta font-medium text-muted-foreground";
-
-/** Server actions return their refusal rather than throwing it; surface it as an error here. */
-async function unwrap(result: Promise<ActionResult<unknown>>) {
-  const outcome = await result;
-  if (!outcome.ok) throw new Error(outcome.message);
+async function settle(action: () => Promise<ActionResult<unknown>>): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const outcome = await action();
+    return outcome.ok ? { ok: true } : { ok: false, message: outcome.message };
+  } catch {
+    return { ok: false, message: "The request failed before the server answered." };
+  }
 }
-
-const textareaClass = cn(
-  "w-full rounded-ctl border border-border bg-background px-3 py-2 text-base",
-  "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-);
 
 export function ChangeRequestsPanel({
   projectId,
@@ -128,36 +121,40 @@ export function ChangeRequestsPanel({
   closed,
   rows,
   sending,
+  finance,
+  canEdit,
+  canPrice,
 }: {
   projectId: string;
   currency: string;
-  /** The published hourly rate for this project's currency; null when none exists. */
   rate: number | null;
   warrantyDays: number;
   closed: boolean;
   rows: ChangeRequestRow[];
   sending: QuoteSending;
+  finance: boolean;
+  canEdit: boolean;
+  canPrice: boolean;
 }) {
   const [dialog, setDialog] = React.useState<Dialog | null>(null);
   const close = () => setDialog(null);
 
   return (
     <>
-      <Panel
-        title="Change requests"
-        description={
-          closed
-            ? "The project is closed. Changes can still be logged, quoted and billed here."
-            : "One-off paid work outside the contract — no retainer needed."
-        }
-        action={
-          <Button size="sm" variant="outline" onClick={() => setDialog({ kind: "new" })}>
-            <Plus className="size-3.5" />
-            New request
-          </Button>
-        }
-        flush
-      >
+      <div className="plane overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+          <p className="min-w-0 flex-1 text-meta text-muted-foreground">
+            {closed
+              ? "The project is closed. Changes can still be logged, quoted and billed here."
+              : "One-off paid work outside the contract — no retainer needed."}
+          </p>
+          {canEdit && (
+            <Button size="sm" variant="outline" className="pointer-coarse:h-11" onClick={() => setDialog({ kind: "new" })}>
+              <Plus className="size-3.5" />
+              New request
+            </Button>
+          )}
+        </div>
         {rows.length === 0 ? (
           <EmptyInline>
             Nothing requested yet. When the client asks for a change and has no maintenance
@@ -169,11 +166,20 @@ export function ChangeRequestsPanel({
         ) : (
           <ul className="rows">
             {rows.map((row) => (
-              <RequestRow key={row.id} row={row} currency={currency} baseUrl={sending.baseUrl} open={setDialog} />
+              <RequestRow
+                key={row.id}
+                row={row}
+                currency={currency}
+                baseUrl={sending.baseUrl}
+                finance={finance}
+                canEdit={canEdit}
+                canPrice={canPrice}
+                open={setDialog}
+              />
             ))}
           </ul>
         )}
-      </Panel>
+      </div>
 
       {dialog?.kind === "new" && <NewRequestDialog projectId={projectId} onClose={close} />}
       {dialog?.kind === "quote" && (
@@ -199,17 +205,16 @@ export function ChangeRequestsPanel({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Row                                                                        */
-/* -------------------------------------------------------------------------- */
-
 function pricingLine(row: ChangeRequestRow, currency: string): string | null {
   if (row.pricing === "WARRANTY") return "Warranty · no charge";
   if (row.pricing === "FIXED") return "Fixed quote";
-  if (row.pricing === "HOURLY" && row.hourlyRate != null) {
+  if (row.pricing === "HOURLY") {
     const hours = row.actualMinutes ?? row.estimatedMinutes;
+    if (hours == null) return null;
     const verb = row.actualMinutes != null ? "actual" : "estimated";
-    return `${formatHours(hours)} ${verb} × ${money(row.hourlyRate, currency)}`;
+    return row.hourlyRate != null
+      ? `${formatHours(hours)} ${verb} × ${money(row.hourlyRate, currency)}`
+      : `${formatHours(hours)} ${verb}`;
   }
   return null;
 }
@@ -218,11 +223,17 @@ function RequestRow({
   row,
   currency,
   baseUrl,
+  finance,
+  canEdit,
+  canPrice,
   open,
 }: {
   row: ChangeRequestRow;
   currency: string;
   baseUrl: string | null;
+  finance: boolean;
+  canEdit: boolean;
+  canPrice: boolean;
   open: (dialog: Dialog) => void;
 }) {
   const router = useRouter();
@@ -232,40 +243,50 @@ function RequestRow({
 
   const run = (label: string, action: () => Promise<ActionResult<unknown>>) =>
     startTransition(async () => {
-      try {
-        await unwrap(action());
-        toast.success(label);
-        router.refresh();
-      } catch (error) {
-        toast.error("Could not update the request", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
+      const result = await settle(action);
+      if (!result.ok) {
+        toast.error(`${result.message} Nothing was changed.`);
+        return;
       }
+      toast.success(label);
+      router.refresh();
     });
 
   let primary: React.ReactNode = null;
   const menu: { label: string; onSelect: () => void; destructive?: boolean }[] = [];
+  const recordApproval = {
+    label: "Record approval",
+    onSelect: () => open({ kind: "decision", row, decision: "APPROVED" }),
+  };
+  const recordDeclined = {
+    label: "Record declined",
+    onSelect: () => open({ kind: "decision", row, decision: "DECLINED" }),
+  };
 
   switch (row.status) {
     case "REQUESTED":
-      primary = <Button size="sm" variant="outline" onClick={() => open({ kind: "quote", row })}>Quote</Button>;
-      if (row.warrantyEligible) {
+      if (canPrice) {
+        primary = <Button size="sm" variant="outline" onClick={() => open({ kind: "quote", row })}>Quote</Button>;
+      }
+      if (canEdit && row.warrantyEligible) {
         menu.push({
           label: "Cover under warranty",
           onSelect: () => run("Covered under warranty", () => coverChangeRequestUnderWarranty(row.id)),
         });
       }
-      menu.push({ label: "Record declined", onSelect: () => open({ kind: "decision", row, decision: "DECLINED" }) });
+      if (canEdit) menu.push(recordDeclined);
       break;
     case "QUOTED":
       if (row.quoteSentAt) {
-        primary = (
-          <Button size="sm" variant="outline" onClick={() => open({ kind: "decision", row, decision: "APPROVED" })}>
-            Record approval
-          </Button>
-        );
-        menu.push({ label: "Resend quote", onSelect: () => open({ kind: "send", row }) });
-        if (baseUrl && row.quoteToken) {
+        if (canEdit) {
+          primary = (
+            <Button size="sm" variant="outline" onClick={recordApproval.onSelect}>
+              Record approval
+            </Button>
+          );
+        }
+        if (canPrice) menu.push({ label: "Resend quote", onSelect: () => open({ kind: "send", row }) });
+        if (canPrice && baseUrl && row.quoteToken) {
           const link = `${baseUrl}/quote/${row.quoteToken}`;
           menu.push({
             label: "Copy quote link",
@@ -276,30 +297,50 @@ function RequestRow({
               ),
           });
         }
-      } else {
+      } else if (canPrice) {
         primary = (
           <Button size="sm" variant="outline" onClick={() => open({ kind: "send", row })}>
             Send quote
           </Button>
         );
-        menu.push({ label: "Record approval", onSelect: () => open({ kind: "decision", row, decision: "APPROVED" }) });
+        menu.push(recordApproval);
+      } else if (canEdit) {
+        primary = (
+          <Button size="sm" variant="outline" onClick={recordApproval.onSelect}>
+            Record approval
+          </Button>
+        );
       }
-      menu.push({ label: "Re-quote", onSelect: () => open({ kind: "quote", row }) });
-      menu.push({ label: "Record declined", onSelect: () => open({ kind: "decision", row, decision: "DECLINED" }) });
+      if (canPrice) menu.push({ label: "Re-quote", onSelect: () => open({ kind: "quote", row }) });
+      if (canEdit) menu.push(recordDeclined);
       break;
     case "APPROVED":
-      primary = (
-        <Button size="sm" variant="outline" disabled={busy} onClick={() => run("Work started", () => startChangeRequest(row.id))}>
-          {busy && <LoadingIcon size="sm" />}
-          Start work
-        </Button>
-      );
+      if (canEdit) {
+        primary = (
+          <Button size="sm" variant="outline" disabled={busy} onClick={() => run("Work started", () => startChangeRequest(row.id))}>
+            {busy && <LoadingIcon size="sm" />}
+            Start work
+          </Button>
+        );
+      }
       break;
     case "IN_PROGRESS":
-      primary = <Button size="sm" variant="outline" onClick={() => open({ kind: "deliver", row })}>Deliver</Button>;
+      if (canPrice) {
+        primary = <Button size="sm" variant="outline" onClick={() => open({ kind: "deliver", row })}>Deliver</Button>;
+      } else if (canEdit) {
+        primary = (
+          <Hint label="Delivery bills the client — an admin or owner records it">
+            <span className="inline-flex">
+              <Button size="sm" variant="outline" disabled aria-disabled>
+                Deliver
+              </Button>
+            </span>
+          </Hint>
+        );
+      }
       break;
   }
-  if (isOpen(row.status)) {
+  if (canEdit && isOpen(row.status)) {
     menu.push({ label: "Cancel request", onSelect: () => open({ kind: "cancel", row }), destructive: true });
   }
 
@@ -346,13 +387,21 @@ function RequestRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {amount != null && (
+        {finance && amount != null && (
           <span className="font-mono text-md tabular-nums">{money(amount, currency)}</span>
         )}
-        {row.payment ? (
-          <Link href="/payments" className="rounded-xs" title="Open payments">
-            <StatusPill registry="paymentStatus" value={row.payment.status} />
-          </Link>
+        {row.payment && finance ? (
+          <Hint label="Open the payment">
+            <Link
+              href={`/payments?inspect=${row.payment.id}`}
+              className="rounded-xs"
+              aria-label="Open the payment"
+            >
+              <StatusPill registry="paymentStatus" value={row.payment.status} />
+            </Link>
+          </Hint>
+        ) : row.payment ? (
+          <StatusPill registry="paymentStatus" value={row.payment.status} />
         ) : (
           <StatusPill registry="changeRequestStatus" value={row.status} />
         )}
@@ -378,30 +427,24 @@ function RequestRow({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Dialogs                                                                    */
-/* -------------------------------------------------------------------------- */
-
 function useSubmit(onClose: () => void) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const submit = async (label: string, action: () => Promise<ActionResult<unknown>>) => {
     setBusy(true);
-    try {
-      await unwrap(action());
-      toast.success(label);
-      router.refresh();
-      onClose();
-    } catch (error) {
-      toast.error("Could not save it", {
-        description:
-          error instanceof Error ? `${error.message} Nothing was changed.` : "Unknown error. Nothing was changed.",
-      });
-    } finally {
-      setBusy(false);
+    setError(null);
+    const result = await settle(action);
+    setBusy(false);
+    if (!result.ok) {
+      setError(`${result.message} Nothing was changed.`);
+      return;
     }
+    toast.success(label);
+    router.refresh();
+    onClose();
   };
-  return { busy, submit };
+  return { busy, submit, error };
 }
 
 function DialogShell({
@@ -415,6 +458,8 @@ function DialogShell({
   destructive,
   onConfirm,
   onClose,
+  error,
+  asSheet = false,
   children,
 }: {
   title: string;
@@ -423,13 +468,67 @@ function DialogShell({
   canSubmit: boolean;
   confirm: string;
   dismiss?: string;
-  /** A second, non-primary commit beside the confirm button. */
   secondary?: { label: string; onClick: () => void };
   destructive?: boolean;
   onConfirm: () => void;
   onClose: () => void;
+  error?: string | null;
+  asSheet?: boolean;
   children?: React.ReactNode;
 }) {
+  const sheet = useSheetSide();
+  const errorLine = error ? (
+    <p role="alert" className="text-meta text-danger">
+      {error}
+    </p>
+  ) : null;
+  const commit = (
+    <>
+      {secondary && (
+        <Button
+          variant="outline"
+          className="pointer-coarse:h-11"
+          disabled={busy || !canSubmit}
+          onClick={secondary.onClick}
+        >
+          {secondary.label}
+        </Button>
+      )}
+    </>
+  );
+
+  if (asSheet) {
+    return (
+      <Sheet open onOpenChange={(next) => !next && !busy && onClose()}>
+        <SheetContent side={sheet.side} width="md" className={sheet.className}>
+          <SheetHeader>
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription>{description}</SheetDescription>
+          </SheetHeader>
+          <SheetBody className="space-y-3 overflow-y-auto">
+            {children}
+            {errorLine}
+          </SheetBody>
+          <SheetFooter>
+            <Button variant="ghost" className="pointer-coarse:h-11" disabled={busy} onClick={onClose}>
+              {dismiss}
+            </Button>
+            {commit}
+            <Button
+              variant={destructive ? "destructive" : "brand"}
+              className="pointer-coarse:h-11"
+              disabled={busy || !canSubmit}
+              onClick={onConfirm}
+            >
+              {busy && <LoadingIcon size="sm" />}
+              {confirm}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
   return (
     <AlertDialog open onOpenChange={(next) => !next && !busy && onClose()}>
       <AlertDialogContent className="max-w-lg">
@@ -438,13 +537,10 @@ function DialogShell({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         {children && <div className="space-y-3">{children}</div>}
+        {errorLine}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{dismiss}</AlertDialogCancel>
-          {secondary && (
-            <Button variant="outline" disabled={busy || !canSubmit} onClick={secondary.onClick}>
-              {secondary.label}
-            </Button>
-          )}
+          {commit}
           <AlertDialogAction
             variant={destructive ? "destructive" : "brand"}
             disabled={busy || !canSubmit}
@@ -463,15 +559,17 @@ function DialogShell({
 }
 
 function NewRequestDialog({ projectId, onClose }: { projectId: string; onClose: () => void }) {
-  const { busy, submit } = useSubmit(onClose);
+  const { busy, submit, error } = useSubmit(onClose);
   const [title, setTitle] = React.useState("");
   const [detail, setDetail] = React.useState("");
 
   return (
     <DialogShell
+      asSheet
       title="Log a change request"
       description="What the client asked for, in their words. It is priced in the next step."
       busy={busy}
+      error={error}
       canSubmit={title.trim().length > 0}
       confirm="Log request"
       onClose={onClose}
@@ -488,21 +586,18 @@ function NewRequestDialog({ projectId, onClose }: { projectId: string; onClose: 
           autoFocus
         />
       </Field>
-      <label className="block space-y-1.5">
-        <span className={FIELD_LABEL}>Detail (optional)</span>
-        <textarea
+      <Field label="Detail (optional)">
+        <Textarea
           value={detail}
           onChange={(event) => setDetail(event.target.value)}
           rows={4}
           maxLength={4000}
-          className={textareaClass}
         />
-      </label>
+      </Field>
     </DialogShell>
   );
 }
 
-/** Parses a typed number; empty or invalid reads as null rather than zero. */
 function parseNumber(value: string): number | null {
   if (value.trim() === "") return null;
   const n = Number(value);
@@ -520,11 +615,11 @@ function QuoteDialog({
   currency: string;
   rate: number | null;
   onClose: () => void;
-  /** Called with the freshly quoted row when the operator chose to send it straight away. */
   onSend: (row: ChangeRequestRow) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
   const [mode, setMode] = React.useState<"HOURLY" | "FIXED">(
     row.pricing === "FIXED" || rate == null ? "FIXED" : "HOURLY",
   );
@@ -546,6 +641,7 @@ function QuoteDialog({
 
   async function save(andSend: boolean) {
     setBusy(true);
+    setError(null);
     try {
       const result = await quoteChangeRequest(
         row.id,
@@ -553,7 +649,10 @@ function QuoteDialog({
           ? { pricing: "HOURLY", estimatedHours: hoursValue ?? 0 }
           : { pricing: "FIXED", amount: Math.round(amountValue ?? 0) },
       );
-      if (!result.ok) throw new Error(result.message);
+      if (!result.ok) {
+        setError(`${result.message} Nothing was changed.`);
+        return;
+      }
       router.refresh();
       if (andSend) {
         onSend({
@@ -569,11 +668,8 @@ function QuoteDialog({
         toast.success("Quote saved", { description: "Not sent yet — send it from the row when ready." });
         onClose();
       }
-    } catch (error) {
-      toast.error("Could not save the quote", {
-        description:
-          error instanceof Error ? `${error.message} Nothing was changed.` : "Unknown error. Nothing was changed.",
-      });
+    } catch {
+      setError("The request failed before the server answered. Nothing was changed.");
     } finally {
       setBusy(false);
     }
@@ -581,6 +677,7 @@ function QuoteDialog({
 
   return (
     <DialogShell
+      asSheet
       title={row.status === "QUOTED" ? "Re-quote the request" : "Quote the request"}
       description={
         <>
@@ -590,6 +687,7 @@ function QuoteDialog({
         </>
       }
       busy={busy}
+      error={error}
       canSubmit={preview != null}
       confirm={preview != null ? `Save and send ${money(preview, currency)}` : "Save and send"}
       secondary={{ label: "Save only", onClick: () => void save(false) }}
@@ -668,7 +766,7 @@ function DecisionDialog({
   currency: string;
   onClose: () => void;
 }) {
-  const { busy, submit } = useSubmit(onClose);
+  const { busy, submit, error } = useSubmit(onClose);
   const [channel, setChannel] = React.useState<ManualChannel | null>(null);
   const [day, setDay] = React.useState(today());
   const [note, setNote] = React.useState("");
@@ -683,6 +781,7 @@ function DecisionDialog({
           : "The client does not want this change. It closes without billing."
       }
       busy={busy}
+      error={error}
       canSubmit
       confirm={approved ? "Record approval" : "Record declined"}
       destructive={!approved}
@@ -704,21 +803,18 @@ function DecisionDialog({
         value={channel}
         onChange={(value) => setChannel((current) => (current === value ? null : value))}
       />
-      <label className="block space-y-1.5">
-        <span className={FIELD_LABEL}>When</span>
-        <Input type="date" value={day} max={today()} onChange={(event) => setDay(event.target.value)} className="w-44" />
-      </label>
-      <label className="block space-y-1.5">
-        <span className={FIELD_LABEL}>Note (optional)</span>
-        <textarea
+      <Field label="When">
+        <DateField value={day} max={today()} onChange={setDay} className="w-44" />
+      </Field>
+      <Field label="Note (optional)">
+        <Textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={2}
           maxLength={500}
           placeholder="Kept in the audit trail"
-          className={textareaClass}
         />
-      </label>
+      </Field>
     </DialogShell>
   );
 }
@@ -732,7 +828,7 @@ function DeliverDialog({
   currency: string;
   onClose: () => void;
 }) {
-  const { busy, submit } = useSubmit(onClose);
+  const { busy, submit, error } = useSubmit(onClose);
   const hourly = row.pricing === "HOURLY";
   const [hours, setHours] = React.useState(
     row.estimatedMinutes != null ? String(row.estimatedMinutes / 60) : "",
@@ -762,6 +858,7 @@ function DeliverDialog({
             : "Delivered at no charge — no payment is opened."
       }
       busy={busy}
+      error={error}
       canSubmit={billed != null}
       confirm={billed != null && billed > 0 ? `Deliver and bill ${money(billed, currency)}` : "Deliver"}
       onClose={onClose}
@@ -810,14 +907,12 @@ function SendQuoteDialog({
   sending: QuoteSending;
   onClose: () => void;
 }) {
-  const { busy, submit } = useSubmit(onClose);
+  const { busy, submit, error } = useSubmit(onClose);
   const canEmail = sending.emailConfigured && Boolean(sending.clientEmail);
   const [channel, setChannel] = React.useState<"email" | "whatsapp">(
     canEmail || !sending.whatsappConfigured ? "email" : "whatsapp",
   );
 
-  // The link shown in the draft is the one the server will append; the server
-  // builds its own and re-appends it if this body loses it.
   const link = sending.baseUrl && row.quoteToken ? `${sending.baseUrl}/quote/${row.quoteToken}` : null;
   const draft = React.useMemo(
     () =>
@@ -847,6 +942,7 @@ function SendQuoteDialog({
 
   return (
     <DialogShell
+      asSheet
       title={row.quoteSentAt ? "Resend the quote" : "Send the quote"}
       description={
         <>
@@ -856,6 +952,7 @@ function SendQuoteDialog({
         </>
       }
       busy={busy}
+      error={error}
       canSubmit={blocked == null}
       confirm={channel === "email" ? "Send email" : "Send over WhatsApp"}
       onClose={onClose}
@@ -896,16 +993,15 @@ function SendQuoteDialog({
           <Input value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={200} />
         </Field>
       )}
-      <label className="block space-y-1.5">
-        <span className={FIELD_LABEL}>Message</span>
-        <textarea
+      <Field label="Message">
+        <Textarea
           value={body}
           onChange={(event) => setBody(event.target.value)}
           rows={11}
           maxLength={10000}
-          className={cn(textareaClass, "font-mono text-meta leading-relaxed")}
+          className="font-mono text-meta leading-relaxed"
         />
-      </label>
+      </Field>
       <div className="flex items-center justify-between gap-3">
         <p className="text-meta text-subtle-foreground">Plain text. The link is added back if you remove it.</p>
         <Button
@@ -926,7 +1022,7 @@ function SendQuoteDialog({
 }
 
 function CancelDialog({ row, onClose }: { row: ChangeRequestRow; onClose: () => void }) {
-  const { busy, submit } = useSubmit(onClose);
+  const { busy, submit, error } = useSubmit(onClose);
   const [note, setNote] = React.useState("");
 
   return (
@@ -934,6 +1030,7 @@ function CancelDialog({ row, onClose }: { row: ChangeRequestRow; onClose: () => 
       title="Cancel the request"
       description={`${row.title}. It stays on the project as cancelled, and nothing is billed.`}
       busy={busy}
+      error={error}
       canSubmit
       confirm="Cancel request"
       dismiss="Keep it"
@@ -941,17 +1038,15 @@ function CancelDialog({ row, onClose }: { row: ChangeRequestRow; onClose: () => 
       onClose={onClose}
       onConfirm={() => submit("Request cancelled", () => cancelChangeRequest(row.id, note))}
     >
-      <label className="block space-y-1.5">
-        <span className={FIELD_LABEL}>Why (optional)</span>
-        <textarea
+      <Field label="Why (optional)">
+        <Textarea
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={2}
           maxLength={500}
           placeholder="Kept in the audit trail"
-          className={textareaClass}
         />
-      </label>
+      </Field>
     </DialogShell>
   );
 }

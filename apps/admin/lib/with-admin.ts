@@ -6,25 +6,9 @@ import type { Role } from "@/lib/nav";
 import { permitted, resolveRole, type Capability } from "@/lib/rbac";
 import { requireAdminSession } from "@/lib/require-admin";
 
-/**
- * The admin route wrapper.
- *
- * The `if (!(await requireAdminSession(request))) return 401` guard was
- * copy-pasted into every handler in `app/api/admin/**`. That works right up
- * until someone adds the fifteenth route and forgets, and the failure mode is
- * an unauthenticated read of client data. Wrapping the handler makes the check
- * structural: there is no way to export a handler from this helper without it
- * having run.
- *
- * The wrapper also hands the handler the resolved session and an `Actor` ready
- * for `recordActivity`, so an audited mutation does not have to re-derive who
- * is calling it.
- */
-
 export interface AdminContext<P = Record<string, string>> {
   session: NonNullable<Awaited<ReturnType<typeof requireAdminSession>>>;
   actor: Actor;
-  /** The caller's product role (lib/rbac.ts), for decisions finer than `can`. */
   role: Role | undefined;
   params: P;
 }
@@ -35,11 +19,6 @@ export type AdminHandler<P> = (
 ) => Promise<NextResponse> | NextResponse;
 
 export interface WithAdminOptions {
-  /**
-   * Capabilities the caller's product role must hold, e.g. `["edit", "payment"]`
-   * or several. A caller who is an admin but lacks one gets a 403; omitting it
-   * keeps the route open to every admin, as before.
-   */
   can?: Capability | Capability[];
 }
 
@@ -49,14 +28,6 @@ const unauthorized = () =>
 const forbidden = () =>
   NextResponse.json({ success: false, message: "Not permitted" }, { status: 403 });
 
-/**
- * Wraps a route handler in the admin session check, and optionally in a
- * capability check on top of it.
- *
- * Next passes `{ params }` as the second argument to a route handler; params
- * are a promise in the App Router, so they are awaited here once rather than in
- * every handler.
- */
 export function withAdmin<P = Record<string, string>>(
   handler: AdminHandler<P>,
   options: WithAdminOptions = {},
@@ -88,9 +59,6 @@ export function withAdmin<P = Record<string, string>>(
           { status: error.status },
         );
       }
-      // The message is deliberately generic: a Prisma error string can carry
-      // column names and constraint definitions, which is not something an
-      // API response should teach a caller.
       console.error(`Admin route failed: ${request.method} ${request.nextUrl.pathname}`, error);
       return NextResponse.json(
         { success: false, message: "Something went wrong. The error has been logged." },
@@ -100,7 +68,6 @@ export function withAdmin<P = Record<string, string>>(
   };
 }
 
-/** Throw this from a handler to return a specific status without a try/catch. */
 export class HttpError extends Error {
   constructor(
     readonly status: number,
@@ -115,7 +82,6 @@ export const badRequest = (message: string) => new HttpError(400, message);
 export const notFound = (message = "Not found.") => new HttpError(404, message);
 export const conflict = (message: string) => new HttpError(409, message);
 
-/** Parses and validates a JSON body, throwing a 400 on malformed input. */
 export async function readJson<T>(request: NextRequest, schema: ZodType<T>): Promise<T> {
   let raw: unknown;
   try {

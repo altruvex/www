@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Download, FolderOpen } from "lucide-react";
-import { DataTable, type Column } from "@/components/os/data-table";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Download, FolderOpen, Trash2 } from "lucide-react";
+import { Button } from "@repo/ui";
+import { DataTable, type BulkAction, type Column } from "@/components/os/data-table";
 import { EmptyState } from "@/components/os/empty-state";
+import { useRecordDelete, type DeleteTarget } from "@/components/os/delete-record";
 import { EntityLink } from "@/components/os/entity-link";
+import { inspectHref } from "@/components/os/inspect-sheet";
 import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
 import type { RegistryName } from "@/lib/status";
@@ -25,7 +29,77 @@ export interface DocumentRow {
   updatedAt: string;
 }
 
-export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
+function ownersOf(selected: DocumentRow[], label: "Proposal" | "Contract"): DeleteTarget[] {
+  const owners = new Map<string, DeleteTarget>();
+  for (const row of selected) {
+    if (row.entityLabel !== label) continue;
+    const id = row.entityHref.split("/").pop();
+    if (id && !owners.has(id)) owners.set(id, { id, label: `${row.name.replace(/ \((PDF|signed)\)$/, "")} · ${row.clientName}` });
+  }
+  return [...owners.values()];
+}
+
+export function DocumentsTable({
+  rows,
+  filtered,
+  canDeleteProposals,
+  canDeleteContracts,
+}: {
+  rows: DocumentRow[];
+  canDeleteProposals: boolean;
+  canDeleteContracts: boolean;
+  filtered: string | null;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const delProposals = useRecordDelete({ entity: "proposal" });
+  const delContracts = useRecordDelete({ entity: "contract" });
+
+  const bulkOf = (
+    label: "Proposal" | "Contract",
+    noun: string,
+    chain: string,
+    request: (targets: DeleteTarget[]) => void,
+  ): BulkAction<DocumentRow> => ({
+    label: `Delete ${noun}s`,
+    icon: Trash2,
+    destructive: true,
+    confirm: (selected) => {
+      const n = ownersOf(selected, label).length;
+      return {
+        title: n === 0 ? `No ${noun}s selected` : `Delete ${n} ${noun}${n === 1 ? "" : "s"}`,
+        description: `This deletes the whole ${noun} record, not just its file${n === 0 ? "" : ` — ${n} ${noun}${n === 1 ? "" : "s"} in all`}. ${chain}`,
+        consequence: "Protected records are kept and each one is named with the reason. The next step shows exactly what goes.",
+        confirmLabel: "Continue",
+        tone: "danger",
+      };
+    },
+    onRun: (selected) => {
+      const targets = ownersOf(selected, label);
+      if (targets.length === 0) {
+        return { ok: false, message: `None of the selected files belong to a ${noun}.` };
+      }
+      request(targets);
+      return undefined;
+    },
+  });
+  const bulkActions = [
+    canDeleteProposals &&
+      bulkOf(
+        "Proposal",
+        "proposal",
+        "A proposal takes its contract, the project and the payments with it.",
+        delProposals.request,
+      ),
+    canDeleteContracts &&
+      bulkOf(
+        "Contract",
+        "contract",
+        "A contract takes its project and the payments with it.",
+        delContracts.request,
+      ),
+  ].filter((a): a is BulkAction<DocumentRow> => a !== false);
+
   const columns: Column<DocumentRow>[] = [
     {
       id: "name",
@@ -61,7 +135,7 @@ export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
       width: "112px",
       cell: (row) => (
         <Link href={row.entityHref} className="text-muted-foreground hover:text-brand">
-          {row.entityLabel} →
+          {row.entityLabel}
         </Link>
       ),
       minWidth: "xl",
@@ -109,7 +183,7 @@ export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
           className="inline-flex h-6 items-center gap-1 rounded-sm border border-border px-1.5 text-meta hover:bg-surface"
           onClick={(e) => e.stopPropagation()}
         >
-          <Download className="size-3" />
+          <Download className="size-3" aria-hidden />
           Open
         </a>
       ),
@@ -117,21 +191,52 @@ export function DocumentsTable({ rows }: { rows: DocumentRow[] }) {
   ];
 
   return (
+    <>
     <DataTable
       tableId="documents"
       rows={rows}
       columns={columns}
       rowKey={(row) => row.id}
+      rowHref={(row) => inspectHref(pathname, searchParams, row.id)}
       searchPlaceholder="Search documents…"
       initialSort={{ columnId: "created", dir: "desc" }}
+      selectable={bulkActions.length > 0}
+      selectionNoun="document"
+      bulkActions={bulkActions.length > 0 ? bulkActions : undefined}
       mobile={{ title: "name", subtitle: "client", meta: ["category", "status", "created"] }}
       empty={
         <EmptyState
           icon={FolderOpen}
-          title="No documents in this view"
-          body="Nothing here matches the current search or columns. Clear the search to see every generated file."
+          title={filtered ? `No documents in “${filtered}”` : "No documents in this view"}
+          body={
+            filtered
+              ? "Nothing of this kind has been generated yet. Pick another chip above, or All."
+              : "Nothing here matches the search. Clear it to see every generated file."
+          }
+          action={
+            filtered ? (
+              <Button variant="outline" size="sm" asChild>
+                <Link href={clearedHref(pathname, searchParams)}>Clear filters</Link>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/proposals">Open proposals</Link>
+              </Button>
+            )
+          }
         />
       }
     />
+    {delProposals.dialog}
+    {delContracts.dialog}
+    </>
   );
+}
+
+function clearedHref(pathname: string, searchParams: URLSearchParams | null) {
+  const params = new URLSearchParams(searchParams?.toString());
+  params.delete("type");
+  params.delete("inspect");
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }

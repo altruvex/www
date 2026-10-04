@@ -1,8 +1,11 @@
 "use client";
 
-import { Button } from "@repo/ui";
-import { LoadingIcon } from "@repo/ui";
-import { Field, Input } from "@repo/ui";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState, useSyncExternalStore, useTransition } from "react";
+
+import { Button, Checkbox, Field, Input, LoadingIcon } from "@repo/ui";
+
 import { signIn, twoFactor } from "@/lib/auth-client";
 import {
   getRememberMe,
@@ -11,17 +14,13 @@ import {
   subscribeRememberMe,
 } from "@/lib/remember-me";
 import { safeRedirectPath } from "@/lib/safe-redirect";
-import { AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, useSyncExternalStore, useTransition } from "react";
-import { Checkbox } from "@repo/ui";
+
+import { AuthNotice, AuthShell, authControl } from "./auth-shell";
 
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // Read through `useSyncExternalStore` so the server's value survives
-  // hydration and the stored one is applied straight after — see lib/remember-me.ts.
   const rememberMe = useSyncExternalStore(
     subscribeRememberMe,
     getRememberMe,
@@ -29,12 +28,8 @@ function LoginForm() {
   );
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
-  // Better Auth answers a password sign-in with `twoFactorRedirect` when the
-  // account carries a second factor; no session exists until the code verifies.
   const [needsCode, setNeedsCode] = useState(false);
   const [code, setCode] = useState("");
-  // A backup code replaces the authenticator code, not the password. Each one
-  // works once; the server marks it spent, this page never stores it.
   const [useBackup, setUseBackup] = useState(false);
   const codeReady = useBackup ? code.length >= 8 : code.length === 6;
 
@@ -103,176 +98,189 @@ function LoginForm() {
     });
   };
 
-  return (
-    <main className="flex min-h-dvh items-center justify-center px-4 py-10">
-      <div className="w-full max-w-95">
-        <div className="mb-5 flex items-center gap-2">
-          <span className="grid size-6 shrink-0 place-items-center rounded-md bg-foreground font-sans text-meta font-semibold text-background">
-            A
-          </span>
-          <span className="font-sans text-md font-semibold tracking-tight">Altruvex</span>
-          <span className="telemetry ms-auto text-subtle-foreground">Operating system</span>
-        </div>
-        {needsCode ? (
-          <div className="plane p-5">
-            <h1 className="text-lg font-semibold">Enter your code</h1>
-            <p className="mt-1 text-base text-muted-foreground">
-              {useBackup
-                ? "Your password was accepted. Type one of the backup codes you saved when you set up two-factor. Each works once."
-                : "Your password was accepted. Type the six-digit code from your authenticator app."}
-            </p>
-            <form onSubmit={handleCode} className="mt-5 space-y-3">
-              {useBackup ? (
-                <Field label="Backup code">
-                  <Input
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 24))}
-                    inputMode="text"
-                    autoComplete="off"
-                    spellCheck={false}
-                    placeholder="xxxxx-xxxxx"
-                    className="h-9 font-mono"
-                    autoFocus
-                    required
-                  />
-                </Field>
-              ) : (
-                <Field label="Six-digit code">
-                  <Input
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    placeholder="000000"
-                    className="h-9 tracking-[0.3em]"
-                    autoFocus
-                    required
-                  />
-                </Field>
-              )}
-              {error && (
-                <p
-                  className="rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
-                  role="alert"
-                >
-                  {error}
-                </p>
-              )}
-              <Button
-                type="submit"
-                variant="brand"
-                className="h-9 w-full"
-                disabled={isPending || !codeReady}
-                aria-busy={isPending}
-              >
-                {isPending && <LoadingIcon size="sm" />}
-                {isPending ? "Verifying…" : "Verify and sign in"}
-              </Button>
-              <button
-                type="button"
-                className="block text-meta text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                onClick={() => {
-                  setUseBackup((value) => !value);
-                  setCode("");
-                  setError("");
-                }}
-              >
-                {useBackup ? "Use the authenticator app instead" : "Lost the phone? Use a backup code"}
-              </button>
-            </form>
-          </div>
-        ) : (
-        <div className="plane p-5">
-          <h1 className="text-lg font-semibold">Sign in</h1>
-          <p className="mt-1 text-base text-muted-foreground">
-            This application holds every client, contract and payment record. Access is
-            per person and every session is logged.
-          </p>
-          {sessionExpired && (
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-warning/25 bg-warning/[0.07] px-2.5 py-2 text-base text-warning" role="alert">
-              <AlertCircle className="size-4 shrink-0" />
-              <span>Your session has expired. Please sign in again.</span>
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
-            <Field label="Email">
+  const backToPassword = () => {
+    setNeedsCode(false);
+    setUseBackup(false);
+    setCode("");
+    setPassword("");
+    setError("");
+  };
+
+  const helpLine = (
+    <p className="flex items-start gap-2">
+      <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+      Accounts are created by an owner — there is no sign-up. If you cannot get in, ask for an
+      account rather than resetting one.
+    </p>
+  );
+
+  if (needsCode) {
+    return (
+      <AuthShell
+        label="Operating system"
+        title="Enter your code"
+        lead={
+          useBackup
+            ? "Your password was accepted. Type one of the backup codes you saved when you set up two-factor. Each works once."
+            : "Your password was accepted. Type the six-digit code from your authenticator app."
+        }
+        footer={
+          <button
+            type="button"
+            onClick={backToPassword}
+            className="inline-flex min-h-8 items-center gap-1.5 underline underline-offset-2 hover:text-foreground pointer-coarse:min-h-11"
+          >
+            <ArrowLeft className="size-3.5" aria-hidden />
+            Back to sign in
+          </button>
+        }
+      >
+        <form onSubmit={handleCode} className="space-y-3">
+          {useBackup ? (
+            <Field label="Backup code">
               <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@altruvex.com"
-                autoComplete="username"
-                className="h-9"
+                name="backup-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/[^A-Za-z0-9-]/g, "").slice(0, 24))}
+                inputMode="text"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                placeholder="xxxxx-xxxxx"
+                className={authControl}
                 autoFocus
                 required
               />
             </Field>
-            <Field label="Password">
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Type Your Password"
-                  autoComplete="current-password"
-                  className="h-9 pe-9"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff className="size-4" aria-hidden="true" />
-                  ) : (
-                    <Eye className="size-4" aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            </Field>
-            <div className="flex items-center gap-2 text-base">
-              <Checkbox
-                id="remember-me"
-                checked={rememberMe}
-                onCheckedChange={(checked) => handleRememberMeChange(checked === true)}
+          ) : (
+            <Field label="Six-digit code">
+              <Input
+                name="totp-code"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]*"
+                placeholder="000000"
+                className={`${authControl} tracking-[0.3em]`}
+                autoFocus
+                required
               />
-              <label
-                htmlFor="remember-me"
-                className="cursor-pointer select-none text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Remember me
-              </label>
-            </div>
-            {error && (
-              <p
-                className="rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-            <Button
-              type="submit"
-              variant="brand"
-              className="h-9 w-full"
-              disabled={isPending}
-              aria-busy={isPending}
+            </Field>
+          )}
+          <div aria-live="polite">{error && <AuthNotice tone="danger">{error}</AuthNotice>}</div>
+          <Button
+            type="submit"
+            variant="brand"
+            size="lg"
+            className="w-full"
+            disabled={isPending || !codeReady}
+            aria-busy={isPending}
+          >
+            {isPending && <LoadingIcon size="sm" />}
+            {isPending ? "Verifying…" : "Verify and sign in"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground"
+            onClick={() => {
+              setUseBackup((value) => !value);
+              setCode("");
+              setError("");
+            }}
+          >
+            {useBackup ? "Use the authenticator app instead" : "Lost the phone? Use a backup code"}
+          </Button>
+        </form>
+      </AuthShell>
+    );
+  }
+
+  return (
+    <AuthShell
+      label="Operating system"
+      title="Sign in"
+      lead="This application holds every client, contract and payment record. Access is per person and every session is logged."
+      footer={helpLine}
+    >
+      {sessionExpired && (
+        <AuthNotice tone="warning" className="mb-4">
+          Your session has expired. Please sign in again.
+        </AuthNotice>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <Field label="Email">
+          <Input
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@altruvex.com"
+            autoComplete="username"
+            autoCapitalize="off"
+            spellCheck={false}
+            className={authControl}
+            autoFocus
+            required
+          />
+        </Field>
+        <Field label="Password">
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              autoComplete="current-password"
+              className={`${authControl} pe-10`}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute inset-y-0 end-0 flex w-9 items-center justify-center text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 rounded-e-md pointer-coarse:w-11"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
             >
-              {isPending && <LoadingIcon size="sm" />}
-              {isPending ? "Signing in…" : "Sign in"}
-            </Button>
-          </form>
+              {showPassword ? (
+                <EyeOff className="size-4" aria-hidden="true" />
+              ) : (
+                <Eye className="size-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+        </Field>
+        <div className="flex min-h-8 items-center gap-2 text-base pointer-coarse:min-h-11">
+          <Checkbox
+            id="remember-me"
+            name="remember-me"
+            checked={rememberMe}
+            onCheckedChange={(checked) => handleRememberMeChange(checked === true)}
+          />
+          <label
+            htmlFor="remember-me"
+            className="cursor-pointer select-none text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Remember me
+          </label>
         </div>
-        )}
-        <p className="mt-3 flex items-start gap-2 text-meta text-subtle-foreground">
-          <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          Accounts are created by an owner — there is no sign-up. If you cannot get in,
-          ask for an account rather than resetting one.
-        </p>
-      </div>
-    </main>
+        <div aria-live="polite">{error && <AuthNotice tone="danger">{error}</AuthNotice>}</div>
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          className="w-full"
+          disabled={isPending}
+          aria-busy={isPending}
+        >
+          {isPending && <LoadingIcon size="sm" />}
+          {isPending ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
 

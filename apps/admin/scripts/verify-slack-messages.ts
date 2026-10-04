@@ -1,20 +1,3 @@
-/**
- * What reaches the channel, and how it is written — checked without a webhook.
- *
- * The decisions here are the ones that make a notification channel useful or
- * useless: which events are worth interrupting somebody for, and whether a
- * client called `Smith & Sons <Holdings>` renders as a name or as broken markup.
- * Both fail silently — a channel full of noise still delivers, and mangled
- * markup still posts.
- *
- *   cd apps/admin && bun run verify:slack
- *
- * Delivery is proved too, against a local server standing in for the webhook:
- * that a curated event actually leaves the process, that a non-curated one sends
- * nothing at all, and that a rejected webhook never escapes into the mutation
- * that triggered it. Only the real channel needs a real webhook — that is what
- * the Send a test button on /integrations is for.
- */
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 
@@ -89,7 +72,7 @@ check(
   entityUrl("contract", "abc") === "https://admin.example.com/contracts/abc",
   "an entity resolves to its screen",
 );
-check(entityUrl("payment", "abc") === "https://admin.example.com/payments?payment=abc", "a payment resolves to its row in Billing");
+check(entityUrl("payment", "abc") === "https://admin.example.com/payments?inspect=abc", "a payment resolves to its row in Billing");
 check(entityUrl("maintenance_request", "abc") === "https://admin.example.com/maintenance", "a list-only entity resolves to the list");
 check(entityUrl("nonsense", "abc") === null, "an unknown entity yields no link rather than a broken one");
 delete process.env.NEXT_PUBLIC_APP_URL;
@@ -176,9 +159,6 @@ check(
 
 console.log("\nDelivery");
 {
-  // A local stand-in for the webhook. Formatting can be asserted on a return
-  // value; "does anything actually leave the process" cannot, and that is the
-  // half that breaks when a guard is inverted.
   const received: unknown[] = [];
   let reject = false;
   const server = createServer((request, response) => {
@@ -219,11 +199,6 @@ console.log("\nDelivery");
 
     reject = true;
     let escaped = false;
-    // `notifySlack` logs the rejection it refuses to rethrow, and that log is
-    // itself worth asserting: swallowing a failure silently and swallowing it
-    // loudly look identical from the outside, and only one of them can be
-    // debugged. Captured rather than printed so a deliberate failure does not
-    // read as a broken test run.
     const logged: string[] = [];
     const realError = console.error;
     console.error = (...args: unknown[]) => {

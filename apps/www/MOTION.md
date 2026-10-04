@@ -22,10 +22,10 @@ this document is the implementation layer.
 | `utils/splite.ts` | DOM text splitter (char/word/line, Arabic-aware) |
 | `utils/scroll.ts` | `scrollToY(top)` — programmatic jump through Lenis with `MOTION.scroll.glide`; reduced motion jumps |
 | `utils/theme-switch.ts` `hooks/use-theme-switch.ts` | **theme switch** — the shared `@repo/ui/theme-switch` crossfade on `MOTION.theme`, which *is* that package's `THEME_CROSSFADE` (duration in seconds like every MOTION duration + easing, defined there once; admin uses the same object). `useThemeSwitch()` wraps next-themes' `setTheme` in one View Transition: the new theme fades in over a snapshot of the old, compositor-only, nothing transitions per element. Every theme control calls it; reduced motion / no support = instant swap. The `::view-transition-*(root)` rule in packages/ui tokens.css only turns off the browser's own blend |
-| `hooks/use-magnetic.ts` `use-press.ts` `use-tilt.ts` | **interaction** primitives — spring-driven |
+| `hooks/use-magnetic.ts` `use-press.ts` | **interaction** primitives — spring-driven |
 | `hooks/use-reveal.ts` `use-batch.ts` `use-text.ts` | **scroll** primitives — ScrollTrigger + duration/ease |
 | `hooks/use-section-motion.ts` | section choreography wrappers |
-| `hooks/use-scroll-scene.ts` | **scroll scenes** — `useWordRead` (+ `splitWords`), `useMediaSettle`, `useKineticTrack`, `useTileAssemble`, `useUnderlineDraw` |
+| `hooks/use-scroll-scene.ts` | **scroll scenes** — `useWordRead` (+ `splitWords`), `useMediaSettle`, `useKineticTrack`, `useTileAssemble` |
 | `smooth-scroll.tsx` `lenis-instance.ts` | Lenis boot, ScrollTrigger bridge, body-resize refresh |
 | `lib/utils/gsap.ts` | plugin registration, CustomEase registration of every `MOTION.ease` string, `gsap.defaults` |
 
@@ -54,7 +54,6 @@ MOTION.ease.smooth          // "cubic-bezier(0.25, 0.46, 0.45, 0.94)" — works 
 MOTION.spring.press         // { stiffness: 700, damping: 34, mass: 1 }   ζ≈0.64
 MOTION.spring.release       // { stiffness: 380, damping: 20, mass: 1 }   ζ≈0.51 (one soft overshoot)
 MOTION.spring.magnetic      // { stiffness: 220, damping: 24, mass: 1 }   ζ≈0.81
-MOTION.spring.tilt          // { stiffness: 200, damping: 24, mass: 1 }   ζ≈0.85
 MOTION.spring.snappy / gentle / bouncy
 MOTION.distance.md          // 24px   (xs 8 · sm 16 · body 20 · md 24 · lg 40 · xl 64)
 MOTION.stagger.base         // 0.06s  (tight .04 · word .05 · base .06 · display .07 · loose .08 · line .12)
@@ -87,10 +86,9 @@ lives in refs, springs and GSAP — **React never re-renders during motion**.
 ```ts
 useMagnetic({ strength?, max?, spring? })          // x/y pull toward pointer, springs home on leave
 usePress({ scale?, pressSpring?, releaseSpring?, keyboard? })  // scale on pointer/keyboard press
-useTilt({ max?, perspective?, lift?, spring? })     // rotationX/Y (+z lift) following the pointer
 ```
 
-Implementation contract, shared by all three:
+Implementation contract, shared by both:
 
 - Values are written with `gsap.quickSetter(el, prop, unit)`: no per-frame
   allocation, and the write goes through GSAP's transform cache so `x`/`y`
@@ -195,12 +193,22 @@ with first paint and animate only `opacity` and the individual `translate` /
   by line (no split: no JS, and Arabic lines travel instead of fading as
   inline word boxes), and there is no blur (a filter repaints every frame, on
   the main thread in Safari).
-- **Initial loader.** `ARRIVAL_HOLD_SCRIPT` runs inline in `<head>`, during
-  parse; on a session's first visit it adds `arrival-hold` to `<html>`, which
-  pauses every arrival on its first frame until `InitialLoader` sets
-  `data-initial-load="complete"` (7s failsafe). It must stay an inline script:
-  a `next/script` `beforeInteractive` Script only runs once the Next runtime
-  boots, after first paint.
+- **Initial loader** (`utils/loader.ts`, "one lift", 2026-10-03). Server-rendered
+  markup (`components/shared/initial-loader.tsx`) played by keyframes generated
+  from `MOTION.duration` and `MOTION.loader`, decided by `LOADER_SCRIPT` inline in
+  `<head>` during parse. A visitor's first visit ever (no `WELCOMED_KEY`) gets
+  the greeting rolling out through one masked line as the mark rolls in, then the
+  sheet lifts off the page (~5.5s); every other new session gets the mark alone
+  (~3.2s); the rest of a session gets nothing; no JS gets nothing. The page is
+  released on the lift's `animationstart` (`data-initial-load="complete"` plus
+  `LOADER_RELEASE_EVENT` for `LoadingProvider`), and Lenis / the cursor /
+  exit-intent mount only after that, never mid-loader. Transform and opacity
+  only: the previous loader was an `ssr: false` client component whose clip-path
+  wipe ran on the main thread during hydration and stuttered. Reduced motion:
+  the mark is simply there and the sheet fades. `ARRIVAL_HOLD_SCRIPT` pauses
+  every first-paint arrival until the release (7s failsafe). Both must stay
+  inline scripts: a `next/script` `beforeInteractive` Script only runs once the
+  Next runtime boots, after first paint.
 - **Client navigation.** The keyframes play as the page mounts, inside
   `template.tsx`'s route fade.
 - **Never put `data-arrive` on an element GSAP moves.** The first time GSAP
@@ -260,10 +268,8 @@ that covers Tailwind hover transitions; the hooks below never rely on it.)
 | `useText` | per-word translate/scale(/blur) stagger | whole-element opacity crossfade — the DOM is **not** split |
 | `usePress` | scale spring | opacity dip to `MOTION.reduced.pressOpacity` and back — feedback survives |
 | `useMagnetic` | x/y springs | none (position shift is motion); CSS hover styling remains |
-| `useTilt` | rotation springs | none (rotation is vestibular); CSS hover styling remains |
 | custom cursor | dot + spring-trailed ring | not mounted — the native cursor only |
 | scroll scenes (`useWordRead` `useMediaSettle` `useKineticTrack` `useTileAssemble`) | scrubbed sequence | nothing is set — the markup's resting state is the reduced state (sections render a static fallback where the sticky runway would otherwise be empty) |
-| `useUnderlineDraw` | one-shot staggered underline draw on scroll-in (`[data-draw]` background-size 0% → 100%) | nothing is set — the underlines rest fully drawn |
 | `scrollToY` | Lenis glide | immediate jump |
 | route `template.tsx` | 8px lift + fade | fade only |
 | first-paint arrival (`data-arrive`) | translate/scale + opacity keyframes | nothing — the rules sit inside `prefers-reduced-motion: no-preference` |
@@ -273,7 +279,7 @@ Scroll hooks use `gsap.matchMedia`, so flipping the OS setting mid-session
 re-runs them. Interaction hooks read the preference at mount.
 
 Capability gates (`readMotionEnv`): `fine` (hover + fine pointer) gates
-magnetic/tilt/blur; `constrained` (≤4 cores, ≤4GB, or save-data — **not** "is
+magnetic/blur; `constrained` (≤4 cores, ≤4GB, or save-data — **not** "is
 touch") gates parallax, counters, blur and text scale. Touch alone no longer
 disables anything: modern phones are fast, and every scroll primitive runs on
 native scroll there.
@@ -281,7 +287,7 @@ native scroll there.
 ## 5. RTL
 
 - Interaction hooks are pointer-relative and symmetric — no axis sign exists
-  to get wrong. Verified by construction, and `useTilt` mirrors naturally.
+  to get wrong. Verified by construction.
 - `useReveal` / `useBatch`: `start` / `end` resolve through
   `readDirection(el)` (computed `direction`, so a nested `dir` is honoured).
   `left` / `right` stay physical on purpose and are documented as such.
@@ -301,7 +307,7 @@ have one. Record the interaction, then check:
 
 | primitive | drive | what to look for |
 |---|---|---|
-| magnetic / tilt | hover in, sweep across, leave | Main-thread track shows only tiny yellow (JS) slivers per frame from the ticker; **no purple Layout bars** and no "Recalculate Style" wider than a frame. Layers panel: element is its own compositor layer (`will-change: transform` on `MagneticButton` / `TiltCard`). Frames track solid green at the display rate. |
+| magnetic | hover in, sweep across, leave | Main-thread track shows only tiny yellow (JS) slivers per frame from the ticker; **no purple Layout bars** and no "Recalculate Style" wider than a frame. Layers panel: element is its own compositor layer (`will-change: transform` on `MagneticButton`). Frames track solid green at the display rate. |
 | press | mousedown, hold, release | A single continuous scale curve in the Animations panel — no restart at release (velocity carried). No task > 50ms. |
 | reveals / text | scroll a section into view | Purple Layout should appear **once** at trigger creation / refresh, never per frame during the tween. `.m-word` layers composited; with `blur` a "filter" raster per frame is expected for ≤16 fragments — if it appears on > 16, the cap is broken. |
 | scrub (parallax, scrubExit) | wheel through a section | Lenis frame and ScrollTrigger update in the **same** task each frame (no alternating scroll/animation tasks). No `scroll` event listener from the app in the Event Log (only Lenis' wheel + ScrollTrigger's cached scroll). |

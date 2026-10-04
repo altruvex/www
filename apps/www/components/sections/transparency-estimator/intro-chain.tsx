@@ -2,20 +2,11 @@
 
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/utils";
 import type { Translator } from "./types";
 
 const STAGES = ["pricing", "estimate", "proposal"] as const;
 
-/**
- * Where this page sits between the published prices and the binding figure.
- *
- * Three stages, read in order: pricing is published, this estimate is
- * indicative, and only the written proposal after scope review is binding.
- * The middle stage is marked current so the reader never takes the range for
- * the proposal.
- */
 export function IntroChain({ t }: { t: Translator }) {
   return (
     <nav aria-label={t("intro.chainLabel")} className="mt-10 lg:mt-12">
@@ -36,16 +27,7 @@ export function IntroChain({ t }: { t: Translator }) {
                 tone={current ? "accent" : undefined}
                 className="text-micro leading-none"
               >
-                {stage === "pricing" ? (
-                  <Link
-                    href="/pricing"
-                    className="underline-offset-4 hover:underline"
-                  >
-                    {t(`intro.${stage}.name`)}
-                  </Link>
-                ) : (
-                  t(`intro.${stage}.name`)
-                )}
+                {t(`intro.${stage}.name`)}
               </Eyebrow>
               <span className="text-[0.9375rem] font-medium leading-snug text-foreground">
                 {t(`intro.${stage}.answer`)}

@@ -7,15 +7,6 @@ const withPWA = withPWAInit({
   dest: "public",
   disable: isDev,
   register: true,
-  /**
-   * Static assets only.
-   *
-   * This previously cached every response it saw (`/^https?.*!/`,
-   * NetworkFirst, 200 entries). In an app whose pages and JSON are client
-   * records, contracts and payments, that left the last two hundred responses
-   * readable in Cache Storage after sign-out, on whatever machine was used.
-   * Hashed build output is safe to keep; nothing else is.
-   */
   workboxOptions: {
     runtimeCaching: [
       {
@@ -73,9 +64,6 @@ const nextConfig: NextConfig = {
             key: "X-DNS-Prefetch-Control",
             value: "on",
           },
-          // Content-Security-Policy is set per request in proxy.ts, where the
-          // nonce is generated. A second static header here would be enforced
-          // alongside it and the two would fight.
         ],
       },
       {

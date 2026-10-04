@@ -12,20 +12,25 @@ const CHANNEL = {
   email: { label: "Email", icon: Mail },
 } as const;
 
-/**
- * A plain WhatsApp thread opens its WhatsApp page; a unified one brings its own
- * `href` (and the channels it spans).
- *
- * The row is one big target (the preview link stretches over it), with the
- * client's name layered above as its own link — nesting the two would be an
- * <a> inside an <a>, which breaks hydration.
- */
-export function ThreadList({ threads }: { threads: (Thread | ConversationThread)[] }) {
+export function ThreadList({
+  threads,
+  hrefFor,
+  selectedId,
+}: {
+  threads: (Thread | ConversationThread)[];
+  hrefFor?: (thread: Thread | ConversationThread) => string;
+  selectedId?: string;
+}) {
   return (
     <ul className="rows">
       {threads.map((thread) => {
         const unified = "channels" in thread;
-        const href = unified ? thread.href : `/whatsapp/${thread.clientId}`;
+        const href = hrefFor
+          ? hrefFor(thread)
+          : unified
+            ? thread.href
+            : `/whatsapp/${thread.clientId}`;
+        const selected = selectedId === thread.clientId;
         const channels: Channel[] = unified ? thread.channels : ["whatsapp"];
         const lastChannel: Channel = unified ? thread.lastChannel : "whatsapp";
         return (
@@ -35,7 +40,10 @@ export function ThreadList({ threads }: { threads: (Thread | ConversationThread)
               "relative flex items-start gap-3 px-3 py-2.5 transition-colors duration-[var(--dur-state)]",
               "hover:bg-surface/70",
               thread.unanswered && "bg-warning/[0.05]",
+              selected &&
+                "bg-surface before:absolute before:inset-y-0 before:start-0 before:w-0.5 before:bg-brand",
             )}
+            aria-current={selected ? "true" : undefined}
           >
             <Avatar name={thread.clientName} size="md" className="mt-0.5" />
             <div className="min-w-0 flex-1">

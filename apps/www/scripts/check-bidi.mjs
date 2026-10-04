@@ -1,20 +1,4 @@
 #!/usr/bin/env node
-// Bidi check for the site copy (spec step 20). Usage, from apps/www:
-//
-//   bun run check:bidi            static check + browser rendering (needs uv + Playwright browsers)
-//   bun run check:bidi --static   static check only
-//
-// (a) Static: a product or standard name followed by its version number is one unit, so the
-//     space between them must be a no-break space (U+00A0) in every locale. "Next.js 16" split
-//     over two lines reads as "Next.js" and a stray "16" — in RTL the "16" even lands on the
-//     other side of the column. The same holds between a WCAG version and its level (2.1 AA).
-//
-// (b) Browser: builds rendering cases from the real message strings, in the DOM shape their
-//     component renders (a <bdi> where the component isolates LTR content), writes them to
-//     packages/brand-font/dist/bidi-report.json and runs packages/brand-font/tests/test_bidi_www.py,
-//     which renders each case in Chromium, Firefox and WebKit and adds per-engine results to the
-//     same report. The fixes are the standard tools only: NBSP, <bdi>/dir. No bidi control
-//     characters live in the messages, and (c) below keeps it that way.
 
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
@@ -28,16 +12,13 @@ const REPORT = join(BRAND_FONT, "dist", "bidi-report.json");
 const LOCALES = ["en", "ar"];
 const NBSP = " ";
 
-// Names that are written with a version number. Add to this list, not around it.
 const VERSIONED = [
   "Next\\.js", "React", "TypeScript", "Tailwind CSS", "Node\\.js", "WCAG", "ISO", "PHP", "Python",
   "Vue", "Angular", "PostgreSQL", "Prisma", "iOS", "Android", "HTTP", "TLS", "OAuth", "ECMAScript",
 ];
 const VERSION = "v?[0-9\\u0660-\\u0669]+(?:[.\\u066B][0-9\\u0660-\\u0669]+)*";
-// Any whitespace (or none) other than a single NBSP between a name and its version.
 const NAME_VERSION = new RegExp(`(?<![\\w.-])(${VERSIONED.join("|")})(\\s+)(${VERSION})(?![\\w.])`, "gu");
 const WCAG_LEVEL = new RegExp(`(WCAG${NBSP}${VERSION})(\\s+)(A{1,3})(?![\\w])`, "gu");
-// Explicit bidi controls (LRM/RLM/ALM, embeddings, overrides, isolates) — none belong in copy.
 const BIDI_CONTROLS = /[؜‎‏‪-‮⁦-⁩]/u;
 
 function load(locale) {
@@ -63,8 +44,6 @@ function get(messages, key) {
   return o;
 }
 
-/* ── (a) static ──────────────────────────────────────────────────────────── */
-
 function staticCheck(all) {
   const failures = [];
   let units = 0;
@@ -88,18 +67,13 @@ function staticCheck(all) {
   return { ok: failures.length === 0, units_checked: units, bidi_controls: controls, failures };
 }
 
-/* ── (b) rendering cases ─────────────────────────────────────────────────── */
-
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const plain = (s) => s.replaceAll(NBSP, " ");
-// Rich-text tags in a message render as spans; the bidi class of the text is what matters.
 const rich = (s) => esc(s).replace(/&lt;(\/?)[a-z]+&gt;/g, (_, close) => (close ? "</span>" : "<span>"));
 const tokens = (s) => s.match(/[()+]|[^\s ()+]+/gu);
 const firstStrongIsLatin = (s) => /^[^A-Za-z؀-ۿ]*[A-Za-z]/u.test(s);
-// The unit that must not break: the name's last word + the version ("CSS v4" in "Tailwind CSS v4").
 const versionUnits = (s) => [...s.matchAll(NAME_VERSION)].map((m) => `${m[1].split(" ").pop()}${m[2]}${m[3]}`);
 
-// work/[slug]/page-client.tsx: tech list item — a dot, then the name.
 const DOT = '<span style="display:block;width:4px;height:4px;border-radius:9999px;background:currentColor;flex-shrink:0"></span>';
 const chip = (inner) => `<li style="display:flex;align-items:center;gap:12px">${DOT}${inner}</li>`;
 
@@ -108,9 +82,6 @@ function buildCases(all) {
   const cases = [];
   const add = (c) => cases.push({ units: [], ...c, control_units: (c.units || []).map(plain) });
 
-  // 1. Case-study tech list (AR). The NBSP keeps "Next.js 16" whole. No <bdi>: measured, the UBA
-  //    (bracket pairing included) already orders every chip correctly, so the control is the
-  //    same markup with a plain space.
   const chips = new Set();
   for (const study of Object.values(ar.caseStudies)) for (const t of study.techStack || []) chips.add(t);
   for (const t of chips) {
@@ -125,7 +96,6 @@ function buildCases(all) {
     });
   }
 
-  // 2. Case-study metric figures (AR) that carry Latin: <p><bdi>value</bdi></p>.
   for (const [slug, study] of Object.entries(ar.caseStudies)) {
     for (const [i, m] of (study.metrics || []).entries()) {
       if (!/[A-Za-z]/.test(m.value)) continue;
@@ -139,10 +109,8 @@ function buildCases(all) {
     }
   }
 
-  // 3. WCAG version + level in running text, both locales.
   const wcag = [
     ["serviceDetails.webDesign.lab.rows.items.5.body", "p"],
-    ["serviceDetails.webDesign.features.06.description", "p"],
     ["standards.categories.accessibility.requirements", "li"],
   ];
   for (const locale of LOCALES) {
@@ -158,10 +126,6 @@ function buildCases(all) {
     }
   }
 
-  // 4. A client-typed name inside the AR PDF footer (lib/utils/transparency-pdf.ts). The sample
-  //    name ends in its own full stop, which without isolation leaves the name and joins the
-  //    sentence's full stop on the far side. (A trailing "(EG)" is not a case: bracket pairing
-  //    keeps it with the name, measured.)
   const [before, after] = get(ar, "transparency.pdfContent.confidential").split("{name}");
   const sample = "Acme Co.";
   const next = after.trim().split(/\s+/u)[1];
@@ -174,8 +138,6 @@ function buildCases(all) {
     expected: [next, ".", "Acme", "Co", ".", "لـ"],
   });
 
-  // 5. The prototype's two sentences (docs/prototypes/2026-09-altruvex-sans, a2 matrix): the
-  //    "Next.js 16" line break seen there, now with the NBSP the messages use.
   for (const [id, text, tk, exp] of [
     ["ref-nextjs-16", `بنينا الموقع على Next.js${NBSP}16 من البداية`,
       ["بنينا", "الموقع", "Next.js", "16", "البداية"], ["البداية", "Next.js", "16", "الموقع", "بنينا"]],
@@ -187,16 +149,12 @@ function buildCases(all) {
       units: [`Next.js${NBSP}16`] });
   }
 
-  // 6. Measured and left alone: the UBA already orders these correctly in an RTL paragraph.
   const verified = [
-    ["about.record.items.floor.value", null, ["٩٥", "+", "في", "Lighthouse", "قبل"]],
-    ["footer.copyright", { year: "٢٠٢٦" }, ["©", "٢٠٢٦", "Altruvex", ".", "جميع"]],
+    ["footer.copyright", { year: "2026" }, ["©", "2026", "Altruvex", ".", "جميع"]],
     ["approach.closing.cta", null, ["ابدأ", "المحادثة", ":", "hello@altruvex.com"]],
     ["faq.questions.03.question", null, ["WordPress", "أو", "Shopify", "أو", "Odoo", "؟"]],
-    ["transparency.pdfContent.deliverables.ecommerce.small.0", null, ["محدد", "(", "حتى", "٥٠", "SKU", ")"]],
-    ["contactPage.receipt.sentAt", { time: "١٤:٣٠" }, ["استُلمت", "الساعة", "١٤:٣٠", "بتوقيت"]],
-    ["standards.enforcement.outcomes.fail.example", { check: get(ar, "standards.categories.performance.checks.lcp.label") },
-      ["مثال", ":", "محتوى", "(", "LCP", ")", "لا"]],
+    ["transparency.pdfContent.deliverables.ecommerce.small.0", null, ["محدد", "(", "حتى", "50", "SKU", ")"]],
+    ["contactPage.receipt.sentAt", { time: "14:30" }, ["استُلمت", "الساعة", "14:30", "بتوقيت"]],
   ];
   for (const [key, vars, tk] of verified) {
     let s = get(ar, key);
@@ -204,16 +162,13 @@ function buildCases(all) {
     add({ id: `ar-verified:${key}`, kind: "verified", lang: "ar", dir: "rtl", source: key,
       fixed: `<p>${rich(s)}</p>`, control: null, tokens: tk, expected: tk.slice().reverse() });
   }
-  // The contrast pass line: "٤٫٥:١ أو أعلى" — the ratio stays one left-to-right number.
-  const ratio = get(ar, "standards.sheet.pass.atLeast").replace("{value}", get(ar, "standards.sheet.unit.ratio").replace("{value}", "٤٫٥").replace("1", "١"));
+  const ratio = get(ar, "standards.sheet.pass.atLeast").replace("{value}", get(ar, "standards.sheet.unit.ratio").replace("{value}", "4.5"));
   add({ id: "ar-verified:standards.sheet.pass.atLeast(ratio)", kind: "verified", lang: "ar", dir: "rtl",
     source: "standards.sheet.pass.atLeast + standards.sheet.unit.ratio", fixed: `<p>${esc(ratio)}</p>`, control: null,
-    tokens: ["٤٫٥", ":", "١", "أو", "أعلى"], expected: ["أعلى", "أو", "٤٫٥", ":", "١"] });
+    tokens: ["4.5", ":", "1", "أو", "أعلى"], expected: ["أعلى", "أو", "4.5", ":", "1"] });
 
   return cases;
 }
-
-/* ── run ─────────────────────────────────────────────────────────────────── */
 
 const staticOnly = process.argv.includes("--static");
 const all = Object.fromEntries(LOCALES.map((l) => [l, load(l)]));

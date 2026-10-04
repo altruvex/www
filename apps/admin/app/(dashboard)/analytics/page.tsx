@@ -4,6 +4,9 @@ import { StatTile } from "@/components/os/stat-tile";
 import { EmptyInline } from "@/components/os/empty-state";
 import { BarChart, ColumnChart, HeroNumber } from "@/components/os/chart";
 import { getAnalytics } from "@/lib/analytics-data";
+import { currentRole } from "@/lib/authorize";
+import { canSeeFinance } from "@/lib/nav";
+import { gateRoute } from "@/lib/page-gate";
 import { ANNUAL_BILLING_NOTE, getRevenueMetrics } from "@/lib/revenue-metrics";
 import { RETAINER_CURRENCY } from "@/lib/payment-source";
 import { statusOf } from "@/lib/status";
@@ -11,10 +14,17 @@ import { money, moneyByCurrency, percent } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
+const FINANCE_ONLY = "Finance only";
+const FINANCE_ONLY_SUB = "Shown to finance roles";
+
 export default async function AnalyticsPage() {
+  const denied = await gateRoute("/analytics");
+  if (denied) return denied;
+
+  const showMoney = canSeeFinance(await currentRole());
   const [data, revenue] = await Promise.all([
     getAnalytics(),
-    getRevenueMetrics(),
+    showMoney ? getRevenueMetrics() : null,
   ]);
 
   return (
@@ -24,7 +34,7 @@ export default async function AnalyticsPage() {
         description="Metrics that change a decision. Anything that would only ever be looked at is deliberately not here."
       />
 
-      {/* ---- revenue -------------------------------------------------- */}
+      {revenue && (
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Recurring revenue</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -123,8 +133,8 @@ export default async function AnalyticsPage() {
           </Panel>
         )}
       </section>
+      )}
 
-      {/* ---- sales ---------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Sales</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -136,8 +146,8 @@ export default async function AnalyticsPage() {
           />
           <StatTile
             label="Average deal"
-            value={moneyByCurrency(data.sales.avgDealByCurrency, true)}
-            sub="Accepted proposals only"
+            value={showMoney ? moneyByCurrency(data.sales.avgDealByCurrency, true) : FINANCE_ONLY}
+            sub={showMoney ? "Accepted proposals only" : FINANCE_ONLY_SUB}
           />
           <StatTile
             label="Sales cycle"
@@ -153,12 +163,13 @@ export default async function AnalyticsPage() {
           />
           <StatTile
             label="Won value"
-            value={moneyByCurrency(data.sales.wonValueByCurrency, true)}
-            sub="All time"
-            tone="success"
+            value={showMoney ? moneyByCurrency(data.sales.wonValueByCurrency, true) : FINANCE_ONLY}
+            sub={showMoney ? "All time" : FINANCE_ONLY_SUB}
+            tone={showMoney ? "success" : "neutral"}
           />
         </div>
 
+        {showMoney && (
         <div className="grid gap-4 lg:grid-cols-2">
           <Panel
             title="Signed value by month"
@@ -221,6 +232,7 @@ export default async function AnalyticsPage() {
             )}
           </Panel>
         </div>
+        )}
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Panel
@@ -283,7 +295,6 @@ export default async function AnalyticsPage() {
         </div>
       </section>
 
-      {/* ---- clients -------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Clients</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -310,11 +321,8 @@ export default async function AnalyticsPage() {
           />
           <StatTile
             label="Average client value"
-            value={moneyByCurrency(
-              data.clientsMetrics.avgValueByCurrency,
-              true,
-            )}
-            sub="Accepted value per won client"
+            value={showMoney ? moneyByCurrency(data.clientsMetrics.avgValueByCurrency, true) : FINANCE_ONLY}
+            sub={showMoney ? "Accepted value per won client" : FINANCE_ONLY_SUB}
           />
         </div>
 
@@ -334,7 +342,6 @@ export default async function AnalyticsPage() {
         </Panel>
       </section>
 
-      {/* ---- delivery ------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Delivery</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -377,7 +384,6 @@ export default async function AnalyticsPage() {
         </div>
       </section>
 
-      {/* ---- website -------------------------------------------------- */}
       <section className="space-y-3">
         <h2 className="telemetry text-subtle-foreground">Website</h2>
         <div className="grid gap-4 sm:grid-cols-3">

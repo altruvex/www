@@ -37,11 +37,6 @@ export interface EstimateInput {
   readonly contentReadiness?: ContentReadinessId | null;
 }
 
-/**
- * An estimate input with any answer still open. Every open answer is read as
- * "any of its options", which is how the estimator shows a real range before
- * the questionnaire is complete.
- */
 export interface EstimatePartialInput {
   readonly serviceId?: ServiceId | null;
   readonly complexityId?: ComplexityId | null;
@@ -57,12 +52,6 @@ export interface EstimateResult {
   readonly maxPrice: number;
 }
 
-/**
- * The one worked example the pricing pages walk a buyer through: a website of
- * standard complexity, partial brand, content help, standard timeline. The ids
- * live here so the copy that narrates it never types a figure — every number
- * in the walkthrough is computed from these five answers.
- */
 export const WORKED_EXAMPLE_INPUT: EstimateInput = {
   serviceId: "website",
   complexityId: "standard",
@@ -71,11 +60,6 @@ export const WORKED_EXAMPLE_INPUT: EstimateInput = {
   contentReadiness: "need-help",
 };
 
-/**
- * The engagement floor: the lowest published cell in whichever pricing set the
- * caller supplied. `/pricing` prints it as "From …" and the estimate engine
- * refuses to quote under it, so both must read the same resolved set.
- */
 export function minimumEngagementFrom(pricing: ResolvedPricing): number {
   return Math.min(
     ...Object.values(pricing.services).map((s) => s.price.basic.min),
@@ -86,34 +70,10 @@ function roundEstimate(value: number): number {
   return Math.round(value / ESTIMATE_ROUNDING) * ESTIMATE_ROUNDING;
 }
 
-/** At least one week, never more than the published delivery ceiling. */
 function clampWeeks(value: number): number {
   return Math.min(Math.max(Math.round(value), 1), MAX_DELIVERY_WEEKS);
 }
 
-/**
- * The estimate engine.
- *
- * Brand and content stay neutral until answered, which is what lets the
- * estimator show a real range from the first two answers instead of withholding
- * the number until the questionnaire is complete.
- *
- * Two published promises are enforced here rather than trusted to the matrix,
- * because the modifiers compound and a future edit to any one cell could break
- * either without the cell looking wrong on its own:
- *
- *   - The estimate never falls below `minimumEngagementFrom(pricing)`. `/pricing`
- *     prints that figure as the floor, and a `flexible` timeline discount used
- *     to be able to round the estimator under it — the floor and the estimator
- *     disagreeing is exactly the contradiction this package exists to prevent.
- *   - The estimate never exceeds `MAX_DELIVERY_WEEKS`. Compounding the timeline,
- *     brand and content week factors reaches 1.45x, so the ceiling is applied
- *     after they are, not before.
- *
- * `pricing` defaults to the shipped figures. A surface that can reach the admin
- * overrides passes the resolved set, so the estimator quotes the same numbers
- * `/pricing` publishes after an edit — never the defaults it shipped with.
- */
 export function calculateEstimate(
   input: EstimateInput,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -143,14 +103,6 @@ export function calculateEstimate(
   };
 }
 
-/**
- * The widest range still possible given the answers so far.
- *
- * Every unanswered question is expanded to all of its options and the
- * envelope of every resulting estimate is returned: the estimator opens at the
- * widest span this package publishes and narrows with each answer. With no
- * answers at all this is the whole matrix under every condition.
- */
 export function estimateSpan(
   partial: EstimatePartialInput = {},
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -203,13 +155,6 @@ export interface AddonPrice {
   readonly total: Amount;
 }
 
-/**
- * `costBasis + markup`, always as two visible halves.
- *
- * Returns null when the supplier cost is not on file. Callers must render
- * "pending" rather than a number — quoting an add-on at zero because its cost
- * was unknown is the one failure mode worth being noisy about.
- */
 export function computeAddonPrice(addon: Addon): AddonPrice | null {
   if (addon.costBasis === null) return null;
 
@@ -238,21 +183,10 @@ export function applyVat(net: Amount): VatBreakdown {
   return { net, vat, gross: net + vat, rate: COMMERCIAL_TERMS.vatRate };
 }
 
-/** EGP → USD at the fixed, quarterly-reviewed rate. Rounded to the nearest 10. */
 export function egpToUsd(egp: Amount): Amount {
   return Math.round(egp / USD_EXCHANGE_RATE.egpPerUsd / 10) * 10;
 }
 
-/**
- * A consulting package's build credit, in the currency the engagement is
- * priced in.
- *
- * The audit's fee is published in EGP only, so a USD engagement credits the
- * same money through `egpToUsd` — the one published conversion — rather than
- * a second audit price nobody maintains. Returns null for a currency this
- * package cannot be credited in, which is the signal to refuse the credit
- * with a reason instead of applying a figure in the wrong money.
- */
 export function consultingCreditIn(
   currency: Currency,
   pkg: ConsultingPackage = CONSULTING_PACKAGES["technical-audit"],

@@ -41,9 +41,6 @@ export default async function ConsultingServicePage({
 
   const pricing = await getPublicPricing();
   const audit = consultingView("technical-audit", locale as Locale, pricing);
-  /* The span the audit's fee is stated against. Resolved here rather than in
-     the client component so the figure and the audit price come from the same
-     admin-editable matrix. */
   const buildRange = publishedBuildRangeLabel(locale as Locale, pricing);
 
   const faqItems = t.raw("faq.items") as ConsultingSeoFaq[];

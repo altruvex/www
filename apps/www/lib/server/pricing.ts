@@ -20,31 +20,7 @@ import {
 } from "@repo/pricing-schema";
 import { unstable_cache } from "next/cache";
 
-/**
- * Server-side pricing for the public site.
- *
- * The admin screen is the only place a price is edited; this is the read path
- * that carries those edits to a visitor. Three properties matter here and are
- * deliberate:
- *
- * 1. **Fail-soft.** Any read error falls back to the values this deploy
- *    shipped. A database blip must not blank `/pricing` — a slightly stale
- *    price is strictly better than an error page on the page whose entire
- *    claim is that nothing is hidden.
- * 2. **Cached.** Pricing changes rarely and is read on every marketing page
- *    view, so it is cached and revalidated on a timer rather than queried per
- *    request.
- * 3. **Server-only.** `server-only` makes importing this from a client
- *    component a build error rather than a runtime surprise.
- */
-
-/**
- * Upper bound only. An admin price change pushes a revalidation immediately
- * (see `app/api/revalidate-pricing`), so this is the floor for the case where
- * that call does not land — not the normal latency of a price change.
- */
 const REVALIDATE_SECONDS = 300;
-/** Exported so the revalidation endpoint drops exactly this cache. */
 export const PRICING_CACHE_TAG = "pricing";
 
 function toStatus(value: string): EntityStatus {
@@ -106,9 +82,6 @@ async function readOverrides(): Promise<PricingOverrides> {
             price: m.price,
             requestsPerCycle: m.requestsPerCycle,
             overageHourlyRate: m.overageHourlyRate,
-            // Margin data is deliberately not read here. The public site has no
-            // use for it, and not loading it means it cannot leak from this
-            // process even if something downstream starts serialising pricing.
             status: toStatus(m.status),
             version: m.version,
           }
@@ -164,12 +137,6 @@ const cachedOverrides = unstable_cache(readOverrides, ["pricing-overrides"], {
   tags: [PRICING_CACHE_TAG],
 });
 
-/**
- * Resolved pricing for a public page.
- *
- * Never throws. On any failure the shipped defaults are returned, which is what
- * every page rendered before admin overrides existed.
- */
 export async function getPublicPricing(): Promise<ResolvedPricing> {
   try {
     return resolvePricing(await cachedOverrides());

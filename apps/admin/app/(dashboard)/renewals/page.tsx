@@ -1,16 +1,22 @@
 import { prisma } from "@repo/database";
-import { notFound } from "next/navigation";
 
 import { FilterChip } from "@/components/os/data-table";
+import { ActiveFilters } from "@/components/os/filter-bar";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { TabNav } from "@/components/os/tab-nav";
 import { currentRole } from "@/lib/authorize";
 import { moneyByCurrency } from "@/lib/format";
-import { canSeeFinance } from "@/lib/nav";
-import { listRenewals } from "@/lib/renewals";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
+import { listRenewals, type RenewalRow } from "@/lib/renewals";
+import { InspectSheet } from "@/components/os/inspect-sheet";
+import { EntityLink } from "@/components/os/entity-link";
+import { StatusPill } from "@/components/ui/badge";
+import { date, money } from "@/lib/format";
+import { entityHref } from "@/lib/entity-links";
 
-import { RenewalsTable } from "./renewals-table";
+import { RenewalInspectorActions, RenewalsTable, type CanRenew } from "./renewals-table";
 
 export const dynamic = "force-dynamic";
 
@@ -21,26 +27,24 @@ const KINDS = [
 ] as const;
 type Kind = (typeof KINDS)[number]["id"];
 
-/**
- * Renewals — every retainer period and service term that is coming due, lapsed,
- * or scheduled, across all clients, with the renew action beside each.
- *
- * Finance-gated twice: the sidebar hides it from other roles and this page
- * refuses them itself, because a URL pasted into a message does not go
- * through the sidebar. Everything on it is derived from the clock — the
- * sidebar badge counts the same rows (`countRenewalsNeedingAttention`).
- */
 export default async function RenewalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client?: string; kind?: string }>;
+  searchParams: Promise<{ client?: string; kind?: string; inspect?: string; attention?: string }>;
 }) {
-  const role = await currentRole();
-  if (!canSeeFinance(role)) notFound();
+  const denied = await gateRoute("/renewals");
+  if (denied) return denied;
 
-  const { client: clientParam, kind: kindParam } = await searchParams;
+  const { client: clientParam, kind: kindParam, inspect, attention: attentionParam } = await searchParams;
   const clientId = clientParam?.trim() || null;
   const kind: Kind = KINDS.some((k) => k.id === kindParam) ? (kindParam as Kind) : "all";
+  const attentionOnly = attentionParam === "1";
+
+  const role = await currentRole();
+  const canRenew: CanRenew = {
+    retainer: can(role, "edit", "payment"),
+    service: can(role, "edit", "project"),
+  };
 
   const [rows, scopeClient] = await Promise.all([
     listRenewals(clientId ? { clientId } : {}),
@@ -52,14 +56,14 @@ export default async function RenewalsPage({
     ? scopeClient.company || scopeClient.name || "Unnamed client"
     : "Unknown client";
 
+  const inspected = inspect ? (rows.find((row) => row.key === inspect) ?? null) : null;
   const retainers = rows.filter((row) => row.kind === "retainer");
   const services = rows.filter((row) => row.kind === "service");
-  const visible = kind === "retainers" ? retainers : kind === "services" ? services : rows;
+  const byKind = kind === "retainers" ? retainers : kind === "services" ? services : rows;
+  const visible = attentionOnly ? byKind.filter((row) => row.needsAttention) : byKind;
 
   const overdue = rows.filter((row) => row.rank === 0);
   const soon = rows.filter((row) => row.rank === 1);
-  // What the next 30 days should invoice, per currency — never summed across
-  // currencies, and a quote-only retainer with no quote adds nothing.
   const dueSoon: Record<string, number> = {};
   for (const row of rows) {
     if (row.rank === 2 || row.amount === null || row.blocked !== null) continue;
@@ -82,20 +86,18 @@ export default async function RenewalsPage({
             active={kind}
             basePath="/renewals"
             param="kind"
-            keep={{ client: clientId }}
+            keep={{ client: clientId, attention: attentionOnly ? "1" : null }}
           />
         }
       />
 
-      {clientId && (
-        <div className="flex flex-wrap gap-2">
-          <FilterChip
-            label="Client"
-            value={scopeName}
-            clearHref={kind === "all" ? "/renewals" : `/renewals?kind=${kind}`}
-          />
-        </div>
-      )}
+      <ActiveFilters
+        labels={{ client: "Client", attention: "Showing" }}
+        valueLabels={{
+          client: clientId ? { [clientId]: scopeName } : {},
+          attention: { "1": "Needs attention" },
+        }}
+      />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile
@@ -122,7 +124,63 @@ export default async function RenewalsPage({
         />
       </div>
 
-      <RenewalsTable rows={visible} clientScoped={clientId !== null} />
+      {inspect && !inspected && (
+        <div className="flex flex-wrap gap-2">
+          <FilterChip label="Renewal" value="Not found — it may have been renewed or removed" clearHref="/renewals" />
+        </div>
+      )}
+
+      <RenewalsTable
+        rows={visible}
+        clientScoped={clientId !== null}
+        attentionOnly={attentionOnly}
+        canRenew={canRenew}
+        canRemind={can(role, "send", "message")}
+      />
+
+      {inspected && <RenewalInspector row={inspected} canRenew={canRenew} />}
     </div>
+  );
+}
+
+function RenewalInspector({ row, canRenew }: { row: RenewalRow; canRenew: CanRenew }) {
+  const href = entityHref(row.entityType, row.id);
+  return (
+    <InspectSheet
+      open
+      title={row.what}
+      subtitle={row.detail ?? (row.kind === "retainer" ? "Retainer period" : "Service term")}
+      status={<StatusPill registry={row.urgency.registry} value={row.urgency.value} />}
+      fullHref={href ?? undefined}
+      footer={<RenewalInspectorActions row={row} canRenew={canRenew} />}
+    >
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-base">
+        <div>
+          <dt className="telemetry text-subtle-foreground">Client</dt>
+          <dd className="mt-1">
+            <EntityLink type="client" id={row.clientId}>
+              {row.clientLabel}
+            </EntityLink>
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Next invoice</dt>
+          <dd className="mt-1 font-mono tabular-nums">
+            {row.amount !== null ? money(row.amount, row.currency) : <span className="text-subtle-foreground">no quote</span>}
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">{row.kind === "retainer" ? "Period ends" : "Expires"}</dt>
+          <dd className="mt-1 font-mono tabular-nums">{row.dueAt ? date(row.dueAt) : "No date yet"}</dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Renews</dt>
+          <dd className="mt-1 text-muted-foreground">
+            {row.kind === "retainer" ? (row.autoRenew ? "Automatically, into the next period" : "Not renewing") : row.autoRenew ? "Automatically at the provider" : "By hand"}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-4 text-meta text-muted-foreground">{row.blocked ?? row.billingNote}</p>
+    </InspectSheet>
   );
 }

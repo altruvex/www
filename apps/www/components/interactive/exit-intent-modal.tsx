@@ -56,9 +56,6 @@ export const ExitIntentModal = () => {
       if (response.ok) {
         setIsSuccess(true);
         markAsConverted();
-        // No phone number in an analytics payload. Nothing consumes these
-        // events today, and the day a provider script is added is the day this
-        // would start shipping a lead's number to it.
         trackEvent("exit_intent_captured");
         setTimeout(() => setIsVisible(false), 3000);
       } else {

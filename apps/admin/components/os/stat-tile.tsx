@@ -3,14 +3,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toneText, type Tone } from "@/lib/status";
 
-/**
- * The scale-contrast device from the Design Brief: an 11px mono label above a
- * 28px tabular numeral. Nothing else in the app is that big, which is exactly
- * why it works — the tiles are the only thing you read from across the room.
- *
- * `tone` is never decorative. A tile turns red because something is overdue,
- * not because red looks urgent.
- */
 export function StatTile({
   label,
   value,
@@ -34,7 +26,6 @@ export function StatTile({
       <p
         className={cn(
           "mt-2 font-sans text-[length:var(--text-metric)] font-medium leading-[1.08] tracking-[-0.02em] tabular-nums",
-          // Two currencies ("E£1.2M + $12K") wrap; leading-none clipped the second line.
           "text-balance [overflow-wrap:anywhere]",
           toneText[tone],
         )}
@@ -63,7 +54,8 @@ export function StatTile({
       <Link
         href={href}
         className={cn(
-          "plane block p-3.5 transition-colors duration-[var(--dur-state)] hover:border-border-mid hover:bg-surface/50",
+          "plane block p-3.5 no-underline transition-colors duration-[var(--dur-state)] hover:border-border-mid hover:bg-surface/50",
+          "outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
           className,
         )}
       >

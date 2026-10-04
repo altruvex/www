@@ -6,9 +6,11 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { RepositoryPicker, type RepositoryOption } from "@/components/os/repository-picker";
+import { SearchSelect } from "@/components/os/combobox-select";
 
 import {
   Button,
+  Field,
   Input,
   Select,
   SelectContent,
@@ -40,7 +42,6 @@ const STATUSES = [
 
 const NO_PROJECT = "__none__";
 
-/** Mirrors the server's slug rule, so the error arrives before the request does. */
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -50,13 +51,6 @@ function slugify(value: string): string {
     .slice(0, 80);
 }
 
-/**
- * Creating a product.
- *
- * The slug matters more than it looks: it is how a CI pipeline names this
- * product at the ingest endpoint, so it is derived from the name but stays
- * editable and is shown plainly rather than hidden as an implementation detail.
- */
 export function NewProductSheet({
   clients,
   projects,
@@ -73,7 +67,6 @@ export function NewProductSheet({
         <Plus className="size-3.5" />
         New product
       </Button>
-      {/* Remounted per opening so the form starts clean, with no effect syncing. */}
       {open && (
         <Form
           key="new-product"
@@ -116,27 +109,11 @@ function Form({
   const [detectingFramework, setDetectingFramework] = React.useState(false);
   const [frameworkEvidence, setFrameworkEvidence] = React.useState<string | null>(null);
 
-  /**
-   * Fills the form from the repository GitHub was asked about.
-   *
-   * Only fields the operator has left blank. A pick is a shortcut, not an
-   * instruction to discard what somebody already typed — overwriting a name
-   * chosen on purpose with a repository slug is the kind of "helpful" that
-   * makes people stop using the shortcut.
-   */
   async function importFromRepository(repo: RepositoryOption) {
     if (!name.trim()) setName(repo.name);
     if (!slugTouched && !slug.trim()) setSlug(slugify(repo.name));
-    // A repository's homepage field is normally the live site, and is the one
-    // piece of GitHub metadata that maps onto something this application
-    // publishes. It is still only a default — a successful production deploy
-    // overwrites it with what actually shipped.
     if (!productionUrl.trim() && repo.homepage) setProductionUrl(repo.homepage);
 
-    // The framework comes from the repository's own manifest, not from
-    // GitHub's `language` field — "TypeScript" is true of a Next.js site, an
-    // Express API and a CLI alike, and is not an answer to "what is this built
-    // with". Read on demand, and left blank when the repository does not say.
     if (framework.trim()) return;
     setDetectingFramework(true);
     try {
@@ -150,22 +127,14 @@ function Form({
       };
       if (data.success && data.framework) {
         setFramework(data.framework);
-        // Which file answered. In a monorepo the root manifest names no
-        // framework and the answer comes from one app inside it — saying which
-        // is the difference between a value an operator can check and one they
-        // have to trust.
         setFrameworkEvidence(data.evidence ?? null);
       }
     } catch {
-      // Silent: the operator can type it, and a toast about a field that
-      // pre-fills itself would be noise on a form they are still filling in.
     } finally {
       setDetectingFramework(false);
     }
   }
 
-  // Only projects belonging to the chosen client — the server rejects a
-  // mismatch, so offering one would be offering a guaranteed error.
   const availableProjects = projects.filter((p) => p.clientId === clientId);
   const effectiveSlug = slugTouched ? slug : slugify(name);
 
@@ -220,44 +189,33 @@ function Form({
         </SheetHeader>
         <form className="space-y-3 overflow-y-auto p-4" onSubmit={submit}>
           <Field label="Client">
-            <Select
+            <SearchSelect
+              ariaLabel="Client"
               value={clientId}
-              onValueChange={(value) => {
+              onChange={(value) => {
                 setClientId(value);
-                // The previously chosen project belongs to another client now.
                 setProjectId(NO_PROJECT);
               }}
-            >
-              <SelectTrigger className="w-full" aria-label="Client">
-                <SelectValue placeholder="Pick a client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={clients.map((client) => ({ value: client.id, label: client.label }))}
+              placeholder="Pick a client"
+              searchPlaceholder="Search clients"
+            />
           </Field>
 
           <Field
             label="Project"
             hint="Optional. A product can outlive the project that built it, or exist before one."
           >
-            <Select value={projectId} onValueChange={setProjectId}>
-              <SelectTrigger className="w-full" aria-label="Project">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PROJECT}>Not linked</SelectItem>
-                {availableProjects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchSelect
+              ariaLabel="Project"
+              value={projectId}
+              onChange={setProjectId}
+              options={[
+                { value: NO_PROJECT, label: "Not linked" },
+                ...availableProjects.map((project) => ({ value: project.id, label: project.name })),
+              ]}
+              searchPlaceholder="Search projects"
+            />
           </Field>
 
           <Field label="Name">
@@ -370,23 +328,5 @@ function Form({
         </form>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block space-y-1">
-      <span className="telemetry block text-subtle-foreground">{label}</span>
-      {children}
-      {hint && <span className="block text-meta text-subtle-foreground">{hint}</span>}
-    </label>
   );
 }

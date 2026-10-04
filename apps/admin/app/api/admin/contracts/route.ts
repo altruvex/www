@@ -13,9 +13,6 @@ export const GET = withAdmin(async (request) => {
     const { searchParams } = new URL(request.url);
     const clientId = searchParams.get("clientId");
 
-    // `omit` rather than a hand-written `select`: a column added to Contract
-    // later is returned by default, and only the ones named here — the sign
-    // link and its one-time code — have to be remembered as secrets.
     const contracts = await prisma.contract.findMany({
       where: clientId ? { clientId } : undefined,
       orderBy: { createdAt: "desc" },
@@ -71,8 +68,6 @@ export const POST = withAdmin(async (request, { actor }) => {
       },
     });
 
-    // Audited at creation, before the document is built: a failed build below
-    // still leaves this contract row behind, and the trail must account for it.
     await recordActivity({
       action: "contract.created",
       actor,

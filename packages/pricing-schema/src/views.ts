@@ -56,33 +56,12 @@ import {
   type WeekRange,
 } from "./types";
 
-/**
- * Render-ready view models.
- *
- * Each takes an optional `ResolvedPricing`. Omitted, it is the values this
- * package ships, which is what keeps a page that has no datastore — and every
- * existing call site — working unchanged. A surface that can reach the admin
- * overrides passes the resolved set instead, and the same renderer produces the
- * edited numbers without knowing where they came from.
- *
- * Surfaces consume these rather than reaching for entities and formatting
- * numbers themselves. A page that only ever receives a finished string has no
- * opportunity to invent a price, which is what makes the CI literal guard
- * enforceable rather than aspirational.
- */
-
-/**
- * Shipped defaults, resolved once. The fallback for every view below; defined
- * in `overrides.ts` so the estimate engine shares it without an import cycle.
- */
 export { DEFAULT_PRICING };
 
 export interface InvestmentCellView {
   readonly serviceId: ServiceId;
   readonly complexityId: ComplexityId;
-  /** The cell's range, e.g. "40,000 – 75,000 EGP". Always a range. */
   readonly priceLabel: string;
-  /** The cell's delivery window, e.g. "3–5 weeks". */
   readonly weeksLabel: string;
 }
 
@@ -90,7 +69,6 @@ export interface InvestmentMatrixRowView {
   readonly serviceId: ServiceId;
   readonly name: string;
   readonly description: string;
-  /** One cell per complexity band, in `COMPLEXITY_IDS` order. */
   readonly cells: readonly InvestmentCellView[];
 }
 
@@ -100,15 +78,9 @@ export interface InvestmentMatrixView {
     readonly label: string;
   }[];
   readonly rows: readonly InvestmentMatrixRowView[];
-  /** Cells in the grid, so copy can count them instead of hardcoding it. */
   readonly cellCount: number;
 }
 
-/**
- * The published range grid: a buyer reads project type × complexity and a
- * range, nothing else. This is the grid the service investment register
- * discloses under Custom development.
- */
 export function investmentMatrixView(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -155,30 +127,13 @@ export interface ServiceInvestmentRowView {
   readonly name: string;
   readonly covers: string;
   readonly how: string;
-  /**
-   * The row's figure cell: "Scoped per project" for design, "From {floor}"
-   * for development, the audit fee, and the lowest plan for maintenance.
-   */
   readonly figureLabel: string;
-  /** True when the figure is words, not a number (design). */
   readonly isScopedPerProject: boolean;
-  /** Development only: the twelve published ranges behind "From {floor}". */
   readonly matrix: InvestmentMatrixView | null;
-  /** Audit only: fee, duration and the credit rule. */
   readonly audit: ConsultingView | null;
-  /** Maintenance only: the plans, custom-quote plan included. */
   readonly plans: readonly MaintenanceView[] | null;
 }
 
-/**
- * The service investment register: one row per service line, as `/pricing`
- * and every service page print it.
- *
- * Interface design carries no figure by decision — it is scoped per project.
- * Development quotes the engagement floor and discloses the grid behind it;
- * the audit quotes its fixed fee and the credit; maintenance quotes its plans.
- * Every number resolves from the same set the estimator reads.
- */
 export function serviceInvestmentViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -253,34 +208,20 @@ export function serviceInvestmentViews(
 }
 
 export interface WorkedExampleView {
-  /** The five answers behind every figure below. */
   readonly input: typeof WORKED_EXAMPLE_INPUT;
-  /** The answers as words, for the example's caption line. */
   readonly serviceLabel: string;
   readonly bandLabel: string;
   readonly brandLabel: string;
   readonly contentLabel: string;
   readonly timelineLabel: string;
-  /** "From 22,000 EGP" — the engagement floor. */
   readonly floorLabel: string;
-  /** The published cell the answers land in, e.g. "40,000 – 75,000 EGP". */
   readonly cellLabel: string;
-  /** The estimate after conditions, e.g. "45,000 – 85,000 EGP". */
   readonly estimateLabel: string;
-  /** Weeks after conditions, e.g. "3–6". */
   readonly weeksLabel: string;
   readonly validityDays: number;
   readonly validityDaysLabel: string;
 }
 
-/**
- * The worked example, fully computed.
- *
- * The pricing pages walk a buyer from requirements to proposal on one example
- * project. Every figure in that walkthrough comes from here, computed from
- * `WORKED_EXAMPLE_INPUT` against the same pricing the estimator uses, so the
- * example can never show a number the estimator would not.
- */
 export function workedExampleView(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -314,9 +255,7 @@ export function workedExampleView(
 export interface FactorOptionView {
   readonly id: string;
   readonly label: string;
-  /** The raw price factor, e.g. 1.15. */
   readonly factor: number;
-  /** The price change as words: "+15%", "no change", "−5%". */
   readonly deltaLabel: string;
   readonly isNeutral: boolean;
 }
@@ -324,13 +263,10 @@ export interface FactorOptionView {
 export interface FactorGroupView {
   readonly id: FactorGroupId;
   readonly label: string;
-  /** In the order the estimator asks them. */
   readonly options: readonly FactorOptionView[];
-  /** Lowest to highest delta, e.g. "−5% … +15%" or "no change … +12%". */
   readonly spanLabel: string;
 }
 
-/** The separator between the two ends of a factor span. */
 const SPAN_SEPARATOR = " … ";
 
 function factorDeltaLabel(
@@ -341,14 +277,6 @@ function factorDeltaLabel(
   return factor === 1 ? noChange : formatSignedPercent(factor - 1, locale);
 }
 
-/**
- * The priced conditions, as percents a buyer can read.
- *
- * Turns the multipliers in `modifiers.ts` into per-option delta labels and a
- * span per group. These are the only numbers the "what determines cost"
- * explanation may print, and they are computed from the factors the estimate
- * engine multiplies by — the explanation cannot drift from the engine.
- */
 export function factorViews(locale: Locale): readonly FactorGroupView[] {
   const copy = pricingCopy(locale).factors;
 
@@ -386,20 +314,10 @@ export function factorViews(locale: Locale): readonly FactorGroupView[] {
 export interface PricingDriverView {
   readonly id: PricingDriverId;
   readonly effect: PricingDriverEffect;
-  /** The factor groups that explain this driver's percents; empty for reviewed and monthly items. */
   readonly groups: readonly FactorGroupView[];
-  /**
-   * The driver's overall span across its groups, or null when nothing priced
-   * is attached (a matrix axis, a reviewed item, a monthly plan).
-   */
   readonly spanLabel: string | null;
 }
 
-/**
- * What determines cost, one row per driver, with the real percents attached
- * where a driver is a priced condition. Wording is app copy; the structure and
- * every number are this package's.
- */
 export function pricingDriverViews(
   locale: Locale,
 ): readonly PricingDriverView[] {
@@ -434,7 +352,6 @@ export interface ScopeNoteView {
   readonly description: string;
 }
 
-/** The unpriced scope notes a buyer can tick, in display order. */
 export function scopeNoteViews(locale: Locale): readonly ScopeNoteView[] {
   const copy = pricingCopy(locale).scopeNotes;
   return SCOPE_NOTE_IDS.map((id) => ({
@@ -444,11 +361,6 @@ export function scopeNoteViews(locale: Locale): readonly ScopeNoteView[] {
   }));
 }
 
-/**
- * The widest range the estimator publishes before any answer, as labels.
- * The estimator opens on this and every pricing page that says "from … to …"
- * about the whole offer reads it.
- */
 export function estimateSpanLabels(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -460,12 +372,6 @@ export function estimateSpanLabels(
   };
 }
 
-/**
- * The published delivery window: the shortest and longest cell in the matrix,
- * in weeks. The process pages split this window into phases, so the phase
- * lengths they print cannot promise more (or less) time than a price cell
- * does - and an admin edit to a cell's weeks moves them with it.
- */
 export function deliveryWindowFrom(
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): WeekRange {
@@ -478,20 +384,10 @@ export function deliveryWindowFrom(
   };
 }
 
-/** The engagement floor: the lowest published cell in the matrix. */
 function lowestCell(pricing: ResolvedPricing): number {
   return minimumEngagementFrom(pricing);
 }
 
-/**
- * The whole published build range — the lowest cell in the matrix to the
- * highest — as one formatted span.
- *
- * `/services/consulting` states the audit's fee against it ("4% of the largest
- * build we publish"), so the two figures have to come from the same matrix an
- * admin edits. Deriving it in the app would put a second authority on what the
- * published range is.
- */
 export function publishedBuildRangeLabel(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -509,33 +405,19 @@ export function publishedBuildRangeLabel(
 export interface MaintenanceView {
   readonly id: MaintenancePlanId;
   readonly name: string;
-  /** Formatted price, or the locale's "Custom" wording when quote-only. */
   readonly priceLabel: string;
   readonly cycleLabel: string;
-  /**
-   * The same plan paid a year up front: the yearly figure and its cycle
-   * wording. Null when quote-only.
-   */
   readonly annual: {
     readonly priceLabel: string;
     readonly cycleLabel: string;
   } | null;
   readonly isCustomQuote: boolean;
-  /** Descriptive bullets plus the templated scope and portal lines. */
   readonly features: readonly string[];
-  /** Published overage term. Null on quote-only plans. */
   readonly overageNote: string | null;
   readonly highlight: boolean;
-  /**
-   * The client-facing cap on edit requests per cycle — the unit the retainer
-   * is sold in — so a surface can draw the allowance as a count, not only
-   * read it in a sentence. Null when quote-only.
-   */
   readonly requestsPerCycle: number | null;
   readonly priorityTurnaround: boolean;
-  /** The plan answered against the shared comparison questions. */
   readonly compare: MaintenanceCompare;
-  /** "{rate} EGP / hour" for a table cell. Null on quote-only plans. */
   readonly overageShort: string | null;
 }
 
@@ -551,8 +433,6 @@ function maintenanceFeatures(
     const template = plan.priorityTurnaround
       ? tpl.requestCapPriority
       : tpl.requestCap;
-    // Inserted at the position the hand-written lists used, so the card's
-    // reading order is unchanged by the migration.
     features.splice(
       2,
       0,
@@ -580,7 +460,6 @@ function annualView(
   };
 }
 
-/** Months a year paid up front does not charge for — for "{n} months free" copy. */
 export const MAINTENANCE_ANNUAL_FREE_MONTHS = maintenanceFreeMonths("annual");
 
 export function maintenanceViews(
@@ -635,12 +514,6 @@ export interface ConsultingView {
   readonly ctaLabel: string;
   readonly eyebrow: string;
   readonly includedLabel: string;
-  /**
-   * The credit rule, already resolved against the package's own price.
-   *
-   * `creditAmountLabel` is null when nothing is credited, which is the signal
-   * for a surface to print neither half — never a "0 EGP credited" line.
-   */
   readonly creditLabel: string;
   readonly creditAmountLabel: string | null;
   readonly creditIfBuild: string;
@@ -684,7 +557,6 @@ export interface AddonView {
   readonly name: string;
   readonly description: string;
   readonly status: Addon["status"];
-  /** Null while the supplier cost is not on file — render "pending", not 0. */
   readonly price: AddonPrice | null;
   readonly costBasisLabel: string | null;
   readonly markupLabel: string | null;
@@ -710,7 +582,6 @@ function toAddonView(addon: Addon, locale: Locale): AddonView {
   };
 }
 
-/** Client-safe: `planned` add-ons, the Managed bundle included, are excluded. */
 export function publicAddonViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -720,7 +591,6 @@ export function publicAddonViews(
     .map((addon) => toAddonView(addon, locale));
 }
 
-/** Admin-only: includes roadmap placeholders so they can carry a SOON badge. */
 export function allAddonViews(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -744,12 +614,6 @@ export interface TermsView {
   readonly totalLabel: string;
 }
 
-/**
- * The commercial terms `/transparency` publishes.
- *
- * VAT and the revision rate were previously first disclosed in the contract.
- * Rendering them here is the point of that page.
- */
 export function termsView(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -781,39 +645,25 @@ export function termsView(
 }
 
 export interface PaymentMilestoneView {
-  /** The share as a number, e.g. 50. */
   readonly percent: number;
-  /** The share as text, e.g. "50%" / "٥٠٪". */
   readonly percentLabel: string;
-  /** The milestone sentence, e.g. "50% to start". */
   readonly label: string;
 }
 
 export interface PaymentScheduleView {
-  /** In `paymentSplit` order: start, development milestone, before launch. */
   readonly milestones: readonly [
     PaymentMilestoneView,
     PaymentMilestoneView,
     PaymentMilestoneView,
   ];
-  /** The middle trigger on its own: "a development milestone". */
   readonly milestoneTrigger: string;
-  /** "All figures exclude VAT at 14%." */
   readonly vatExcluded: string;
   readonly ownership: string;
-  /** "30 days from the date of issue." */
   readonly validity: string;
   readonly validityDays: number;
   readonly validityDaysLabel: string;
 }
 
-/**
- * The payment schedule and the terms that travel with a figure.
- *
- * The three milestones are `paymentSplit` joined to the trigger copy, so the
- * pricing page, the FAQ, a proposal and a contract all describe the same
- * schedule in the same words — and an edit to the split moves all of them.
- */
 export function paymentScheduleView(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -846,15 +696,6 @@ export function paymentScheduleView(
   };
 }
 
-/**
- * Named figures for prose interpolation.
- *
- * Some client-facing copy is a sentence that happens to quote a price — an FAQ
- * answer, a homepage artifact caption. Those live in the app's next-intl
- * catalogue because they are prose, but the number inside them must still come
- * from here or it drifts the moment a price changes. The copy carries a
- * `{token}` and the renderer fills it from this map.
- */
 export function pricingTokens(
   locale: Locale,
   pricing: ResolvedPricing = DEFAULT_PRICING,
@@ -866,10 +707,7 @@ export function pricingTokens(
 
   return {
     auditPrice: formatMoney(audit.price, locale),
-    // What that fee is worth against a build. Prose that states the credit
-    // quotes this, so the sentence cannot outlive the rule it describes.
     auditCredit: formatMoney(consultingCreditAmount(audit), locale),
-    // The website/basic cell: the smallest build the matrix publishes.
     essentialRange: formatRange(pricing.services.website.price.basic, locale),
     maintenanceEssential:
       essential.price === null ? "" : formatMoney(essential.price, locale),
@@ -877,26 +715,16 @@ export function pricingTokens(
       professional.price === null
         ? ""
         : formatMoney(professional.price, locale),
-    // The same plans paid a year up front. Derived, so the FAQ's yearly figure
-    // moves with the monthly one.
     maintenanceEssentialAnnual: annualView(essential, locale)?.priceLabel ?? "",
     maintenanceProfessionalAnnual:
       annualView(professional, locale)?.priceLabel ?? "",
     minimumEngagement: formatMoney(lowestCell(pricing), locale),
     revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
     vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
-    // The post-launch warranty is a published commercial term, not a price,
-    // but it is quoted in the same prose and drifts the same way: the FAQ, the
-    // terms of service and the quote artifact all name the window, and the
-    // contract promises it.
     warrantyDays: formatNumber(COMMERCIAL_TERMS.postLaunchWarrantyDays, locale),
-    // The delivery window the process pages divide into phases.
     deliveryWeeksMin: formatNumber(deliveryWindowFrom(pricing).min, locale),
     deliveryWeeksMax: formatNumber(deliveryWindowFrom(pricing).max, locale),
     deliveryCeilingWeeks: formatNumber(MAX_DELIVERY_WEEKS, locale),
-    // The payment schedule. Prose that names a milestone quotes these, so the
-    // FAQ, the terms page and a contract cannot split the same price
-    // three different ways.
     paymentStart: formatPercentLabel(
       COMMERCIAL_TERMS.paymentSplit[0] / 100,
       locale,
@@ -917,7 +745,6 @@ export function pricingTokens(
   };
 }
 
-/** Fills every `{token}` in a prose string from `pricingTokens`. */
 export function fillPricingTokens(
   text: string,
   locale: Locale,

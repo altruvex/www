@@ -84,12 +84,6 @@ const createMeetingSchema = z.object({
   notes: z.string().trim().max(2000).optional(),
 });
 
-/**
- * An operator-created meeting is one the operator has already agreed, so it is
- * written APPROVED (with approvedAt) rather than PENDING — PENDING is the state
- * of a website booking request awaiting a decision, and lands in the "requests"
- * panel. No invitation is sent: meetings have no mail sender.
- */
 export const POST = withAdmin(async (request, { session, actor }) => {
   const input = await readJson(request, createMeetingSchema);
 
@@ -104,7 +98,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       select: { id: true, client: { select: { id: true } } },
     });
     if (!submission) throw new HttpError(400, "That lead does not exist.");
-    // A meeting with a lead who is already a client belongs on the client hub.
     if (!clientId && submission.client) clientId = submission.client.id;
   }
 
@@ -159,7 +152,6 @@ const updateMeetingSchema = z.object({
   scheduledDate: ymd.optional(),
   scheduledTime: hhmm.optional(),
   durationMinutes: duration.optional(),
-  /** Link only — a meeting is unlinked by deleting the client, not from here. */
   clientId: z.string().uuid().optional(),
 });
 
@@ -207,8 +199,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     },
   });
 
-  // Only the fields the caller sent, compared against the stored value; the
-  // diff inside recordChange then drops any that did not actually move.
   const was = {
     status: before.status,
     assignedToId: before.assignedToId,
@@ -262,13 +252,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
   return ok({ meeting: updated });
 }, { can: ["edit", "meeting"] });
 
-/**
- * Deleting a meeting goes through the same registry every other delete uses.
- *
- * It used to call `prisma.meeting.delete` here, which quietly granted ADMIN a
- * permission the role matrix does not (`rbac.ts` gives `meeting.delete` to
- * OWNER only) and wrote a thinner audit snapshot than the registry's.
- */
 export const DELETE = withAdmin(async (request) => {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
@@ -284,7 +267,6 @@ export const DELETE = withAdmin(async (request) => {
   try {
     result = await deleteRecords("meeting", [id]);
   } catch (error) {
-    // `deleteRecords` throws when the role matrix refuses the subject.
     if (error instanceof Error && error.message.startsWith("Your role cannot delete")) {
       return NextResponse.json({ success: false, message: error.message }, { status: 403 });
     }

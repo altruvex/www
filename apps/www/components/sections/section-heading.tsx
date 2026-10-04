@@ -16,9 +16,6 @@ interface SectionHeadingProps {
   accent?: HeadingAccent;
   accentDirection?: GradientDirection;
   accentAnimate?: boolean | AccentAnimation;
-  /** Keep the emphasis second clause but paint it in the section's world
-      gradient instead of dimmed ink. Ignored when `accent` is set, and on
-      `theme="surface"`, which has no world to wear. */
   italicWorld?: boolean;
   secondTitleBreak?: boolean;
   titleId?: string;

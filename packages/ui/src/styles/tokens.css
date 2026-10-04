@@ -1,13 +1,3 @@
-/*
- * The one palette. Both apps import this file, and neither redefines a color
- * that lives here — an app adds only what exists in that app alone (www: scenes,
- * color worlds, gradients; admin: sidebar, density).
- *
- * Values are design.md §3 (neutral ramp, brand blue, semantic colors). Every
- * color is authored as HSL channels and consumed as hsl(var(--x)), so a token
- * can take an alpha at the call site: hsl(var(--brand) / 0.1).
- */
-
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -38,14 +28,10 @@
   --color-border: hsl(var(--border));
   --color-border-mid: hsl(var(--border-mid));
   --color-border-strong: hsl(var(--border-strong));
-  /* The one hairline for Container, Separator and Grid edges. A full color,
-     not channels, so it follows every scene flip of --s-border. */
   --color-border-subtle: var(--border-subtle);
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  /* Status: one value per tone. error and destructive are names for danger,
-     not second reds. */
   --color-success: hsl(var(--success));
   --color-warning: hsl(var(--warning));
   --color-danger: hsl(var(--danger));
@@ -56,7 +42,6 @@
   --color-neutral: hsl(var(--neutral));
   --color-progress: hsl(var(--progress));
 
-  /* Categorical chart order, validated as a set — take them in order. */
   --color-chart-1: hsl(var(--chart-1));
   --color-chart-2: hsl(var(--chart-2));
   --color-chart-3: hsl(var(--chart-3));
@@ -74,7 +59,6 @@
   --color-s-high-soft: var(--s-high-soft);
 
   --color-messaging-whatsapp: hsl(var(--messaging-whatsapp));
-  /* Ink, for scrims behind overlays (bg-n-8/25). */
   --color-n-8: hsl(var(--n-8));
 
   --shadow-card: var(--elevation-card);
@@ -121,7 +105,6 @@
   --control-h-icon: 2.25rem;
   --control-h-icon-lg: 2.5rem;
 
-  /* ── Neutral ramp (design.md §3.2) ─────────────────────────────── */
   --n-0: 0 0% 98%;
   --n-1: 0 0% 96%;
   --n-2: 0 0% 91%;
@@ -132,11 +115,8 @@
   --n-7: 0 0% 18%;
   --n-8: 0 0% 6%;
 
-  /* ── Brand blue (design.md §3.1) ───────────────────────────────── */
   --brand: 214 89% 48%;
   --brand-hover: 214 89% 41%;
-  /* Brand blue as text, per ground. Named once so a scene or world that
-     needs the other ground's value references it instead of retyping it. */
   --brand-text-on-light: 214 90% 43%;
   --brand-text-on-dark: 214 95% 64%;
   --brand-text: var(--brand-text-on-light);
@@ -144,7 +124,6 @@
   --brand-foreground: var(--n-0);
   --selection-accent: var(--brand);
 
-  /* ── Surfaces and text ─────────────────────────────────────────── */
   --background: var(--n-0);
   --foreground: var(--n-8);
   --card: 0 0% 100%;
@@ -166,13 +145,10 @@
   --input: var(--card);
   --ring: var(--brand);
 
-  /* ── Edges: ink at fixed alphas ────────────────────────────────── */
   --border: var(--n-8) / 0.1;
   --border-mid: var(--n-8) / 0.18;
   --border-strong: var(--n-8) / 0.28;
 
-  /* Layering scale for text and hairlines on a ground you do not know
-     (design.md §3.7). */
   --s-high: hsl(var(--n-8) / 0.9);
   --s-mid: hsl(var(--n-8) / 0.72);
   --s-low: hsl(var(--n-8) / 0.52);
@@ -183,7 +159,6 @@
   --s-high-soft: hsl(var(--n-8) / 0.03);
   --border-subtle: var(--s-border);
 
-  /* ── Semantic (design.md §3.5) ─────────────────────────────────── */
   --success: 162 95% 31%;
   --warning: 38 96% 40%;
   --danger: 0 65% 51%;
@@ -193,7 +168,6 @@
   --progress: 258 68% 54%;
   --messaging-whatsapp: 142 70% 28%;
 
-  /* ── Charts ────────────────────────────────────────────────────── */
   --chart-1: 231.4 60.7% 57.1%;
   --chart-2: 28 88.3% 40.4%;
   --chart-3: 177.1 83.7% 33.7%;
@@ -201,7 +175,6 @@
   --chart-5: 77.6 75.2% 28.4%;
   --chart-6: 257.3 72.5% 70%;
 
-  /* ── Elevation ─────────────────────────────────────────────────── */
   --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.04), 0 8px 24px -16px hsl(0 0% 0% / 0.12);
   --elevation-card-lg: 0 2px 4px hsl(0 0% 0% / 0.03), 0 24px 48px -24px hsl(0 0% 0% / 0.18);
   --elev-1: 0 1px 2px hsl(var(--n-8) / 0.05);
@@ -243,8 +216,6 @@
   --success: 162 60% 50%;
   --warning: 36 84% 60%;
   --danger: 0 74% 68%;
-  /* The dark red lifts to 68% lightness, so a label on it flips to the dark
-     ground to keep AA. */
   --destructive-foreground: var(--background);
   --progress: 258 76% 72%;
   --messaging-whatsapp: 142 70% 49%;
@@ -272,9 +243,6 @@
   }
 }
 
-/* Theme switch (theme-switch.ts): the browser's default crossfade blends both
-   snapshots with plus-lighter on its own timing. Here the old page stays
-   opaque and the new one is faded in from JS (THEME_CROSSFADE). */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;

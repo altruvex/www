@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { prisma, type ContractStatus } from "@repo/database";
 import { FileSignature } from "lucide-react";
+import { Button } from "@repo/ui";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
-import { FilterChip } from "@/components/os/data-table";
+import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
+import { gateRoute } from "@/lib/page-gate";
+import { currentRole } from "@/lib/authorize";
+import { can } from "@/lib/rbac";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { ContractsTable, type ContractRow } from "./contracts-table";
-import { Button } from "@repo/ui";
+import { ContractInspector } from "./contract-inspector";
+import { contractStepPermissions } from "./contract-permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -20,58 +25,55 @@ const CONTRACT_STATUSES: readonly ContractStatus[] = [
   "EXPIRED",
 ];
 
-/** The list URL with one scope changed; both scopes travel together. */
+type Params = { client?: string; status?: string; delivery?: string; inspect?: string };
+
 function contractsHref(scope: {
   client?: string | null;
   status?: string | null;
+  delivery?: string | null;
 }) {
   const params = new URLSearchParams();
   if (scope.client) params.set("client", scope.client);
   if (scope.status) params.set("status", scope.status);
+  if (scope.delivery) params.set("delivery", scope.delivery);
   const query = params.toString();
   return query ? `/contracts?${query}` : "/contracts";
 }
 
-export default async function ContractsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ client?: string; status?: string }>;
-}) {
-  const { client: clientParam, status: statusParam } = await searchParams;
-  const clientId = clientParam?.trim() || null;
-  // `?status=` (from Today and the tiles below) narrows the table only; an
-  // unknown value is ignored rather than rendering an empty list that looks real.
-  const status =
-    CONTRACT_STATUSES.find((s) => s === statusParam?.trim().toUpperCase()) ??
-    null;
+export default async function ContractsPage({ searchParams }: { searchParams: Promise<Params> }) {
+  const denied = await gateRoute("/contracts");
+  if (denied) return denied;
 
-  // `?client=` (from the client hub) scopes the query itself; the chip names it.
-  const scopeClient = clientId
-    ? await prisma.client.findUnique({
-        where: { id: clientId },
-        select: { id: true, name: true, company: true },
-      })
-    : null;
+  const params = await searchParams;
+  const clientId = params.client?.trim() || null;
+  const status =
+    CONTRACT_STATUSES.find((s) => s === params.status?.trim().toUpperCase()) ?? null;
+  const noProject = params.delivery === "none";
+  const inspectId = params.inspect?.trim() || null;
+  const role = await currentRole();
+
+  const [scopeClient, contracts] = await Promise.all([
+    clientId
+      ? prisma.client.findUnique({
+          where: { id: clientId },
+          select: { id: true, name: true, company: true },
+        })
+      : null,
+    prisma.contract.findMany({
+      where: clientId ? { clientId } : undefined,
+      include: {
+        client: { select: { id: true, name: true, company: true } },
+        proposal: {
+          select: { id: true, totalPrice: true, currency: true, projectType: true },
+        },
+        project: { select: { id: true, name: true, status: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
   const scopeName = scopeClient
     ? scopeClient.company || scopeClient.name || "Unnamed client"
     : "Unknown client";
-
-  const contracts = await prisma.contract.findMany({
-    where: clientId ? { clientId } : undefined,
-    include: {
-      client: { select: { id: true, name: true, company: true } },
-      proposal: {
-        select: {
-          id: true,
-          totalPrice: true,
-          currency: true,
-          projectType: true,
-        },
-      },
-      project: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
 
   const rows: ContractRow[] = contracts.map((c) => ({
     id: c.id,
@@ -86,24 +88,32 @@ export default async function ContractsPage({
     signedAt: c.signedAt?.toISOString() ?? null,
     signedByName: c.signedByName,
     onboardingSent: Boolean(c.onboardingMessageSentAt),
+    proposalId: c.proposalId,
     projectId: c.project?.id ?? null,
     projectName: c.project?.name ?? null,
-    // The sign token is deliberately not carried: this row is serialised into
-    // a client component, and the token is the signing credential.
+    projectStatus: c.project?.status ?? null,
   }));
 
-  // The tiles summarise the whole scope (all statuses), so they stay a map of
-  // where contracts stand while the table shows the status picked.
-  const visible = status ? rows.filter((r) => r.status === status) : rows;
   const awaiting = rows.filter((r) => r.status === "SENT");
   const signed = rows.filter((r) => r.status === "SIGNED");
-  const signedValue = sumByCurrency(
-    signed.map((r) => ({ amount: r.value, currency: r.currency })),
-  );
+  const signedNoProject = signed.filter((r) => !r.projectId);
+  const drafts = rows.filter((r) => r.status === "DRAFT");
+  const signedValue = sumByCurrency(signed.map((r) => ({ amount: r.value, currency: r.currency })));
   const awaitingValue = sumByCurrency(
     awaiting.map((r) => ({ amount: r.value, currency: r.currency })),
   );
-  const signedNoProject = signed.filter((r) => !r.projectId);
+
+  const visible = rows.filter(
+    (r) => (!status || r.status === status) && (!noProject || (r.status === "SIGNED" && !r.projectId)),
+  );
+  const filterLabel = [
+    status ? statusOf("contractStatus", status).label : null,
+    noProject ? "Signed, no project" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const canDelete = can(role, "delete", "contract");
 
   return (
     <div className="space-y-4">
@@ -112,34 +122,11 @@ export default async function ContractsPage({
         description="Commitments. A contract can only be generated from an accepted proposal, so it always references an offer the client saw."
       />
 
-      {(clientId || status) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {clientId && (
-            <FilterChip
-              label="Client"
-              value={scopeName}
-              clearHref={contractsHref({ status })}
-            />
-          )}
-          {status && (
-            <FilterChip
-              label="Status"
-              value={statusOf("contractStatus", status).label}
-              clearHref={contractsHref({ client: clientId })}
-            />
-          )}
-        </div>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatTile
           label="Awaiting signature"
           value={awaiting.length}
-          sub={
-            awaiting.length
-              ? moneyByCurrency(awaitingValue, true)
-              : "Nothing pending"
-          }
+          sub={awaiting.length ? moneyByCurrency(awaitingValue, true) : "Nothing pending"}
           tone={awaiting.length ? "warning" : "neutral"}
           href={contractsHref({ client: clientId, status: "SENT" })}
         />
@@ -153,29 +140,55 @@ export default async function ContractsPage({
         <StatTile
           label="Signed, no project"
           value={signedNoProject.length}
-          sub={
-            signedNoProject.length
-              ? "Delivery has not started"
-              : "All converted"
-          }
+          sub={signedNoProject.length ? "Delivery has not started" : "All converted"}
           tone={signedNoProject.length ? "danger" : "success"}
+          href={contractsHref({ client: clientId, delivery: "none" })}
         />
         <StatTile
           label="Drafts"
-          value={rows.filter((r) => r.status === "DRAFT").length}
+          value={drafts.length}
           sub="Not sent yet"
           href={contractsHref({ client: clientId, status: "DRAFT" })}
         />
       </div>
 
+      {rows.length > 0 && (
+        <div className="space-y-2">
+          <FilterBar label="Filter contracts">
+            <FilterChip param="status" label="All" count={rows.length} />
+            {CONTRACT_STATUSES.map((s) => (
+              <FilterChip
+                key={s}
+                param="status"
+                value={s}
+                label={statusOf("contractStatus", s).label}
+                count={rows.filter((r) => r.status === s).length}
+              />
+            ))}
+            <FilterChip
+              param="delivery"
+              value="none"
+              label="Signed, no project"
+              count={signedNoProject.length}
+            />
+          </FilterBar>
+          <ActiveFilters
+            labels={{ client: "Client", status: "Status", delivery: "Delivery" }}
+            valueLabels={{
+              ...(clientId ? { client: { [clientId]: scopeName } } : {}),
+              status: Object.fromEntries(
+                CONTRACT_STATUSES.map((s) => [s, statusOf("contractStatus", s).label]),
+              ),
+              delivery: { none: "Signed, no project" },
+            }}
+          />
+        </div>
+      )}
+
       {rows.length === 0 && clientId ? (
         <EmptyState
           icon={FileSignature}
-          title={
-            scopeClient
-              ? `No contracts for ${scopeName} yet`
-              : "This client no longer exists"
-          }
+          title={scopeClient ? `No contracts for ${scopeName} yet` : "This client no longer exists"}
           body={
             scopeClient
               ? "A contract is generated from an accepted proposal. Open this client's proposals to find the one they accepted, or quote them first."
@@ -183,13 +196,7 @@ export default async function ContractsPage({
           }
           action={
             <Button asChild variant="outline">
-              <Link
-                href={
-                  scopeClient
-                    ? `/proposals?client=${scopeClient.id}`
-                    : "/contracts"
-                }
-              >
+              <Link href={scopeClient ? `/proposals?client=${scopeClient.id}` : "/contracts"}>
                 {scopeClient ? "Their proposals" : "All contracts"}
               </Link>
             </Button>
@@ -199,29 +206,23 @@ export default async function ContractsPage({
         <EmptyState
           icon={FileSignature}
           title="No contracts yet"
-          body="Contracts are generated from accepted proposals. Once a client accepts, the Generate contract action on the proposal turns the offer into a commitment with the same numbers."
+          body="Contracts are generated from accepted proposals. Once a client accepts, Generate contract on the proposal turns the offer into a commitment with the same numbers."
           action={
             <Button asChild variant="outline">
               <Link href="/proposals">Open proposals</Link>
             </Button>
           }
         />
-      ) : visible.length === 0 && status ? (
-        <EmptyState
-          icon={FileSignature}
-          title={`No ${statusOf("contractStatus", status).label.toLowerCase()} contracts${clientId ? ` for ${scopeName}` : ""}`}
-          body="Nothing matches this status right now. Clear the status filter to see the rest."
-          action={
-            <Button asChild variant="outline">
-              <Link href={contractsHref({ client: clientId })}>
-                Clear the status filter
-              </Link>
-            </Button>
-          }
-        />
       ) : (
-        <ContractsTable rows={visible} />
+        <ContractsTable
+          rows={visible}
+          canDelete={canDelete}
+          filtered={filterLabel || null}
+          allowed={contractStepPermissions(role)}
+        />
       )}
+
+      <ContractInspector id={inspectId} role={role} />
     </div>
   );
 }

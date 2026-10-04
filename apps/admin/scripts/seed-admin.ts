@@ -1,4 +1,3 @@
-import "dotenv-flow/config";
 import { hashPassword } from "better-auth/crypto";
 import { prisma } from "@repo/database";
 

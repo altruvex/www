@@ -3,11 +3,8 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Edit2, Globe, Mail, Phone } from "lucide-react";
-import { updateCompanyProfile } from "@/app/(dashboard)/_actions/records";
-import { Button } from "@repo/ui";
-import { LoadingIcon } from "@repo/ui";
-import { Field, Input } from "@repo/ui";
+import { ArrowRight, Edit2, Globe, Mail, Phone } from "lucide-react";
+import { Button, Field, Input, LoadingIcon } from "@repo/ui";
 import {
   Sheet,
   SheetBody,
@@ -19,44 +16,54 @@ import {
   SheetTrigger,
 } from "@repo/ui";
 
-/**
- * Editing one record is contextual work, so it happens in a `Sheet` — the
- * settings page stays visible behind it. This used to be a hand-built overlay
- * with its own inputs and buttons: no focus trap, no Escape, no dialog role,
- * and a 12px type size that exists nowhere else in the OS.
- */
-export function CompanyProfileEditor({
-  initialData,
-}: {
-  initialData: {
-    phone: string;
-    email: string;
-    website: string;
-    brandColor: string;
-    brandColorDark: string;
-  };
-}) {
+import { saveCompanyProfile, type CompanyProfileInput } from "@/app/(dashboard)/_actions/settings";
+
+const FIELD_LABELS: Record<keyof CompanyProfileInput, string> = {
+  phone: "Phone",
+  email: "Email",
+  website: "Website",
+  brandColor: "Light accent",
+  brandColorDark: "Dark accent",
+};
+
+export function CompanyProfileEditor({ initialData }: { initialData: CompanyProfileInput }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [phone, setPhone] = React.useState(initialData.phone);
-  const [email, setEmail] = React.useState(initialData.email);
-  const [website, setWebsite] = React.useState(initialData.website);
-  const [brandColor, setBrandColor] = React.useState(initialData.brandColor);
-  const [brandColorDark, setBrandColorDark] = React.useState(initialData.brandColorDark);
+  const [draft, setDraft] = React.useState<CompanyProfileInput>(initialData);
   const [pending, startTransition] = React.useTransition();
+
+  const [lastOpen, setLastOpen] = React.useState(open);
+  if (open !== lastOpen) {
+    setLastOpen(open);
+    if (open) setDraft(initialData);
+  }
+
+  function set<K extends keyof CompanyProfileInput>(key: K, value: string) {
+    setDraft((d) => ({ ...d, [key]: value }));
+  }
+
+  const changes = (Object.keys(FIELD_LABELS) as (keyof CompanyProfileInput)[])
+    .map((key) => {
+      const before = initialData[key];
+      const after =
+        key === "brandColor" || key === "brandColorDark"
+          ? draft[key].replace(/^#/, "").trim() || before
+          : draft[key].trim();
+      return { key, before, after };
+    })
+    .filter((c) => c.before !== c.after);
 
   function handleSave(event: React.FormEvent) {
     event.preventDefault();
+    if (changes.length === 0) return;
     startTransition(async () => {
-      try {
-        await updateCompanyProfile({ phone, email, website, brandColor, brandColorDark });
-        toast.success("Company profile updated");
+      const result = await saveCompanyProfile(draft);
+      if (result.ok) {
+        toast.success(result.message ?? "Company profile saved.");
         setOpen(false);
         router.refresh();
-      } catch (error) {
-        toast.error("Could not update the profile", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
+      } else {
+        toast.error(result.message);
       }
     });
   }
@@ -86,8 +93,8 @@ export function CompanyProfileEditor({
                 <Input
                   type="text"
                   required
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
+                  value={draft.phone}
+                  onChange={(event) => set("phone", event.target.value)}
                   placeholder="+20 100 000 0000"
                   className="ps-8"
                 />
@@ -100,8 +107,8 @@ export function CompanyProfileEditor({
                 <Input
                   type="email"
                   required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  value={draft.email}
+                  onChange={(event) => set("email", event.target.value)}
                   placeholder="contact@altruvex.com"
                   className="ps-8"
                 />
@@ -112,10 +119,10 @@ export function CompanyProfileEditor({
               <div className="relative">
                 <Globe className="pointer-events-none absolute start-2.5 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
                 <Input
-                  type="text"
+                  type="url"
                   required
-                  value={website}
-                  onChange={(event) => setWebsite(event.target.value)}
+                  value={draft.website}
+                  onChange={(event) => set("website", event.target.value)}
                   placeholder="https://altruvex.com"
                   className="ps-8"
                 />
@@ -127,13 +134,14 @@ export function CompanyProfileEditor({
                 <div className="flex items-center gap-2">
                   <span
                     className="size-[var(--control-h)] shrink-0 rounded-md border border-border"
-                    style={{ backgroundColor: `#${brandColor}` }}
+                    style={{ backgroundColor: `#${draft.brandColor}` }}
                     aria-hidden
                   />
                   <Input
                     type="text"
-                    value={brandColor}
-                    onChange={(event) => setBrandColor(event.target.value.replace(/^#/, ""))}
+                    value={draft.brandColor}
+                    onChange={(event) => set("brandColor", event.target.value.replace(/^#/, ""))}
+                    maxLength={6}
                     className="font-mono"
                   />
                 </div>
@@ -143,17 +151,44 @@ export function CompanyProfileEditor({
                 <div className="flex items-center gap-2">
                   <span
                     className="size-[var(--control-h)] shrink-0 rounded-md border border-border"
-                    style={{ backgroundColor: `#${brandColorDark}` }}
+                    style={{ backgroundColor: `#${draft.brandColorDark}` }}
                     aria-hidden
                   />
                   <Input
                     type="text"
-                    value={brandColorDark}
-                    onChange={(event) => setBrandColorDark(event.target.value.replace(/^#/, ""))}
+                    value={draft.brandColorDark}
+                    onChange={(event) => set("brandColorDark", event.target.value.replace(/^#/, ""))}
+                    maxLength={6}
                     className="font-mono"
                   />
                 </div>
               </Field>
+            </div>
+
+            <div className="plane p-3" aria-live="polite">
+              {changes.length === 0 ? (
+                <p className="text-meta text-muted-foreground">Nothing changed yet.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {changes.map((change) => (
+                    <li
+                      key={change.key}
+                      className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-meta"
+                    >
+                      <span className="w-24 shrink-0 text-subtle-foreground">
+                        {FIELD_LABELS[change.key]}
+                      </span>
+                      <span className="min-w-0 truncate font-mono text-muted-foreground line-through">
+                        {change.before || "—"}
+                      </span>
+                      <ArrowRight className="size-3 shrink-0 text-subtle-foreground" aria-hidden />
+                      <span className="min-w-0 truncate font-mono text-foreground">
+                        {change.after || "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </SheetBody>
 
@@ -161,9 +196,13 @@ export function CompanyProfileEditor({
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="brand" disabled={pending}>
+            <Button type="submit" variant="brand" disabled={pending || changes.length === 0}>
               {pending && <LoadingIcon size="sm" />}
-              {pending ? "Saving…" : "Save changes"}
+              {pending
+                ? "Saving…"
+                : changes.length === 0
+                  ? "Save changes"
+                  : `Save ${changes.length} change${changes.length === 1 ? "" : "s"}`}
             </Button>
           </SheetFooter>
         </form>

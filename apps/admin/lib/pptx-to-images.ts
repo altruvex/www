@@ -10,32 +10,14 @@ import { sofficeFontEnv } from "./soffice-fonts";
 const execFileAsync = promisify(execFile);
 
 export type RenderFailure =
-  /** soffice or pdftoppm is not on PATH. The host cannot preview at all. */
   | "unavailable"
-  /** The toolchain was there and ran out of time. */
   | "timeout"
-  /** It ran, and produced nothing usable. */
   | "failed";
 
 export type RenderResult =
   | { ok: true; images: Buffer[] }
   | { ok: false; reason: RenderFailure; detail: string };
 
-/**
- * Renders a pptx to one PNG per slide (LibreOffice -> PDF -> PNG).
- *
- * Every invocation gets its OWN LibreOffice user profile. This is not a
- * detail: two `soffice` processes sharing the default profile do not queue —
- * the second one exits silently, writes no file and prints nothing, so the
- * caller sees "no output" and cannot tell it apart from a missing binary.
- * That happens whenever a preview and a generate overlap, and every time the
- * operator has the LibreOffice desktop app open on the same machine.
- *
- * Failures are typed rather than collapsed into null, because "LibreOffice is
- * not installed" and "the render timed out" need different sentences on
- * screen — telling someone to install software they already have is worse
- * than saying nothing.
- */
 export async function renderPptxToPngs(
   pptxBuffer: Buffer,
   options: { dpi?: number; firstPage?: number; lastPage?: number } = {},
@@ -88,8 +70,6 @@ export async function renderPptxToPngs(
       return { ok: false, ...classify(error, "pdftoppm") };
     }
 
-    // pdftoppm numbers pages without zero padding past 9, so sort on the
-    // parsed page number instead of lexically.
     const files = (await readdir(workDir))
       .filter((name) => name.startsWith("slide-") && name.endsWith(".png"))
       .sort((a, b) => pageNumber(a) - pageNumber(b));

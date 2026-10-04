@@ -40,9 +40,6 @@ export default async function TransparencyPage({
           ...buildFaqPageSchemas(faqEntries, locale, pricing),
         ]}
       />
-      {/* Only the slice the estimator engine reads crosses to the client, so
-          the figure a visitor sees is the one the lead API recomputes on the
-          server — and nothing else in the resolved set is serialised. */}
       <PageClient
         pricing={{ services: pricing.services, terms: pricing.terms }}
       />

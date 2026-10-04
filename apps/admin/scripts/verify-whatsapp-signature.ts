@@ -1,20 +1,3 @@
-/**
- * The WhatsApp webhook's signature check, in isolation.
- *
- * This endpoint is exempt from the session guard in `proxy.ts` and writes
- * straight into the CRM — `handleInboundMessage` creates a `Client` and an
- * inbound message row. Its signature check is therefore the only thing standing
- * between a public URL and fabricated client records, and it is worth a test of
- * its own.
- *
- *   cd apps/admin && bun run verify:whatsapp
- *
- * The case that matters most is the missing-secret one. An earlier version
- * accepted every unsigned payload when `WHATSAPP_APP_SECRET` was absent and
- * left a comment asking for it to be set before real traffic — production then
- * ran open on exactly that gap for as long as nobody noticed. A comment is not
- * an enforcement; this is.
- */
 import { createHmac } from "node:crypto";
 
 import { isValidSignature } from "@/app/api/whatsapp/webhook/route";
@@ -49,14 +32,6 @@ check(
 check(!isValidSignature(body, "sha256=", secret, true), "an empty digest is refused");
 
 console.log("\nWith no secret configured");
-// An empty string, not `undefined`: `undefined` triggers the parameter default
-// and quietly reads the real secret out of the environment, so the three checks
-// below would pass while testing nothing. `""` is falsy to the same `!appSecret`
-// guard the handler uses, and cannot be substituted.
-// The refusal is logged, and that log is worth asserting: a webhook that goes
-// quiet is indistinguishable from a webhook nobody is calling, and the operator
-// would hunt for the fault in Meta's delivery log rather than in one unset
-// variable. Captured so a deliberate refusal does not read as a broken run.
 const logged: string[] = [];
 const realError = console.error;
 console.error = (...args: unknown[]) => {

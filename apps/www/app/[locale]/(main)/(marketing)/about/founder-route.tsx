@@ -8,15 +8,6 @@ import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
-/**
- * The whole route between a client's decision and the code, on one line:
- * one person on it. The two segments draw from the inline start when the
- * route comes into view (the origin class mirrors it in RTL); with reduced
- * motion nothing is set, so the lines are simply drawn.
- *
- * The quote beside it is neutral ink: the page's two coloured headings are
- * the hero and the closing CTA.
- */
 export function FounderRouteSection() {
   const t = useTranslations("about.founderRoute");
   const tFounder = useTranslations("about.founder");

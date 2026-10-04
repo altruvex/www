@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    qualities: [70, 75, 80],
     minimumCacheTTL: 60 * 60 * 24 * 7,
   },
   experimental: {
@@ -90,8 +91,6 @@ const nextConfig: NextConfig = {
         destination: "/:locale/transparency",
         permanent: true,
       },
-      // The e-commerce service page was removed (2026-09-13). The URL was in the
-      // sitemap and indexed, so it lands on the services index rather than a 404.
       {
         source: "/services/ecommerce",
         destination: "/services",
@@ -105,7 +104,6 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    // Avoid custom Cache-Control on Next internals in dev - Next warns and it can break HMR.
     const prodOnlyNextAssetCache =
       process.env.NODE_ENV === "production"
         ? [
@@ -130,10 +128,6 @@ const nextConfig: NextConfig = {
           ]
         : [];
 
-    // Order matters: when several sources match a path, the LAST matching
-    // entry wins per header key. The catch-all default must come first so the
-    // specific asset rules below can override it — previously it came last and
-    // silently forced max-age=0 onto every hashed /_next/static asset in prod.
     return [
       {
         source: "/:path*",
@@ -145,8 +139,6 @@ const nextConfig: NextConfig = {
         ],
       },
       ...prodOnlyNextAssetCache,
-      // No blanket .js/.css immutable rule: hashed bundles already live under
-      // /_next/static, and public scripts like sw.js must stay revalidatable.
       {
         source: "/:path*\\.(svg|jpg|jpeg|png|gif|ico|webp|avif|woff2)",
         headers: [

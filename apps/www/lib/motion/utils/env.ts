@@ -1,13 +1,9 @@
 import { MOTION } from "../tokens";
 
 interface MotionEnv {
-  /** prefers-reduced-motion: reduce */
   reduce: boolean;
-  /** Low CPU / RAM / save-data. NOT "is touch" — modern phones are fast. */
   constrained: boolean;
-  /** hover: hover + pointer: fine — hover-driven flourishes only make sense here. */
   fine: boolean;
-  /** hover: none + pointer: coarse */
   touch: boolean;
 }
 
@@ -28,17 +24,11 @@ function detectConstrained(): boolean {
 
 let constrainedCache: boolean | null = null;
 
-/** Cached: hardware facts don't change during a session. */
 export function getConstrainedDevice(): boolean {
   if (constrainedCache === null) constrainedCache = detectConstrained();
   return constrainedCache;
 }
 
-/**
- * Read at hook setup. Media queries are cheap; not cached because the user
- * can flip reduced-motion mid-session (scroll hooks re-run via gsap.matchMedia,
- * interaction hooks read on next mount).
- */
 export function readMotionEnv(): MotionEnv {
   return {
     reduce: matches("(prefers-reduced-motion: reduce)"),

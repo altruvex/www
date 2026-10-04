@@ -1,17 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Chart primitives — built to the `dataviz` skill's procedure, not to taste.
- *
- * Form first: everything on the analytics page is either a MAGNITUDE COMPARISON
- * (horizontal bars, sorted, direct-labelled) or a CHANGE OVER TIME (columns on
- * one axis). No pies, no dual axes, no donut with a number in the middle.
- *
- * Colour last, and only from the validated categorical order (--chart-1..6 in
- * globals.css). Status tones stay reserved for state and are never a series.
- * Every mark is direct-labelled, so identity never rests on colour alone.
- */
 export const SERIES = [
   "bg-chart-1",
   "bg-chart-2",
@@ -25,16 +14,10 @@ export interface BarDatum {
   id: string;
   label: string;
   value: number;
-  /** Formatted for display — never derive this from `value` in the component. */
   display: string;
-  /** Fixed series index. Omit for a single-series chart (all bars series 1). */
   seriesIndex?: number;
 }
 
-/**
- * Horizontal bars. Chosen over columns whenever the category labels are words:
- * a rotated x-axis label is a layout failure, not a style.
- */
 export function BarChart({
   data,
   labelWidth = "9rem",
@@ -65,8 +48,6 @@ export function BarChart({
                 SERIES[(datum.seriesIndex ?? 0) % SERIES.length],
               )}
               style={{
-                // A zero draws nothing. A minimum-width bar for an empty value
-                // is a lie the eye reads before it reads the label.
                 width: datum.value === 0 ? 0 : `${Math.max(1.5, (datum.value / peak) * 100)}%`,
               }}
               title={`${datum.label}: ${datum.display}`}
@@ -81,11 +62,6 @@ export function BarChart({
   );
 }
 
-/**
- * Change over time. ONE measure per chart — the dual-axis chart is the single
- * most common charting mistake and it is banned here. A second measure gets its
- * own ColumnChart underneath, sharing the x labels.
- */
 export function ColumnChart({
   data,
   height = 96,
@@ -135,10 +111,6 @@ export function ColumnChart({
   );
 }
 
-/**
- * The hero number. `choosing-a-form.md`: when the data is ONE value, the right
- * chart is not a chart.
- */
 export function HeroNumber({
   value,
   label,

@@ -11,14 +11,7 @@ import { publicBaseUrlFromHeaders } from "@/lib/public-url";
 import { statusOf } from "@/lib/status";
 import { renewalView } from "@/lib/subscription-lifecycle";
 import type { Tone } from "@/lib/status";
-
-/**
- * Everything the client hub reads, in one place.
- *
- * The hub is a server page over Prisma; this file keeps the query shape and the
- * derived values (stage, overdue, attention) together so the tab components
- * receive finished data and never re-derive a state on their own.
- */
+import { PROJECT_CURRENCY_INCLUDE } from "@/lib/project-currency";
 
 const OPEN_TASK_STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED"] as const;
 const CLOSED_CHANGE_STATUSES = ["DELIVERED", "DECLINED", "CANCELLED"] as const;
@@ -47,12 +40,16 @@ export const CLIENT_HUB_INCLUDE = {
     orderBy: { createdAt: "desc" },
     include: {
       payments: { orderBy: { createdAt: "asc" } },
-      contract: { select: { proposal: { select: { currency: true } } } },
+      ...PROJECT_CURRENCY_INCLUDE,
       changeRequests: {
         orderBy: { requestedAt: "desc" },
         select: { id: true, title: true, status: true, requestedAt: true },
       },
-      _count: { select: { tasks: { where: { status: { in: [...OPEN_TASK_STATUSES] } } } } },
+      _count: {
+        select: {
+          tasks: { where: { status: { in: [...OPEN_TASK_STATUSES] } } },
+        },
+      },
     },
   },
   subscriptions: {
@@ -66,12 +63,25 @@ export const CLIENT_HUB_INCLUDE = {
         where: { environment: "PRODUCTION", status: "SUCCEEDED" },
         orderBy: { createdAt: "desc" },
         take: 1,
-        select: { id: true, number: true, version: true, finishedAt: true, createdAt: true },
+        select: {
+          id: true,
+          number: true,
+          version: true,
+          finishedAt: true,
+          createdAt: true,
+        },
       },
       incidents: {
         where: { status: { not: "RESOLVED" } },
         orderBy: { detectedAt: "desc" },
-        select: { id: true, number: true, title: true, severity: true, status: true, detectedAt: true },
+        select: {
+          id: true,
+          number: true,
+          title: true,
+          severity: true,
+          status: true,
+          detectedAt: true,
+        },
       },
     },
   },
@@ -80,7 +90,9 @@ export const CLIENT_HUB_INCLUDE = {
   notes: { orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] },
 } satisfies Prisma.ClientInclude;
 
-export type HubClient = Prisma.ClientGetPayload<{ include: typeof CLIENT_HUB_INCLUDE }>;
+export type HubClient = Prisma.ClientGetPayload<{
+  include: typeof CLIENT_HUB_INCLUDE;
+}>;
 
 export interface AttentionItem {
   key: string;
@@ -95,18 +107,25 @@ export interface HubEvent {
   action: string;
   summary: string;
   actorLabel: string;
+  actorKind: string | null;
   entityType: string;
   entityId: string;
+  entityLabel: string | null;
+  before: unknown;
+  after: unknown;
+  metadata: unknown;
   createdAt: Date;
 }
 
+export const HISTORY_TAKE = 12;
+
 export async function loadClientHub(id: string) {
-  const client = await prisma.client.findUnique({ where: { id }, include: CLIENT_HUB_INCLUDE });
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: CLIENT_HUB_INCLUDE,
+  });
   if (!client) return null;
 
-  // Events about this client: its own (entityType client) and the ones written
-  // on its records that carry `metadata.clientId` — proposals sent, payments
-  // recorded, contracts signed. That is how the mutation sites tag them.
   const activityWhere: Prisma.ActivityEventWhereInput = {
     OR: [
       { entityType: { in: ["client", "Client"] }, entityId: id },
@@ -115,7 +134,8 @@ export async function loadClientHub(id: string) {
   };
 
   const meetingScope: Prisma.MeetingWhereInput[] = [{ clientId: id }];
-  if (client.contactSubmissionId) meetingScope.push({ submissionId: client.contactSubmissionId });
+  if (client.contactSubmissionId)
+    meetingScope.push({ submissionId: client.contactSubmissionId });
 
   const [services, meetings, recentEvents] = await Promise.all([
     listServices({ clientId: id }),
@@ -127,14 +147,19 @@ export async function loadClientHub(id: string) {
     prisma.activityEvent.findMany({
       where: activityWhere,
       orderBy: { createdAt: "desc" },
-      take: 10,
+      take: HISTORY_TAKE,
       select: {
         id: true,
         action: true,
         summary: true,
         actorLabel: true,
+        actorKind: true,
         entityType: true,
         entityId: true,
+        entityLabel: true,
+        before: true,
+        after: true,
+        metadata: true,
         createdAt: true,
       },
     }),
@@ -148,8 +173,6 @@ export async function loadClientHub(id: string) {
     overdue: isPaymentOverdue(p, now),
   }));
 
-  // "Last activity" is the newest thing anyone recorded about the client; the
-  // row's own updatedAt only moves when the client record itself is edited.
   const lastActivityAt = recentEvents[0]?.createdAt ?? client.updatedAt;
 
   return {
@@ -174,11 +197,6 @@ export function openChangeRequests(project: HubClient["projects"][number]) {
   );
 }
 
-/**
- * What needs an operator on this client right now — the client-scoped version
- * of Today. Every item is derived from stored rows at read time; nothing here
- * is a flag someone has to remember to clear.
- */
 function attentionFor(
   client: HubClient,
   payments: HubPayment[],
@@ -221,7 +239,10 @@ function attentionFor(
     for (const incident of product.incidents) {
       items.push({
         key: `incident-${incident.id}`,
-        tone: incident.severity === "SEV1" || incident.severity === "SEV2" ? "danger" : "warning",
+        tone:
+          incident.severity === "SEV1" || incident.severity === "SEV2"
+            ? "danger"
+            : "warning",
         title: `${product.name}: ${incident.title}`,
         detail: `${statusOf("incidentStatus", incident.status).label} · opened ${when(incident.detectedAt)}`,
         href: entityHref("incident", incident.id),
@@ -231,7 +252,11 @@ function attentionFor(
 
   for (const sub of client.subscriptions) {
     const view = renewalView(sub, now);
-    if (view.urgency === "overdue" || view.urgency === "due-soon" || view.urgency === "ending") {
+    if (
+      view.urgency === "overdue" ||
+      view.urgency === "due-soon" ||
+      view.urgency === "ending"
+    ) {
       items.push({
         key: `subscription-${sub.id}`,
         tone: view.urgency === "overdue" ? "danger" : "warning",
@@ -248,18 +273,23 @@ function attentionFor(
   }
 
   for (const service of services) {
-    if (service.state === "expired" || service.state === "urgent" || service.state === "renewing-soon") {
+    if (
+      service.state === "expired" ||
+      service.state === "urgent" ||
+      service.state === "renewing-soon"
+    ) {
       items.push({
         key: `service-${service.id}`,
         tone: service.state === "renewing-soon" ? "warning" : "danger",
         title: `${service.name} ${service.state === "expired" ? "has expired" : "needs renewing"}`,
-        detail: service.expiresAt ? `Expires ${dueLabel(service.expiresAt)}` : "No expiry recorded",
+        detail: service.expiresAt
+          ? `Expires ${dueLabel(service.expiresAt)}`
+          : "No expiry recorded",
         href: entityHref("client_service", service.id),
       });
     }
   }
 
-  // Email is outbound only, so only WhatsApp can leave a client waiting.
   const lastMessage = client.messages[0];
   if (lastMessage?.direction === "INBOUND") {
     items.push({

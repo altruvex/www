@@ -1,12 +1,4 @@
 #!/usr/bin/env node
-/**
- * Cross-surface parity report.
- *
- * Confirms every surface resolves the same figure for the same entity, and
- * that the estimator lands on the cell the published matrix advertises. The
- * guard proves no surface holds its own number; this proves the numbers they
- * all share are the right ones and internally consistent.
- */
 import {
   ADDONS, allAddonViews, calculateEstimate, COMMERCIAL_TERMS, COMPLEXITY_IDS,
   computeAddonPrice, consultingView, DEFAULT_PRICING, estimateSpan,
@@ -147,7 +139,7 @@ for (const l of LOCALES) {
 console.log("\n[6] Published terms reach the client before contract stage");
 for (const l of LOCALES) {
   const t = termsView(l);
-  check(t.vatNote.includes(l === "en" ? "14" : "١٤"), `${l}: VAT rate published`);
+  check(t.vatNote.includes("14"), `${l}: VAT rate published`);
   check(digits(t.revisionNote).includes("800"), `${l}: revision rate published`);
   check(digits(t.usdNote).includes("50"), `${l}: USD rate published`);
   check(t.usdNote.includes(USD_EXCHANGE_RATE.reviewedOn), `${l}: USD review date published`);

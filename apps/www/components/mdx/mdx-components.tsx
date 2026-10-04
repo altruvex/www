@@ -1,4 +1,9 @@
-import { Accent, Highlight, Strong, type AccentGradient } from "@/components/ui/emphasis";
+import {
+  Accent,
+  Highlight,
+  Strong,
+  type AccentGradient,
+} from "@/components/ui/emphasis";
 import { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -17,11 +22,6 @@ function fallbackAltText(src: string) {
   return humanized || "Article illustration";
 }
 
-/**
- * The single color accent an article earns for its one defining claim -
- * not a highlighter. Used at most once or twice per article; everything
- * else stays in Strong/Highlight so the color keeps its signal.
- */
 function Mark({
   gradient = "brand",
   children,
@@ -122,7 +122,10 @@ export const mdxComponents: MDXComponents = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="rounded-ctl-xs bg-muted px-1.5 py-0.5 text-sm leading-normal tracking-wider text-sm">
+        <code
+          dir="ltr"
+          className="rounded-ctl-xs bg-muted px-1.5 py-0.5 text-sm leading-normal tracking-wider text-sm"
+        >
           {children}
         </code>
       );

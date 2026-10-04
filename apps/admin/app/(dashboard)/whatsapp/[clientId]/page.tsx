@@ -9,6 +9,7 @@ import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar } from "@repo/ui";
+import { gateRoute } from "@/lib/page-gate";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { dateTime, money, phone as fmtPhone, when } from "@/lib/format";
@@ -18,18 +19,14 @@ import { ChannelTabs } from "../../inbox/channel-tabs";
 
 export const dynamic = "force-dynamic";
 
-/**
- * A thread. Deliberately read-only in this pass: sending a free-form WhatsApp
- * message needs the Cloud API send path plus template selection and the 24-hour
- * session-window rule, and a compose box that silently fails outside that window
- * is worse than no compose box. The lifecycle sends (proposal, contract,
- * onboarding) already work from their own records.
- */
 export default async function ThreadPage({
   params,
 }: {
   params: Promise<{ clientId: string }>;
 }) {
+  const denied = await gateRoute("/whatsapp/[clientId]", "this thread");
+  if (denied) return denied;
+
   const { clientId } = await params;
 
   const client = await prisma.client.findUnique({
@@ -51,7 +48,6 @@ export default async function ThreadPage({
   );
   const failed = client.messages.filter((m) => m.status === "FAILED");
 
-  // The 24-hour session window: outside it, only approved templates can be sent.
   const hoursSinceInbound = lastInbound
     ? (now.getTime() - lastInbound.createdAt.getTime()) / 3_600_000
     : null;
@@ -248,14 +244,15 @@ export default async function ThreadPage({
           )}
         </Panel>
 
-        <Panel title="Sending" description="Why there is no compose box here yet">
+        <Panel title="Sending" description="No free-form compose here — by design, not an omission">
           <p className="max-w-prose text-base text-muted-foreground">
-            Free-form sending is deliberately not wired into this screen. WhatsApp only
-            accepts arbitrary text inside a 24-hour window after the client writes; outside
-            it, an approved template is required. A compose box that silently fails half
-            the time would be worse than none. The sends that matter — proposal, contract,
-            onboarding — are template-based and run from their own records, where the
-            system knows which template applies.
+            This screen reads the thread; it does not compose. WhatsApp accepts arbitrary text
+            only inside the 24-hour window after the client writes, and outside it only an
+            approved template. A compose box that silently fails half the time would be worse
+            than none. The sends that matter — proposal, contract, onboarding — are
+            template-based and run from their own records, where the system knows which
+            template applies. To reply with free text while the window is open, use the
+            business phone.
           </p>
         </Panel>
       </DetailLayout>

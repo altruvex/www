@@ -7,22 +7,11 @@ import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import type { RefObject } from "react";
 
-/*
- * The parts /process and the homepage's process section both draw. They live
- * here, once, so the two surfaces cannot drift apart: the homepage is /process
- * in short, built from the same pieces.
- */
-
 type Scope = "min" | "max";
 
 export const phaseIndex = (i: number, locale: string) =>
   formatIndex(i + 1, 2, locale);
 
-/**
- * The same five phases at the smallest and the largest scope, on one
- * working-day scale. Both ends are the price matrix's delivery window, so the
- * bars never promise a length a price cell does not.
- */
 export function ScopeBars({
   barsRef,
   className,
@@ -61,7 +50,6 @@ export function ScopeBars({
                 />
               ))}
             </div>
-            {/* Indices need the room md+ gives the one-day discovery segment. */}
             <div aria-hidden className="mt-2 hidden gap-1.5 md:flex">
               {phases.map((phase, i) => (
                 <span
@@ -80,10 +68,6 @@ export function ScopeBars({
   );
 }
 
-/**
- * The gate that closes a phase: your part, then what it releases. Its accent
- * rule draws once the reader reaches the phase.
- */
 export function PhaseGate({
   phase,
   next,

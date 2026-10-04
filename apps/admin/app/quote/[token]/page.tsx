@@ -5,13 +5,7 @@ import { AlertCircle } from "lucide-react";
 import { formatHours, quoteAnswerable } from "@/lib/change-requests";
 import { date, money } from "@/lib/format";
 import { QuoteAnswer } from "./quote-answer";
-
-/**
- * The page a client opens from a change-request quote. Reached by token only
- * (exempted in `proxy.ts`), and it shows only what the client was sent: the
- * request, the figure, how it is charged and until when it holds. Nothing
- * internal — no estimate history, no notes, no other request on the project.
- */
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
 export const dynamic = "force-dynamic";
 
@@ -41,35 +35,33 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
         select: {
           name: true,
           client: { select: { name: true, company: true } },
-          contract: { select: { proposal: { select: { currency: true } } } },
+          ...PROJECT_CURRENCY_SELECT,
         },
       },
     },
   });
 
-  // A token exists from the moment a request is quoted and survives a re-quote,
-  // so an unsent quote on a known token is a revision in progress — the client
-  // sees that, never a figure nobody has sent them yet.
-  if (!row || (!row.quoteSentAt && row.status === "QUOTED")) {
+  const live = row ? quoteAnswerable(row) : null;
+
+  if (!row || !live || (!live.ok && live.reason === "revising") || row.quotedAmount == null) {
     return (
       <Shell>
-        <div className="py-6 text-center">
+        <div className="py-4 text-center" role="status">
           <AlertCircle className="mx-auto mb-4 size-10 text-muted-foreground" aria-hidden />
-          <p className="text-lg font-medium">
+          <h1 className="text-lg font-medium">
             {row ? "This quote is being revised" : "Quote not found"}
-          </p>
-          <p className="mt-2 text-sm text-muted-foreground">
+          </h1>
+          <p className="mt-2 text-sm text-pretty text-muted-foreground">
             {row
-              ? "You will receive the updated quote shortly."
-              : "This link is not valid. If it came from Altruvex, reply to that message and we will resend it."}
+              ? "The figure is being updated, so it cannot be answered right now. The new quote will reach you on the same channel as this link."
+              : "This link is not valid, or the quote was withdrawn. If it came from Altruvex, reply to that message and we will send a working one."}
           </p>
         </div>
       </Shell>
     );
   }
 
-  const currency = row.project.contract.proposal.currency;
-  const live = quoteAnswerable(row);
+  const currency = projectCurrency(row.project);
   const hourly = row.pricing === "HOURLY" && row.hourlyRate != null;
 
   return (
@@ -78,20 +70,20 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
         <p className="mb-1 text-sm text-muted-foreground">
           Altruvex · {row.project.client.company || row.project.client.name || row.project.name}
         </p>
-        <h1 className="text-2xl font-medium text-balance">{row.title}</h1>
+        <h1 className="text-xl font-medium text-balance break-words sm:text-2xl">{row.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Change to {row.project.name}</p>
       </div>
 
-      {row.detail && <p className="whitespace-pre-line text-sm text-muted-foreground">{row.detail}</p>}
+      {row.detail && <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{row.detail}</p>}
 
-      <dl className="space-y-2 rounded-2xl bg-muted/50 p-5 text-sm">
+      <dl className="space-y-2 rounded-2xl bg-muted/50 p-4 text-sm sm:p-5">
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-muted-foreground">Price</dt>
           <dd className="font-mono text-lg font-medium tabular-nums">{money(row.quotedAmount, currency)}</dd>
         </div>
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-muted-foreground">Charged as</dt>
-          <dd className="text-end font-medium">
+          <dd className="min-w-0 text-end font-medium">
             {hourly
               ? `${formatHours(row.estimatedMinutes)} estimated × ${money(row.hourlyRate, currency)} / hour`
               : "Fixed price"}
@@ -113,7 +105,7 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
       <QuoteAnswer
         token={token}
-        amount={row.quotedAmount ?? 0}
+        amount={row.quotedAmount}
         amountLabel={money(row.quotedAmount, currency)}
         answerable={live.ok}
         state={
@@ -138,8 +130,8 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="plane w-full max-w-lg space-y-6 p-8">{children}</div>
+    <main className="flex min-h-dvh items-start justify-center px-4 py-6 sm:items-center sm:py-12">
+      <div className="plane w-full max-w-lg space-y-6 p-5 sm:p-8">{children}</div>
     </main>
   );
 }

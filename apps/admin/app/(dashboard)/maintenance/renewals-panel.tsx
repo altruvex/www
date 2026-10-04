@@ -4,53 +4,42 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Switch,
-} from "@repo/ui";
+import { Button, Switch } from "@repo/ui";
 
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { EntityLink } from "@/components/os/entity-link";
 import { Panel } from "@/components/os/panel";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
-import type { AdminSubscription } from "@/lib/maintenance-admin";
 import { date, money } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
-/**
- * Renewals (§10).
- *
- * The requirement this answers is "do not make the operator open every client
- * to discover what is expiring". Anything needing money or a decision inside the
- * horizon appears here, sorted by how late it is.
- *
- * Two states that a naive "days until renewal" list would conflate are kept
- * apart deliberately:
- *   overdue  — auto-renewing, the date passed, payment is not recorded.
- *   ending   — auto-renew is OFF. Not a renewal at all, a scheduled churn event.
- *              It needs to be visible BEFORE the date, not discovered after it.
- */
-export function RenewalsPanel({ subscriptions }: { subscriptions: readonly AdminSubscription[] }) {
+import type { SubscriptionView } from "./subscription-view";
+
+export function RenewalsPanel({
+  subscriptions,
+  showMoney = false,
+  canEdit = false,
+}: {
+  subscriptions: readonly SubscriptionView[];
+  showMoney?: boolean;
+  canEdit?: boolean;
+}) {
   const router = useRouter();
   const [busy, setBusy] = React.useState<string | null>(null);
-  // Renewing opens the next period's invoice, so it is confirmed first — the
-  // same step the renewals screen and the retainer page ask for.
-  const [confirming, setConfirming] = React.useState<AdminSubscription | null>(null);
+  const [confirming, setConfirming] = React.useState<SubscriptionView | null>(
+    null,
+  );
 
   const due = subscriptions
-    .filter((s) => s.renewalUrgency !== "scheduled" && s.renewalUrgency !== "none")
+    .filter(
+      (s) => s.renewalUrgency !== "scheduled" && s.renewalUrgency !== "none",
+    )
     .sort((a, b) => a.daysUntilRenewal - b.daysUntilRenewal);
 
-  async function send(id: string, body: unknown, okMessage: string) {
-    setBusy(id);
+  async function request(
+    body: unknown,
+  ): Promise<{ ok: boolean; message?: string }> {
     try {
       const res = await fetch("/api/admin/maintenance", {
         method: "PATCH",
@@ -58,19 +47,35 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
         body: JSON.stringify(body),
       });
       if (res.status === 401) {
-        toast.error("Your session expired. Sign in again.");
         router.push("/login");
-        return;
+        return { ok: false, message: "Your session expired. Sign in again." };
       }
-      const data = (await res.json()) as { success: boolean; message?: string };
-      if (!data.success) {
-        toast.error(data.message ?? "That change could not be saved.");
-        return;
-      }
-      toast.success(okMessage);
+      const data = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
+      if (!data.success)
+        return {
+          ok: false,
+          message: data.message ?? "That change could not be saved.",
+        };
       router.refresh();
+      return { ok: true, message: data.message };
     } catch {
-      toast.error("The request could not be sent. Check your connection.");
+      return {
+        ok: false,
+        message: "The request could not be sent. Check your connection.",
+      };
+    }
+  }
+
+  async function send(id: string, body: unknown, okMessage: string) {
+    setBusy(id);
+    try {
+      const result = await request(body);
+      if (!result.ok)
+        toast.error(result.message ?? "That change could not be saved.");
+      else toast.success(okMessage);
     } finally {
       setBusy(null);
     }
@@ -84,9 +89,9 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
         flush
       >
         <p className="px-3 py-6 text-base text-muted-foreground">
-          Every retainer is inside its paid period with auto-renewal on. A retainer
-          appears here once it is within 30 days of its renewal date, once it lapses
-          unpaid, or as soon as auto-renewal is switched off.
+          Every retainer is inside its paid period with auto-renewal on. A
+          retainer appears here once it is within 30 days of its renewal date,
+          once it lapses unpaid, or as soon as auto-renewal is switched off.
         </p>
       </Panel>
     );
@@ -121,8 +126,12 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
                   </EntityLink>
                 </p>
                 <p className="truncate text-meta text-subtle-foreground">
-                  {sub.planName} · {sub.planPriceLabel}
-                  {sub.planPriceSuffix && ` ${sub.planPriceSuffix}`} ·{" "}
+                  {sub.planName}
+                  {showMoney && ` · ${sub.planPriceLabel}`}
+                  {showMoney &&
+                    sub.planPriceSuffix &&
+                    ` ${sub.planPriceSuffix}`}{" "}
+                  ·{" "}
                   {sub.daysUntilRenewal < 0
                     ? `${Math.abs(sub.daysUntilRenewal)} days overdue`
                     : `in ${sub.daysUntilRenewal} days`}
@@ -140,7 +149,9 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
 
               {sub.currentPeriodPayment && (
                 <span className="flex shrink-0 items-center gap-1.5 text-meta text-subtle-foreground">
-                  {money(sub.currentPeriodPayment.amount, sub.currency)}
+                  {showMoney &&
+                    sub.currentPeriodPayment.amount !== null &&
+                    money(sub.currentPeriodPayment.amount, sub.currency)}
                   <StatusPill
                     registry="paymentStatus"
                     value={sub.currentPeriodPayment.status}
@@ -149,73 +160,78 @@ export function RenewalsPanel({ subscriptions }: { subscriptions: readonly Admin
                 </span>
               )}
 
-              <label className="flex shrink-0 items-center gap-1.5">
-                <Switch
-                  checked={sub.autoRenew}
-                  disabled={isBusy}
-                  onCheckedChange={(checked) =>
-                    send(
-                      sub.id,
-                      { action: "subscription-auto-renew", id: sub.id, autoRenew: checked },
-                      checked
-                        ? "Auto-renewal on."
-                        : `Auto-renewal off — expires ${date(sub.renewsAt)}.`,
-                    )
-                  }
-                  aria-label={`Auto-renew ${sub.clientName}`}
-                />
-                <span className="text-meta text-subtle-foreground">Auto</span>
-              </label>
+              {canEdit && (
+                <label className="flex shrink-0 items-center gap-1.5">
+                  <Switch
+                    checked={sub.autoRenew}
+                    disabled={isBusy}
+                    onCheckedChange={(checked) =>
+                      send(
+                        sub.id,
+                        {
+                          action: "subscription-auto-renew",
+                          id: sub.id,
+                          autoRenew: checked,
+                        },
+                        checked
+                          ? "Auto-renewal on."
+                          : `Auto-renewal off — expires ${date(sub.renewsAt)}.`,
+                      )
+                    }
+                    aria-label={`Auto-renew ${sub.clientName}`}
+                  />
+                  <span className="text-meta text-subtle-foreground">Auto</span>
+                </label>
+              )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isBusy}
-                onClick={() => setConfirming(sub)}
-              >
-                {isBusy ? "Working…" : "Mark renewed"}
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isBusy}
+                  onClick={() => setConfirming(sub)}
+                >
+                  {isBusy ? "Working…" : "Mark renewed"}
+                </Button>
+              )}
             </li>
           );
         })}
       </ul>
 
       {confirming && (
-        <AlertDialog open onOpenChange={(open) => !open && setConfirming(null)}>
-          <AlertDialogContent className="max-w-lg">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Mark {confirming.clientName} renewed</AlertDialogTitle>
-              <AlertDialogDescription>
-                Moves the retainer into its next period and opens a pending payment of{" "}
-                {money(confirming.invoiceAmount, confirming.currency)}. No money is taken.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Not now</AlertDialogCancel>
-              <AlertDialogAction
-                variant="brand"
-                onClick={() => {
-                  const sub = confirming;
-                  setConfirming(null);
-                  void send(
-                    sub.id,
-                    { action: "subscription-renew", id: sub.id },
-                    `Renewed into the next period — ${money(sub.invoiceAmount, sub.currency)} is pending.`,
-                  );
-                }}
-              >
-                Mark renewed
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setConfirming(null)}
+          title={`Mark ${confirming.clientName} renewed`}
+          body={`${confirming.planName} · next period starts ${date(confirming.currentPeriodEnd)}, anchored to the period that ended rather than to today.`}
+          consequence={`Opens a pending payment of ${
+            showMoney && confirming.invoiceAmount !== null
+              ? money(confirming.invoiceAmount, confirming.currency)
+              : "the plan's price at this interval"
+          } for the new period. No money is taken; a period that already has its payment is not invoiced twice.`}
+          confirmLabel="Mark renewed"
+          cancelLabel="Not now"
+          onConfirm={async () => {
+            const result = await request({
+              action: "subscription-renew",
+              id: confirming.id,
+            });
+            if (!result.ok) return result;
+            return {
+              ok: true,
+              message: result.message ?? "Renewed into the next period.",
+            };
+          }}
+        />
       )}
 
       <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
-        &ldquo;Mark renewed&rdquo; moves the retainer into its next period and opens that
-        period&rsquo;s invoice as a pending payment at the plan&rsquo;s published price — a
-        quote-only plan bills from its quoted monthly price. It does not take the money: no payment
-        provider is connected, so the payment is marked paid by hand on the payments screen.
+        &ldquo;Mark renewed&rdquo; moves the retainer into its next period and
+        opens that period&rsquo;s invoice as a pending payment at the
+        plan&rsquo;s published price — a quote-only plan bills from its quoted
+        monthly price. It does not take the money: no payment provider is
+        connected, so the payment is marked paid by hand on the payments screen.
       </p>
     </Panel>
   );

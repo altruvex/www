@@ -1,17 +1,5 @@
 import { env } from "@/lib/env";
 
-/**
- * Tells the public site to drop its pricing cache.
- *
- * Deliberately best-effort. The price is already committed by the time this
- * runs, and the public site expires its own cache on a timer regardless — so a
- * failure here costs latency, never correctness. Coupling a saved price to a
- * network call to a separate deployment would turn someone else's outage into
- * a failed write, which is a far worse trade.
- *
- * Never throws, and never blocks the response for long.
- */
-
 const TIMEOUT_MS = 3_000;
 
 export async function revalidatePublicPricing(): Promise<
@@ -21,8 +9,6 @@ export async function revalidatePublicPricing(): Promise<
   const secret = env?.PRICING_REVALIDATE_SECRET;
 
   if (!url || !secret) {
-    // Not configured is a normal state in development and in any environment
-    // that has not wired the two apps together yet.
     return { ok: false, reason: "not configured" };
   }
 

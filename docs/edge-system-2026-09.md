@@ -22,6 +22,7 @@ and the exception record, so a later change can check what was decided and why.
 | E2 | The code-block copy button moved to `top-2.5 end-2.5` and is `ctl-sm` (22 − 10 = 12). This also fixed the physical `right-4`. |
 | E3 | The audit-lead card uses `panel-sm`. Size and importance are not reasons for a bigger radius. |
 | E4 | `--radius-ctl-xs` = 4px, for elements 24px tall or less. It absorbed the `[0.3rem]`, `[0.1875rem]` and `[2px]` arbitrary values. |
+| E6 | (2026-10-03) Buttons are pills (`rounded-full`) in both apps — `MagneticButton`, `CtaButtonGroup` and the shared Button primitive. This supersedes the "pill is never a CTA" line of RUL-065 for buttons only; every other control keeps `ctl-*` by height. Reason: the switch was already made across both apps and the shared primitive, and reverting one app would split the system. |
 | E5 | The standards card-top rule was thinned to 1px `border-border-subtle` (language B, hover accent tint). It is not a ledger, so D1 does not cover it. |
 
 ## 2. Tokens (`apps/www/app/globals.css`)

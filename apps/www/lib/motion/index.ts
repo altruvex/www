@@ -14,11 +14,9 @@ export {
   useKineticTrack,
   useMediaSettle,
   useTileAssemble,
-  useUnderlineDraw,
   useWordRead,
 } from "@/lib/motion/hooks/use-scroll-scene";
 export { useThemeSwitch } from "@/lib/motion/hooks/use-theme-switch";
-export { useTilt } from "@/lib/motion/hooks/use-tilt";
 export { MOTION, resolveEase } from "./tokens";
 export { readMotionEnv } from "./utils/env";
 export { scrollToY } from "./utils/scroll";

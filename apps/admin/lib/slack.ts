@@ -2,33 +2,12 @@ import type { ActionItem } from "@/lib/action-center";
 import type { RecordActivityInput } from "@/lib/activity-log";
 import { entityHref } from "@/lib/entity-links";
 
-/**
- * Slack, one direction only (§26).
- *
- * An incoming webhook and nothing else: no OAuth app, no bot token, no stored
- * credential per user. The whole integration is one URL in the environment,
- * which is why it costs nothing to run and nothing to keep alive.
- *
- * It is deliberately not a second audit log. `/audit` already records every
- * mutation, and a channel that receives all of them is a channel nobody reads —
- * at which point the one message that mattered is buried. What goes to Slack is
- * the curated set below: the events that would make somebody put down what they
- * are doing.
- */
-
 const MAX_TEXT = 2900;
 
 export function slackConfigured(): boolean {
   return Boolean(process.env.SLACK_WEBHOOK_URL);
 }
 
-/**
- * The admin app's own address, used to make every message clickable.
- *
- * A notification that says a contract was signed but not which one, or where to
- * look, costs more attention than it saves. Falls back to the auth URL, which is
- * the same origin, and to no link at all rather than a broken one.
- */
 function appUrl(): string | null {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? process.env.BETTER_AUTH_URL;
   return base ? base.replace(/\/$/, "") : null;
@@ -41,19 +20,6 @@ export function entityUrl(entityType: string, entityId: string): string | null {
   return `${base}${path}`;
 }
 
-/* -------------------------------------------------------------------------- */
-/* What is worth interrupting somebody for                                    */
-/* -------------------------------------------------------------------------- */
-
-/**
- * The curated set, with the emoji each event carries.
- *
- * The test is not "did something happen" — everything that happens is already
- * in `/audit`. The test is "would a person want to know within the minute".
- * A signed contract and a failed production deploy pass it; a viewed submission,
- * a renamed product and a successful build do not, and a channel that included
- * them would train everyone to ignore it.
- */
 export const NOTIFIED_ACTIONS: Record<string, string> = {
   "client.created": ":wave:",
   "proposal.sent": ":outbox_tray:",
@@ -70,12 +36,9 @@ export const NOTIFIED_ACTIONS: Record<string, string> = {
   "build.failed": ":red_circle:",
   "deployment.failed": ":red_circle:",
   "deployment.rolled_back": ":rewind:",
-  // Raised by the renewal sweep, once per service per threshold per cycle —
-  // a domain that lapses takes the client's site and mail down with it.
   "service.renewal_due": ":hourglass_flowing_sand:",
 };
 
-/** Deletions all read the same way and all deserve a line in the channel. */
 const DELETED_SUFFIX = ".deleted";
 
 export function shouldNotify(action: string): boolean {
@@ -86,20 +49,10 @@ export function emojiFor(action: string): string {
   return NOTIFIED_ACTIONS[action] ?? (action.endsWith(DELETED_SUFFIX) ? ":x:" : ":information_source:");
 }
 
-/**
- * Turns "contract.signed" into "Contract signed".
- *
- * Read from the action rather than hand-written per event, so a new action
- * added at a mutation site cannot arrive in the channel as a raw identifier.
- */
 export function headlineFor(action: string): string {
   const words = action.replace(/[._]/g, " ").trim();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
-
-/* -------------------------------------------------------------------------- */
-/* Message construction                                                       */
-/* -------------------------------------------------------------------------- */
 
 export interface SlackBlock {
   type: string;
@@ -108,7 +61,6 @@ export interface SlackBlock {
 }
 
 export interface SlackMessage {
-  /** Plain-text fallback: what a phone notification shows. */
   text: string;
   blocks: SlackBlock[];
 }
@@ -116,11 +68,6 @@ export interface SlackMessage {
 const truncate = (value: string, max = MAX_TEXT) =>
   value.length > max ? `${value.slice(0, max - 1)}…` : value;
 
-/**
- * Slack's mrkdwn is not Markdown. Only these three characters change meaning,
- * and escaping them is what stops a client called "Smith & Sons <Holdings>"
- * from rendering as broken markup.
- */
 export function escapeMrkdwn(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -134,9 +81,6 @@ export function buildEventMessage(input: RecordActivityInput): SlackMessage {
   const headline = `${emojiFor(input.action)} *${headlineFor(input.action)}*`;
 
   return {
-    // Escaped as well: Slack renders the fallback in the phone notification and
-    // in clients that cannot draw blocks, so an unescaped client name is broken
-    // markup in exactly the place somebody reads first.
     text: truncate(
       escapeMrkdwn(`${headlineFor(input.action)}: ${label} — ${input.summary}`),
       300,
@@ -159,14 +103,6 @@ export function buildEventMessage(input: RecordActivityInput): SlackMessage {
   };
 }
 
-/**
- * The action centre as one message.
- *
- * Posted on demand rather than on a timer: there is no scheduler in this
- * application, and inventing one that fires from a page view would mean the
- * digest arrives only when somebody is already looking at the list it
- * summarises.
- */
 export function buildDigestMessage(items: ActionItem[]): SlackMessage {
   const base = appUrl();
   if (items.length === 0) {
@@ -181,8 +117,6 @@ export function buildDigestMessage(items: ActionItem[]): SlackMessage {
     };
   }
 
-  // Ten, because a message longer than a screen is a message nobody finishes.
-  // The count of what was left out is more useful than the items themselves.
   const shown = items.slice(0, 10);
   const rest = items.length - shown.length;
 
@@ -221,10 +155,6 @@ export function buildDigestMessage(items: ActionItem[]): SlackMessage {
   };
 }
 
-/* -------------------------------------------------------------------------- */
-/* Delivery                                                                   */
-/* -------------------------------------------------------------------------- */
-
 export class SlackNotConfiguredError extends Error {
   constructor() {
     super("SLACK_WEBHOOK_URL is not set.");
@@ -232,13 +162,6 @@ export class SlackNotConfiguredError extends Error {
   }
 }
 
-/**
- * Posts, with a hard ceiling on how long it may take.
- *
- * This runs inline with a mutation the operator is waiting on, so a Slack
- * outage must cost four seconds and not a hung request. Throws — the callers
- * that must not fail wrap it; the one that reports success to a human does not.
- */
 export async function postToSlack(message: SlackMessage): Promise<void> {
   const url = process.env.SLACK_WEBHOOK_URL;
   if (!url) throw new SlackNotConfiguredError();
@@ -251,19 +174,11 @@ export async function postToSlack(message: SlackMessage): Promise<void> {
   });
 
   if (!response.ok) {
-    // Slack answers a webhook with a plain-text reason ("invalid_payload",
-    // "no_service"), which is worth far more in a log than the status alone.
     const detail = await response.text().catch(() => "");
     throw new Error(`Slack returned ${response.status}: ${detail.slice(0, 200)}`);
   }
 }
 
-/**
- * The fire-and-forget path used by the audit trail.
- *
- * Never throws, for the same reason `recordActivity` never throws: a
- * notification about a mutation must not be able to break the mutation.
- */
 export async function notifySlack(input: RecordActivityInput): Promise<void> {
   if (!slackConfigured() || !shouldNotify(input.action)) return;
   try {

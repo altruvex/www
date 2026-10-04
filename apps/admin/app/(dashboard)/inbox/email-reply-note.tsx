@@ -1,10 +1,5 @@
 import { replyToAddress } from "@/lib/email";
 
-/**
- * Where a reply would be expected, said honestly. Email here is outbound only:
- * there is no inbound ingestion and no compose box, so nothing on this screen
- * may suggest a reply can be written or received here.
- */
 export function EmailReplyNote() {
   const replyTo = replyToAddress();
   return (

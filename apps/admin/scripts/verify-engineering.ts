@@ -423,8 +423,6 @@ try {
       "an event we do not read is acknowledged so GitHub's delivery log stays green",
     );
 
-    // Two products naming one repository: the receiver must refuse rather than
-    // file one product's history under another.
     await prisma.product.update({
       where: { id: otherProduct.id },
       data: { repositoryUrl: `git@github.com:${repo}.git` },
@@ -478,7 +476,6 @@ try {
     );
   }
 } finally {
-  // Cascades clear builds, deployments, logs and incidents.
   await prisma.activityEvent.deleteMany({
     where: { entityType: { in: ["build", "deployment", "product", "incident"] } },
   });

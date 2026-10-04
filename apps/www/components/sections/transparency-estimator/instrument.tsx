@@ -318,7 +318,7 @@ export function Instrument({
           </div>
         </div>
         <Collapsible open={!stuck}>
-          <p className="border-t border-border-subtle bg-surface/60 px-5 py-2.5 text-xs leading-relaxed text-muted-foreground sm:px-8 sm:py-3">
+          <p className="border-t border-border-subtle px-5 py-2.5 text-xs leading-relaxed text-muted-foreground sm:px-8 sm:py-3">
             {settled
               ? t("live.settled")
               : resolved

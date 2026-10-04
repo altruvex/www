@@ -11,18 +11,8 @@ import {
 } from "@repo/pricing-schema";
 import type { AnswerMap } from "./types";
 
-/**
- * The slice of the resolved pricing the estimator actually reads.
- *
- * The engine prices from `services` only and the result panel quotes
- * `terms` (VAT, validity, warranty). The page hands the browser just these
- * two rather than the whole `ResolvedPricing`: a server-to-client prop is
- * serialised into the page payload, and the full object carries maintenance
- * margin planning that must never reach a client surface.
- */
 export type EstimatorPricing = Pick<ResolvedPricing, "services" | "terms">;
 
-/** Rebuilds a full pricing set around the slice, for the schema's views. */
 export function resolveEstimatorPricing(
   slice: EstimatorPricing | undefined,
 ): ResolvedPricing {
@@ -31,14 +21,6 @@ export function resolveEstimatorPricing(
     : DEFAULT_PRICING;
 }
 
-/**
- * The widest range still possible given the answers so far.
- *
- * A thin adapter over the schema's `estimateSpan`: it maps the estimator's
- * question keys onto the engine's input and passes the resolved pricing
- * through, so a surface with admin overrides quotes the same numbers
- * `/pricing` publishes.
- */
 export function spanFor(
   answers: AnswerMap,
   pricing?: ResolvedPricing,

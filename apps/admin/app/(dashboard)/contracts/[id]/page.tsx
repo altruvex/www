@@ -1,55 +1,56 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
-import { Download, ExternalLink, ShieldCheck } from "lucide-react";
+import {
+  CopyPlus,
+  Download,
+  ExternalLink,
+  FolderKanban,
+  History,
+  PenLine,
+  Receipt,
+  Route,
+  Server,
+  ShieldCheck,
+} from "lucide-react";
+import { Button } from "@repo/ui";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
-import { TabNav } from "@/components/os/tab-nav";
-import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
+import { MetaList, QuickActions } from "@/components/os/detail-layout";
+import { Dossier, DossierSection } from "@/components/os/section-index";
 import { Timeline } from "@/components/os/timeline";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { EmptyInline } from "@/components/os/empty-state";
+import { NextSteps } from "@/components/os/next-steps";
 import { AlertBar } from "@/components/os/error-state";
+import { ManualOnboardingButton, ManualStatusMenu } from "@/components/os/manual-status";
+import { SendDocument } from "@/components/os/send-document";
+import { ContractSignerForm } from "@/components/os/contract-signer";
+import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { StatusPill } from "@/components/ui/badge";
+import { CopyValueButton } from "@/components/os/copy-button";
+import { CopyLinkButton } from "@/components/proposal/copy-link";
+import { contractSendProps } from "@/components/proposal/send-props";
 import { buildActivity } from "@/lib/activity";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { documentUrl } from "@/lib/storage";
 import { statusOf } from "@/lib/status";
 import { discountAmount, investmentTotal, proposalContentSchema } from "@/lib/proposal-schema";
-import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { date, dateTime, money } from "@/lib/format";
-import { ManualOnboardingButton, ManualStatusMenu } from "@/components/os/manual-status";
-import { headers } from "next/headers";
-
-import { SendDocument } from "@/components/os/send-document";
-import { ContractSignerForm } from "@/components/os/contract-signer";
-import {
-  effectiveSigner,
-  maskEmail,
-  maskPhone,
-  whatsappConfigured,
-} from "@/lib/sign-verification";
-import { publicBaseUrlFromHeaders } from "@/lib/public-url";
+import { effectiveSigner, maskEmail, maskPhone } from "@/lib/sign-verification";
 import { entityHref } from "@/lib/entity-links";
 import { isPaymentOverdue } from "@/lib/payment-overdue";
-import { contractDraft } from "@/lib/email-templates";
-import { emailTransport } from "@/lib/email";
-import { Button } from "@repo/ui";
+import { findDeletedContractProject } from "@/lib/contract-signing";
+import { contractStepPermissions } from "../contract-permissions";
+import { contractNextSteps } from "../contract-steps";
+import { CreateProjectButton } from "./create-project";
 
 export const dynamic = "force-dynamic";
 
-const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "terms", label: "Terms" },
-  { id: "signature", label: "Signature" },
-  { id: "activity", label: "Activity" },
-];
-
-/**
- * The contract lifecycle, stated on the page so an operator never has to
- * remember it: Draft → Sent → Signed → Active (project) → Completed.
- */
 const LIFECYCLE = [
   { id: "DRAFT", label: "Drafted" },
   { id: "SENT", label: "Sent for signature" },
@@ -59,14 +60,14 @@ const LIFECYCLE = [
 
 export default async function ContractDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
+  const denied = await gateRoute("/contracts/[id]");
+  if (denied) return denied;
+
   const { id } = await params;
-  const { tab: tabParam } = await searchParams;
-  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "overview";
+  const role = await currentRole();
 
   const contract = await prisma.contract.findUnique({
     where: { id },
@@ -78,15 +79,8 @@ export default async function ContractDetailPage({
   });
   if (!contract) notFound();
 
-  // The signing link, absolute, because it goes into a mail a client opens
-  // somewhere else entirely. Client-facing, so it is built on the configured
-  // public origin (BETTER_AUTH_URL), never on the request host.
-  const signUrl = contract.signToken
-    ? `${publicBaseUrlFromHeaders(await headers())}/sign/${contract.signToken}`
-    : "";
+  const { signUrl, send } = await contractSendProps(contract);
 
-  // Documents are signed-on-read when the bucket is private, so the link is
-  // built here rather than taken off the row.
   const contractFileUrl = await documentUrl(contract.fileUrl);
   const signedFileUrl = await documentUrl(contract.signedFileUrl);
 
@@ -104,10 +98,6 @@ export default async function ContractDetailPage({
     Boolean(contract.signedByName && signer.name) &&
     contract.signedByName!.trim().toLowerCase() !== signer.name!.trim().toLowerCase();
 
-  // The contract's value is the proposal's NET total. The list price and the
-  // discount that got the client here are read back off the proposal content,
-  // because "what did we actually give away" is a question this page gets
-  // asked more often than any other.
   const proposalContent = proposalContentSchema.safeParse(contract.proposal.content);
   const discount = proposalContent.success ? proposalContent.data.discount : null;
   const reduction = proposalContent.success
@@ -135,8 +125,6 @@ export default async function ContractDetailPage({
       : [],
   });
 
-  // DECLINED / EXPIRED are dead ends, not points on this line — a declined
-  // contract sitting on "Sent for signature" reads as still in flight.
   const dead = contract.status === "DECLINED" || contract.status === "EXPIRED";
   const reachedIndex = dead
     ? 1
@@ -148,31 +136,52 @@ export default async function ContractDetailPage({
           ? 0
           : 1;
 
+  const canSend = can(role, "send", "contract");
+  const canEdit = can(role, "edit", "contract");
+  const canDelete = can(role, "delete", "contract");
+  const canSeePayments = can(role, "view", "payment");
+  const canCreateProject = can(role, "create", "project");
+  const priorProject =
+    canCreateProject && contract.status === "SIGNED" && !contract.project
+      ? await findDeletedContractProject(contract.id)
+      : null;
+  const signable = contract.status === "DRAFT" || contract.status === "SENT";
+  const sendable = send && canSend && signable;
+  const services = proposalContent.success ? proposalContent.data.services : [];
+  const payments = contract.project?.payments ?? [];
+  const reference = contract.id.slice(0, 8).toUpperCase();
+  const steps = contractNextSteps(contract, contractStepPermissions(role));
+  const projectStep = steps.find((step) => step.key === "project");
+  const quoteStep = steps.find((step) => step.key === "quote");
+  const deliverySteps = steps.filter((step) => step.key === "task" || step.key === "charge");
+  const onboardingInHeader =
+    contract.status === "SIGNED" && !contract.onboardingMessageSentAt && !contract.project && canEdit;
+
   return (
     <div className="space-y-4">
       <PageHeader
         crumbs={[
           { label: "Contracts", href: "/contracts" },
           { label: clientName, href: `/clients/${contract.clientId}` },
-          { label: contract.id.slice(0, 8).toUpperCase() },
+          { label: reference },
         ]}
-        title={`Contract ${contract.id.slice(0, 8).toUpperCase()}`}
+        title={`Contract ${reference}`}
         status={<StatusPill registry="contractStatus" value={contract.status} />}
         meta={
           <>
-            <MetaItem label="Client">
-              <EntityLink type="client" id={contract.clientId}>
-                {clientName}
-              </EntityLink>
+            <MetaItem label="Reference">
+              <span className="inline-flex items-center gap-1">
+                <span className="font-mono">{reference}</span>
+                <CopyValueButton value={reference} label="Contract number" />
+              </span>
             </MetaItem>
+            <MetaItem label="Scope">{contract.proposal.projectType}</MetaItem>
             <MetaItem label="Value">
               {money(contract.proposal.totalPrice, contract.proposal.currency)}
             </MetaItem>
             {reduction > 0 && (
               <MetaItem label={discountLabel}>
-                <span className="text-danger">
-                  −{money(reduction, contract.proposal.currency)}
-                </span>
+                <span className="text-danger">−{money(reduction, contract.proposal.currency)}</span>
               </MetaItem>
             )}
             <MetaItem label="Created">{date(contract.createdAt)}</MetaItem>
@@ -182,65 +191,107 @@ export default async function ContractDetailPage({
         actions={
           <>
             {contractFileUrl && (
-              <Button asChild variant="outline">
+              <Button asChild variant="ghost">
                 <a href={contractFileUrl} target="_blank" rel="noreferrer">
-                  <Download className="size-3.5" />
+                  <Download className="size-3.5" aria-hidden />
                   Document
                 </a>
               </Button>
             )}
-            {contract.status === "DRAFT" && contract.signToken && (
-              <SendDocument
-                label="Send for signature"
-                endpoint={`/api/admin/contracts/${contract.id}/send`}
-                defaultSubject={contractDraft(contract.client.name, signUrl).subject}
-                defaultBody={contractDraft(contract.client.name, signUrl).body}
-                clientEmail={contract.client.email}
-                emailConfigured={emailTransport() !== "none"}
-                whatsappConfigured={whatsappConfigured()}
-              />
-            )}
-            {contract.status !== "SIGNED" && (
+            {contract.status !== "SIGNED" && canEdit && (
               <ManualStatusMenu entity="contract" id={contract.id} status={contract.status} />
             )}
-            {contract.status === "SIGNED" && !contract.onboardingMessageSentAt && (
-              <ManualOnboardingButton contractId={contract.id} />
+            {canDelete && (
+              <DeleteRecordButton
+                entity="contract"
+                id={contract.id}
+                label={`${contract.proposal.projectType} · ${clientName}`}
+                redirectTo="/contracts"
+              />
             )}
-            <DeleteRecordButton
-              entity="contract"
-              id={contract.id}
-              label={`${contract.proposal.projectType} · ${contract.client.company ?? contract.client.name ?? "Client"}`}
-              redirectTo="/contracts"
-            />
+            {onboardingInHeader && <ManualOnboardingButton contractId={contract.id} />}
+            {projectStep && (
+              <Button asChild variant="outline">
+                <Link href={projectStep.href}>
+                  <FolderKanban className="size-3.5" aria-hidden />
+                  {projectStep.label}
+                </Link>
+              </Button>
+            )}
+            {quoteStep && (
+              <Button asChild variant="brand">
+                <Link href={quoteStep.href}>
+                  <CopyPlus className="size-3.5" aria-hidden />
+                  {quoteStep.label}
+                </Link>
+              </Button>
+            )}
+            {sendable && (
+              <SendDocument
+                {...send}
+                label="Send for signature"
+                resend={contract.status === "SENT"}
+                variant={contract.status === "DRAFT" ? "brand" : "outline"}
+              />
+            )}
           </>
         }
         alert={
-          contract.status === "SIGNED" && !contract.project ? (
+          signable && !send ? (
+            <AlertBar tone="warning">
+              {contract.signToken
+                ? "This contract has no generated document, so it cannot be sent for signature. Delete it and generate it again from the accepted proposal, or record a signature by hand if it was signed another way."
+                : "This contract has no signing link, so it cannot be sent from here. Record it by hand if it was signed another way."}
+            </AlertBar>
+          ) : contract.status === "SIGNED" && !contract.project ? (
             <AlertBar
               tone="danger"
-              href={`/clients/${contract.clientId}`}
-              cta="Open the client record"
+              action={
+                canCreateProject ? (
+                  <CreateProjectButton
+                    contractId={contract.id}
+                    total={money(contract.proposal.totalPrice, contract.proposal.currency)}
+                    split={`${split.first ?? 50}/${split.second ?? 30}/${split.final ?? 20}`}
+                    priorProject={
+                      priorProject
+                        ? {
+                            label: priorProject.label,
+                            deletedAt: priorProject.deletedAt ? date(priorProject.deletedAt) : null,
+                          }
+                        : null
+                    }
+                  />
+                ) : null
+              }
             >
-              This contract is signed but no project exists. Delivery has not formally
-              started and no payment schedule is being tracked.
+              This contract is signed but no project exists. Delivery has not formally started and
+              no payment schedule is being tracked.
             </AlertBar>
           ) : contract.status === "SIGNED" && !contract.onboardingMessageSentAt ? (
             <AlertBar
               tone="warning"
-              href={`/whatsapp/${contract.clientId}`}
-              cta="Open the WhatsApp thread"
+              action={canEdit ? <ManualOnboardingButton contractId={contract.id} /> : null}
             >
-              The client has not been told what happens next. Send the onboarding
-              message so the first week does not go quiet.
+              Onboarding is not recorded. Once you have told the client what happens next, record it
+              here so the first week does not go quiet unnoticed.
             </AlertBar>
           ) : null
         }
-        tabs={<TabNav tabs={TABS} active={tab} basePath={`/contracts/${contract.id}`} />}
       />
 
-      <DetailLayout
+      <Dossier
+        label="Contract sections"
+        sections={[
+          { id: "status", label: "Status", icon: <Route /> },
+          { id: "delivery", label: "Delivery", icon: <FolderKanban /> },
+          { id: "terms", label: "Terms & split", icon: <Receipt /> },
+          { id: "services", label: "Services", icon: <Server />, count: services.length },
+          { id: "signature", label: "Signature", icon: <PenLine /> },
+          { id: "history", label: "History", icon: <History /> },
+        ]}
         aside={
           <>
+            <NextSteps steps={deliverySteps} />
             <Panel title="Parties" flush>
               <MetaList
                 items={[
@@ -253,44 +304,22 @@ export default async function ContractDetailPage({
                       </EntityLink>
                     ),
                   },
-                  { label: "Phone", value: <span className="font-mono text-meta">{contract.client.phone}</span> },
+                  {
+                    label: "Phone",
+                    value: contract.client.phone ? (
+                      <span className="font-mono text-meta">{contract.client.phone}</span>
+                    ) : (
+                      "—"
+                    ),
+                  },
                   { label: "Email", value: contract.client.email ?? "—" },
                   {
                     label: "Proposal",
                     value: (
-                      <Link href={`/proposals/${contract.proposalId}`} className="hover:text-brand">
+                      <EntityLink type="proposal" id={contract.proposalId}>
                         {money(contract.proposal.totalPrice, contract.proposal.currency)}
-                      </Link>
+                      </EntityLink>
                     ),
-                  },
-                ]}
-              />
-            </Panel>
-
-            <Panel title="Signature" flush>
-              <MetaList
-                items={[
-                  {
-                    label: "Method",
-                    value: contract.signatureMethod
-                      ? contract.signatureMethod.replace(/_/g, " ").toLowerCase()
-                      : "—",
-                  },
-                  { label: "Signed by", value: contract.signedByName ?? "—" },
-                  {
-                    label: "Verified",
-                    value: verifiedHint ?? "—",
-                    hint: "Where the one-time code that authorised the signature was sent",
-                  },
-                  { label: "Signed at", value: contract.signedAt ? dateTime(contract.signedAt) : "—" },
-                  {
-                    label: "From IP",
-                    value: contract.signedIp ? (
-                      <span className="font-mono text-micro">{contract.signedIp}</span>
-                    ) : (
-                      "—"
-                    ),
-                    hint: "Recorded at signature for evidentiary value",
                   },
                 ]}
               />
@@ -304,7 +333,7 @@ export default async function ContractDetailPage({
                   : "Only this person receives the code the link needs"
               }
             >
-              {contract.status === "SIGNED" ? (
+              {contract.status === "SIGNED" || !canEdit ? (
                 <MetaList
                   className="-mx-3"
                   items={[
@@ -330,19 +359,19 @@ export default async function ContractDetailPage({
               )}
             </Panel>
 
-            {contract.signToken && (
-              <Panel title="Client link" flush>
+            {signUrl && signable && (
+              <Panel title="Client link">
                 <QuickActions>
-                  <Button asChild variant="outline">
-                    <a href={`/sign/${contract.signToken}`} target="_blank" rel="noreferrer">
-                      <ExternalLink className="size-3.5 text-subtle-foreground" />
+                  <CopyLinkButton url={signUrl} label="Copy signing link" />
+                  <Button asChild variant="ghost">
+                    <a href={signUrl} target="_blank" rel="noreferrer">
+                      <ExternalLink className="size-3.5 text-subtle-foreground" aria-hidden />
                       Open the signing page
                     </a>
                   </Button>
                   <p className="text-meta text-subtle-foreground">
-                    The link alone cannot sign: it asks for a one-time code sent to the
-                    authorised signer&apos;s WhatsApp or email. It is single-purpose and tied to this
-                    contract only.
+                    The link alone cannot sign: it asks for a one-time code sent to the authorised
+                    signer&apos;s WhatsApp or email. It is tied to this contract only.
                   </p>
                 </QuickActions>
               </Panel>
@@ -350,63 +379,66 @@ export default async function ContractDetailPage({
           </>
         }
       >
-        {tab === "overview" && (
-          <>
-            <Panel
-              title="Where this contract stands"
-              description={
-                dead
-                  ? `This contract is ${statusOf("contractStatus", contract.status).label.toLowerCase()} — it will not move further.`
-                  : undefined
-              }
-            >
-              <ol className="flex flex-wrap items-center gap-x-2 gap-y-3">
-                {LIFECYCLE.map((step, i) => {
-                  const done = i <= reachedIndex;
-                  return (
-                    <li key={step.id} className="flex items-center gap-2">
-                      <span
-                        className={
-                          done
-                            ? "flex size-5 items-center justify-center rounded-full bg-success/15 font-mono text-micro text-success"
-                            : "flex size-5 items-center justify-center rounded-full border border-border font-mono text-micro text-subtle-foreground"
-                        }
-                      >
-                        {i + 1}
-                      </span>
-                      <span className={done ? "text-base" : "text-base text-subtle-foreground"}>
-                        {step.label}
-                      </span>
-                      {i < LIFECYCLE.length - 1 && (
-                        <span className="mx-1 h-px w-6 bg-border" aria-hidden />
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            </Panel>
-
-            <Panel title="Delivery" flush>
-              {contract.project ? (
-                <div className="px-3 py-3">
-                  <EntityLink
-                    type="project"
-                    id={contract.project.id}
-                    className="text-base font-medium"
+        <DossierSection
+          id="status"
+          title="Where this contract stands"
+          description={
+            dead
+              ? `This contract is ${statusOf("contractStatus", contract.status).label.toLowerCase()} — it will not move further.`
+              : undefined
+          }
+        >
+          <ol className="grid gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-x-2">
+            {LIFECYCLE.map((step, i) => {
+              const done = i <= reachedIndex;
+              return (
+                <li
+                  key={step.id}
+                  className="flex items-center gap-2"
+                  aria-current={i === reachedIndex ? "step" : undefined}
+                >
+                  <span
+                    className={
+                      done
+                        ? "flex size-5 items-center justify-center rounded-full bg-success/15 font-mono text-micro text-success"
+                        : "flex size-5 items-center justify-center rounded-full border border-border font-mono text-micro text-subtle-foreground"
+                    }
+                    aria-hidden
                   >
-                    {contract.project.name}
-                  </EntityLink>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                    <StatusPill registry="projectPhase" value={contract.project.phase} variant="dot" />
-                    <StatusPill registry="projectStatus" value={contract.project.status} />
-                  </div>
-                  {contract.project.payments.length > 0 && (
+                    {i + 1}
+                  </span>
+                  <span className={done ? "text-base" : "text-base text-subtle-foreground"}>
+                    {step.label}
+                    <span className="sr-only">{done ? " (done)" : " (not yet)"}</span>
+                  </span>
+                  {i < LIFECYCLE.length - 1 && (
+                    <span className="mx-1 hidden h-px w-6 bg-border sm:block" aria-hidden />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </DossierSection>
+
+        <DossierSection id="delivery" title="Delivery">
+          {contract.project ? (
+            <Panel flush>
+              <div className="px-3 py-3">
+                <EntityLink type="project" id={contract.project.id} className="text-base font-medium">
+                  {contract.project.name}
+                </EntityLink>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <StatusPill registry="projectPhase" value={contract.project.phase} variant="dot" />
+                  <StatusPill registry="projectStatus" value={contract.project.status} />
+                </div>
+                {canSeePayments ? (
+                  payments.length > 0 ? (
                     <ul className="rows mt-3 border-t border-border">
-                      {contract.project.payments.map((payment) => (
+                      {payments.map((payment) => (
                         <li key={payment.id}>
                           <Link
                             href={entityHref("payment", payment.id) ?? "/payments"}
-                            className="-mx-1 flex items-center gap-3 rounded-xs px-1 py-2 transition-colors duration-[var(--dur-state)] hover:bg-surface-2"
+                            className="-mx-1 flex min-h-11 items-center gap-3 rounded-xs px-1 py-2 transition-colors duration-[var(--dur-state)] hover:bg-surface-2 sm:min-h-0"
                           >
                             <span className="min-w-0 flex-1 truncate text-base">
                               {statusOf("paymentMilestone", payment.milestone).label}
@@ -423,33 +455,41 @@ export default async function ContractDetailPage({
                         </li>
                       ))}
                     </ul>
-                  )}
-                </div>
-              ) : (
-                <EmptyInline>
-                  No project has been created from this contract. A project is how the
-                  commitment becomes tracked delivery — phases, launch date and the
-                  payment schedule all live on it.
-                </EmptyInline>
-              )}
+                  ) : (
+                    <p className="mt-3 border-t border-border pt-3 text-meta text-muted-foreground">
+                      No payment rows on this project.
+                    </p>
+                  )
+                ) : (
+                  <p className="mt-3 border-t border-border pt-3 text-meta text-muted-foreground">
+                    Payment records are visible to finance roles only.
+                  </p>
+                )}
+              </div>
             </Panel>
-          </>
-        )}
+          ) : (
+            <EmptyInline>
+              {contract.status === "SIGNED"
+                ? "No project was opened from this contract. A project is how the commitment becomes tracked delivery — phases, launch date and the payment schedule all live on it."
+                : "A project and its payment schedule open automatically when this contract is signed."}
+            </EmptyInline>
+          )}
+        </DossierSection>
 
-        {tab === "terms" && (
-          <>
-            <Panel title="Commercial terms" description="Taken from the proposal, not re-entered">
+        <DossierSection
+          id="terms"
+          title="Terms and payment split"
+          description="Taken from the proposal, not re-entered"
+        >
+          <div className="space-y-4">
+            <Panel flush>
               <MetaList
-                className="-mx-3"
                 items={[
                   { label: "Scope", value: contract.proposal.projectType },
                   { label: "Complexity", value: contract.proposal.complexity },
                   ...(reduction > 0
                     ? [
-                        {
-                          label: "List price",
-                          value: money(subtotal, contract.proposal.currency),
-                        },
+                        { label: "List price", value: money(subtotal, contract.proposal.currency) },
                         {
                           label: discountLabel,
                           value: (
@@ -470,23 +510,28 @@ export default async function ContractDetailPage({
               />
             </Panel>
             <Panel title="Payment terms">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {[
                   { label: "On signature", pct: split.first ?? 50 },
                   { label: "At milestone", pct: split.second ?? 30 },
                   { label: "On handover", pct: split.final ?? 20 },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-3">
-                    <span className="w-36 shrink-0 text-base text-muted-foreground">{row.label}</span>
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                      <span className="block h-full rounded-full bg-brand" style={{ width: `${row.pct}%` }} />
+                  <div
+                    key={row.label}
+                    className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 sm:flex"
+                  >
+                    <span className="text-base text-muted-foreground sm:w-36 sm:shrink-0">
+                      {row.label}
                     </span>
-                    <span className="w-28 shrink-0 text-end font-mono text-meta tabular-nums">
+                    <span className="text-end font-mono text-meta tabular-nums sm:order-last sm:w-32 sm:shrink-0">
                       {row.pct}% ·{" "}
                       {money(
                         Math.round((contract.proposal.totalPrice * row.pct) / 100),
                         contract.proposal.currency,
                       )}
+                    </span>
+                    <span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-surface-2 sm:flex-1">
+                      <span className="block h-full rounded-full bg-brand" style={{ width: `${row.pct}%` }} />
                     </span>
                   </div>
                 ))}
@@ -498,24 +543,40 @@ export default async function ContractDetailPage({
                 </p>
               )}
             </Panel>
+          </div>
+        </DossierSection>
 
-            {proposalContent.success && (
-              <ServiceTermsPanel
-                services={proposalContent.data.services}
-                currency={contract.proposal.currency}
-                liveHref={`/clients/${contract.clientId}?tab=services`}
-              />
-            )}
-          </>
-        )}
+        <DossierSection
+          id="services"
+          title="Services outside the fee"
+          description="Opened as tracked services when the contract is signed"
+        >
+          {services.length === 0 ? (
+            <EmptyInline>
+              {proposalContent.success
+                ? "The proposal behind this contract carries no services."
+                : "The proposal behind this contract predates the services list, so it carries none."}
+            </EmptyInline>
+          ) : (
+            <ServiceTermsPanel
+              services={services}
+              currency={contract.proposal.currency}
+              liveHref={`/clients/${contract.clientId}?tab=services`}
+            />
+          )}
+        </DossierSection>
 
-        {tab === "signature" && (
-          <Panel title="Signature evidence" description="What was captured, and what it proves">
+        <DossierSection
+          id="signature"
+          title="Signature and onboarding"
+          description="What was captured, and what it proves"
+        >
+          <div className="space-y-4">
             {contract.signedAt ? (
               <div className="space-y-3">
                 <div className="flex items-start gap-3 rounded-md border border-success/30 bg-success/[0.06] p-3">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" />
-                  <div>
+                  <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                  <div className="min-w-0">
                     <p className="text-base font-medium">
                       Signed by {contract.signedByName ?? "an unnamed party"}
                     </p>
@@ -530,25 +591,22 @@ export default async function ContractDetailPage({
                     )}
                     {nameDiffers && (
                       <p className="mt-1 text-meta text-warning">
-                        The typed name differs from the authorised signer ({signer.name}). The
-                        code still went only to that person&apos;s contact.
+                        The typed name differs from the authorised signer ({signer.name}). The code
+                        still went only to that person&apos;s contact.
                       </p>
                     )}
                   </div>
                 </div>
                 <p className="max-w-prose text-base text-muted-foreground">
-                  This is a click-to-sign record: the name, timestamp and originating IP
-                  captured at the moment the client confirmed. A link signature also required
-                  a one-time code, which proves control of the authorised signer&apos;s
-                  WhatsApp or mailbox — not their legal identity. It is evidence of assent,
-                  not a cryptographic signature. A qualified e-signature provider can be
-                  wired in behind the same status field without changing this screen —
-                  see Integrations.
+                  This is a click-to-sign record: the name, timestamp and originating IP captured at
+                  the moment the client confirmed. A link signature also required a one-time code,
+                  which proves control of the authorised signer&apos;s WhatsApp or mailbox — not
+                  their legal identity. It is evidence of assent, not a cryptographic signature.
                 </p>
                 {signedFileUrl && (
                   <Button asChild variant="outline">
                     <a href={signedFileUrl} target="_blank" rel="noreferrer">
-                      <Download className="size-3.5" />
+                      <Download className="size-3.5" aria-hidden />
                       Signed copy
                     </a>
                   </Button>
@@ -556,30 +614,52 @@ export default async function ContractDetailPage({
               </div>
             ) : (
               <EmptyInline>
-                Not signed. Once the client signs — or you record a signature by hand —
-                the name, time and IP are captured here permanently.
+                Not signed. Once the client signs — or you record a signature by hand — the name,
+                time and IP are captured here permanently.
               </EmptyInline>
             )}
-          </Panel>
-        )}
 
-        {tab === "activity" && (
-          <>
+            <Panel flush>
+              <MetaList
+                items={[
+                  {
+                    label: "Method",
+                    value: contract.signatureMethod
+                      ? contract.signatureMethod.replace(/_/g, " ").toLowerCase()
+                      : "—",
+                  },
+                  {
+                    label: "Verified",
+                    value: verifiedHint ?? "—",
+                    hint: "Where the one-time code that authorised the signature was sent",
+                  },
+                  {
+                    label: "Onboarding",
+                    value: contract.onboardingMessageSentAt
+                      ? dateTime(contract.onboardingMessageSentAt)
+                      : contract.status === "SIGNED"
+                        ? "Not recorded"
+                        : "After signature",
+                  },
+                ]}
+              />
+            </Panel>
+          </div>
+        </DossierSection>
+
+        <DossierSection id="history" title="History">
+          <div className="space-y-4">
             <Panel title="Activity" flush bodyClassName="p-2">
               <Timeline events={activity} emptyLabel="Nothing recorded for this contract." />
             </Panel>
             <EntityAudit type="contract" id={contract.id} />
-          </>
-        )}
-      </DetailLayout>
+          </div>
+        </DossierSection>
+      </Dossier>
     </div>
   );
 }
 
-/**
- * OVERDUE is derived, never read as stored: a PENDING row past the cutoff is
- * late, and a row stored OVERDUE whose due day has not passed is still due.
- */
 function derivedPaymentStatus(payment: { status: string; dueDate: Date | null }): string {
   if (isPaymentOverdue(payment)) return "OVERDUE";
   return payment.status === "OVERDUE" ? "PENDING" : payment.status;

@@ -1,44 +1,27 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma, type Prisma } from "@repo/database";
 import { Button, Field, Input, SelectField } from "@repo/ui";
 
 import { PageHeader } from "@/components/os/page-header";
+import { DateField } from "@/components/os/date-field";
+import { CursorPager } from "@/components/os/pager";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyInline } from "@/components/os/empty-state";
 import { FilterChip } from "@/components/os/data-table";
-import { EntityLink } from "@/components/os/entity-link";
-import { ToneBadge } from "@/components/ui/badge";
+import { EventList } from "@/components/os/event-row";
 import { SPELLINGS } from "@/components/os/entity-audit";
-import { dateTime, when } from "@/lib/format";
-import { entityHref, normalizeEntityType } from "@/lib/entity-links";
-import { titleCase, type Tone } from "@/lib/status";
+import { normalizeEntityType } from "@/lib/entity-links";
+import { gateRoute } from "@/lib/page-gate";
+import { resolveRole } from "@/lib/rbac";
+import { titleCase } from "@/lib/status";
 
 export const dynamic = "force-dynamic";
 
-/** Rows per page. Older history is a page, not a scroll. */
 const PAGE = 50;
 
 const ACTOR_KINDS = ["USER", "CLIENT", "INTEGRATION", "SYSTEM"] as const;
 
-/**
- * The audit log (§12).
- *
- * This page used to be a *projection*: it read `updatedAt` off contracts,
- * proposals, payments and sessions and inferred that something had happened.
- * That can show a row changed and roughly when — it can never show who changed
- * it, or what the value had been, which is the only reason an audit log exists.
- *
- * It now reads `ActivityEvent`, written at each mutation site with the actor and
- * the changed fields. Events before this shipped do not exist, and the page says
- * so rather than back-filling plausible history.
- *
- * Filters are URL search params and are applied in the query, not in the
- * browser: the log is the system's memory, and a filter that only searched the
- * latest few hundred rows would answer "nothing happened" about anything older.
- * Every detail page's audit panel links here with `?entity=<type>&id=<id>`.
- */
 interface Filters {
   actor: string;
   action: string;
@@ -59,10 +42,16 @@ function dayStart(value: string): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-/** Every spelling writers have used for the kind this filter names. */
 function entityTypesFor(entity: string): string[] {
   const kind = normalizeEntityType(entity);
   return (kind && SPELLINGS[kind]) || [entity];
+}
+
+function actionPrefixes(action: string): string[] {
+  return action
+    .split(",")
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
 }
 
 function whereFor(f: Filters): Prisma.ActivityEventWhereInput {
@@ -75,7 +64,8 @@ function whereFor(f: Filters): Prisma.ActivityEventWhereInput {
         : { actorLabel: { contains: f.actor, mode: "insensitive" } },
     );
   }
-  if (f.action) and.push({ action: { startsWith: f.action.toLowerCase() } });
+  const prefixes = actionPrefixes(f.action);
+  if (prefixes.length) and.push({ OR: prefixes.map((prefix) => ({ action: { startsWith: prefix } })) });
   if (f.entity) and.push({ entityType: { in: entityTypesFor(f.entity) } });
   if (f.id) and.push({ entityId: f.id });
   const from = f.from ? dayStart(f.from) : null;
@@ -102,38 +92,10 @@ function hrefFor(params: Params): string {
   return query ? `/audit?${query}` : "/audit";
 }
 
-/**
- * Tone is taken from the VERB of the action, not from a per-action table.
- * Actions are open-ended — every new mutation site adds one — so a lookup table
- * would silently render each new action as "unknown".
- */
-function toneFor(action: string): Tone {
-  const verb = action.split(".")[1] ?? "";
-  if (/deleted|failed|revoked|cancelled|suspended|rejected|disabled/.test(verb)) return "danger";
-  if (/created|opened|signed|succeeded|resolved|renewed|paid|enabled/.test(verb)) return "success";
-  if (/updated|changed|rotated|moved|regenerated/.test(verb)) return "progress";
-  if (/due|overdue|expiring|past/.test(verb)) return "warning";
-  return "info";
-}
-
-function actionLabel(action: string): string {
-  const [entity, verb] = action.split(".");
-  return verb ? `${titleCase(entity)} ${verb.replace(/_/g, " ")}` : titleCase(action);
-}
-
-function fieldList(value: unknown): string[] {
-  return value && typeof value === "object" && !Array.isArray(value) ? Object.keys(value) : [];
-}
-
-function show(value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "string") return value.length > 120 ? `${value.slice(0, 120)}…` : value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  const json = JSON.stringify(value);
-  return json.length > 120 ? `${json.slice(0, 120)}…` : json;
-}
-
 export default async function AuditPage({ searchParams }: { searchParams: Promise<Params> }) {
+  const denied = await gateRoute("/audit", "the audit log");
+  if (denied) return denied;
+
   const params = await searchParams;
   const filters: Filters = {
     actor: (params.actor ?? "").trim(),
@@ -146,8 +108,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   };
   const where = whereFor(filters);
 
-  // Cursor pagination on (createdAt, id): `before` walks older than a row,
-  // `after` walks newer. Offsets would drift as events keep arriving.
   const before = params.before?.trim() || null;
   const after = params.after?.trim() || null;
   const direction: "older" | "newer" = after ? "newer" : "older";
@@ -181,11 +141,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
   const more = page.length > PAGE;
   const slice = more ? page.slice(0, PAGE) : page;
-  const events = direction === "newer" ? [...slice].reverse() : slice;
+  const events = (direction === "newer" ? [...slice].reverse() : slice).map((event) => ({
+    ...event,
+    actorRole: event.actor ? (resolveRole(event.actor) ?? null) : null,
+  }));
   const first = events[0];
   const last = events[events.length - 1];
-  // Walking older: there is a newer page whenever a cursor got us here. Walking
-  // newer: there is an older page whenever a cursor got us here.
   const olderHref =
     last && (direction === "older" ? more : true) ? hrefFor({ ...filters, before: last.id }) : null;
   const newerHref =
@@ -221,7 +182,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           <Field label="Actor" hint="A name, or USER / CLIENT / SYSTEM / INTEGRATION">
             <Input name="actor" defaultValue={filters.actor} placeholder="Anyone" className="h-8" />
           </Field>
-          <Field label="Action starts with" hint="e.g. contract. or payment.paid">
+          <Field label="Action starts with" hint="e.g. contract. or payment.paid — commas for any of several">
             <Input name="action" defaultValue={filters.action} placeholder="Any action" className="h-8 font-mono" />
           </Field>
           <Field label="Entity">
@@ -238,10 +199,10 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <Input name="id" defaultValue={filters.id} placeholder="Any record" className="h-8 font-mono" />
           </Field>
           <Field label="From">
-            <Input type="date" name="from" defaultValue={filters.from} className="h-8" />
+            <DateField name="from" defaultValue={filters.from} className="h-8" />
           </Field>
           <Field label="To">
-            <Input type="date" name="to" defaultValue={filters.to} className="h-8" />
+            <DateField name="to" defaultValue={filters.to} className="h-8" />
           </Field>
           <Field label="Text" hint="Matches the summary and the record's name">
             <Input name="q" defaultValue={filters.q} placeholder="Anything" className="h-8" />
@@ -263,7 +224,15 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               <FilterChip
                 key={key}
                 label={titleCase(key === "q" ? "text" : key === "id" ? "record" : key)}
-                value={key === "id" ? <span className="font-mono">{filters.id}</span> : filters[key]}
+                value={
+                  key === "id" ? (
+                    <span className="font-mono">{filters.id}</span>
+                  ) : key === "action" ? (
+                    <span className="font-mono">{actionPrefixes(filters.action).join(" or ")}</span>
+                  ) : (
+                    filters[key]
+                  )
+                }
                 clearHref={hrefFor({ ...filters, [key]: "" })}
               />
             ))}
@@ -290,114 +259,27 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             </EmptyInline>
           </div>
         ) : (
-          <ol className="divide-y divide-border">
-            {events.map((event) => {
-              const before = (event.before ?? {}) as Record<string, unknown>;
-              const after = (event.after ?? {}) as Record<string, unknown>;
-              const fields = Array.from(new Set([...fieldList(event.before), ...fieldList(event.after)]));
-              const metadata = event.metadata as Record<string, unknown> | null;
-              const hasMeta = metadata !== null && Object.keys(metadata).length > 0;
-              const linked = entityHref(event.entityType, event.entityId) !== null;
-              const role = event.actor?.opsRole ?? event.actor?.role ?? null;
-              return (
-                <li key={event.id} className="px-3 py-2.5">
-                  <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
-                    <ToneBadge tone={toneFor(event.action)} className="shrink-0">
-                      {actionLabel(event.action)}
-                    </ToneBadge>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-base">
-                        <span className="font-medium">{event.actorLabel}</span>{" "}
-                        <span className="text-muted-foreground">{event.summary}</span>
-                      </p>
-                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-meta text-subtle-foreground">
-                        <span>{role ? titleCase(String(role)) : titleCase(event.actorKind)}</span>
-                        <span aria-hidden>·</span>
-                        <EntityLink type={event.entityType} id={event.entityId} muted={!linked}>
-                          {event.entityLabel ?? titleCase(event.entityType)}
-                        </EntityLink>
-                        {!linked && (
-                          <span className="font-mono text-micro">{event.entityType}</span>
-                        )}
-                        <Link
-                          href={hrefFor({ ...filters, entity: event.entityType, id: event.entityId })}
-                          className="hover:text-foreground"
-                        >
-                          this record only
-                        </Link>
-                      </p>
-                    </div>
-                    <time
-                      className="shrink-0 font-mono text-micro tabular-nums text-subtle-foreground"
-                      dateTime={event.createdAt.toISOString()}
-                      title={dateTime(event.createdAt)}
-                    >
-                      {when(event.createdAt)}
-                    </time>
-                  </div>
-                  {(fields.length > 0 || hasMeta) && (
-                    <details className="group mt-1">
-                      <summary className="cursor-pointer list-none text-meta text-subtle-foreground hover:text-foreground">
-                        {fields.length > 0
-                          ? `${fields.length} field${fields.length === 1 ? "" : "s"} changed · `
-                          : "Details · "}
-                        <span className="font-mono">
-                          {fields.slice(0, 4).join(", ")}
-                          {fields.length > 4 ? "…" : ""}
-                        </span>
-                      </summary>
-                      {fields.length > 0 && (
-                        <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-sm border border-border bg-surface/50 p-2 text-meta">
-                          {fields.map((field) => (
-                            <div key={field} className="contents">
-                              <dt className="font-mono text-subtle-foreground">{field}</dt>
-                              <dd className="min-w-0 break-words">
-                                <span className="text-muted-foreground line-through decoration-border-mid">
-                                  {show(before[field])}
-                                </span>
-                                {" → "}
-                                <span>{show(after[field])}</span>
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      )}
-                      {hasMeta && (
-                        <pre className="mt-1.5 max-h-48 overflow-auto rounded-sm border border-border bg-surface p-2 font-mono text-meta">
-                          {JSON.stringify(metadata, null, 2)}
-                        </pre>
-                      )}
-                    </details>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        )}
-        {(olderHref || newerHref) && (
-          <div className="flex items-center justify-between gap-2 border-t border-border px-3 py-2">
-            {newerHref ? (
-              <Button asChild variant="ghost" size="sm">
-                <Link href={newerHref}>
-                  <ChevronLeft className="size-3.5" />
-                  Newer
+          <EventList
+            events={events}
+            groupByDate
+            renderAside={(event) =>
+              filters.id === event.entityId ? null : (
+                <Link
+                  href={hrefFor({ ...filters, entity: event.entityType, id: event.entityId })}
+                  className="hover:text-foreground"
+                >
+                  this record only
                 </Link>
-              </Button>
-            ) : (
-              <span />
-            )}
-            {olderHref ? (
-              <Button asChild variant="ghost" size="sm">
-                <Link href={olderHref}>
-                  Older
-                  <ChevronRight className="size-3.5" />
-                </Link>
-              </Button>
-            ) : (
-              <span />
-            )}
-          </div>
+              )
+            }
+          />
         )}
+        <CursorPager
+          prevHref={newerHref}
+          nextHref={olderHref}
+          summary={`${events.length} event${events.length === 1 ? "" : "s"}, newest first`}
+          className="border-t border-border px-3 py-2"
+        />
       </Panel>
     </div>
   );

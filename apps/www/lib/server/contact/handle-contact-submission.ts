@@ -45,7 +45,6 @@ const BUDGET_RANGE_MAP: Record<
   OVER_50K: BudgetRange.OVER_50K,
 };
 
-/** UTM values are analytics labels: a short string or nothing at all. */
 function boundedAttribution(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -128,8 +127,6 @@ export async function handleContactSubmission(request: NextRequest) {
       userAgent,
       ipAddress,
       referrer: referer,
-      // Attribution is attacker-supplied like everything else on a public
-      // form, so it is bounded here rather than copied off the request body.
       utmSource: boundedAttribution(body.utmSource),
       utmMedium: boundedAttribution(body.utmMedium),
       utmCampaign: boundedAttribution(body.utmCampaign),

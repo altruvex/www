@@ -22,8 +22,6 @@ export default function MaintenancePage({
       <ErrorBoundary>
         <MaintenancePlans plans={plans} />
       </ErrorBoundary>
-      {/* A maintenance buyer already has a site, so the close asks for that
-          site rather than for a build conversation. */}
       <SectionEndCta
         world={serviceWorld("maintenance")}
         title={t("title")}

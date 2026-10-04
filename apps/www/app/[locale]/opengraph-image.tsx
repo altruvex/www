@@ -13,27 +13,12 @@ export const size = {
 
 export const revalidate = 86400;
 
-// Altruvex Sans comes from @repo/brand-font, read from disk at render time: no
-// network fetch. Satori reads neither WOFF2 nor variable axes, so the package
-// ships static TTF instances (dist/og), cut from the same variable fonts the
-// site serves, at the two weights used below. process.cwd() is apps/www under
-// next dev/build/start, and output tracing follows a literal path.join from it.
 const BRAND_OG = join(process.cwd(), "node_modules/@repo/brand-font/dist/og");
 
 function loadBrandFont(face: "Latin" | "Arabic", weight: 400 | 700) {
   return readFile(join(BRAND_OG, `AltruvexSans${face}-${weight}.ttf`));
 }
 
-/**
- * Satori runs no bidi algorithm: it lays text out left to right in logical
- * order, so an Arabic sentence comes out with its words reversed. Instead of a
- * bidi dependency (the line breaks that reordering needs are Satori's own, and
- * unavailable to us), Arabic copy is laid out word by word: each word is one
- * flex item, the row is `row-reverse` + `wrap` so words start at the right edge
- * and lines wrap from the right, and each word is split into direction runs so
- * "Next.js", "B2B" and digits keep their internal LTR order. Letter joining
- * inside a run is left to Satori, which already shapes Arabic correctly.
- */
 type Run = { kind: "A" | "L" | "P"; text: string };
 
 const MIRRORED: Record<string, string> = {
@@ -49,9 +34,6 @@ const MIRRORED: Record<string, string> = {
   "»": "«",
 };
 
-// Strong class of one character: Latin letters and digits are L, Arabic script
-// is R, everything else (spaces, punctuation) is neutral. Combining marks
-// inherit the class of the letter they sit on.
 function strongClass(ch: string, previous: "L" | "R" | "N"): "L" | "R" | "N" {
   if (/[\p{Script=Latin}\p{N}]/u.test(ch)) return "L";
   if (/[\p{Script=Arabic}\u0640]/u.test(ch)) return "R";
@@ -59,11 +41,6 @@ function strongClass(ch: string, previous: "L" | "R" | "N"): "L" | "R" | "N" {
   return "N";
 }
 
-// Splits a right-to-left paragraph into words, and each word into runs, in
-// logical order (first run = rightmost on screen). A neutral takes its
-// neighbours' direction when both agree (the "." in "Next.js", the spaces in
-// "Next.js and React"); otherwise it takes the paragraph direction, right to
-// left. That is what puts a sentence-final "." on the left of the last word.
 function rtlWords(text: string): Run[][] {
   const chars = Array.from(text);
   const raw: ("L" | "R" | "N")[] = [];
@@ -100,7 +77,6 @@ function rtlWords(text: string): Run[][] {
     const kind = resolved[i] === "L" ? "L" : raw[i] === "R" ? "A" : "P";
     const last = word[word.length - 1];
     if (last?.kind === kind) {
-      // Neutrals in an RTL run read right to left, so later ones go first.
       last.text =
         kind === "P" ? (MIRRORED[ch] ?? ch) + last.text : last.text + ch;
     } else {
@@ -111,22 +87,12 @@ function rtlWords(text: string): Run[][] {
   return words;
 }
 
-// Satori sizes a text box by summing the width of each character alone, i.e.
-// its isolated glyph, while it draws the joined forms, which are narrower. An
-// Arabic word's box is therefore wider than its ink, and the gaps between
-// words come out uneven. So Arabic runs are shaped here instead: each letter
-// is swapped for its contextual form from Unicode's Arabic Presentation Forms-B
-// block (which Altruvex Sans Arabic covers), and the run is emitted in visual
-// order, so the box is measured on the glyphs that are actually drawn. The
-// table is read from Unicode itself (the compatibility decomposition of each
-// form gives its base letter), so nothing is hand-typed.
 type Forms = { fin?: string; iso: string; ini?: string; med?: string };
 const ARABIC_FORMS = new Map<string, Forms>();
 for (let cp = 0xfe80; cp <= 0xfefc; cp++) {
   const glyph = String.fromCodePoint(cp);
   const base = glyph.normalize("NFKC");
   const forms = ARABIC_FORMS.get(base);
-  // Each base's forms are consecutive: isolated, final, initial, medial.
   if (!forms) ARABIC_FORMS.set(base, { iso: glyph });
   else if (!forms.fin) forms.fin = glyph;
   else if (!forms.ini) forms.ini = glyph;
@@ -134,18 +100,12 @@ for (let cp = 0xfe80; cp <= 0xfefc; cp++) {
 }
 
 const isMark = (ch: string) => /\p{M}/u.test(ch);
-// Joins the letter after it: dual-joining letters (four forms) and tatweel.
 const joinsNext = (ch: string) =>
   ch === "\u0640" || !!ARABIC_FORMS.get(ch)?.med;
-// Joins the letter before it: every letter with a final form, and tatweel.
 const joinsPrev = (ch: string) =>
   ch === "\u0640" || !!ARABIC_FORMS.get(ch)?.fin;
 
 function shapeArabic(run: string): string {
-  // A cluster is a letter plus the marks stacked on it; marks are transparent
-  // to joining and stay glued to their letter. The font's marks are cut for
-  // right-to-left order (zero advance, drawn over the glyph that follows), so in
-  // the left-to-right string Satori draws they precede their letter.
   const clusters: { base: string; marks: string }[] = [];
   for (const ch of Array.from(run)) {
     if (isMark(ch) && clusters.length)
@@ -157,7 +117,6 @@ function shapeArabic(run: string): string {
     const { base, marks } = clusters[i]!;
     const prevJoins = i > 0 && joinsNext(clusters[i - 1]!.base);
     const next = clusters[i + 1];
-    // Lam + alef is one mandatory ligature glyph.
     const ligature = next && ARABIC_FORMS.get(base + next.base);
     if (ligature) {
       out.push(marks + next.marks + (prevJoins ? ligature.fin : ligature.iso));
@@ -176,7 +135,6 @@ function shapeArabic(run: string): string {
     }
     out.push(marks + glyph);
   }
-  // Satori draws left to right, so emit the clusters in visual order.
   return out.reverse().join("");
 }
 
@@ -239,11 +197,8 @@ export default async function OpenGraphImage({
       loadBrandFont("Arabic", 700),
     ]);
 
-  // Satori falls back across the loaded fonts per glyph, so the Arabic in the
-  // English card ("English + العربية") draws in the Arabic face, and vice versa.
   const fontFamily = isArabic ? "brand-arabic" : "brand-latin";
 
-  // Arabic has no case and no tracking; Latin keeps both.
   const eyebrow = {
     color: css(PALETTE.light["n-5"]),
     display: "flex",
@@ -286,8 +241,6 @@ export default async function OpenGraphImage({
     maxWidth: 920,
     ...(isArabic ? {} : { textAlign: "left" as const }),
   };
-  // The site mirrors in RTL: corner items swap sides, so every row that pairs
-  // two items runs row-reverse in Arabic.
   const rowDirection = isArabic ? ("row-reverse" as const) : ("row" as const);
 
   return new ImageResponse(

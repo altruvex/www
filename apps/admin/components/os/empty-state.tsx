@@ -2,10 +2,6 @@ import * as React from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * §37 — an empty state explains the section, says why it is empty, and offers
- * the action that would fill it. "No data found." is banned in this codebase.
- */
 export function EmptyState({
   icon: Icon,
   title,
@@ -33,7 +29,6 @@ export function EmptyState({
   );
 }
 
-/** The inline version, for an empty tab inside a detail page. */
 export function EmptyInline({
   children,
   action,

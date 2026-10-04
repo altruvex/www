@@ -9,37 +9,21 @@
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
 
 @theme inline {
-  /* The palette is packages/ui/src/styles/tokens.css. Only what exists on
-     the site alone is declared here: scenes, color worlds, gradients. */
   --color-inverted-bg: hsl(var(--inverted-bg));
   --color-local-accent: var(--local-accent);
   --color-local-accent-fg: var(--local-accent-fg);
   --color-local-accent-soft: var(--local-accent-soft);
   --color-local-accent-text: var(--local-accent-text);
 
-  /* Headings and display type are Altruvex Sans, as in the admin app.
-     --font-brand is set on :root below. */
   --font-sans: var(--font-brand);
-  /* One face for the text of the site (Ali, 2026-10-01): body text, the small
-     labels set with font-mono and code are all Altruvex Sans; there is no
-     monospace. The Latin emphasis clause in a heading
-     (components/ui/emphasis.tsx) is the face's own drawn italic (2026-10-03),
-     which replaced the Georgia stopgap. */
   --font-body: var(--font-brand);
   --font-mono: var(--font-brand);
 
-  /* Control family — keyed to control HEIGHT (design.md §6.1). ctl-xs is for
-     elements under 24px tall (keys, inline code, tags, glyphs). */
   --radius-ctl-xs: calc(var(--radius) - 12px);
 
-  /* Panel family — Container (A) and Grid (C) outer edges, keyed to ROLE:
-     card → sm, overlay/popover → md, large block/tile → lg. Kept apart from
-     the ctl-* family on purpose. Concentric rule, where a child sits in the
-     corner and padding < radius: inner = outer − padding. */
   --radius-panel-sm: calc(var(--radius) + 6px);
   --radius-panel-md: calc(var(--radius) + 12px);
   --radius-panel-lg: calc(var(--radius) + 18px);
-  /* The one inset that occurs: a panel-sm padded 1rem. */
   --radius-panel-inset: calc(var(--radius-panel-sm) - 1rem);
 
   --animate-text-gradient: text-gradient 6s linear infinite;
@@ -47,7 +31,6 @@
 
   --ease-strong: cubic-bezier(0.23, 1, 0.32, 1);
 
-  /* A bare `transition` takes the house hover timing, not Tailwind's 150ms. */
   --default-transition-duration: var(--motion-hover);
   --default-transition-timing-function: var(--ease-default);
 }
@@ -68,11 +51,11 @@
   --leading-body: 1.75;
   --section-y-top: clamp(5rem, 10vh, 8rem);
   --section-y-bottom: clamp(5rem, 14vh, 10rem);
+  --heading-gap: clamp(3.5rem, 6vw, 5rem);
+  --section-block: clamp(3rem, 5vw, 5rem);
 
-  /* The ground an inverted scene paints (flips to paper in dark, below). */
   --inverted-bg: 0 0% 9%;
 
-  /* A section's color world. With no accent-world-* class it is the brand. */
   --local-accent: hsl(var(--brand));
   --local-accent-fg: hsl(var(--brand-foreground));
   --local-accent-soft: var(--brand-soft);
@@ -198,27 +181,34 @@ header[data-scene="inverted"] {
   --local-accent-soft: hsl(var(--brand) / 0.12);
   --ring: var(--brand);
 
-  /* Scene reads dark here, so liquid glass panels inside it use the dark
-     glass tokens regardless of the site's own light/dark theme. */
   --glass-background: hsl(0 0% 10% / 0.65);
   --glass-background-strong: hsl(0 0% 12% / 0.75);
   --glass-background-flat: hsl(0 0% 8% / 0.5);
   --glass-border: hsl(0 0% 100% / 0.12);
   --glass-highlight: hsl(0 0% 100% / 0.1);
   --glass-shadow: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
+  --glass-clear-background: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.46),
+    hsl(var(--surface) / 0.34)
+  );
+  --glass-clear-sheen: linear-gradient(180deg, hsl(var(--n-0) / 0.09), transparent 38%);
+  --glass-clear-border: hsl(var(--n-0) / 0.14);
+  --glass-clear-shadow:
+    inset 0 1px 0 hsl(var(--n-0) / 0.22), inset 0 -1px 0 hsl(var(--n-0) / 0.04),
+    0 24px 48px -24px hsl(0 0% 0% / 0.7);
+  --glass-clear-filter: blur(28px) saturate(180%) brightness(0.8);
+  --glass-clear-background-dense: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.92),
+    hsl(var(--card) / 0.9)
+  );
 }
 
-/* An island locked dark stays dark in both themes (the /services/development
-   close). In the dark theme the root's --inverted-bg is the bright value, so
-   the island restores the dark ground it paints from; every other token it
-   uses comes from the base [data-scene="inverted"] block, which the flip rule
-   above now skips for it. */
 .dark [data-scene="inverted"][data-scene-lock="dark"] {
   --inverted-bg: 0 0% 9%;
 }
 
-/* The site is already dark, so this scene inverts the other way: a bright
-   scene, and glass panels switch to the light glass tokens to match it. */
 .dark #services-wrapper[data-scene="inverted"],
 .dark header[data-scene="inverted"] {
   color-scheme: light;
@@ -267,15 +257,23 @@ header[data-scene="inverted"] {
   --glass-border: hsl(0 0% 0% / 0.08);
   --glass-highlight: hsl(0 0% 100% / 0.6);
   --glass-shadow: 0 4px 24px -8px hsl(0 0% 0% / 0.08);
+  --glass-clear-background: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.62),
+    hsl(var(--surface) / 0.5)
+  );
+  --glass-clear-sheen: linear-gradient(180deg, hsl(var(--n-0) / 0.5), transparent 40%);
+  --glass-clear-border: hsl(var(--n-0) / 0.7);
+  --glass-clear-shadow:
+    inset 0 1px 0 hsl(var(--n-0) / 0.9), 0 0 0 1px hsl(var(--n-8) / 0.06),
+    0 24px 48px -28px hsl(var(--n-8) / 0.35);
+  --glass-clear-filter: blur(28px) saturate(180%) brightness(1.06);
+  --glass-clear-background-dense: linear-gradient(
+    180deg,
+    hsl(var(--card) / 0.94),
+    hsl(var(--card) / 0.9)
+  );
 }
-
-/* ── Color worlds ──────────────────────────────────────────────────────
-   A section scopes its accent with accent-world-{blue|orange|green|violet|cyan}.
-   Blue/orange/green carry a job site-wide (brand / action / proof); violet
-   and cyan carry a discipline and appear on /services only (violet =
-   interface design, cyan = consulting). Values are measured, not picked:
-   --local-accent clears AA both as text on the page background and as a
-   fill under --local-accent-fg, in light and dark. */
 
 .accent-world-blue {
   --local-accent: hsl(var(--brand-text-on-light));
@@ -292,9 +290,6 @@ header[data-scene="inverted"] {
 }
 
 .accent-world-orange {
-  /* Hue 20, between the ember gradient's middle and end stops, so a filled
-     button reads as burnt orange beside the gradient instead of brown
-     (27 90% 35% did). 4.74:1 as text on the page and under --local-accent-fg. */
   --local-accent: hsl(20 92% 40%);
   --local-accent-text: var(--local-accent);
   --local-accent-fg: hsl(var(--n-0));
@@ -357,12 +352,6 @@ header[data-scene="inverted"] {
   --local-accent-soft: hsl(190 80% 44% / 0.1);
 }
 
-/* An inverted island (a dark panel inside a light page) needs the dark accent,
-   or the hairline it draws disappears into the panel. Both nesting orders are
-   listed because both occur: the island can sit inside the world (consulting's
-   audit panel) or carry the world itself. Only the discipline worlds are
-   here - blue, orange and green predate this and keep whatever their own
-   sections already resolved, so nothing that ships today moves. */
 [data-scene="inverted"] .accent-world-violet,
 .accent-world-violet [data-scene="inverted"] {
   --local-accent: hsl(268 88% 74%);
@@ -379,14 +368,25 @@ header[data-scene="inverted"] {
   --local-accent-soft: hsl(190 80% 52% / 0.14);
 }
 
-/* ── Gradient accents (design.md §3.4) ────────────────────────────────
-   Emphasis text paints from --grad-from → --grad-via → --grad-to. A named
-   gradient (`accent-iris`, `<Mark gradient="ember">`) sets them on the text
-   itself. A world section sets them on the section, so `<Accent
-   gradient="world">` inherits the gradient of the world it sits in: the blue
-   world IS the brand gradient, orange IS ember, green IS forest — one
-   definition each, not a copy per world. Outside any world, the root carries
-   the brand gradient. */
+.accent-world-green [data-scene="inverted"] {
+  --local-accent: hsl(158 36% 49%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(0 0% 12%);
+  --local-accent-soft: hsl(158 36% 49% / 0.1);
+  --grad-from: hsl(156 54% 52%);
+  --grad-via: hsl(148 46% 54%);
+  --grad-to: hsl(170 58% 50%);
+}
+
+.dark .accent-world-green [data-scene="inverted"]:not([data-scene-lock="dark"]) {
+  --local-accent: hsl(158 64% 30%);
+  --local-accent-text: var(--local-accent);
+  --local-accent-fg: hsl(var(--n-0));
+  --local-accent-soft: hsl(158 64% 30% / 0.08);
+  --grad-from: hsl(162 70% 34%);
+  --grad-via: hsl(152 62% 38%);
+  --grad-to: hsl(168 72% 36%);
+}
 
 :root,
 .accent-brand,
@@ -407,8 +407,6 @@ header[data-scene="inverted"] {
 
 .accent-ember,
 .accent-world-orange {
-  /* The amber stop is as light as it can be and still reach 3:1 on the light
-     background (3.15:1); 36 94% 46% measured 2.51:1. */
   --grad-from: hsl(34 94% 42%);
   --grad-via: hsl(24 92% 48%);
   --grad-to: hsl(12 88% 50%);
@@ -494,8 +492,6 @@ header[data-scene="inverted"] {
 }
 
 .accent-sunset {
-  /* Orange stop darkened to reach 3:1 on the light background (3.21:1);
-     30 94% 48% measured 2.71:1. */
   --grad-from: hsl(28 94% 45%);
   --grad-via: hsl(10 86% 54%);
   --grad-to: hsl(340 78% 54%);
@@ -523,8 +519,6 @@ header[data-scene="inverted"] {
 
 .accent-mint {
   --grad-from: hsl(150 64% 38%);
-  /* Teal stops at 36%, not 38%, to reach 3:1 on the light background
-     (3.28:1 and 3.26:1; they measured 2.97:1 and 2.94:1). */
   --grad-via: hsl(168 70% 36%);
   --grad-to: hsl(184 78% 36%);
 }
@@ -575,10 +569,6 @@ header[data-scene="inverted"] {
   --grad-to: hsl(40 94% 58%);
 }
 
-/* Body-size accent (the article <Mark>). The stops above are tuned for display
-   type, where 3:1 is the bar; text at body size needs 4.5:1. Mixing each stop
-   20% toward black keeps its hue and lifts every named gradient to 4.5:1 or
-   more on the light background. Dark mode already clears 4.5:1 unmixed. */
 .body-accent {
   --grad-body-from: color-mix(in srgb, var(--grad-from) 80%, black);
   --grad-body-via: color-mix(in srgb, var(--grad-via) 80%, black);
@@ -604,9 +594,6 @@ header[data-scene="inverted"] {
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  /* Each split span clips its own gradient, so it needs the same measured
-     pad-and-cancel as <Accent> (components/ui/emphasis.tsx): Arabic dots and
-     marks ink past the line box. The negative margin keeps layout unchanged. */
   padding-block: 0.36em 0.13em;
   margin-block: -0.36em -0.13em;
 }
@@ -617,12 +604,6 @@ header[data-scene="inverted"] {
   margin-inline-end: -0.1em;
 }
 
-/* ── Photo caption ────────────────────────────────────────────────────
-   Plain white type set straight on a photo, no card (the /about stage and
-   the development + interface-design heroes), from the picked prototype
-   docs/prototypes/2026-09-about/b.html. The pool is the photo's own
-   blue-black, only as deep as a white caption needs to hold 4.5:1, and it
-   pools under the bottom-end corner where every caption lives. */
 .photo-caption-scrim {
   --caption-scrim-x: 100%;
   position: absolute;
@@ -635,16 +616,11 @@ header[data-scene="inverted"] {
   --caption-scrim-x: 0%;
 }
 
-/* useWordRead: the hook scrubs --read from 0 to 1 per word; unset (no JS,
-   reduced motion) a word rests at full ink. */
 [data-word] {
   --read-ink: calc(var(--read, 1) * 100%);
   color: color-mix(in srgb, hsl(var(--foreground)) var(--read-ink), hsl(var(--read-dim)));
 }
 
-/* A full-width floor under a stage's own title (the /work light stages):
-   a title runs the stage's whole width, so the corner scrim above is not
-   enough. Same ink as the caption scrim. */
 .photo-title-scrim {
   position: absolute;
   inset: 0;
@@ -652,21 +628,11 @@ header[data-scene="inverted"] {
   background: linear-gradient(to top, hsl(214 30% 4% / 0.84) 0%, hsl(214 30% 4% / 0.56) 32%, hsl(214 30% 4% / 0) 68%);
 }
 
-/* ── Home hero stage ──────────────────────────────────────────────────
-   components/sections/hero-section.server.tsx + hero-stage.tsx, from the
-   picked prototype docs/prototypes/2026-09-hero-v5 (A, 2026-09-28). A scene-
-   inverted island locked dark in both themes (data-scene-lock="dark"). Its
-   ground is the photo's own blue-black instead of the neutral scene ink, and
-   its ink is pure white, because the scrim below was measured against white:
-   the lightest pool that keeps every line ≥4.5:1 (the iris word ≥5:1). */
 #home .hero-stage {
   --inverted-bg: 214 30% 4%;
   --foreground: 0 0% 100%;
   --ring: 0 0% 100%;
 
-  /* Framing. The fabric's light runs across the upper half and the copy
-     sits in the dark below it, so the photo is shown as shot in both
-     directions; --hero-zoom stays available for a photo that needs pushing. */
   --hero-zoom: 1;
   --hero-scrim-a: 0.62;
   --hero-scrim-b: 0.4;
@@ -678,8 +644,6 @@ header[data-scene="inverted"] {
   --hero-scrim-x: 100%;
 }
 
-/* Slack for the motion: 12px of pointer travel each side (14px given), and
-   16% at the top for the scroll lag (the photo trails by 0.15 of the stage). */
 #home .hero-photo {
   position: absolute;
   z-index: -2;
@@ -699,7 +663,6 @@ header[data-scene="inverted"] {
   object-position: 50% 50%;
 }
 
-/* Only as much scrim as AA needs, pooled under the copy (bottom-start). */
 #home .hero-scrim {
   position: absolute;
   inset: 0;
@@ -711,16 +674,12 @@ header[data-scene="inverted"] {
     linear-gradient(to top, hsl(var(--inverted-bg) / 0.6) 0%, hsl(var(--inverted-bg) / 0) 45%);
 }
 
-/* Tablet portrait: the copy block is taller than it is wide, so the pool
-   widens with it (the eyebrow measured 4.26:1 at 768 before this). */
 @media (min-width: 768px) and (max-width: 1023.98px) {
   #home .hero-stage {
     --hero-scrim-w: 170%;
   }
 }
 
-/* Phone: the photo holds the upper stage and the copy sits on solid ink. The
-   crop window is in the photo's own coordinates, so the LTR flip mirrors it. */
 @media (max-width: 767.98px) {
   #home .hero-photo {
     bottom: auto;
@@ -740,25 +699,6 @@ header[data-scene="inverted"] {
   }
 }
 
-/* The secondary CTA on the photo: a glass outline pill. */
-#home .hero-glass-pill {
-  color: hsl(var(--foreground));
-  border-color: hsl(var(--foreground) / 0.4);
-  background-color: hsl(var(--foreground) / 0.06);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
-  backdrop-filter: blur(12px) saturate(140%);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  #home .hero-glass-pill:hover {
-    border-color: hsl(var(--foreground) / 0.8);
-    background-color: hsl(var(--foreground) / 0.12);
-  }
-}
-
-/* The header over the hero stage (nav.tsx sets data-over-stage): its CTA
-   turns to a white pill with ink text in both themes, then back to brand
-   blue once the stage has scrolled out from under it. */
 header[data-over-stage] [data-nav-cta] {
   background-color: hsl(var(--n-0));
   color: hsl(var(--n-8));
@@ -801,9 +741,6 @@ header[data-over-stage] [data-nav-cta] {
     color: hsl(var(--foreground));
   }
 
-  /* The brand stack picks per character by family order: the page's own
-     script first, so shared characters (space, digits, brackets) come from the
-     face that sets the line. Fallbacks are the package's measured faces. */
   :root {
     --font-brand:
       var(--font-brand-latin), var(--font-brand-arabic),
@@ -909,8 +846,6 @@ header[data-over-stage] [data-nav-cta] {
     letter-spacing: 0 !important;
   }
 
-  /* The footer wordmark is a Latin mark, set the same in both locales; its
-     fitted size assumes the -0.05em tracking (footer.tsx). */
   [dir="rtl"] [data-wordmark] {
     font-family: var(--font-brand-latin), var(--font-brand-arabic);
     letter-spacing: -0.05em !important;
@@ -958,18 +893,10 @@ html.lenis body {
 }
 
 @layer utilities {
-  /* Arabic headings never sit tighter than 1.3. Components set LTR leading
-     (leading-[1.04], .section-title 1.08) that is too tight for Arabic ascenders
-     and marks, especially with the ex-height scale on RTL headings. In the
-     utilities layer, [dir] + element outranks a single leading-* class. */
   [dir="rtl"] :is(h1, h2, h3, h4, .section-title) {
     line-height: var(--lh-heading-ar);
   }
 
-  /* A light (300) Latin display needs a slightly heavier Arabic light to match
-     its stroke (--weight-ar-display-light, from @repo/brand-font). One rule for
-     every brand-face heading that sets font-light; [dir] + element + class
-     outranks the single font-light class. */
   [dir="rtl"] :is(h1, h2, h3, h4, .section-title).font-light {
     font-weight: var(--weight-ar-display-light);
   }

@@ -14,23 +14,17 @@ type CommercialCtaDefinition = {
 };
 
 const COMMERCIAL_CTAS: Record<CommercialCtaKey, CommercialCtaDefinition> = {
-  /* The one primary the site opens with a blank page rather than a calendar:
-     it asks what is being built instead of asking for a slot. */
   describeTheBuild: { href: "/contact" },
   projectRange: { href: "/transparency" },
   realBuild: { href: "/work" },
-  /* How a project is scoped and priced: the pricing page. */
   scopeProjects: { href: "/pricing" },
   technicalCall: { href: "/schedule" },
   technicalAudit: { href: "/contact?service=consulting&package=audit" },
   architecture: { href: "/contact?service=development&track=architecture" },
-  /* The contact form reads `service` and preselects maintenance. */
   maintenanceEnquiry: { href: "/contact?service=maintenance" },
   maintenancePlans: { href: "/services/maintenance#pricing" },
 };
 
-/* Each maintenance plan opens the contact form with the plan and the billing
-   period already written into the message, where the visitor can edit them. */
 export function maintenancePlanHref(id: string, billing: "monthly" | "annual") {
   return `/contact?service=maintenance&plan=${encodeURIComponent(id)}&billing=${billing}`;
 }

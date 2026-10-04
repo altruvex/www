@@ -7,12 +7,8 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
+import { LABEL, LEAD, SECTION_TITLE } from "./type";
 
-/**
- * The /pricing section head: a grey mono index, the title, and the lead on the
- * reading side. A client island only because the entrance hooks need refs;
- * everything under it renders on the server.
- */
 export function ModelSectionHead({
   index,
   id,
@@ -36,16 +32,18 @@ export function ModelSectionHead({
       titleRef={titleRef}
       descriptionRef={descRef}
       eyebrow={
-        <span className="text-sm tabular-nums text-muted-foreground ltr:font-mono">
+        <span className={`${LABEL} tabular-nums`}>
           <Num value={index} pad={2} />
         </span>
       }
       firstTitle={title}
       description={lead}
-      className="mb-14 md:mb-20"
+      className="mb-(--heading-gap) max-w-[56rem]"
       classes={{
-        title: "max-w-[22ch]",
-        description: "lg:max-w-[24rem]",
+        container: "gap-7 md:gap-7 lg:flex-col lg:items-start",
+        titleWrapper: "space-y-7",
+        title: `${SECTION_TITLE} max-w-[18ch]`,
+        description: `${LEAD} max-w-[36ch] md:max-w-[36ch] lg:max-w-[36ch]`,
       }}
     />
   );

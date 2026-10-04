@@ -1,6 +1,8 @@
 "use client";
 
+import { Hint } from "@repo/ui";
 import { cn } from "@/lib/utils";
+import { DateField } from "@/components/os/date-field";
 import {
   DndContext,
   DragEndEvent,
@@ -19,11 +21,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Button, Field,
+  Button,
+  Field,
   Input,
   Textarea,
   controlSurface,
-  useFieldMeta
+  useFieldMeta,
 } from "@repo/ui";
 import { GripVertical, ListPlus, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
@@ -45,7 +48,6 @@ export function TextInput({
   invalid?: boolean;
   className?: string;
   ariaLabel?: string;
-  /** For a value the schema owns: shown, focusable, not editable. */
   readOnly?: boolean;
 }) {
   return (
@@ -110,7 +112,6 @@ export function NumberInput({
   invalid?: boolean;
   className?: string;
   ariaLabel?: string;
-  /** For a value the schema owns: shown, focusable, not editable. */
   readOnly?: boolean;
 }) {
   const meta = useFieldMeta({ invalid });
@@ -141,7 +142,7 @@ export function NumberInput({
           "h-(--control-h) text-end font-mono tabular-nums",
           readOnly && "text-muted-foreground",
           suffix && "pe-7",
-          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
         )}
       />
       {suffix && (
@@ -156,21 +157,13 @@ export function NumberInput({
 export function DateInput({
   value,
   onChange,
-  invalid,
 }: {
   value: string;
   onChange: (value: string) => void;
   invalid?: boolean;
 }) {
-  const meta = useFieldMeta({ invalid });
   return (
-    <input
-      type="date"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      {...meta}
-      className={cn(controlSurface, "h-(--control-h)")}
-    />
+    <DateField value={value} onChange={onChange} />
   );
 }
 
@@ -219,7 +212,7 @@ function SortableItem<T>({
   renderItem: (
     item: T,
     index: number,
-    update: (patch: Partial<T>) => void
+    update: (patch: Partial<T>) => void,
   ) => React.ReactNode;
   update: (patch: Partial<T>) => void;
   onRemove: () => void;
@@ -251,44 +244,50 @@ function SortableItem<T>({
         "group/row flex items-start gap-2 rounded-md border p-2",
         isDragging
           ? "relative border-primary bg-surface shadow-md"
-          : "border-border bg-surface/50"
+          : "border-border bg-surface/50",
       )}
     >
       <div className="flex w-6 shrink-0 flex-col items-center gap-0.5 pt-1">
         <span className="font-mono text-micro tabular-nums text-subtle-foreground">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className={cn(
-            "mt-1 cursor-grab touch-none rounded-xs p-0.5 text-subtle-foreground",
-            "opacity-45 transition-[opacity,color] duration-(--dur-state)",
-            "hover:text-foreground hover:opacity-100 group-hover/row:opacity-80",
-            "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
-            "active:cursor-grabbing",
-            isDragging && "opacity-100 text-foreground"
-          )}
-          aria-label={`Reorder item ${index + 1} — press space, then use the arrow keys`}
-          title="Drag to reorder"
-        >
-          <GripVertical className="size-3" aria-hidden />
-        </button>
+        <Hint label="Drag to reorder">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className={cn(
+              "mt-1 cursor-grab touch-none rounded-xs p-0.5 text-subtle-foreground",
+              "opacity-45 transition-[opacity,color] duration-(--dur-state)",
+              "hover:text-foreground hover:opacity-100 group-hover/row:opacity-80",
+              "focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+              "active:cursor-grabbing",
+              isDragging && "opacity-100 text-foreground",
+            )}
+            aria-label={`Reorder item ${index + 1} — press space, then use the arrow keys`}
+          >
+            <GripVertical className="size-3" aria-hidden />
+          </button>
+        </Hint>
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         {renderItem(item, index, update)}
       </div>
-      <button
-        type="button"
-        onClick={onRemove}
-        disabled={!canRemove}
-        aria-label={`Remove item ${index + 1}`}
-        title={!canRemove ? `At least ${minItems} required` : "Remove"}
-        className="shrink-0 rounded-sm p-1.5 text-subtle-foreground transition-colors duration-(--dur-state) hover:bg-danger/10 hover:text-danger disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-subtle-foreground"
-      >
-        <Trash2 className="size-3.5" />
-      </button>
+      <Hint label={canRemove ? "Remove" : null}>
+        <button
+          type="button"
+          onClick={onRemove}
+          disabled={!canRemove}
+          aria-label={
+            canRemove
+              ? `Remove item ${index + 1}`
+              : `Item ${index + 1} cannot be removed — at least ${minItems} required`
+          }
+          className="shrink-0 rounded-sm p-1.5 text-subtle-foreground transition-colors duration-(--dur-state) hover:bg-danger/10 hover:text-danger disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-subtle-foreground"
+        >
+          <Trash2 className="size-3.5" />
+        </button>
+      </Hint>
     </li>
   );
 }
@@ -309,7 +308,7 @@ export function ListEditor<T>({
   renderItem: (
     item: T,
     index: number,
-    update: (patch: Partial<T>) => void
+    update: (patch: Partial<T>) => void,
   ) => React.ReactNode;
   addLabel?: string;
   emptyHint?: string;
@@ -320,7 +319,7 @@ export function ListEditor<T>({
   const nextId = React.useRef(items.length);
 
   const [ids, setIds] = React.useState<string[]>(() =>
-    items.map((_, i) => `${baseId}-${i}`)
+    items.map((_, i) => `${baseId}-${i}`),
   );
 
   React.useEffect(() => {
@@ -329,7 +328,7 @@ export function ListEditor<T>({
       if (prev.length < items.length) {
         const added = Array.from(
           { length: items.length - prev.length },
-          () => `${baseId}-${nextId.current++}`
+          () => `${baseId}-${nextId.current++}`,
         );
         return [...prev, ...added];
       }
@@ -338,7 +337,7 @@ export function ListEditor<T>({
   }, [items.length, baseId]);
 
   const displayIds = items.map(
-    (_, index) => ids[index] ?? `${baseId}-fallback-${index}`
+    (_, index) => ids[index] ?? `${baseId}-fallback-${index}`,
   );
 
   const sensors = useSensors(
@@ -349,7 +348,7 @@ export function ListEditor<T>({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -365,7 +364,7 @@ export function ListEditor<T>({
 
   const update = (index: number) => (patch: Partial<T>) => {
     onChange(
-      items.map((item, i) => (i === index ? { ...item, ...patch } : item))
+      items.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     );
   };
 
@@ -387,7 +386,7 @@ export function ListEditor<T>({
           "flex flex-col items-start gap-3 rounded-md border border-dashed px-4 py-5",
           invalid
             ? "border-danger/35 bg-danger/4"
-            : "border-border bg-surface/40"
+            : "border-border bg-surface/40",
         )}
       >
         <div className="flex items-start gap-2.5">
@@ -396,7 +395,7 @@ export function ListEditor<T>({
               "mt-px flex size-6 shrink-0 items-center justify-center rounded-md border",
               invalid
                 ? "border-danger/25 text-danger"
-                : "border-border bg-surface text-subtle-foreground"
+                : "border-border bg-surface text-subtle-foreground",
             )}
           >
             <ListPlus className="size-3.5" aria-hidden />
@@ -404,7 +403,7 @@ export function ListEditor<T>({
           <p
             className={cn(
               "max-w-prose text-base",
-              invalid ? "text-danger" : "text-muted-foreground"
+              invalid ? "text-danger" : "text-muted-foreground",
             )}
           >
             {emptyHint ??
@@ -470,7 +469,7 @@ export function Derived({
       title={title}
       className={cn(
         "inline-flex h-8 items-center justify-end font-mono text-meta tabular-nums text-subtle-foreground",
-        className
+        className,
       )}
     >
       {children}
@@ -489,7 +488,7 @@ export function SplitMeter({
 }) {
   const total = segments.reduce(
     (sum, s) => sum + (Number.isFinite(s.value) ? s.value : 0),
-    0
+    0,
   );
   const ok = Math.abs(total - target) < 0.001;
   const over = total > target + 0.001;
@@ -513,12 +512,8 @@ export function SplitMeter({
               style={{ width: `${(value / scale) * 100}%` }}
               className={cn(
                 "h-full transition-[width,background-color] duration-(--dur-state)",
-                ok
-                  ? "bg-brand"
-                  : over
-                    ? "bg-danger/75"
-                    : "bg-brand/55",
-                i % 2 === 1 && "brightness-125"
+                ok ? "bg-brand" : over ? "bg-danger/75" : "bg-brand/55",
+                i % 2 === 1 && "brightness-125",
               )}
             />
           );
@@ -537,7 +532,9 @@ export function SplitMeter({
             key={i}
             className="inline-flex items-baseline gap-1 text-meta text-subtle-foreground"
           >
-            <span className="truncate">{segment.label || `Payment ${i + 1}`}</span>
+            <span className="truncate">
+              {segment.label || `Payment ${i + 1}`}
+            </span>
             <span className="font-mono text-micro tabular-nums text-muted-foreground">
               {Number.isFinite(segment.value) ? segment.value : 0}%
             </span>

@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { AuditLeadCapture } from "@/components/sections/audit-lead-capture";
+import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Link } from "@/i18n/navigation";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { buildArticlePageSchemas, getArticleBreadcrumbTrail } from "@/lib/schema";
@@ -14,6 +15,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { ArticleReader } from "./article-reader";
 
 const ARTICLE_CTA_MAP: Record<string, { href: string }> = {
   "why-not-wordpress": { href: "/pricing" },
@@ -66,6 +68,11 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   if (!article) notFound();
 
   const t = await getTranslations({ locale, namespace: "writing" });
+  const tEnd = await getTranslations({
+    locale,
+    namespace: "common.endCta.pages.writing",
+  });
+  const all = await getAllArticles(locale);
   const related = await getRelatedArticles(
     slug,
     article.frontmatter.tags,
@@ -73,33 +80,38 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   );
   const ctaConfig = ARTICLE_CTA_MAP[slug] ?? null;
 
+  const index = all.findIndex((a) => a.slug === slug);
+  const next = all.length > 1 ? all[(index + 1) % all.length] : null;
+
+  const taken = new Set([slug, next?.slug]);
+  const keepReading = [
+    ...all.filter((a) => a.frontmatter.topic === article.frontmatter.topic),
+    ...related,
+  ]
+    .filter((a) => !taken.has(a.slug) && (taken.add(a.slug), true))
+    .slice(0, 2);
+
+  const readTime = (minutes: number) =>
+    t("readTime", {
+      count: minutes,
+      minutes: localizeNumbers(String(minutes), locale),
+    });
+
   return (
     <>
       <JsonLd schemas={buildArticlePageSchemas(locale, article)} />
-      <div className="min-h-screen pt-24 md:pt-32">
+      <div className="min-h-screen pt-(--section-y-top)">
         <Container>
-          <Breadcrumbs items={getArticleBreadcrumbTrail(locale, article)} />
-          <Link
-            href="/writing"
-            className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow mb-12"
-          >
-            <ArrowIcon
-              direction="back"
-              className="h-3.5 w-3.5 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
-            />
-            {t("backLink")}
-          </Link>
+          <Breadcrumbs
+            items={getArticleBreadcrumbTrail(locale, article)}
+            className="mb-10 md:mb-12"
+          />
           <article>
-            <header className="mb-16 md:mb-20 max-w-4xl">
-              <div className="flex items-center gap-4 mb-6">
-                <time
-                  dateTime={article.frontmatter.date}
-                  className="eyebrow text-muted-foreground"
-                >
+            <header className="max-w-245">
+              <p className="flex flex-wrap items-center gap-2.5 text-sm text-muted-foreground">
+                <time dateTime={article.frontmatter.date}>
                   {new Date(article.frontmatter.date).toLocaleDateString(
-                    // Bare "ar" resolves to Latin digits in current ICU; only a
-                    // region-qualified tag keeps the Arabic-Indic numbering.
-                    locale === "ar" ? "ar-EG" : "en-US",
+                    locale === "ar" ? "ar-EG-u-nu-latn" : "en-US",
                     {
                       year: "numeric",
                       month: "long",
@@ -107,119 +119,120 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                     },
                   )}
                 </time>
-                <span className="text-primary/20">·</span>
-                <Eyebrow>
-                  {t("readTime", {
-                    count: article.frontmatter.readTimeMinutes,
-                    minutes: localizeNumbers(
-                      String(article.frontmatter.readTimeMinutes),
-                      locale,
-                    ),
-                  })}
-                </Eyebrow>
-              </div>
+                <span aria-hidden>·</span>
+                <span>{readTime(article.frontmatter.readTimeMinutes)}</span>
+              </p>
 
-              <h1
-                className="mb-6 font-sans font-normal text-primary leading-[1.03]"
-                style={{
-                  fontSize: "clamp(36px, 6vw, 72px)",
-                  letterSpacing: "-0.025em",
-                }}
-              >
+              <h1 className="mt-5.5 max-w-[18ch] font-sans font-normal text-[clamp(38px,5.8vw,84px)] leading-[1.03] tracking-[-0.025em] text-foreground rtl:leading-[1.3] rtl:tracking-normal">
                 {article.frontmatter.title}
               </h1>
-              <p className="text-base text-primary/60 leading-relaxed">
+              <p className="mt-6.5 max-w-[56ch] text-[clamp(18px,1.5vw,21px)] leading-normal text-muted-foreground">
                 {article.frontmatter.excerpt}
               </p>
-              <div className="mt-6 flex flex-wrap gap-2">
+              <div className="mt-6.5 flex flex-wrap gap-1.5">
                 {article.frontmatter.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="border border-border-subtle bg-foreground/2 rounded-full px-3 py-1 eyebrow text-foreground/35"
+                    className="rounded-full border border-border-subtle px-3 py-1 text-xs text-muted-foreground"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             </header>
-            <div className="h-px w-full bg-foreground/8 mb-12 md:mb-16" />
-            <div
-              className="transition-all prose prose-lg max-w-3xl dark:prose-invert
+
+            <ArticleReader
+              headings={article.headings}
+              readTimeMinutes={article.frontmatter.readTimeMinutes}
+              proseClassName="prose prose-lg max-w-3xl dark:prose-invert
             prose-headings:font-sans prose-headings:font-normal prose-headings:tracking-tight
+            prose-h2:scroll-mt-24
             prose-p:text-primary/60 prose-p:leading-relaxed
             prose-a:text-primary prose-a:no-underline hover:prose-a:text-primary/70
-            prose-code:font-mono text-sm leading-normal tracking-wider prose-code:text-sm
-            prose-blockquote:border-border-subtle prose-blockquote:text-primary/60
-          "
+            prose-code:text-sm
+            prose-blockquote:border-border-subtle prose-blockquote:text-primary/60"
             >
               <MDXRemote source={article.content} components={mdxComponents} />
-            </div>
+            </ArticleReader>
+
             <AuditLeadCapture
               source={`article_audit_cta:${slug}`}
-              className="mt-12 md:mt-16 max-w-3xl"
+              className="mt-(--section-block) max-w-3xl"
             />
           </article>
+
           {ctaConfig && (
-            <section className="mt-16 border-t border-border-subtle pt-10">
+            <section className="mt-(--section-block) border-t border-border-subtle pt-10">
               <Eyebrow className="mb-4 block">{t("nextStep")}</Eyebrow>
               <Link
                 href={ctaConfig.href}
                 className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
               >
                 {t(`ctas.${slug}`)}
-                <ArrowIcon className="h-3.5 w-3.5 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+                <ArrowIcon className="h-3.5 w-3.5" />
               </Link>
             </section>
           )}
-          {related.length > 0 && (
-            <section className="mt-20 md:mt-32 border-t border-border-subtle pt-12 md:pt-16">
-              <Eyebrow className="mb-4 block">{t("relatedArticles")}</Eyebrow>
-              <h2
-                className="font-sans font-normal text-primary leading-[1.05] mb-10"
-                style={{
-                  fontSize: "clamp(24px, 3.5vw, 40px)",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {t("keepReading")}
+
+          {next && (
+            <Link
+              href={`/writing/${next.slug}`}
+              className="group mt-[clamp(96px,14vh,160px)] grid grid-cols-[1fr_auto] items-end gap-x-8 gap-y-2 border-t-2 border-foreground pt-6"
+            >
+              <Eyebrow className="col-span-2">
+                {t("article.nextArticle")} ·{" "}
+                {readTime(next.frontmatter.readTimeMinutes)}
+              </Eyebrow>
+              <h2 className="max-w-[20ch] font-sans font-normal text-[clamp(30px,4.4vw,64px)] leading-[1.05] tracking-[-0.02em] text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-brand-text rtl:leading-[1.35] rtl:tracking-normal">
+                {next.frontmatter.title}
               </h2>
-              <div className="grid gap-4 md:grid-cols-3">
-                {related.map((rel) => (
-                  <Link
-                    key={rel.slug}
-                    href={`/writing/${rel.slug}`}
-                    className="group border border-border-subtle rounded-panel-sm bg-foreground/2 p-6 hover:bg-foreground/4 transition-all duration-(--motion-drawer)"
-                  >
-                    <h3
-                      className="font-sans font-medium text-primary mb-2 group-hover:text-primary/70 transition-all duration-(--motion-drawer)"
-                      style={{
-                        fontSize: "clamp(15px, 1.5vw, 18px)",
-                        letterSpacing: "-0.01em",
-                      }}
+              <ArrowIcon
+                strokeWidth={1.5}
+                className="size-[clamp(30px,4vw,56px)] ltr:group-hover:translate-x-2 rtl:group-hover:-translate-x-2"
+              />
+            </Link>
+          )}
+
+          {keepReading.length > 0 && (
+            <section className="mt-14">
+              <Eyebrow>{t("keepReading")}</Eyebrow>
+              <ul className="mt-2 grid md:grid-cols-2 md:gap-x-12">
+                {keepReading.map((rel) => (
+                  <li key={rel.slug}>
+                    <Link
+                      href={`/writing/${rel.slug}`}
+                      className="group flex items-baseline justify-between gap-4 border-b border-border-subtle py-4 text-lg"
                     >
-                      {rel.frontmatter.title}
-                    </h3>
-                    <p className="text-sm text-primary/60 leading-relaxed">
-                      {rel.frontmatter.excerpt}
-                    </p>
-                  </Link>
+                      <span className="text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-brand-text">
+                        {rel.frontmatter.title}
+                      </span>
+                      <span className="shrink-0 text-[0.8125rem] whitespace-nowrap text-muted-foreground">
+                        {readTime(rel.frontmatter.readTimeMinutes)}
+                      </span>
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
-          <footer className="mb-20 mt-16 border-t border-border-subtle pt-10">
+
+          <footer className="mt-12 mb-(--section-y-bottom)">
             <Link
               href="/writing"
-              className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
+              className="group inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-(--motion-drawer) hover:text-foreground"
             >
-              <ArrowIcon
-                direction="back"
-                className="h-3.5 w-3.5 ltr:group-hover:-translate-x-0.5 rtl:group-hover:translate-x-0.5"
-              />
+              <ArrowIcon direction="back" className="h-3.5 w-3.5" />
               {t("backLink")}
             </Link>
           </footer>
         </Container>
+        <SectionEndCta
+          title={tEnd("title")}
+          titleAccent={tEnd("titleAccent")}
+          body={tEnd("body")}
+          primary="projectRange"
+          secondary="technicalAudit"
+        />
       </div>
     </>
   );

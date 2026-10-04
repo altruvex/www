@@ -7,13 +7,6 @@ import { BellRing } from "lucide-react";
 
 import { Button, LoadingIcon } from "@repo/ui";
 
-/**
- * Runs the renewal sweep now and says what it actually wrote.
- *
- * "0 new alerts" is a real answer, not a failure: every due alert may already
- * have been raised by an earlier run, and saying so is the point of reporting
- * the count instead of a generic success.
- */
 export function CheckRenewalsButton() {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);

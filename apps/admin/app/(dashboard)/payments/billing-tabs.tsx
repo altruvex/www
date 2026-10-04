@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/**
- * The Billing tab bar: Payments and Outstanding live on /payments, Invoices
- * on /invoices. `TabNav` derives every href from one base path, and Invoices
- * is its own route (it has its own print view and its own URL operators
- * paste), so the three tabs are written out here with the same classes as
- * TabNav rather than bending that component to express a cross-route tab.
- */
 export type BillingTab = "payments" | "outstanding" | "invoices";
 
 const TABS: ReadonlyArray<{ id: BillingTab; label: string; href: string }> = [

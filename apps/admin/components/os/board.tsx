@@ -6,35 +6,12 @@ import { ChevronRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toneDot, type Tone } from "@/lib/status";
 
-/**
- * The pipeline board (§5), in two layouts that are the same board.
- *
- * Above md it is columns, because comparing stages side by side is the whole
- * point of a board. Below md it is a stack of stage sections, because a row of
- * nine 248px columns is not a responsive layout — it is a desktop layout with a
- * scrollbar bolted on, and it asks a phone user to scroll sideways through
- * eight stages to find the ninth. Same split, same breakpoint, same reasoning
- * as the data table's table/cards pair.
- *
- * Movement uses the native HTML5 drag API rather than a library — one drag, one
- * drop, one server action, and 30kB of dnd-kit would not make it better. But
- * that API does not fire on touch at all, so every card also carries a stage
- * <select> that does exactly the same thing. On a phone it is the only path,
- * which is why it is sized as a real control rather than a hover-revealed hint.
- */
 export interface BoardColumn {
   id: string;
   label: string;
   tone: Tone;
-  /** Shown under the column header — usually a money total. */
   summary?: string;
-  /**
-   * The column is computed from records elsewhere, so nothing can be put into
-   * it by hand. Marked in the header, refused before the drop rather than
-   * after it, and disabled in every card's stage menu.
-   */
   locked?: boolean;
-  /** Why it is locked. Rendered as the header hint. */
   lockedReason?: string;
 }
 
@@ -44,7 +21,6 @@ export interface BoardCard {
   title: string;
   subtitle?: string;
   href?: string;
-  /** Right-aligned value on the card, e.g. deal size. */
   value?: string;
   meta?: React.ReactNode;
 }
@@ -61,27 +37,16 @@ export function Board({
   cards: BoardCard[];
   onMove?: (cardId: string, toColumnId: string) => void | Promise<void>;
   emptyColumnLabel?: string;
-  /** Names the horizontal scroll region for screen readers and keyboard users. */
   label?: string;
-  /**
-   * A stage the caller arrived for (`/pipeline?stage=NEW`). It is outlined,
-   * brought into view on mount, and on the stacked layout it is the only stage
-   * open by default. An id that matches no column is ignored.
-   */
   focusColumnId?: string;
 }) {
   const [dragging, setDragging] = React.useState<string | null>(null);
   const [over, setOver] = React.useState<string | null>(null);
-  // Optimistic placement so the card moves on drop, before the server replies.
   const [moved, setMoved] = React.useState<Record<string, string>>({});
-  // Stack layout only. Absent = the default (open when the stage holds deals).
   const [openStages, setOpenStages] = React.useState<Record<string, boolean>>({});
 
   const focusId = columns.some((c) => c.id === focusColumnId) ? focusColumnId : undefined;
 
-  // Desktop only in effect: the scroller is display:none below md, where
-  // scrollIntoView is a no-op and the stacked layout opens the stage instead.
-  // "nearest" keeps the page itself from jumping vertically.
   React.useEffect(() => {
     if (!focusId) return;
     document
@@ -94,17 +59,12 @@ export function Board({
     [columns],
   );
 
-  // Derived, not synced: an override is only meaningful while the server still
-  // disagrees with it. Once the refreshed data matches, the entry is a no-op and
-  // is dropped, so a card can never be pinned to a column the records left.
   const serverStages = cards.map((c) => `${c.id}:${c.columnId}`).join("|");
   const pending = React.useMemo(() => {
     const byId = new Map(cards.map((c) => [c.id, c.columnId]));
     return Object.fromEntries(
       Object.entries(moved).filter(([id, stage]) => byId.get(id) !== stage),
     );
-    // serverStages is the value-identity of `cards` — the array itself is a new
-    // reference on every parent render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moved, serverStages]);
 
@@ -120,13 +80,10 @@ export function Board({
       const from = pending[card.id] ?? card.columnId;
       if (from === toColumnId) return;
 
-      // A refused target is never placed optimistically. Showing the card land
-      // and then snap back reads as a bug; the caller explains the refusal.
       if (locked.has(toColumnId) || locked.has(from)) {
         try {
           await onMove?.(cardId, toColumnId);
         } catch {
-          /* the caller has already said why */
         }
         return;
       }
@@ -135,7 +92,7 @@ export function Board({
       try {
         await onMove?.(cardId, toColumnId);
       } catch {
-        setMoved((m) => ({ ...m, [cardId]: from })); // roll back, don't lie
+        setMoved((m) => ({ ...m, [cardId]: from }));
       }
     },
     [cards, pending, locked, onMove],
@@ -154,7 +111,6 @@ export function Board({
         key={card.id}
         draggable={draggable}
         onDragStart={(e) => {
-          // A drag begun on the stage menu or the client link is a mis-grab.
           if ((e.target as HTMLElement).closest("select, a, option")) {
             e.preventDefault();
             return;
@@ -209,12 +165,9 @@ export function Board({
               onChange={(e) => void move(card.id, e.target.value)}
               className={cn(
                 "-mx-1 w-[calc(100%+0.5rem)] max-w-[calc(100%+0.5rem)] rounded-xs border border-transparent bg-transparent",
-                // 44px on a touch screen, where the stage menu is the only way
-                // to move a card at all.
                 "min-h-7 px-1 py-0.5 pointer-coarse:min-h-11 pointer-coarse:px-2 pointer-coarse:py-2",
                 "font-mono text-micro uppercase tracking-[0.06em] text-subtle-foreground",
                 "transition-colors duration-[var(--dur-state)]",
-                // No hover on touch, so the control is visible at rest there.
                 "pointer-coarse:border-border pointer-coarse:bg-surface pointer-coarse:text-foreground",
                 "hover:border-border hover:bg-surface hover:text-foreground",
                 "focus-visible:border-ring",
@@ -222,8 +175,6 @@ export function Board({
               )}
             >
               {columns.map((c) => {
-                // The suffix explains why an option cannot be chosen. On the
-                // card's own stage it explains nothing and just adds noise.
                 const unreachable = Boolean(c.locked) && c.id !== columnOf(card);
                 return (
                   <option key={c.id} value={c.id} disabled={unreachable}>
@@ -241,7 +192,6 @@ export function Board({
 
   return (
     <>
-      {/* ---- phones and small tablets: one stage per row, no sideways scroll -- */}
       <div className="space-y-2 md:hidden">
         {columns.map((column) => {
           const columnCards = cardsIn(column.id);
@@ -312,19 +262,13 @@ export function Board({
         })}
       </div>
 
-      {/* ---- md and up: the board proper ------------------------------------- */}
       <div
-        // The bleed matches the shell's own padding at this breakpoint (sm:p-4).
-        // Four pixels of mismatch here is four pixels of horizontal scroll on
-        // the whole document, which is the one scroll direction a page must
-        // never have.
         className={cn(
           "hidden md:block",
           "-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2",
           "snap-x snap-proximity scroll-px-4",
           "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
         )}
-        // A scrollable region that cannot be reached by keyboard fails WCAG 2.1.1.
         tabIndex={0}
         role="region"
         aria-label={label}
@@ -348,8 +292,6 @@ export function Board({
                   setOver(column.id);
                 }}
                 onDragLeave={(e) => {
-                  // Moving onto a child fires dragleave on the parent too, which
-                  // makes the highlight flicker. Only a real exit counts.
                   if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
                   setOver((o) => (o === column.id ? null : o));
                 }}
@@ -402,8 +344,6 @@ export function Board({
                   </div>
                 )}
 
-                {/* The column scrolls, not the page: a busy stage must not push
-                    the board's own headers off the screen. */}
                 <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain p-1.5 [max-height:min(68dvh,760px)]">
                   {columnCards.length === 0 ? (
                     <p

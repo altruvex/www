@@ -10,14 +10,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ZodError } from "zod";
 import { tooManyRequests } from "@/lib/server/too-many-requests";
 
-/**
- * Human-quotable estimate reference.
- *
- * The visitor is shown this and it is quoted in the WhatsApp hand-off, so it
- * has to survive being read aloud and retyped: uppercase, no vowels (no words
- * form by accident), and none of the character pairs that get confused in a
- * chat window — 0/O, 1/I/L, 5/S, 8/B.
- */
 const REFERENCE_ALPHABET = "ACDEFGHJKMNPQRTVWXY2346789";
 
 function newReference() {
@@ -29,15 +21,6 @@ function newReference() {
   return `AX-${out}`;
 }
 
-/**
- * Attribution, read from the referring page rather than asked for.
- *
- * `ContactSubmission` has carried these columns since it was created;
- * transparency leads landed without any, so an estimator lead could never be
- * told apart from an organic one. The fetch is same-origin, so `referer` is
- * the estimator page's own URL and carries whatever campaign brought the
- * visitor to it.
- */
 function readAttribution(request: NextRequest) {
   const referer = request.headers.get("referer");
   if (!referer) return {};
@@ -51,7 +34,6 @@ function readAttribution(request: NextRequest) {
       utmCampaign: url.searchParams.get("utm_campaign")?.slice(0, 120) ?? null,
     };
   } catch {
-    // A malformed Referer is not a reason to lose the lead.
     return {};
   }
 }
@@ -81,18 +63,12 @@ export async function POST(request: NextRequest) {
       windowSeconds: 60 * 60,
     });
     if (!rl.ok) {
-      // The body was read above, so its locale is known here.
       return tooManyRequests(request, rl.retryAfterSeconds, locale);
     }
 
     const validatedData = transparencyLeadSchema.parse(body);
     const attribution = readAttribution(request);
 
-    // Recomputed from the answers rather than taken from the request. The
-    // browser sends what it displayed, and an operator later quotes this row
-    // back to the client — so the figure has to be one this codebase produced,
-    // through the same engine the estimator itself renders, over the same
-    // resolved pricing (admin overrides applied) the page handed the browser.
     const pricing = await getPublicPricing();
     const estimate = calculateEstimate(
       {
@@ -105,10 +81,6 @@ export async function POST(request: NextRequest) {
       pricing,
     );
 
-    // The reference is random rather than sequential, so a collision is
-    // possible and cheap to retry. Three attempts over a 26^6 space is far
-    // beyond what the table will ever need; failing after that is a real
-    // fault, not bad luck.
     let lead: { id: string; reference: string } | null = null;
     for (let attempt = 0; attempt < 3 && !lead; attempt++) {
       try {

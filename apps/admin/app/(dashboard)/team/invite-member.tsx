@@ -22,11 +22,6 @@ import {
 import { inviteMember } from "@/app/(dashboard)/_actions/team";
 import { ROLES, ROLE_DESCRIPTIONS, ROLE_LABELS, isRole } from "@/lib/rbac";
 
-/**
- * Adds a person and mails them a set-password link. There is no sign-up, so
- * this is the only way in. Without a mail transport the link cannot be sent,
- * and the button says so instead of creating an account nobody can enter.
- */
 export function InviteMember({
   transportConfigured,
   allowOwner,
@@ -39,6 +34,7 @@ export function InviteMember({
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [role, setRole] = React.useState("VIEWER");
+  const nameRef = React.useRef<HTMLInputElement>(null);
   const [pending, startTransition] = React.useTransition();
 
   if (!transportConfigured) {
@@ -55,16 +51,20 @@ export function InviteMember({
     );
   }
 
-  function submit(event: React.FormEvent) {
+  function submit(event: React.FormEvent, another = false) {
     event.preventDefault();
     startTransition(async () => {
       const result = await inviteMember({ name, email, role });
       if (result.ok) {
         toast.success(result.message ?? "Invitation sent.");
-        setOpen(false);
         setName("");
         setEmail("");
-        setRole("VIEWER");
+        if (another) {
+          nameRef.current?.focus();
+        } else {
+          setOpen(false);
+          setRole("VIEWER");
+        }
       } else {
         toast.error(result.message);
       }
@@ -92,6 +92,7 @@ export function InviteMember({
           <SheetBody className="space-y-4">
             <Field label="Name">
               <Input
+                ref={nameRef}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoComplete="off"
@@ -127,6 +128,16 @@ export function InviteMember({
           <SheetFooter>
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>
               Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pending}
+              onClick={(e) => {
+                if (e.currentTarget.form?.reportValidity()) submit(e, true);
+              }}
+            >
+              Save and add another
             </Button>
             <Button type="submit" variant="brand" disabled={pending}>
               {pending && <LoadingIcon size="sm" />}

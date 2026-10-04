@@ -38,18 +38,12 @@ export const GET = withAdmin(async (request) => {
   }
 }, { can: ["view", "proposal"] });
 
-// Only the fields the pipeline needs beyond the content document itself.
-// Everything the deck renders lives in `content` and is validated by the
-// shared schema, not duplicated here.
 const createProposalSchema = z.object({
   clientId: z.string().uuid(),
   projectType: z.enum(["website", "webapp", "ecommerce", "pwa"]),
   complexity: z.enum(["basic", "standard", "premium"]),
   accentName: z.string().min(1),
   content: z.unknown(),
-  // "Edit as a new version": the proposal this one was copied from. Recorded
-  // in the audit trail only — the source row is never written, so a version
-  // can never overwrite what the client was already sent.
   sourceProposalId: z.string().uuid().optional(),
 });
 
@@ -58,8 +52,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
     const body = await request.json();
     const validatedData = createProposalSchema.parse(body);
 
-    // Server-side gate. The Admin form runs the same checks, but never
-    // trust client-side validation alone.
     let content;
     try {
       content = runProposalContentGate(validatedData.content);
@@ -83,22 +75,8 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       );
     }
 
-    // The scalar columns are derived from the content document, never
-    // entered separately — the contract builder and signing flow read them
-    // and must not be able to disagree with the deck.
-    // `totalPrice` is the NET figure — what the client owes after any
-    // discount. Every downstream reader (contract value, VAT, milestone
-    // payments, pipeline value, analytics) uses this column, and all of them
-    // mean the amount actually invoiced. The pre-discount subtotal is
-    // recoverable from `lineItems`, and the discount itself from `content`.
     const totalPrice = netTotal(content.investmentItems, content.discount);
     const timelineWeeks = totalTimelineWeeks(content.timelinePhases);
-    // The published ceiling, enforced where the document is created rather
-    // than trusted to the operator. The estimator that seeds this form already
-    // clamps to it, but the phase durations are hand-editable afterwards — and
-    // a proposal is the artefact a client holds us to. `/pricing` and
-    // `/transparency` both promise this number; a deck that quoted past it
-    // would be the one surface able to contradict them.
     if (timelineWeeks > MAX_DELIVERY_WEEKS) {
       return NextResponse.json(
         {
@@ -112,8 +90,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       name: item.item,
       amount: item.amount,
     }));
-    // Carried alongside the items so a reader of `lineItems` alone cannot
-    // mistake the subtotal for the fee.
     const reduction = discountAmount(content.investmentItems, content.discount);
     if (reduction > 0) {
       lineItems.push({
@@ -147,9 +123,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       },
     });
 
-    // Audited where the row is created, before the document is generated: a
-    // failed generation below still leaves this DRAFT row behind, and the
-    // trail must account for it.
     const source = validatedData.sourceProposalId
       ? await prisma.proposal.findFirst({
           where: { id: validatedData.sourceProposalId, clientId: client.id },
@@ -193,8 +166,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       if (process.env.NODE_ENV !== "production") {
         console.error("Error generating proposal file:", error);
       }
-      // The Proposal row still exists (status DRAFT, no fileUrl) — Ali can
-      // retry generation rather than losing the edited content.
       return NextResponse.json(
         {
           success: false,

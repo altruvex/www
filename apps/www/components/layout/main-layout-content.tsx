@@ -42,8 +42,6 @@ export function MainLayoutContent({ children }: layoutChildren) {
     >
       <AnimationController />
       <Nav />
-      {/* The page is a sheet lifted off the footer (see footer.tsx): it carries its
-          own ground and a panel-lg bottom edge, and the footer waits beneath it. */}
       <div className="relative z-10 rounded-b-panel-lg bg-background">{children}</div>
       <Footer />
     </main>

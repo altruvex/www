@@ -5,26 +5,12 @@ import { z } from "zod";
 import { clientActor, recordActivity } from "@/lib/activity-log";
 import { quoteAnswerable } from "@/lib/change-requests";
 
-/**
- * The client's answer to a change-request quote (`/quote/[token]`).
- *
- * Public: exempted in `proxy.ts`, authenticated only by the unguessable token,
- * rate limited per IP and per token. It can do exactly three things to exactly
- * one row — note that the quote was opened, approve it, or decline it — and
- * only while `quoteAnswerable` says the quote is live.
- *
- * "Viewed" is posted by the page's script, not stamped when the page renders:
- * mail scanners and WhatsApp link previews fetch a URL without a person behind
- * them, and a viewed date they wrote would be evidence of nothing.
- */
-
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("viewed") }),
   z.object({
     action: z.literal("approve"),
-    /** The figure the client was looking at. Refused if the quote moved since. */
     amount: z.number().int(),
     name: z.string().trim().min(2, "Type your name to approve.").max(200),
     note: z.string().trim().max(1000).optional(),
@@ -109,8 +95,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const now = new Date();
   const approved = body.action === "approve";
-  // Conditional on the state that was checked, so two clicks (or two tabs)
-  // cannot both answer.
   const updated = await prisma.changeRequest.updateMany({
     where: { id: row.id, status: "QUOTED", quotedAmount: row.quotedAmount },
     data: approved

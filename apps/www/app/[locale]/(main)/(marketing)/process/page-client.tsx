@@ -33,7 +33,6 @@ export default function ProcessPage() {
   );
 }
 
-/** The statement. The page's one colour heading is its emphasis clause. */
 function OpeningSection() {
   const t = useTranslations("process.hero");
   const eyebrowRef = useSectionEyebrow();
@@ -56,7 +55,7 @@ function OpeningSection() {
           classes={{
             titleWrapper: "space-y-6",
             title:
-              "max-w-[14ch] text-[clamp(3rem,8.4vw,8rem)] font-light leading-[0.98] tracking-[-0.045em] rtl:leading-[1.3] rtl:tracking-normal",
+              "max-w-6xl text-balance text-[clamp(3rem,8.4vw,8rem)] font-light leading-[0.98] tracking-[-0.045em] rtl:leading-[1.3] rtl:tracking-normal",
             description:
               "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
           }}
@@ -66,11 +65,6 @@ function OpeningSection() {
   );
 }
 
-/**
- * One brand-mood photograph, re-tinted to the green world, with the page's
- * three facts set on it. It settles through the site's media hook; with
- * reduced motion it is simply there.
- */
 function PhotoBand() {
   const t = useTranslations("process.page.photo");
   const mediaRef = useMediaSettle<HTMLElement>();
@@ -101,7 +95,6 @@ function PhotoBand() {
   );
 }
 
-/** The claim, the five phases named up front, then one chapter each. */
 function PhasesSection() {
   const t = useTranslations("process.page.register");
   const eyebrowRef = useSectionEyebrow();
@@ -128,11 +121,6 @@ function PhasesSection() {
   );
 }
 
-/**
- * The close names where a project enters the process: phase 01, with its own
- * length and brief read from the phase list above, so the call being offered is
- * the first step of the framework the page just described - not a generic ask.
- */
 function ClosingSection() {
   const t = useTranslations("process");
   const length = usePhaseLength();
@@ -146,7 +134,7 @@ function ClosingSection() {
       primary="technicalCall"
       secondary="projectRange"
       aside={
-        <div className="max-w-xl border-t border-border-subtle pt-6">
+        <div className="max-w-xl">
           <Eyebrow tone="accent" className="mb-4 block">
             {t("closing.startsHere")}
           </Eyebrow>

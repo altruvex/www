@@ -5,30 +5,11 @@ declare global {
   var __prisma: PrismaClient | undefined;
 }
 
-/**
- * `pg` currently treats `sslmode=require` as an alias for `verify-full`, so a
- * connection string that says `require` is checking the certificate chain and
- * the hostname today. pg v9 drops that alias and `require` reverts to libpq's
- * meaning: encrypted, but unverified — a channel someone can sit in the middle
- * of. Nothing about that release is visible from here. No error, no failed
- * connection, no log line; the same query returns the same row over a weaker
- * link. Naming `verify-full` outright is what survives the upgrade, and this
- * refuses to connect without it rather than let the downgrade pass silently.
- *
- * Held against production only, and only once a connection string exists:
- * `next build` runs with NODE_ENV=production and often without the runtime
- * secrets, and a local Postgres over loopback presents no certificate to
- * verify. Failing a developer's scratch database would teach them to delete
- * this check rather than keep it.
- */
 function assertVerifiedTls(connectionString: string | undefined): void {
   if (process.env.NODE_ENV !== "production" || !connectionString) {
     return;
   }
 
-  // Read by pattern rather than by parsing the URL: a password may carry
-  // characters that break a parser, and a thrown parse error here would read
-  // as a database outage. The string itself never reaches the message.
   const sslmode = /[?&]sslmode=([^&]*)/.exec(connectionString)?.[1];
 
   if (sslmode !== "verify-full") {
@@ -41,11 +22,6 @@ function assertVerifiedTls(connectionString: string | undefined): void {
   }
 }
 
-/**
- * Prisma 7 requires an explicit driver adapter — `new PrismaClient()` with no
- * adapter throws. The connection string is still read from `DATABASE_URL`;
- * only the plumbing moved from the datasource block to here.
- */
 function createPrismaClient(): PrismaClient {
   assertVerifiedTls(process.env.DATABASE_URL);
 
@@ -75,13 +51,6 @@ interface LinkClientToLeadInput {
   transparencyLeadId?: string;
 }
 
-/**
- * Finds or creates the unified Client row for an inbound lead, so every
- * auto-captured submission lands in the same pipeline as manually-entered
- * clients. Matches on normalized phone; cross-links a source relation onto
- * an existing Client rather than creating a duplicate when the same phone
- * has already come in through the other channel.
- */
 export async function linkClientToLead(input: LinkClientToLeadInput) {
   const phone = normalizePhone(input.phone);
   if (!phone) return null;
@@ -114,21 +83,9 @@ export async function linkClientToLead(input: LinkClientToLeadInput) {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Rate limiting
-//
-// Lives here because both apps need it and it is backed by a table in this
-// schema. It takes an opaque `identifier` rather than a request object so it
-// stays free of any framework dependency; each app derives that from its own
-// request type.
-// ---------------------------------------------------------------------------
-
 export interface RateLimitConfig {
-  /** Broad bucket, e.g. "public_api". */
   scope: string;
-  /** The specific endpoint, e.g. "portal_request". */
   route: string;
-  /** Caller identity — usually a client IP, or a token for per-link limits. */
   identifier: string;
   limit: number;
   windowSeconds: number;
@@ -138,14 +95,6 @@ export type RateLimitResult =
   | { ok: true; remaining: number }
   | { ok: false; retryAfterSeconds: number };
 
-/**
- * Fixed-window rate limit.
- *
- * Fails **open**: if the limiter's own table is unavailable the request is
- * allowed. Losing the limiter should not also take down lead capture or lock a
- * paying client out of their portal — the limiter protects against abuse, and
- * trading availability for it during an outage is the wrong way round.
- */
 export async function enforceRateLimit(
   config: RateLimitConfig,
 ): Promise<RateLimitResult> {
@@ -215,7 +164,6 @@ export async function enforceRateLimit(
   }
 }
 
-/** Best-effort caller IP from the usual proxy headers. */
 export function clientIpFromHeaders(headers: Headers): string {
   const xff = headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0]?.trim() || "unknown";

@@ -1,12 +1,4 @@
 import { LEAD_SCORE_THRESHOLDS } from "@repo/pricing-schema";
-/**
- * §4 — lead score.
- *
- * Deliberately a transparent additive model out of 100, not a black box. An
- * operator has to be able to look at a score of 72 and reconstruct why, or they
- * will stop trusting the ordering — which is the only thing the score is for.
- * `reasons` is returned alongside the number and shown in the UI tooltip.
- */
 export interface ScoreInput {
   budget?: string | null;
   timeline?: string | null;
@@ -56,7 +48,6 @@ export function scoreLead(input: ScoreInput): { score: number; reasons: string[]
   if (input.budget && BUDGET_POINTS[input.budget] != null)
     add(BUDGET_POINTS[input.budget], `budget ${input.budget.replace(/_/g, " ").toLowerCase()}`);
   else if (input.estimatorPriceMax) {
-    // No declared budget, but the estimator produced a number — use it.
     const points =
       input.estimatorPriceMax >= LEAD_SCORE_THRESHOLDS.large
         ? 26

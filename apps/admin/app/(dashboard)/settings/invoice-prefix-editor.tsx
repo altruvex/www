@@ -3,21 +3,19 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ArrowRight } from "lucide-react";
 import { Button, Field, Input, LoadingIcon } from "@repo/ui";
 
 import { updateInvoicePrefix } from "@/app/(dashboard)/_actions/settings";
 import { INVOICE_PREFIX_PATTERN } from "@/lib/team-rules";
 
-/**
- * The one editable part of invoice numbering. The counter next to it is
- * read-only on purpose: it moves only when a payment is invoiced, so two
- * invoices can never share a number because someone typed one in.
- */
 export function InvoicePrefixEditor({
   initialPrefix,
+  next,
   canEdit,
 }: {
   initialPrefix: string;
+  next: string;
   canEdit: boolean;
 }) {
   const router = useRouter();
@@ -27,6 +25,7 @@ export function InvoicePrefixEditor({
   const normalized = prefix.trim().toUpperCase();
   const valid = INVOICE_PREFIX_PATTERN.test(normalized);
   const unchanged = normalized === initialPrefix;
+  const preview = `${normalized}-${next.slice(initialPrefix.length + 1)}`;
 
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +42,8 @@ export function InvoicePrefixEditor({
   }
 
   return (
-    <form onSubmit={save} className="flex flex-wrap items-end gap-2">
+    <form onSubmit={save} className="space-y-2">
+      <div className="flex flex-wrap items-end gap-2">
       <Field
         label="Prefix"
         error={prefix && !valid ? "Letters, digits and hyphens only, up to 8." : undefined}
@@ -68,6 +68,15 @@ export function InvoicePrefixEditor({
         {pending && <LoadingIcon size="sm" />}
         Save prefix
       </Button>
+      </div>
+      {valid && !unchanged && (
+        <p className="flex flex-wrap items-center gap-x-2 text-meta text-muted-foreground" aria-live="polite">
+          <span>Next invoice</span>
+          <span className="font-mono line-through">{next}</span>
+          <ArrowRight className="size-3 text-subtle-foreground" aria-hidden />
+          <span className="font-mono text-foreground">{preview}</span>
+        </p>
+      )}
     </form>
   );
 }

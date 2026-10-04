@@ -2,21 +2,12 @@ import Link from "next/link";
 import { prisma } from "@repo/database";
 import { deriveClientStage } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
+import { Hint } from "@repo/ui";
 
-/**
- * The intake hub's tab bar: Leads · Form submissions · Estimator.
- *
- * `TabNav` drives tabs from one base path plus a search param; these three are
- * three routes (each keeps its own URL, filters and saved table view), so this
- * renders the same bar with a href per tab. The markup is TabNav's, copied on
- * purpose — change the two together.
- */
 export type IntakeTab = "leads" | "submissions" | "estimator";
 
-/** The stages that still count as a lead — one place, shared with /leads. */
 export const LEAD_STAGES = ["NEW", "VIEWED", "CONTACTED", "QUALIFIED"] as const;
 
-/** Stored statuses a lead can have; a superset prefilter for the derived stage. */
 export const LEAD_STATUS_PREFILTER: (
   | "NEW"
   | "VIEWED"
@@ -41,6 +32,7 @@ async function intakeCounts() {
           orderBy: { createdAt: "desc" },
           take: 1,
         },
+        projects: { select: { id: true }, take: 1 },
         contracts: {
           select: { status: true },
           orderBy: { createdAt: "desc" },
@@ -60,12 +52,11 @@ async function intakeCounts() {
 }
 
 export async function IntakeTabs({ active }: { active: IntakeTab }) {
-  // A count failing must never take the page down — the bar still navigates.
   const counts = await intakeCounts().catch(() => null);
   return (
     <nav
       aria-label="Intake"
-      className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex h-9 items-center gap-4 overflow-x-auto border-b pointer-coarse:h-11 border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {TABS.map((tab) => {
         const isActive = tab.id === active;
@@ -76,7 +67,7 @@ export async function IntakeTabs({ active }: { active: IntakeTab }) {
             href={tab.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "relative -mb-px inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 text-base",
+              "relative -mb-px inline-flex h-9 shrink-0 pointer-coarse:h-11 items-center gap-1.5 whitespace-nowrap border-b-2 text-base",
               "transition-colors duration-[var(--dur-state)]",
               isActive
                 ? "border-foreground font-medium text-foreground"
@@ -85,9 +76,8 @@ export async function IntakeTabs({ active }: { active: IntakeTab }) {
           >
             {tab.label}
             {count != null && count > 0 && (
-              <span
-                className="font-mono text-micro tabular-nums text-subtle-foreground"
-                title={
+              <Hint
+                label={
                   tab.id === "leads"
                     ? "Open leads"
                     : tab.id === "submissions"
@@ -95,8 +85,10 @@ export async function IntakeTabs({ active }: { active: IntakeTab }) {
                       : "Estimates not yet converted"
                 }
               >
-                {count}
-              </span>
+                <span className="font-mono text-micro tabular-nums text-subtle-foreground">
+                  {count}
+                </span>
+              </Hint>
             )}
           </Link>
         );

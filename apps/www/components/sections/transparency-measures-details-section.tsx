@@ -12,11 +12,6 @@ type MeasureSection = {
   title: string;
 };
 
-/**
- * How the estimate works: one hairline register, a row per topic. The title
- * holds the leading column, the explanation and its points the other — the
- * same row idiom as the estimator questions above and the FAQ below.
- */
 export function TransparencyMeasuresDetailsSection() {
   const t = useTranslations("transparency.seo");
   const locale = useLocale();

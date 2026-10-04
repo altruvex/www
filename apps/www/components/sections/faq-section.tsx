@@ -17,6 +17,7 @@ import { memo, useId } from "react";
 interface FaqSectionProps {
   namespace: string;
   className?: string;
+  titleClassName?: string;
   questionKeys?: string[];
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_QUESTION_KEYS = ["01", "02", "03", "04", "05"];
 export const FaqSection = memo(function FaqSection({
   namespace,
   className,
+  titleClassName,
   questionKeys = DEFAULT_QUESTION_KEYS,
 }: FaqSectionProps) {
   const t = useTranslations(namespace);
@@ -46,8 +48,6 @@ export const FaqSection = memo(function FaqSection({
       {
         id: key,
         question: fillTokens(entry.q ?? entry.question ?? ""),
-        // Answers are prose that may quote a price; the figure comes from the
-        // schema so it cannot drift from what /pricing renders.
         answer: fillTokens(entry.a ?? entry.answer ?? ""),
       },
     ];
@@ -59,6 +59,7 @@ export const FaqSection = memo(function FaqSection({
       title={t("subtitle")}
       items={items}
       className={className}
+      titleClassName={titleClassName}
     />
   );
 });
@@ -68,18 +69,15 @@ type FaqSectionViewProps = {
   title: string;
   items: FaqListItem[];
   className?: string;
+  titleClassName?: string;
 };
 
-/**
- * Title column on the start side, the shared FAQ list beside it, and a way
- * out to /faq under the title. The title column holds still on wide screens
- * while the answers open, so the question being answered stays named.
- */
 export function FaqSectionView({
   eyebrow,
   title,
   items,
   className,
+  titleClassName,
 }: FaqSectionViewProps) {
   const tFaq = useTranslations("faq");
   const headingId = useId();
@@ -105,7 +103,10 @@ export function FaqSectionView({
             <h2
               id={headingId}
               ref={titleRef}
-              className="max-w-[18ch] text-balance text-[clamp(1.875rem,3.2vw,2.75rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground"
+              className={cn(
+                "max-w-[18ch] text-balance text-[clamp(1.875rem,3.2vw,2.75rem)] font-normal leading-[1.1] tracking-[-0.02em] text-foreground",
+                titleClassName,
+              )}
             >
               {title}
             </h2>

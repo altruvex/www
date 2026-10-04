@@ -1,7 +1,9 @@
 "use client";
 
 import { signOut } from "@/lib/auth-client";
-import { groupFor, navItemFor } from "@/lib/nav";
+import { canSee, groupFor, navItemFor, type Role } from "@/lib/nav";
+import { can } from "@/lib/rbac";
+import { CountBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   Avatar,
@@ -41,15 +43,16 @@ const railControl =
 
 export function Topbar({
   user,
+  role,
   unreadCount,
   onOpenPalette,
   onCreateProposal,
   onOpenMobileNav,
 }: {
   user: { name?: string | null; email?: string | null; role?: string | null };
+  role?: Role;
   unreadCount: number;
   onOpenPalette: () => void;
-  /** Opens the palette's client picker — a proposal is created from its client. */
   onCreateProposal: () => void;
   onOpenMobileNav: () => void;
 }) {
@@ -62,6 +65,15 @@ export function Topbar({
 
   const item = navItemFor(pathname);
   const group = groupFor(pathname);
+  const groupHref = group?.items.find((i) => canSee(i, role))?.href;
+  const create = {
+    client: can(role, "create", "client"),
+    proposal: can(role, "create", "proposal"),
+    meeting: can(role, "create", "meeting"),
+  };
+  const canCreate = create.client || create.proposal || create.meeting;
+  const settingsItem = navItemFor("/settings");
+  const seesSettings = settingsItem ? canSee(settingsItem, role) : false;
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -84,9 +96,18 @@ export function Topbar({
       </button>
 
       <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-meta">
-        {group && (
+        {group && group.label.toLowerCase() !== item?.label.toLowerCase() && (
           <>
-            <span className="hidden text-subtle-foreground sm:inline">{group.label}</span>
+            {groupHref ? (
+              <Link
+                href={groupHref}
+                className="hidden rounded-sm text-subtle-foreground no-underline outline-none transition-colors duration-[var(--dur-state)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand sm:inline"
+              >
+                {group.label}
+              </Link>
+            ) : (
+              <span className="hidden text-subtle-foreground sm:inline">{group.label}</span>
+            )}
             <span className="hidden text-subtle-foreground sm:inline" aria-hidden="true">/</span>
           </>
         )}
@@ -114,6 +135,7 @@ export function Topbar({
             <Kbd>K</Kbd>
           </span>
         </button>
+        {canCreate && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="icon-sm" variant="brand" aria-label="Create new item">
@@ -122,21 +144,24 @@ export function Topbar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Create</DropdownMenuLabel>
-            <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/clients/new")}>
-              <Link href="/clients/new">Client</Link>
-            </DropdownMenuItem>
-            {/* There is no client-less proposal route: a proposal is written for a
-                client at /clients/[id]/new-proposal. This opens the palette as a
-                client picker. Deferred a tick so the menu finishes closing and
-                returning focus before the dialog takes it. */}
-            <DropdownMenuItem onSelect={() => window.setTimeout(onCreateProposal, 0)}>
-              Proposal…
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/calendar?new=meeting")}>
-              <Link href="/calendar?new=meeting">Meeting</Link>
-            </DropdownMenuItem>
+            {create.client && (
+              <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/clients/new")}>
+                <Link href="/clients/new">Client</Link>
+              </DropdownMenuItem>
+            )}
+            {create.proposal && (
+              <DropdownMenuItem onSelect={() => window.setTimeout(onCreateProposal, 0)}>
+                Proposal…
+              </DropdownMenuItem>
+            )}
+            {create.meeting && (
+              <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/calendar?new=meeting")}>
+                <Link href="/calendar?new=meeting">Meeting</Link>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
         <Link
           href="/notifications"
           onMouseEnter={() => router.prefetch("/notifications")}
@@ -144,9 +169,11 @@ export function Topbar({
           aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
         >
           <Bell size={18} strokeWidth={1.75} />
-          {unreadCount > 0 && (
-            <span className="absolute inset-e-1.5 top-1.5 size-1.5 rounded-full bg-danger ring-2 ring-background" />
-          )}
+          <CountBadge
+            count={unreadCount}
+            tone="danger"
+            className="absolute -top-0.5 -end-0.5 ms-0 ring-2 ring-background"
+          />
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -180,19 +207,17 @@ export function Topbar({
               <div className="h-20 animate-pulse bg-muted/20 rounded-md" />
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/settings")}>
-              <Link href="/settings">
-                <UserIcon strokeWidth={1.75} /> Settings
-              </Link>
-            </DropdownMenuItem>
+            {seesSettings && (
+              <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/settings")}>
+                <Link href="/settings">
+                  <UserIcon strokeWidth={1.75} /> Settings
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               destructive
               onSelect={async () => {
                 await signOut();
-                // An earlier service-worker config cached every response it
-                // saw, so a browser that ran that version still holds client
-                // records in Cache Storage. Signing out is the moment to drop
-                // them; the current config keeps only hashed build output.
                 if (typeof caches !== "undefined") {
                   await caches
                     .keys()
@@ -205,7 +230,7 @@ export function Topbar({
                     )
                     .catch(() => undefined);
                 }
-                window.location.href = "/login";
+                window.location.replace("/login");
               }}
             >
               <LogOut strokeWidth={1.75} /> Sign out

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 
 interface CodeBlockProps {
@@ -10,6 +11,7 @@ interface CodeBlockProps {
 }
 
 export function CodeBlock({ children, className }: CodeBlockProps) {
+  const t = useTranslations("writing.article");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -35,14 +37,14 @@ export function CodeBlock({ children, className }: CodeBlockProps) {
   };
 
   return (
-    <div className="group relative my-6">
+    <div dir="ltr" className="group relative my-6">
       <button
         onClick={handleCopy}
         className={cn(
           "absolute end-2.5 top-2.5 rounded-ctl-sm border border-border-subtle bg-background p-2",
-          "opacity-0 transition-all group-hover:opacity-100",
+          "opacity-0 transition-opacity duration-(--motion-hover) ease-smooth group-hover:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100 motion-reduce:transition-none",
         )}
-        aria-label="Copy code"
+        aria-label={copied ? t("codeCopied") : t("copyCode")}
       >
         {copied ? (
           <Check className="h-4 w-4 text-success" />
@@ -50,7 +52,12 @@ export function CodeBlock({ children, className }: CodeBlockProps) {
           <Copy className="h-4 w-4" />
         )}
       </button>
-      <pre className={cn("overflow-x-auto rounded-panel-sm border border-border-subtle p-4", className)}>
+      <pre
+        className={cn(
+          "overflow-x-auto rounded-panel-sm border border-border-subtle p-4",
+          className,
+        )}
+      >
         {children}
       </pre>
     </div>

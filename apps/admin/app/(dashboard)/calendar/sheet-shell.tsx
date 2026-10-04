@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
@@ -9,13 +10,27 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@repo/ui";
+import { cn } from "@/lib/utils";
 
-/**
- * The calendar's side panel. Open state lives in the URL (?meeting= / ?new=),
- * so the shell is mounted only while a param is present and closing is a
- * navigation back to `closeHref` — which keeps the month the operator was on.
- * Children are server-rendered (the audit trail is an async server component).
- */
+const WIDE_QUERY = "(min-width: 768px)";
+
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+export function useSheetSide(): { side: "end" | "bottom"; className?: string } {
+  const wide = React.useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => true,
+  );
+  return wide
+    ? { side: "end" }
+    : { side: "bottom", className: cn("pb-[env(safe-area-inset-bottom)]") };
+}
+
 export function SheetShell({
   title,
   description,
@@ -28,14 +43,15 @@ export function SheetShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { side, className } = useSheetSide();
   return (
     <Sheet open onOpenChange={(next) => !next && router.push(closeHref, { scroll: false })}>
-      <SheetContent side="end" width="md">
+      <SheetContent side={side} width="md" className={className}>
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           <SheetDescription>{description ?? "Meeting details"}</SheetDescription>
         </SheetHeader>
-        <SheetBody className="space-y-4">{children}</SheetBody>
+        <SheetBody className="space-y-4 overflow-y-auto">{children}</SheetBody>
       </SheetContent>
     </Sheet>
   );

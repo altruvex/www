@@ -19,7 +19,7 @@ export default async function PrivacyPolicyPage({
 }) {
   const { locale } = await params;
 
-  const dateLocale = locale === "ar" ? "ar-EG" : "en-US";
+  const dateLocale = locale === "ar" ? "ar-EG-u-nu-latn" : "en-US";
   const lastModified = new Date("2026-07-05");
   const formattedDate = lastModified.toLocaleDateString(dateLocale, {
     month: "long",

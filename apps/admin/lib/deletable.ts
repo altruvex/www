@@ -3,28 +3,6 @@ import { paymentSourceLabel } from "@/lib/payment-source";
 
 import type { Subject } from "@/lib/rbac";
 
-/**
- * The delete registry.
- *
- * Deleting a row in this system is never a single `DELETE FROM`. A client owns
- * proposals, which own contracts, which own a project, which owns payments and
- * tasks — and Prisma's default referential action on those required relations
- * is RESTRICT, so a naive delete fails with a foreign-key error an operator
- * cannot act on. Every entity therefore declares three things here:
- *
- *  1. **What goes with it** (`impact`) — shown before the operator confirms,
- *     so "delete this client" never silently destroys a signed contract.
- *  2. **Whether it may go at all** (`block`) — a signed contract, a collected
- *     payment and a CI-written build are records of something that actually
- *     happened. A soft block is refused for everyone below OWNER; a hard block
- *     is refused for everyone, because the database would refuse it anyway.
- *  3. **A snapshot** — the fields written into the audit event *before* the row
- *     stops existing. A deletion nobody can reconstruct is not auditable.
- *
- * Deletes are hard: the row leaves Postgres. The audit trail, not a `deletedAt`
- * column, is what survives it.
- */
-
 export interface DeletionImpact {
   label: string;
   count: number;
@@ -32,28 +10,19 @@ export interface DeletionImpact {
 
 export interface DeletionBlock {
   reason: string;
-  /** Hard blocks cannot be forced — the database itself would refuse. */
   hard: boolean;
 }
 
 export interface DeletionPlan {
   entity: string;
   id: string;
-  /** How the record is named back to the operator, and in the audit trail. */
   label: string;
   impact: DeletionImpact[];
   block: DeletionBlock | null;
   snapshot: Record<string, unknown>;
-  /** Consequences that are not deletions — a foreign key that goes null. */
   notes: string[];
 }
 
-/**
- * Who is asking. Personal records (notifications) refuse anyone else's rows.
- * Optional so a verification script can plan a company record without a
- * session; a plan called without it is treated as nobody asking, so a personal
- * record is refused rather than exposed.
- */
 export interface PlanContext {
   userId: string | null;
 }
@@ -62,7 +31,6 @@ export interface Deletable {
   subject: Subject;
   noun: string;
   plural: string;
-  /** Paths refreshed after a successful delete. */
   revalidate: string[];
   plan: (id: string, ctx?: PlanContext) => Promise<DeletionPlan | null>;
   remove: (id: string) => Promise<void>;
@@ -78,7 +46,6 @@ const CI_RECORD =
   "Written by the build pipeline as the record of what actually shipped, not by this app.";
 
 export const DELETABLES: Record<string, Deletable> = {
-  /* ---------------------------------------------------------------- client */
   client: {
     subject: "client",
     noun: "client",
@@ -126,7 +93,6 @@ export const DELETABLES: Record<string, Deletable> = {
 
       const [payments, tasks, signedContracts, paidPayments] =
         await Promise.all([
-          // A payment reaches a client through its project or its retainer.
           prisma.payment.count({
             where: { OR: [{ project: { clientId: id } }, { subscription: { clientId: id } }] },
           }),
@@ -200,19 +166,12 @@ export const DELETABLES: Record<string, Deletable> = {
             where: { projectId: { in: projectIds } },
           });
         }
-        // Products cascade their builds, deployments, logs and incidents.
         await tx.product.deleteMany({ where: { clientId: id } });
-        // Projects cascade their tasks.
         await tx.project.deleteMany({ where: { clientId: id } });
         await tx.contract.deleteMany({ where: { clientId: id } });
         await tx.proposal.deleteMany({ where: { clientId: id } });
         await tx.whatsAppMessage.deleteMany({ where: { clientId: id } });
-        // Services cascade with the client row itself.
-        // Retainer payments would survive the subscription (SetNull) with no
-        // client left to belong to — they go with the client, as project
-        // payments do.
         await tx.payment.deleteMany({ where: { subscription: { clientId: id } } });
-        // Subscriptions cascade their requests.
         await tx.maintenanceSubscription.deleteMany({
           where: { clientId: id },
         });
@@ -221,7 +180,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ------------------------------------------------------------ submission */
   submission: {
     subject: "lead",
     noun: "form submission",
@@ -277,12 +235,10 @@ export const DELETABLES: Record<string, Deletable> = {
       };
     },
     async remove(id) {
-      // Notes and tags cascade.
       await prisma.contactSubmission.delete({ where: { id } });
     },
   },
 
-  /* ------------------------------------------------------ transparency lead */
   transparencyLead: {
     subject: "lead",
     noun: "estimate",
@@ -333,7 +289,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* -------------------------------------------------------------- proposal */
   proposal: {
     subject: "proposal",
     noun: "proposal",
@@ -430,7 +385,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* -------------------------------------------------------------- contract */
   contract: {
     subject: "contract",
     noun: "contract",
@@ -515,7 +469,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* --------------------------------------------------------------- project */
   project: {
     subject: "project",
     noun: "project",
@@ -534,6 +487,8 @@ export const DELETABLES: Record<string, Deletable> = {
         select: {
           id: true,
           name: true,
+          contractId: true,
+          origin: true,
           phase: true,
           status: true,
           liveUrl: true,
@@ -566,6 +521,8 @@ export const DELETABLES: Record<string, Deletable> = {
             : null,
         snapshot: {
           name: row.name,
+          contractId: row.contractId,
+          origin: row.origin,
           phase: row.phase,
           status: row.status,
           liveUrl: row.liveUrl,
@@ -578,7 +535,6 @@ export const DELETABLES: Record<string, Deletable> = {
                 `${row._count.products} product${row._count.products === 1 ? "" : "s"} stay${row._count.products === 1 ? "s" : ""} operated — a product outlives the project that built it.`,
               ]
             : []),
-          // A domain does not stop expiring because the engagement record went.
           ...(row._count.services > 0
             ? [
                 `${row._count.services} service${row._count.services === 1 ? "" : "s"} (domain, hosting…) stay${row._count.services === 1 ? "s" : ""} on the client and keep${row._count.services === 1 ? "s" : ""} raising renewal alerts.`,
@@ -590,13 +546,11 @@ export const DELETABLES: Record<string, Deletable> = {
     async remove(id) {
       await prisma.$transaction(async (tx) => {
         await tx.payment.deleteMany({ where: { projectId: id } });
-        // Tasks and change requests cascade; products fall back to no project.
         await tx.project.delete({ where: { id } });
       });
     },
   },
 
-  /* --------------------------------------------------------------- payment */
   payment: {
     subject: "payment",
     noun: "payment",
@@ -647,7 +601,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* --------------------------------------------------------------- meeting */
   meeting: {
     subject: "meeting",
     noun: "meeting",
@@ -691,7 +644,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ------------------------------------------------------------------ task */
   task: {
     subject: "project",
     noun: "task",
@@ -733,7 +685,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* --------------------------------------------------------------- product */
   product: {
     subject: "project",
     noun: "product",
@@ -794,12 +745,10 @@ export const DELETABLES: Record<string, Deletable> = {
       };
     },
     async remove(id) {
-      // Builds, deployments, logs and incidents all cascade from the product.
       await prisma.product.delete({ where: { id } });
     },
   },
 
-  /* ----------------------------------------------------------------- build */
   build: {
     subject: "project",
     noun: "build",
@@ -843,7 +792,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ------------------------------------------------------------ deployment */
   deployment: {
     subject: "project",
     noun: "deployment",
@@ -883,7 +831,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ------------------------------------------------------------------- log */
   log: {
     subject: "project",
     noun: "log entry",
@@ -925,7 +872,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* -------------------------------------------------------------- incident */
   incident: {
     subject: "project",
     noun: "incident",
@@ -966,12 +912,10 @@ export const DELETABLES: Record<string, Deletable> = {
       };
     },
     async remove(id) {
-      // Updates cascade.
       await prisma.incident.delete({ where: { id } });
     },
   },
 
-  /* --------------------------------------------- maintenance subscription */
   maintenanceSubscription: {
     subject: "client",
     noun: "retainer",
@@ -1025,13 +969,10 @@ export const DELETABLES: Record<string, Deletable> = {
       };
     },
     async remove(id) {
-      // Requests cascade; payments keep their rows with subscriptionId
-      // cleared (SetNull), the way a service's terms outlive the service.
       await prisma.maintenanceSubscription.delete({ where: { id } });
     },
   },
 
-  /* -------------------------------------------------- maintenance request */
   maintenanceRequest: {
     subject: "client",
     noun: "maintenance request",
@@ -1075,7 +1016,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ---------------------------------------------------------------- note */
   note: {
     subject: "note",
     noun: "note",
@@ -1112,15 +1052,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ----------------------------------------------------------- client note */
-  // The operator's own note on a client. Subject is "note", shared with the
-  // website-lead note above: a note is conversation, not company data, and the
-  // people who write notes must be able to take them back. "client" delete is
-  // held back for owners because removing a client cascades its whole history.
-  //
-  // The label names the client, never the note: `clientNote.deleted` is posted
-  // to Slack like every delete, and Slack shows the label. The body survives
-  // only in the audit snapshot, which stays inside the admin.
   clientNote: {
     subject: "note",
     noun: "note",
@@ -1161,7 +1092,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* -------------------------------------------------------- client service */
   clientService: {
     subject: "client",
     noun: "service",
@@ -1194,7 +1124,9 @@ export const DELETABLES: Record<string, Deletable> = {
           row.status === "ACTIVE"
             ? {
                 reason:
-                  "This service is running at the provider. Deleting it stops its renewal alerts and removes it from the client's history. Cancel it instead — a cancelled service keeps its record.",
+                  row.termMonths === null
+                    ? "This service was bought for the client. Deleting it removes the purchase from the client's history. Cancel it instead — a cancelled service keeps its record."
+                    : "This service is running at the provider. Deleting it stops its renewal alerts and removes it from the client's history. Cancel it instead — a cancelled service keeps its record.",
                 hard: false,
               }
             : null,
@@ -1206,6 +1138,7 @@ export const DELETABLES: Record<string, Deletable> = {
           price: row.price,
           currency: row.currency,
           termMonths: row.termMonths,
+          oneTime: row.termMonths === null,
           expiresAt: row.expiresAt,
           proposalId: row.proposalId,
           client: row.client.company || row.client.name,
@@ -1214,7 +1147,6 @@ export const DELETABLES: Record<string, Deletable> = {
           ...(row.proposalId
             ? ["The accepted proposal still lists it — deleting the row does not change a signed document."]
             : []),
-          // Payments are records of money owed; they outlive the service row.
           ...(row._count.payments > 0
             ? [`${row._count.payments} payment${row._count.payments === 1 ? "" : "s"} for its terms stay${row._count.payments === 1 ? "s" : ""} on the project.`]
             : []),
@@ -1226,10 +1158,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* --------------------------------------------------------- notification */
-  // Notifications fan out one row per admin, so a row belongs to one inbox.
-  // Clearing your own inbox is every role's right; clearing somebody else's
-  // is a hard block, whatever the role — an owner included.
   notification: {
     subject: "notification",
     noun: "notification",
@@ -1271,7 +1199,6 @@ export const DELETABLES: Record<string, Deletable> = {
     },
   },
 
-  /* ------------------------------------------------------------------ user */
   user: {
     subject: "team",
     noun: "team member",
@@ -1328,7 +1255,6 @@ export const DELETABLES: Record<string, Deletable> = {
       };
     },
     async remove(id) {
-      // Sessions and accounts cascade; assignments fall back to null.
       await prisma.user.delete({ where: { id } });
     },
   },

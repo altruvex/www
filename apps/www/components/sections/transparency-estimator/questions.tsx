@@ -8,7 +8,6 @@ import { type ComponentPropsWithoutRef } from "react";
 import { useRadioKeys } from "./hooks";
 import type { AnswerMap, QuestionDef, QuestionKey, Translator } from "./types";
 
-/** The step heading level: h2 under the page's h1, h3 under the home h2. */
 export type HeadingLevel = 2 | 3;
 
 
@@ -71,7 +70,6 @@ function OptionRows({
   selected: string | null;
   onSelect: (val: string) => void;
   t: Translator;
-  /** Overrides the catalogue title, for options the schema names. */
   titleFor?: (option: string) => string;
   className?: string;
 }) {
@@ -367,13 +365,6 @@ export function ConditionsBlock({
     </div>
   );
 }
-/**
- * Step 03, "What does it need?" — the capabilities scope review has to confirm.
- *
- * A checklist, never a price input: the schema publishes no figure for these,
- * so ticking one records it for the request and the PDF and leaves the range
- * exactly where it was. The badge says so before anyone has to wonder.
- */
 export function ScopeNotesStep({
   index,
   title,
@@ -447,7 +438,7 @@ export function ScopeNotesStep({
               <span
                 aria-hidden
                 className={cn(
-                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-sm border-2 transition-colors duration-(--motion-instant) ease-smooth",
+                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-ctl-xs border-2 transition-colors duration-(--motion-instant) ease-smooth",
                   isChecked
                     ? "border-local-accent bg-local-accent"
                     : "border-foreground/45 bg-background group-hover:border-foreground/70",

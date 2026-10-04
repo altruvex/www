@@ -11,15 +11,23 @@ import { Button } from "@repo/ui";
 
 import { FilterChip } from "@/components/os/data-table";
 import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
+import { InspectSheet, inspectHref } from "@/components/os/inspect-sheet";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { TabNav } from "@/components/os/tab-nav";
+import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { listBuildsPage, listDeploymentsPage } from "@/lib/engineering";
+import { dateTime } from "@/lib/format";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
 import { BuildsTable, type BuildRow } from "./builds-table";
 import { DeploymentsTable, type DeploymentRow } from "./deployments-table";
 import { DeploymentFilters } from "./filters";
-import { clientName, safeHttpUrl } from "./shared";
+import { ExternalUrl, clientName, duration, safeHttpUrl } from "./shared";
 
 export const dynamic = "force-dynamic";
 
@@ -30,54 +38,64 @@ const TABS = [
 
 type Tab = (typeof TABS)[number]["id"];
 
-interface Params {
+type Params = {
   tab?: string;
   product?: string;
   environment?: string;
   status?: string;
   client?: string;
   cursor?: string;
-}
+  inspect?: string;
+  window?: string;
+};
 
-const FILTER_KEYS = ["product", "environment", "status", "client"] as const;
+const FILTER_KEYS = ["product", "environment", "status", "client", "window"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 const ENVIRONMENTS = Object.values(DeployEnvironment);
 const DEPLOYMENT_STATUSES = Object.values(DeploymentStatus);
 const BUILD_STATUSES = Object.values(BuildStatus);
 
-/** The window the tiles count over. Named in every tile so no figure is unlabelled. */
+const LIST_WINDOWS = {
+  "24h": { ms: 86_400_000, label: "Last 24 hours" },
+  "7d": { ms: 7 * 86_400_000, label: "Last 7 days" },
+  "30d": { ms: 30 * 86_400_000, label: "Last 30 days" },
+} as const;
+type ListWindow = keyof typeof LIST_WINDOWS;
+const asListWindow = (v?: string): ListWindow | undefined =>
+  v && v in LIST_WINDOWS ? (v as ListWindow) : undefined;
+
+function withinWindow<T extends { createdAt: Date }>(
+  page: { entries: T[]; hasMore: boolean; nextCursor: string | null },
+  start: Date | undefined,
+) {
+  if (!start) return page;
+  const entries = page.entries.filter((row) => row.createdAt >= start);
+  return entries.length === page.entries.length
+    ? page
+    : { entries, hasMore: false, nextCursor: null };
+}
+
 const WINDOW_DAYS = 30;
 
-/**
- * Deployments and builds across every product (§7).
- *
- * Two tabs rather than two nav entries: an operator asking "did it ship" and an
- * operator asking "did it compile" are the same person thirty seconds apart,
- * and splitting them across the sidebar makes that a navigation problem.
- *
- * Nothing on this page is writable. Deployment state arrives from CI, and a
- * "Deploy" button here would be a claim rather than a cause — see §18.
- *
- * Filters live in the URL so a filtered view is a link someone can be sent.
- * The list is cursor-paginated: the history only grows, and an offset into a
- * list that CI keeps prepending to shows the same rows twice.
- */
 export default async function DeploymentsPage({
   searchParams,
 }: {
   searchParams: Promise<Params>;
 }) {
+  const denied = await gateRoute("/deployments");
+  if (denied) return denied;
+  const role = await currentRole();
+  const canDelete = can(role, "delete", "project");
+  const canOpenIncident =
+    can(role, "create", "incident") && roleCanOpen(role, "/incidents");
+
   const sp = await searchParams;
   const tab: Tab = sp.tab === "builds" ? "builds" : "deployments";
 
-  // Anything unrecognised is dropped rather than passed to Prisma — a stale
-  // link with `status=FOO` should show the unfiltered list, not a crash.
   const environment = ENVIRONMENTS.includes(sp.environment as DeployEnvironment)
     ? (sp.environment as DeployEnvironment)
     : undefined;
-  // A status only means something on the tab whose enum it belongs to:
-  // `QUEUED` is a build state, `ROLLED_BACK` a deployment one.
   const statuses: readonly string[] =
     tab === "builds" ? BUILD_STATUSES : DEPLOYMENT_STATUSES;
   const status =
@@ -88,10 +106,9 @@ export default async function DeploymentsPage({
   const filters = { productId, environment, status, clientId };
 
   const now = new Date();
+  const listWindow = asListWindow(sp.window);
+  const windowStart = listWindow ? new Date(now.getTime() - LIST_WINDOWS[listWindow].ms) : undefined;
   const since = new Date(now.getTime() - WINDOW_DAYS * 86_400_000);
-  // The tiles follow the product / client scope, because "failed deploys" next
-  // to one client's list should be that client's. They ignore the status and
-  // environment filters: each tile is itself a status/environment count.
   const scope = {
     ...(productId ? { productId } : {}),
     ...(clientId ? { product: { clientId } } : {}),
@@ -129,19 +146,41 @@ export default async function DeploymentsPage({
         createdAt: { gte: since },
       },
     }),
-    prisma.deployment.count({
-      where: { ...scope, status: "FAILED", createdAt: { gte: since } },
-    }),
-    prisma.build.count({
-      where: { ...scope, status: "FAILED", createdAt: { gte: since } },
-    }),
+    prisma.deployment.count({ where: { ...scope, status: "FAILED" } }),
+    prisma.build.count({ where: { ...scope, status: "FAILED" } }),
     prisma.incident.count({ where: { ...scope, status: { not: "RESOLVED" } } }),
-    tab === "deployments" ? listDeploymentsPage(filters, cursor) : null,
-    tab === "builds" ? listBuildsPage(filters, cursor) : null,
+    tab === "deployments"
+      ? listDeploymentsPage(filters, cursor).then((p) => withinWindow(p, windowStart))
+      : null,
+    tab === "builds"
+      ? listBuildsPage(filters, cursor).then((p) => withinWindow(p, windowStart))
+      : null,
   ]);
 
-  // Nothing has ever been reported. Saying so once, plainly, beats an empty
-  // table under four zero tiles.
+  const inspectId = sp.inspect || undefined;
+  const [inspectedDeployment, inspectedBuild] = await Promise.all([
+    inspectId && tab === "deployments"
+      ? prisma.deployment.findUnique({
+          where: { id: inspectId },
+          include: {
+            product: { select: { id: true, name: true } },
+            build: { select: { id: true, number: true, branch: true } },
+            rolledBackBy: { select: { id: true, number: true } },
+            _count: { select: { logs: true, incidents: true } },
+          },
+        })
+      : null,
+    inspectId && tab === "builds"
+      ? prisma.build.findUnique({
+          where: { id: inspectId },
+          include: {
+            product: { select: { id: true, name: true } },
+            _count: { select: { logs: true, deployments: true } },
+          },
+        })
+      : null,
+  ]);
+
   if (!anyDeployment && !anyBuild) {
     const noProducts = products.length === 0 && !clientId;
     return (
@@ -149,14 +188,15 @@ export default async function DeploymentsPage({
         <PageHeader
           title="Deployments"
           description="Build and deployment history for every product Altruvex operates."
+          meta={<ToneBadge tone="neutral">Written by CI</ToneBadge>}
         />
         <EmptyState
           icon={Rocket}
-          title={noProducts ? "No products yet" : "Nothing has been reported"}
+          title={noProducts ? "No products yet" : "No pipeline connected yet"}
           body={
             noProducts
               ? "Deployments belong to a product. Add the sites and apps Altruvex operates, then point their pipelines at the ingest endpoint."
-              : "No build or deployment has reached the ingest endpoint. This page is deliberately read-only: rows appear because CI reported them, never because someone filled in a form — so it stays empty until a pipeline posts. Issue an ingest token on a product to connect one."
+              : "No build or deployment has reached the ingest endpoint, and this page is read-only: rows appear because CI reported them, never because someone filled in a form. To connect one, open a product, issue an ingest token under Pipeline (or link its GitHub repository), and have CI post to /api/ingest/builds and /api/ingest/deployments."
           }
           action={
             <Button asChild variant="outline">
@@ -175,9 +215,9 @@ export default async function DeploymentsPage({
     environment,
     status,
     client: clientId,
+    window: listWindow,
   };
 
-  /** This page with one filter changed; the cursor always resets. */
   function hrefWith(
     patch: Partial<Record<FilterKey | "cursor", string | null>>,
   ): string {
@@ -222,10 +262,16 @@ export default async function DeploymentsPage({
       label: "Status",
       value: statusOf(statusRegistry, status).label,
     },
+    listWindow && {
+      key: "window",
+      label: "Created",
+      value: LIST_WINDOWS[listWindow].label,
+    },
   ].filter(Boolean) as { key: FilterKey; label: string; value: string }[];
 
   const filterControls = (
     <DeploymentFilters
+      key="filters"
       filters={[
         {
           param: "product",
@@ -283,6 +329,7 @@ export default async function DeploymentsPage({
       url: d.url,
       safeUrl: safeHttpUrl(d.url),
       at: (d.finishedAt ?? d.createdAt).toISOString(),
+      inspectHref: inspectHref("/deployments", sp, d.id),
     }),
   );
 
@@ -303,7 +350,9 @@ export default async function DeploymentsPage({
     failureReason: b.failureReason,
     deploymentCount: b._count.deployments,
     at: (b.finishedAt ?? b.createdAt).toISOString(),
+    inspectHref: inspectHref("/deployments", sp, b.id),
   }));
+  const closeHref = inspectHref("/deployments", sp, null);
 
   const page = tab === "deployments" ? deploymentPage : buildPage;
   const scoped = Boolean(productId || clientId);
@@ -339,14 +388,13 @@ export default async function DeploymentsPage({
       <PageHeader
         title="Deployments"
         description="Reported by CI through the ingest endpoint. Nothing here is entered by hand, which is why it can be trusted as a record of what actually shipped."
+        meta={<ToneBadge tone="neutral">Written by CI</ToneBadge>}
         tabs={
           <TabNav
             tabs={[...TABS]}
             active={tab}
             basePath="/deployments"
-            // A status that is not valid on the other tab is dropped there
-            // when the page validates it, so keeping it is safe.
-            keep={{ product: productId, environment, status, client: clientId }}
+            keep={{ product: productId, environment, status, client: clientId, window: listWindow }}
           />
         }
       />
@@ -361,7 +409,7 @@ export default async function DeploymentsPage({
         <StatTile
           label="Failed deploys"
           value={failedDeployCount}
-          sub={windowNote.charAt(0).toUpperCase() + windowNote.slice(1)}
+          sub={`All time, ${scopeNote}`}
           tone={failedDeployCount > 0 ? "danger" : "neutral"}
           href={
             failedDeployCount > 0
@@ -372,7 +420,7 @@ export default async function DeploymentsPage({
         <StatTile
           label="Failed builds"
           value={failedBuildCount}
-          sub={windowNote.charAt(0).toUpperCase() + windowNote.slice(1)}
+          sub={`All time, ${scopeNote}`}
           tone={failedBuildCount > 0 ? "warning" : "neutral"}
           href={
             failedBuildCount > 0
@@ -402,8 +450,6 @@ export default async function DeploymentsPage({
               key={chip.key}
               label={chip.label}
               value={chip.value}
-              // Clearing the client also clears a product that belongs to it,
-              // or the product select would hold a value it no longer lists.
               clearHref={hrefWith(
                 chip.key === "client"
                   ? { client: null, product: null }
@@ -419,9 +465,17 @@ export default async function DeploymentsPage({
           rows={deploymentRows}
           toolbar={filterControls}
           empty={empty}
+          canDelete={canDelete}
+          canOpenIncident={canOpenIncident}
         />
       ) : (
-        <BuildsTable rows={buildRows} toolbar={filterControls} empty={empty} />
+        <BuildsTable
+          rows={buildRows}
+          toolbar={filterControls}
+          empty={empty}
+          canDelete={canDelete}
+          canOpenIncident={canOpenIncident}
+        />
       )}
 
       {(cursor || page?.hasMore) && (
@@ -450,6 +504,189 @@ export default async function DeploymentsPage({
             <span className="text-subtle-foreground">Oldest reached</span>
           )}
         </nav>
+      )}
+
+      <InspectSheet
+        open={Boolean(inspectId)}
+        width="md"
+        title={
+          inspectedDeployment
+            ? `Deployment #${inspectedDeployment.number} · ${inspectedDeployment.product.name}`
+            : inspectedBuild
+              ? `Build #${inspectedBuild.number} · ${inspectedBuild.product.name}`
+              : "Record"
+        }
+        subtitle={
+          inspectedDeployment
+            ? dateTime(inspectedDeployment.finishedAt ?? inspectedDeployment.createdAt)
+            : inspectedBuild
+              ? dateTime(inspectedBuild.finishedAt ?? inspectedBuild.createdAt)
+              : undefined
+        }
+        status={
+          inspectedDeployment ? (
+            <StatusPill registry="deploymentStatus" value={inspectedDeployment.status} />
+          ) : inspectedBuild ? (
+            <StatusPill registry="buildStatus" value={inspectedBuild.status} />
+          ) : undefined
+        }
+        fullHref={
+          inspectedDeployment
+            ? `/deployments/${inspectedDeployment.id}`
+            : inspectedBuild
+              ? `/deployments/builds/${inspectedBuild.id}`
+              : undefined
+        }
+      >
+        {inspectedDeployment && (
+          <div className="space-y-4">
+            <p className="text-meta text-subtle-foreground">
+              Written by CI — read-only. Nothing here can be changed from the admin.
+            </p>
+            {inspectedDeployment.failureReason && (
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
+                {inspectedDeployment.failureReason}
+              </pre>
+            )}
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-meta">
+              <Fact label="Product">
+                <EntityLink type="product" id={inspectedDeployment.product.id}>
+                  {inspectedDeployment.product.name}
+                </EntityLink>
+              </Fact>
+              <Fact label="Environment">
+                {statusOf("deployEnvironment", inspectedDeployment.environment).label}
+              </Fact>
+              <Fact label="Version">{inspectedDeployment.version ?? "—"}</Fact>
+              <Fact label="Commit">
+                <span className="font-mono">{inspectedDeployment.commitSha?.slice(0, 7) ?? "—"}</span>
+              </Fact>
+              <Fact label="Build">
+                {inspectedDeployment.build ? (
+                  <EntityLink type="build" id={inspectedDeployment.build.id}>
+                    #{inspectedDeployment.build.number}
+                    {inspectedDeployment.build.branch ? ` · ${inspectedDeployment.build.branch}` : ""}
+                  </EntityLink>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+              <Fact label="Triggered by">{inspectedDeployment.triggeredBy ?? "—"}</Fact>
+              <Fact label="Rolled back by">
+                {inspectedDeployment.rolledBackBy ? (
+                  <EntityLink type="deployment" id={inspectedDeployment.rolledBackBy.id}>
+                    #{inspectedDeployment.rolledBackBy.number}
+                  </EntityLink>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+              <Fact label="URL">
+                <ExternalUrl value={inspectedDeployment.url} />
+              </Fact>
+            </dl>
+            <InspectLinks
+              logs={`/logs?deployment=${inspectedDeployment.id}`}
+              errors={`/logs?deployment=${inspectedDeployment.id}&level=ERROR`}
+              logCount={inspectedDeployment._count.logs}
+              extra={
+                inspectedDeployment._count.incidents > 0
+                  ? {
+                      href: `/incidents?deployment=${inspectedDeployment.id}&status=all`,
+                      label: `${inspectedDeployment._count.incidents} linked incident${inspectedDeployment._count.incidents === 1 ? "" : "s"}`,
+                    }
+                  : null
+              }
+            />
+          </div>
+        )}
+        {inspectedBuild && (
+          <div className="space-y-4">
+            <p className="text-meta text-subtle-foreground">
+              Written by CI — read-only. Nothing here can be changed from the admin.
+            </p>
+            {inspectedBuild.failureReason && (
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
+                {inspectedBuild.failureReason}
+              </pre>
+            )}
+            {inspectedBuild.commitMessage && (
+              <p className="break-words text-body">{inspectedBuild.commitMessage}</p>
+            )}
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-meta">
+              <Fact label="Product">
+                <EntityLink type="product" id={inspectedBuild.product.id}>
+                  {inspectedBuild.product.name}
+                </EntityLink>
+              </Fact>
+              <Fact label="Environment">
+                {statusOf("deployEnvironment", inspectedBuild.environment).label}
+              </Fact>
+              <Fact label="Branch">{inspectedBuild.branch ?? "—"}</Fact>
+              <Fact label="Commit">
+                <span className="font-mono">{inspectedBuild.commitSha?.slice(0, 7) ?? "—"}</span>
+              </Fact>
+              <Fact label="Triggered by">{inspectedBuild.triggeredBy ?? "—"}</Fact>
+              <Fact label="Duration">{duration(inspectedBuild.durationMs)}</Fact>
+              <Fact label="Deployments">{inspectedBuild._count.deployments}</Fact>
+            </dl>
+            <InspectLinks
+              logs={`/logs?build=${inspectedBuild.id}`}
+              errors={`/logs?build=${inspectedBuild.id}&level=ERROR`}
+              logCount={inspectedBuild._count.logs}
+              extra={null}
+            />
+          </div>
+        )}
+        {inspectId && !inspectedDeployment && !inspectedBuild && (
+          <p className="text-meta text-muted-foreground">
+            This record no longer exists, or belongs to the other tab.{" "}
+            <Link href={closeHref} className="text-brand hover:underline">
+              Close
+            </Link>
+          </p>
+        )}
+      </InspectSheet>
+    </div>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="telemetry text-subtle-foreground">{label}</dt>
+      <dd className="mt-0.5 min-w-0 truncate">{children}</dd>
+    </div>
+  );
+}
+
+function InspectLinks({
+  logs,
+  errors,
+  logCount,
+  extra,
+}: {
+  logs: string;
+  errors: string;
+  logCount: number;
+  extra: { href: string; label: string } | null;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button asChild variant="outline" size="sm" className="pointer-coarse:min-h-11">
+        <Link href={logs}>
+          {logCount > 0 ? `${logCount.toLocaleString("en-US")} log lines` : "Logs (none yet)"}
+        </Link>
+      </Button>
+      {logCount > 0 && (
+        <Button asChild variant="ghost" size="sm" className="pointer-coarse:min-h-11">
+          <Link href={errors}>Errors and worse</Link>
+        </Button>
+      )}
+      {extra && (
+        <Button asChild variant="ghost" size="sm" className="pointer-coarse:min-h-11">
+          <Link href={extra.href}>{extra.label}</Link>
+        </Button>
       )}
     </div>
   );

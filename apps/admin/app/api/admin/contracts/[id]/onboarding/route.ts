@@ -4,12 +4,6 @@ import { recordActivity } from "@/lib/activity-log";
 import { badRequest, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 import { channelPhrase, manualMetadata, manualRecordFields } from "@/lib/manual-record";
 
-/**
- * Records that the client was told what happens next, when that happened
- * outside the automated WhatsApp onboarding message — a call, a personal
- * message, the kickoff meeting. Without it the contract page warns forever on
- * an instance where WhatsApp is not configured.
- */
 const schema = z.object(manualRecordFields);
 
 export const POST = withAdmin<{ id: string }>(async (request, { actor, params }) => {

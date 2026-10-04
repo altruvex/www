@@ -9,10 +9,6 @@ export interface IntentAccent {
   dark: string;
 }
 
-// The INTENT SELECTION GUIDE — direct port of
-// ~/.claude/skills/altruvex-design-intelligence/references/00-altruvex-taste.md.
-// Each accent is the middle stop of the site's gradient of the same name,
-// resolved from @repo/ui/palette — so it cannot drift from globals.css.
 const via = (name: keyof typeof GRADIENT_VIA_HSL, mode: "light" | "dark") =>
   hslToHex(GRADIENT_VIA_HSL[name][mode]);
 
@@ -38,9 +34,6 @@ const INDUSTRY_KEYWORDS: { pattern: RegExp; accent: string }[] = [
   { pattern: /luxury|premium|personal brand/i, accent: "none" },
 ];
 
-/** Suggests an intent accent from a client's free-text industry. Falls back
- * to "ocean" (the estimator's own documented default) when nothing matches —
- * Ali always sees this as an editable suggestion, never a silent choice. */
 export function suggestIntentAccent(industry: string | null | undefined): string {
   if (!industry) return "ocean";
   const match = INDUSTRY_KEYWORDS.find(({ pattern }) => pattern.test(industry));

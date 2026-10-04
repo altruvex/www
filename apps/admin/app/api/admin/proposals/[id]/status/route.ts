@@ -4,20 +4,12 @@ import { recordChange } from "@/lib/activity-log";
 import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 import { channelPhrase, manualMetadata, manualRecordFields } from "@/lib/manual-record";
 
-/**
- * Sets a proposal's status by hand — for everything that happened outside the
- * system: handed over in a meeting, sent from a personal inbox, accepted on a
- * call. See `lib/manual-record.ts` for what a manual record may and may not
- * claim.
- *
- * DELIVERED / READ / VIEWED are not settable here. They are transport
- * evidence (a WhatsApp receipt, a portal open), and an operator cannot know
- * them first-hand.
- */
 const schema = z.object({
   status: z.enum(["DRAFT", "SENT", "ACCEPTED", "REJECTED", "EXPIRED"]),
   ...manualRecordFields,
 });
+
+const TRANSPORT_EVIDENCE = new Set(["DELIVERED", "READ", "VIEWED"]);
 
 const ACTIONS = {
   DRAFT: "proposal.reverted_to_draft",
@@ -43,11 +35,15 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
     throw badRequest("The proposal already has that status.");
   }
 
-  // A contract is generated from an accepted offer. Walking the proposal back
-  // underneath it would leave a commitment referencing an offer nobody took.
   if (proposal.contract && input.status !== "ACCEPTED") {
     throw conflict(
       "This proposal already has a contract. Delete the contract first if the client withdrew.",
+    );
+  }
+
+  if (input.status === "SENT" && TRANSPORT_EVIDENCE.has(proposal.status)) {
+    throw conflict(
+      `This proposal is already ${proposal.status.toLowerCase()} — the system recorded it. Recording it as sent by hand would overwrite that evidence.`,
     );
   }
 

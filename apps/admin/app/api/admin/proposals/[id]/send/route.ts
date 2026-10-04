@@ -26,6 +26,16 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       );
     }
 
+    if (proposal.status !== "DRAFT" && proposal.status !== "SENT") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `This proposal is ${proposal.status.toLowerCase()} and can no longer be sent. Issue a new version instead.`,
+        },
+        { status: 409 },
+      );
+    }
+
     const docUrl = await documentUrl(proposal.pdfUrl ?? proposal.fileUrl, SHARED_URL_TTL_SECONDS);
     if (!docUrl) {
       return NextResponse.json(
@@ -34,10 +44,6 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       );
     }
 
-    // Which channel, chosen by the operator. WhatsApp remains the default
-    // because it is what the studio has always used; email exists because it
-    // works today without a verified business, a registered number or a payment
-    // method, and a proposal that cannot be sent is a deal that cannot move.
     const { searchParams } = new URL(request.url);
     const channel = searchParams.get("channel") === "email" ? "email" : "whatsapp";
     const edited = await readOptionalDraft(request);
@@ -46,10 +52,6 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       try {
         const link = toAbsoluteUrl(docUrl, request);
         const draft = proposalDraft(proposal.client.name, link);
-        // An edited subject and body if the operator wrote one, the shared
-        // default otherwise. The link is re-appended either way: the body is
-        // editable, which means it is deletable, and a proposal email with no
-        // proposal in it looks perfectly fine as it is sent.
         const sent = await sendDocumentEmail({
           client: proposal.client,
           subject: edited.subject?.trim() || draft.subject,
@@ -75,8 +77,6 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
 
         return NextResponse.json({ success: true, proposal: updated, emailId: sent.id });
       } catch (error) {
-        // Each of these is a different fix, and flattening them into "sending
-        // failed" makes the operator guess which one they are looking at.
         const status =
           error instanceof ClientHasNoAddressError
             ? 400

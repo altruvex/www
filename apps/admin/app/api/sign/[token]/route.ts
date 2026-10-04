@@ -38,9 +38,6 @@ export async function GET(
       );
     }
 
-    // A signer should see what they are getting off, not only the net figure —
-    // the discount is part of what they agreed to. Derived here rather than
-    // stored so it can never contradict the proposal it came from.
     const parsedContent = proposalContentSchema.safeParse(contract.proposal.content);
     const reduction = parsedContent.success
       ? discountAmount(parsedContent.data.investmentItems, parsedContent.data.discount)
@@ -52,8 +49,6 @@ export async function GET(
       success: true,
       contract: {
         status: contract.status,
-        // The page needs to tell a client why the form is gone. A 404 here
-        // would read as "we lost your contract" for a link that is simply old.
         expired: signLinkExpired(contract),
         signer: {
           name: signer.name,
@@ -121,8 +116,6 @@ export async function POST(
       );
     }
 
-    // A contract recorded as declined or expired — by the client or by hand —
-    // must not be signable through a link that is still in someone's inbox.
     if (contract.status === "DECLINED" || contract.status === "EXPIRED") {
       return NextResponse.json(
         { success: false, message: "This contract is no longer open for signature." },
@@ -161,8 +154,6 @@ export async function POST(
     const body = await request.json();
     const validatedData = signSchema.parse(body);
 
-    // The link alone does not sign: the designated signer must hold the code
-    // that was sent to their own WhatsApp or mailbox.
     if (
       !contract.signCodeHash ||
       !contract.signCodeExpiresAt ||
@@ -201,7 +192,6 @@ export async function POST(
       );
     }
 
-    // Consume the code atomically so two submits with the same code sign once.
     const consumed = await prisma.contract.updateMany({
       where: { id: contract.id, signCodeHash: contract.signCodeHash },
       data: { signCodeHash: null, signCodeExpiresAt: null, signCodeAttempts: 0 },

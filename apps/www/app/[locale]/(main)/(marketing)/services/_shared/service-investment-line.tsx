@@ -7,18 +7,8 @@ import { cn } from "@/lib/utils/utils";
 import { serviceInvestmentViews, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 
-/*
- * One service's row of the /pricing "Service investment" register, printed on
- * its own service page: name, how it is priced, the figure, and the estimator.
- * The row comes from `serviceInvestmentViews` against the resolved pricing
- * (admin overrides included), the same view /pricing reads, so the two can
- * never disagree.
- */
-
 type LineServiceId = "design" | "development";
 
-/** Development opens the estimator on its own project type; design has no
-    published range to preselect. */
 const ESTIMATOR_QUERY: Record<LineServiceId, string> = {
   design: "",
   development: "?projectType=webapp",

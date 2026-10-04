@@ -3,6 +3,7 @@
 import { SegmentedControl } from "@/components/base/segmented-control";
 import { PlanSummary } from "@/components/sections/plan-summary";
 import { SectionHeading } from "@/components/sections/section-heading";
+import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
 import { maintenancePlanHref } from "@/lib/config/commercial";
@@ -58,14 +59,14 @@ function Tokens({ plan }: { plan: MaintenanceView }) {
             <li
               key={index}
               data-token
-              className="size-6 md:size-8 rounded-[0.5rem] border border-dashed border-local-accent/60"
+              className="size-6 md:size-8 rounded-ctl-xs md:rounded-ctl-sm border border-dashed border-local-accent/60"
             />
           ))
         : Array.from({ length: count }, (_, index) => (
             <li
               key={index}
               data-token
-              className="flex size-6 md:size-8 items-end rounded-[0.5rem] bg-local-accent p-0.5 md:p-1 text-local-accent-fg"
+              className="flex size-6 md:size-8 items-end rounded-ctl-xs md:rounded-ctl-sm bg-local-accent p-0.5 md:p-1 text-local-accent-fg"
             >
               <span className="text-[9px] md:text-[10px] leading-none tabular-nums ltr:font-mono">
                 <Num value={index + 1} pad={2} />
@@ -161,7 +162,7 @@ export function MaintenancePlans({
       aria-labelledby="maintenance-plans-heading"
       className="accent-world-green scroll-mt-24 border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
-      <div className="mx-auto w-full max-w-352 px-4 md:px-8 lg:px-16">
+      <Container>
         <SectionHeading
           titleId="maintenance-plans-heading"
           eyebrowRef={eyebrowRef}
@@ -172,7 +173,7 @@ export function MaintenancePlans({
           secondTitle={t("plans.titleAccent")}
           accent="mint"
           description={t("plans.description")}
-          className="mb-10 md:mb-12"
+          className="mb-(--heading-gap)"
         />
         <div
           ref={billingRef}
@@ -195,11 +196,11 @@ export function MaintenancePlans({
             })}
           </p>
         </div>
-      </div>
+      </Container>
       <div ref={tableRef} className="w-full">
         <div
           ref={tokensRef}
-          className="w-full ps-0 pe-4 md:pe-8 lg:px-16 lg:mx-auto lg:max-w-352"
+          className="w-full ps-0 pe-6 sm:pe-8 md:pe-12 lg:px-16 lg:mx-auto lg:max-w-352"
         >
           <div
             role="region"
@@ -217,7 +218,7 @@ export function MaintenancePlans({
                   <td
                     className={cn(
                       stickyLabel,
-                      "w-36 md:w-48 pb-8 lg:w-[22%] ps-4 md:ps-8 lg:ps-0"
+                      "w-36 md:w-48 pb-8 lg:w-[22%] ps-6 sm:ps-8 md:ps-12 lg:ps-0"
                     )}
                   />
                   {plans.map((plan, index) => (
@@ -262,7 +263,7 @@ export function MaintenancePlans({
                       scope="row"
                       className={cn(
                         stickyLabel,
-                        "w-36 md:w-48 lg:w-[22%] border-t border-border-subtle py-4 md:py-5 ps-4 md:ps-8 lg:ps-0 pe-3 md:pe-4 text-start align-top text-xs md:text-sm font-normal text-muted-foreground"
+                        "w-36 md:w-48 lg:w-[22%] border-t border-border-subtle py-4 md:py-5 ps-6 sm:ps-8 md:ps-12 lg:ps-0 pe-3 md:pe-4 text-start align-top text-xs md:text-sm font-normal text-muted-foreground"
                       )}
                     >
                       {t(`plans.table.rows.${row}`)}
@@ -286,7 +287,7 @@ export function MaintenancePlans({
           </div>
         </div>
       </div>
-      <div className="mx-auto w-full max-w-352 px-4 md:px-8 lg:px-16 mt-14 md:mt-16">
+      <Container className="mt-(--section-block)">
         <div ref={outsideRef}>
           <Eyebrow className="mb-6 text-xs">{t("plans.outside")}</Eyebrow>
           <dl className="grid gap-x-10 gap-y-8 md:grid-cols-3">
@@ -302,7 +303,7 @@ export function MaintenancePlans({
             ))}
           </dl>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

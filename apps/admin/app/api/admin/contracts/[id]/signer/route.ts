@@ -4,11 +4,6 @@ import { recordChange } from "@/lib/activity-log";
 import { looksLikeAnAddress } from "@/lib/email";
 import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
-/**
- * Designates who may sign a contract through its link. Blank fields fall back
- * to the client record. Changing the signer voids any code already sent, so a
- * code delivered to the previous person cannot be used after the change.
- */
 const schema = z.object({
   signerName: z.string().trim().max(200),
   signerPhone: z.string().trim().max(40),

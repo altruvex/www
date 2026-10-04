@@ -18,15 +18,8 @@ import type { MaintenanceView } from "@repo/pricing-schema";
 import { useLocale, useTranslations } from "next-intl";
 
 
-/**
- * The plan whose terms the example month is drawn from. Its promises —
- * daily monitoring and backup review, weekly checks, a monthly report,
- * priority incident handling, and a capped number of priority edit
- * requests — come from `@repo/pricing-schema`, never from this file.
- */
 const MONTH_PLAN = "professional";
 
-/** What we do without being asked, in the order it recurs. */
 const OURS = ["daily", "weekly", "monthly", "incident"] as const;
 
 export function MaintenanceHero({
@@ -73,7 +66,7 @@ export function MaintenanceHero({
               container: "lg:flex-col lg:items-start",
               titleWrapper: "space-y-6",
               title:
-                "text-[clamp(2.75rem,6vw,5.75rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
+                "max-w-6xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
             }}
           />
           <div>
@@ -101,7 +94,7 @@ export function MaintenanceHero({
           </div>
         </div>
         {plan ? (
-          <div className="mt-24 border-t border-border-subtle pt-20 md:mt-32 md:pt-28">
+          <div className="mt-(--section-y-bottom) border-t border-border-subtle pt-(--section-y-top)">
             <SectionHeading
               titleId="maintenance-month-heading"
               eyebrowRef={monthEyebrowRef}
@@ -114,11 +107,9 @@ export function MaintenanceHero({
               description={t("hero.month.description", { plan: plan.name })}
             />
 
-            {/* Our column is full and yours holds one thing: the empty space
-                under "Your part" is the argument, so it is never filled. */}
             <div
               ref={splitRef}
-              className="mt-14 grid border-t border-border md:mt-20 lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
+              className="mt-(--heading-gap) grid border-t border-border lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
             >
               <div data-month-part className="pt-8 lg:pe-[clamp(2rem,4vw,4rem)]">
                 <Eyebrow className="m-0">{t("hero.month.ours.label")}</Eyebrow>
@@ -151,7 +142,7 @@ export function MaintenanceHero({
                   {t("hero.month.yours.heading")}
                 </h3>
                 {requests !== null ? (
-                  <div className="mt-7 border-y border-border-subtle py-5">
+                  <div className="mt-7">
                     <p className="text-balance text-[clamp(1.5rem,2.4vw,2.125rem)] font-light leading-[1.2] tracking-[-0.02em] text-foreground rtl:leading-[1.45] rtl:tracking-normal">
                       {t("hero.month.yours.request")}
                     </p>

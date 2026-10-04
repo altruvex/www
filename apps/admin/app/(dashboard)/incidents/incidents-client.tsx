@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus, ShieldAlert } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import {
   Button,
@@ -19,32 +18,10 @@ import {
   SheetTitle,
 } from "@repo/ui";
 
-import { EmptyState } from "@/components/os/empty-state";
-import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
-import { Panel } from "@/components/os/panel";
-import { StatusPill } from "@/components/ui/badge";
 import { when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
-import { cn } from "@/lib/utils";
 import { sendIncidentRequest } from "./incident-request";
-
-export interface IncidentRecord {
-  id: string;
-  number: number;
-  title: string;
-  severity: string;
-  status: string;
-  productId: string;
-  productName: string;
-  clientId: string;
-  clientName: string;
-  ownerName: string | null;
-  deploymentId: string | null;
-  deploymentNumber: number | null;
-  detectedAt: string;
-  lastUpdate: { body: string; author: string; at: string } | null;
-}
 
 export interface ProductOption {
   id: string;
@@ -59,288 +36,187 @@ export interface ProductOption {
   }[];
 }
 
+type UserOption = { id: string; name: string | null; email: string };
+
 const SEVERITIES = ["SEV1", "SEV2", "SEV3", "SEV4"] as const;
-const STATUSES = ["INVESTIGATING", "IDENTIFIED", "MONITORING", "RESOLVED"] as const;
+const STATUSES = [
+  "INVESTIGATING",
+  "IDENTIFIED",
+  "MONITORING",
+  "RESOLVED",
+] as const;
 const UNASSIGNED = "__unassigned__";
 const NONE = "__none__";
 const ANY = "__any__";
 
-/**
- * The incident list, its filters, and the two mutations that belong on a list:
- * open one, move one. Everything else — the timeline, resolving with a note,
- * reopening, owner and severity — lives on the incident's own page.
- */
-export function IncidentsClient({
-  records,
+export function ProductScope({
   products,
-  users,
-  filters,
-  chips,
-  filtered,
-  clearHref,
-  defaultProductId,
 }: {
-  records: IncidentRecord[];
-  products: ProductOption[];
-  users: { id: string; name: string | null; email: string }[];
-  filters: { status: string; severity: string; product: string };
-  /** Removable chips for every active filter, rendered on the server. */
-  chips: React.ReactNode;
-  /** The list is narrower than "open incidents on every product". */
-  filtered: boolean;
-  clearHref: string | null;
-  defaultProductId?: string;
+  products: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [creating, setCreating] = React.useState(false);
-  const [pending, setPending] = React.useState<string | null>(null);
+  const product = searchParams.get("product") ?? "";
+
+  return (
+    <Select
+      value={product || ANY}
+      onValueChange={(value) => {
+        const next = new URLSearchParams(searchParams.toString());
+        if (value === ANY) next.delete("product");
+        else next.set("product", value);
+        next.delete("page");
+        const qs = next.toString();
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      }}
+    >
+      <SelectTrigger
+        className="h-[var(--control-h-sm)] w-44 pointer-coarse:h-11"
+        aria-label="Product"
+      >
+        <SelectValue placeholder="All products" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ANY}>All products</SelectItem>
+        {products.map((p) => (
+          <SelectItem key={p.id} value={p.id}>
+            {p.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+export function IncidentRowActions({
+  id,
+  number,
+  title,
+  status,
+  canEdit,
+  canDelete,
+}: {
+  id: string;
+  number: number;
+  title: string;
+  status: string;
+  canEdit: boolean;
+  canDelete: boolean;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = React.useState(false);
   const del = useRecordDelete({ entity: "incident" });
 
-  const apply = (key: string, value: string) => {
-    const next = new URLSearchParams(searchParams.toString());
-    if (!value || value === ANY) next.delete(key);
-    else next.set(key, value);
-    const qs = next.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  };
-
-  async function move(incident: IncidentRecord, status: string) {
-    // Resolving needs an explanation, so it goes to the incident's page where
-    // there is somewhere to type one, rather than failing at the API.
-    if (status === "RESOLVED") {
-      router.push(`/incidents/${incident.id}#update`);
+  async function move(next: string) {
+    if (next === "RESOLVED") {
+      router.push(`/incidents/${id}#update`);
       return;
     }
-    setPending(incident.id);
-    const reopening = incident.status === "RESOLVED";
+    setPending(true);
+    const reopening = status === "RESOLVED";
     await sendIncidentRequest(
       router,
       "PATCH",
-      { id: incident.id, status },
-      reopening ? "Incident reopened." : `Moved to ${statusOf("incidentStatus", status).label.toLowerCase()}.`,
+      { id, status: next },
+      reopening
+        ? "Incident reopened."
+        : `Moved to ${statusOf("incidentStatus", next).label.toLowerCase()}.`,
     );
-    setPending(null);
+    setPending(false);
   }
 
-  if (products.length === 0) {
-    return (
-      <EmptyState
-        icon={ShieldAlert}
-        title="No products to raise an incident against"
-        body="An incident is always about a product Altruvex operates — that is what makes it actionable rather than a note. Add a product first."
-        action={
-          <Button asChild variant="outline">
-            <Link href="/products">Open products</Link>
-          </Button>
-        }
-      />
-    );
-  }
+  return (
+    <div className="flex items-center gap-1.5">
+      {canEdit && (
+        <Select value={status} onValueChange={move} disabled={pending}>
+          <SelectTrigger
+            className="h-[var(--control-h-sm)] w-36 max-sm:w-32 pointer-coarse:h-11"
+            aria-label={`Status for #${number} ${title}`}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUSES.map((value) => (
+              <SelectItem key={value} value={value}>
+                {status === "RESOLVED" && value !== "RESOLVED"
+                  ? `Reopen: ${statusOf("incidentStatus", value).label.toLowerCase()}`
+                  : statusOf("incidentStatus", value).label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+      {canDelete && (
+        <>
+          <RowActions
+            onDelete={() => del.request({ id, label: `#${number} ${title}` })}
+            deleteLabel="Delete incident"
+          />
+          {del.dialog}
+        </>
+      )}
+    </div>
+  );
+}
 
-  const openCount = records.filter((r) => r.status !== "RESOLVED").length;
-  const title =
-    filters.status === "all"
-      ? "All incidents"
-      : filters.status
-        ? `${statusOf("incidentStatus", filters.status).label} incidents`
-        : "Open incidents";
+export function OpenIncidentButton({
+  products,
+  users,
+  defaultProductId,
+  defaultDeploymentId,
+  defaultOpen = false,
+}: {
+  products: ProductOption[];
+  users: UserOption[];
+  defaultProductId?: string;
+  defaultDeploymentId?: string;
+  defaultOpen?: boolean;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [creating, setCreatingState] = React.useState(defaultOpen);
+
+  const setCreating = (next: boolean) => {
+    setCreatingState(next);
+    if (!next && searchParams.has("new")) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("new");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  };
 
   return (
     <>
-      <Panel
-        title={title}
-        description={
-          filtered
-            ? `${records.length} matching the filters · the tiles above count every product`
-            : filters.status === "all"
-              ? `${records.length} total · ${openCount} open`
-              : `${records.length} shown`
-        }
-        action={
-          <Button variant="brand" size="sm" onClick={() => setCreating(true)}>
-            <Plus className="size-3.5" />
-            Open incident
-          </Button>
-        }
-        flush
+      <Button
+        variant="brand"
+        size="sm"
+        className="pointer-coarse:min-h-11"
+        onClick={() => setCreating(true)}
       >
-        <div className="flex flex-wrap items-center gap-2 border-b border-border p-2">
-          <Select value={filters.status || ANY} onValueChange={(v) => apply("status", v)}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-40" aria-label="Status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ANY}>Open</SelectItem>
-              {STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {statusOf("incidentStatus", status).label}
-                </SelectItem>
-              ))}
-              <SelectItem value="all">All, including resolved</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filters.severity || ANY} onValueChange={(v) => apply("severity", v)}>
-            <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36" aria-label="Severity">
-              <SelectValue placeholder="Any severity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ANY}>Any severity</SelectItem>
-              {SEVERITIES.map((severity) => (
-                <SelectItem key={severity} value={severity}>
-                  {severity}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filters.product || ANY} onValueChange={(v) => apply("product", v)}>
-            <SelectTrigger className="w-full sm:w-44" aria-label="Product">
-              <SelectValue placeholder="All products" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ANY}>All products</SelectItem>
-              {products.map((product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {chips && (
-          <div className="flex flex-wrap items-center gap-1.5 border-b border-border px-2 py-2">
-            {chips}
-          </div>
-        )}
-
-        {records.length === 0 ? (
-          filtered || filters.status === "all" ? (
-            <div className="px-3 py-10 text-center">
-              <p className="text-md font-semibold">No incident matches</p>
-              <p className="mt-1 text-base text-muted-foreground">
-                Nothing fits every filter above. Remove a chip to widen the list.
-              </p>
-              {clearHref && (
-                <Button asChild variant="outline" size="sm" className="mt-3">
-                  <Link href={clearHref}>Clear filters</Link>
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="px-3 py-10 text-center">
-              <p className="text-md font-semibold">Nothing is broken</p>
-              <p className="mt-1 text-base text-muted-foreground">
-                No open incident on any product. Open one when something needs a name, an
-                owner and a timeline.
-              </p>
-              <Button asChild variant="ghost" size="sm" className="mt-3">
-                <Link href="/incidents?status=all">See past incidents</Link>
-              </Button>
-            </div>
-          )
-        ) : (
-          <ul className="divide-y divide-border">
-            {records.map((incident) => (
-              <li
-                key={incident.id}
-                className={cn(
-                  "flex flex-wrap items-start gap-x-3 gap-y-2 px-3 py-2.5",
-                  pending === incident.id && "opacity-60",
-                )}
-              >
-                <StatusPill
-                  registry="incidentSeverity"
-                  value={incident.severity}
-                  className="mt-0.5 shrink-0"
-                />
-
-                <div className="min-w-0 flex-1 basis-48">
-                  <Link
-                    href={`/incidents/${incident.id}`}
-                    className="block max-w-full truncate text-base font-medium hover:underline"
-                  >
-                    <span className="font-mono text-meta text-subtle-foreground">
-                      #{incident.number}
-                    </span>{" "}
-                    {incident.title}
-                  </Link>
-                  <p className="truncate text-meta text-subtle-foreground">
-                    <EntityLink type="product" id={incident.productId} muted>
-                      {incident.productName}
-                    </EntityLink>
-                    {" · "}
-                    <EntityLink type="client" id={incident.clientId} muted>
-                      {incident.clientName}
-                    </EntityLink>
-                    {" · "}
-                    {incident.ownerName ?? "Unowned"}
-                    {" · detected "}
-                    {when(incident.detectedAt)}
-                    {incident.deploymentId && incident.deploymentNumber != null && (
-                      <>
-                        {" · after "}
-                        <EntityLink type="deployment" id={incident.deploymentId} muted>
-                          deploy #{incident.deploymentNumber}
-                        </EntityLink>
-                      </>
-                    )}
-                  </p>
-                  {incident.lastUpdate && (
-                    <p className="mt-0.5 truncate text-meta text-muted-foreground">
-                      {incident.lastUpdate.author}: {incident.lastUpdate.body}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Select
-                    value={incident.status}
-                    onValueChange={(value) => move(incident, value)}
-                    disabled={pending === incident.id}
-                  >
-                    <SelectTrigger className="w-36" aria-label={`Status for ${incident.title}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>
-                          {incident.status === "RESOLVED" && status !== "RESOLVED"
-                            ? `Reopen: ${statusOf("incidentStatus", status).label.toLowerCase()}`
-                            : statusOf("incidentStatus", status).label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <RowActions
-                    onDelete={() =>
-                      del.request({ id: incident.id, label: `#${incident.number} ${incident.title}` })
-                    }
-                    deleteLabel="Delete incident"
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
-
+        <Plus className="size-3.5" />
+        Open incident
+      </Button>
       <CreateIncidentSheet
-        // Remounting on open resets the form to the current product filter.
         key={creating ? "open" : "closed"}
         open={creating}
         onOpenChange={setCreating}
         products={products}
         users={users}
         defaultProductId={defaultProductId}
+        defaultDeploymentId={defaultDeploymentId}
         onSubmit={async (body) => {
-          const done = await sendIncidentRequest(router, "POST", body, "Incident opened.");
+          const done = await sendIncidentRequest(
+            router,
+            "POST",
+            body,
+            "Incident opened.",
+          );
           if (done) setCreating(false);
         }}
       />
-
-      {del.dialog}
     </>
   );
 }
@@ -351,26 +227,35 @@ function CreateIncidentSheet({
   products,
   users,
   defaultProductId,
+  defaultDeploymentId,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   products: ProductOption[];
-  users: { id: string; name: string | null; email: string }[];
+  users: UserOption[];
   defaultProductId?: string;
+  defaultDeploymentId?: string;
   onSubmit: (body: Record<string, unknown>) => Promise<void>;
 }) {
   const [busy, setBusy] = React.useState(false);
   const [productId, setProductId] = React.useState(
-    products.find((p) => p.id === defaultProductId)?.id ?? products[0]?.id ?? "",
+    products.find((p) => p.id === defaultProductId)?.id ??
+      products[0]?.id ??
+      "",
   );
   const [title, setTitle] = React.useState("");
   const [detail, setDetail] = React.useState("");
   const [severity, setSeverity] = React.useState<string>("SEV3");
   const [ownerId, setOwnerId] = React.useState<string>(UNASSIGNED);
-  const [deploymentId, setDeploymentId] = React.useState<string>(NONE);
+  const [deploymentId, setDeploymentId] = React.useState<string>(
+    products
+      .find((p) => p.id === productId)
+      ?.deployments.find((d) => d.id === defaultDeploymentId)?.id ?? NONE,
+  );
 
-  const deployments = products.find((p) => p.id === productId)?.deployments ?? [];
+  const deployments =
+    products.find((p) => p.id === productId)?.deployments ?? [];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -400,7 +285,6 @@ function CreateIncidentSheet({
               value={productId}
               onValueChange={(value) => {
                 setProductId(value);
-                // A deployment belongs to one product; the API would refuse it.
                 setDeploymentId(NONE);
               }}
             >
@@ -484,7 +368,10 @@ function CreateIncidentSheet({
               onValueChange={setDeploymentId}
               disabled={deployments.length === 0}
             >
-              <SelectTrigger className="w-full" aria-label="Suspected deployment">
+              <SelectTrigger
+                className="w-full"
+                aria-label="Suspected deployment"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -492,7 +379,8 @@ function CreateIncidentSheet({
                 {deployments.map((d) => (
                   <SelectItem key={d.id} value={d.id}>
                     #{d.number} · {d.environment.toLowerCase()} ·{" "}
-                    {statusOf("deploymentStatus", d.status).label.toLowerCase()} · {when(d.createdAt)}
+                    {statusOf("deploymentStatus", d.status).label.toLowerCase()}{" "}
+                    · {when(d.createdAt)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -500,10 +388,18 @@ function CreateIncidentSheet({
           </Field>
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="brand" disabled={busy || !title.trim()}>
+            <Button
+              type="submit"
+              variant="brand"
+              disabled={busy || !title.trim()}
+            >
               {busy ? "Opening…" : "Open incident"}
             </Button>
           </div>
@@ -526,7 +422,9 @@ function Field({
     <label className="block space-y-1">
       <span className="telemetry block text-subtle-foreground">{label}</span>
       {children}
-      {hint && <span className="block text-meta text-subtle-foreground">{hint}</span>}
+      {hint && (
+        <span className="block text-meta text-subtle-foreground">{hint}</span>
+      )}
     </label>
   );
 }

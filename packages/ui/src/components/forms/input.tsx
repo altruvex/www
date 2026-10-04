@@ -1,16 +1,18 @@
 "use client";
 
 import * as React from "react";
-
+import { ChevronDown } from "lucide-react";
 import { cn, normalizeEasternArabicNumerals } from "../../lib/utils";
 
 export const controlSurface =
-  "w-full min-w-0 rounded-md border border-border bg-input px-3 text-sm text-foreground " +
+  "w-full min-w-0 rounded-full border border-border bg-input px-3 text-sm text-foreground " +
   "placeholder:text-muted-foreground selection:bg-accent selection:text-accent-foreground " +
   "transition-[color,border-color,background-color,box-shadow] duration-[var(--duration-state)] ease-[var(--ease-standard)] " +
   "hover:border-border-mid focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 " +
   "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 " +
   "aria-invalid:border-destructive aria-invalid:bg-destructive/[0.04] aria-invalid:focus-visible:ring-destructive/20";
+
+export const formControlClasses = controlSurface;
 
 interface FieldMeta {
   id: string;
@@ -74,6 +76,8 @@ export function useFieldMeta(own: {
   };
 }
 
+const LTR_TYPES = new Set(["tel", "email", "url"]);
+
 type InputProps = React.ComponentProps<"input"> & {
   normalize?: boolean;
 };
@@ -85,6 +89,7 @@ function Input({
   onChange,
   normalize = false,
   inputMode,
+  dir,
   ...props
 }: InputProps) {
   const meta = useFieldMeta({ id, invalid: props["aria-invalid"] === true });
@@ -107,16 +112,20 @@ function Input({
     [normalize, onChange],
   );
 
+  const writtenLtr = dir === undefined && LTR_TYPES.has(type);
+
   return (
     <input
       type={type === "number" ? "text" : type}
       inputMode={inputMode || (type === "number" ? "numeric" : undefined)}
+      dir={writtenLtr ? "ltr" : dir}
       data-slot="input"
       {...meta}
       onChange={handleChange}
       className={cn(
         controlSurface,
         "h-[var(--control-h)] file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
+        writtenLtr && "rtl:text-right",
         className,
       )}
       {...props}
@@ -131,22 +140,38 @@ function Textarea({ className, id, ...props }: React.ComponentProps<"textarea">)
     <textarea
       data-slot="textarea"
       {...meta}
-      className={cn(controlSurface, "min-h-24 resize-y py-2 leading-relaxed", className)}
+      className={cn(
+        controlSurface,
+        "rounded-xl min-h-24 resize-y py-2.5 leading-relaxed",
+        className,
+      )}
       {...props}
     />
   );
 }
 
-function SelectField({ className, id, ...props }: React.ComponentProps<"select">) {
+function SelectField({ className, id, children, ...props }: React.ComponentProps<"select">) {
   const meta = useFieldMeta({ id, invalid: props["aria-invalid"] === true });
 
   return (
-    <select
-      data-slot="select-field"
-      {...meta}
-      className={cn(controlSurface, "h-[var(--control-h)]", className)}
-      {...props}
-    />
+    <span data-slot="select-field-wrapper" className="relative block w-full">
+      <select
+        data-slot="select-field"
+        {...meta}
+        className={cn(
+          controlSurface,
+          "h-[var(--control-h)] appearance-none pe-8 cursor-pointer [&>option]:bg-background [&>option]:text-foreground",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </select>
+      <ChevronDown
+        aria-hidden
+        className="pointer-events-none absolute end-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+      />
+    </span>
   );
 }
 

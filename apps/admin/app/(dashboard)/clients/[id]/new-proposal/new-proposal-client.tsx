@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import {
   calculateEstimate,
+  CURRENCIES,
   MAX_DELIVERY_WEEKS,
   egpToUsd,
   type BrandIdentityId as BrandIdentity,
+  type Currency,
   type ComplexityId as Complexity,
   type ContentReadinessId as ContentReadiness,
   type ResolvedPricing,
@@ -117,17 +119,11 @@ interface ProposalDraft {
   timeline: Timeline | null;
   brandIdentity: BrandIdentity | null;
   contentReadiness: ContentReadiness | null;
-  currency: "EGP" | "USD";
+  currency: Currency;
   accentName: string | null;
   content: ProposalContent;
 }
 
-/**
- * What the server page resolved from `?from=<proposalId>` ("Edit as a new
- * version"). `version` prefills the builder from that proposal; `ignored`
- * means the id named nothing usable for this client, and the screen says so.
- * Either way, saving creates a new proposal — the source is never written.
- */
 export type ProposalInitial =
   | {
       kind: "version";
@@ -135,9 +131,8 @@ export type ProposalInitial =
       sourceLabel: string;
       projectType: ProjectType | null;
       complexity: Complexity | null;
-      currency: "EGP" | "USD";
+      currency: Currency;
       accentName: string | null;
-      /** Null when the source had no content document, or one that no longer validates. */
       content: ProposalContent | null;
     }
   | { kind: "ignored"; sourceId: string; reason: string };
@@ -168,11 +163,6 @@ function formatSavedAt(iso: string): string {
     });
 }
 
-/**
- * `pricing` is override ?? default, resolved by the server page from
- * `lib/pricing-store`. The estimate and the seeded deck read it, so a price
- * edited on /pricing is what this screen quotes — never the shipped defaults.
- */
 export function NewProposalClient({
   pricing,
   initial,
@@ -193,18 +183,11 @@ export function NewProposalClient({
   const [previewSlides, setPreviewSlides] = React.useState<string[] | null>(
     null,
   );
-  // An edit used to throw the rendered slides away, which left the operator
-  // with nothing to look at exactly when they had just changed something.
-  // The render is kept and marked out of date instead — a stale picture of
-  // the deck beats a blank panel, as long as it never claims to be current.
   const [previewStale, setPreviewStale] = React.useState(false);
   const [previewStartedAt, setPreviewStartedAt] = React.useState<number | null>(
     null,
   );
   const [rail, setRail] = React.useState<RailId>("setup");
-  // A tick meaning "the schema is happy" is not the same claim as "you have
-  // read this". The rail used to show both as one green check, so nine
-  // never-opened sections looked finished. Visited is tracked separately.
   const [visited, setVisited] = React.useState<Set<RailId>>(
     () => new Set<RailId>(["setup"]),
   );
@@ -213,8 +196,6 @@ export function NewProposalClient({
     setVisited((prev) => (prev.has(id) ? prev : new Set(prev).add(id)));
   }, []);
 
-  // A new version starts from its source's inputs and deck. The proposal date
-  // is the one thing that must not be copied: the new version is dated today.
   const [projectType, setProjectType] = React.useState<ProjectType | null>(
     version?.projectType ?? null,
   );
@@ -226,7 +207,7 @@ export function NewProposalClient({
     React.useState<BrandIdentity | null>(null);
   const [contentReadiness, setContentReadiness] =
     React.useState<ContentReadiness | null>(null);
-  const [currency, setCurrency] = React.useState<"EGP" | "USD">(
+  const [currency, setCurrency] = React.useState<Currency>(
     version?.currency ?? "EGP",
   );
   const [accentName, setAccentName] = React.useState<string | null>(
@@ -253,9 +234,6 @@ export function NewProposalClient({
   const [storageBlocked, setStorageBlocked] = React.useState(false);
   const draftChecked = React.useRef(false);
 
-  // Every past proposal that still carries its content document. A deck is
-  // mostly the same sentences every time; the part that changes is the client
-  // and the numbers. Copying one is faster than re-seeding and re-editing it.
   const [sources, setSources] = React.useState<ProposalSource[] | null>(null);
   const [sourcesOpen, setSourcesOpen] = React.useState(false);
 
@@ -267,8 +245,6 @@ export function NewProposalClient({
       const data = await response.json();
       if (data.success) {
         setClient(data.client);
-        // Only a suggestion: an accent already chosen (a new version keeps
-        // its source's) is not replaced by the industry default.
         setAccentName((prev) => prev ?? suggestIntentAccent(data.client.industry));
       } else {
         setLoadError(data.message || "Failed to load client");
@@ -340,12 +316,6 @@ export function NewProposalClient({
     );
   }, [estimate, projectType, client, clientIdentity, currency, pricing]);
 
-  // Seeding only ever happens into an EMPTY deck now. It used to fire on any
-  // estimator change, which meant toggling complexity after writing nine
-  // sections replaced all of them with a fresh midpoint and no warning — the
-  // old comment claimed hand edits were never silently overwritten, and that
-  // was the one case where they were. A changed estimate is now offered, not
-  // applied: `seedOutOfDate` puts a re-seed button on the screen instead.
   if (
     estimate &&
     projectType &&
@@ -459,8 +429,6 @@ export function NewProposalClient({
   const copyFrom = (source: ProposalSource) => {
     if (!clientIdentity) return;
     const today = new Date().toISOString().slice(0, 10);
-    // The client and the date are the only two things a copy must not keep.
-    // Everything else — scope, phases, terms, wording — is the reason to copy.
     setContent({
       ...source.content,
       meta: {
@@ -486,7 +454,6 @@ export function NewProposalClient({
     try {
       window.localStorage.removeItem(draftKey(clientId));
     } catch {
-      // Ignored
     }
     setDraftSavedAt(null);
     setOfferedDraft(null);
@@ -549,17 +516,6 @@ export function NewProposalClient({
       }),
     });
 
-  /**
-   * Render the deck, or one slide of it.
-   *
-   * Three things this must not do, all of which it used to. It must not
-   * return silently when the deck is invalid — a button that does nothing is
-   * indistinguishable from a broken one, so an invalid deck sends the
-   * operator to the first section that is actually wrong. It must not blank
-   * the slides it already has, because a render takes seconds and an empty
-   * panel for those seconds reads as failure. And it must not navigate: the
-   * section-level render is meant to leave you exactly where you were.
-   */
   const handlePreview = async (options: { slide?: number; navigate?: boolean } = {}) => {
     if (!content) return;
     if (!validation.ok) {
@@ -584,8 +540,6 @@ export function NewProposalClient({
       const data = await response.json();
       if (data.success) {
         if (options.slide) {
-          // A single-slide render replaces just that frame, so the rest of
-          // the deck on screen keeps whatever age it already had.
           setPreviewSlides((prev) => {
             const next = prev ? [...prev] : [];
             next[options.slide! - 1] = data.slides[0];
@@ -684,7 +638,6 @@ export function NewProposalClient({
   const weeks = content ? timelineWeeks(content.timelinePhases) : 0;
   const overCeiling = weeks > MAX_DELIVERY_WEEKS;
   const deckLocked = !content;
-  // "Reviewed" means opened AND clean. Neither half alone is the truth.
   const reviewed = deckLocked
     ? 0
     : PROPOSAL_GROUPS.filter(
@@ -1211,14 +1164,17 @@ export function NewProposalClient({
                         </span>
                         <Select
                           value={currency}
-                          onValueChange={(v) => setCurrency(v as "EGP" | "USD")}
+                          onValueChange={(v) => setCurrency(v as Currency)}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="EGP">EGP</SelectItem>
-                            <SelectItem value="USD">USD</SelectItem>
+                            {CURRENCIES.map((code) => (
+                              <SelectItem key={code} value={code}>
+                                {code}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <span className="block text-meta text-subtle-foreground">
@@ -1458,14 +1414,6 @@ export function NewProposalClient({
   );
 }
 
-/**
- * How long the render has been going, in plain seconds.
- *
- * A spinner says "working"; it does not say "for how long", and a
- * LibreOffice render is slow enough that the difference matters. Past the
- * point where the wait stops looking normal, it says so rather than spinning
- * indefinitely and letting the operator guess.
- */
 function RenderProgress({ startedAt }: { startedAt: number | null }) {
   const [now, setNow] = React.useState(() => Date.now());
 

@@ -8,11 +8,6 @@ import { inlineSign, readDirection, type Direction } from "../utils/direction";
 import { REDUCED_FADE } from "../utils/env";
 import { whenMotionReady } from "../utils/ready";
 
-/**
- * `up` / `down` / `left` / `right` are PHYSICAL (same in every locale).
- * `start` / `end` are LOGICAL: the element slides in from the inline-start
- * or inline-end edge, so an RTL page mirrors automatically. Prefer logical.
- */
 export type RevealDirection =
   | "up"
   | "down"
@@ -32,12 +27,6 @@ export interface RevealConfig {
   trigger?: string | MotionTrigger;
   once?: boolean;
   scrub?: boolean | number;
-  /**
-   * Anticipation micro-beat (principles M2): a small counter-movement away
-   * from rest while the element fades partway in, before the main ease-out
-   * settle. Only meaningful for directional/scale reveals; ignored for
-   * `fade` and under reduced motion. Off by default.
-   */
   anticipate?: boolean;
 }
 
@@ -64,7 +53,6 @@ export function revealFrom(
     case "down": return { ...base, y: -distance };
     case "left": return { ...base, x: distance };
     case "right": return { ...base, x: -distance };
-    // From the inline-start edge: −x in LTR, +x in RTL.
     case "start": return { ...base, x: -distance * inlineSign(dir) };
     case "end": return { ...base, x: distance * inlineSign(dir) };
     case "scale": return { ...base, scale: 0.95 };
@@ -74,12 +62,6 @@ export function revealFrom(
 
 type RevealShape = Required<Omit<RevealConfig, "trigger" | "once">>;
 
-/**
- * The site's reveal, as a reusable core: sets the from-state and plays the
- * entrance (with the anticipation beat when asked). `useReveal` passes a
- * scroll trigger; without one it plays now. Full-motion tier only — callers
- * own reduced motion.
- */
 function playRevealEnter(
   el: HTMLElement,
   shape: RevealShape,
@@ -171,7 +153,6 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
           (context) => {
             const { reduced } = context.conditions as { reduced: boolean };
 
-            // ── Reduced-motion tier: opacity-only settle ─────────────────
             if (reduced) {
               gsap.fromTo(
                 el,
@@ -181,9 +162,6 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
               return;
             }
 
-            // ── Full-motion tier ─────────────────────────────────────────
-            // The tween itself lives in `playRevealEnter`. This hook adds
-            // only the scroll trigger.
             playRevealEnter(
               el,
               { direction, delay, duration, distance, ease, anticipate, scrub },

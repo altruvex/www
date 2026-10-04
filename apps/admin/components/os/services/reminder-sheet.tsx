@@ -16,25 +16,16 @@ import {
   Textarea,
 } from "@repo/ui";
 
-import type { ServiceRow } from "@/lib/client-services";
+import type { ServiceScreenRow } from "@/lib/client-services";
 import { date } from "@/lib/format";
 import { reminderDraftFor, whatsappLink } from "@/lib/service-reminder";
 
-/**
- * Reminding a client that a service renews.
- *
- * The wording is editable and pre-filled from the same draft the server falls
- * back to. Email is sent and recorded by the app. WhatsApp is handed to the
- * operator's own phone — the Business API has no renewal template — and only
- * recorded once they say they sent it, so the history never claims a message
- * this system did not send.
- */
 export function ReminderSheet({
   service,
   emailConfigured,
   onClose,
 }: {
-  service: ServiceRow;
+  service: ServiceScreenRow;
   emailConfigured: boolean;
   onClose: () => void;
 }) {

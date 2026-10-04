@@ -3,10 +3,6 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * A Panel is a flat plane with a hairline header. It is NOT a card: no shadow,
- * no lift on hover, no rounded-3xl. Twenty of these tile without becoming soup.
- */
 export function Panel({
   title,
   description,
@@ -22,7 +18,6 @@ export function Panel({
   children: React.ReactNode;
   className?: string;
   bodyClassName?: string;
-  /** Body sits flush to the plane edge — for tables and row lists. */
   flush?: boolean;
 }) {
   return (

@@ -1,19 +1,9 @@
 import { pricingCopy, type Currency } from "@repo/pricing-schema";
+import { projectCurrency, type ProjectCurrencySource } from "./project-currency";
 
-/**
- * What a payment row bills, for the screens that list payments.
- *
- * A payment carries no currency or name of its own. A project payment reads
- * both from its contract; a retainer payment (`Payment.subscriptionId`) has
- * no contract, so it reads them from the plan it renews. Maintenance plans
- * are published in EGP (`MaintenancePlan.price` in @repo/pricing-schema), and
- * that is the only currency a retainer invoice can be in.
- */
 export const RETAINER_CURRENCY: Currency = "EGP";
 
-export interface PaymentProjectSource {
-  readonly contract: { readonly proposal: { readonly currency: string } };
-}
+export type PaymentProjectSource = ProjectCurrencySource;
 
 export interface PaymentSubscriptionSource {
   readonly planId: string;
@@ -22,22 +12,15 @@ export interface PaymentSubscriptionSource {
 export function paymentCurrency(payment: {
   readonly project: PaymentProjectSource | null;
 }): string {
-  return payment.project?.contract.proposal.currency ?? RETAINER_CURRENCY;
+  return payment.project ? projectCurrency(payment.project) : RETAINER_CURRENCY;
 }
 
-/** "Essential retainer" — the plan's name, or its id when the schema no longer knows it. */
 export function retainerLabel(subscription: PaymentSubscriptionSource): string {
   const copy = pricingCopy("en").maintenance;
   const plan = (copy as Record<string, { name: string } | undefined>)[subscription.planId];
   return `${plan?.name ?? subscription.planId} retainer`;
 }
 
-/**
- * The line a list names the payment by: the service term, the project, or the
- * retainer's plan. A service term names the service it renews because the
- * project is only where it is billed; a retainer payment whose subscription
- * was deleted keeps the row and says so.
- */
 export function paymentSourceLabel(payment: {
   readonly project: { readonly name: string } | null;
   readonly subscription: PaymentSubscriptionSource | null;
@@ -49,11 +32,6 @@ export function paymentSourceLabel(payment: {
   return "Retainer (deleted)";
 }
 
-/**
- * The record a payment bills, as an entity-link target: the service term's
- * service, the project, or the retainer. Null only for a retainer payment
- * whose subscription has since been deleted — there is nothing left to open.
- */
 export function paymentSourceEntity(payment: {
   readonly projectId?: string | null;
   readonly subscriptionId?: string | null;
@@ -65,19 +43,12 @@ export function paymentSourceEntity(payment: {
   return null;
 }
 
-/** Where the payment is managed from: the project's financials, or /maintenance. */
 export function paymentSourceHref(payment: {
   readonly project: { readonly id: string } | null;
 }): string {
-  return payment.project ? `/projects/${payment.project.id}?tab=financials` : "/maintenance";
+  return payment.project ? `/projects/${payment.project.id}#money` : "/maintenance";
 }
 
-/**
- * How money arrived, as the operator records it. `Payment.method` is free text
- * in the schema; these are the values the Record-payment dialog writes, and
- * the labels every list reads them back with. An older row holding another
- * string is shown verbatim rather than hidden.
- */
 export const PAYMENT_METHODS = ["bank_transfer", "cash", "cheque", "other"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 

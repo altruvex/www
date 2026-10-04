@@ -2,14 +2,6 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { statusOf, toneClasses, toneDot, type RegistryName, type Tone } from "@/lib/status";
 
-/**
- * StatusPill — the ONE way a state is rendered anywhere in this app.
- *
- * Two visual weights on purpose:
- *   variant="pill"  a bordered tint. Use in headers, detail pages, filters.
- *   variant="dot"   a 6px dot + label. Use inside table rows, where twenty
- *                   tinted pills stacked vertically become a rash.
- */
 export function StatusPill({
   registry,
   value,
@@ -73,7 +65,6 @@ export function ToneBadge({
   );
 }
 
-/** Numeric count badge for sidebar items and tabs. */
 export function CountBadge({
   count,
   tone = "neutral",

@@ -1,5 +1,6 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
+import { DirectionalLink } from "@/components/shared/directional-link";
 import { Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { getCommercialCta } from "@/lib/config/commercial";
@@ -68,13 +69,19 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             >
               {t("sub")}
             </p>
-            <div data-arrive="element">
+            <div
+              data-arrive="element"
+              className="flex flex-col items-start gap-x-8 gap-y-4 sm:flex-row sm:items-center"
+            >
               <CtaButtonGroup
                 primary={{ href: primaryCta.href, label: tCTAs("projectRange") }}
-                secondary={{ href: secondaryCta.href, label: tCTAs("realBuild") }}
-                secondaryArrow
-                secondaryClassName="hero-glass-pill"
               />
+              <DirectionalLink
+                href={secondaryCta.href}
+                className="min-h-6 rounded-ctl-sm text-base text-foreground/80 transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+              >
+                {tCTAs("realBuild")}
+              </DirectionalLink>
             </div>
           </div>
         </Container>

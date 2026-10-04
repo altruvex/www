@@ -1,19 +1,3 @@
-/**
- * The GitHub → Altruvex translation, checked without a database.
- *
- * Everything asserted here is a decision rather than plumbing: which repository
- * spellings name the same repository, which workflow conclusions count as a
- * failure, which branch is production, and which GitHub states must write
- * nothing at all. Those are the parts that would go wrong quietly — a mapping
- * that files every pull-request build as a production build still renders
- * perfectly.
- *
- *   cd apps/admin && bun run verify:github
- *
- * The webhook route itself — signature rejection, product matching, the refusal
- * to guess between two products sharing a repository — is exercised against a
- * real database by `verify:engineering`.
- */
 import { createHmac } from "node:crypto";
 import {
   buildFromWorkflowRun,
@@ -24,8 +8,12 @@ import {
   deploymentFromStatusEvent,
   environmentFromBranch,
   environmentFromGithubName,
+  deploymentStatusSchema,
   githubRepoSlug,
+  isAcknowledgeOnlyEvent,
+  isGithubAppDelivery,
   verifyGithubSignature,
+  workflowRunSchema,
 } from "@/lib/github";
 
 let fail = 0;
@@ -206,10 +194,6 @@ console.log("\nRepository import mode");
 
 console.log("\nImport matching");
 {
-  // The listing marks a repository as taken by comparing normalised slugs, so
-  // the same repository written two different ways on two products must still
-  // collide. This is the check that stops the UI from cheerfully offering a
-  // repository the webhook receiver will then refuse to attribute.
   const onProductA = githubRepoSlug("git@github.com:Altruvex/site.git");
   const fromGithub = githubRepoSlug("https://github.com/altruvex/site");
   check(
@@ -227,9 +211,6 @@ console.log("\nFramework detection");
   const pkg = (deps: Record<string, string>, dev: Record<string, string> = {}) =>
     JSON.stringify({ dependencies: deps, devDependencies: dev });
 
-  // The ordering rule. Every meta-framework depends on the library beneath it,
-  // so a wrong order reports every Next.js site in the studio as "React" — a
-  // plausible-looking answer nobody would think to question.
   check(
     frameworkFromManifest("package.json", pkg({ next: "^16.2.10", react: "19.0.0" })).framework ===
       "Next.js 16",
@@ -291,10 +272,6 @@ console.log("\nFramework detection");
     "and cites nothing when it found nothing",
   );
 
-  // A build tool is not a framework. `laravel/laravel` ships Vite for its
-  // assets and a composer.json that says Laravel; reading only the first
-  // manifest answered "Vite", which is a confidently wrong answer and worse
-  // than the blank field it replaced.
   check(
     frameworkFromManifest("package.json", pkg({}, { vite: "^8.0.0" })).confidence === "low",
     "Vite is a low-confidence signal, never allowed to win on its own",
@@ -327,6 +304,73 @@ console.log("\nFramework detection");
   check(majorVersion(">=18") === "18", "a bare minimum reads as its major");
   check(majorVersion("*") === null, "a wildcard has no major");
   check(majorVersion(undefined) === null, "a missing range has no major");
+}
+
+console.log("\nGitHub App deliveries");
+{
+  const installation = { id: 81234567, node_id: "MDIzOkludGVncmF0aW9uSW5zdGFsbGF0aW9uODEyMzQ1Njc=" };
+  const appRun = JSON.stringify({
+    action: "completed",
+    installation,
+    repository: { full_name: "Altruvex/Site", default_branch: "main", private: true },
+    organization: { login: "Altruvex" },
+    sender: { login: "ali" },
+    workflow_run: {
+      id: 77,
+      name: "CI",
+      head_branch: "feature/x",
+      head_sha: "abc1234",
+      status: "completed",
+      conclusion: "success",
+      run_started_at: "2026-10-04T09:00:00Z",
+      updated_at: "2026-10-04T09:02:00Z",
+      actor: { login: "ali" },
+      head_commit: { message: "Ship it" },
+      pull_requests: [],
+    },
+  });
+  const appSig = `sha256=${createHmac("sha256", secret).update(appRun, "utf8").digest("hex")}`;
+  check(verifyGithubSignature(appRun, appSig, secret), "an App delivery verifies with the same secret and header");
+
+  const parsedRun = workflowRunSchema.safeParse(JSON.parse(appRun));
+  check(parsedRun.success, "an App workflow_run parses — `installation` and extra keys are tolerated");
+  if (parsedRun.success) {
+    const fromApp = buildFromWorkflowRun(parsedRun.data);
+    check(fromApp.externalId === "gh-run-77", "an App run keeps the same idempotency key as a webhook run");
+    check(fromApp.status === "SUCCEEDED" && fromApp.environment === "PREVIEW", "and translates identically");
+    check(
+      githubRepoSlug(parsedRun.data.repository.full_name) === githubRepoSlug("https://github.com/altruvex/site"),
+      "the App's full_name matches a product's Repository field whatever the case",
+    );
+  }
+
+  const appDeploy = {
+    action: "created",
+    installation,
+    repository: { full_name: "altruvex/site", default_branch: "main" },
+    deployment: { id: 5, environment: "production", sha: "abc1234", ref: "main" },
+    deployment_status: { state: "success", environment: "production", environment_url: "https://x.com" },
+  };
+  const parsedDeploy = deploymentStatusSchema.safeParse(appDeploy);
+  check(parsedDeploy.success, "an App deployment_status parses");
+  if (parsedDeploy.success) {
+    check(
+      deploymentFromStatusEvent(parsedDeploy.data)?.externalId === "gh-deployment-5",
+      "and becomes the same deployment a webhook would write",
+    );
+  }
+
+  check(isGithubAppDelivery(JSON.parse(appRun)), "a payload with installation.id is an App delivery");
+  check(!isGithubAppDelivery({ repository: { full_name: "a/b" } }), "a repository webhook payload is not");
+  check(!isGithubAppDelivery({ installation: { id: "1" } }), "a non-numeric installation id is not trusted as one");
+  check(!isGithubAppDelivery(null), "nor is an empty body");
+
+  for (const event of ["ping", "installation", "installation_repositories"]) {
+    check(isAcknowledgeOnlyEvent(event), `${event} is acknowledged and writes nothing`);
+  }
+  for (const event of ["workflow_run", "deployment_status", ""]) {
+    check(!isAcknowledgeOnlyEvent(event), `${event || "an unnamed event"} is not short-circuited`);
+  }
 }
 
 console.log(fail === 0 ? "\ngithub — all checks passed.\n" : `\n${fail} check(s) FAILED.\n`);

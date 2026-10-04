@@ -3,12 +3,6 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toneDot, type Tone } from "@/lib/status";
 
-/**
- * Horizontal stage bars. Chosen over a funnel chart on purpose: the funnel
- * shape encodes the same number twice (width AND position) and makes small
- * stages unreadable. A labelled bar with the count at the end is scannable and
- * survives dark mode, greyscale and a phone (docs/design-principles.md C4).
- */
 export function FunnelBars({
   stages,
   hrefBase,

@@ -10,6 +10,7 @@ import {
 } from "@/components/sections/pricing-model/pricing-spine";
 import { ModelSectionHead } from "@/components/sections/pricing-model/section-head";
 import { ServiceInvestmentRegister } from "@/components/sections/pricing-model/service-investment-register";
+import { SECTION_TITLE } from "@/components/sections/pricing-model/type";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/shared/container";
@@ -35,6 +36,7 @@ import {
   type ServiceInvestmentRowView,
 } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
+import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 import PricingHero from "./page-client";
 
@@ -49,7 +51,6 @@ export async function generateMetadata({
   return generateRouteMetadata(locale, metaKey, pathSuffix);
 }
 
-/** One project type, from its lowest published cell to its highest. */
 function serviceRange(
   pricing: ResolvedPricing,
   serviceId: keyof ResolvedPricing["services"],
@@ -65,7 +66,6 @@ function serviceRange(
   );
 }
 
-/** The offer JSON-LD, one Offer per service line in the register. */
 function offerEntries(
   rows: readonly ServiceInvestmentRowView[],
   buildRange: string,
@@ -86,12 +86,16 @@ function ModelSection({
   index,
   title,
   lead,
+  ground = "plain",
+  opening = "none",
   children,
 }: {
   id: string;
   index: number;
   title: string;
   lead: string;
+  ground?: "plain" | "band";
+  opening?: "none" | "rule";
   children: ReactNode;
 }) {
   const headingId = `${id}-heading`;
@@ -99,15 +103,24 @@ function ModelSection({
     <section
       id={id}
       aria-labelledby={headingId}
-      className="scroll-mt-24 border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+      className={cn(
+        "scroll-mt-24 pt-(--section-y-top) pb-(--section-y-bottom)",
+        ground === "band" && "bg-surface",
+      )}
     >
       <Container>
+        {opening === "rule" ? (
+          <div aria-hidden className="mb-(--heading-gap) border-t-2 border-foreground" />
+        ) : null}
         <ModelSectionHead index={index} id={headingId} title={title} lead={lead} />
         {children}
       </Container>
     </section>
   );
 }
+
+const PRICING_RHYTHM =
+  "[--section-y-top:clamp(9rem,min(20vh,14vw),15rem)] [--section-y-bottom:clamp(9rem,min(20vh,14vw),15rem)] [--heading-gap:clamp(5.5rem,min(12vh,8.4vw),9.5rem)] [--section-block:clamp(7.5rem,min(16vh,11.2vw),11.5rem)] max-[759px]:[--section-y-top:6.5rem] max-[759px]:[--section-y-bottom:6.5rem] max-[759px]:[--heading-gap:3.5rem] max-[759px]:[--section-block:5rem]";
 
 export default async function PricingPage({
   params,
@@ -217,11 +230,12 @@ export default async function PricingPage({
           ),
         ]}
       />
-      <PricingHero />
-
+      <div className={PRICING_RHYTHM}>
+      <PricingHero floorLabel={example.floorLabel} />
       <ModelSection
         id="how"
         index={1}
+        ground="band"
         title={tm("sections.how.title")}
         lead={tm("sections.how.lead")}
       >
@@ -237,7 +251,6 @@ export default async function PricingPage({
           })}
         />
       </ModelSection>
-
       <ModelSection
         id="cost"
         index={2}
@@ -246,19 +259,19 @@ export default async function PricingPage({
       >
         <CostSplit locale={locale} data={split} />
       </ModelSection>
-
       <ModelSection
         id="investment"
         index={3}
+        opening="rule"
         title={tm("sections.invest.title")}
         lead={tm("sections.invest.lead")}
       >
         <ServiceInvestmentRegister rows={rows} />
       </ModelSection>
-
       <ModelSection
         id="terms"
         index={4}
+        ground="band"
         title={tm("sections.terms.title")}
         lead={tm("sections.terms.lead")}
       >
@@ -269,16 +282,19 @@ export default async function PricingPage({
           warrantyDays={tokens.warrantyDays ?? ""}
         />
       </ModelSection>
-
-      <FaqSection namespace="pricing.faq" />
-
+      <div id="faq" className="scroll-mt-24">
+        <FaqSection namespace="pricing.faq" titleClassName={SECTION_TITLE} />
+      </div>
       <SectionEndCta
         title={tm("close.title")}
         body={tm("close.lead")}
         primary="projectRange"
         secondary="technicalCall"
         world="blue"
+        size="display"
+        titleClassName={`${SECTION_TITLE} max-w-[14ch]`}
       />
+      </div>
     </>
   );
 }

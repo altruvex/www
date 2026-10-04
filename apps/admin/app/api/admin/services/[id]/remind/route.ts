@@ -6,24 +6,9 @@ import { recordActivity } from "@/lib/activity-log";
 import { clientLabel, SERVICE_INCLUDE, toServiceRow } from "@/lib/client-services";
 import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
 import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
+import { isOneTime } from "@/lib/service-lifecycle";
 import { reminderDraftFor } from "@/lib/service-reminder";
 import { badRequest, conflict, HttpError, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
-
-/**
- * Telling a client their service is about to renew — the notice the contract
- * promises before each renewal date.
- *
- * Sent by a person, never on a timer. A reminder carries a price and a date
- * to a client; an automated one that went out after the operator had already
- * agreed a different price on the phone is worse than none. The renewal alerts
- * are what make sure the person remembers.
- *
- * Two channels, and they claim different things:
- *   email            sent through the mail transport, recorded as an EmailMessage.
- *   whatsapp-manual  the operator sent it from their own WhatsApp (the Business
- *                    API has no renewal template). Recorded as a manual record —
- *                    no WhatsAppMessage row, because this app sent nothing.
- */
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +26,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
     include: { ...SERVICE_INCLUDE, client: { select: { id: true, name: true, company: true, email: true, phone: true } } },
   });
   if (!service) throw notFound("That service no longer exists.");
+  if (isOneTime(service)) throw conflict("A one-time service never renews — there is nothing to remind about.");
   if (service.status !== "ACTIVE" || !service.expiresAt) {
     throw conflict("Only a registered service with an expiry date has a renewal to remind about.");
   }

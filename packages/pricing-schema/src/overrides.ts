@@ -12,22 +12,6 @@ import { COMMERCIAL_TERMS, USD_EXCHANGE_RATE, type CommercialTerms, type Exchang
 import { SERVICES, type Service } from "./services";
 import type { BillingCycle, EntityStatus } from "./types";
 
-/**
- * Admin-editable overrides layered over the shipped defaults.
- *
- * The constants in this package stay the source of truth for *shape* and for
- * the last-deployed values; a row here is what an operator has actually
- * changed. Resolution is `override ?? default` throughout, which buys three
- * things: an empty store renders exactly what the last deploy shipped, a
- * datastore outage degrades to those values instead of taking prices off the
- * marketing site, and the CI literal guard keeps working because the numbers
- * still live in this package.
- *
- * This module is deliberately pure — no database, no I/O. Each app reads its
- * own store and hands the result to `resolvePricing`, so `apps/www` does not
- * inherit a database dependency it does not otherwise need.
- */
-
 export interface CellOverride {
   readonly serviceId: ServiceId;
   readonly complexityId: ComplexityId;
@@ -43,14 +27,6 @@ export interface MaintenanceOverride {
   readonly price: number | null;
   readonly requestsPerCycle: number | null;
   readonly overageHourlyRate: number | null;
-  /**
-   * Internal margin planning. Optional on purpose: a consumer with no business
-   * reading margin data — the public site — omits it entirely, so the figure
-   * never enters that process at all rather than merely going unrendered.
-   *
-   * `undefined` means "not supplied, keep the default"; `null` means an
-   * operator explicitly cleared it.
-   */
   readonly internalHourEquivalent?: number | null;
   readonly status: EntityStatus;
   readonly version: number;
@@ -95,7 +71,6 @@ export interface PricingOverrides {
   readonly terms?: TermsOverride | null;
 }
 
-/** The fully resolved pricing world: defaults with any overrides applied. */
 export interface ResolvedPricing {
   readonly services: Readonly<Record<ServiceId, Service>>;
   readonly maintenance: Readonly<Record<MaintenancePlanId, MaintenancePlan>>;
@@ -103,21 +78,13 @@ export interface ResolvedPricing {
   readonly addons: Readonly<Record<AddonId, Addon>>;
   readonly terms: CommercialTerms;
   readonly exchangeRate: ExchangeRate;
-  /** True when at least one override was applied. */
   readonly overridden: boolean;
 }
 
 function isoDate(value: string): `${number}-${number}-${number}` {
-  // Callers pass an ISO date; the branded type is presentational only.
   return value.slice(0, 10) as `${number}-${number}-${number}`;
 }
 
-/**
- * Applies overrides to the shipped defaults.
- *
- * Nothing is mutated and unknown ids are ignored rather than throwing: a row
- * left behind by a renamed id must not be able to break a pricing page.
- */
 export function resolvePricing(
   overrides: PricingOverrides = {},
 ): ResolvedPricing {
@@ -222,11 +189,4 @@ export function resolvePricing(
   return { services, maintenance, consulting, addons, terms, exchangeRate, overridden };
 }
 
-/**
- * Shipped defaults, resolved once. The fallback for every view and for the
- * estimate engine when a caller has no datastore to read overrides from.
- *
- * Lives here rather than in `views.ts` because `compute.ts` needs it too, and
- * views already import compute — defining it there would close a cycle.
- */
 export const DEFAULT_PRICING: ResolvedPricing = resolvePricing();

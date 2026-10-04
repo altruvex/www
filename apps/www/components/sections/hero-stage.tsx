@@ -5,20 +5,6 @@ import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
 import { gsap } from "@/lib/utils/gsap";
 import { useRef, type ReactNode } from "react";
 
-/*
- * The homepage hero stage: an inset dark island (scene-inverted, locked dark in
- * both themes) that the header reads as "over the stage" (data-nav-stage).
- *
- * The entrance is not here. The photo settles and the copy rises through the
- * first-paint arrival (data-arrive in hero-section.server.tsx,
- * lib/motion/utils/arrival.ts): CSS that starts with first paint, so it never
- * waits for this component to hydrate. What this adds is the living stage
- * afterwards: the photo trails the scroll (0.85×) and, on fine pointers,
- * drifts up to 12px against the cursor. Both move [data-hero-photo] /
- * [data-hero-zoom], never the arriving <img> inside them.
- */
-
-/** Pointer parallax reach, px each way. The photo layer carries 14px of slack. */
 const PARALLAX_REACH = 12;
 
 export function HeroStage({
@@ -37,7 +23,6 @@ export function HeroStage({
     const zoom = stage.querySelector<HTMLElement>("[data-hero-zoom]");
     const mm = gsap.matchMedia();
 
-    // Scroll: the photo trails the stage (stage 1.0, photo 0.85).
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       if (!photo) return;
       gsap.to(photo, {
@@ -53,7 +38,6 @@ export function HeroStage({
       });
     });
 
-    // Pointer: fine pointers only.
     mm.add("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)", () => {
       if (!zoom) return;
       const toX = gsap.quickTo(zoom, "x", { duration: MOTION.duration.base, ease: MOTION.ease.strong });
@@ -84,7 +68,6 @@ export function HeroStage({
       ref={stageRef}
       data-scene="inverted"
       data-scene-lock="dark"
-      data-nav-invert
       data-nav-stage
       className={className}
     >

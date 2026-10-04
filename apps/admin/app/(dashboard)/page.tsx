@@ -1,53 +1,88 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { getDashboardData, STAGE_TONE } from "@/lib/dashboard-data";
-import { getActionCentre } from "@/lib/action-center";
+import { getDashboardData, getNowEngineering } from "@/lib/dashboard-data";
+import { getActionCentre, roleCanOpen } from "@/lib/action-center";
+import { getOperator } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { getShellBadges } from "@/lib/shell-data";
+import { listRenewals } from "@/lib/renewals";
 import { slackConfigured } from "@/lib/slack";
-import { requireAdminPage } from "@/lib/require-admin";
-import { toProductRole } from "@/lib/rbac";
 import { canSeeFinance } from "@/lib/nav";
-import { statusOf } from "@/lib/status";
-import { moneyByCurrency, percent, sumByCurrency } from "@/lib/format";
+import { entityHref } from "@/lib/entity-links";
+import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { paymentCurrency } from "@/lib/payment-source";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel, PanelLink } from "@/components/os/panel";
-import { StatTile } from "@/components/os/stat-tile";
 import { ActionCenter } from "@/components/os/action-center";
 import { SlackButton } from "@/components/os/slack-button";
-import { FunnelBars } from "@/components/os/funnel";
-import { EmptyInline } from "@/components/os/empty-state";
+import { CountStrip, type CountStripCell } from "@/components/today/count-strip";
+import { NowAside } from "@/components/today/now-aside";
 import { RevenuePanel } from "@/components/today/revenue-panel";
-import { EngineeringStatus } from "@/components/today/engineering-status";
-import { DeliveryPanel } from "@/components/today/delivery-panel";
 import { ActivityFeed } from "@/components/today/activity-feed";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Today. Read top to bottom it answers, in order: what needs a person now,
- * is anything broken, how is the money, what is shipping, and what just
- * happened. Every number is a link to the list it counts.
- *
- * Money is shown only to roles that may see finance; the counts that do not
- * reveal an amount stay visible to everyone.
- */
 export default async function DashboardPage() {
-  const session = await requireAdminPage();
-  const finance = canSeeFinance(
-    toProductRole((session.user as { role?: string }).role),
-  );
+  const denied = await gateRoute("/");
+  if (denied) return denied;
 
-  const [data, actions] = await Promise.all([
-    getDashboardData({ finance }),
-    getActionCentre(),
+  const operator = await getOperator();
+  const role = operator?.role;
+  const finance = canSeeFinance(role);
+  const sees = (href: string) => roleCanOpen(role, href);
+  const seesEngineering = sees("/deployments");
+  const seesRenewals = sees("/renewals");
+  const seesWork = sees("/projects");
+  const seesAudit = sees("/audit");
+
+  const [data, actions, shell, engineering, renewals] = await Promise.all([
+    getDashboardData({ finance, audit: seesAudit }),
+    getActionCentre(role),
+    getShellBadges(operator?.session.user.id ?? ""),
+    seesEngineering ? getNowEngineering() : Promise.resolve(null),
+    seesRenewals ? listRenewals() : Promise.resolve(null),
   ]);
+  const badges = shell.badges;
 
-  const withCurrency = (rows: typeof data.paymentsOverdue) =>
-    rows.map((p) => ({ amount: p.amount, currency: paymentCurrency(p) }));
-  const overdueTotal = sumByCurrency(withCurrency(data.paymentsOverdue));
-  const hasOverdue = data.paymentsOverdue.length > 0;
+  const overdueTotal = sumByCurrency(
+    data.paymentsOverdue.map((p) => ({ amount: p.amount, currency: paymentCurrency(p) })),
+  );
   const urgent = actions.filter((a) => a.tone === "danger").length;
+  const renewalRows = renewals?.filter((row) => row.needsAttention) ?? null;
+
+  const allCells: CountStripCell[] = [
+    { label: "New leads", value: badges.leads ?? 0, href: "/leads?stage=new", tone: "info" },
+    { label: "Unanswered chats", value: badges.inbox ?? 0, href: "/inbox?filter=waiting", tone: "warning" },
+    {
+      label: "Awaiting reply",
+      value: badges.proposals ?? 0,
+      href: "/proposals?status=open",
+      tone: "warning",
+      sub: finance && data.openProposals.count > 0 ? moneyByCurrency(data.openProposals.byCurrency, true) : undefined,
+    },
+    { label: "Awaiting signature", value: badges.contracts ?? 0, href: "/contracts?status=SENT", tone: "warning" },
+    { label: "Meetings pending", value: badges.meetings ?? 0, href: "/calendar", tone: "info" },
+    { label: "Tasks due · 7d", value: data.tasksDueCount, href: "/tasks?due=week", tone: "warning" },
+    { label: "Open incidents", value: badges.incidents ?? 0, href: "/incidents", tone: "danger" },
+    {
+      label: "Failed builds · 24h",
+      value: engineering?.failedBuildCount ?? 0,
+      href: "/deployments?tab=builds&status=FAILED&window=24h",
+      tone: "danger",
+    },
+    {
+      label: "Overdue payments",
+      value: badges.payments ?? 0,
+      href: "/payments?status=overdue",
+      tone: "danger",
+      sub: finance && data.paymentsOverdue.length > 0 ? moneyByCurrency(overdueTotal, true) : undefined,
+    },
+    { label: "Renewals due", value: badges.renewals ?? 0, href: "/renewals?attention=1", tone: "warning" },
+  ];
+  const cells = allCells.filter(
+    (cell) => sees(cell.href) && (cell.label !== "Failed builds · 24h" || engineering !== null),
+  );
 
   return (
     <div className="space-y-4">
@@ -55,157 +90,76 @@ export default async function DashboardPage() {
         title="Today"
         description={
           actions.length === 0
-            ? "Nothing is waiting on a person right now."
+            ? "Nothing you can act on is waiting right now."
             : `${actions.length} item${actions.length === 1 ? " needs" : "s need"} a decision${urgent ? `, ${urgent} of them already late` : ""}.`
         }
         actions={
-          <Button asChild variant="outline">
-            <Link href="/pipeline">
-              Open pipeline
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
+          sees("/pipeline") ? (
+            <Button asChild variant="outline">
+              <Link href="/pipeline">
+                Open pipeline
+                <ArrowRight className="size-3.5 rtl:-scale-x-100" aria-hidden />
+              </Link>
+            </Button>
+          ) : null
         }
       />
 
-      {/* ---- 1. what needs a human. Above every metric, on purpose. ---- */}
-      <Panel
-        title="Needs attention"
-        description="Ranked by urgency across every module; each item opens its record"
-        action={
-          <div className="flex items-center gap-3">
-            {slackConfigured() && (
-              <SlackButton
-                action="digest"
-                label="Post to Slack"
-                pendingLabel="Posting…"
-              />
-            )}
-            {actions.length > 0 ? (
-              <PanelLink href="/actions">All {actions.length}</PanelLink>
-            ) : null}
-          </div>
-        }
-        flush
-      >
-        <ActionCenter items={actions} limit={8} />
-      </Panel>
+      <CountStrip cells={cells} label="Queues — each opens its list" />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile
-          label="New leads"
-          value={data.newLeads}
-          sub="Not yet contacted"
-          tone={data.newLeads > 0 ? "info" : "neutral"}
-          href="/leads"
-        />
-        <StatTile
-          label="Awaiting signature"
-          value={data.contractsAwaitingSignature}
-          sub="Contracts sent, not signed"
-          tone={data.contractsAwaitingSignature > 0 ? "warning" : "neutral"}
-          href="/contracts?status=SENT"
-        />
-        <StatTile
-          label="Open proposals"
-          value={data.openProposals.count}
-          sub={
-            finance
-              ? moneyByCurrency(data.openProposals.byCurrency, true)
-              : "Sent, not answered"
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <Panel
+          title="Needs you"
+          description="Ranked by urgency across every area you can act on; each row opens its record"
+          action={
+            <div className="flex items-center gap-3">
+              {slackConfigured() && (
+                <SlackButton action="digest" label="Post to Slack" pendingLabel="Posting…" />
+              )}
+              {actions.length > 0 ? <PanelLink href="/actions">All {actions.length}</PanelLink> : null}
+            </div>
           }
-          tone={data.openProposals.count > 0 ? "warning" : "neutral"}
-          href="/proposals"
+          className="xl:col-start-1"
+          flush
+        >
+          <ActionCenter items={actions} limit={8} />
+        </Panel>
+
+        <NowAside
+          className={finance ? "xl:row-span-3" : "xl:row-span-2"}
+          engineering={engineering}
+          renewals={
+            renewalRows ? { rows: renewalRows.slice(0, 5), total: renewalRows.length } : null
+          }
+          work={
+            seesWork
+              ? {
+                  byPhase: data.activeProjectsByPhase,
+                  launches: data.upcomingLaunches,
+                  launchCount: data.upcomingLaunchCount,
+                  tasks: data.tasksDue,
+                  taskCount: data.tasksDueCount,
+                }
+              : null
+          }
         />
-        {finance ? (
-          <StatTile
-            label="Overdue payments"
-            value={data.paymentsOverdue.length}
-            sub={
-              hasOverdue ? moneyByCurrency(overdueTotal, true) : "Nothing late"
-            }
-            tone={hasOverdue ? "danger" : "success"}
-            href="/payments?status=overdue"
-          />
-        ) : (
-          <StatTile
-            label="Signed this month"
-            value={data.signedThisMonth.count}
-            tone={data.signedThisMonth.count > 0 ? "success" : "neutral"}
-            href="/contracts?status=SIGNED"
-          />
+
+        {finance && (
+          <div className="min-w-0 xl:col-start-1">
+            <RevenuePanel />
+          </div>
         )}
+
+        <div className="min-w-0 xl:col-start-1">
+          <ActivityFeed
+            events={data.activity.map((e) => ({
+              ...e,
+              linkable: sees(entityHref(e.entityType, e.entityId) ?? "/"),
+            }))}
+            auditHref={seesAudit ? "/audit" : null}
+          />
+        </div>
       </div>
-
-      {/* ---- 2. is anything broken ------------------------------------ */}
-      <EngineeringStatus />
-
-      {/* ---- 3. revenue (owned by the revenue domain) ------------------ */}
-      {finance && <RevenuePanel />}
-
-      <Panel
-        title="Lead pipeline"
-        description={`Win rate ${percent(data.pipeline.winRate)}${
-          data.pipeline.avgCycleDays != null
-            ? ` · ${data.pipeline.avgCycleDays}d average cycle`
-            : ""
-        }`}
-        action={<PanelLink href="/pipeline">Board</PanelLink>}
-      >
-        {data.pipeline.total === 0 ? (
-          <EmptyInline>
-            No clients yet. The first website submission that gets converted
-            will appear here as a New lead.
-          </EmptyInline>
-        ) : (
-          <>
-            <FunnelBars
-              stages={data.pipeline.stages.map((s) => ({
-                id: s.stage,
-                label: statusOf("pipelineStage", s.stage).label,
-                count: s.count,
-                tone: STAGE_TONE[s.stage],
-              }))}
-              hrefBase="/pipeline?stage="
-            />
-            {(data.pipeline.lost > 0 || data.pipeline.spam > 0) && (
-              <p className="mt-3 flex gap-3 border-t border-border pt-2 font-mono text-micro text-subtle-foreground">
-                <Link
-                  href="/pipeline?stage=LOST"
-                  className="hover:text-foreground"
-                >
-                  LOST {data.pipeline.lost}
-                </Link>
-                <Link
-                  href="/pipeline?stage=SPAM"
-                  className="hover:text-foreground"
-                >
-                  SPAM {data.pipeline.spam}
-                </Link>
-              </p>
-            )}
-            {finance && (
-              <p className="mt-2 text-meta text-muted-foreground">
-                Weighted{" "}
-                {moneyByCurrency(data.pipeline.weightedValueByCurrency, true)} ·{" "}
-                {moneyByCurrency(data.pipeline.openValueByCurrency, true)} open
-              </p>
-            )}
-          </>
-        )}
-      </Panel>
-
-      {/* ---- 4. what is shipping -------------------------------------- */}
-      <DeliveryPanel
-        byPhase={data.activeProjectsByPhase}
-        launches={data.upcomingLaunches}
-        launchCount={data.upcomingLaunchCount}
-        tasks={data.tasksDue}
-        taskCount={data.tasksDueCount}
-      />
-
-      {/* ---- 5. what just happened ------------------------------------ */}
-      <ActivityFeed events={data.activity} />
     </div>
   );
 }

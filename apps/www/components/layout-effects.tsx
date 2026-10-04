@@ -1,6 +1,7 @@
 "use client";
 
 import { CommandPaletteHost } from "@/components/interactive/command-palette-host";
+import { useLoading } from "@/components/providers/loading-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
@@ -22,14 +23,6 @@ const ExitIntentLazy = dynamic(
   { ssr: false },
 );
 
-const InitialLoaderLazy = dynamic(
-  () =>
-    import("@/components/shared/initial-loader").then((m) => ({
-      default: m.InitialLoader,
-    })),
-  { ssr: false },
-);
-
 const SmoothScrollLazy = dynamic(
   () =>
     import("@/components/providers/smooth-scroll-provider").then((m) => ({
@@ -41,11 +34,12 @@ const SmoothScrollLazy = dynamic(
 export function LayoutEffects({ children }: { children: ReactNode }) {
   const idleMounted = useIdleMount({ timeout: 1200 });
   const hasInteracted = useFirstInteraction();
-  const shouldMountNonCritical = idleMounted || hasInteracted;
+  const { isInitialLoadComplete } = useLoading();
+  const shouldMountNonCritical =
+    isInitialLoadComplete && (idleMounted || hasInteracted);
 
   return (
     <>
-      <InitialLoaderLazy />
       {shouldMountNonCritical ? <SmoothScrollLazy /> : null}
       <ThemeProvider
         attribute="class"

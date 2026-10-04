@@ -1,10 +1,14 @@
+import { gateRoute } from "@/lib/page-gate";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { NewClientForm } from "./new-client-form";
 
 export const dynamic = "force-dynamic";
 
-export default function NewClientPage() {
+export default async function NewClientPage() {
+  const denied = await gateRoute("/clients/new", "a new client");
+  if (denied) return denied;
+
   return (
     <div className="space-y-4">
       <PageHeader

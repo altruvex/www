@@ -555,7 +555,6 @@ function buildCaseStudySchema(
   };
 }
 
-/** Strips MDX/markdown syntax down to plain prose for articleBody/wordCount. */
 function plainTextFromMdx(mdx: string): string {
   return mdx
     .replace(/```[\s\S]*?```/g, " ")
@@ -628,11 +627,6 @@ function buildArticleSchema(
   };
 }
 
-/**
- * No numeric star ratings exist for these testimonials, so reviewRating /
- * AggregateRating are intentionally omitted rather than fabricated —
- * unsupported rating schema risks a Google manual action.
- */
 function buildReviewSchema(
   locale: SupportedLocale,
   testimonial: Testimonial,
@@ -790,7 +784,6 @@ export function buildPageSchemas(
 
   if (pageKey === "services") {
     schemas.push(
-      // Same order as the /services index rows (services-index/data.ts).
       SCHEMAS.service(loc, "serviceInterfaceDesign"),
       SCHEMAS.service(loc, "serviceDevelopment"),
       SCHEMAS.service(loc, "serviceConsulting"),
@@ -842,12 +835,6 @@ function stripFaqMarkup(text: string): string {
     .trim();
 }
 
-/**
- * FAQ answers reach search engines as machine-readable text, so a stale price
- * here is published as a structured offer, not just prose. Pricing tokens are
- * filled centrally rather than at each of the five call sites — one of which
- * would eventually be forgotten.
- */
 export function buildFaqPageSchemas(
   entries: FaqEntry[],
   locale: string = "en",

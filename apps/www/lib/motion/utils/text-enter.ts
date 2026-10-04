@@ -1,11 +1,3 @@
-/**
- * The site's text entrance, as a reusable core.
- *
- * `useText` plays this once, when its element scrolls in. The split and the
- * entrance live here, so every section title on the site moves the same way:
- * the same split, the same travel, scale and blur, the same ease, the same
- * Arabic rules. There is no second text animation to drift from the first.
- */
 import { gsap } from "@/lib/utils/gsap";
 import { MOTION, resolveEase, type MotionEase } from "../tokens";
 import { readMotionEnv } from "./env";
@@ -16,14 +8,9 @@ type TextSplit = "char" | "word" | "line";
 interface TextTargets {
   targets: Element[];
   isRTL: boolean;
-  /** Latin only — Arabic fragments are never blurred. */
   scriptAllowsBlur: boolean;
 }
 
-/**
- * Splits `el` once and returns its fragments. A second call reuses the
- * existing split instead of rewriting the DOM again.
- */
 export function splitText(el: HTMLElement, splitBy: TextSplit): TextTargets {
   if (!el.hasAttribute("data-m-split")) {
     el.setAttribute("data-m-split", splitBy);
@@ -58,11 +45,6 @@ interface TextEnterShape {
   delay?: number;
 }
 
-/**
- * The from-state and to-state of the entrance for a set of fragments. Blur is
- * a one-shot enter effect only: fine pointer, unconstrained device, Latin
- * script, and at most `MOTION.text.blurCap` fragments.
- */
 export function textEnterVars(
   split: TextTargets,
   shape: TextEnterShape,

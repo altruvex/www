@@ -22,21 +22,7 @@ import Image, { getImageProps } from "next/image";
 import type { ReactNode } from "react";
 import { HeroHeadline, HeroReveal } from "../hero-motion-wrappers";
 
-/*
- * /services/development as a dark studio — chosen by Ali 2026-09-19 from three
- * working prototypes (docs/prototypes/2026-09-services-development/c.html),
- * after Trionn and Produx (Awwwards SOTD) — then repainted the same day in the
- * house identity at Ali's request: the page follows the theme (no forced dark
- * scene), grounds alternate background / surface bands, containers use the
- * edge system (border-subtle + panel radii), cards carry the world tick, the
- * numerals are mono, liquid glass sits over imagery where it can read, and the
- * close is the shared SectionEndCta. The one colour moment is the word track's
- * wipe into the page's world (local-accent), which follows the theme too.
- */
-
 const DEV_CASE = "altruvex-site";
-
-/* ── Hero ─────────────────────────────────────────────────────────────── */
 
 function StudioHero() {
   const t = useTranslations("serviceDetails.development");
@@ -44,13 +30,11 @@ function StudioHero() {
   const tCTAs = useTranslations("commercial.ctas");
   const primary = getCommercialCta("projectRange");
   const secondary = getCommercialCta("architecture");
-  /* The picture settles: opens from an inset, then eases out of its zoom. */
   const mediaRef = useMediaSettle<HTMLDivElement>();
 
   return (
-    <section aria-labelledby="dev-hero-heading" className="bg-background pt-28 pb-(--section-y-bottom) lg:pt-32">
+    <section aria-labelledby="dev-hero-heading" className="bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        {/* Type first, at the scale the word track and the facts use later. */}
         <div className="grid gap-y-8 lg:grid-cols-12 lg:items-end lg:gap-x-10">
           <div className="lg:col-span-7">
             <HeroReveal delay={0.1} className="mb-6">
@@ -84,8 +68,6 @@ function StudioHero() {
           </div>
         </div>
 
-        {/* The picture as one large container (panel-lg), glass card on it —
-            the same pairing the ownership card uses further down. */}
         <div
           ref={mediaRef}
           className="relative mt-14 aspect-[4/5] overflow-hidden rounded-panel-lg sm:aspect-[16/10] lg:mt-20 lg:aspect-[21/9]"
@@ -115,8 +97,6 @@ function StudioHero() {
   );
 }
 
-/* ── Statement: read word by word as it scrolls ───────────────────────── */
-
 function StudioStatement() {
   const s = useTranslations("serviceDetails.development.studio.statement");
   const textRef = useWordRead<HTMLParagraphElement>();
@@ -140,12 +120,9 @@ function StudioStatement() {
   );
 }
 
-/* ── Word track: the method, crossing the screen ──────────────────────── */
-
 function StudioWords() {
   const s = useTranslations("serviceDetails.development.studio.words");
   const items = s.raw("items") as string[];
-  /* The track crosses the screen; the world layer rises through it. */
   const rootRef = useKineticTrack<HTMLElement>();
 
   const track = (
@@ -168,8 +145,6 @@ function StudioWords() {
         <div aria-hidden data-track className="text-foreground motion-reduce:hidden">
           {track}
         </div>
-        {/* The page's world rising through the same words: a second copy on
-            local-accent, revealed from below as the track crosses. */}
         <div
           aria-hidden
           data-wipe
@@ -177,7 +152,6 @@ function StudioWords() {
         >
           <div data-track>{track}</div>
         </div>
-        {/* Reduced motion: the method as one still line, wrapped. */}
         <Container className="hidden motion-reduce:block">
           <Eyebrow>{s("caption")}</Eyebrow>
           <p className="mt-6 text-[clamp(2.5rem,7vw,6rem)] leading-[1.05] font-light tracking-[-0.04em] text-foreground rtl:tracking-normal">
@@ -189,14 +163,11 @@ function StudioWords() {
   );
 }
 
-/* ── Tiles: the picture assembles from its pieces ─────────────────────── */
-
 const COLS = 6;
 const ROWS = 4;
 
 function StudioTiles() {
   const s = useTranslations("serviceDetails.development.studio.tiles");
-  /* The picture assembles from its pieces as the runway scrolls. */
   const rootRef = useTileAssemble<HTMLElement>();
   const {
     props: { src },
@@ -215,8 +186,6 @@ function StudioTiles() {
                 key={i}
                 data-tile
                 aria-hidden
-                /* The four corner pieces carry the block's corner, so the
-                   assembled picture lands as one large container (panel-lg). */
                 className={cn(
                   "absolute bg-cover will-change-transform",
                   r === 0 && c === 0 && "rounded-ss-panel-lg",
@@ -237,7 +206,6 @@ function StudioTiles() {
             );
           })}
         </div>
-        {/* White on the photograph in both themes: the image is dark by construction. */}
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <div className="overflow-hidden px-4 pb-[0.12em]">
             <h2
@@ -254,8 +222,6 @@ function StudioTiles() {
   );
 }
 
-/* ── Facts ────────────────────────────────────────────────────────────── */
-
 function Tick() {
   return <span aria-hidden className="block h-[3px] w-5 rounded-full bg-local-accent" />;
 }
@@ -264,7 +230,6 @@ function StudioFacts() {
   const s = useTranslations("serviceDetails.development.studio.facts");
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const gridRef = useSectionCardGrid<HTMLDivElement>();
-  /* The speed figure is the flagship case study's own metric, not a literal. */
   const speed = getCaseStudyBySlug(DEV_CASE)?.metrics[0]?.value ?? "";
 
   const card = "flex flex-col overflow-hidden rounded-panel-sm border border-border-subtle bg-card";
@@ -284,7 +249,7 @@ function StudioFacts() {
           <p className="mt-4 text-muted-foreground">{s("description")}</p>
         </div>
 
-        <div ref={gridRef} className="mx-auto mt-14 grid max-w-6xl gap-4 md:grid-cols-3">
+        <div ref={gridRef} className="mx-auto mt-(--heading-gap) grid max-w-6xl gap-4 md:grid-cols-3">
           <article className={card}>
             <div className="relative aspect-[4/3]">
               <Image src="/images/services/image-3.png" alt="" fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
@@ -297,7 +262,6 @@ function StudioFacts() {
             </div>
           </article>
 
-          {/* Ownership: the figure on liquid glass, over the brand image it frosts. */}
           <article className={cn(card, "relative min-h-96 justify-end p-4")}>
             <Image src="/brand/branding/image5.png" alt="" fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
             <div className="liquid-glass-panel relative flex flex-col gap-4 rounded-panel-inset p-5">
@@ -325,8 +289,6 @@ function StudioFacts() {
   );
 }
 
-/** `investment` is the server-rendered service-investment line, printed
-    after the facts. */
 export function DevStudio({ investment }: { investment?: ReactNode }) {
   return (
     <>

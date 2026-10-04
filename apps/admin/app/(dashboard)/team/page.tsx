@@ -10,6 +10,7 @@ import { ToneBadge } from "@/components/ui/badge";
 import { getOperator } from "@/lib/authorize";
 import { emailTransport } from "@/lib/email";
 import { dateTime, when } from "@/lib/format";
+import { gateRoute } from "@/lib/page-gate";
 import {
   ACTIONS,
   ROLES,
@@ -28,14 +29,10 @@ import { MemberSessions, type SessionRow } from "./session-list";
 
 export const dynamic = "force-dynamic";
 
-/**
- * People, roles and sessions. Everything an operator can do here is a server
- * action in `_actions/team.ts` that re-checks the capability; the page only
- * decides what to draw. Nothing on it is a secret: the session token is
- * compared on the server and never sent, and a member's second factor is
- * shown as on or off, never as a key or a code.
- */
 export default async function TeamPage() {
+  const denied = await gateRoute("/team", "the team");
+  if (denied) return denied;
+
   const now = new Date();
   const [operator, users, sessions] = await Promise.all([
     getOperator(),
@@ -77,7 +74,6 @@ export default async function TeamPage() {
   const canRemove = can(myRole, "delete", "team");
   const transportConfigured = emailTransport() !== "none";
 
-  // The token decides which row is "this browser", then stays on the server.
   const sessionsByUser = new Map<string, SessionRow[]>();
   for (const s of sessions) {
     const row: SessionRow = {
@@ -140,60 +136,68 @@ export default async function TeamPage() {
             const self = member.id === me;
             const label = member.name ?? member.email;
             return (
-              <li key={member.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
-                <Avatar name={label} size="lg" />
-                <div className="min-w-0 flex-1 basis-48">
-                  <p className="flex items-center gap-2 truncate text-base font-medium">
-                    {member.name ?? "Unnamed"}
-                    {self && <span className="telemetry text-subtle-foreground">you</span>}
-                  </p>
-                  <p className="truncate text-meta text-muted-foreground">{member.email}</p>
+              <li key={member.id} className="space-y-2 px-3 py-2.5">
+                <div className="flex items-start gap-3">
+                  <Avatar name={label} size="lg" />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-base font-medium">
+                      <span className="truncate">{member.name ?? "Unnamed"}</span>
+                      {self && <span className="telemetry text-subtle-foreground">you</span>}
+                      {!member.hasPassword && (
+                        <ToneBadge tone="warning">Invited — no password yet</ToneBadge>
+                      )}
+                      <ToneBadge tone={member.twoFactorEnabled ? "success" : "neutral"}>
+                        {member.twoFactorEnabled ? "2FA on" : "2FA off"}
+                      </ToneBadge>
+                    </p>
+                    <p className="truncate text-meta text-muted-foreground">{member.email}</p>
+                    <p className="font-mono text-micro text-subtle-foreground">
+                      {member.lastLoginAt ? `last sign-in ${when(member.lastLoginAt)}` : "never signed in"}
+                      {" · "}joined {dateTime(member.createdAt)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {!member.hasPassword && (
-                    <ToneBadge tone="warning">Invited — no password yet</ToneBadge>
+                <div className="flex flex-wrap items-center gap-1.5 ps-0 sm:ps-12">
+                  {canManage && !self ? (
+                    <RoleSelect
+                      userId={member.id}
+                      name={label}
+                      role={member.productRole}
+                      allowOwner={myRole === "OWNER"}
+                    />
+                  ) : (
+                    <ToneBadge tone={member.productRole ? "info" : "neutral"}>
+                      {member.productRole ? ROLE_LABELS[member.productRole] : member.role}
+                    </ToneBadge>
                   )}
-                  <ToneBadge tone={member.twoFactorEnabled ? "success" : "neutral"}>
-                    {member.twoFactorEnabled ? "2FA on" : "2FA off"}
-                  </ToneBadge>
+
+                  <MemberSessions
+                    userId={member.id}
+                    label={label}
+                    sessions={member.sessions}
+                    canRevoke={self || canManage}
+                    own={self}
+                  />
+
+                  {canManage && transportConfigured && (
+                    <AccessLinkButton userId={member.id} kind={member.hasPassword ? "reset" : "invite"} />
+                  )}
+
+                  {canRemove && !self && (
+                    <span className="ms-auto">
+                      <DeleteRecordButton
+                        entity="user"
+                        id={member.id}
+                        label={label}
+                        size="icon-sm"
+                        aria-label={`Remove ${label}`}
+                      >
+                        {null}
+                      </DeleteRecordButton>
+                    </span>
+                  )}
                 </div>
-
-                <div className="text-end">
-                  <p className="font-mono text-micro text-subtle-foreground">
-                    {member.lastLoginAt ? `last sign-in ${when(member.lastLoginAt)}` : "never signed in"}
-                  </p>
-                  <p className="font-mono text-micro text-subtle-foreground">joined {dateTime(member.createdAt)}</p>
-                </div>
-
-                <MemberSessions
-                  userId={member.id}
-                  label={label}
-                  sessions={member.sessions}
-                  canRevoke={self || canManage}
-                  own={self}
-                />
-
-                {canManage && !self ? (
-                  <RoleSelect userId={member.id} role={member.productRole} allowOwner={myRole === "OWNER"} />
-                ) : (
-                  <ToneBadge tone={member.productRole ? "info" : "neutral"}>
-                    {member.productRole ? ROLE_LABELS[member.productRole] : member.role}
-                  </ToneBadge>
-                )}
-
-                {canManage && transportConfigured && (
-                  <AccessLinkButton userId={member.id} kind={member.hasPassword ? "reset" : "invite"} />
-                )}
-
-                {/* Removing people is an Owner action, and the server refuses
-                    the two cases that would lock this app: your own account,
-                    and the last superadmin. */}
-                {canRemove && !self && (
-                  <DeleteRecordButton entity="user" id={member.id} label={label} size="icon-sm">
-                    {null}
-                  </DeleteRecordButton>
-                )}
               </li>
             );
           })}
@@ -201,6 +205,7 @@ export default async function TeamPage() {
       </Panel>
 
       <Panel
+        className="bg-none bg-card"
         title="Permission matrix"
         description="What each role may do. This grid is generated from the same table the server checks."
         flush

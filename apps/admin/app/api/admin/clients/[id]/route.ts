@@ -3,7 +3,8 @@ import { z } from "zod";
 import { prisma, Prisma, SubmissionStatus, Priority, normalizePhone } from "@repo/database";
 import { recordChange } from "@/lib/activity-log";
 import { httpUrl } from "@/lib/http-url";
-import { badRequest, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
+import { derivedStatusMessage, WRITABLE_STATUSES } from "@/lib/status";
+import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
 export const GET = withAdmin<{ id: string }>(async (_request, { params }) => {
   const client = await prisma.client.findUnique({
@@ -37,8 +38,6 @@ export const GET = withAdmin<{ id: string }>(async (_request, { params }) => {
   return ok({ client });
 }, { can: ["view", "client"] });
 
-// An optional text field: an empty string clears it, so a form can send every
-// field it shows without the operator having to know which ones were set.
 const optionalText = (max: number) => z.string().trim().max(max).optional();
 
 const updateClientSchema = z.object({
@@ -47,7 +46,6 @@ const updateClientSchema = z.object({
   email: z.email().optional().or(z.literal("")),
   company: optionalText(200),
   industry: optionalText(120),
-  // Rendered as a link on the client hub, so the scheme is restricted.
   website: httpUrl.optional().or(z.literal("")),
   country: optionalText(120),
   address: optionalText(500),
@@ -61,7 +59,6 @@ const updateClientSchema = z.object({
 
 type UpdateInput = z.infer<typeof updateClientSchema>;
 
-/** The nullable text columns: an empty string from the form stores NULL. */
 const NULLABLE_TEXT = [
   "email",
   "company",
@@ -76,6 +73,9 @@ const NULLABLE_TEXT = [
 export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }) => {
   const input: UpdateInput = await readJson(request, updateClientSchema);
   const { id } = params;
+  if (input.status !== undefined && !WRITABLE_STATUSES.has(input.status)) {
+    throw conflict(derivedStatusMessage(input.status));
+  }
 
   const before = await prisma.client.findUnique({
     where: { id },
@@ -103,8 +103,6 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
     const phone = normalizePhone(input.phone);
     if (!phone) throw badRequest("Enter a valid phone number");
     if (phone !== before.phone) {
-      // Same reason as on create: two records on one number split the
-      // WhatsApp thread and the lead history between them.
       const clash = await prisma.client.findFirst({
         where: { phone, id: { not: id } },
         select: { id: true, name: true, company: true },
@@ -132,9 +130,6 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
 
   const client = await prisma.client.update({ where: { id }, data: updateData });
 
-  // Before and after are read from the stored rows, not from the request, so
-  // the diff shows normalised values (the phone as stored, NULL for a cleared
-  // field) and recordChange keeps only the fields that really changed.
   const keys = Object.keys(updateData) as (keyof typeof before)[];
   await recordChange({
     action: "client.updated",

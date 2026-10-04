@@ -1,18 +1,33 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { AlertTriangle, FileSignature, FileText, Inbox, Mail, MessageCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  FileSignature,
+  FileText,
+  Inbox,
+  Mail,
+  MessageCircle,
+} from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState, EmptyInline } from "@/components/os/empty-state";
 import { ThreadList } from "@/components/os/thread-list";
-import { FilterChip } from "@/components/os/data-table";
+import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
 import { EntityLink } from "@/components/os/entity-link";
 import { entityHref } from "@/lib/entity-links";
 import { StatusPill } from "@/components/ui/badge";
 import { statusOf } from "@/lib/status";
-import { getConversationThreads, getClientConversation, type ConversationItem } from "@/lib/threads";
+import {
+  getConversationThreads,
+  getClientConversation,
+  type ConversationItem,
+} from "@/lib/threads";
 import { dateTime, when } from "@/lib/format";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui";
 import { ChannelTabs } from "./channel-tabs";
@@ -23,98 +38,213 @@ export const dynamic = "force-dynamic";
 const DESCRIPTION =
   "Every conversation across WhatsApp and email, one row per client, waiting-on-you first. Replying never means leaving the system to find who they are.";
 
-export default async function InboxPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ client?: string }>;
-}) {
-  const { client: clientId } = await searchParams;
-  if (clientId) return <ClientConversation clientId={clientId} />;
+type Filter = "waiting" | "failed";
+type ChannelFilter = "whatsapp" | "email";
 
-  const threads = await getConversationThreads();
-  const unanswered = threads.filter((t) => t.unanswered);
-  const failed = threads.filter((t) => t.failed > 0);
+interface InboxParams {
+  client?: string;
+  filter?: string;
+  channel?: string;
+  q?: string;
+}
 
-  return (
-    <div className="space-y-4">
-      <PageHeader title="Inbox" description={DESCRIPTION} tabs={<ChannelTabs active="all" />} />
+export default async function InboxPage({ searchParams }: { searchParams: Promise<InboxParams> }) {
+  const denied = await gateRoute("/inbox", "the inbox");
+  if (denied) return denied;
+  const canSeeIntegrations = can(await currentRole(), "view", "integration");
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatTile
-          label="Needs a reply"
-          value={unanswered.length}
-          sub={unanswered.length ? "Client spoke last on WhatsApp" : "Everyone has been answered"}
-          tone={unanswered.length ? "danger" : "success"}
-        />
-        <StatTile label="Active threads" value={threads.length} sub="Clients with any message" />
-        <StatTile
-          label="Delivery failures"
-          value={failed.length}
-          sub={failed.length ? "Clients with a message that never arrived" : "All delivered"}
-          tone={failed.length ? "danger" : "success"}
-        />
-      </div>
+  const params = await searchParams;
+  const filter: Filter | null =
+    params.filter === "waiting" || params.filter === "failed" ? params.filter : null;
+  const channel: ChannelFilter | null =
+    params.channel === "whatsapp" || params.channel === "email" ? params.channel : null;
+  const q = params.q?.trim().toLowerCase() ?? "";
+  const clientId = params.client || null;
 
-      {threads.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title="No conversations yet"
-          body="Threads appear as soon as a proposal or contract is sent by WhatsApp or email, or a client writes in on WhatsApp. Each one stays attached to the client it belongs to."
-          action={
-            <>
+  const [allThreads, conversation] = await Promise.all([
+    getConversationThreads(),
+    clientId ? getClientConversation(clientId) : Promise.resolve(null),
+  ]);
+  if (clientId && !conversation) notFound();
+
+  const unanswered = allThreads.filter((t) => t.unanswered);
+  const failed = allThreads.filter((t) => t.failed > 0);
+  const threads = allThreads.filter(
+    (t) =>
+      (filter !== "waiting" || t.unanswered) &&
+      (filter !== "failed" || t.failed > 0) &&
+      (!channel || t.channels.includes(channel)) &&
+      (!q ||
+        t.clientName.toLowerCase().includes(q) ||
+        t.phone.toLowerCase().includes(q) ||
+        t.lastMessage.toLowerCase().includes(q)),
+  );
+  const scoped = Boolean(filter || channel || q);
+
+  const listQuery = new URLSearchParams();
+  if (filter) listQuery.set("filter", filter);
+  if (channel) listQuery.set("channel", channel);
+  if (q) listQuery.set("q", params.q!.trim());
+  const listQs = listQuery.toString();
+  const listHref = listQs ? `/inbox?${listQs}` : "/inbox";
+  const hrefFor = (thread: { clientId: string }) => {
+    const next = new URLSearchParams(listQuery);
+    next.set("client", thread.clientId);
+    return `/inbox?${next}`;
+  };
+
+  const list =
+    allThreads.length === 0 ? (
+      <EmptyState
+        icon={Inbox}
+        title="No conversations yet"
+        body="Threads appear as soon as a proposal or contract is sent by WhatsApp or email, or a client writes in on WhatsApp. Each one stays attached to the client it belongs to."
+        action={
+          <>
+            {canSeeIntegrations && (
               <Button asChild variant="outline">
                 <Link href="/integrations">Check the connections</Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link href="/clients">Open a client</Link>
-              </Button>
-            </>
-          }
+            )}
+            <Button asChild variant="outline">
+              <Link href="/clients">Open a client</Link>
+            </Button>
+          </>
+        }
+      />
+    ) : (
+      <div className="space-y-2">
+        <FilterBar search={{ placeholder: "Search clients and messages…" }} label="Inbox filters">
+          <FilterChip param="filter" label="All" count={allThreads.length} />
+          <FilterChip param="filter" value="waiting" label="Waiting on you" count={unanswered.length} />
+          <FilterChip param="filter" value="failed" label="Delivery failed" count={failed.length} />
+          <FilterChip
+            param="channel"
+            value="whatsapp"
+            label="WhatsApp"
+            icon={<MessageCircle />}
+            count={allThreads.filter((t) => t.channels.includes("whatsapp")).length}
+          />
+          <FilterChip
+            param="channel"
+            value="email"
+            label="Email"
+            icon={<Mail />}
+            count={allThreads.filter((t) => t.channels.includes("email")).length}
+          />
+        </FilterBar>
+        <ActiveFilters
+          labels={{ filter: "Show", channel: "Channel", q: "Search" }}
+          valueLabels={{
+            filter: { waiting: "Waiting on you", failed: "Delivery failed" },
+            channel: { whatsapp: "WhatsApp", email: "Email" },
+          }}
         />
-      ) : (
-        <>
-          {unanswered.length > 0 && (
-            <Panel
-              title="Waiting on you"
-              description="The client spoke last on WhatsApp — longest wait first"
-              flush
+        <Panel
+          title="Conversations"
+          description={
+            filter === "waiting"
+              ? "The client spoke last on WhatsApp — longest wait first"
+              : "Waiting first, then latest activity"
+          }
+          flush
+        >
+          {threads.length === 0 ? (
+            <EmptyInline
+              action={
+                <Button asChild variant="outline" size="sm">
+                  <Link href={clientId ? `/inbox?client=${clientId}` : "/inbox"}>Show all</Link>
+                </Button>
+              }
             >
-              <ThreadList threads={unanswered} />
-            </Panel>
+              No conversation matches this filter.
+            </EmptyInline>
+          ) : (
+            <ThreadList threads={threads} hrefFor={hrefFor} selectedId={clientId ?? undefined} />
           )}
-          <Panel title="All conversations" description="Waiting first, then latest activity" flush>
-            <ThreadList threads={threads} />
-          </Panel>
+        </Panel>
+        {!scoped && (
           <p className="text-meta text-subtle-foreground">
-            Email is outbound only here — a client cannot be &quot;waiting&quot; on an email thread because
-            replies never arrive in this app.
+            Email is outbound only here — a client cannot be &quot;waiting&quot; on an email thread
+            because replies never arrive in this app.
           </p>
-        </>
-      )}
-    </div>
-  );
-}
-
-async function ClientConversation({ clientId }: { clientId: string }) {
-  const conversation = await getClientConversation(clientId);
-  if (!conversation) notFound();
-  const { client, items, whatsappCount, emailCount } = conversation;
+        )}
+      </div>
+    );
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Inbox"
         description={DESCRIPTION}
+        tabs={<ChannelTabs active="all" clientId={conversation?.client.id} />}
         actions={
-          <Button asChild variant="outline">
-            <Link href={`/clients/${client.id}`}>Open client</Link>
-          </Button>
+          conversation ? (
+            <Button asChild variant="outline">
+              <Link href={`/clients/${conversation.client.id}`}>Open client</Link>
+            </Button>
+          ) : undefined
         }
-        tabs={<ChannelTabs active="all" clientId={client.id} />}
       />
 
+      {!conversation && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatTile
+            label="Needs a reply"
+            value={unanswered.length}
+            sub={unanswered.length ? "Client spoke last on WhatsApp" : "Everyone has been answered"}
+            tone={unanswered.length ? "danger" : "success"}
+            href={unanswered.length ? "/inbox?filter=waiting" : undefined}
+          />
+          <StatTile label="Active threads" value={allThreads.length} sub="Clients with any message" />
+          <StatTile
+            label="Delivery failures"
+            value={failed.length}
+            sub={failed.length ? "Clients with a message that never arrived" : "All delivered"}
+            tone={failed.length ? "danger" : "success"}
+            href={failed.length ? "/inbox?filter=failed" : undefined}
+          />
+        </div>
+      )}
+
+      {conversation ? (
+        <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)] lg:items-start">
+          <div className="hidden min-w-0 lg:block">{list}</div>
+          <div className="min-w-0">
+            <ClientConversation
+              conversation={conversation}
+              backHref={listHref}
+            />
+          </div>
+        </div>
+      ) : (
+        list
+      )}
+    </div>
+  );
+}
+
+function ClientConversation({
+  conversation,
+  backHref,
+}: {
+  conversation: NonNullable<Awaited<ReturnType<typeof getClientConversation>>>;
+  backHref: string;
+}) {
+  const { client, items, whatsappCount, emailCount } = conversation;
+
+  return (
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <FilterChip label="Client" value={client.name} clearHref="/inbox" />
+        <Button asChild variant="ghost" size="sm" className="lg:hidden">
+          <Link href={backHref}>
+            <ArrowLeft />
+            Back to inbox
+          </Link>
+        </Button>
+        <EntityLink type="client" id={client.id} className="text-base font-medium">
+          {client.name}
+        </EntityLink>
         <StatusPill registry="submissionStatus" value={client.status} variant="dot" />
         <span className="font-mono text-micro text-subtle-foreground">
           {whatsappCount} WhatsApp · {emailCount} email
@@ -167,7 +297,8 @@ async function ClientConversation({ clientId }: { clientId: string }) {
         <div className="space-y-3">
           <p className="max-w-prose text-base text-muted-foreground">
             <span className="font-medium text-foreground">WhatsApp.</span> Reply from the WhatsApp
-            thread — it shows whether the 24-hour session window is open.
+            thread — it shows whether the 24-hour session window is open. There is no free-form
+            compose in this app by design: outside that window only approved templates send.
           </p>
           <EmailReplyNote />
         </div>
@@ -235,11 +366,10 @@ function Message({ item }: { item: ConversationItem }) {
           </div>
         )}
         {item.failureReason && <p className="mt-1 text-meta text-danger">{item.failureReason}</p>}
-        <p
-          className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-micro text-subtle-foreground"
-          title={dateTime(item.at)}
-        >
-          {when(item.at)}
+        <p className="mt-1 flex flex-wrap items-center gap-1.5 font-mono text-micro text-subtle-foreground">
+          <time dateTime={item.at.toISOString()} title={dateTime(item.at)}>
+            {when(item.at)}
+          </time>
           {!inbound && (
             <>
               <span aria-hidden>·</span>

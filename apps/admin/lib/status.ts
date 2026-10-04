@@ -1,20 +1,3 @@
-/**
- * The status registry — one place, six tones.
- *
- * Design law (docs/admin-os-design-brief.md): every enum in the Prisma schema
- * maps into exactly ONE of six semantic tones. A seventh colour, or the same
- * enum rendered two different ways on two different screens, is a design bug.
- * Screens never write `bg-success/10` by hand; they call `statusOf()`.
- *
- * Tone meanings — these are about WHAT THE OPERATOR MUST DO, not about mood:
- *   neutral   inert. Nothing is happening and nothing should.
- *   info      in flight, on the happy path, no human needed.
- *   progress  actively being worked by someone.
- *   warning   a human needs to act soon, or this will go wrong.
- *   danger    already wrong: failed, lost, overdue, rejected.
- *   success   terminal-good: won, signed, paid, launched.
- */
-
 export type Tone =
   | "neutral"
   | "info"
@@ -26,11 +9,9 @@ export type Tone =
 export interface StatusDef {
   label: string;
   tone: Tone;
-  /** Short operator-facing gloss, shown in tooltips and the action centre. */
   hint?: string;
 }
 
-/** Tailwind classes per tone. The only place tone becomes colour. */
 export const toneClasses: Record<Tone, string> = {
   neutral: "text-neutral border-neutral/25 bg-neutral/10",
   info: "text-info border-info/25 bg-info/10",
@@ -40,7 +21,6 @@ export const toneClasses: Record<Tone, string> = {
   success: "text-success border-success/25 bg-success/10",
 };
 
-/** Solid dot colour, for dense rows where a pill is too heavy. */
 export const toneDot: Record<Tone, string> = {
   neutral: "bg-neutral",
   info: "bg-info",
@@ -50,7 +30,6 @@ export const toneDot: Record<Tone, string> = {
   success: "bg-success",
 };
 
-/** Icon-only tone. Static class strings — Tailwind cannot see `text-${tone}`. */
 export const toneIcon: Record<Tone, string> = {
   neutral: "text-neutral",
   info: "text-info",
@@ -60,7 +39,6 @@ export const toneIcon: Record<Tone, string> = {
   success: "text-success",
 };
 
-/** Text-only tone, for numerals in stat tiles. */
 export const toneText: Record<Tone, string> = {
   neutral: "text-foreground",
   info: "text-info",
@@ -82,6 +60,22 @@ export const submissionStatus: Registry = {
   LOST: { label: "Lost", tone: "danger" },
   SPAM: { label: "Spam", tone: "neutral" },
 };
+
+export const WRITABLE_STATUSES: ReadonlySet<string> = new Set([
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFIED",
+  "LOST",
+  "SPAM",
+]);
+
+export function derivedStatusMessage(status: string): string {
+  return (
+    `“${status}” is derived from proposals and contracts and cannot be set directly. ` +
+    `Send a proposal or generate a contract instead.`
+  );
+}
 
 export const priority: Registry = {
   LOW: { label: "Low", tone: "neutral" },
@@ -126,6 +120,11 @@ export const projectPhase: Registry = {
   POST_LAUNCH_SUPPORT: { label: "Support", tone: "success" },
 };
 
+export const projectOrigin: Registry = {
+  CONTRACT: { label: "From contract", tone: "neutral" },
+  RECORDED: { label: "Recorded", tone: "info", hint: "Entered by hand — no proposal or contract" },
+};
+
 export const PROJECT_PHASE_ORDER = [
   "DISCOVERY",
   "DESIGN",
@@ -152,9 +151,6 @@ export const paymentMilestone: Registry = {
   RETAINER_RENEWAL: { label: "Retainer period", tone: "info", hint: "One billing period of a maintenance retainer" },
   OTHER: { label: "Other", tone: "neutral" },
 };
-
-/* -- Change requests --------------------------------------------------------
-   Transitions live in lib/change-requests.ts; this is only how each reads. */
 
 export const changeRequestStatus: Registry = {
   REQUESTED: { label: "Needs a quote", tone: "warning", hint: "Price it before anything else happens" },
@@ -226,11 +222,6 @@ export const budgetRange: Registry = {
   OVER_50K: { label: "Over 50k", tone: "success" },
 };
 
-/**
- * The derived client pipeline stage. This is not a database column — it is
- * computed in lib/pipeline.ts from the client's furthest-along artifact
- * (signed contract beats sent contract beats read proposal beats status).
- */
 export const pipelineStage: Registry = {
   NEW: { label: "New", tone: "info" },
   VIEWED: { label: "Viewed", tone: "neutral" },
@@ -243,12 +234,6 @@ export const pipelineStage: Registry = {
   LOST: { label: "Lost", tone: "danger" },
   SPAM: { label: "Spam", tone: "neutral" },
 };
-
-/* -- Engineering operations ------------------------------------------------
-   Tone here follows the same rule as everywhere else: it describes what the
-   operator must DO, not how the event feels. A failed build is `danger`
-   because someone has to fix it; a queued one is `neutral` because nobody
-   should touch it yet. */
 
 export const productStatus: Registry = {
   PLANNED: { label: "Planned", tone: "neutral", hint: "Agreed, not started" },
@@ -319,11 +304,6 @@ export const taskStatus: Registry = {
   CANCELLED: { label: "Cancelled", tone: "neutral" },
 };
 
-/* -- Subscription lifecycle -------------------------------------------------
-   Keyed by the statuses lib/subscription-lifecycle.ts derives. That module is
-   isomorphic (it has no Tailwind and no registry) and this one is the single
-   place a status becomes a colour, so the two are kept deliberately in step. */
-
 export const subscriptionStatus: Registry = {
   TRIALING: { label: "Trial", tone: "info" },
   ACTIVE: { label: "Active", tone: "success" },
@@ -343,20 +323,15 @@ export const renewalUrgency: Registry = {
   none: { label: "—", tone: "neutral" },
 };
 
-/* -- Client services ---------------------------------------------------------
-   Keyed on the DERIVED state from lib/service-lifecycle.ts, not the stored
-   status: "expired" is something the calendar says, never a column. */
-
 export const clientServiceState: Registry = {
   pending: { label: "Not registered", tone: "neutral", hint: "Agreed, no expiry date yet" },
   active: { label: "Active", tone: "success" },
+  "one-time": { label: "Owned", tone: "success", hint: "Bought once — never renews, never expires" },
   "renewing-soon": { label: "Renews soon", tone: "warning", hint: "Inside 30 days — invoice now" },
   urgent: { label: "Expiring", tone: "danger", hint: "Inside 7 days" },
   expired: { label: "Expired", tone: "danger", hint: "The expiry date has passed" },
   cancelled: { label: "Cancelled", tone: "neutral" },
 };
-
-/* -- Notifications --------------------------------------------------------- */
 
 export const notificationType: Registry = {
   NEW_CONTACT: { label: "New contact", tone: "info" },
@@ -375,6 +350,7 @@ export const REGISTRIES = {
   contractStatus,
   projectStatus,
   projectPhase,
+  projectOrigin,
   paymentStatus,
   paymentMilestone,
   changeRequestStatus,
@@ -404,11 +380,6 @@ export type RegistryName = keyof typeof REGISTRIES;
 
 const FALLBACK: StatusDef = { label: "Unknown", tone: "neutral" };
 
-/**
- * Resolve a raw enum value to its status definition. Unknown values degrade to
- * a readable title-cased label rather than rendering the raw SCREAMING_CASE —
- * a new enum member added to the schema will look plain, never broken.
- */
 export function statusOf(registry: RegistryName, value?: string | null): StatusDef {
   if (!value) return FALLBACK;
   const found = REGISTRIES[registry][value];
@@ -424,7 +395,6 @@ export function titleCase(value: string): string {
     .join(" ");
 }
 
-/** Options for a <select>/filter built straight off a registry. */
 export function optionsOf(registry: RegistryName) {
   return Object.entries(REGISTRIES[registry]).map(([value, def]) => ({
     value,

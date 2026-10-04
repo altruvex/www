@@ -25,10 +25,6 @@ export interface TeamOption {
   label: string;
 }
 
-/**
- * Triage of the raw record. Each control saves on change and says so — there is
- * no Save button to forget, and a refusal reverts the control to what is stored.
- */
 export function TriagePanel({
   submissionId,
   status,

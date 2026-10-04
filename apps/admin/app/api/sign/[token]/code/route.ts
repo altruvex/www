@@ -19,11 +19,6 @@ function fail(message: string, status: number, extra: Record<string, unknown> = 
   return NextResponse.json({ success: false, message, ...extra }, { status });
 }
 
-/**
- * Sends the designated signer a one-time code. Public by design — the caller
- * holds only the sign link — so it is limited per link and per IP, and the
- * code only ever goes to the address on the contract, never one supplied here.
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },

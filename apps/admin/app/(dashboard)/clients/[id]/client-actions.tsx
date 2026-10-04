@@ -3,86 +3,136 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronDown } from "lucide-react";
-import { Button } from "@repo/ui";
-import { LoadingIcon } from "@repo/ui";
+import { Check, ChevronDown } from "lucide-react";
 import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
+  LoadingIcon,
 } from "@repo/ui";
-import { optionsOf, statusOf } from "@/lib/status";
-import { setClientPriority, setClientStatus } from "@/app/(dashboard)/_actions/records";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { optionsOf, statusOf, WRITABLE_STATUSES } from "@/lib/status";
+import {
+  changeClientPriority,
+  changeClientStatus,
+} from "@/app/(dashboard)/_actions/clients";
 
-/**
- * The client-side island on an otherwise server-rendered detail page.
- * Everything here is a mutation; everything else on the page is server HTML.
- */
+const CLOSING = new Set(["LOST", "SPAM"]);
+
 export function StatusMenu({
   clientId,
+  clientLabel,
   status,
   priority,
+  canEdit,
 }: {
   clientId: string;
+  clientLabel: string;
   status: string;
   priority: string;
+  canEdit: boolean;
 }) {
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
+  const [closing, setClosing] = React.useState<string | null>(null);
 
-  function change(kind: "status" | "priority", value: string) {
+  function apply(kind: "status" | "priority", value: string) {
     startTransition(async () => {
-      try {
-        if (kind === "status") await setClientStatus(clientId, value);
-        else await setClientPriority(clientId, value);
-        toast.success(`${kind === "status" ? "Status" : "Priority"} updated`);
+      const result =
+        kind === "status"
+          ? await changeClientStatus(clientId, value)
+          : await changeClientPriority(clientId, value);
+      if (result.ok) {
+        toast.success(result.message ?? "Saved.");
         router.refresh();
-      } catch (error) {
-        toast.error("Could not update", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
+      } else {
+        toast.error(result.message);
       }
     });
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={busy}>
-          {busy ? <LoadingIcon size="sm" /> : null}
-          {statusOf("submissionStatus", status).label}
-          <ChevronDown className="size-3" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuLabel>Set status</DropdownMenuLabel>
-        {optionsOf("submissionStatus").map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            onSelect={() => change("status", option.value)}
-            destructive={option.value === "LOST" || option.value === "SPAM"}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={busy || !canEdit}
+            aria-label={`Status: ${statusOf("submissionStatus", status).label}. Change status or priority`}
           >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuLabel>Set priority</DropdownMenuLabel>
-        {optionsOf("priority").map((option) => (
-          <DropdownMenuItem
-            key={option.value}
-            onSelect={() => change("priority", option.value)}
-          >
-            {option.label}
-            {option.value === priority && <span className="ms-auto text-subtle-foreground">current</span>}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            {busy ? <LoadingIcon size="sm" /> : null}
+            {statusOf("submissionStatus", status).label}
+            <ChevronDown className="size-3" aria-hidden />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Set status</DropdownMenuLabel>
+          {optionsOf("submissionStatus")
+            .filter((option) => WRITABLE_STATUSES.has(option.value))
+            .map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                disabled={option.value === status}
+                onSelect={() =>
+                  CLOSING.has(option.value)
+                    ? setClosing(option.value)
+                    : apply("status", option.value)
+                }
+                destructive={CLOSING.has(option.value)}
+              >
+                {option.label}
+                {option.value === status && (
+                  <Check className="ms-auto size-3.5" aria-label="current" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Set priority</DropdownMenuLabel>
+          {optionsOf("priority").map((option) => (
+            <DropdownMenuItem
+              key={option.value}
+              disabled={option.value === priority}
+              onSelect={() => apply("priority", option.value)}
+            >
+              {option.label}
+              {option.value === priority && (
+                <Check className="ms-auto size-3.5" aria-label="current" />
+              )}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ConfirmDialog
+        open={closing !== null}
+        onOpenChange={(open) => !open && setClosing(null)}
+        tone="danger"
+        title={
+          closing === "SPAM"
+            ? `Mark ${clientLabel} as spam?`
+            : `Mark ${clientLabel} as lost?`
+        }
+        consequence={
+          closing === "SPAM"
+            ? "It leaves the leads list and the pipeline. Its records, notes and history stay."
+            : "It leaves the open pipeline. Its proposals, notes and history stay, and the status can be set back."
+        }
+        confirmLabel={closing === "SPAM" ? "Mark spam" : "Mark lost"}
+        onConfirm={async () => {
+          if (!closing) return;
+          const result = await changeClientStatus(clientId, closing);
+          if (result.ok) router.refresh();
+          return result;
+        }}
+      />
+    </>
   );
 }
 
-/** Fire-and-report POST buttons for the proposal / contract lifecycle. */
 export function LifecycleButton({
   label,
   busyLabel,
@@ -90,6 +140,7 @@ export function LifecycleButton({
   body,
   variant = "outline",
   confirm,
+  successMessage,
 }: {
   label: string;
   busyLabel: string;
@@ -97,36 +148,62 @@ export function LifecycleButton({
   body?: Record<string, unknown>;
   variant?: "outline" | "brand" | "default";
   confirm?: string;
+  successMessage?: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
 
-  async function run() {
-    if (confirm && !window.confirm(confirm)) return;
-    setBusy(true);
+  async function post(): Promise<{ ok: boolean; message?: string }> {
     try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: body ? { "Content-Type": "application/json" } : undefined,
         body: body ? JSON.stringify(body) : undefined,
       });
-      const data = (await response.json()) as { success?: boolean; message?: string };
+      const data = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
       if (!response.ok || !data.success) {
-        throw new Error(data.message || `Request failed (${response.status})`);
+        return {
+          ok: false,
+          message:
+            data.message ||
+            `The server refused (${response.status}). Nothing was changed.`,
+        };
       }
-      toast.success(label);
       router.refresh();
-    } catch (error) {
-      // §38: say what failed, what it means, and leave the record untouched.
-      toast.error(`${label} failed`, {
-        description:
-          error instanceof Error
-            ? `${error.message}. Nothing was changed — you can retry safely.`
-            : "Unknown error. Nothing was changed.",
-      });
-    } finally {
-      setBusy(false);
+      return {
+        ok: true,
+        message: data.message || successMessage || `${label}: done.`,
+      };
+    } catch {
+      return {
+        ok: false,
+        message:
+          "The request failed before the server answered. Nothing was changed — you can retry.",
+      };
     }
+  }
+
+  async function run() {
+    setBusy(true);
+    const result = await post();
+    setBusy(false);
+    if (result.ok) toast.success(result.message);
+    else toast.error(`${label} failed`, { description: result.message });
+  }
+
+  if (confirm) {
+    return (
+      <ConfirmDialog
+        trigger={<Button variant={variant}>{label}</Button>}
+        title={`${label}?`}
+        consequence={confirm}
+        confirmLabel={label}
+        onConfirm={post}
+      />
+    );
   }
 
   return (

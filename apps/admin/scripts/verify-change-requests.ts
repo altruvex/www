@@ -1,13 +1,3 @@
-/**
- * Pure-logic checks for change requests and project closure.
- *
- * Needs no database. The project page, the server actions and the close dialog
- * all derive transitions, quotes and the warranty window from
- * `lib/change-requests.ts`; pinning it here is what stops one of them from
- * quietly billing warranty work or letting a request skip its quote.
- *
- *   cd apps/admin && bun run verify:change-requests
- */
 import {
   billedAmountFor,
   canTransition,
@@ -40,8 +30,6 @@ const throws = (fn: () => unknown) => {
 
 const utc = (s: string) => new Date(`${s}T12:00:00.000Z`);
 
-// Rates are passed in, as the page and actions pass the resolved schema terms.
-// These are arbitrary fixtures, not Altruvex prices.
 const rates = { revisionHourlyRate: 7, revisionHourlyRateUsd: 3 };
 
 console.log("\nTransitions");

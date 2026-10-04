@@ -10,27 +10,12 @@ import {
   RENEWAL_SOON_DAYS,
 } from "@/lib/subscription-lifecycle";
 
-/**
- * Renewals across retainers and client services — the one place the
- * "what is coming due" question is answered. The sidebar badge, the Today page
- * and /renewals all read from here.
- */
-
-/**
- * The badge: retainers past due, in grace, expired or inside the alert window,
- * plus active services inside theirs or lapsed. Both are derived from the
- * clock, never from a stored flag, so the count is right whether or not the
- * renewal sweep has run.
- *
- * Retainers are read narrowly (five lifecycle fields, only those whose period
- * ends inside the window) and judged in memory, because PAST_DUE / GRACE /
- * EXPIRED do not exist as stored values to count.
- */
 export async function countRenewalsNeedingAttention(now: Date = new Date()): Promise<number> {
   const [services, retainers] = await Promise.all([
     prisma.clientService.count({
       where: {
         status: "ACTIVE",
+        termMonths: { not: null },
         expiresAt: { lte: new Date(now.getTime() + SERVICE_SOON_DAYS * DAY_MS) },
       },
     }),
@@ -51,37 +36,27 @@ export async function countRenewalsNeedingAttention(now: Date = new Date()): Pro
   return services + retainers.filter((sub) => needsRenewalAttention(sub, now)).length;
 }
 
-/** One line of the renewals table: a retainer period or a service term. */
 export interface RenewalRow {
-  /** Unique across both kinds — the table's row key. */
   readonly key: string;
   readonly kind: "retainer" | "service";
-  /** The record id, for `entityHref` and the renew actions. */
   readonly id: string;
   readonly entityType: "subscription" | "client_service";
   readonly clientId: string;
   readonly clientLabel: string;
-  /** "Growth · monthly" or "Domain · example.com". */
   readonly what: string;
   readonly detail: string | null;
   readonly amount: number | null;
   readonly currency: string;
-  /** Period end or term expiry, ISO. Null for a service with no date yet. */
   readonly dueAt: string | null;
-  /** Negative once the date has passed; null without a date. */
   readonly daysUntil: number | null;
-  /** The pill: which registry in lib/status.ts and which value. */
   readonly urgency: {
     readonly registry: "renewalUrgency" | "subscriptionStatus" | "clientServiceState";
     readonly value: string;
   };
-  /** Sorting weight: 0 needs a decision now, 1 soon, 2 scheduled. */
   readonly rank: 0 | 1 | 2;
   readonly needsAttention: boolean;
   readonly autoRenew: boolean;
-  /** Why the renew action is unavailable, or null when it can run. */
   readonly blocked: string | null;
-  /** What the renew action will invoice, worded for the confirm step. */
   readonly billingNote: string;
 }
 
@@ -110,9 +85,6 @@ function retainerRow(sub: AdminSubscription): RenewalRow {
     currency: sub.currency,
     dueAt: sub.renewsAt,
     daysUntil: sub.daysUntilRenewal,
-    // An EXPIRED retainer has no renewal urgency (it is not auto-renewing), so
-    // its derived status is the honest pill; every other retainer reads from
-    // the urgency registry the maintenance screen already uses.
     urgency: lapsed && effective === "EXPIRED"
       ? { registry: "subscriptionStatus", value: effective }
       : { registry: "renewalUrgency", value: sub.renewalUrgency },
@@ -151,26 +123,27 @@ function serviceRow(service: ServiceRow): RenewalRow {
     blocked:
       service.status === "CANCELLED"
         ? "Cancelled"
-        : service.state === "pending"
-          ? "Not registered yet — activate it from the services screen"
-          : null,
-    billingNote: service.projectId
-      ? `Extends the term by ${service.termMonths} month${service.termMonths === 1 ? "" : "s"} and opens a pending payment of ${service.currency} ${service.price} on ${service.projectName ?? "the project"}.`
-      : `Extends the term by ${service.termMonths} month${service.termMonths === 1 ? "" : "s"}. No payment is opened: the service is not on a project's schedule, so record it on the payments screen when invoiced.`,
+        : service.termMonths === null
+          ? "Bought once — nothing to renew"
+          : service.state === "pending"
+            ? "Not registered yet — activate it from the services screen"
+            : null,
+    billingNote:
+      service.termMonths === null
+        ? "A one-time service is billed once at purchase and never renews."
+        : service.projectId
+          ? `Extends the term by ${service.termMonths} month${service.termMonths === 1 ? "" : "s"} and opens a pending payment of ${service.currency} ${service.price} on ${service.projectName ?? "the project"}.`
+          : `Extends the term by ${service.termMonths} month${service.termMonths === 1 ? "" : "s"}. No payment is opened: the service is not on a project's schedule, so record it on the payments screen when invoiced.`,
   };
 }
 
-/**
- * Everything that renews, as one list: live retainers (cancelled ones have
- * nothing to renew) and dated services. Sorted by what needs a decision first,
- * then by date.
- */
 export async function listRenewals(
   options: { clientId?: string } = {},
   now: Date = new Date(),
 ): Promise<RenewalRow[]> {
   const where: Prisma.ClientServiceWhereInput = {
     status: { not: "CANCELLED" },
+    termMonths: { not: null },
     expiresAt: { not: null },
     ...(options.clientId ? { clientId: options.clientId } : {}),
   };

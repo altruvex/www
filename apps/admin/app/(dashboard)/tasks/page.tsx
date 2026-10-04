@@ -1,37 +1,71 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ListChecks } from "lucide-react";
 
 import { prisma } from "@repo/database";
 import { Button } from "@repo/ui";
 
 import { EmptyState } from "@/components/os/empty-state";
-import { FilterChip } from "@/components/os/data-table";
+import { EntityAudit } from "@/components/os/entity-audit";
 import { AlertBar } from "@/components/os/error-state";
+import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
+import { INSPECT_PARAM, inspectHref } from "@/components/os/inspect-sheet";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
+import { getOperator } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { TasksClient, type TaskItem } from "./tasks-client";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Delivery tasks (§5).
- *
- * These rows are real. The previous version of this screen derived three tasks
- * per project from its phase, gave them ids like `task-<projectId>-1`, and
- * answered "create" with a toast that wrote nothing — so an operator who
- * assigned work here lost it on refresh. Everything below is `ProjectTask`.
- */
-export default async function TasksPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ project?: string; task?: string }>;
-}) {
-  const { project: projectParam, task: taskParam } = await searchParams;
-  const projectId = projectParam?.trim() || null;
-  const taskId = taskParam?.trim() || null;
+const STATUS_LABEL: Record<string, string> = {
+  TODO: "To do",
+  IN_PROGRESS: "In progress",
+  BLOCKED: "Blocked",
+  DONE: "Done",
+  CANCELLED: "Cancelled",
+};
 
-  // `?project=` scopes the board and its counts to one project (the project
-  // page links here); `?task=` opens one task's sheet (entityHref for a task).
+type Params = {
+  project?: string;
+  task?: string;
+  inspect?: string;
+  status?: string;
+  assignee?: string;
+  due?: string;
+  q?: string;
+  view?: string;
+  new?: string;
+};
+
+const STATUS_VALUES = ["TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED"];
+
+export default async function TasksPage({ searchParams }: { searchParams: Promise<Params> }) {
+  const denied = await gateRoute("/tasks", "tasks");
+  if (denied) return denied;
+
+  const params = await searchParams;
+  if (params.task && !params[INSPECT_PARAM]) {
+    const { task, ...rest } = params;
+    redirect(inspectHref("/tasks", rest, task));
+  }
+
+  const operator = await getOperator();
+  const role = operator?.role;
+  const me = operator?.session.user.id ?? null;
+  const canEdit = can(role, "edit", "project");
+  const canCreate = can(role, "create", "project");
+  const canDelete = can(role, "delete", "project");
+
+  const projectId = params.project?.trim() || null;
+  const taskId = params[INSPECT_PARAM]?.trim() || null;
+  const status = STATUS_VALUES.includes(params.status ?? "") ? params.status! : null;
+  const assignee = params.assignee?.trim() || null;
+  const due = params.due === "overdue" || params.due === "week" ? params.due : null;
+  const q = params.q?.trim().toLowerCase() || null;
+  const view = params.view === "list" ? "list" : "board";
+
   const [tasks, projects, users, scopeProject] = await Promise.all([
     prisma.projectTask.findMany({
       where: projectId ? { projectId } : undefined,
@@ -48,8 +82,6 @@ export default async function TasksPage({
         },
       },
     }),
-    // Work is put against live projects. A closed project named in the scope
-    // is still offered, so its own tasks can be edited and re-homed.
     prisma.project.findMany({
       where: {
         OR: [{ status: { in: ["ACTIVE", "ON_HOLD"] } }, ...(projectId ? [{ id: projectId }] : [])],
@@ -92,14 +124,40 @@ export default async function TasksPage({
     createdAt: task.createdAt.toISOString(),
   }));
 
-  const openTasks = items.filter((t) => t.status !== "DONE" && t.status !== "CANCELLED");
-  const overdue = openTasks.filter((t) => t.dueDate && new Date(t.dueDate) < now);
+  const isOpen = (t: TaskItem) => t.status !== "DONE" && t.status !== "CANCELLED";
+  const isOverdue = (t: TaskItem) => isOpen(t) && t.dueDate != null && new Date(t.dueDate) < now;
+  const weekAhead = new Date(now.getTime() + 7 * 86_400_000);
+  const openTasks = items.filter(isOpen);
+  const overdue = openTasks.filter(isOverdue);
   const blocked = openTasks.filter((t) => t.status === "BLOCKED");
   const unassigned = openTasks.filter((t) => !t.assigneeId);
+  const done = items.filter((t) => t.status === "DONE").length;
+  const mine = me ? openTasks.filter((t) => t.assigneeId === me).length : 0;
   const missingTask = taskId != null && !items.some((t) => t.id === taskId);
 
-  // Projects the edit sheet may need that the live list leaves out: a task on
-  // a completed project still has to show its own project in the picker.
+  const shown = items.filter((t) => {
+    if (status ? t.status !== status : t.status === "CANCELLED") return false;
+    if (assignee === "none" ? t.assigneeId != null : assignee === "me" ? t.assigneeId !== me : assignee ? t.assigneeId !== assignee : false) {
+      return false;
+    }
+    if (due === "overdue" && !isOverdue(t)) return false;
+    if (due === "week" && !(isOpen(t) && t.dueDate && new Date(t.dueDate) <= weekAhead)) return false;
+    if (q && !`${t.title} ${t.detail ?? ""} ${t.projectName} ${t.clientName} ${t.assigneeName ?? ""}`.toLowerCase().includes(q)) {
+      return false;
+    }
+    return true;
+  });
+  const filtered = Boolean(status || assignee || due || q);
+
+  const tileHref = (key: "status" | "assignee" | "due" | null, value: string | null) => {
+    const next = new URLSearchParams();
+    if (projectId) next.set("project", projectId);
+    if (view === "list") next.set("view", "list");
+    if (key && value) next.set(key, value);
+    const query = next.toString();
+    return query ? `/tasks?${query}` : "/tasks";
+  };
+
   const projectOptions = projects.map((p) => ({
     id: p.id,
     name: p.name,
@@ -124,48 +182,86 @@ export default async function TasksPage({
         description="Work items inside a delivery project. Every task belongs to a project — a task with no project is a note, and notes belong on the client record."
       />
 
-      {projectId && (
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterChip
-            label="Project"
-            value={scopeProject?.name ?? "Unknown project"}
-            clearHref="/tasks"
-          />
-        </div>
-      )}
-
       {missingTask && (
         <AlertBar tone="warning" href={`/audit?entity=task&id=${taskId}`} cta="Open the audit log">
           That task no longer exists. If it was deleted, the audit log has what it contained.
         </AlertBar>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatTile
           label="Open"
           value={openTasks.length}
-          sub={`of ${items.length} total`}
+          sub={`${done} done${scopeProject ? ` on ${scopeProject.name}` : ""}`}
           tone={openTasks.length > 0 ? "progress" : "neutral"}
+          href={tileHref(null, null)}
         />
         <StatTile
           label="Overdue"
           value={overdue.length}
-          sub="Past their due date"
+          sub="Open, past their due date"
           tone={overdue.length > 0 ? "danger" : "success"}
+          href={tileHref("due", due === "overdue" ? null : "overdue")}
         />
         <StatTile
           label="Blocked"
           value={blocked.length}
           sub="Waiting on someone else"
           tone={blocked.length > 0 ? "warning" : "neutral"}
+          href={tileHref("status", status === "BLOCKED" ? null : "BLOCKED")}
         />
         <StatTile
           label="Unassigned"
           value={unassigned.length}
           sub="Open with no owner"
           tone={unassigned.length > 0 ? "warning" : "neutral"}
+          href={tileHref("assignee", assignee === "none" ? null : "none")}
         />
       </div>
+
+      {projectOptions.length > 0 && (
+        <div className="space-y-2">
+          <FilterBar
+            search={{ placeholder: "Search tasks, projects, people…" }}
+            trailing={
+              <div className="flex items-center gap-1" aria-label="Layout">
+                <FilterChip param="view" label="Board" />
+                <FilterChip param="view" value="list" label="List" />
+              </div>
+            }
+          >
+            <div className="flex max-w-full items-center gap-1 overflow-x-auto" aria-label="Status">
+              <FilterChip param="status" label="Not cancelled" />
+              {STATUS_VALUES.map((value) => (
+                <FilterChip
+                  key={value}
+                  param="status"
+                  value={value}
+                  label={STATUS_LABEL[value]}
+                  count={items.filter((t) => t.status === value).length}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-1" aria-label="Owner and due date">
+              {me && <FilterChip param="assignee" value="me" label="Mine" count={mine} />}
+              <FilterChip param="due" value="week" label="Next 7 days + overdue" />
+            </div>
+          </FilterBar>
+          <ActiveFilters
+            labels={{ project: "Project", assignee: "Owner", due: "Due", status: "Status" }}
+            valueLabels={{
+              project: projectId && scopeProject ? { [projectId]: scopeProject.name } : {},
+              assignee: {
+                me: "Mine",
+                none: "Unassigned",
+                ...Object.fromEntries(users.map((u) => [u.id, u.name || u.email])),
+              },
+              due: { overdue: "Overdue", week: "Next 7 days + overdue" },
+              status: STATUS_LABEL,
+            }}
+          />
+        </div>
+      )}
 
       {projectOptions.length === 0 ? (
         <EmptyState
@@ -180,11 +276,23 @@ export default async function TasksPage({
         />
       ) : (
         <TasksClient
-          items={items}
+          items={shown}
+          totalInScope={items.length}
+          filtered={filtered}
+          statusFilter={status}
+          view={view}
           projects={projectOptions}
           users={users}
           scopeProjectId={scopeProject ? projectId : null}
-          openTaskId={missingTask ? null : taskId}
+          inspectId={missingTask ? null : taskId}
+          inspected={missingTask ? null : (items.find((t) => t.id === taskId) ?? null)}
+          inspectHistory={
+            taskId && !missingTask ? <EntityAudit type="task" id={taskId} /> : null
+          }
+          canEdit={canEdit}
+          canCreate={canCreate}
+          canDelete={canDelete}
+          openCreate={canCreate && params.new === "task"}
         />
       )}
     </div>

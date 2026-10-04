@@ -5,6 +5,7 @@ import { prisma } from "@repo/database";
 import { PALETTE } from "@repo/ui/palette";
 import { authorize } from "@/lib/authorize";
 import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
+import { derivedStatusMessage, WRITABLE_STATUSES } from "@/lib/status";
 
 const CLIENT_STATUSES = [
   "NEW",
@@ -18,14 +19,23 @@ const CLIENT_STATUSES = [
 ] as const;
 type ClientStatus = (typeof CLIENT_STATUSES)[number];
 
+function refuseDerivedStatus(status: string) {
+  if (!CLIENT_STATUSES.includes(status as ClientStatus)) {
+    throw new Error(`Unknown status: ${status}`);
+  }
+  refuseDerivedStage(status);
+}
+
+function refuseDerivedStage(stage: string) {
+  if (!WRITABLE_STATUSES.has(stage)) throw new Error(derivedStatusMessage(stage));
+}
+
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 type PriorityValue = (typeof PRIORITIES)[number];
 
 export async function setClientStatus(clientId: string, status: string) {
   const session = await authorize("edit", "client");
-  if (!CLIENT_STATUSES.includes(status as ClientStatus)) {
-    throw new Error(`Unknown status: ${status}`);
-  }
+  refuseDerivedStatus(status);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
     select: { status: true, name: true, company: true },
@@ -79,14 +89,12 @@ export async function setClientPriority(clientId: string, priority: string) {
 
 export async function bulkSetClientStatus(clientIds: string[], status: string) {
   const session = await authorize("edit", "client");
-  if (!CLIENT_STATUSES.includes(status as ClientStatus)) {
-    throw new Error(`Unknown status: ${status}`);
-  }
+  refuseDerivedStatus(status);
   const before = await prisma.client.findMany({
     where: { id: { in: clientIds } },
     select: { id: true, status: true, name: true, company: true },
   });
-  await prisma.client.updateMany({
+  const { count } = await prisma.client.updateMany({
     where: { id: { in: clientIds } },
     data: { status: status as ClientStatus },
   });
@@ -108,24 +116,12 @@ export async function bulkSetClientStatus(clientIds: string[], status: string) {
   revalidatePath("/clients");
   revalidatePath("/leads");
   revalidatePath("/pipeline");
+  return count;
 }
-
-/**
- * Board drag-and-drop. The board's stages are DERIVED (a signed contract wins
- * over the status column), so only the pre-proposal stages are writable here —
- * dragging a card into "Signed" would be a lie the records contradict. The UI
- * disables those columns; this is the server-side half of that rule.
- */
-const WRITABLE_STAGES = new Set(["NEW", "VIEWED", "CONTACTED", "QUALIFIED", "LOST", "SPAM"]);
 
 export async function moveClientStage(clientId: string, stage: string) {
   const session = await authorize("edit", "client");
-  if (!WRITABLE_STAGES.has(stage)) {
-    throw new Error(
-      `“${stage}” is derived from proposals and contracts and cannot be set directly. ` +
-      `Send a proposal or generate a contract instead.`,
-    );
-  }
+  refuseDerivedStage(stage);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
     select: { status: true, name: true, company: true },
@@ -148,9 +144,6 @@ export async function moveClientStage(clientId: string, stage: string) {
   revalidatePath("/clients");
 }
 
-// OVERDUE is not settable: it is derived from the due date (lib/payment-overdue.ts).
-// A hand-set OVERDUE would stay overdue after the date moved, and a hand-cleared
-// one would hide a payment that is genuinely late.
 const PAYMENT_STATUSES = ["PENDING", "PAID", "WAIVED"] as const;
 type PaymentStatusValue = (typeof PAYMENT_STATUSES)[number];
 
@@ -168,7 +161,6 @@ export async function setPaymentStatus(paymentId: string, status: string) {
     where: { id: paymentId },
     data: {
       status: status as PaymentStatusValue,
-      // Re-marking a paid row keeps the date it was actually paid.
       paidAt: status === "PAID" ? (before.status === "PAID" ? before.paidAt : new Date()) : null,
     },
   });
@@ -249,8 +241,6 @@ export async function setProjectPhase(projectId: string, phase: string) {
     where: { id: projectId },
     data: {
       phase: phase as ProjectPhaseValue,
-      // The launch happened once. Re-picking LAUNCHED (after stepping back to QA
-      // for a fix, say) must not move the recorded launch date.
       ...(phase === "LAUNCHED" && !before?.actualLaunchDate ? { actualLaunchDate: new Date() } : {}),
     },
   });
@@ -276,9 +266,6 @@ export async function setProjectStatus(projectId: string, status: string) {
   if (!PROJECT_STATUSES.includes(status as ProjectStatusValue)) {
     throw new Error(`Unknown project status: ${status}`);
   }
-  // Completion goes through `closeProject` (_actions/change-requests.ts): it
-  // checks unpaid payments and open change requests and stamps completedAt.
-  // Setting COMPLETED here would skip both.
   if (status === "COMPLETED") {
     throw new Error("Use Close project — it checks payments and open change requests first.");
   }
@@ -290,8 +277,6 @@ export async function setProjectStatus(projectId: string, status: string) {
     where: { id: projectId },
     data: {
       status: status as ProjectStatusValue,
-      // Reopening a closed project un-closes it; a stale completedAt would
-      // keep reading "closed on" a date that is no longer true.
       ...(before?.status === "COMPLETED" ? { completedAt: null } : {}),
     },
   });
@@ -309,13 +294,13 @@ export async function setProjectStatus(projectId: string, status: string) {
   revalidatePath(`/projects/${projectId}`);
 }
 
-/**
- * Notifications are per person: writers fan out one row per admin, so marking
- * read is scoped to the signed-in user — one operator clearing their inbox must
- * not clear everybody else's.
- */
-export async function markNotificationsRead() {
-  const session = await authorize("view", "notification");
+export async function markNotificationsRead(): Promise<{ ok: boolean; changed: boolean; message: string }> {
+  let session: Awaited<ReturnType<typeof authorize>>;
+  try {
+    session = await authorize("view", "notification");
+  } catch (error) {
+    return { ok: false, changed: false, message: error instanceof Error ? error.message : "Not permitted." };
+  }
   const { count } = await prisma.notification.updateMany({
     where: { userId: session.user.id, read: false },
     data: { read: true, readAt: new Date() },
@@ -333,17 +318,30 @@ export async function markNotificationsRead() {
   }
   revalidatePath("/notifications");
   revalidatePath("/", "layout");
+  return {
+    ok: true,
+    changed: count > 0,
+    message:
+      count === 0
+        ? "Nothing was unread"
+        : `${count} notification${count === 1 ? "" : "s"} marked read`,
+  };
 }
 
-export async function markNotificationRead(notificationId: string) {
-  const session = await authorize("view", "notification");
-  // Scoped to the signed-in person's own row: the id alone is not enough,
-  // because the same fact fans out as one row per admin.
+export async function markNotificationRead(
+  notificationId: string,
+): Promise<{ ok: boolean; changed: boolean; message: string }> {
+  let session: Awaited<ReturnType<typeof authorize>>;
+  try {
+    session = await authorize("view", "notification");
+  } catch (error) {
+    return { ok: false, changed: false, message: error instanceof Error ? error.message : "Not permitted." };
+  }
   const row = await prisma.notification.findFirst({
     where: { id: notificationId, userId: session.user.id, read: false },
     select: { id: true, title: true },
   });
-  if (!row) return;
+  if (!row) return { ok: true, changed: false, message: "Already read; nothing changed" };
   await prisma.notification.update({
     where: { id: row.id },
     data: { read: true, readAt: new Date() },
@@ -360,33 +358,30 @@ export async function markNotificationRead(notificationId: string) {
   });
   revalidatePath("/notifications");
   revalidatePath("/", "layout");
+  return { ok: true, changed: true, message: "Marked read" };
 }
 
-/**
- * §16 — converting a submission into a lead NEVER destroys the submission.
- * The raw payload (UTM, referrer, user agent, the exact words they typed) stays
- * exactly as received; the Client row references it. That is the difference
- * between a CRM and a form-to-CRM importer that loses the evidence.
- */
 export async function convertSubmissionToClient(submissionId: string) {
   const session = await authorize("create", "client");
 
   const submission = await prisma.contactSubmission.findUnique({
     where: { id: submissionId },
-    select: { id: true, name: true, phone: true, client: { select: { id: true } } },
+    select: { id: true, name: true, phone: true, status: true, client: { select: { id: true } } },
   });
   if (!submission) throw new Error("Submission not found");
-  if (submission.client) return { clientId: submission.client.id, created: false };
+  if (submission.client) return { clientId: submission.client.id, created: false, linked: true };
+  if (submission.status === "SPAM") {
+    throw new Error("This submission is marked as spam. Change its status before converting it.");
+  }
 
-  // A client already exists on this phone number more often than not — the same
-  // person filling the form twice must not become two client records.
   const existing = await prisma.client.findFirst({
     where: { phone: submission.phone },
     select: { id: true, contactSubmissionId: true },
   });
 
   if (existing) {
-    if (!existing.contactSubmissionId) {
+    const linked = !existing.contactSubmissionId;
+    if (linked) {
       await prisma.client.update({
         where: { id: existing.id },
         data: { contactSubmissionId: submission.id },
@@ -404,7 +399,7 @@ export async function convertSubmissionToClient(submissionId: string) {
     }
     revalidatePath("/submissions");
     revalidatePath("/leads");
-    return { clientId: existing.id, created: false };
+    return { clientId: existing.id, created: false, linked };
   }
 
   const client = await prisma.client.create({
@@ -432,7 +427,7 @@ export async function convertSubmissionToClient(submissionId: string) {
   revalidatePath("/submissions");
   revalidatePath("/leads");
   revalidatePath("/clients");
-  return { clientId: client.id, created: true };
+  return { clientId: client.id, created: true, linked: true };
 }
 
 export async function convertEstimateToClient(leadId: string) {
@@ -443,7 +438,7 @@ export async function convertEstimateToClient(leadId: string) {
     select: { id: true, name: true, phone: true, client: { select: { id: true } } },
   });
   if (!lead) throw new Error("Estimate not found");
-  if (lead.client) return { clientId: lead.client.id, created: false };
+  if (lead.client) return { clientId: lead.client.id, created: false, linked: true };
 
   const existing = await prisma.client.findFirst({
     where: { phone: lead.phone },
@@ -451,7 +446,8 @@ export async function convertEstimateToClient(leadId: string) {
   });
 
   if (existing) {
-    if (!existing.transparencyLeadId) {
+    const linked = !existing.transparencyLeadId;
+    if (linked) {
       await prisma.client.update({
         where: { id: existing.id },
         data: { transparencyLeadId: lead.id },
@@ -473,7 +469,7 @@ export async function convertEstimateToClient(leadId: string) {
     });
     revalidatePath("/transparency");
     revalidatePath("/leads");
-    return { clientId: existing.id, created: false };
+    return { clientId: existing.id, created: false, linked };
   }
 
   const client = await prisma.client.create({
@@ -506,7 +502,7 @@ export async function convertEstimateToClient(leadId: string) {
   revalidatePath("/transparency");
   revalidatePath("/leads");
   revalidatePath("/clients");
-  return { clientId: client.id, created: true };
+  return { clientId: client.id, created: true, linked: true };
 }
 
 export async function updateCompanyProfile(data: {
@@ -543,8 +539,6 @@ export async function updateCompanyProfile(data: {
     entityId: "default",
     entityLabel: "Company profile",
     summary: "Updated company profile",
-    // Only the profile fields: the whole row would also diff updatedAt and
-    // the invoice counter, neither of which this edit changed.
     before: before
       ? { phone: before.phone, email: before.email, website: before.website, brandColor: before.brandColor, brandColorDark: before.brandColorDark }
       : {},

@@ -13,7 +13,6 @@ interface LineItem {
 
 interface SignContract {
   status: "DRAFT" | "SENT" | "SIGNED" | "DECLINED" | "EXPIRED";
-  /** The link's own 30-day window, separate from the contract's status. */
   expired: boolean;
   fileUrl: string | null;
   signedAt: string | null;
@@ -31,7 +30,6 @@ interface SignContract {
     lineItems: LineItem[];
     timelineWeeks: number;
     paymentSplit: { first: number; second: number; final: number };
-    /** Present only when a discount was actually applied. */
     discount: { label: string; amount: number; subtotal: number } | null;
   };
   portalToken: string | null;
@@ -52,6 +50,7 @@ export default function SignContractPage() {
   const [contract, setContract] = useState<SignContract | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [name, setName] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -89,7 +88,7 @@ export default function SignContractPage() {
         if (data.retryAfterSeconds) setResendIn(data.retryAfterSeconds);
       }
     } catch {
-      setCodeError("Something went wrong. Please try again.");
+      setCodeError("We could not reach the server, so no code was sent. Please try again.");
     } finally {
       setSending(null);
     }
@@ -98,6 +97,7 @@ export default function SignContractPage() {
   const fetchContract = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadFailed(false);
       const response = await fetch(`/api/sign/${token}`);
       const data = await response.json();
       if (data.success) {
@@ -106,7 +106,7 @@ export default function SignContractPage() {
         setNotFound(true);
       }
     } catch {
-      setNotFound(true);
+      setLoadFailed(true);
     } finally {
       setLoading(false);
     }
@@ -139,14 +139,14 @@ export default function SignContractPage() {
       if (data.success) {
         setSignedPortalToken(data.portalToken);
       } else {
-        setError(data.message || "Failed to sign contract");
+        setError(data.message || "The agreement was not signed. Please try again.");
         if (data.codeExpired) {
           setSentTo(null);
           setCode("");
         }
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("We could not reach the server, so the agreement was not signed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -154,78 +154,90 @@ export default function SignContractPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center" role="status" aria-label="Loading the agreement">
         <LoadingIcon size="lg" />
       </div>
     );
   }
 
+  if (loadFailed) {
+    return (
+      <Notice icon={<AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden />} title="The agreement did not load">
+        <p>We could not reach the server. Check your connection and try again — nothing has changed.</p>
+        <Button variant="outline" className="mt-6 h-11 w-full" onClick={() => void fetchContract()}>
+          Try again
+        </Button>
+      </Notice>
+    );
+  }
+
   if (notFound || !contract) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">Contract not found</p>
-          <p className="text-sm text-muted-foreground mt-2">
-            This sign-in link is invalid or has expired.
-          </p>
-        </div>
-      </div>
+      <Notice icon={<AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" aria-hidden />} title="Agreement not found">
+        <p>
+          This signing link is not valid. If it came from Altruvex, reply to that message and we
+          will send a working one.
+        </p>
+      </Notice>
     );
   }
 
   const alreadySigned = contract.status === "SIGNED" || signedPortalToken;
+  const clientName = contract.client.company || contract.client.name;
   const portalToken = signedPortalToken ?? contract.portalToken;
 
-  // An old link and a lost contract are different facts, and a client reading
-  // "not found" for the first one would reasonably think their agreement had
-  // gone missing.
   if (!alreadySigned && contract.expired) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md plane p-8 text-center">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h1 className="text-2xl font-medium text-foreground mb-2">This link has expired</h1>
-          <p className="text-sm text-muted-foreground">
-            Signing links stay open for 30 days after we send them. The agreement itself is
-            unchanged — ask us to send it again and the new link will work straight away.
-          </p>
-        </div>
-      </div>
+      <Notice icon={<AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden />} title="This link has expired">
+        <p>
+          Signing links stay open for 30 days after we send them. The agreement itself is
+          unchanged — ask us to send it again and the new link will work straight away.
+        </p>
+      </Notice>
+    );
+  }
+
+  if (!alreadySigned && (contract.status === "DECLINED" || contract.status === "EXPIRED")) {
+    return (
+      <Notice icon={<AlertCircle className="mx-auto mb-4 h-12 w-12 text-muted-foreground" aria-hidden />} title="This agreement is closed">
+        <p>
+          {contract.status === "DECLINED"
+            ? "It was recorded as declined, so it can no longer be signed."
+            : "It is no longer open for signature."}{" "}
+          If that is not what you expected, reply to our message and we will sort it out.
+        </p>
+      </Notice>
     );
   }
 
   if (alreadySigned) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md plane p-8 text-center">
-          <CheckCircle2 className="h-12 w-12 text-success mx-auto mb-4" />
-          <h1 className="text-2xl font-medium text-foreground mb-2">Contract signed</h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            Thanks{(name || contract.signedByName) ? `, ${name || contract.signedByName}` : ""} —
-            you&apos;ll hear from us on WhatsApp shortly with next steps.
-          </p>
-          {portalToken && (
-            <Button variant="brand" className="w-full h-11" asChild>
-              <a href={`/portal/${portalToken}`}>Track your project</a>
-            </Button>
-          )}
-        </div>
-      </div>
+      <Notice icon={<CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" aria-hidden />} title="Agreement signed">
+        <p className="mb-6">
+          Thanks{(name || contract.signedByName) ? `, ${name || contract.signedByName}` : ""} — your
+          signature is recorded{contract.signedAt ? ` (${new Date(contract.signedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })})` : ""}.
+          We will contact you with the next steps. You can close this page.
+        </p>
+        {portalToken && (
+          <Button variant="brand" className="h-11 w-full" asChild>
+            <a href={`/portal/${portalToken}`}>Track your project</a>
+          </Button>
+        )}
+      </Notice>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg plane p-8 space-y-6">
+    <main className="flex min-h-dvh items-start justify-center px-4 py-6 sm:items-center sm:py-12">
+      <div className="w-full max-w-lg plane space-y-6 p-5 sm:p-8">
         <div>
           <p className="text-sm text-muted-foreground mb-1">Altruvex</p>
-          <h1 className="text-2xl font-medium text-foreground">
-            Project agreement — {contract.client.company || contract.client.name}
+          <h1 className="text-xl font-medium text-balance break-words text-foreground sm:text-2xl">
+            Project agreement{clientName ? ` — ${clientName}` : ""}
           </h1>
         </div>
 
-        <div className="rounded-2xl bg-muted/50 p-5 space-y-2 text-sm">
+        <div className="space-y-2 rounded-2xl bg-muted/50 p-4 text-sm sm:p-5">
           {contract.proposal.discount && (
             <>
               <div className="flex justify-between">
@@ -275,9 +287,9 @@ export default function SignContractPage() {
             href={contract.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-brand hover:underline"
+            className="-my-2 inline-flex min-h-11 items-center gap-2 text-sm text-brand hover:underline"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4" aria-hidden />
             Review the full agreement (.docx)
           </a>
         )}
@@ -344,6 +356,11 @@ export default function SignContractPage() {
                   {codeError}
                 </p>
               ) : null}
+              {error && !sentTo ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {error}
+                </p>
+              ) : null}
             </div>
 
             {sentTo && (
@@ -376,20 +393,20 @@ export default function SignContractPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Type your full name"
                     autoComplete="name"
-                    className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20"
+                    className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-lg text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 sm:text-sm focus-visible:ring-foreground/20"
                     required
                   />
                 </div>
-                <label className="flex items-start gap-3 text-sm">
+                <label className="-mx-2 flex min-h-11 cursor-pointer items-start gap-3 rounded-xl px-2 py-2 text-sm hover:bg-muted/50">
                   <input
                     type="checkbox"
                     checked={agreed}
                     onChange={(e) => setAgreed(e.target.checked)}
-                    className="mt-1"
+                    className="mt-0.5 size-5 shrink-0 accent-brand"
                   />
                   <span className="text-muted-foreground">
                     I have read the agreement above and agree to its terms on behalf of{" "}
-                    {contract.client.company || contract.client.name}.
+                    {clientName || "the client named in it"}.
                   </span>
                 </label>
                 {error ? (
@@ -411,6 +428,26 @@ export default function SignContractPage() {
           </form>
         )}
       </div>
-    </div>
+    </main>
+  );
+}
+
+function Notice({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="flex min-h-dvh items-center justify-center px-4 py-6">
+      <div className="plane w-full max-w-md p-5 text-center sm:p-8" role="status">
+        {icon}
+        <h1 className="mb-2 text-xl font-medium text-balance text-foreground sm:text-2xl">{title}</h1>
+        <div className="text-sm text-pretty text-muted-foreground">{children}</div>
+      </div>
+    </main>
   );
 }

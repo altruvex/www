@@ -1,11 +1,6 @@
 import { formatDistanceToNowStrict, isToday, isYesterday, format } from "date-fns";
 import { calendarDaysUntil } from "@/lib/payment-overdue";
 
-/**
- * Money. Always tabular, always with an explicit currency — this app deals in
- * EGP and USD simultaneously and a bare number is a bug waiting to be a wire
- * transfer. `compact` is for stat tiles only; tables always show the full value.
- */
 export function money(
   amount: number | null | undefined,
   currency = "EGP",
@@ -20,18 +15,12 @@ export function money(
   }).format(amount);
 }
 
-/** Several currencies summed separately — never added together. */
 export function moneyByCurrency(byCurrency: Record<string, number>, compact = false) {
   const entries = Object.entries(byCurrency).filter(([, v]) => v !== 0);
   if (entries.length === 0) return "—";
   return entries.map(([c, v]) => money(v, c, { compact })).join(" + ");
 }
 
-/**
- * Sum amounts KEEPING them apart by currency. Adding an EGP figure to a USD one
- * produces a number that is true in no currency at all — the one arithmetic this
- * application must never do.
- */
 export function sumByCurrency(
   items: { amount: number; currency: string }[],
 ): Record<string, number> {
@@ -42,7 +31,6 @@ export function sumByCurrency(
   return sums;
 }
 
-/** Scale every currency in a bucket by the same factor (weighting, averaging). */
 export function scaleByCurrency(
   sums: Record<string, number>,
   factor: (currency: string) => number,
@@ -65,7 +53,6 @@ export function percent(value: number | null | undefined, digits = 0) {
   return `${value.toFixed(digits)}%`;
 }
 
-/** Absolute date, for anything a person might quote back to a client. */
 export function date(value: Date | string | null | undefined) {
   if (!value) return "—";
   return format(new Date(value), "d MMM yyyy");
@@ -76,10 +63,6 @@ export function dateTime(value: Date | string | null | undefined) {
   return format(new Date(value), "d MMM yyyy, HH:mm");
 }
 
-/**
- * Relative time for activity feeds. Today and yesterday get the clock time
- * because "18 hours ago" is useless when deciding whether to chase someone.
- */
 export function when(value: Date | string | null | undefined) {
   if (!value) return "—";
   const d = new Date(value);
@@ -88,11 +71,6 @@ export function when(value: Date | string | null | undefined) {
   return formatDistanceToNowStrict(d, { addSuffix: true });
 }
 
-/**
- * Signed day delta against now, in whole business days. Negative = overdue.
- * Calendar days, not rounded hours: something due at 02:05 today is "due
- * today" all day, which is what the overdue rule for payments says too.
- */
 export function daysFromNow(value: Date | string | null | undefined) {
   if (!value) return null;
   return calendarDaysUntil(value);
@@ -113,7 +91,6 @@ export function initials(name?: string | null, fallback = "??") {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || fallback;
 }
 
-/** E.164-ish phone display; leaves anything unexpected untouched. */
 export function phone(value?: string | null) {
   if (!value) return "—";
   const digits = value.replace(/[^\d+]/g, "");

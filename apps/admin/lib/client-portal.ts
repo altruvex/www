@@ -9,20 +9,113 @@ import {
 } from "@repo/pricing-schema";
 
 import { billedPlanPrice, intervalPriceLabel } from "@/lib/billing-interval";
+import { httpUrl } from "@/lib/http-url";
+import { isPaymentOverdue } from "@/lib/payment-overdue";
 import { getPricing } from "@/lib/pricing-store";
+import { CONTACT } from "@/lib/proposal-content";
+import { deriveStatus } from "@/lib/subscription-lifecycle";
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
-/**
- * The client portal's read model.
- *
- * A client sees their plan, how much of this cycle's request allowance they
- * have used, and every request they have made. The cap and the overage rate are
- * resolved from the pricing schema rather than copied onto the subscription, so
- * a plan change reaches existing subscribers instead of leaving them reading a
- * stale number.
- *
- * `internalHourEquivalent` is never read here. The cap a client sees is the
- * request count they were sold; the hours behind it are margin planning.
- */
+export interface PortalContact {
+  readonly phone: string;
+  readonly email: string;
+}
+
+export async function loadPortalContact(): Promise<PortalContact> {
+  const row = await prisma.companySettings.findUnique({
+    where: { id: "default" },
+    select: { phone: true, email: true },
+  });
+  return { phone: row?.phone ?? CONTACT.phone, email: row?.email ?? CONTACT.email };
+}
+
+export interface ProjectPortalPayment {
+  readonly id: string;
+  readonly milestone: string;
+  readonly amount: number;
+  readonly status: string;
+  readonly dueDate: string | null;
+  readonly paidAt: string | null;
+}
+
+export interface ProjectPortalView {
+  readonly clientName: string;
+  readonly projectName: string;
+  readonly phase: string;
+  readonly status: string;
+  readonly stagingUrl: string | null;
+  readonly liveUrl: string | null;
+  readonly targetLaunchDate: string | null;
+  readonly actualLaunchDate: string | null;
+  readonly currency: string;
+  readonly payments: readonly ProjectPortalPayment[];
+  readonly paidTotal: number;
+  readonly scheduleTotal: number;
+}
+
+function safeHttpUrl(value: string | null): string | null {
+  if (!value) return null;
+  return httpUrl.safeParse(value).success ? value : null;
+}
+
+export async function loadProjectPortal(
+  token: string,
+  now: Date = new Date(),
+): Promise<ProjectPortalView | null> {
+  const project = await prisma.project.findUnique({
+    where: { portalToken: token },
+    select: {
+      name: true,
+      phase: true,
+      status: true,
+      stagingUrl: true,
+      liveUrl: true,
+      targetLaunchDate: true,
+      actualLaunchDate: true,
+      client: { select: { name: true, company: true } },
+      ...PROJECT_CURRENCY_SELECT,
+      payments: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          milestone: true,
+          amount: true,
+          status: true,
+          dueDate: true,
+          paidAt: true,
+        },
+      },
+    },
+  });
+  if (!project) return null;
+
+  const payments = project.payments.map((p) => ({
+    id: p.id,
+    milestone: p.milestone,
+    amount: p.amount,
+    status: p.status === "PENDING" && isPaymentOverdue(p, now) ? "OVERDUE" : p.status,
+    dueDate: p.dueDate?.toISOString() ?? null,
+    paidAt: p.paidAt?.toISOString() ?? null,
+  }));
+  const billable = payments.filter((p) => p.status !== "WAIVED");
+
+  return {
+    clientName: project.client.company || project.client.name || "Your project",
+    projectName: project.name,
+    phase: project.phase,
+    status: project.status,
+    stagingUrl: safeHttpUrl(project.stagingUrl),
+    liveUrl: safeHttpUrl(project.liveUrl),
+    targetLaunchDate: project.targetLaunchDate?.toISOString() ?? null,
+    actualLaunchDate: project.actualLaunchDate?.toISOString() ?? null,
+    currency: projectCurrency(project),
+    payments,
+    paidTotal: billable.filter((p) => p.status === "PAID").reduce((s, p) => s + p.amount, 0),
+    scheduleTotal: billable.reduce((s, p) => s + p.amount, 0),
+  };
+}
+
+const REQUESTABLE: ReadonlySet<string> = new Set(["TRIALING", "ACTIVE", "PAST_DUE", "GRACE"]);
 
 export interface PortalRequest {
   readonly id: string;
@@ -37,27 +130,19 @@ export interface PortalRequest {
 export interface PortalView {
   readonly clientName: string;
   readonly planName: string;
-  /** One invoice at the subscription's interval, or the custom-quote wording. */
   readonly planPriceLabel: string;
-  /** Localised "/ month", "/ year" — empty when the plan is quote-only. */
   readonly planPriceSuffix: string;
   readonly isCustomQuote: boolean;
   readonly subscriptionStatus: string;
-  /** When the paid period ends: the renewal date, or the end date when auto-renew is off. */
+  readonly canRequest: boolean;
   readonly renewsAt: string;
   readonly autoRenew: boolean;
-  /** Null when the plan is quote-only and has no published cap. */
   readonly requestsPerCycle: number | null;
   readonly requestsUsed: number;
   readonly requestsRemaining: number | null;
   readonly overageNote: string | null;
   readonly cycleStart: string;
   readonly cycleEnd: string;
-  /**
-   * Days until the request allowance resets. The allowance is monthly on every
-   * interval, so this is not the renewal — an annual retainer resets its
-   * allowance eleven times before it renews once.
-   */
   readonly daysUntilAllowanceReset: number;
   readonly requestsThisCycle: readonly PortalRequest[];
   readonly history: readonly PortalRequest[];
@@ -87,7 +172,6 @@ function toPortalRequest(row: {
   };
 }
 
-/** Resolves a portal token. Returns null for an unknown or cancelled link. */
 export async function loadPortal(
   token: string,
   locale: Locale = "en",
@@ -110,10 +194,8 @@ export async function loadPortal(
   const tpl = copy.maintenanceTemplates;
 
   const cycle = currentBillingCycle(subscription.startedAt, now);
+  const status = deriveStatus(subscription, now);
 
-  // Only requests stamped into this cycle and marked against the cap count.
-  // Overage work is shown but never counted, so the number a client reads
-  // always matches what they are billed for.
   const thisCycle = subscription.requests.filter(
     (r) =>
       r.cycleStart.getTime() >= cycle.start.getTime() &&
@@ -132,7 +214,8 @@ export async function loadPortal(
     planPriceLabel: price.price,
     planPriceSuffix: price.suffix,
     isCustomQuote: billed === null || billed.price === null,
-    subscriptionStatus: subscription.status,
+    subscriptionStatus: status,
+    canRequest: REQUESTABLE.has(status),
     renewsAt: subscription.currentPeriodEnd.toISOString(),
     autoRenew: subscription.autoRenew,
     requestsPerCycle: cap,
@@ -161,15 +244,6 @@ export interface SubmitOutcome {
   readonly overCap: boolean;
 }
 
-/**
- * Records a client's request.
- *
- * Being over the cap does NOT reject the request — it is accepted and flagged
- * as overage. Refusing work a client is willing to pay for would be the wrong
- * behaviour, and silently counting it against a cap they have already used up
- * would be worse. The cycle is stamped now so a later change to the billing
- * anchor cannot move this request into another window.
- */
 export async function submitRequest(
   token: string,
   title: string,
@@ -181,7 +255,7 @@ export async function submitRequest(
     include: { requests: true },
   });
 
-  if (!subscription || subscription.status !== "ACTIVE") {
+  if (!subscription || !REQUESTABLE.has(deriveStatus(subscription, now))) {
     return {
       ok: false,
       message: "This portal link is not valid.",

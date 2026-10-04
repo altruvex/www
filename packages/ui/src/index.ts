@@ -5,14 +5,18 @@ export * from "./components/primitives/kbd";
 export * from "./components/primitives/separator";
 export * from "./components/primitives/surface";
 
+export * from "./components/forms/calendar";
 export * from "./components/forms/checkbox";
+export * from "./components/forms/date-picker";
 export * from "./components/forms/input";
 export * from "./components/forms/label";
 export * from "./components/forms/segmented-control";
 export * from "./components/forms/select";
 export * from "./components/forms/switch";
 
+export * from "./components/overlays/accordion";
 export * from "./components/overlays/alert-dialog";
+export * from "./components/overlays/drawer";
 export * from "./components/overlays/dropdown-menu";
 export * from "./components/overlays/menu";
 export * from "./components/overlays/popover";

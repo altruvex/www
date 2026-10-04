@@ -92,7 +92,9 @@
     "return": "What monitoring surfaces becomes the next audit's brief.",
     "processLead": "How a build runs, phase by phase",
     "processLink": "See the process",
-    "open": "What it includes"
+    "open": "What it includes",
+    "prev": "Previous",
+    "next": "Next"
   },
   "loop": {
     "close": {

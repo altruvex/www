@@ -6,18 +6,10 @@ import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Container } from "@/components/shared/container";
 import { ContentsRail } from "@/components/shared/contents-rail";
 import { FaqList, type FaqListItem } from "@/components/shared/faq-list";
-import { Num } from "@/components/ui/num";
 import { useTranslations } from "next-intl";
 
 type FaqQuestion = { question: string; answer: string };
 
-/**
- * Topic order and membership. Kept in code rather than in the message files
- * because it is structure, not copy — and because the question keys are
- * numeric strings, which JavaScript orders "10".."14" ahead of "01" when the
- * object is iterated, so reading them with Object.values scrambled the page.
- * A key missing from a locale is skipped, never rendered empty.
- */
 const FAQ_GROUPS = [
   { id: "ownership", keys: ["01", "02", "09", "14"] },
   { id: "pricing", keys: ["11", "10", "12", "08"] },
@@ -28,10 +20,6 @@ const FAQ_GROUPS = [
 export default function FAQPageClient() {
   const t = useTranslations("faq");
   const tEnd = useTranslations("common.endCta.pages.faq");
-  // FAQ prose quotes prices and the post-launch warranty window as {token}s,
-  // filled from the resolved pricing so an answer cannot state a figure that
-  // /pricing no longer charges — or a warranty the contract no longer grants.
-  // Questions carry them too: one of them names the warranty window.
   const fillTokens = useFillPricingTokens();
   const questions = t.raw("questions") as Record<string, FaqQuestion>;
 
@@ -51,7 +39,6 @@ export default function FAQPageClient() {
     }),
   })).filter((group) => group.items.length > 0);
 
-  // Numbering runs on across topics, so "07" names one question page-wide.
   const groups = filled.map((group, index) => ({
     ...group,
     startIndex:
@@ -65,7 +52,6 @@ export default function FAQPageClient() {
         eyebrow={t("eyebrow")}
         title={t("title")}
         description={t("subtitle")}
-        minHeightClass="min-h-[60vh]"
       />
 
       <section
@@ -84,7 +70,7 @@ export default function FAQPageClient() {
             />
 
             <div className="max-w-4xl space-y-20 md:space-y-24">
-              {groups.map((group, index) => (
+              {groups.map((group) => (
                 <section
                   key={group.id}
                   id={group.id}
@@ -92,20 +78,12 @@ export default function FAQPageClient() {
                   aria-labelledby={`${group.id}-title`}
                   className="scroll-mt-28 outline-none"
                 >
-                  <div className="mb-6 flex items-baseline gap-4 md:mb-8">
-                    <span
-                      aria-hidden
-                      className="text-sm tabular-nums text-local-accent-text ltr:font-mono"
-                    >
-                      <Num value={index + 1} pad={2} />
-                    </span>
-                    <h2
-                      id={`${group.id}-title`}
-                      className="text-[clamp(1.5rem,2.2vw,2rem)] font-normal leading-tight tracking-[-0.015em] text-foreground"
-                    >
-                      {group.title}
-                    </h2>
-                  </div>
+                  <h2
+                    id={`${group.id}-title`}
+                    className="mb-6 text-[clamp(1.5rem,2.2vw,2rem)] font-normal leading-tight tracking-[-0.015em] text-foreground md:mb-8"
+                  >
+                    {group.title}
+                  </h2>
                   <FaqList items={group.items} startIndex={group.startIndex} />
                 </section>
               ))}
@@ -114,8 +92,6 @@ export default function FAQPageClient() {
         </Container>
       </section>
 
-      {/* Someone who reached the end of the FAQ did not find their question,
-          so the close asks for it rather than for a build. */}
       <SectionEndCta
         eyebrow={tEnd("eyebrow")}
         title={tEnd("title")}

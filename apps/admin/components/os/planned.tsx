@@ -4,15 +4,6 @@ import { ArrowRight, Construction } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 
-/**
- * The honesty valve.
- *
- * Modules in the IA that have no Prisma model behind them render THIS instead
- * of a screen full of invented clients. It states what the module does, what
- * must exist before it can be built, and where the work currently happens.
- * A fake dashboard is worse than an empty one: it teaches the operator to trust
- * numbers that are not real.
- */
 export function PlannedModule({
   title,
   blurb,

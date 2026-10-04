@@ -27,17 +27,10 @@ import {
 } from "@/lib/service-lifecycle";
 import { entityHref } from "@/lib/entity-links";
 import type { Tone } from "@/lib/status";
+import { canSeeFinance, type Role } from "@/lib/nav";
+import { pageDecision, ROUTE_GATES, type RouteGate } from "@/lib/route-gates";
+import { UNCONTACTED_WHERE } from "@/lib/dashboard-data";
 
-/**
- * The Action Centre answers the only question a dashboard is actually for:
- * "what requires a human right now?"
- *
- * Ordering is by URGENCY SCORE, not by entity type — an overdue payment and an
- * unanswered client message compete on the same list, because in a real day
- * they compete for the same hour. Score is deliberately simple and readable:
- *   base weight by kind + days of staleness, capped.
- * A clever ranking nobody can predict is worse than a blunt one everyone can.
- */
 export interface ActionItem {
   id: string;
   kind:
@@ -58,7 +51,6 @@ export interface ActionItem {
   detail: string;
   href: string;
   cta: string;
-  /** Higher = more urgent. Used for ordering only; never shown raw. */
   score: number;
   ageDays: number;
 }
@@ -70,12 +62,27 @@ function ageInDays(from: Date | null | undefined) {
   return Math.max(0, Math.floor((Date.now() - new Date(from).getTime()) / DAY));
 }
 
-/**
- * Memoised per request: the shell's sidebar badge and the Today page both read
- * this list, and the badge must equal the list's length, so they share one run
- * instead of two that could disagree by a row created in between.
- */
-export const getActionCentre = cache(buildActionCentre);
+const allActions = cache(buildActionCentre);
+
+export function roleCanOpen(role: Role | undefined, href: string): boolean {
+  const path = href.split(/[?#]/)[0] ?? "/";
+  const first = path.split("/").filter(Boolean)[0];
+  const key = first ? `/${first}` : "/";
+  const gate = (ROUTE_GATES as Record<string, RouteGate | undefined>)[key];
+  if (!gate) return true;
+  return pageDecision(role, gate.required, gate.roles);
+}
+
+const MONEY_KINDS: ReadonlySet<ActionItem["kind"]> = new Set(["payment", "renewal"]);
+
+export async function getActionCentre(role?: Role): Promise<ActionItem[]> {
+  const items = await allActions();
+  if (!role) return items;
+  const finance = canSeeFinance(role);
+  return items.filter(
+    (item) => roleCanOpen(role, item.href) && (finance || !MONEY_KINDS.has(item.kind)),
+  );
+}
 
 async function buildActionCentre(): Promise<ActionItem[]> {
   const now = new Date();
@@ -97,14 +104,12 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     renewableSubscriptions,
     expiringServices,
   ] = await Promise.all([
-    // A lead nobody has contacted. The single most expensive thing to ignore.
     prisma.client.findMany({
-      where: { status: { in: ["NEW", "VIEWED"] } },
+      where: UNCONTACTED_WHERE,
       select: { id: true, name: true, company: true, phone: true, createdAt: true },
       orderBy: { createdAt: "asc" },
       take: 25,
     }),
-    // Sent, seen, no answer.
     prisma.proposal.findMany({
       where: { status: { in: ["SENT", "DELIVERED", "READ", "VIEWED"] } },
       select: {
@@ -140,8 +145,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       orderBy: { createdAt: "asc" },
       take: 25,
     }),
-    // Late from the day after the due date; due today still sits in the
-    // "due soon" list below, so the two windows meet at the same cut-off.
     prisma.payment.findMany({
       where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: overdueCutoff(now) } },
       select: {
@@ -173,8 +176,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       orderBy: { scheduledDate: "asc" },
       take: 25,
     }),
-    // The LATEST inbound per client — not "the 100 newest messages", which
-    // silently dropped a quiet client whose message aged out of the window.
     prisma.whatsAppMessage.groupBy({
       by: ["clientId"],
       where: { direction: "INBOUND" },
@@ -200,15 +201,11 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       orderBy: { createdAt: "desc" },
       take: 25,
     }),
-    // Anything broken and unresolved. An incident exists precisely because a
-    // human decided it needs one, so all of them belong here.
     prisma.incident.findMany({
       where: { status: { not: "RESOLVED" } },
       orderBy: [{ severity: "asc" }, { detectedAt: "asc" }],
       include: { product: { select: { id: true, name: true } } },
     }),
-    // A failed production deploy in the last week that has not since been
-    // followed by a successful one is still the current state of that product.
     prisma.deployment.findMany({
       where: {
         status: "FAILED",
@@ -218,16 +215,14 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       orderBy: { createdAt: "desc" },
       include: { product: { select: { id: true, name: true } } },
     }),
-    // Renewal urgency is derived, so every revenue-bearing retainer is fetched
-    // and judged in code rather than guessed at with a date filter.
     prisma.maintenanceSubscription.findMany({
       where: { status: { in: ["TRIALING", "ACTIVE"] } },
       include: { client: { select: { id: true, name: true, company: true } } },
     }),
-    // Domains, hosting, mailboxes inside the first alert threshold or lapsed.
     prisma.clientService.findMany({
       where: {
         status: "ACTIVE",
+        termMonths: { not: null },
         expiresAt: { lte: new Date(now.getTime() + SERVICE_SOON_DAYS * DAY) },
       },
       include: { client: { select: { id: true, name: true, company: true } } },
@@ -236,7 +231,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     }),
   ]);
 
-  // Which clients have an outbound message newer than their latest inbound?
   const lastOutbound = await prisma.whatsAppMessage.groupBy({
     by: ["clientId"],
     where: { direction: "OUTBOUND" },
@@ -253,7 +247,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     )
     .map((row) => row.clientId);
 
-  // Fetch the actual message only for the clients that are genuinely waiting.
   const waitingMessages = waitingClientIds.length
     ? await prisma.whatsAppMessage.findMany({
         where: { direction: "INBOUND", clientId: { in: waitingClientIds } },
@@ -295,7 +288,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
 
   for (const p of awaitingResponse) {
     const age = ageInDays(p.sentAt);
-    if (age < 2) continue; // give the client a moment before nagging
+    if (age < 2) continue;
     items.push({
       id: `prop-${p.id}`,
       kind: "proposal",
@@ -345,8 +338,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
   }
 
   for (const pay of latePayments) {
-    // Days late are counted in business days, so a payment due last night is
-    // one day past due this morning, not zero.
     const age = -calendarDaysUntil(pay.dueDate!, now);
     items.push({
       id: `pay-${pay.id}`,
@@ -451,19 +442,14 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       icon: ShieldAlert,
       tone: critical ? "danger" : "warning",
       title: `${incident.severity} · ${incident.title}`,
-      detail: `${incident.product.name} · open ${age}d · ${incident.status.toLowerCase()}`,
+      detail: `${incident.product.name} · ${age === 0 ? "opened today" : `open ${age}d`} · ${incident.status.toLowerCase()}`,
       href: entityHref("incident", incident.id) ?? "/incidents",
       cta: "Open incident",
-      // A SEV1 outranks everything else on this list, including a late payment:
-      // money can wait an hour, a down production site cannot.
       score: (critical ? 140 : 85) + Math.min(age, 14) * 2,
       ageDays: age,
     });
   }
 
-  // Only surface a failed deploy while it is still the newest one for that
-  // product and environment — a failure already fixed by a later deploy is
-  // history, not an action.
   const supersededProducts = new Set<string>();
   for (const deployment of failedDeployments) {
     if (supersededProducts.has(deployment.productId)) continue;
@@ -487,8 +473,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     const view = renewalView(sub, now);
     const effective = deriveStatus(sub, now);
     const clientLabel = sub.client.company || sub.client.name || "A client";
-    // EXPIRED is derived, so the row still reads ACTIVE/TRIALING and renewalView
-    // reports no urgency for it — the grace window has run out with nothing paid.
     if (effective === "EXPIRED") {
       const lapsedDays = Math.abs(view.daysUntil);
       items.push({
@@ -541,8 +525,6 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       detail: `${service.name}${service.provider ? ` · ${service.provider}` : ""}${remindedThisCycle(service) ? " · client reminded" : " · client not reminded yet"}`,
       href: entityHref("client_service", service.id) ?? "/services",
       cta: lapsed ? "Renew now" : "Renew & invoice",
-      // A lapsed domain takes the client's site and email down with it, so it
-      // ranks beside a failed production deploy rather than beside a retainer.
       score: lapsed ? 105 + Math.min(Math.abs(days), 30) : urgent ? 88 + (SERVICE_URGENT_DAYS - days) * 2 : 60,
       ageDays: lapsed ? Math.abs(days) : 0,
     });

@@ -1,27 +1,13 @@
 import { cn } from "@/lib/utils/utils";
 
-/*
- * The five problem drawings and the frame each one sits in.
- *
- * Every drawing is a list of strokes on a 96x96 grid, fitted to ~4..92 so the
- * art fills its frame rather than floating in it. Strokes are 1.5px regardless
- * of the frame's size (non-scaling), draw in list order, and exactly one stroke
- * per drawing carries the section accent — always the last one, so the draw
- * motion lands on it.
- */
-
 interface Stroke {
   readonly d: string;
-  /** The one accented stroke per drawing. */
   readonly accent?: boolean;
-  /** Heavier accent (the stalled loading bar). */
   readonly bold?: boolean;
-  /** Filled with the page background, so it hides what is drawn behind it. */
   readonly occlude?: boolean;
 }
 
 interface Drawing {
-  /** Mirrored in RTL: the drawing reads start → end. */
   readonly flip: boolean;
   readonly strokes: readonly Stroke[];
 }
@@ -48,8 +34,6 @@ function line(x1: number, y1: number, x2: number, y2: number): string {
   return `M${r1(x1)} ${r1(y1)}L${r1(x2)} ${r1(y2)}`;
 }
 
-/** A page wireframe (frame, logo + nav, divider, block, three text lines),
-    drawn at scale `k` from origin (ox, oy). */
 function page(ox: number, oy: number, k: number, second: boolean): Stroke[] {
   const x = (n: number) => ox + n * k;
   const y = (n: number) => oy + n * k;
@@ -74,7 +58,6 @@ function page(ox: number, oy: number, k: number, second: boolean): Stroke[] {
 const PAGE_SCALE = 1.27;
 
 const DRAWINGS: readonly Drawing[] = [
-  // 01 — two identical pages; only the second one's logo is "yours".
   {
     flip: false,
     strokes: [
@@ -82,7 +65,6 @@ const DRAWINGS: readonly Drawing[] = [
       ...page(6 + 22 * PAGE_SCALE, 6 + 10 * PAGE_SCALE, PAGE_SCALE, true),
     ],
   },
-  // 02 — a phone whose loading ring stalls at about a third.
   {
     flip: false,
     strokes: [
@@ -93,7 +75,6 @@ const DRAWINGS: readonly Drawing[] = [
       { d: "M48 35 A13 13 0 0 1 60.2 52.4", accent: true, bold: true },
     ],
   },
-  // 03 — a document zipped shut, a key beside it.
   {
     flip: false,
     strokes: [
@@ -114,7 +95,6 @@ const DRAWINGS: readonly Drawing[] = [
       },
     ],
   },
-  // 04 — five stepped bars rising start → end.
   {
     flip: true,
     strokes: [
@@ -126,7 +106,6 @@ const DRAWINGS: readonly Drawing[] = [
       { d: "M79 90V6H91V90", accent: true },
     ],
   },
-  // 05 — you and the engineer on a diagonal relay; the last hop is broken.
   {
     flip: true,
     strokes: [
@@ -141,22 +120,14 @@ const DRAWINGS: readonly Drawing[] = [
   },
 ];
 
-/** Five frame shapes, one per row. Radii come from the panel tokens (22px
-    below lg, 28px at lg); sides are logical so the shapes mirror in RTL. */
 const FRAME_SHAPES = [
-  "rounded-panel-sm lg:rounded-panel-md",
+  "rounded-panel-sm",
   "rounded-t-full pt-[14%]",
-  "rounded-b-panel-sm lg:rounded-b-panel-md",
+  "rounded-b-panel-sm",
   "border-e-0",
-  "rounded-panel-sm rounded-se-none lg:rounded-panel-md lg:rounded-se-none",
+  "rounded-panel-sm rounded-se-none",
 ] as const;
 
-/**
- * The framed drawing for row `index`. Decorative: the row's title and
- * description carry the meaning. Each stroke is `data-stroke` with
- * `pathLength=1`, so the draw motion can offset a dash of length 1; at rest
- * (no JS, reduced motion) every stroke is fully drawn.
- */
 export function ProblemDrawing({ index, className }: { index: number; className?: string }) {
   const drawing = DRAWINGS[index];
   if (!drawing) return null;

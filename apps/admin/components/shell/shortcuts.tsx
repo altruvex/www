@@ -9,7 +9,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@repo/ui";
-import { gotoShortcutsFor, type Role } from "@/lib/nav";
+import { createShortcutsFor, gotoShortcutsFor, type Role } from "@/lib/nav";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -37,9 +37,10 @@ const ANYWHERE: Section = {
 const IN_A_TABLE: Section = {
   title: "In a table",
   rows: [
-    { keys: ["Tab"], label: "Move through headers and rows" },
-    { keys: ["Space"], label: "Select the focused row" },
-    { keys: ["↵"], label: "Open the focused record" },
+    { keys: ["Tab"], label: "Move through sort headers, checkboxes and rows" },
+    { keys: ["↵"], label: "Open the focused row (Space does the same)" },
+    { keys: ["Space"], label: "Tick the focused checkbox to select its row" },
+    { keys: ["Esc"], label: "Clear the selection" },
   ],
 };
 
@@ -60,9 +61,6 @@ export function ShortcutsSheet({
     setIsMac(navigator.platform.toUpperCase().indexOf("MAC") >= 0);
   }, []);
 
-  // The "Go to" rows are generated from the same list the shell's g-chord
-  // handler reads (lib/nav GOTO_SHORTCUTS), so the sheet cannot advertise a
-  // chord that does nothing. The `?` key itself is handled by AppShell only.
   const sections = React.useMemo<Section[]>(
     () => [
       ANYWHERE,
@@ -70,6 +68,14 @@ export function ShortcutsSheet({
         title: "Go to",
         rows: gotoShortcutsFor(role).map((s) => ({
           keys: ["G", s.key.toUpperCase()],
+          label: s.label,
+          href: s.href,
+        })),
+      },
+      {
+        title: "Create",
+        rows: createShortcutsFor(role).map((s) => ({
+          keys: ["C", s.key.toUpperCase()],
           label: s.label,
           href: s.href,
         })),
@@ -116,7 +122,7 @@ export function ShortcutsSheet({
                         <button
                           type="button"
                           onClick={() => handleRowClick(row.href)}
-                          className="flex w-full items-center gap-3 px-4 py-2 text-start transition-colors hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+                          className="flex min-h-11 w-full items-center gap-3 px-4 py-2 text-start transition-colors duration-[var(--dur-state)] hover:bg-surface focus-visible:bg-surface outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
                         >
                           <span className="min-w-0 flex-1 text-base">{row.label}</span>
                           {keys}

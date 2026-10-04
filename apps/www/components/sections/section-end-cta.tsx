@@ -2,7 +2,6 @@
 
 import { Container } from "@/components/shared/container";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { accentWorldClass, type AccentPalette } from "@/lib/config/accent-world";
 import { getCommercialCta, type CommercialCtaKey } from "@/lib/config/commercial";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
@@ -11,7 +10,6 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { SectionHeading } from "./section-heading";
 
-/** A shared commercial action by key, or a page's own link and wording. */
 type EndCtaAction = CommercialCtaKey | { href: string; label: string };
 
 type SectionEndCtaProps = {
@@ -19,42 +17,27 @@ type SectionEndCtaProps = {
   title: ReactNode;
   titleAccent?: ReactNode;
   body: ReactNode;
-  /** Defaults to the reply-time promise; pass null to omit it. */
-  footnote?: ReactNode | null;
   primary: EndCtaAction;
   secondary?: EndCtaAction;
   world?: AccentPalette;
-  /**
-   * The page's own device, set under the heading: the next unwritten record on
-   * /work, the next case study, the phase a project starts at. It is what makes
-   * one page's close different from another's without a second layout.
-   */
   aside?: ReactNode;
-  /** "display" is the homepage's larger close. */
   size?: "default" | "display";
+  titleClassName?: string;
   id?: string;
   ariaLabel?: string;
 };
 
-/**
- * Every page closes on this one structure - heading on the reading side, the
- * next step in a narrow column beside it - so a visitor learns where the action
- * sits once. What changes per page is what the close says, which actions it
- * offers, the colour world it wears and the aside it carries. It used to close
- * eight pages on the same "Ready to scope your build?" with only the buttons
- * swapped, including the privacy policy.
- */
 export function SectionEndCta({
   eyebrow,
   title,
   titleAccent,
   body,
-  footnote,
   primary,
   secondary,
   world = "orange",
   aside,
   size = "default",
+  titleClassName,
   id,
   ariaLabel,
 }: SectionEndCtaProps) {
@@ -81,7 +64,6 @@ export function SectionEndCta({
       )}
     >
       <Container>
-        <div aria-hidden className="mb-14 h-px w-full bg-local-accent/40 md:mb-16" />
         <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_clamp(18rem,28vw,24rem)] md:items-start lg:gap-16">
           <div className="min-w-0">
             <SectionHeading
@@ -101,6 +83,7 @@ export function SectionEndCta({
                   size === "display"
                     ? "text-[clamp(2.125rem,4vw,3.25rem)] leading-[1.08]"
                     : "text-[clamp(1.875rem,3.2vw,2.625rem)] leading-[1.1]",
+                  titleClassName,
                 ),
               }}
             />
@@ -121,9 +104,6 @@ export function SectionEndCta({
               secondaryArrow
               stacked
             />
-            {footnote !== null && (
-              <Eyebrow className="text-xs">{footnote ?? t("footnote")}</Eyebrow>
-            )}
           </div>
         </div>
       </Container>

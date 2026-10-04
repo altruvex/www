@@ -5,13 +5,6 @@ import { checkCssMotionTokens } from "@/lib/motion/utils/css-tokens";
 import type Lenis from "lenis";
 import { useEffect } from "react";
 
-/**
- * Boots Lenis + the ScrollTrigger refresh observer. It provides no context and
- * renders `children` only as a convenience, so it is mounted as a SIBLING of
- * the app tree rather than a wrapper — wrapping it conditionally changed the
- * element type at that position and made React unmount/remount the whole app
- * (which silently wiped open UI state, e.g. the mobile nav drawer).
- */
 export function SmoothScrollProvider({
   children,
 }: {
@@ -50,19 +43,12 @@ export function SmoothScrollProvider({
             duration: MOTION.lenis.duration,
             easing: MOTION.lenis.easing,
             smoothWheel: MOTION.lenis.smoothWheel,
-            // Lenis is stepped from the GSAP ticker below — never from its own
-            // rAF loop, otherwise two loops fight over one scroll position.
             autoRaf: false,
           });
 
           lenisRef = lenis;
           setLenis(lenis);
 
-          // Lenis emits `scroll` synchronously inside `lenis.raf()`, i.e.
-          // inside the GSAP ticker frame. Updating ScrollTrigger right there
-          // keeps scrub tweens in the SAME frame as the scroll position;
-          // deferring to a second rAF put them one frame behind Lenis, which
-          // reads as a faint shimmer on every scrub-linked element.
           lenis.on("scroll", ScrollTrigger.update);
 
           tickFn = (time: number) => lenis.raf(time * 1000);
@@ -70,16 +56,6 @@ export function SmoothScrollProvider({
           gsap.ticker.lagSmoothing(0);
         }
 
-        // Handle page geometry changes automatically. ScrollTrigger needs its
-        // start/end pixels recomputed on any body-height change — otherwise
-        // reveals near the bottom of the page (e.g. the footer) keep stale
-        // trigger positions when layout settles AFTER the triggers were created
-        // (fonts loading, the giant footer wordmark reflowing, client-side route
-        // changes) and can get stuck at opacity 0. When Lenis is active it also
-        // needs its scroll bounds resized. This runs on touch too (where Lenis
-        // is off but ScrollTrigger reveals still fire), since body-height shifts
-        // don't emit a window resize event. Debounced to a single rAF so a burst
-        // of resizes only triggers one refresh.
         let refreshPending = false;
         resizeObserver = new ResizeObserver(() => {
           lenisRef?.resize();

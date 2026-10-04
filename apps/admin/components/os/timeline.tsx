@@ -44,15 +44,12 @@ export const ICON_MAP: Record<string, LucideIcon> = {
 export interface TimelineEvent {
   id: string;
   at: Date | string;
-  /** Resolved at render time via ICON_MAP. Falls back to Activity icon. */
   iconName?: string;
   tone: Tone;
   title: string;
   detail?: string;
   href?: string;
-  /** Rendered as mono metadata under the title. */
   meta?: string;
-  /** Activity taxonomy for category filtering */
   category?: string;
 }
 
@@ -75,9 +72,6 @@ export function Timeline({
     );
   }
 
-  // If date grouping is turned off or dense view requested, render flat list.
-  // Rows sit flush against each other — the connector spine is only continuous
-  // if there is no gap for it to fall into.
   if (!groupByDate || dense) {
     return (
       <ol>
@@ -93,7 +87,6 @@ export function Timeline({
     );
   }
 
-  // Group events by date label
   const groups: { label: string; events: TimelineEvent[] }[] = [];
   const groupMap = new Map<string, TimelineEvent[]>();
 
@@ -120,7 +113,6 @@ export function Timeline({
     <div className="space-y-6">
       {groups.map((group) => (
         <section key={group.label} className="space-y-2">
-          {/* Section Header */}
           <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-md border border-border bg-card/90 px-2 py-1.5 backdrop-blur-md">
             <span className="telemetry text-muted-foreground">{group.label}</span>
             <span className="font-mono text-micro tabular-nums text-subtle-foreground">
@@ -144,19 +136,6 @@ export function Timeline({
   );
 }
 
-/**
- * One event, as a ROW — not a card. §31: a Panel is a flat plane, and a feed
- * inside one is a list of rows on that plane, so nothing here lifts, scales or
- * carries its own shadow.
- *
- * Three things are fixed on purpose:
- *   · the spine runs INTO the next row (no gap), so a run of events reads as
- *     one thread rather than a stack of separate cards;
- *   · the chevron is visible at rest, because "this row goes somewhere" is
- *     information, and hover does not exist on a phone;
- *   · a dense row stays ONE line high — meta joins the timestamp instead of
- *     opening a second line, so eight events fit where five did.
- */
 function TimelineItem({
   event,
   dense = false,
@@ -177,13 +156,10 @@ function TimelineItem({
         interactive && "hover:bg-surface/70",
       )}
     >
-      {/* Spine and icon */}
       <div className="relative flex w-7 shrink-0 flex-col items-center self-stretch">
         {!isLast && (
           <div
             className={cn(
-              // Reaches the next row's badge: its own bottom padding plus the
-              // next row's top padding. Short of that it is a tick, not a line.
               "absolute left-1/2 top-7 w-px -translate-x-1/2 bg-border-mid",
               dense ? "-bottom-3" : "-bottom-4",
             )}
@@ -193,8 +169,6 @@ function TimelineItem({
         <div
           className={cn(
             "relative z-10 flex size-7 items-center justify-center rounded-md border",
-            // The same tone classes every pill uses, so a timeline icon and a
-            // status pill for one state can never drift apart.
             toneClasses[event.tone],
           )}
         >
@@ -202,7 +176,6 @@ function TimelineItem({
         </div>
       </div>
 
-      {/* What happened, when, and where it goes */}
       <div className="min-w-0 flex-1 pt-1">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
           <p className="min-w-0 text-base leading-snug">

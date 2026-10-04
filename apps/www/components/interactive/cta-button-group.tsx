@@ -14,11 +14,8 @@ type CtaButtonGroupProps = {
   secondary?: CtaAction;
   primaryVariant?: "primary" | "accent";
   secondaryArrow?: boolean;
-  /** Stack both buttons at equal, full width on every screen — for narrow columns. */
   stacked?: boolean;
-  /** "pill" rounds both buttons fully, matching the header's own CTA. */
   shape?: "default" | "pill";
-  /** Extra classes for the secondary button (the homepage hero's glass pill). */
   secondaryClassName?: string;
   className?: string;
   ref?: Ref<HTMLDivElement>;
@@ -43,9 +40,6 @@ export function CtaButtonGroup({
       ref={ref}
       className={cn(
         "flex flex-col items-stretch gap-3",
-        /* The group fills its column on mobile even when the parent does not
-           stretch it (the hero's parent is items-start), so the buttons'
-           own w-full has something to fill. */
         width,
         !stacked && "sm:flex-row sm:items-center",
         className,

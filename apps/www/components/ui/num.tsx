@@ -10,7 +10,6 @@ interface NumProps {
 
 export function Num({ value, pad }: NumProps) {
   const locale = useLocale();
-  // Padding follows formatIndex: Arabic index labels carry no leading zero.
   return (
     <>
       {pad

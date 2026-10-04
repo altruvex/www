@@ -6,33 +6,10 @@ import { createSpring } from "@/lib/motion/utils/spring";
 import { gsap } from "@/lib/utils/gsap";
 import { useEffect, useRef } from "react";
 
-/*
- * The custom cursor: a brand dot that sits exactly on the pointer and a glass
- * ring that trails it on a spring. The ring and both hover scales share one
- * critically damped spring (MOTION.spring.gentle): an unhurried trail that
- * settles without overshoot, so the cursor never feels in a rush, while the
- * dot keeps the pointer itself exact.
- *
- * Only lib/motion springs and gsap.quickSetter write these transforms, and
- * nothing may transition them: a CSS transition that a per-frame write
- * retargets restarts every frame, falls far behind and moves unevenly. The
- * ring is .liquid-glass, whose transition list includes transform, so its
- * inline style narrows the transition to opacity. The springs are solved
- * analytically, so the trail is the same at 60 Hz, at 120 Hz and across a
- * dropped frame, and they sleep once at rest.
- *
- * Over a [data-magnetic] control the ring leans toward the control's resting
- * centre, measured once per hover with the control's own translate taken out
- * and page scroll compensated, as useMagnetic does.
- */
-
 const SIZE = { ring: 32, dot: 8 };
-/** Ring and dot scale over something clickable. */
 const HOVER_SCALE = { ring: 1.4, dot: 0.6 };
-/** Share of the way the ring leans from the pointer to a magnetic centre. */
 const MAGNETIC_PULL = 0.15;
 const INTERACTIVE = "button, a, [data-cursor-pointer]";
-/** Show / hide. Replaces .liquid-glass's transition list on the ring. */
 const FADE = "opacity var(--motion-drawer) var(--ease-default)";
 
 type Setter = (value: number) => void;
@@ -121,7 +98,6 @@ function CustomCursor() {
       dotY(py);
       if (e.target !== lastTarget) hover(e.target);
       if (!visible) {
-        // Appear where the pointer is, never fly in from the last exit point.
         ringX.jump(px);
         ringY.jump(py);
         show(true);
@@ -129,14 +105,12 @@ function CustomCursor() {
       aim();
     };
 
-    // Hover changes the pointer did not move into (the page scrolled under it).
     const onOver = (e: PointerEvent) => {
       if (e.pointerType !== "mouse" || !visible) return;
       hover(e.target);
       aim();
     };
 
-    // Left the window (or entered an iframe, which keeps its own events).
     const onOut = (e: PointerEvent) => {
       if (e.pointerType === "mouse" && e.relatedTarget === null) show(false);
     };

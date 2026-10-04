@@ -9,11 +9,6 @@ function initials(name?: string | null) {
   return (parts[0]?.[0] ?? "?").concat(parts[1]?.[0] ?? "").toUpperCase();
 }
 
-/**
- * No photo pipeline exists, so this is a deterministic monogram: the same name
- * always gets the same tint. Avoids the "everyone is grey" problem in a list of
- * twenty rows without introducing decorative colour.
- */
 const TINTS = [
   "bg-info/12 text-info",
   "bg-success/12 text-success",

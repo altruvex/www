@@ -14,18 +14,10 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // The proxy already refused anyone who is not ADMIN+; this is the second
-  // line. The access decision is made here from the session itself, so a
-  // proxy bypass in the framework never becomes an unauthenticated read of
-  // the pages underneath.
   const session = await requireAdminPage();
 
   const dbRole = (session.user as { role?: string }).role;
 
-  // An operator who has not enrolled in two-factor is sent to the enrolment
-  // screen: always when it is required, otherwise until they choose "Skip for
-  // now" in this browser. The screen lives outside this layout, so this
-  // cannot redirect to itself.
   const enrolled = Boolean(
     (session.user as { twoFactorEnabled?: boolean | null }).twoFactorEnabled,
   );
@@ -34,12 +26,7 @@ export default async function DashboardLayout({
     if (mfaRequired() || !skipped) redirect(MFA_SETUP_PATH);
   }
 
-  // Read after the access decision, not beside it: the unread count belongs to
-  // this operator, and nothing is queried for a request that is about to be
-  // redirected.
   const shell = await getShellBadges(session.user.id);
-  // The product role narrows the nav: an assigned opsRole wins over the one
-  // derived from the sign-in role, read the same way authorize() reads it.
   const role = await currentRole();
 
   return (

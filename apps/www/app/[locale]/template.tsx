@@ -5,18 +5,8 @@ import { gsap } from "@/lib/utils/gsap";
 import { MOTION } from "@/lib/motion/config";
 import { useRef } from "react";
 
-// Next.js re-mounts template.tsx on every client navigation, which makes it the
-// correct home for a route-enter transition (unlike layout.tsx, which persists).
-// A module-level flag survives these re-mounts, so we skip the very first mount:
-// the initial-loader already owns that paint, and animating here too would
-// double up.
 let hasMounted = false;
 
-/**
- * Route-enter transition. Communicated state: "new page content has arrived."
- * 8px lift + fade, ~350ms — the same restrained vocabulary as the section
- * reveals, just at page granularity. Opacity-only under reduced motion.
- */
 export default function Template({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 

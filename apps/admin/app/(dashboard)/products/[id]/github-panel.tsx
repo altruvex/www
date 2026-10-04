@@ -8,19 +8,10 @@ import { toast } from "sonner";
 import { Button } from "@repo/ui";
 
 import { MetaList } from "@/components/os/detail-layout";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { Panel } from "@/components/os/panel";
 import { RepositoryPicker } from "@/components/os/repository-picker";
 
-/**
- * Setup state for the GitHub webhook (§26).
- *
- * There is nothing to click here that connects anything — the connection is
- * made in GitHub, by a person with admin rights on the repository. What this
- * panel does is say which of the three conditions are already true, so the one
- * that is missing is the thing on screen rather than something to go hunting
- * for: a repository URL on this product, a secret on the server, and a webhook
- * pointed at this URL.
- */
 export function GithubPanel({
   productId,
   repositoryUrl,
@@ -28,6 +19,7 @@ export function GithubPanel({
   webhookUrl,
   secretConfigured,
   lastEventAt,
+  canEdit,
 }: {
   productId: string;
   repositoryUrl: string | null;
@@ -35,19 +27,14 @@ export function GithubPanel({
   webhookUrl: string;
   secretConfigured: boolean;
   lastEventAt: string | null;
+  canEdit: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(repositoryUrl ?? "");
   const [saving, setSaving] = React.useState(false);
 
-  /**
-   * The panel used to say "set this product's repository URL first" and offer
-   * nothing to set it with — the only editor was the create form, so an
-   * existing product could be told what was missing and given no way to supply
-   * it.
-   */
-  async function save(url: string | null) {
+  async function save(url: string | null): Promise<boolean> {
     setSaving(true);
     try {
       const res = await fetch("/api/admin/products", {
@@ -62,18 +49,20 @@ export function GithubPanel({
       if (res.status === 401) {
         toast.error("Your session expired. Sign in again.");
         router.push("/login");
-        return;
+        return false;
       }
       const data = (await res.json()) as { success: boolean; message?: string };
       if (!data.success) {
         toast.error(data.message ?? "That did not work.");
-        return;
+        return false;
       }
       toast.success(url ? "Repository linked." : "Repository unlinked.");
       setEditing(false);
       router.refresh();
+      return true;
     } catch {
       toast.error("The request could not be sent. Check your connection.");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -97,7 +86,7 @@ export function GithubPanel({
         lastEventAt
           ? "Builds and deployments are arriving from GitHub"
           : ready
-            ? "Ready for a webhook"
+            ? "Waiting for the first event from GitHub"
             : "Not connected"
       }
       flush
@@ -126,7 +115,7 @@ export function GithubPanel({
         ]}
       />
 
-      {editing ? (
+      {!canEdit ? null : editing ? (
         <div className="space-y-2 border-t border-border p-3">
           <RepositoryPicker
             value={draft}
@@ -154,15 +143,30 @@ export function GithubPanel({
               Cancel
             </Button>
             {repositoryUrl && (
-              <Button
-                size="sm"
-                variant="destructive-ghost"
-                disabled={saving}
-                className="ms-auto"
-                onClick={() => save(null)}
-              >
-                Unlink
-              </Button>
+              <ConfirmDialog
+                tone="danger"
+                title="Unlink the repository?"
+                consequence="GitHub events for this repository stop matching this product: new workflow runs and deployments are no longer recorded here. History already recorded stays."
+                confirmLabel="Unlink"
+                onConfirm={async () => {
+                  const ok = await save(null);
+                  if (!ok)
+                    return {
+                      ok: false,
+                      message: "The repository is still linked.",
+                    };
+                }}
+                trigger={
+                  <Button
+                    size="sm"
+                    variant="destructive-ghost"
+                    disabled={saving}
+                    className="ms-auto"
+                  >
+                    Unlink
+                  </Button>
+                }
+              />
             )}
           </div>
         </div>
@@ -181,43 +185,58 @@ export function GithubPanel({
       )}
 
       <div className="space-y-2 border-t border-border p-3">
-        <div>
-          <p className="telemetry text-subtle-foreground">Payload URL</p>
-          <p className="mt-1 break-all rounded-sm border border-border bg-surface p-2 font-mono text-meta">
-            {webhookUrl}
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full"
-          onClick={() => copy(webhookUrl, "Payload URL")}
-        >
-          <Copy className="size-3.5" />
-          Copy payload URL
-        </Button>
-        {repoSlug && (
-          <Button asChild variant="ghost" size="sm" className="w-full">
-            <a
-              href={`https://github.com/${repoSlug}/settings/hooks/new`}
-              target="_blank"
-              rel="noreferrer noopener"
-            >
-              <ExternalLink className="size-3.5" />
-              Add the webhook on GitHub
-            </a>
-          </Button>
-        )}
         <p className="text-meta text-subtle-foreground">
           {!repositoryUrl
-            ? "Set this product's repository URL first — the webhook is matched to a product by the repository it names."
+            ? "Link this product's repository above — every GitHub event is matched to a product by the repository it names."
             : !repoSlug
               ? "The repository URL on this product is not a github.com repository, so no delivery can be matched to it."
               : !secretConfigured
                 ? "Set GITHUB_WEBHOOK_SECRET on the server. Until then every delivery is refused — an unverified webhook is an unauthenticated write."
-                : "Content type application/json, the same secret as the server, and the events “Workflow runs” and “Deployment statuses”. Do not also post to /api/ingest/* from the same workflow, or every run is recorded twice."}
+                : "Install the Altruvex GitHub App once on the account or organization that owns this repository, and give it access to this repository. Nothing is set per repository: the App reports workflow runs and deployments, and this product's Repository field decides where they land."}
         </p>
       </div>
+
+      <details className="border-t border-border p-3">
+        <summary className="cursor-pointer text-meta text-subtle-foreground">
+          Without the App: a webhook on this repository
+        </summary>
+        <div className="mt-2 space-y-2">
+          <div>
+            <p className="telemetry text-subtle-foreground">Payload URL</p>
+            <p className="mt-1 break-all rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+              {webhookUrl}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => copy(webhookUrl, "Payload URL")}
+          >
+            <Copy className="size-3.5" />
+            Copy payload URL
+          </Button>
+          {repoSlug && (
+            <Button asChild variant="ghost" size="sm" className="w-full">
+              <a
+                href={`https://github.com/${repoSlug}/settings/hooks/new`}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <ExternalLink className="size-3.5" />
+                Add the webhook on GitHub
+              </a>
+            </Button>
+          )}
+          <p className="text-meta text-subtle-foreground">
+            Content type application/json, the same secret as the server, and
+            the events “Workflow runs” and “Deployment statuses”. Use this or
+            the App for a repository, not both, and do not also post to
+            /api/ingest/* from the same workflow — every run would be recorded
+            twice.
+          </p>
+        </div>
+      </details>
     </Panel>
   );
 }

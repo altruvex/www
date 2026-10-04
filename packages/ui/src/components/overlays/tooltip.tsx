@@ -31,7 +31,6 @@ export function TooltipContent({
   );
 }
 
-/** One-liner for the common case. */
 export function Hint({
   label,
   children,

@@ -72,37 +72,21 @@
     "title": "Accountability built in.",
     "titleItalic": "automatically.",
     "eyebrow": "The gate",
-    "label": "What the pipeline decides",
     "outcomes": {
-      "pass": {
-        "state": "All {n} {count, plural, one {check} other {checks}} pass",
-        "result": "The deploy ships."
-      },
       "fail": {
         "state": "One check misses its line",
-        "result": "Nothing deploys.",
-        "example": "Example: {check} misses its line. Every other check passes, and the deploy still does not happen."
+        "result": "Nothing deploys."
       }
-    }
+    },
+    "count": "{n} {count, plural, one {check} other {checks}}."
   },
   "hero": {
     "description": "Every system must be fast, readable, accessible, and maintainable enough that every decision after launch is easier - not harder.",
     "eyebrow": "11 - Standards",
     "title": "Quality is a delivery requirement,",
-    "titleItalic": "not a bonus round.",
-    "contents": {
-      "summary": "{standards} {standardsCount, plural, one {standard} other {standards}} · {checks} {checksCount, plural, one {check} other {checks}} · one gate every deploy passes through",
-      "checks": "{n} {count, plural, one {check} other {checks}}"
-    }
+    "titleItalic": "not a bonus round."
   },
   "sheet": {
-    "sectionLabel": "The standards and their pass lines",
-    "builtWith": "Built with",
-    "passLine": "The pass line",
-    "legend": {
-      "pass": "Passes",
-      "fail": "Fails"
-    },
     "pass": {
       "atLeast": "{value} or higher",
       "over": "Over {value}",

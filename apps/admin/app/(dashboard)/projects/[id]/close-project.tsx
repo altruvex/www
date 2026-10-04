@@ -2,23 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, CircleCheckBig, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  Button,
-  Checkbox,
-  LoadingIcon,
-} from "@repo/ui";
+import { Checkbox, Field, LoadingIcon, Textarea } from "@repo/ui";
 
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { date } from "@/lib/format";
 import { warrantyWindow } from "@/lib/change-requests";
@@ -28,43 +16,36 @@ import {
   type ClosurePlan,
 } from "@/app/(dashboard)/_actions/change-requests";
 
-/**
- * Closing a project is a checklist read from the server, not a status in a
- * dropdown. Unpaid payments and open change requests hold the close back; an
- * owner may override them, and the override is written into the audit event.
- */
-export function CloseProjectButton({ projectId, projectName }: { projectId: string; projectName: string }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
-        <CircleCheckBig className="size-3.5 text-subtle-foreground" />
-        Close project
-      </Button>
-      {open && (
-        <CloseProjectDialog projectId={projectId} projectName={projectName} onClose={() => setOpen(false)} />
-      )}
-    </>
-  );
-}
-
-function CloseProjectDialog({
+export function CloseProjectDialog({
   projectId,
   projectName,
-  onClose,
+  open,
+  onOpenChange,
 }: {
   projectId: string;
   projectName: string;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
   const [plan, setPlan] = React.useState<ClosurePlan | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [override, setOverride] = React.useState(false);
   const [note, setNote] = React.useState("");
-  const [busy, setBusy] = React.useState(false);
+
+  const [lastOpen, setLastOpen] = React.useState(open);
+  if (open !== lastOpen) {
+    setLastOpen(open);
+    if (open) {
+      setPlan(null);
+      setLoadError(null);
+      setOverride(false);
+      setNote("");
+    }
+  }
 
   React.useEffect(() => {
+    if (!open) return;
     let live = true;
     describeProjectClosure(projectId)
       .then((result) => {
@@ -72,52 +53,43 @@ function CloseProjectDialog({
         if (result.ok) setPlan(result.data);
         else setLoadError(result.message);
       })
-      .catch(() => live && setLoadError("The checklist could not be loaded."));
+      .catch(() => live && setLoadError("The checklist could not be loaded. Nothing was changed."));
     return () => {
       live = false;
     };
-  }, [projectId]);
+  }, [open, projectId]);
 
   const blocked = plan?.blocked ?? false;
-  const canSubmit = !busy && plan != null && (!blocked || (plan.canOverride && override));
-
-  async function run() {
-    setBusy(true);
-    try {
-      const result = await closeProject(projectId, {
-        override: blocked && override,
-        ...(note.trim() ? { note: note.trim() } : {}),
-      });
-      if (!result.ok) throw new Error(result.message);
-      toast.success("Project closed", { description: projectName });
-      router.refresh();
-      onClose();
-    } catch (error) {
-      toast.error("Could not close the project", {
-        description:
-          error instanceof Error ? `${error.message} Nothing was changed.` : "Unknown error. Nothing was changed.",
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const warrantyEnds = plan
     ? warrantyWindow(plan.actualLaunchDate ? new Date(plan.actualLaunchDate) : null, plan.warrantyDays).endsAt
     : null;
 
   return (
-    <AlertDialog open onOpenChange={(next) => !next && !busy && onClose()}>
-      <AlertDialogContent className="max-w-lg">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Close {projectName}</AlertDialogTitle>
-          <AlertDialogDescription>
-            Marks the engagement finished and records today as the close date. Change requests
-            can still be logged afterwards, and the project can be reopened from the status menu.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-
-        {loadError ? (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Close ${projectName}`}
+      confirmLabel={blocked ? "Close with override" : "Close project"}
+      consequence="Records today as the close date. Change requests can still be logged afterwards, and the project can be reopened from the status menu."
+      onConfirm={async () => {
+        if (loadError) return { ok: false, message: loadError };
+        if (!plan) return { ok: false, message: "The checklist is still loading." };
+        if (blocked && !plan.canOverride) {
+          return { ok: false, message: "Settle the items above first, or ask an owner to close it with an override." };
+        }
+        if (blocked && !override) {
+          return { ok: false, message: "Tick “Close anyway” to override the items above, or settle them first." };
+        }
+        const result = await closeProject(projectId, {
+          override: blocked && override,
+          ...(note.trim() ? { note: note.trim() } : {}),
+        });
+        if (!result.ok) return { ok: false, message: `${result.message} Nothing was changed.` };
+        router.refresh();
+        return { ok: true, message: `${projectName} closed.` };
+      }}
+      body={
+        loadError ? (
           <p className="text-meta text-danger">{loadError}</p>
         ) : plan == null ? (
           <div className="flex items-center gap-2 py-3 text-meta text-muted-foreground" aria-live="polite">
@@ -154,15 +126,14 @@ function CloseProjectDialog({
 
             {blocked &&
               (plan.canOverride ? (
-                <label className="flex items-start gap-2.5">
+                <label className="flex min-h-11 items-start gap-2.5 sm:min-h-0">
                   <Checkbox
                     checked={override}
                     onCheckedChange={(value) => setOverride(value === true)}
                     className="mt-0.5 border-foreground/45 hover:border-foreground/70"
                   />
                   <span className="text-base">
-                    Close anyway. The override and the reasons above are written into the audit
-                    trail.
+                    Close anyway. The override and the reasons above are written into the audit trail.
                   </span>
                 </label>
               ) : (
@@ -171,38 +142,18 @@ function CloseProjectDialog({
                 </p>
               ))}
 
-            <label className="block space-y-1.5">
-              <span className="block text-meta font-medium text-muted-foreground">Note (optional)</span>
-              <textarea
+            <Field label="Note (optional)">
+              <Textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 rows={2}
                 maxLength={500}
                 placeholder="Kept in the audit trail"
-                className={cn(
-                  "w-full rounded-ctl border border-border bg-background px-3 py-2 text-base",
-                  "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                )}
               />
-            </label>
+            </Field>
           </div>
-        )}
-
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            variant="brand"
-            disabled={!canSubmit}
-            onClick={(event) => {
-              event.preventDefault();
-              void run();
-            }}
-          >
-            {busy && <LoadingIcon size="sm" />}
-            {blocked ? "Close with override" : "Close project"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        )
+      }
+    />
   );
 }

@@ -1,26 +1,26 @@
-import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
-import { loadPortal } from "@/lib/client-portal";
+import { loadPortal, loadPortalContact } from "@/lib/client-portal";
+import { PortalInvalid } from "@/app/portal/[token]/portal-shell";
+
 import { PortalClient } from "./portal-client";
 
 export const dynamic = "force-dynamic";
 
-/**
- * The client-facing maintenance portal.
- *
- * Rendered on the server so a client sees their plan and allowance without a
- * loading state, and so the token never has to be handed to client-side code
- * for the initial read.
- */
+export const metadata: Metadata = {
+  title: "Maintenance portal",
+  robots: { index: false, follow: false },
+};
+
 export default async function ClientPortalPage({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const portal = await loadPortal(token);
+  const [portal, contact] = await Promise.all([loadPortal(token), loadPortalContact()]);
 
-  if (!portal) notFound();
+  if (!portal) return <PortalInvalid kind="maintenance" contact={contact} />;
 
-  return <PortalClient token={token} initial={portal} />;
+  return <PortalClient token={token} initial={portal} contact={contact} />;
 }

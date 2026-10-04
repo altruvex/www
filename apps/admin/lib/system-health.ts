@@ -6,14 +6,6 @@ import { emailTransport } from "@/lib/email";
 import { storageConfig } from "@/lib/storage";
 import { CRON_JOBS } from "@/lib/cron-jobs";
 
-/**
- * §26 / §27 — integration and system health.
- *
- * These are REAL checks, not a page of green dots. Configuration presence is
- * checked against the actual environment; liveness is checked by touching the
- * dependency. A check that cannot be performed reports "unknown", never "ok" —
- * an integrations page that lies is worse than no integrations page.
- */
 export type HealthState = "ok" | "degraded" | "down" | "unconfigured" | "unknown";
 
 export interface HealthCheck {
@@ -22,20 +14,8 @@ export interface HealthCheck {
   category: "integration" | "infrastructure";
   state: HealthState;
   summary: string;
-  /** What breaks if this is broken. */
   impact: string;
-  /** What a human should do about it. */
   remedy?: string;
-  /**
-   * Where that is done, when it is done inside this application rather than in
-   * the environment.
-   *
-   * The same rule `AlertBar` enforces: naming a problem without naming the
-   * screen that fixes it leaves the operator hunting for the route. WhatsApp,
-   * storage and email are configured entirely by environment variables and
-   * carry no destination — GitHub and Google Calendar have real screens, and
-   * "Integrations" is where somebody goes looking for them.
-   */
   setup?: { href: string; label: string };
   detail?: string;
   lastChecked: string;
@@ -50,7 +30,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
   const at = new Date().toISOString();
   const checks: HealthCheck[] = [];
 
-  /* ---- database -------------------------------------------------------- */
   let dbState: HealthState = "unknown";
   let dbDetail: string | undefined;
   const dbStart = Date.now();
@@ -74,19 +53,12 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     lastChecked: at,
   });
 
-  /* ---- WhatsApp Cloud API ---------------------------------------------- */
   const waMissing = present(
     "WHATSAPP_ACCESS_TOKEN",
     "WHATSAPP_PHONE_NUMBER_ID",
     "WHATSAPP_WEBHOOK_VERIFY_TOKEN",
     "WHATSAPP_APP_SECRET",
   );
-  // Health is a claim about *now*, so the failure counts are scoped to a
-  // window. Counting every failure since the table was created means one bad
-  // afternoon marks the integration degraded forever — and a card that can
-  // never go green is a card an operator stops reading, which costs more than
-  // the warning was ever worth. The all-time total stays in the metrics, where
-  // it is history rather than a verdict.
   const waWindowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [waTotal, waFailedAllTime, waRecent, waFailed, waLast] = await Promise.all([
     prisma.whatsAppMessage.count(),
@@ -143,7 +115,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- GitHub webhook --------------------------------------------------- */
   const ghSecret = present("GITHUB_WEBHOOK_SECRET");
   const [ghProducts, ghLastBuild, ghLastDeployment] = await Promise.all([
     prisma.product.findMany({
@@ -164,8 +135,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
   const ghSlugs = ghProducts
     .map((p) => githubRepoSlug(p.repositoryUrl))
     .filter((slug): slug is string => slug !== null);
-  // A repository claimed by two products cannot be attributed from the webhook
-  // alone, and the receiver refuses those deliveries rather than guessing.
   const ghDuplicates = ghSlugs.filter((slug, i) => ghSlugs.indexOf(slug) !== i).length;
   const ghLastEvent =
     [ghLastBuild?.createdAt, ghLastDeployment?.createdAt]
@@ -182,9 +151,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
           ? "degraded"
           : ghLastEvent
             ? "ok"
-            // Configured on this side, but whether GitHub is actually pointed
-            // here is only knowable from a delivery. Saying "ok" before one
-            // arrives would be a flag reporting on itself.
             : "unknown",
     summary:
       ghSecret.length > 0
@@ -220,12 +186,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- Slack ------------------------------------------------------------ */
-  // Deliberately reports "configured", never "healthy". An incoming webhook
-  // answers nothing until something is posted to it, and there is no read
-  // endpoint to probe — claiming health from the presence of a URL would be
-  // exactly the flag reporting on itself that this page exists to avoid. The
-  // test button on this page is the real check, and a person has to press it.
   const slackMissing = present("SLACK_WEBHOOK_URL");
   checks.push({
     id: "slack",
@@ -249,7 +209,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- object storage --------------------------------------------------- */
   const storage = storageConfig();
   const storageMissing = storage.missing;
   const [withFiles, withoutFiles] = await Promise.all([
@@ -283,7 +242,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- authentication --------------------------------------------------- */
   const authMissing = present("BETTER_AUTH_SECRET");
   const [users, activeSessions] = await Promise.all([
     prisma.user.count(),
@@ -304,7 +262,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- transactional email ---------------------------------------------- */
   const transport = emailTransport();
   const emailWindowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [emailTotal, emailFailedRecent, emailRecent] = await Promise.all([
@@ -318,9 +275,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     id: "email",
     name: "Transactional email",
     category: "integration",
-    // Like Slack, a transport that has accepted mail is not the same as mail
-    // that arrived — nothing here reports delivery, because nothing here can
-    // know it until a provider webhook is wired up.
     state:
       transport === "none"
         ? "unconfigured"
@@ -355,11 +309,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- scheduled jobs --------------------------------------------------- */
-  // The sweep writes no activity event of its own; the only durable trace of a
-  // run is the renewal notifications it fans out. The newest of those is the
-  // most honest "last ran" available — when the sweep ran and found nothing
-  // due, it left nothing behind, and the check says so instead of guessing.
   const cronMissing = present("CRON_SECRET");
   const lastRenewalNotice = await prisma.notification.findFirst({
     where: { type: "RENEWAL_DUE" },
@@ -401,10 +350,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- ingest tokens ---------------------------------------------------- */
-  // Per-product tokens let a pipeline post builds, deployments and logs
-  // directly. Only the hash is stored, so the check can say how many exist and
-  // when the newest was issued — never what any of them is.
   const [tokenProducts, productCount, lastBuild, lastDeployment, lastLog] = await Promise.all([
     prisma.product.findMany({
       where: { ingestTokenHash: { not: null } },
@@ -457,7 +402,6 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
     ],
   });
 
-  /* ---- rate limiting ---------------------------------------------------- */
   const [buckets, hotBuckets] = await Promise.all([
     prisma.rateLimitBucket.count(),
     prisma.rateLimitBucket.count({ where: { count: { gt: 50 } } }),

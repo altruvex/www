@@ -17,18 +17,6 @@ import {
   type ResolvedPricing,
 } from "@repo/pricing-schema";
 
-/**
- * Reads the admin-editable pricing overrides and resolves them over the
- * shipped defaults from `@repo/pricing-schema`.
- *
- * Every read is fail-soft. A published price is on the marketing site, in
- * proposals, and in signed contracts, so a database blip must not blank it —
- * on any read error this falls back to the defaults, which are the values the
- * last deploy shipped. That is strictly better than an error page and never
- * worse than being slightly stale.
- */
-
-/** Maps rows to typed entries, dropping any the mapper rejects. */
 function mapDefined<TRow, TOut>(
   rows: readonly TRow[],
   map: (row: TRow) => TOut | null,
@@ -51,11 +39,6 @@ function toBillingCycle(value: string): BillingCycle {
     : "annual";
 }
 
-/**
- * Rows are validated against the canonical id set at the boundary rather than
- * cast through it. A row whose plan id is no longer in the schema is dropped
- * here, so nothing downstream has to reason about an id that no longer exists.
- */
 function isMaintenanceId(value: string): value is MaintenancePlanId {
   return (MAINTENANCE_PLAN_IDS as readonly string[]).includes(value);
 }
@@ -149,7 +132,6 @@ export async function loadPricingOverrides(): Promise<PricingOverrides> {
   };
 }
 
-/** Resolved pricing for admin surfaces. Falls back to defaults on any error. */
 export async function getPricing(): Promise<ResolvedPricing> {
   try {
     return resolvePricing(await loadPricingOverrides());
@@ -167,13 +149,6 @@ export interface ChangeEntry {
   readonly newValue: string | null;
 }
 
-/**
- * Records what changed, field by field.
- *
- * A published price is a commitment a client can read back, so "what did this
- * cost in March, and who changed it" has to be answerable. Written in the same
- * transaction as the change itself so the log cannot drift from reality.
- */
 export function diffFields(
   entityType: string,
   entityId: string,
@@ -205,13 +180,6 @@ export async function recordChanges(
   });
 }
 
-/**
- * The entity types the pricing route writes. `lib/maintenance-admin.ts` also
- * writes to this log (quoted-price changes on individual retainers, keyed
- * "maintenance_request" / "maintenance_subscription"); those are per-client
- * commercial changes, not published-price changes, and the /pricing history
- * must not show them as if a plan's price had moved.
- */
 export const PUBLISHED_PRICE_ENTITY_TYPES = ["cell", "terms", "maintenance", "consulting", "addon"] as const;
 
 export async function pricingHistory(limit = 50) {

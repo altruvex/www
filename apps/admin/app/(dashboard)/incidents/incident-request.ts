@@ -4,14 +4,6 @@ import { toast } from "sonner";
 
 type Router = { push: (href: string) => void; refresh: () => void };
 
-/**
- * The one client path to the incident API, shared by the list and the detail
- * page so both read its answers the same way.
- *
- * Success is only claimed when the API says something was written: a PATCH that
- * changed nothing comes back `changed: false` and is reported as exactly that,
- * never as a green toast over a no-op.
- */
 export async function sendIncidentRequest(
   router: Router,
   method: "POST" | "PATCH",
@@ -40,8 +32,6 @@ export async function sendIncidentRequest(
   try {
     data = await res.json();
   } catch {
-    // A proxy error page or a crashed handler answers with HTML; say what is
-    // known — it failed — instead of throwing inside the click handler.
   }
 
   if (!res.ok || !data.success) {

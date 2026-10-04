@@ -7,12 +7,13 @@ import { prisma } from "@repo/database";
 
 import { randomBytes } from "node:crypto";
 
-import { auth } from "@/lib/auth";
+import { getOperator } from "@/lib/authorize";
+import { env } from "@/lib/env";
 import { sendDocumentEmail } from "@/lib/email-sender";
 import { ensureLink } from "@/lib/email-templates";
 import { publicBaseUrlFromHeaders } from "@/lib/public-url";
 import { sendTextMessage } from "@/lib/whatsapp-api";
-import { can, toProductRole, type Action, type Subject } from "@/lib/rbac";
+import { can, type Action, type Subject } from "@/lib/rbac";
 import { recordActivity, userActor } from "@/lib/activity-log";
 import { getPricing } from "@/lib/pricing-store";
 import { manualMetadata, manualRecordFields, channelPhrase } from "@/lib/manual-record";
@@ -30,27 +31,12 @@ import {
   type ChangeRequestStatusValue,
   type ClosureCheck,
 } from "@/lib/change-requests";
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
-/**
- * Server actions for change requests and for closing a project. The rules
- * themselves live in `lib/change-requests.ts`; this file checks permission,
- * reads the row, asks that module whether the move is legal, writes, and
- * records the audit event at the mutation site.
- */
-
-/**
- * A refusal the operator should read. Anything else that throws is logged and
- * reported generically — a Prisma error message is not UI copy.
- */
 class Refusal extends Error {}
 
 export type ActionResult<T = unknown> = { ok: true; data: T } | { ok: false; message: string };
 
-/**
- * Actions return their refusal instead of throwing it: in a production build
- * Next.js replaces a thrown server-action message with a generic digest, and
- * "requested outside the warranty" is exactly the sentence the dialog needs.
- */
 async function attempt<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
   try {
     return { ok: true, data: await fn() };
@@ -65,15 +51,14 @@ async function attempt<T>(fn: () => Promise<T>): Promise<ActionResult<T>> {
 }
 
 async function authorize(checks: [Action, Subject][]) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const role = toProductRole((session?.user as { role?: string } | undefined)?.role);
+  const operator = await getOperator();
+  if (!operator) throw new Refusal("Not signed in.");
   for (const [action, subject] of checks) {
-    if (!can(role, action, subject)) throw new Refusal(`Not permitted: ${action} ${subject}`);
+    if (!can(operator.role, action, subject)) throw new Refusal(`Not permitted: ${action} ${subject}`);
   }
-  return { session, role };
+  return { session: operator.session, role: operator.role };
 }
 
-/** Logging and moving work along is delivery; putting a number on it is money. */
 const DELIVERY: [Action, Subject][] = [["edit", "project"]];
 const PRICING: [Action, Subject][] = [
   ["edit", "project"],
@@ -97,7 +82,7 @@ async function loadRequest(id: string) {
           name: true,
           status: true,
           actualLaunchDate: true,
-          contract: { select: { proposal: { select: { currency: true } } } },
+          ...PROJECT_CURRENCY_SELECT,
         },
       },
     },
@@ -113,10 +98,6 @@ function assertMove(from: string, to: ChangeRequestStatusValue, pricing?: string
     );
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/* Create                                                                     */
-/* -------------------------------------------------------------------------- */
 
 const createSchema = z.object({
   title: z.string().trim().min(1, "Say what the client asked for.").max(200),
@@ -159,10 +140,6 @@ export async function createChangeRequest(projectId: string, input: z.input<type
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Quote                                                                      */
-/* -------------------------------------------------------------------------- */
-
 const quoteSchema = z.discriminatedUnion("pricing", [
   z.object({
     pricing: z.literal("HOURLY"),
@@ -192,7 +169,7 @@ export async function quoteChangeRequest(
     const row = await loadRequest(id);
     assertMove(row.status, "QUOTED");
 
-    const currency = row.project.contract.proposal.currency;
+    const currency = projectCurrency(row.project);
     let update: {
       pricing: "HOURLY" | "FIXED";
       estimatedMinutes: number | null;
@@ -217,9 +194,6 @@ export async function quoteChangeRequest(
       update = { pricing: "FIXED", estimatedMinutes: null, hourlyRate: null, quotedAmount: data.amount };
     }
 
-    // The token survives a re-quote so a link already in the client's inbox
-    // keeps working; the sent/viewed stamps do not, because they described the
-    // previous number. Until this one is sent, the link refuses an answer.
     const quoteToken = row.quoteToken ?? randomBytes(24).toString("base64url");
     await prisma.changeRequest.update({
       where: { id },
@@ -253,26 +227,12 @@ export async function quoteChangeRequest(
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Sending the quote                                                          */
-/* -------------------------------------------------------------------------- */
-
 const sendSchema = z.object({
   channel: z.enum(["email", "whatsapp"]),
   subject: z.string().max(200).optional(),
   body: z.string().max(10000).optional(),
 });
 
-/**
- * Sends the current quote to the client the way a proposal goes: the operator
- * picks the channel and may rewrite the wording, and the link is re-appended
- * server-side because an editable body is a deletable one.
- *
- * Every attempt is recorded by the transport (`EmailMessage` /
- * `WhatsAppMessage`), failures included. WhatsApp here is free-form text, not a
- * template — Meta only delivers that inside the 24-hour window opened by the
- * client's last message, and outside it the refusal is shown as Meta wrote it.
- */
 export async function sendChangeRequestQuote(
   id: string,
   input: z.input<typeof sendSchema>,
@@ -291,7 +251,7 @@ export async function sendChangeRequestQuote(
           select: {
             id: true,
             client: { select: { id: true, name: true, company: true, email: true, phone: true } },
-            contract: { select: { proposal: { select: { currency: true } } } },
+            ...PROJECT_CURRENCY_SELECT,
           },
         },
       },
@@ -303,7 +263,7 @@ export async function sendChangeRequestQuote(
 
     const { terms } = await getPricing();
     const client = row.project.client;
-    const currency = row.project.contract.proposal.currency;
+    const currency = projectCurrency(row.project);
     let base: string;
     try {
       base = publicBaseUrlFromHeaders(await headers());
@@ -322,7 +282,7 @@ export async function sendChangeRequestQuote(
         await sendDocumentEmail({ client, subject: data.subject?.trim() || draft.subject, body });
         sentTo = client.email ?? "the client";
       } else {
-        if (!process.env.WHATSAPP_ACCESS_TOKEN || !process.env.WHATSAPP_PHONE_NUMBER_ID) {
+        if (!env?.WHATSAPP_ACCESS_TOKEN || !env?.WHATSAPP_PHONE_NUMBER_ID) {
           throw new Refusal("WhatsApp is not configured, so nothing can be sent over it.");
         }
         await sendTextMessage({ clientId: client.id, phone: client.phone, body });
@@ -330,8 +290,6 @@ export async function sendChangeRequestQuote(
       }
     } catch (error) {
       if (error instanceof Refusal) throw error;
-      // The transport's own reason is the useful one: a missing address, an
-      // unconfigured mailbox, or Meta refusing a message outside the window.
       throw new Refusal(error instanceof Error ? error.message : "The message could not be sent.");
     }
 
@@ -353,7 +311,6 @@ export async function sendChangeRequestQuote(
   });
 }
 
-/** Warranty cover: free, no quote, and only for a request made inside the window. */
 export async function coverChangeRequestUnderWarranty(id: string): Promise<ActionResult> {
   return attempt(async () => {
     const { session } = await authorize(DELIVERY);
@@ -395,20 +352,11 @@ export async function coverChangeRequestUnderWarranty(id: string): Promise<Actio
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* The client's answer — recorded by hand                                      */
-/* -------------------------------------------------------------------------- */
-
 const decisionSchema = z.object({
   decision: z.enum(["APPROVED", "DECLINED"]),
   ...manualRecordFields,
 });
 
-/**
- * The client's yes or no arrives outside the system (a call, a message), so
- * this follows the manual-record rule: it claims only what the operator knows,
- * and the audit event carries `manual: true` with the channel.
- */
 export async function recordChangeRequestDecision(id: string, input: z.input<typeof decisionSchema>): Promise<ActionResult> {
   return attempt(async () => {
     const { session } = await authorize(DELIVERY);
@@ -439,17 +387,13 @@ export async function recordChangeRequestDecision(id: string, input: z.input<typ
       metadata: {
         projectId: row.projectId,
         quotedAmount: row.quotedAmount,
-        currency: row.project.contract.proposal.currency,
+        currency: projectCurrency(row.project),
         ...manualMetadata(data),
       },
     });
     revalidate(row.projectId);
   });
 }
-
-/* -------------------------------------------------------------------------- */
-/* Work                                                                       */
-/* -------------------------------------------------------------------------- */
 
 export async function startChangeRequest(id: string): Promise<ActionResult> {
   return attempt(async () => {
@@ -478,12 +422,6 @@ const deliverSchema = z.object({
   actualHours: z.number().positive().max(1000).optional(),
 });
 
-/**
- * Delivery is where money becomes owed: a billable request opens a PENDING
- * payment on the project, in the same transaction, so the request can never
- * read as delivered with nothing to collect. Warranty and zero-amount work
- * open no payment — an invoice for nothing is noise on /payments.
- */
 export async function deliverChangeRequest(id: string, input: z.input<typeof deliverSchema> = {}): Promise<ActionResult> {
   return attempt(async () => {
     const { session } = await authorize(PRICING);
@@ -494,7 +432,7 @@ export async function deliverChangeRequest(id: string, input: z.input<typeof del
     const actualMinutes =
       data.actualHours != null ? hoursToMinutes(data.actualHours) : row.actualMinutes;
     const amount = billedAmountFor({ ...row, actualMinutes });
-    const currency = row.project.contract.proposal.currency;
+    const currency = projectCurrency(row.project);
     const now = new Date();
 
     const paymentId = await prisma.$transaction(async (tx) => {
@@ -567,10 +505,6 @@ export async function cancelChangeRequest(id: string, note?: string): Promise<Ac
   });
 }
 
-/* -------------------------------------------------------------------------- */
-/* Closing the project                                                        */
-/* -------------------------------------------------------------------------- */
-
 export interface ClosurePlan {
   checks: ClosureCheck[];
   blocked: boolean;
@@ -579,11 +513,6 @@ export interface ClosurePlan {
   actualLaunchDate: string | null;
 }
 
-/**
- * What the close dialog shows. Read from the server, never from the row on
- * screen, for the same reason the delete dialog is: the page may be minutes
- * stale, and a payment marked paid in another tab changes the answer.
- */
 export async function describeProjectClosure(projectId: string): Promise<ActionResult<ClosurePlan>> {
   return attempt(async () => {
     const { role } = await authorize([["edit", "project"]]);

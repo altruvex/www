@@ -46,12 +46,8 @@ import {
   termLabel,
 } from "@/lib/service-lifecycle";
 
-/**
- * A blank service row. Domain and hosting start with the first term inside
- * the project fee, because that is what the standard contract says ("domain,
- * SSL and base hosting for Year 1 are included"). The price starts empty, not
- * at a guess: a renewal price is a fact about one registrar and one term.
- */
+const ONE_TIME_TERM = "one-time";
+
 function newService(kind: ProposalService["kind"]): ProposalService {
   return {
     kind,
@@ -71,12 +67,10 @@ function formatCurrency(amount: number, currency: string) {
       maximumFractionDigits: 0,
     }).format(amount);
   } catch {
-    // An unknown currency code shouldn't blank out the live total.
     return `${currency} ${amount.toLocaleString("en-US")}`;
   }
 }
 
-/** Total weeks implied by the phase duration labels — same rule the deck uses. */
 export function timelineWeeks(phases: { durationLabel: string }[]): number {
   const parsed = phases.map((p) => {
     const m = /^\s*(\d+(?:\.\d+)?)/.exec(p.durationLabel);
@@ -87,17 +81,6 @@ export function timelineWeeks(phases: { durationLabel: string }[]): number {
     : phases.length;
 }
 
-/**
- * The builder is indexed by the DECK, not by the schema.
- *
- * A proposal is seven slides. Editing it as one 800-line scroll meant the
- * operator had to hold the mapping from "the pricing table" to "slide 5" in
- * their head. Each group below is a place in the finished document, and the
- * rail shows how many problems are still in it.
- *
- * These groups change navigation only. Every field, its shape, its validation
- * and the generated deck are untouched.
- */
 export const PROPOSAL_GROUPS = [
   { id: "cover", slide: "01", label: "Cover & client", blurb: "Names, date, validity, currency" },
   { id: "headings", slide: "—", label: "Slide headings", blurb: "The standing copy on every slide" },
@@ -112,7 +95,6 @@ export const PROPOSAL_GROUPS = [
 
 export type ProposalGroupId = (typeof PROPOSAL_GROUPS)[number]["id"];
 
-/** Which validation paths belong to which group. Prefix match, longest wins. */
 const GROUP_PATHS: Record<ProposalGroupId, string[]> = {
   cover: ["meta"],
   headings: ["sections"],
@@ -125,7 +107,6 @@ const GROUP_PATHS: Record<ProposalGroupId, string[]> = {
   chrome: ["labels"],
 };
 
-/** Issues no group claims. Without this they would be invisible in the rail. */
 export function unassignedIssues(issues: ValidationIssue[]): ValidationIssue[] {
   const prefixes = Object.values(GROUP_PATHS).flat();
   return issues.filter(
@@ -136,7 +117,6 @@ export function unassignedIssues(issues: ValidationIssue[]): ValidationIssue[] {
   );
 }
 
-/** Issue count per group, so the rail can say where the problems actually are. */
 export function groupIssueCounts(issues: ValidationIssue[]): Record<ProposalGroupId, number> {
   const counts = Object.fromEntries(
     PROPOSAL_GROUPS.map((g) => [g.id, 0]),
@@ -204,16 +184,8 @@ export function ProposalContentEditor({
   const percentOk = Math.abs(percentTotal - 100) < 0.001;
   const percentGap = 100 - percentTotal;
 
-  // Two dates the operator was setting blind: the deck prints a valid-until
-  // line derived from the validity window, and a client reads the timeline as
-  // a delivery promise. Both are derived here with the same rule the document
-  // uses — never stored, so neither can drift from the fields above it.
   const weeks = timelineWeeks(content.timelinePhases);
   const validUntil = formatDocDate(validUntilDate(content.meta));
-  // The contract already prints VAT (contract-builder.ts applies the schema's
-  // rate to the same figure). The deck says nothing, so a client can read one
-  // number in the proposal and a bigger one in the agreement. Shown here as
-  // the derived figure it is — the schema owns the rate, not this screen.
   const vat = applyVat(total);
   const delivery = formatDocDate(deliveryDate(content.meta.proposalDate, weeks));
 
@@ -273,10 +245,6 @@ export function ProposalContentEditor({
           </div>
         </div>
 
-        {/* Both of these are already implied by the fields above — the deck
-            prints the first and the client infers the second. Showing them
-            here means the operator sets a validity window and a phase plan
-            while looking at the dates they actually produce. */}
         <dl className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-meta text-muted-foreground">
@@ -748,9 +716,6 @@ export function ProposalContentEditor({
           addLabel="Add line item"
           emptyHint={sectionError("investmentItems")}
           renderItem={(item, i, update) => (
-            // Stacked below sm: at 375px a fixed-width amount field squeezes
-            // the name into an unreadable sliver, and the name is the half you
-            // are reading when you scan a price table.
             <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
               <TextInput
                 value={item.item}
@@ -806,9 +771,6 @@ export function ProposalContentEditor({
             emptyHint={sectionError("paymentSchedule")}
             renderItem={(item, i, update) => (
               <div className="space-y-2">
-                {/* Three controls on one line only survive from sm up. Below
-                    that the milestone name wraps to its own row and the
-                    percentage and its derived amount share the next one. */}
                 <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
                   <TextInput
                     value={item.label}
@@ -826,8 +788,6 @@ export function ProposalContentEditor({
                     invalid={!(item.percent >= 0 && item.percent <= 100)}
                     className="w-24 sm:w-28"
                   />
-                  {/* Derived, never editable — a stored amount drifts the
-                      moment a line item changes. */}
                   <Derived className="flex-1 sm:w-32 sm:flex-none">
                     {formatCurrency(paymentAmount(content, item.percent), currency)}
                   </Derived>
@@ -883,7 +843,7 @@ export function ProposalContentEditor({
               Per year{" "}
               <span className="text-foreground">
                 {formatCurrency(
-                  content.services.reduce((sum, s) => sum + annualised(s.price || 0, s.termMonths || 12), 0),
+                  content.services.reduce((sum, s) => sum + annualised(s.price || 0, s.termMonths), 0),
                   currency,
                 )}
               </span>
@@ -897,7 +857,7 @@ export function ProposalContentEditor({
           makeItem={() => newService("DOMAIN")}
           addLabel="Add service"
           minItems={0}
-          emptyBody="No recurring services on this proposal. Add the domain and hosting if Altruvex will hold them — each gets its own price and term, and the contract lists them."
+          emptyBody="No recurring services on this proposal. Add the domain and hosting if Altruvex will hold them — each gets its own price and term, and the contract lists them. A theme or licence bought once is a one-time term."
           renderItem={(item, i, update) => {
             const err = (field: string) => issuesFor(`services.${i}.${field}`)[0]?.message;
             return (
@@ -945,13 +905,18 @@ export function ProposalContentEditor({
                     ariaLabel={`Service ${i + 1} provider`}
                   />
                   <Select
-                    value={String(item.termMonths)}
-                    onValueChange={(v) => update({ termMonths: Number(v) })}
+                    value={item.termMonths === null ? ONE_TIME_TERM : String(item.termMonths)}
+                    onValueChange={(v) =>
+                      v === ONE_TIME_TERM
+                        ? update({ termMonths: null, firstTermIncluded: false })
+                        : update({ termMonths: Number(v) })
+                    }
                   >
                     <SelectTrigger className="w-full sm:w-40" aria-label={`Service ${i + 1} term`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={ONE_TIME_TERM}>{termLabel(null)}</SelectItem>
                       {[1, 3, 6, 12, 24, 36].map((months) => (
                         <SelectItem key={months} value={String(months)}>
                           {termLabel(months)}
@@ -959,14 +924,16 @@ export function ProposalContentEditor({
                       ))}
                     </SelectContent>
                   </Select>
-                  <label className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
-                    <span className="text-meta text-muted-foreground">First term in fee</span>
-                    <Switch
-                      checked={item.firstTermIncluded}
-                      onCheckedChange={(checked) => update({ firstTermIncluded: checked })}
-                      aria-label={`Service ${i + 1}: first term included in the project fee`}
-                    />
-                  </label>
+                  {item.termMonths !== null && (
+                    <label className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
+                      <span className="text-meta text-muted-foreground">First term in fee</span>
+                      <Switch
+                        checked={item.firstTermIncluded}
+                        onCheckedChange={(checked) => update({ firstTermIncluded: checked })}
+                        aria-label={`Service ${i + 1}: first term included in the project fee`}
+                      />
+                    </label>
+                  )}
                 </div>
                 {(err("price") || err("name") || err("termMonths")) && (
                   <p className="text-meta text-danger">{err("price") ?? err("name") ?? err("termMonths")}</p>
@@ -1128,9 +1095,6 @@ export function ProposalContentEditor({
             invalid={!content.whyUs.cta.trim()}
           />
         </Field>
-        {/* Deliberately not a <Field>: Field hands its one generated id to
-            every control underneath it, so wrapping a list produced N inputs
-            sharing an id and one error marking all of them invalid. */}
         <div className="space-y-1.5">
           <h4 className="text-base font-medium text-muted-foreground">Value props</h4>
           <ListEditor

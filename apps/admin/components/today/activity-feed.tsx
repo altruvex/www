@@ -1,29 +1,40 @@
-import { when } from "@/lib/format";
+"use client";
+
+import * as React from "react";
+
 import { Panel, PanelLink } from "@/components/os/panel";
-import { EntityLink } from "@/components/os/entity-link";
 import { EmptyInline } from "@/components/os/empty-state";
+import { EventList, type EventRowData } from "@/components/os/event-row";
+import { domainForEvent, EVENT_DOMAINS, type EventDomain } from "@/lib/activity-icons";
+import { cn } from "@/lib/utils";
 
-type Event = {
-  id: string;
-  actorLabel: string;
-  entityType: string;
-  entityId: string;
-  entityLabel: string | null;
-  summary: string;
-  createdAt: Date;
-};
+export function ActivityFeed({
+  events,
+  auditHref = null,
+}: {
+  events: EventRowData[];
+  auditHref?: string | null;
+}) {
+  const [domain, setDomain] = React.useState<EventDomain | "all">("all");
 
-/**
- * Today → what happened. Read from the persisted audit trail (ActivityEvent),
- * not reconstructed from record timestamps, so it shows who did it and the
- * record it happened to — the same rows /audit shows in full.
- */
-export function ActivityFeed({ events }: { events: Event[] }) {
+  const tagged = React.useMemo(
+    () => events.map((e) => ({ event: e, domain: domainForEvent(e.action, e.entityType) })),
+    [events],
+  );
+  const counts = React.useMemo(() => {
+    const map = new Map<EventDomain, number>();
+    for (const { domain: d } of tagged) if (d) map.set(d, (map.get(d) ?? 0) + 1);
+    return map;
+  }, [tagged]);
+  const chips = EVENT_DOMAINS.filter((d) => (counts.get(d.key) ?? 0) > 0);
+  const visible =
+    domain === "all" ? events : tagged.filter((t) => t.domain === domain).map((t) => t.event);
+
   return (
     <Panel
       title="Recent activity"
       description="Who changed what, newest first"
-      action={<PanelLink href="/audit">Audit log</PanelLink>}
+      action={auditHref ? <PanelLink href={auditHref}>Audit log</PanelLink> : null}
       flush
     >
       {events.length === 0 ? (
@@ -34,33 +45,60 @@ export function ActivityFeed({ events }: { events: Event[] }) {
           </EmptyInline>
         </div>
       ) : (
-        <ul className="divide-y divide-border">
-          {events.map((e) => (
-            <li
-              key={e.id}
-              className="flex flex-col gap-0.5 px-3 py-2 text-base sm:flex-row sm:items-baseline sm:gap-3"
+        <>
+          {chips.length > 1 && (
+            <div
+              role="group"
+              aria-label="Filter by domain"
+              className="flex flex-wrap items-center gap-1 border-b border-border px-3 py-1.5"
             >
-              <span className="shrink-0 text-meta text-subtle-foreground sm:w-28">
-                {when(e.createdAt)}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="text-muted-foreground">{e.actorLabel}</span>{" "}
-                <span>{e.summary}</span>
-              </span>
-              {e.entityLabel && (
-                <EntityLink
-                  type={e.entityType}
-                  id={e.entityId}
-                  muted
-                  className="min-w-0 shrink-0 truncate text-meta sm:max-w-[16rem]"
+              <DomainChip active={domain === "all"} onClick={() => setDomain("all")}>
+                All <Count n={events.length} />
+              </DomainChip>
+              {chips.map((d) => (
+                <DomainChip
+                  key={d.key}
+                  active={domain === d.key}
+                  onClick={() => setDomain(d.key)}
                 >
-                  {e.entityLabel}
-                </EntityLink>
-              )}
-            </li>
-          ))}
-        </ul>
+                  {d.label} <Count n={counts.get(d.key) ?? 0} />
+                </DomainChip>
+              ))}
+            </div>
+          )}
+          <EventList events={visible} dense />
+        </>
       )}
     </Panel>
+  );
+}
+
+function Count({ n }: { n: number }) {
+  return <span className="font-mono text-micro tabular-nums text-subtle-foreground">{n}</span>;
+}
+
+function DomainChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-[var(--control-h-sm)] items-center gap-1 rounded-md border px-2 text-meta transition-colors duration-[var(--dur-state)]",
+        active
+          ? "border-foreground/45 bg-surface text-foreground"
+          : "border-transparent text-muted-foreground hover:bg-surface hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
   );
 }

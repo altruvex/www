@@ -14,25 +14,8 @@ import {
   type ProposalContent,
 } from "./proposal-schema";
 
-// ---- Locked design system ----
-// Every geometric value in this file is measured from the approved reference
-// deck. It is fixed for every client: only the CONTENT varies, and all of it
-// arrives in the ProposalContent argument. There is no client-specific
-// literal anywhere below — if you find one, it is a bug, not a default.
-//
-// Colors come from the one palette (lib/document-colors.ts → @repo/ui/palette),
-// so the deck prints the same neutrals and brand the screens paint. The deck's
-// earlier warm neutrals (E3DED7, A09880, 767373, 0D0D11) were retired for the
-// nearest ramp step.
 const TOKENS = DECK_COLORS;
 
-// Altruvex Sans, the face both apps set all text in (packages/brand-font). The
-// deck embeds nothing: the fonts reach it as the installed desktop builds
-// (packages/brand-font/dist/desktop), on the machine that renders the PDF.
-// "Altruvex Sans Light" is the legacy family the Light styles install under,
-// so `italic: true` on it picks Light Italic, the drawn italic the site sets
-// its emphasis clause in. The labels and figures were Courier New; the site
-// has no mono, so the deck has none either - the key is kept for the role.
 const FONT = {
   display: "Altruvex Sans Light",
   heading: "Altruvex Sans",
@@ -41,33 +24,20 @@ const FONT = {
 
 const ML = 0.65;
 const MT = 0.65;
-// The reference deck's slide box is 595.5 x 841.625pt. Declaring 8.27 x 11.69
-// instead lands one EMU tick away and shifts the rendered page edge by a pixel,
-// so the exact figures are kept here.
 const PAGE_W = 7562850 / 914400;
 const PAGE_H = 10688638 / 914400;
-// Content measure is its own constant, not PAGE_W - margins: the reference
-// lays every full-width element out on a 6.97in column.
 const TW = 6.97;
-const CONTENT_R = ML + TW; // right edge of the content column
-const FRAME_B = 11.14; // baseline the footer and bottom crop marks sit on
+const CONTENT_R = ML + TW;
+const FRAME_B = 11.14;
 
-// Reference text boxes carry zero inset and center-anchored text; without
-// these every box would sit ~0.1in inward of its measured position.
 const BOX = { margin: 0, valign: "middle" } as const;
 
-/** EMU is the unit the .pptx itself stores; pptxgenjs takes inches. */
 const EMU_PER_INCH = 914400;
 const inches = (emu: number) => emu / EMU_PER_INCH;
 
-// Slide 2's problem list, pinned to the approved deck's own EMU values.
-// That file was hand-tuned in PowerPoint, so the first three items do not
-// share one rhythm: each title and description carries its own sub-0.02in
-// offset and the first item's rule is a hair narrower. Items past the third
-// continue on the last item's offsets.
-const PROBLEM_FIRST_Y = 2194560; // 2.40in
-const PROBLEM_STEP = 1097280; // 1.20in
-const PROBLEM_RULE_H = 792000; // 0.8661in
+const PROBLEM_FIRST_Y = 2194560;
+const PROBLEM_STEP = 1097280;
+const PROBLEM_RULE_H = 792000;
 const PROBLEM_ITEMS = [
   { ruleW: 21600, titleY: -9144, descY: 265176 },
   { ruleW: 22860, titleY: 3165, descY: 282057 },
@@ -81,19 +51,10 @@ function formatCurrency(amount: number, currency: string): string {
     maximumFractionDigits: 0,
   })
     .format(amount)
-    // Intl separates the code from the number with U+00A0; the deck uses a
-    // plain space; the non-breaking space would show up as a mismatch in any
-    // text diff.
     .replace(/\u00A0/g, " ");
   return formatted;
 }
 
-/**
- * Total weeks the timeline actually covers. Read off the phases so it can
- * never contradict them: sum the leading number in each duration label when
- * every label carries one, otherwise fall back to counting the phases.
- * There is deliberately no separately entered total to drift out of sync.
- */
 function totalTimelineWeeks(phases: { durationLabel: string }[]): number {
   const parsed = phases.map((phase) => {
     const match = /^\s*(\d+(?:\.\d+)?)/.exec(phase.durationLabel);
@@ -118,7 +79,6 @@ function hairline(
   slide.addShape(pptx.ShapeType.rect, { x, y, w, h, fill: { color } });
 }
 
-/** One corner tick: a horizontal and a vertical arm meeting at (x, y). */
 function cornerMark(
   slide: PptxGenJS.Slide,
   pptx: PptxGenJS,
@@ -208,7 +168,6 @@ function eyebrow(slide: PptxGenJS.Slide, text: string, dark = false) {
   });
 }
 
-/** Section heading: bold sans lead-in + the one light-italic accent word. */
 function sectionHeading(
   slide: PptxGenJS.Slide,
   lead: string,
@@ -229,16 +188,12 @@ interface Ctx {
   company: CompanyDetails;
 }
 
-// ---- Slide 1 — Cover ----
 function buildCoverSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.darkBg };
 
-  // Draw order matters: the header's text box overlaps the dot grid, and the
-  // reference lays the dots down first.
   dotGrid(slide, pptx, 5.6, 0.5);
 
-  // Page crop marks at the four margin corners.
   const arm = 0.16;
   for (const [x, y] of [
     [ML, MT],
@@ -265,8 +220,6 @@ function buildCoverSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     charSpacing: 3,
   });
 
-  // Ghost page number, bled off the left edge. Its bleed is a measured
-  // value, not a round number — kept in EMU so it lands exactly.
   slide.addText("01", {
     ...BOX,
     x: inches(-377334),
@@ -287,7 +240,6 @@ function buildCoverSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     { ...BOX, x: ML, y: 4.3, w: TW, h: 2.4, lineSpacingMultiple: 0.95 },
   );
 
-  // Client block, bracketed top and bottom.
   const bracket = 0.18;
   for (const y of [7.3, 9.0]) {
     cornerMark(slide, pptx, ML, y, bracket, 0, 1);
@@ -352,7 +304,6 @@ function buildCoverSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   });
 }
 
-// ---- Slide 2 — Project Understanding ----
 function buildProblemSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.paper };
@@ -383,7 +334,6 @@ function buildProblemSlide(pptx: PptxGenJS, { content, company }: Ctx) {
       h: inches(PROBLEM_RULE_H),
       fill: { color: TOKENS.ruleWarm },
     });
-    // Number and title share one line.
     slide.addText(String(i + 1).padStart(2, "0"), {
       ...BOX,
       x: 0.85,
@@ -419,8 +369,6 @@ function buildProblemSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   });
 
-  // Anchored to the page, not to the item list — the quote holds the same
-  // baseline no matter how many problems the proposal carries.
   slide.addText(section.quote, {
       ...BOX,
       x: ML,
@@ -436,7 +384,6 @@ function buildProblemSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 2);
 }
 
-// ---- Slide 3 — Proposed Solution ----
 function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.paper };
@@ -452,9 +399,6 @@ function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const gridY = 2.3;
   const pad = 0.2;
   const numeralW = 0.45;
-  // The description stops short of the ghost numeral's column instead of
-  // running under it — clearance derived from the numeral box, so longer
-  // copy can never overlap it.
   const numeralX = 2.81;
   const descW = numeralX - pad - 0.2;
 
@@ -506,8 +450,6 @@ function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   });
 
-  // The whole performance block follows the card grid, so a fifth or sixth
-  // module pushes it down instead of being overlapped by it.
   const gridRows = Math.ceil(content.solutionModules.length / 2);
   const gridBottom = gridY + (gridRows - 1) * (cardH + rowGap) + cardH;
   const targetsLabelY = Math.max(6.0, gridBottom + 0.1);
@@ -524,9 +466,6 @@ function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     charSpacing: 2,
   });
 
-  // Fixed column pitch while the row fits the content width, compressed to
-  // fit once it doesn't — so three targets keep the reference's rhythm and
-  // more than three still stay inside the margins.
   const targets = content.performanceTargets;
   const targetGutter = 0.1;
   const targetPitch = Math.min(2.3, TW / targets.length);
@@ -578,7 +517,6 @@ function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
       h: barH,
       fill: { color: TOKENS.hairline },
     });
-    // Fill width is the score, never a constant.
     slide.addShape(pptx.ShapeType.rect, {
       x: ML,
       y: y + 0.28,
@@ -591,7 +529,6 @@ function buildSolutionSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 3);
 }
 
-// ---- Slide 4 — Timeline ----
 function buildTimelineSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.paper };
@@ -605,7 +542,6 @@ function buildTimelineSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const rowStep = 0.78;
   const dotSize = 0.12;
 
-  // Reaches the last dot exactly, whatever the phase count.
   slide.addShape(pptx.ShapeType.line, {
     x: ML + 0.12,
     y: rowsY + 0.12,
@@ -668,7 +604,6 @@ function buildTimelineSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   });
 
-  // Same rule on the timeline: the chart follows the rows.
   const rowsBottom = rowsY + (phases.length - 1) * rowStep + 0.58;
   const loadLabelY = Math.max(6.63, rowsBottom + 0.57);
 
@@ -684,7 +619,6 @@ function buildTimelineSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     charSpacing: 2,
   });
 
-  // One bar per phase, height from that phase's own load value.
   const chartW = 4.97;
   const chartBottom = loadLabelY + 1.0;
   const chartH = 0.9;
@@ -731,7 +665,6 @@ function buildTimelineSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 4);
 }
 
-// ---- Slide 5 — Investment ----
 function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.paper };
@@ -795,15 +728,10 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     hairline(slide, pptx, ML, y + 0.4, TW, TOKENS.hairline, 0.008);
   });
 
-  // Everything below the table hangs off the total, so the block keeps its
-  // spacing whatever the item count.
   const subtotal = investmentTotal(content.investmentItems);
   const reduction = discountAmount(content.investmentItems, content.discount);
   const total = netTotal(content.investmentItems, content.discount);
 
-  // A discount is shown as its own two lines above the total — the list price
-  // the client was quoted, then what came off it. Folding it silently into the
-  // total would throw away the only part of a discount that persuades anyone.
   let totalY = firstRowY + content.investmentItems.length * rowStep + 0.1;
   if (reduction > 0) {
     const subtotalY = totalY;
@@ -842,8 +770,6 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
       color: TOKENS.label,
       charSpacing: 2,
     });
-    // The minus sign is the whole point of the row; an unsigned figure here
-    // reads as another charge.
     slide.addText(`− ${formatCurrency(reduction, currency)}`, {
       ...BOX,
       x: amountX,
@@ -913,8 +839,6 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
       h: splitH,
       fontFace: FONT.mono,
       fontSize: 9.5,
-      // paper, not --foreground: on the 737373 segment this is the pairing
-      // that clears AA (4.54:1 vs 4.16:1 for F0F0F0).
       color: TOKENS.paper,
       align: "center",
     });
@@ -946,8 +870,6 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
       fontSize: 11,
       color: TOKENS.body,
     });
-    // Recomputed here every time — a stored amount would go stale the
-    // moment an investment item changed.
     slide.addText(formatCurrency(paymentAmount(content, row.percent), currency), {
       ...BOX,
       x: 6.32,
@@ -963,8 +885,6 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
 
   const validUntil =
     formatDocDate(validUntilDate(content.meta)) ?? content.meta.proposalDate;
-  // Clears the payment rows rather than sitting at a height that only
-  // suits three of them.
   const payBottom = payFirstY + (content.paymentSchedule.length - 1) * payStep + 0.3;
   slide.addText(fillTemplate(content.labels.validUntil, { date: validUntil }), {
     ...BOX,
@@ -984,27 +904,11 @@ function buildInvestmentSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 5);
 }
 
-// Rows are laid out from the block's top so the fit check and the drawing
-// cannot disagree about where the last row ends.
 const SERVICES_ROW_STEP = 0.36;
 const SERVICES_FIRST_ROW = 0.42;
 const SERVICES_NOTE_GAP = 0.12;
-/** Lowest the block may reach — clear of the footer hairline at 11.12. */
 const SERVICES_FLOOR = 10.9;
 
-/**
- * Recurring services, under the payment split and visibly outside it.
- *
- * Not a row in the investment table: those rows sum into the total, and a
- * domain renewal printed there would read as part of the project fee — the
- * one thing the pricing rule for pass-through services forbids. Each service
- * says its term and what the client pays per term; a first term covered by
- * the fee says so instead of printing a price that will not be invoiced.
- *
- * Refuses to overflow. A block that runs into the footer is a deck nobody
- * meant to send, so it fails the generation with a message the editor can put
- * next to the services list instead.
- */
 function buildServicesBlock(
   slide: PptxGenJS.Slide,
   pptx: PptxGenJS,
@@ -1055,11 +959,9 @@ function buildServicesBlock(
       color: TOKENS.ink,
       fit: "shrink",
     });
-    // Compact on purpose: at 8.5pt the column holds ~24 characters
-    // before it runs into the price, and "EVERY 2 YEARS · FIRST TERM INCLUDED"
-    // does not. The contract spells the same facts out in full.
-    const term = `${service.termMonths} MO`;
-    slide.addText(service.firstTermIncluded ? `${term} · 1ST TERM IN FEE` : term, {
+    const term = service.termMonths === null ? "ONE-TIME" : `${service.termMonths} MO`;
+    const inFee = service.termMonths !== null && service.firstTermIncluded;
+    slide.addText(inFee ? `${term} · 1ST TERM IN FEE` : term, {
       ...BOX,
       x: 4.05,
       y,
@@ -1096,7 +998,6 @@ function buildServicesBlock(
   });
 }
 
-// ---- Slide 6 — Scope & Terms ----
 function buildScopeSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.paper };
@@ -1155,8 +1056,6 @@ function buildScopeSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   }
 
-  // Key terms clear the longer of the two scope columns rather than sitting
-  // at a fixed height that a longer list would collide with.
   const longestScope = Math.max(
     content.scopeIncluded.length,
     content.scopeNotIncluded.length,
@@ -1205,7 +1104,6 @@ function buildScopeSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 6);
 }
 
-// ---- Slide 7 — Why Altruvex ----
 function buildClosingSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   const slide = pptx.addSlide();
   slide.background = { color: TOKENS.darkBg };
@@ -1231,7 +1129,6 @@ function buildClosingSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     { ...BOX, x: ML, y: 1.55, w: TW, h: 1.3, lineSpacingMultiple: 1.05 },
   );
 
-  // Full measure, not a narrow left column.
   slide.addText(content.whyUs.paragraph, {
     ...BOX,
     x: ML,
@@ -1261,8 +1158,6 @@ function buildClosingSlide(pptx: PptxGenJS, { content, company }: Ctx) {
     });
   });
 
-  // The CTA clears the value props rather than sitting at a fixed height a
-  // longer list would run into.
   const propsBottom = propFirstY + (content.whyUs.valueProps.length - 1) * propStep + propH;
   const ctaY = Math.max(7.14, propsBottom + 0.51);
   const ctaH = 1.6;
@@ -1303,17 +1198,10 @@ function buildClosingSlide(pptx: PptxGenJS, { content, company }: Ctx) {
   footer(slide, pptx, content.labels.footerCompany, 7, true);
 }
 
-/**
- * Renders a proposal deck. Takes the whole content document and the shared
- * company details — there is no other input, and no client content lives in
- * this module.
- */
 export async function buildProposalPptx(
   content: ProposalContent,
   company: CompanyDetails,
 ): Promise<Buffer> {
-  // QA gate: colors are fixed for every client, so this is a pure token
-  // check against the configured brand — fails before any slide is built.
   runProposalContrastGate(company);
 
   const pptx = new PptxGenJS();

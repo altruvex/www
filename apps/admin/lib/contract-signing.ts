@@ -1,7 +1,14 @@
-import { prisma, type SignatureMethod, type SignVerificationChannel } from "@repo/database";
+import {
+  prisma,
+  type Client,
+  type Contract,
+  type Proposal,
+  type SignatureMethod,
+  type SignVerificationChannel,
+} from "@repo/database";
 import { clientActor, recordActivity, type Actor } from "./activity-log";
-import { servicesFromProposal } from "./client-services";
 import { proposalContentSchema } from "./proposal-schema";
+import { servicesFromProposal } from "./service-lifecycle";
 import { sendTemplateMessage } from "./whatsapp-api";
 
 interface HandleContractSignedInput {
@@ -10,23 +17,106 @@ interface HandleContractSignedInput {
   signedIp: string | null;
   signatureMethod: SignatureMethod;
   baseUrl: string;
-  /** Where the one-time code that authorised a link signature was delivered. */
   verification?: { via: SignVerificationChannel; to: string; hint: string };
-  /**
-   * Set when an operator records a signature by hand (paper, a scanned PDF).
-   * The audit events are then attributed to that operator, because the client
-   * did not act in this system and claiming they did would be false evidence.
-   */
   recordedBy?: { actor: Actor; summary: string; metadata?: Record<string, unknown> };
 }
 
-/**
- * The trigger from §6: the instant a contract is signed, create the Project
- * + 50/30/20 Payment rows and fire the onboarding WhatsApp message — every
- * time, automatically, no exceptions. Safe to call more than once for the
- * same contract (double form-submits, retries): signing itself, the
- * project/payments, and the onboarding send are each only performed once.
- */
+type ContractForProject = Pick<Contract, "id" | "clientId" | "proposalId"> & {
+  client: Pick<Client, "name" | "company">;
+  proposal: Pick<Proposal, "projectType" | "paymentSplit" | "totalPrice" | "content" | "currency">;
+};
+
+export async function openContractProject(
+  contract: ContractForProject,
+  createdBy: string,
+  options: {
+    recreateBilling?: boolean;
+  } = {},
+) {
+  const recreateBilling = options.recreateBilling !== false;
+  const split = contract.proposal.paymentSplit as unknown as {
+    first: number;
+    second: number;
+    final: number;
+  };
+  const openedAt = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.project.create({
+      data: {
+        contractId: contract.id,
+        clientId: contract.clientId,
+        name: `${contract.client.company || contract.client.name || "Client"} — ${contract.proposal.projectType}`,
+        phase: "DISCOVERY",
+      },
+    });
+
+    if (recreateBilling) {
+      await tx.payment.createMany({
+        data: [
+          {
+            projectId: created.id,
+            milestone: "DEPOSIT_50",
+            amount: Math.round((contract.proposal.totalPrice * split.first) / 100),
+            dueDate: openedAt,
+          },
+          {
+            projectId: created.id,
+            milestone: "MILESTONE_30",
+            amount: Math.round((contract.proposal.totalPrice * split.second) / 100),
+          },
+          {
+            projectId: created.id,
+            milestone: "FINAL_20",
+            amount: Math.round((contract.proposal.totalPrice * split.final) / 100),
+          },
+        ],
+      });
+    }
+
+    const parsed = proposalContentSchema.safeParse(contract.proposal.content);
+    const services = parsed.success ? parsed.data.services : [];
+    if (recreateBilling && services.length > 0) {
+      await tx.clientService.createMany({
+        data: servicesFromProposal({
+          services,
+          clientId: contract.clientId,
+          projectId: created.id,
+          proposalId: contract.proposalId,
+          currency: contract.proposal.currency,
+          createdBy,
+        }),
+      });
+    }
+
+    return created;
+  });
+}
+
+export async function findDeletedContractProject(
+  contractId: string,
+): Promise<{ label: string | null; deletedAt: Date | null } | null> {
+  const created = await prisma.activityEvent.findMany({
+    where: { action: "project.created", after: { path: ["contractId"], equals: contractId } },
+    select: { entityId: true, entityLabel: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const deleted = await prisma.activityEvent.findFirst({
+    where: {
+      action: "project.deleted",
+      OR: [
+        { before: { path: ["contractId"], equals: contractId } },
+        ...(created.length > 0 ? [{ entityId: { in: created.map((e) => e.entityId) } }] : []),
+      ],
+    },
+    select: { entityLabel: true, createdAt: true },
+    orderBy: { createdAt: "desc" },
+  });
+  if (deleted) return { label: deleted.entityLabel, deletedAt: deleted.createdAt };
+  if (created[0]) return { label: created[0].entityLabel, deletedAt: null };
+  return null;
+}
+
 export async function handleContractSigned(input: HandleContractSignedInput) {
   const contract = await prisma.contract.findUnique({
     where: { id: input.contractId },
@@ -64,77 +154,9 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
   const isNewProject = project == null;
 
   if (!project) {
-    const split = contract.proposal.paymentSplit as unknown as {
-      first: number;
-      second: number;
-      final: number;
-    };
-    const signingDate = new Date();
-
-    // One transaction, deliberately.
-    //
-    // These used to be two awaited calls. If `createMany` threw after `create`
-    // committed, the Project existed with zero Payments — and because the
-    // idempotency guard above finds that Project on every later call, the
-    // payment block was never re-entered. The result was a signed client
-    // contract that could never be invoiced, invisible until someone noticed.
-    project = await prisma.$transaction(async (tx) => {
-      const created = await tx.project.create({
-        data: {
-          contractId: contract.id,
-          clientId: contract.clientId,
-          name: `${contract.client.company || contract.client.name || "Client"} — ${contract.proposal.projectType}`,
-          phase: "DISCOVERY",
-        },
-      });
-
-      await tx.payment.createMany({
-        data: [
-          {
-            projectId: created.id,
-            milestone: "DEPOSIT_50",
-            amount: Math.round((contract.proposal.totalPrice * split.first) / 100),
-            dueDate: signingDate,
-          },
-          {
-            projectId: created.id,
-            milestone: "MILESTONE_30",
-            amount: Math.round((contract.proposal.totalPrice * split.second) / 100),
-          },
-          {
-            projectId: created.id,
-            milestone: "FINAL_20",
-            amount: Math.round((contract.proposal.totalPrice * split.final) / 100),
-          },
-        ],
-      });
-
-      // The recurring services the client agreed to, as PENDING rows. Same
-      // transaction as the project for the same reason as the payments: the
-      // idempotency guard above never re-enters this block, so a project that
-      // committed without them would never get them.
-      const parsed = proposalContentSchema.safeParse(contract.proposal.content);
-      const services = parsed.success ? parsed.data.services : [];
-      if (services.length > 0) {
-        await tx.clientService.createMany({
-          data: servicesFromProposal({
-            services,
-            clientId: contract.clientId,
-            projectId: created.id,
-            proposalId: contract.proposalId,
-            currency: contract.proposal.currency,
-            createdBy: input.signedByName,
-          }),
-        });
-      }
-
-      return created;
-    });
+    project = await openContractProject(contract, input.signedByName);
   }
 
-  // On the public signing page the actor is the client: nobody at Altruvex is
-  // signed in when that runs, and recording it as SYSTEM would lose who signed.
-  // A hand-recorded signature is attributed to the operator who entered it.
   const signer = input.recordedBy?.actor ?? clientActor(input.signedByName);
 
   if (contract.status !== "SIGNED") {
@@ -190,9 +212,6 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
         data: { onboardingMessageSentAt: new Date() },
       });
     } catch (error) {
-      // Don't let a WhatsApp failure undo the signing or project creation —
-      // both already happened. A null onboardingMessageSentAt is the visible
-      // signal this still needs a nudge (and the next call here will retry).
       if (process.env.NODE_ENV !== "production") {
         console.error("Failed to send onboarding message:", error);
       }

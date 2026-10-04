@@ -5,7 +5,9 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { VercelAnalytics } from "@/components/shared/vercel-analytics";
 import { routing } from "@/i18n/routing";
 import "@/lib/config/env";
+import { InitialLoader } from "@/components/shared/initial-loader";
 import { ARRIVAL_CSS, ARRIVAL_HOLD_SCRIPT } from "@/lib/motion/utils/arrival";
+import { LOADER_CSS, LOADER_SCRIPT } from "@/lib/motion/utils/loader";
 import { buildGlobalSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { pricingTokens, type Locale } from "@repo/pricing-schema";
@@ -17,26 +19,6 @@ import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
 
-// Altruvex Sans (packages/brand-font) is the only face the site loads: headings,
-// body text and labels, in both scripts (Ali, 2026-10-01). Two
-// families, one per script; globals.css orders them per locale into
-// --font-brand. adjustFontFallback is off because the package ships its own
-// fallback faces, measured per script (dist/web/fallback.css), which
-// next/font's single Arial fallback cannot match for Arabic.
-//
-// display: "optional", not "swap" (Ali, 2026-09-30): a heading must never
-// change line count after first paint. The fallback is fitted to the corpus
-// average, so a short balanced heading near a wrap boundary can still differ by
-// a line (measured in dist/font-loading-report.json). With "optional" the page
-// keeps whichever face it painted with; the preload below is what makes that
-// face the brand one on a normal connection. Both preloads stay on every
-// locale: without them "optional" would drop to the fallback on first visits.
-//
-// The Latin family carries the drawn italic (packages/brand-font/tools/italic.py,
-// 2026-10-03) at the two weights the site sets in italic: 300 for the emphasis
-// clause in headings (components/ui/emphasis.tsx) and 400 for italic in body
-// text. Both are preloaded with the upright, since headings sit above the fold
-// and "optional" would otherwise keep a synthetic slant on first visits.
 const brandLatin = localFont({
   src: [
     {
@@ -85,8 +67,6 @@ export default async function RootLayout({ children, params }: Props) {
 
   setRequestLocale(locale);
 
-  // Resolved once per request and shared with every client component that
-  // renders prose quoting a price.
   const priceTokens = pricingTokens(locale as Locale, await getPublicPricing());
 
   const tA11y = await getTranslations({ locale, namespace: "a11y" });
@@ -95,16 +75,15 @@ export default async function RootLayout({ children, params }: Props) {
     <html
       lang={locale}
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       dir={locale === "ar" ? "rtl" : "ltr"}
-      // On <html>, not <body>: --font-brand is resolved on :root, where
-      // Tailwind's preflight reads --font-sans.
       className={cn(brandLatin.variable, brandArabic.variable)}
     >
       <head>
-        {/* First-paint arrivals (lib/motion/utils/arrival.ts): the hold runs
-            during parse, before the page paints. */}
         <script dangerouslySetInnerHTML={{ __html: ARRIVAL_HOLD_SCRIPT }} />
         <style dangerouslySetInnerHTML={{ __html: ARRIVAL_CSS }} />
+        <script dangerouslySetInnerHTML={{ __html: LOADER_SCRIPT }} />
+        <style dangerouslySetInnerHTML={{ __html: LOADER_CSS }} />
       </head>
       <body
         suppressHydrationWarning
@@ -118,6 +97,7 @@ export default async function RootLayout({ children, params }: Props) {
         >
           {tA11y("skipToContent")}
         </a>
+        <InitialLoader />
         <Script id="boot-flags" strategy="beforeInteractive">
           {`document.documentElement.setAttribute('data-js','enabled');(function(){try{var c=sessionStorage.getItem('Altruvex_initial_load_complete');if(c){document.documentElement.setAttribute('data-initial-load','complete')}}catch(e){}})();`}
         </Script>

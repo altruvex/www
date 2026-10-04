@@ -26,7 +26,6 @@ const patchSchema = z.object({
   ownerId: z.string().min(1).nullable().optional(),
   resolution: z.string().max(5000).nullable().optional(),
   update: z.string().max(5000).optional(),
-  /** The deployment suspected of causing it; null clears the link. */
   deploymentId: z.string().min(1).nullable().optional(),
 });
 
@@ -80,8 +79,6 @@ export const POST = withAdmin(async (request, { actor }) => {
   }
 
   const incident = await prisma.$transaction(async (tx) => {
-    // Same row-lock pattern as ingest numbering: two operators filing at once
-    // must not both claim incident #4.
     await tx.$queryRawUnsafe(`SELECT id FROM products WHERE id = $1 FOR UPDATE`, product.id);
     const rows = await tx.$queryRawUnsafe<{ max: number | null }[]>(
       `SELECT MAX("number") AS max FROM "incidents" WHERE "productId" = $1`,
@@ -146,8 +143,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
   const reopening = statusChanged && existing.status === "RESOLVED";
   const label = `${existing.product.name} #${existing.number}`;
 
-  // Resolving without saying what was wrong produces an incident history nobody
-  // can learn from, so the note is required rather than encouraged.
   if (patch.status === "RESOLVED" && existing.status !== "RESOLVED") {
     const explanation = patch.resolution?.trim() || update?.trim();
     if (!explanation) {
@@ -155,8 +150,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
   }
 
-  // Resolve the related records once, both to refuse a foreign one and so the
-  // audit diff names people and deploys rather than ids.
   let nextOwner = existing.owner;
   if (patch.ownerId !== undefined && patch.ownerId !== existing.ownerId) {
     nextOwner = patch.ownerId
@@ -191,8 +184,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     (patch.deploymentId !== undefined && patch.deploymentId !== existing.deploymentId) ||
     (patch.resolution !== undefined && (patch.resolution?.trim() || null) !== existing.resolution);
 
-  // A request that changes nothing and says nothing writes nothing, and says so
-  // — the caller must not show "updated" over a no-op.
   if (!statusChanged && !fieldsChanged && !note) {
     return ok({ incident: existing, changed: false });
   }
@@ -207,8 +198,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
         ...(patch.resolution !== undefined
           ? { resolution: patch.resolution?.trim() || null }
           : {}),
-        // Resolving with only an update note: that note is what fixed it, so it
-        // becomes the resolution rather than leaving a resolved incident blank.
         ...(patch.status === "RESOLVED" &&
         existing.status !== "RESOLVED" &&
         patch.resolution === undefined &&
@@ -221,12 +210,7 @@ export const PATCH = withAdmin(async (request, { actor }) => {
           : patch.status
             ? { resolvedAt: null }
             : {}),
-        // Reopening voids the old fix: it is kept in the timeline (it was
-        // posted as an update when the incident was resolved), but the
-        // incident no longer claims it as its resolution.
         ...(reopening && patch.resolution === undefined ? { resolution: null } : {}),
-        // First move off INVESTIGATING is the acknowledgement. It is a fact
-        // about the past, so a later reopen does not clear it.
         ...(patch.status && patch.status !== "INVESTIGATING" && !existing.acknowledgedAt
           ? { acknowledgedAt: new Date() }
           : {}),
@@ -276,9 +260,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     });
   }
 
-  // Severity, owner, suspected deploy and resolution text are judgements too,
-  // and each one changes who gets woken up — so they are audited, with only the
-  // fields that actually moved.
   await recordChange({
     action: "incident.changed",
     actor,

@@ -22,16 +22,6 @@ import { withAdmin } from "@/lib/with-admin";
 import { revalidatePublicPricing } from "@/lib/revalidate-pricing";
 import type { ChangeEntry } from "@/lib/pricing-store";
 
-/**
- * The only write path for pricing.
- *
- * Public surfaces are read-only consumers; this route is where a number
- * changes. Every accepted change is diffed field-by-field and written to the
- * change log in the same transaction, so the log cannot drift from the value.
- * The same transaction also writes one ActivityEvent per save, so the price
- * change shows up in the audit trail beside everything else the operator did.
- */
-
 const money = z.number().int().min(PRICE_BOUNDS.moneyMin).max(PRICE_BOUNDS.moneyMax);
 const status = z.enum(["active", "planned", "retired"]);
 
@@ -114,12 +104,8 @@ export const PATCH = withAdmin(
     );
   }
   const body = parsed.data;
-  // The change log keeps the operator as a plain string; the audit event keeps
-  // the structured actor. Both name the same person.
   const changedBy = session.user.email ?? session.user.id ?? null;
 
-  // A range that runs backwards would render as "70,000 – 35,000 EGP" on a
-  // published page, so it is rejected here rather than shipped.
   if (body.kind === "cell" && (body.priceMax < body.priceMin || body.weeksMax < body.weeksMin)) {
     return NextResponse.json(
       { success: false, message: "Range maximum cannot be below its minimum." },
@@ -139,9 +125,6 @@ export const PATCH = withAdmin(
   try {
     const changes = await applyChange(body, changedBy, actor);
 
-    // The write is already committed. This only shortens how long the public
-    // site keeps serving the previous number, so its outcome is reported but
-    // never turned into a failure.
     const revalidated = await revalidatePublicPricing();
     if (!revalidated.ok) {
       console.warn(
@@ -167,7 +150,6 @@ export const PATCH = withAdmin(
 
 type Payload = z.infer<typeof payloadSchema>;
 
-/** The name an operator knows the item by: "Website · Standard", "Essential plan", "Commercial terms". */
 function itemLabel(body: Payload): string {
   const copy = pricingCopy("en");
   switch (body.kind) {
@@ -184,11 +166,6 @@ function itemLabel(body: Payload): string {
   }
 }
 
-/**
- * One audit event per save, with the changed fields as before/after maps so
- * the Activity screen shows "price 1,500 → 1,800" without decoding the change
- * log. Written through the transaction so a rolled-back save leaves no event.
- */
 async function auditPricingChange(
   tx: Prisma.TransactionClient,
   actor: Actor,
@@ -223,8 +200,6 @@ async function auditPricingChange(
 async function applyChange(body: Payload, changedBy: string | null, actor: Actor): Promise<number> {
   if (body.kind === "cell") {
     const { serviceId, complexityId } = body;
-    // Columns are named rather than spread: on the one path that changes a
-    // published price, what gets written should be explicit.
     const fields = {
       priceMin: body.priceMin,
       priceMax: body.priceMax,
@@ -281,9 +256,6 @@ async function applyChange(body: Payload, changedBy: string | null, actor: Actor
     });
   }
 
-  // Three explicit branches rather than one generic one. Erasing the Prisma
-  // delegates through a structural type would defeat the typed models on the
-  // one path in the system that changes a published price.
   if (body.kind === "maintenance") {
     const { id } = body;
     const fields = {

@@ -30,9 +30,6 @@ export const SERVICE_ORDER = [
 export type ServiceEntry = (typeof SERVICE_ORDER)[number];
 type ServiceId = ServiceEntry["id"];
 
-/* The three moments in a system's life, and the disciplines that belong to
-   each. This is where a service sits, not how a build runs — the phase model
-   is lib/process-phases.ts. */
 export const LIFE_MOMENTS = [
   { id: "before", services: ["audit"] },
   { id: "build", services: ["website", "portal"] },

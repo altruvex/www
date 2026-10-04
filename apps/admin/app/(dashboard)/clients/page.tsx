@@ -4,8 +4,12 @@ import { Building2, Plus } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { EmptyState } from "@/components/os/empty-state";
 import { StatTile } from "@/components/os/stat-tile";
-import { FilterChip } from "@/components/os/data-table";
+import { FilterBar, FilterChip } from "@/components/os/filter-bar";
+import { currentRole } from "@/lib/authorize";
 import { deriveClientStage } from "@/lib/dashboard-data";
+import { canSeeFinance } from "@/lib/nav";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { ClientsTable, type ClientRow } from "./clients-table";
@@ -13,8 +17,6 @@ import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 
-// Every derived stage, including the two the pipeline board leaves out (SPAM
-// is never a deal; LOST is a column there but a list is easier to work).
 const STAGES = [
   "NEW",
   "VIEWED",
@@ -33,8 +35,15 @@ export default async function ClientsPage({
 }: {
   searchParams: Promise<{ stage?: string }>;
 }) {
+  const denied = await gateRoute("/clients", "clients");
+  if (denied) return denied;
+  const role = await currentRole();
+  const showMoney = canSeeFinance(role);
+  const canCreate = can(role, "create", "client");
+  const canDelete = can(role, "delete", "client");
+  const canEdit = can(role, "edit", "client");
+
   const { stage: stageParam } = await searchParams;
-  // An unknown value is ignored rather than shown as an empty filtered list.
   const stage =
     STAGES.find((s) => s === stageParam?.trim().toUpperCase()) ?? null;
 
@@ -87,11 +96,11 @@ export default async function ClientsPage({
     createdAt: client.createdAt.toISOString(),
     updatedAt: client.updatedAt.toISOString(),
     stage: deriveClientStage(client),
-    lifetimeValue: client.proposals
-      .filter((p) => p.status === "ACCEPTED")
-      .reduce((sum, p) => sum + p.totalPrice, 0),
-    // The currency the accepted work is actually in — the row used to print the
-    // NEWEST proposal's currency next to a total made of older ones.
+    lifetimeValue: !showMoney
+      ? 0
+      : client.proposals
+          .filter((p) => p.status === "ACCEPTED")
+          .reduce((sum, p) => sum + p.totalPrice, 0),
     lifetimeCurrency:
       client.proposals.find((p) => p.status === "ACCEPTED")?.currency ?? "EGP",
     mixedCurrency:
@@ -100,7 +109,7 @@ export default async function ClientsPage({
           .filter((p) => p.status === "ACCEPTED")
           .map((p) => p.currency),
       ).size > 1,
-    latestValue: client.proposals[0]?.totalPrice ?? null,
+    latestValue: showMoney ? (client.proposals[0]?.totalPrice ?? null) : null,
     currency: client.proposals[0]?.currency ?? "EGP",
     proposalCount: client._count.proposals,
     contractCount: client._count.contracts,
@@ -112,10 +121,12 @@ export default async function ClientsPage({
       client.projects.find((p) => p.status === "ACTIVE")?.id ?? null,
   }));
 
-  // The stage is derived, so the filter runs after derivation, not in SQL.
   const visible = stage ? rows.filter((r) => r.stage === stage) : rows;
 
-  const active = rows.filter((r) => r.projectCount > 0).length;
+  const active = rows.filter((r) => r.activeProjectId).length;
+  const stageCounts = new Map<string, number>();
+  for (const r of rows)
+    stageCounts.set(r.stage, (stageCounts.get(r.stage) ?? 0) + 1);
   const signed = rows.filter((r) => r.stage === "SIGNED").length;
   const lifetime = sumByCurrency(
     rows.map((r) => ({
@@ -130,30 +141,23 @@ export default async function ClientsPage({
         title="Clients"
         description="One record per company. Proposals, contracts, projects, payments and messages all hang off it — nothing here is a second copy."
         actions={
-          <Button asChild variant="brand">
-            <Link href="/clients/new">
-              <Plus className="size-3.5" />
-              New client
-            </Link>
-          </Button>
+          canCreate ? (
+            <Button asChild variant="brand">
+              <Link href="/clients/new">
+                <Plus className="size-3.5" />
+                New client
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
 
-      {stage && (
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterChip
-            label="Stage"
-            value={statusOf("pipelineStage", stage).label}
-            clearHref="/clients"
-          />
-        </div>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <StatTile
           label="Total clients"
           value={rows.length}
           sub="Every record, all stages"
+          href="/clients"
         />
         <StatTile
           label="Signed"
@@ -165,15 +169,41 @@ export default async function ClientsPage({
         <StatTile
           label="In delivery"
           value={active}
-          sub="Has a project"
+          sub="Has an active project"
           tone={active ? "progress" : "neutral"}
+          href="/projects"
         />
-        <StatTile
-          label="Accepted value"
-          value={moneyByCurrency(lifetime, true)}
-          sub="Sum of accepted proposals"
-        />
+        {showMoney ? (
+          <StatTile
+            label="Accepted value"
+            value={moneyByCurrency(lifetime, true)}
+            sub="Sum of accepted proposals"
+          />
+        ) : (
+          <StatTile
+            label="New"
+            value={stageCounts.get("NEW") ?? 0}
+            sub="Not opened yet"
+            tone={stageCounts.get("NEW") ? "warning" : "neutral"}
+            href="/clients?stage=NEW"
+          />
+        )}
       </div>
+
+      {rows.length > 0 && (
+        <FilterBar label="Filter clients by stage">
+          <FilterChip param="stage" label="All" count={rows.length} />
+          {STAGES.filter((s) => s === stage || stageCounts.get(s)).map((s) => (
+            <FilterChip
+              key={s}
+              param="stage"
+              value={s}
+              label={statusOf("pipelineStage", s).label}
+              count={stageCounts.get(s) ?? 0}
+            />
+          ))}
+        </FilterBar>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState
@@ -181,12 +211,14 @@ export default async function ClientsPage({
           title="No clients yet"
           body="A client record is created when a website submission is converted, when the estimator produces a qualified lead, or when you add one by hand. Everything downstream — proposals, contracts, projects — hangs off this record."
           action={
-            <Button asChild variant="brand">
-              <Link href="/clients/new">
-                <Plus className="size-3.5" />
-                Add the first client
-              </Link>
-            </Button>
+            canCreate ? (
+              <Button asChild variant="brand">
+                <Link href="/clients/new">
+                  <Plus className="size-3.5" />
+                  Add the first client
+                </Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : visible.length === 0 && stage ? (
@@ -201,7 +233,13 @@ export default async function ClientsPage({
           }
         />
       ) : (
-        <ClientsTable rows={visible} />
+        <ClientsTable
+          rows={visible}
+          showMoney={showMoney}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          canPropose={can(role, "create", "proposal")}
+        />
       )}
     </div>
   );

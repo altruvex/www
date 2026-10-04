@@ -7,12 +7,6 @@ import { useSectionElement, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 
-/**
- * Who the studio is for, and who it is not for, as a two-column register
- * opened by the ledger-head-rule. The "not a fit" column is struck through
- * but kept at muted-foreground, so it stays readable: it is still copy a
- * visitor is meant to read about themselves.
- */
 export function FitRegisterSection() {
   const t = useTranslations("about.fit");
   const fit: string[] = t.raw("fitItems");
@@ -37,7 +31,7 @@ export function FitRegisterSection() {
 
         <div
           ref={registerRef}
-          className="mt-10 grid border-t-2 border-foreground md:grid-cols-2 lg:mt-14"
+          className="mt-(--heading-gap) grid border-t-2 border-foreground md:grid-cols-2"
         >
           <FitColumn label={t("fitLabel")} items={fit} />
           <FitColumn label={t("notLabel")} items={notFit} struck />

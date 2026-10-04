@@ -1,4 +1,3 @@
-
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { SectionSkeleton } from "@/components/shared/section-skeleton";
 import dynamic from "next/dynamic";
@@ -42,30 +41,7 @@ const WorkSection = dynamic(
     import("@/components/sections/work-section").then((mod) => mod.WorkSection),
   { loading: () => <SectionSkeleton /> },
 );
-const QuoteArtifactSection = dynamic(
-  () =>
-    import("@/components/sections/quote-artifact-section").then(
-      (mod) => mod.QuoteArtifactSection,
-    ),
-  { loading: () => <SectionSkeleton /> },
-);
-/**
- * `transparency` is the server-rendered "Transparent by design" section: it
- * reads the resolved (override-aware) pricing, so page.tsx renders it and
- * hands it in. `paymentSplit` is the resolved payment schedule's percentages,
- * in milestone order, which the quote artifact draws its bar from.
- * `scopeFigure` is the worked example's estimate range, which the quote
- * artifact's first clause repeats.
- */
-export function HomeClient({
-  transparency,
-  paymentSplit,
-  scopeFigure,
-}: {
-  transparency: ReactNode;
-  paymentSplit: readonly number[];
-  scopeFigure: string;
-}) {
+export function HomeClient({ transparency }: { transparency: ReactNode }) {
   return (
     <>
       <ErrorBoundary>

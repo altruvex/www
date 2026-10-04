@@ -9,7 +9,6 @@ import { Button, LoadingIcon } from "@repo/ui";
 
 import { sendAccessLink } from "@/app/(dashboard)/_actions/team";
 
-/** Mails a set-password link: the invitation again, or a reset for someone with a password. */
 export function AccessLinkButton({ userId, kind }: { userId: string; kind: "invite" | "reset" }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();

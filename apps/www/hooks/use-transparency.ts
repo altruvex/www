@@ -19,33 +19,17 @@ export type Timeline = TimelineId | null;
 export type BrandIdentity = BrandIdentityId | null;
 export type ContentReadiness = ContentReadinessId | null;
 
-/**
- * The five inputs `calculateEstimate` actually consumes — no more, no less.
- *
- * This hook previously carried an eight-step wizard (`step`, `nextStep`,
- * `prevStep`, `canProceed`, `TOTAL_STEPS = 8`) plus `budget` and
- * `deadlineUrgency`. None of it was reachable: the estimator drives its own
- * question list, and neither `budget` nor `deadlineUrgency` was ever passed to
- * the pricing engine or to the lead API. Asking a visitor for their budget and
- * then pricing them anyway is the exact suspicion this page exists to remove,
- * so the dead state is gone rather than left lying around to be re-wired.
- */
 interface TransparencyState {
   brandIdentity: BrandIdentity;
   complexity: Complexity;
   contentReadiness: ContentReadiness;
   projectType: ProjectType;
   timeline: Timeline;
-  /**
-   * "What does it need?" — recorded with the request for scope review and
-   * never passed to the engine. Kept in schema order.
-   */
   scopeNotes: readonly ScopeNoteId[];
 }
 
 interface UseTransparencyOptions {
   initialProjectType?: ProjectType;
-  /** The resolved pricing the page read; defaults to the shipped figures. */
   pricing?: ResolvedPricing;
 }
 
@@ -98,12 +82,6 @@ export function useTransparency({
     setState(createInitialState());
   }, [createInitialState]);
 
-  /**
-   * The estimate needs only projectType + complexity; brand, content and
-   * timeline are refiners that stay neutral until answered. That is what lets
-   * the readout show a real range before every question is done, instead of
-   * withholding the number until the end.
-   */
   const getEstimate = useCallback((): EstimateResult | null => {
     if (!state.projectType || !state.complexity) return null;
 

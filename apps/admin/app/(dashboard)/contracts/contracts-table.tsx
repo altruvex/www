@@ -1,13 +1,19 @@
 "use client";
 
-import { FileSignature } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
+import { FileSignature, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
 import { EmptyState } from "@/components/os/empty-state";
+import { CopyValueButton } from "@/components/os/copy-button";
 import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
+import { inspectHref } from "@/components/os/inspect-sheet";
+import { Button, DropdownMenuItem } from "@repo/ui";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date } from "@/lib/format";
 import { statusOf } from "@/lib/status";
+import { contractNextSteps, type ContractStepPermissions } from "./contract-steps";
 
 export interface ContractRow {
   id: string;
@@ -22,16 +28,27 @@ export interface ContractRow {
   signedAt: string | null;
   signedByName: string | null;
   onboardingSent: boolean;
-  /** The project delivering this contract, when one was created. */
+  proposalId: string;
   projectId: string | null;
   projectName: string | null;
+  projectStatus: string | null;
 }
 
-export function ContractsTable({ rows }: { rows: ContractRow[] }) {
+export function ContractsTable({
+  rows,
+  canDelete,
+  filtered,
+  allowed,
+}: {
+  rows: ContractRow[];
+  canDelete: boolean;
+  filtered: string | null;
+  allowed: ContractStepPermissions;
+}) {
   const del = useRecordDelete({ entity: "contract" });
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const columns: Column<ContractRow>[] = [
-    // Column 0 is the contract's own identity (scope + reference): DataTable
-    // wraps it in the row link, so the client link cannot live here.
     {
       id: "contract",
       header: "Contract",
@@ -42,6 +59,11 @@ export function ContractsTable({ rows }: { rows: ContractRow[] }) {
           <span className="ms-1.5 font-mono text-micro text-subtle-foreground">
             {row.id.slice(0, 8).toUpperCase()}
           </span>
+          <CopyValueButton
+            value={row.id.slice(0, 8).toUpperCase()}
+            label="Contract number"
+            className="ms-1 align-middle"
+          />
         </span>
       ),
       sortValue: (row) => row.projectType,
@@ -148,22 +170,97 @@ export function ContractsTable({ rows }: { rows: ContractRow[] }) {
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        rowHref={(row) => `/contracts/${row.id}`}
+        rowHref={(row) => inspectHref(pathname, searchParams, row.id)}
         searchPlaceholder="Search contracts by client or signatory…"
         initialSort={{ columnId: "created", dir: "desc" }}
         mobile={{ title: "contract", subtitle: "client", meta: ["status", "value", "signed", "delivery"] }}
-        rowActions={(row) => (
-          <RowActions onDelete={() => del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })} />
-        )}
+        selectable={canDelete}
+        selectionNoun="contract"
+        bulkActions={
+          canDelete
+            ? [
+                {
+                  label: "Delete",
+                  icon: Trash2,
+                  destructive: true,
+                  onRun: (selected) =>
+                    del.request(
+                      selected.map((row) => ({
+                        id: row.id,
+                        label: `${row.projectType} · ${row.clientName}`,
+                      })),
+                    ),
+                },
+              ]
+            : undefined
+        }
+        rowActions={(row) => {
+          const steps = contractNextSteps(
+            {
+              status: row.status,
+              clientId: row.clientId,
+              proposalId: row.proposalId,
+              project:
+                row.projectId && row.projectStatus
+                  ? { id: row.projectId, status: row.projectStatus }
+                  : null,
+            },
+            allowed,
+          );
+          if (steps.length === 0 && !canDelete) return null;
+          return (
+            <RowActions
+              onDelete={
+                canDelete
+                  ? () =>
+                      del.request({ id: row.id, label: `${row.projectType} · ${row.clientName}` })
+                  : undefined
+              }
+            >
+              {steps.map((step) => (
+                <DropdownMenuItem key={step.key} asChild>
+                  <Link href={step.href}>
+                    <step.icon className="size-3.5" />
+                    {step.label}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </RowActions>
+          );
+        }}
         empty={
           <EmptyState
             icon={FileSignature}
-            title="No contracts in this view"
-            body="Nothing here matches the current view. Contracts are generated from accepted proposals."
+            title={filtered ? `No contracts in “${filtered}”` : "No contracts in this view"}
+            body={
+              filtered
+                ? "Nothing matches this filter right now. Pick another chip above, or All."
+                : "Nothing here matches the search. Contracts are generated from accepted proposals."
+            }
+            action={
+              filtered ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={clearedHref(pathname, searchParams)}>Clear filters</Link>
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/proposals">Open proposals</Link>
+                </Button>
+              )
+            }
           />
         }
       />
       {del.dialog}
     </>
   );
+}
+
+function clearedHref(pathname: string, searchParams: URLSearchParams | null) {
+  const params = new URLSearchParams(searchParams?.toString());
+  params.delete("status");
+  params.delete("delivery");
+  params.delete("inspect");
+  const query = params.toString();
+  return query ? `${pathname}?${query}` : pathname;
 }

@@ -1,15 +1,3 @@
-/**
- * Checks for client services: renewal arithmetic, alert thresholds and their
- * idempotency keys, the proposal schema's services block, and both documents
- * that print them.
- *
- * Needs no database. The renewal sweep's only database-facing guarantee — one
- * notification per (user, key) — is the unique index; what this pins is that
- * the key is right, because a key that changes every run notifies every run and
- * a key that never changes notifies once in the service's life.
- *
- *   cd apps/admin && bun run verify:services
- */
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -28,9 +16,14 @@ import {
   termBilling,
   crossedThreshold,
   daysUntilExpiry,
+  needsAttention,
   nextExpiry,
+  perTermLabel,
   renewalAlertKey,
+  renewRefusal,
   serviceState,
+  servicesFromProposal,
+  termLabel,
 } from "../lib/service-lifecycle";
 
 let failures = 0;
@@ -45,7 +38,6 @@ const DAY = 86_400_000;
 const now = utc("2026-09-14");
 const inDays = (n: number) => new Date(now.getTime() + n * DAY);
 
-/** One entry of an Office file, read with the system unzip — no zip dependency. */
 const scratch = mkdtempSync(join(tmpdir(), "verify-services-"));
 function readZipEntry(buffer: Buffer, entry: string): string {
   const file = join(scratch, `${Math.random().toString(36).slice(2)}.zip`);
@@ -55,16 +47,42 @@ function readZipEntry(buffer: Buffer, entry: string): string {
 
 async function main() {
   console.log("\nDerived state");
-  check(serviceState({ status: "PENDING", expiresAt: null }, now) === "pending", "pending has no expiry and stays pending");
-  check(serviceState({ status: "ACTIVE", expiresAt: null }, now) === "pending", "active without a date reads as pending, never invents one");
-  check(serviceState({ status: "ACTIVE", expiresAt: inDays(90) }, now) === "active", "90 days out is active");
-  check(serviceState({ status: "ACTIVE", expiresAt: inDays(30) }, now) === "renewing-soon", "30 days out is renewing soon");
-  check(serviceState({ status: "ACTIVE", expiresAt: inDays(7) }, now) === "urgent", "7 days out is urgent");
-  check(serviceState({ status: "ACTIVE", expiresAt: new Date(now.getTime() - 1000) }, now) === "expired", "a second past expiry is expired");
-  check(serviceState({ status: "CANCELLED", expiresAt: inDays(-100) }, now) === "cancelled", "cancelled wins over a lapsed date");
+  check(serviceState({ status: "PENDING", expiresAt: null, termMonths: 12 }, now) === "pending", "pending has no expiry and stays pending");
+  check(serviceState({ status: "ACTIVE", expiresAt: null, termMonths: 12 }, now) === "pending", "active without a date reads as pending, never invents one");
+  check(serviceState({ status: "ACTIVE", expiresAt: inDays(90), termMonths: 12 }, now) === "active", "90 days out is active");
+  check(serviceState({ status: "ACTIVE", expiresAt: inDays(30), termMonths: 12 }, now) === "renewing-soon", "30 days out is renewing soon");
+  check(serviceState({ status: "ACTIVE", expiresAt: inDays(7), termMonths: 12 }, now) === "urgent", "7 days out is urgent");
+  check(serviceState({ status: "ACTIVE", expiresAt: new Date(now.getTime() - 1000), termMonths: 12 }, now) === "expired", "a second past expiry is expired");
+  check(serviceState({ status: "CANCELLED", expiresAt: inDays(-100), termMonths: 12 }, now) === "cancelled", "cancelled wins over a lapsed date");
+
+  console.log("\nOne-time services");
+  const owned = { status: "ACTIVE" as const, expiresAt: null, termMonths: null };
+  check(serviceState(owned, now) === "one-time", "an active one-time service is owned, not pending");
+  check(serviceState({ ...owned, expiresAt: inDays(-5) }, now) === "one-time", "a stray date on a one-time service never makes it expired");
+  check(serviceState({ ...owned, expiresAt: inDays(3) }, now) === "one-time", "…nor renewing soon");
+  check(serviceState({ ...owned, status: "PENDING" }, now) === "pending", "a one-time service not yet bought is pending");
+  check(serviceState({ ...owned, status: "CANCELLED" }, now) === "cancelled", "a cancelled one-time service is cancelled");
+  check(!needsAttention(serviceState(owned, now)), "owned needs no attention");
+  check(crossedThreshold({ ...owned, expiresAt: inDays(1) }, now) === null, "a one-time service never crosses a threshold");
+  check(termLabel(null) === "One-time", "termLabel(null) is One-time");
+  check(perTermLabel(null) === "one-time", "perTermLabel(null) is one-time");
+  check(annualised(5000, null) === 0, "a one-time price adds nothing to a yearly total");
+  check(renewRefusal(owned) === "A one-time service is bought once and never renews.", "renewing a one-time service is refused");
+  check(renewRefusal({ status: "ACTIVE", expiresAt: null, termMonths: 12 }) !== null, "renewing an undated service is refused");
+  check(renewRefusal({ status: "ACTIVE", expiresAt: inDays(30), termMonths: 12 }) === null, "a dated active service can be renewed");
+  const purchase = termBilling({
+    event: "activate",
+    price: 4500,
+    currency: "EGP",
+    firstTermIncluded: false,
+    projectId: "p1",
+    projectCurrency: "EGP",
+    termStart: utc("2026-09-14"),
+  });
+  check(purchase.bill && purchase.amount === 4500 && iso(purchase.dueDate) === "2026-09-14", "buying a one-time service bills its price once, due on the purchase day");
 
   console.log("\nAlert thresholds");
-  const threshold = (d: number) => crossedThreshold({ status: "ACTIVE", expiresAt: inDays(d) }, now);
+  const threshold = (d: number) => crossedThreshold({ status: "ACTIVE", expiresAt: inDays(d), termMonths: 12 }, now);
   check(threshold(45) === null, "45 days out raises nothing");
   check(threshold(30) === 30, "30 days out raises the 30-day alert");
   check(threshold(20) === 30, "20 days out is still the 30-day alert (14 not yet crossed)");
@@ -72,8 +90,8 @@ async function main() {
   check(threshold(5) === 7, "5 days out after a gap jumps straight to 7, not a stale 14");
   check(threshold(1) === 1, "tomorrow raises the 1-day alert");
   check(threshold(-3) === 0, "lapsed raises the expiry-day alert");
-  check(crossedThreshold({ status: "PENDING", expiresAt: null }, now) === null, "pending raises nothing");
-  check(crossedThreshold({ status: "CANCELLED", expiresAt: inDays(2) }, now) === null, "cancelled raises nothing");
+  check(crossedThreshold({ status: "PENDING", expiresAt: null, termMonths: 12 }, now) === null, "pending raises nothing");
+  check(crossedThreshold({ status: "CANCELLED", expiresAt: inDays(2), termMonths: 12 }, now) === null, "cancelled raises nothing");
 
   console.log("\nAlert identity");
   const expiry = inDays(7);
@@ -162,10 +180,23 @@ async function main() {
     services: [
       { kind: "DOMAIN" as const, name: "verify-co.com", provider: "Namecheap", termMonths: 12, firstTermIncluded: true, price: 950 },
       { kind: "HOSTING" as const, name: "Vercel Pro", provider: "", termMonths: 1, firstTermIncluded: false, price: 1100 },
+      { kind: "SOFTWARE_LICENSE" as const, name: "Verify Theme", provider: "ThemeForest", termMonths: null, firstTermIncluded: true, price: 3200 },
     ],
   };
   const parsed = validateProposalContent(withServices);
-  check(parsed.ok, "services with a price and term validate");
+  check(parsed.ok, "services with a price and term validate, a one-time line included");
+  check(parsed.content!.services[0]!.termMonths === 12, "a saved numeric term parses unchanged");
+  check(parsed.content!.services[2]!.termMonths === null, "a one-time line keeps its null term");
+  const signed = servicesFromProposal({
+    services: parsed.content!.services,
+    clientId: "cl1",
+    projectId: "p1",
+    proposalId: "pr1",
+    currency: "EGP",
+    createdBy: "verify",
+  });
+  check(signed[0]!.termMonths === 12 && signed[0]!.firstTermIncluded === true, "signing keeps a recurring line's term and first-term flag");
+  check(signed[2]!.termMonths === null && signed[2]!.firstTermIncluded === false && signed[2]!.status === "PENDING", "signing opens a one-time line as a one-time service with no first-term flag");
   check(
     netTotal(parsed.content!.investmentItems, parsed.content!.discount) === investmentTotal(content.investmentItems),
     "services never enter the project total",
@@ -190,6 +221,10 @@ async function main() {
   check(Boolean(slide5.includes("verify-co.com")), "slide 5 prints the domain");
   check(Boolean(slide5.includes("RECURRING SERVICES")), "slide 5 prints the services label");
   check(Boolean(slide5.includes("1ST TERM IN FEE")), "a first term in the fee says so");
+  check(Boolean(slide5.includes("ONE-TIME")), "a one-time service prints ONE-TIME");
+  const themePrice = withServices.services[2].price.toLocaleString("en-US");
+  check(Boolean(slide5.includes(`${themePrice} one-time`)), "a one-time price carries no per-term unit");
+  check(!slide5.includes("ONE-TIME · 1ST TERM IN FEE"), "a one-time service never claims a first term in the fee");
 
   const crowded = {
     ...parsed.content!,
@@ -222,6 +257,8 @@ async function main() {
   check(documentXml.includes("Recurring services."), "the contract states the services clause");
   check(documentXml.includes("verify-co.com (Namecheap)"), "the contract lists each service with its provider");
   check(documentXml.includes("Included in the project fee"), "the contract says which first terms are included");
+  check(documentXml.includes("Verify Theme (ThemeForest)") && documentXml.includes("One-time") && documentXml.includes("Bought once"), "the contract lists a one-time service as One-time, bought once");
+  check(documentXml.includes("A service marked One-time is bought once"), "the clause explains a one-time service");
 
   const bare = { ...contract, proposal: { ...contract.proposal, content } } as typeof contract;
   const bareXml = readZipEntry(await buildContractDocx(bare), "word/document.xml");

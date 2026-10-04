@@ -5,21 +5,6 @@ import { prisma } from "@repo/database";
 import { recordActivity, recordChange } from "@/lib/activity-log";
 import { notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
-/**
- * Delivery tasks (§5).
- *
- * These are real rows. The screen this replaced synthesised three tasks per
- * project from its phase and answered "create" with a toast, so nothing an
- * operator did on it survived a refresh.
- *
- * There is deliberately no DELETE *here*. `CANCELLED` already removes a task
- * from the board and from every open count while keeping the record that it was
- * once planned, and that is the right answer for work that was dropped.
- * Removing a row that should never have existed is a different act: it goes
- * through `deleteRecords` in app/(dashboard)/_actions/delete.ts, which writes
- * what it destroyed to the audit trail first.
- */
-
 export const dynamic = "force-dynamic";
 
 const STATUSES = ["TODO", "IN_PROGRESS", "BLOCKED", "DONE", "CANCELLED"] as const;
@@ -34,7 +19,6 @@ const PHASES = [
   "POST_LAUNCH_SUPPORT",
 ] as const;
 
-/** Sparse ordering: a reorder rewrites one row instead of the whole column. */
 const POSITION_STEP = 1000;
 
 const createSchema = z.object({
@@ -50,7 +34,6 @@ const createSchema = z.object({
 
 const patchSchema = z.object({
   id: z.string().min(1),
-  /** Moving a task to another project. Every task belongs to exactly one. */
   projectId: z.string().min(1).optional(),
   title: z.string().min(1).max(300).optional(),
   detail: z.string().max(5000).nullable().optional(),
@@ -90,8 +73,6 @@ export const POST = withAdmin(async (request, { actor, session }) => {
   });
   if (!project) throw notFound("That project no longer exists.");
 
-  // Append to the end of its column rather than the top: a new task is not
-  // automatically the most important one.
   const last = await prisma.projectTask.findFirst({
     where: { projectId: body.projectId, status: body.status },
     orderBy: { position: "desc" },
@@ -153,9 +134,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     where: { id },
     data: {
       ...patch,
-      // `completedAt` follows status rather than being set independently, so a
-      // task cannot be DONE with no completion date, or reopened still carrying
-      // one.
       ...(patch.status
         ? {
             completedAt:

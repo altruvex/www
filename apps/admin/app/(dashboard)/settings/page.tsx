@@ -7,6 +7,7 @@ import { getOperator } from "@/lib/authorize";
 import { auth } from "@/lib/auth";
 import { can } from "@/lib/rbac";
 import { mfaRequired } from "@/lib/mfa";
+import { gateRoute } from "@/lib/page-gate";
 import { emailTransport } from "@/lib/email";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
@@ -33,25 +34,19 @@ const TABS = [
 
 const SECONDS_PER_DAY = 24 * 60 * 60;
 
-/** The session life as configured in `lib/auth.ts`, in days, read rather than retyped. */
 function sessionLifeDays(): number | null {
   const seconds = auth.options.session?.expiresIn;
   return typeof seconds === "number" ? Math.round(seconds / SECONDS_PER_DAY) : null;
 }
 
-/**
- * Every claim on this page is read from the thing it describes: the session
- * life from the auth config, the mail transport from the environment, the
- * invoice numbering from the settings row, the sessions from the session
- * table. The previous version carried a "Known gaps" list that was mostly
- * untrue by the time it was read (no second factor, no audit table), which is
- * the opposite of what a settings screen is for.
- */
 export default async function SettingsPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
+  const denied = await gateRoute("/settings", "settings");
+  if (denied) return denied;
+
   const { tab: tabParam } = await searchParams;
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "organization";
 
@@ -83,7 +78,6 @@ export default async function SettingsPage({
     prisma.user.count(),
   ]);
 
-  // The token decides which row is "this browser", then stays on the server.
   const sessionRows: SessionRow[] = mySessions.map((s) => ({
     id: s.id,
     ipAddress: s.ipAddress,
@@ -162,7 +156,11 @@ export default async function SettingsPage({
               ]}
             />
             <div className="border-t border-border p-3">
-              <InvoicePrefixEditor initialPrefix={numbering.invoicePrefix} canEdit={canEditSettings} />
+              <InvoicePrefixEditor
+                initialPrefix={numbering.invoicePrefix}
+                next={numbering.next}
+                canEdit={canEditSettings}
+              />
               <p className="mt-2 max-w-prose text-meta text-muted-foreground">
                 A number is assigned once, when a payment is invoiced, and is never reused —
                 changing the prefix affects invoices issued from now on, not the ones already
@@ -328,9 +326,10 @@ export default async function SettingsPage({
                 }
               />
               <TemplateRow
-                name="Invoice document"
-                state="planned"
-                detail={`Payments are numbered (${numbering.next} is next) and carry an issue date, but no invoice document is generated yet. There is no Invoice model; the number lives on the payment.`}
+                name="Invoice — numbered payment view"
+                state="live"
+                href="/invoices"
+                detail={`Each invoiced payment carries its number (${numbering.next} is next) and issue date, and /invoices lists them. Nothing generates a printable document: the number lives on the payment, there is no Invoice model, and a client is sent the figure, not a PDF.`}
               />
             </ul>
           </Panel>
@@ -445,15 +444,25 @@ function TemplateRow({
   name,
   state,
   detail,
+  href,
 }: {
   name: string;
   state: "live" | "planned" | "unconfigured";
   detail: string;
+  href?: string;
 }) {
   return (
     <li className="flex items-center gap-3 px-3 py-2.5">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-base font-medium">{name}</p>
+        <p className="truncate text-base font-medium">
+          {href ? (
+            <Link href={href} className="underline-offset-2 hover:underline">
+              {name}
+            </Link>
+          ) : (
+            name
+          )}
+        </p>
         <p className="text-meta text-muted-foreground">{detail}</p>
       </div>
       <ToneBadge tone={state === "live" ? "success" : state === "unconfigured" ? "warning" : "neutral"}>

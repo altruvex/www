@@ -22,7 +22,7 @@ function LabHero() {
   const mediaRef = useMediaSettle<HTMLDivElement>({ zoom: false });
 
   return (
-    <section aria-labelledby="ifd-hero-heading" className="bg-background pt-32 pb-(--section-y-bottom) lg:pt-40">
+    <section aria-labelledby="ifd-hero-heading" className="bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container className="grid gap-y-8 lg:grid-cols-12 lg:items-end lg:gap-x-10">
         <div className="lg:col-span-7">
           <HeroReveal delay={0.1} className="flex items-center gap-3">
@@ -76,13 +76,6 @@ function LabHero() {
             <p className="text-[clamp(1.125rem,1.7vw,1.5rem)] font-light leading-[1.25] tracking-[-0.02em] text-foreground sm:text-white rtl:leading-[1.6] rtl:tracking-normal">
               {s("card")}
             </p>
-            <a
-              href="#disciplines"
-              className="mt-3 inline-flex items-center gap-1.5 rounded-ctl-sm text-sm font-medium text-local-accent-text underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-white sm:underline"
-            >
-              {s("cardLink")}
-              <span aria-hidden>↓</span>
-            </a>
           </HeroReveal>
         </div>
       </Container>
@@ -121,20 +114,15 @@ function StackedRows() {
   return (
     <section id="disciplines" aria-labelledby="ifd-rows-heading" className="bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        <div className="flex flex-wrap items-end justify-between gap-4 pb-12">
-          <div>
-            <Eyebrow>{s("eyebrow")}</Eyebrow>
-            <h2
-              ref={titleRef}
-              id="ifd-rows-heading"
-              className="mt-5 text-[clamp(2.75rem,5.4vw,5.75rem)] leading-[1.02] font-light tracking-[-0.04em] text-foreground rtl:leading-[1.3] rtl:tracking-normal"
-            >
-              {s("title")} <Highlight tone="world">{s("titleAccent")}</Highlight>
-            </h2>
-          </div>
-          <span className="font-mono text-xs text-muted-foreground tabular-nums">
-            <Num value={items.length} pad={2} />
-          </span>
+        <div className="pb-(--heading-gap)">
+          <Eyebrow>{s("eyebrow")}</Eyebrow>
+          <h2
+            ref={titleRef}
+            id="ifd-rows-heading"
+            className="mt-5 text-[clamp(2.75rem,5.4vw,5.75rem)] leading-[1.02] font-light tracking-[-0.04em] text-foreground rtl:leading-[1.3] rtl:tracking-normal"
+          >
+            {s("title")} <Highlight tone="world">{s("titleAccent")}</Highlight>
+          </h2>
         </div>
         <ol className="list-none">
           {items.map((item, i) => (

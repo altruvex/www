@@ -5,7 +5,6 @@ import {
   DirectionalLink,
   ExternalDirectionalLink,
 } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { FOUNDER_LINK } from "@/lib/config/commercial";
 import { getAllTestimonials } from "@/lib/data/testimonials";
@@ -16,7 +15,6 @@ import {
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle,
-  useUnderlineDraw,
   useWordRead,
 } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
@@ -30,17 +28,6 @@ import { SectionHeading } from "./section-heading";
 const QUOTE_ROW =
   "grid gap-x-12 gap-y-8 py-12 md:py-16 lg:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]";
 
-const noteMarks = {
-  mark: (chunks: ReactNode) => (
-    <span
-      data-draw
-      className="bg-linear-to-r from-local-accent-text to-local-accent-text bg-size-[100%_1px] bg-position-[0_100%] bg-no-repeat pb-0.5 rtl:bg-position-[100%_100%]"
-    >
-      {chunks}
-    </span>
-  ),
-} as const;
-
 const closingMarks = {
   strong: (chunks: ReactNode) => (
     <strong className="font-semibold text-white">{chunks}</strong>
@@ -48,7 +35,6 @@ const closingMarks = {
   dim: (chunks: ReactNode) => <span className="text-white/55">{chunks}</span>,
 } as const;
 
-/* A client quote at display size, read word by word on scroll. */
 function ClientQuote({ text }: { text: string }) {
   const readRef = useWordRead<HTMLQuoteElement>();
   return (
@@ -74,8 +60,6 @@ export const TrustSection = memo(function TrustSection() {
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const bodyRef = useSectionDescription();
-
-  const noteRef = useUnderlineDraw<HTMLParagraphElement>();
 
   const registerRef = useSectionCardGrid<HTMLDivElement>({
     selector: "[data-ledger-row]",
@@ -151,9 +135,8 @@ export const TrustSection = memo(function TrustSection() {
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
           secondTitle={t("titleAccent")}
-          accent="world"
           description={t.rich("body", bodyMarks)}
-          className="mb-14 md:mb-20"
+          className="mb-(--heading-gap)"
         />
         <div ref={registerRef} className="border-t-2 border-foreground">
           <h3 className="sr-only">{t("testimonials.eyebrow")}</h3>
@@ -187,33 +170,15 @@ export const TrustSection = memo(function TrustSection() {
               </div>
             </figure>
           ))}
-          <div data-ledger-row className={QUOTE_ROW}>
-            <Eyebrow className="m-0">{t("note.label")}</Eyebrow>
-            <div>
-              <p
-                ref={noteRef}
-                className="max-w-[40ch] text-[clamp(1.1875rem,1.7vw,1.5625rem)] leading-normal text-foreground rtl:leading-[1.8]">
-                {t.rich("note.body", noteMarks)}
-              </p>
-              <p className="mt-9 inline-flex min-w-60 flex-col">
-                <span className="border-b border-foreground/45 px-1 pb-2.5 text-[2.125rem] leading-none text-foreground rtl:font-light">
-                  {t("founder.name")}
-                </span>
-                <span className="mt-2.5 text-sm text-muted-foreground">
-                  {t("founder.role")}
-                </span>
-              </p>
-            </div>
-          </div>
         </div>
       </Container>
       <div
         ref={closingFrameRef}
-        className="mt-20 px-6 sm:px-8 md:mt-28 md:px-12 lg:px-16"
+        className="mt-(--section-block) px-6 sm:px-8 md:px-12 lg:px-16"
       >
         <div
           ref={closingMediaRef}
-          className="relative h-104 w-full overflow-hidden rounded-panel-sm sm:h-120 md:h-136 lg:h-152"
+          className="relative h-104 w-full overflow-hidden rounded-panel-lg sm:h-120 md:h-136 lg:h-152"
         >
           <Image
             ref={closingImageRef}
@@ -221,7 +186,7 @@ export const TrustSection = memo(function TrustSection() {
             alt=""
             aria-hidden
             fill
-            quality={100}
+            quality={75}
             draggable={false}
             sizes="100vw"
             className="object-cover"

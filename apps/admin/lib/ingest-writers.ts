@@ -3,18 +3,6 @@ import { prisma, type Build, type Deployment, type Product, type ProductStatus }
 import type { Actor } from "@/lib/activity-log";
 import { ingestActor, nextNumber, recordActivity } from "@/lib/ingest";
 
-/**
- * The only writers of build and deployment rows (§7).
- *
- * Two callers reach them: the token-authenticated `/api/ingest/*` endpoints a
- * pipeline posts to by hand, and the GitHub webhook receiver, which is the same
- * evidence arriving in GitHub's vocabulary instead of ours. Both must produce
- * an identical row, so the upsert, the numbering, the coalescing rules and the
- * product-status side effect live here once rather than being reimplemented per
- * transport — two copies of this logic would drift within a release, and the
- * screens that read these tables would start disagreeing about what shipped.
- */
-
 export type BuildStatusInput = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED";
 export type DeploymentStatusInput =
   | "PENDING"
@@ -31,12 +19,6 @@ export const DEPLOYMENT_TERMINAL = new Set<DeploymentStatusInput>([
   "ROLLED_BACK",
 ]);
 
-/**
- * Product statuses a successful production deploy may promote to LIVE: the ones
- * that mean "not launched yet". MAINTENANCE and SUNSET are operator decisions
- * about a product that already launched, and a deploy is not evidence against
- * them.
- */
 const PRE_LAUNCH_STATUSES = new Set<ProductStatus>(["PLANNED", "IN_DEVELOPMENT"]);
 
 export interface BuildInput {
@@ -68,25 +50,10 @@ export interface DeploymentInput {
   rollbackOfNumber?: number;
 }
 
-/**
- * Prisma's default interactive-transaction timeout is five seconds, measured
- * from the moment the transaction opens.
- *
- * That is generous for three local round trips and not generous at all for
- * three trips to a serverless Postgres that suspends when idle: the first query
- * after a suspension pays the wake-up, and the whole budget is gone before any
- * real work happens. The row lock these transactions hold is on one product for
- * the length of one insert, so a longer ceiling costs nothing and removes a
- * failure that only ever appears on the first build after a quiet hour.
- */
 const TRANSACTION_OPTIONS = { timeout: 20_000, maxWait: 15_000 } as const;
 
 export async function writeBuild(product: Product, body: BuildInput): Promise<Build> {
   return prisma.$transaction(async (tx) => {
-    // `externalId` is the idempotency key. Without one every post is a new
-    // build, which is the correct reading of "the caller gave us nothing to
-    // match on" — better than guessing by commit SHA and merging two genuinely
-    // separate runs of the same commit.
     const existing = body.externalId
       ? await tx.build.findUnique({
           where: {
@@ -99,18 +66,12 @@ export async function writeBuild(product: Product, body: BuildInput): Promise<Bu
       body.finishedAt ??
       (BUILD_TERMINAL.has(body.status)
         ? (existing?.finishedAt ?? new Date())
-        : // Keep the finish time of a build that already ended; only a build
-          // still running has none.
+        :
           (existing && BUILD_TERMINAL.has(existing.status as BuildStatusInput)
             ? existing.finishedAt
             : null));
 
     if (existing) {
-      // Events arrive out of order — a retried "in progress" after the run
-      // finished, or a replayed delivery — and a finished build that flips
-      // back to RUNNING is a screen telling an operator something untrue.
-      // Late non-terminal news about a settled build updates its details and
-      // leaves its verdict alone.
       const settled = BUILD_TERMINAL.has(existing.status as BuildStatusInput);
       const regressing = settled && !BUILD_TERMINAL.has(body.status);
 
@@ -119,8 +80,6 @@ export async function writeBuild(product: Product, body: BuildInput): Promise<Bu
         data: {
           status: regressing ? existing.status : body.status,
           environment: body.environment,
-          // Coalesce rather than overwrite: a later post that omits a field is
-          // reporting progress, not clearing what an earlier post established.
           commitSha: body.commitSha ?? existing.commitSha,
           commitMessage: body.commitMessage ?? existing.commitMessage,
           branch: body.branch ?? existing.branch,
@@ -132,8 +91,6 @@ export async function writeBuild(product: Product, body: BuildInput): Promise<Bu
             (finishedAt && existing.startedAt
               ? finishedAt.getTime() - existing.startedAt.getTime()
               : existing.durationMs),
-          // Cleared on a non-failing status: a build that was retried into
-          // success must not keep displaying the reason it failed before.
           failureReason:
             body.status === "FAILED" ? (body.failureReason ?? existing.failureReason) : null,
         },
@@ -162,10 +119,6 @@ export async function writeBuild(product: Product, body: BuildInput): Promise<Bu
   }, TRANSACTION_OPTIONS);
 }
 
-/**
- * Only terminal transitions are worth an activity line — a build posting
- * RUNNING every ten seconds would otherwise drown the feed.
- */
 export async function announceBuild(
   product: Product,
   build: Build,
@@ -230,8 +183,6 @@ export async function writeDeployment(
           : null);
 
     const common = {
-      // A deployment that already succeeded or failed keeps that verdict; a
-      // late or replayed non-terminal event is bookkeeping, not a new outcome.
       status: regressing ? (existing!.status as DeploymentStatusInput) : body.status,
       environment: body.environment,
       version: body.version ?? existing?.version ?? null,
@@ -255,8 +206,6 @@ export async function writeDeployment(
           },
         });
 
-    // A rollback names the deployment it replaced, so the superseded row can
-    // show what undid it rather than just going quiet.
     if (body.rollbackOfNumber != null) {
       const superseded = await tx.deployment.findUnique({
         where: {
@@ -272,11 +221,6 @@ export async function writeDeployment(
       }
     }
 
-    // A live production deployment is the only trustworthy evidence of what a
-    // product's URL and status actually are. It promotes a product that had not
-    // launched yet (PLANNED / IN_DEVELOPMENT) to LIVE, and nothing else: a
-    // MAINTENANCE or SUNSET product still deploys fixes, and an operator's
-    // decision that it is winding down must not be undone by a CI run.
     if (body.status === "SUCCEEDED" && body.environment === "PRODUCTION") {
       await tx.product.update({
         where: { id: product.id },

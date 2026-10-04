@@ -9,23 +9,6 @@ import {
   type TransparencyTranslator,
 } from "./transparency-utils";
 
-/**
- * Everything only needed to build and render the estimate PDF.
- *
- * Split out of `transparency-utils.ts` so this module can be dynamically
- * imported on its own: `mapProjectType`/`isValidPhone`/`fillScopeTokens` are
- * needed the moment the estimator renders, but the ~600 lines below — the
- * bilingual per-answer copy, the deliverables catalogue, and the HTML/canvas
- * PDF renderer — are needed only once a visitor has answered all five
- * questions *and* clicked Download. Mixed into one file, a static import of
- * the small functions would have pulled all of this in regardless of whether
- * the dynamic `import()` in `transparency-estimator.tsx` looked deferred on
- * paper; a bundler resolves both references to the same module and does not
- * split a file it has already decided to include eagerly. This file has
- * exactly one caller, so it costs nothing to give it its own boundary.
- */
-
-/** The estimate's colors, by role, from the one palette (@repo/ui/palette). */
 const PDF = {
   white: css(PALETTE.light.card),
   paper: css(PALETTE.light["n-0"]),
@@ -51,14 +34,7 @@ interface ProposalNarrative {
   closing: { ar: string; en: string };
 }
 
-/**
- * The faces the estimate document draws with, adopted from the page that
- * renders it. The site sets everything in Altruvex Sans (@repo/brand-font), so
- * display, body and the label stack (English labels, email and domain) all
- * resolve to the page's `--font-brand`.
- */
 interface PdfFonts {
-  /** The page's `@font-face` rules for those families, with absolute URLs. */
   faces: string;
   display: string;
   body: string;
@@ -74,19 +50,6 @@ function familyNames(stack: string): string[] {
     .filter(Boolean);
 }
 
-/**
- * Reads the fonts for the PDF from the live page.
- *
- * Adopted, not linked: the site's CSP is `font-src 'self'`
- * (lib/config/csp.ts), which the doc.write() iframe inherits, so a Google
- * Fonts @import there never loads; and next/font already self-hosts every
- * face the site uses under hashed same-origin URLs. Copying the page's own
- * `@font-face` rules gives the document the exact files the page has already
- * fetched: no second copy, no build step, no third party, and no family name
- * typed here. Relative URLs are resolved against their stylesheet, and
- * `font-display` becomes `block`: the document waits for its fonts before it
- * is captured, so a face must never be skipped the way `optional` allows.
- */
 export function collectPdfFonts(): PdfFonts {
   const display =
     getComputedStyle(document.documentElement)
@@ -103,7 +66,7 @@ export function collectPdfFonts(): PdfFonts {
     try {
       rules = sheet.cssRules;
     } catch {
-      continue; // a cross-origin sheet; the site's own fonts are never in one
+      continue;
     }
     const base = sheet.href ?? document.baseURI;
     for (const rule of Array.from(rules)) {
@@ -200,10 +163,6 @@ const CONTENT_COPY: Record<string, { ar: string; en: string }> = {
   },
 };
 
-/**
- * The document's last word. The range is indicative; the binding figure is
- * set in a written proposal after scope review — never promised here.
- */
 const CLOSING_COPY = {
   ar: "هذا التقدير مبني على اختياراتك الفعلية. الخطوة التالية: نراجع النطاق معك، ثم نرسل عرضاً مكتوباً واحداً بالرقم المُلزِم.",
   en: "This estimate is built on your actual selections. Next, we review scope with you, then send one written proposal with the binding figure.",
@@ -254,21 +213,14 @@ interface PDFParams {
   locale: string;
   t: TransparencyTranslator;
   projectType: DeliverableProject;
-  /** The legacy band id the deliverable lists are filed under. */
   band: DeliverableBand;
-  /** The schema's service name — with `bandLabel`, the document's label. */
   serviceLabel: string;
   bandLabel: string;
   timelineLabel: string;
-  /** The timeline answer's id, which picks the narrative's timeline note. */
   timelineKey: string;
-  /** Names of the scope notes the visitor ticked, in schema order. */
   scopeNotes: readonly string[];
-  /** Indicative-only line with validity and the VAT sentence, filled. */
   disclaimer: string;
-  /** The pricing the estimate was computed from (warranty window). */
   pricing: ResolvedPricing;
-  /** From `collectPdfFonts()` on the page that renders the document. */
   fonts: PdfFonts;
   priceMin: number;
   priceMax: number;
@@ -286,15 +238,13 @@ export function buildPDFHtml(p: PDFParams): string {
   const alignRight = isRtl ? "left" : "right";
 
   const f = (n: number) =>
-    new Intl.NumberFormat(isRtl ? "ar-EG" : "en-EG", {
+    new Intl.NumberFormat(isRtl ? "ar-EG-u-nu-latn" : "en-EG", {
       style: "currency",
       currency: "EGP",
       maximumFractionDigits: 0,
     }).format(n);
 
-  // Region-qualified: bare "ar" resolves to Latin digits in current ICU, which
-  // would print a Latin date next to the Arabic-Indic figures below it.
-  const today = new Intl.DateTimeFormat(isRtl ? "ar-EG" : "en-US", {
+  const today = new Intl.DateTimeFormat(isRtl ? "ar-EG-u-nu-latn" : "en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -317,7 +267,6 @@ export function buildPDFHtml(p: PDFParams): string {
   const col1 = items.slice(0, half);
   const col2 = items.slice(half);
 
-  // Label = service + band, both named by the schema (R13).
   const lblProjectType = escapeHtml(p.serviceLabel);
   const lblBand = escapeHtml(p.bandLabel);
   const lblTimeline = escapeHtml(p.timelineLabel);
@@ -330,7 +279,6 @@ export function buildPDFHtml(p: PDFParams): string {
   });
   const L = (obj: { ar: string; en: string }) => pickLang(obj, p.locale);
 
-  // Escaped: the stacks carry double quotes and go into style="…" attributes.
   const fontBody = escapeHtml(p.fonts.body);
   const scopeNoteRows =
     p.scopeNotes.length > 0
@@ -343,23 +291,15 @@ export function buildPDFHtml(p: PDFParams): string {
       : `<div style="padding:7px 0;font-family:${fontBody};font-size:11.5px;color:${PDF.muted};">${escapeHtml(p.t("pdfContent.noScopeNotes"))}</div>`;
   const fontDisplay = escapeHtml(p.fonts.display);
   const fontMono = escapeHtml(p.fonts.mono);
-  // Small labels. EN: mono, tracked, capitals. AR: the body face at tracking 0 and no
-  // case transform — letter-spacing pulls Arabic letters apart, and they must join.
   const labelStyle = (tracking: string) =>
     isRtl
       ? `font-family:${fontBody};letter-spacing:0;text-transform:none;`
       : `font-family:${fontMono};letter-spacing:${tracking};text-transform:uppercase;`;
-  // Untracked secondary text that carries translated copy: mono in EN, body face in AR.
   const monoText = `font-family:${isRtl ? fontBody : fontMono};`;
-  // Latin-only strings (email, domain) stay mono in both locales, isolated as LTR.
   const latinMono = `font-family:${fontMono};direction:ltr;unicode-bidi:isolate;`;
   const safeName = p.name ? escapeHtml(p.name) : "";
   const clientName =
     safeName || escapeHtml(p.t("pdfContent.prospectiveClient"));
-  // The typed name is isolated in <bdi>: a Latin name inside the Arabic sentence ("Acme Co.")
-  // otherwise loses its own trailing punctuation to the far side. Placed after escaping the
-  // sentence so the (already escaped) name is not escaped twice.
-  // U+E000 (private use): survives escapeHtml and never occurs in copy.
   const NAME_SLOT = "\uE000";
   const confidentialLine = escapeHtml(
     p.t("pdfContent.confidential", { name: NAME_SLOT }),

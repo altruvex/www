@@ -18,13 +18,6 @@ export interface TextConfig {
   trigger?: string | MotionTrigger;
   once?: boolean;
   splitBy?: "char" | "word" | "line";
-  /**
-   * Blur-in per fragment. `filter` is not a compositor-only property: each
-   * blurred fragment re-rasterises every frame for the tween's length. It is
-   * therefore a one-shot enter effect only (never interaction-frequency),
-   * gated to fine-pointer + non-constrained devices and capped at
-   * `MOTION.text.blurCap` fragments.
-   */
   blur?: boolean;
   scrubExit?: boolean;
 }
@@ -80,9 +73,6 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
           (context) => {
             const { reduced } = context.conditions as { reduced: boolean };
 
-            // ── Reduced-motion tier: whole-element opacity settle ────────
-            // No split: a reduced-motion user never sees the stagger, so
-            // there is no reason to rewrite their DOM.
             if (reduced) {
               gsap.fromTo(
                 el,
@@ -94,9 +84,6 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
 
             const constrained = readMotionEnv().constrained;
 
-            // The split and the entrance itself live in `text-enter`, shared
-            // with surfaces that replay it on demand — one text animation for
-            // the whole site. This hook adds only the scroll trigger.
             const split = splitText(el, splitBy);
             const { targets, isRTL } = split;
             const { from, to } = textEnterVars(split, {
@@ -125,17 +112,10 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
               },
             });
 
-            // ── Accent sweep ─────────────────────────────────────────────
-            // `<Accent animate="sweep">` gradients wipe across the phrase
-            // once, in lockstep with the reveal. Panning one inherited custom
-            // property moves every fragment's gradient as a single sheet.
-            // This is a paint-bound (background-position) one-shot; it is
-            // never interaction-frequency and is off on constrained devices.
             if (!constrained) {
               const sweepAccents = Array.from(
                 el.querySelectorAll<HTMLElement>('[data-accent-anim="sweep"]'),
               );
-              // Batch the reads before any write.
               const widths = sweepAccents.map((a) => a.getBoundingClientRect().width);
               sweepAccents.forEach((accentEl, i) => {
                 const accentWidth = widths[i];
@@ -163,8 +143,6 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
             if (scrubExit && !constrained) {
               const section = el.closest("section") ?? el;
               gsap.to(targets, {
-                // Arabic fragments are `display:inline` (shaping must not break),
-                // and inline boxes can't be transformed — opacity only there.
                 yPercent: isRTL ? 0 : -20,
                 opacity: 0,
                 ease: MOTION.ease.fadeOut,
@@ -182,9 +160,6 @@ export function useText<T extends HTMLElement = HTMLHeadingElement>(
         );
       }, el);
 
-      // Gradient-accent fragments are aligned to the phrase's measured layout
-      // at split time. Reflow (viewport resize, font swap, locale change)
-      // shifts those measurements, so re-align on resize.
       resizeObserver = new ResizeObserver(() => {
         cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(() => alignAccentGradients(el));

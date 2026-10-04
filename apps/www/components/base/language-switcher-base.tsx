@@ -17,10 +17,6 @@ const LANGUAGES: readonly { code: Locale; nativeName: string }[] = [
 ];
 
 interface LanguageSwitcherBaseProps {
-  /**
-   * `inline` — one tap switches to the other language (the header bar).
-   * `segmented` — both languages visible, current one selected (the drawer).
-   */
   variant?: "inline" | "segmented";
   className?: string;
 }
@@ -59,15 +55,12 @@ export function LanguageSwitcherBase({
         options={LANGUAGES.map((lang) => ({
           value: lang.code,
           label: lang.nativeName,
-          // Sets the name in its own language's face (globals.css, [lang|="ar"]).
           lang: lang.code,
         }))}
       />
     );
   }
 
-  // Two languages make a menu an extra step with nothing to choose between:
-  // the button names the other language, in that language, and goes there.
   const target = LANGUAGES.find((lang) => lang.code !== locale) ?? LANGUAGES[0];
 
   return (

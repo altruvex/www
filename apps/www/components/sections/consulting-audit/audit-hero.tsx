@@ -11,20 +11,6 @@ import { useTranslations } from "next-intl";
 import { HeroHeadline, HeroReveal } from "../hero-motion-wrappers";
 import { Tick } from "./tick";
 
-/**
- * The headline uses `HeroHeadline` — the same arrival every other hero on the
- * site plays. A bespoke scatter-and-assemble effect was built here first and
- * rejected on 2026-09-20: too complex for the page, and it dropped the accent
- * clause. One hero motion, shared.
- *
- * The hero states the claim and the two doors — nothing else. It used to carry
- * a "why an audit at all" column, a "what comes back" list and the engagement's
- * figures, and every one of them was saying what a later section exists to say:
- * the argument for deciding early is the cost curve's whole job, the figures
- * belong under the drawing that argues them, and what comes back is sections 01
- * and 03. "A rebuild-or-repair recommendation" was on this screen word for word
- * and again inside the architecture channel.
- */
 export function AuditHero({ audit }: { audit: ConsultingView }) {
   const t = useTranslations("serviceDetails.consulting.audit.hero");
   const tCTAs = useTranslations("commercial.ctas");
@@ -32,7 +18,7 @@ export function AuditHero({ audit }: { audit: ConsultingView }) {
   return (
     <section
       aria-labelledby="consulting-hero-heading"
-      className="bg-background pt-32 pb-(--section-y-bottom) lg:pt-40"
+      className="bg-background pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <HeroReveal delay={0.1} className="flex items-center gap-3">
@@ -40,12 +26,10 @@ export function AuditHero({ audit }: { audit: ConsultingView }) {
           <Eyebrow tone="accent">{t("eyebrow")}</Eyebrow>
         </HeroReveal>
 
-        {/* The world colour lands on the half of the sentence that carries the
-            claim. */}
         <HeroHeadline
           as="h1"
           id="consulting-hero-heading"
-          className="mt-7 max-w-[16ch] text-[clamp(2.75rem,6vw,6.25rem)] leading-[0.98] font-light tracking-[-0.045em] text-foreground rtl:max-w-[20ch] rtl:leading-[1.25] rtl:tracking-normal"
+          className="mt-7 max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] leading-[0.98] font-light tracking-[-0.045em] text-foreground rtl:leading-[1.25] rtl:tracking-normal"
         >
           {t("title")} <Highlight tone="world">{t("titleAccent")}</Highlight>
         </HeroHeadline>
@@ -57,7 +41,6 @@ export function AuditHero({ audit }: { audit: ConsultingView }) {
             </p>
           </HeroReveal>
           <HeroReveal delay={0.62}>
-            <Eyebrow className="mb-6">{t("subtitle")}</Eyebrow>
             <CtaButtonGroup
               primaryVariant="accent"
               primary={{ href: "#audit-offer", label: audit.ctaLabel }}

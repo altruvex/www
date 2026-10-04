@@ -67,7 +67,6 @@ export interface ActivitySources {
     status: string;
     paidAt: Date | null;
     dueDate: Date | null;
-    /** Null for a retainer period, which belongs to a subscription. */
     projectId: string | null;
     currency?: string;
     project?: { name: string; client?: { name: string | null; company: string | null } | null } | null;
@@ -111,7 +110,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
     return c.name || c.company || undefined;
   };
 
-  /* ---- origin -------------------------------------------------------- */
   if (submission) {
     const submitter = submission.name ? `Inquiry from ${submission.name}` : "Website inquiry received";
     push({
@@ -188,7 +186,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
     });
   }
 
-  /* ---- proposals ------------------------------------------------------ */
   for (const p of sources.proposals ?? []) {
     const amount = money(p.totalPrice, p.currency);
     const clientName = getClientLabel(p.client);
@@ -249,7 +246,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
       });
   }
 
-  /* ---- contracts ------------------------------------------------------ */
   for (const c of sources.contracts ?? []) {
     const clientName = getClientLabel(c.client);
     push({
@@ -286,7 +282,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
       });
   }
 
-  /* ---- projects ------------------------------------------------------- */
   for (const pr of sources.projects ?? []) {
     const clientName = getClientLabel(pr.client);
     push({
@@ -312,7 +307,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
       });
   }
 
-  /* ---- payments ------------------------------------------------------- */
   for (const pay of sources.payments ?? []) {
     if (pay.paidAt) {
       const clientName = getClientLabel(pay.project?.client);
@@ -337,7 +331,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
     }
   }
 
-  /* ---- meetings ------------------------------------------------------- */
   for (const m of sources.meetings ?? []) {
     const clientName = getClientLabel(m.client) || m.guestName || m.contactSubmission?.name;
     push({
@@ -363,7 +356,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
       });
   }
 
-  /* ---- messages ------------------------------------------------------- */
   for (const msg of sources.messages ?? []) {
     const msgClient = msg.client ?? client;
     const clientName = getClientLabel(msgClient);
@@ -392,7 +384,6 @@ export function buildActivity(sources: ActivitySources): TimelineEvent[] {
 }
 
 function truncateBody(body: string) {
-  // Sanitize raw URLs in message bodies so localhost debug links don't clutter the UI
   const cleaned = body.replace(/https?:\/\/[^\s]+/g, (url) => {
     if (url.includes("/sign/")) return "[Contract signing link]";
     if (url.includes("/proposal")) return "[Proposal link]";
@@ -407,7 +398,6 @@ function truncateBody(body: string) {
   return single.length > 75 ? `${single.slice(0, 74)}…` : single;
 }
 
-/** Local calendar day, matching lib/calendar-data.ts — never the UTC slice. */
 function localDay(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

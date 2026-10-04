@@ -116,11 +116,6 @@ export function PriceControl({
   const setDiscount = (patch: Partial<Discount>) =>
     onChange({ ...content, discount: { ...discount, ...patch } });
 
-  // The published rule: a paid Technical Audit comes off the build. The
-  // figure is never typed here — applying it stamps the schema's number, and
-  // the gate re-derives it on save, so the deck and the contract cannot quote
-  // a credit the site does not offer. Null means this currency has no
-  // published audit fee; the control says so rather than converting silently.
   const auditCredit = auditCreditFor(currency);
   const isAuditCredit = discount.kind === "audit-credit";
   const applyAuditCredit = () => {

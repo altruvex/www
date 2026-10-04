@@ -12,7 +12,6 @@ const check = (ok: boolean, what: string) => {
   if (!ok) failures++;
 };
 
-/** One existing id per entity, so `plan()` can be run against real shapes. */
 const SAMPLE: Record<string, () => Promise<string | null>> = {
   client: async () =>
     (await prisma.client.findFirst({ select: { id: true } }))?.id ?? null,
@@ -94,7 +93,6 @@ async function readOnlyPass() {
     }
   }
 
-  // A missing row must read as "already gone", not throw.
   const gone = await DELETABLES.client!.plan(
     "00000000-0000-4000-8000-000000000000",
     { userId: null },
@@ -150,7 +148,6 @@ async function cascadePass() {
   await prisma.projectTask.create({
     data: { projectId: project.id, title: stamp },
   });
-  // A retainer and one of its period invoices: a payment with no project.
   const subscription = await prisma.maintenanceSubscription.create({
     data: {
       clientId: client.id,

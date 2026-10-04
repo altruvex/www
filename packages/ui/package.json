@@ -10,7 +10,6 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./www": "./src/www/index.ts",
     "./styles": "./src/styles/globals.css",
     "./styles/tokens": "./src/styles/tokens.css",
     "./styles/liquid-glass": "./src/styles/liquid-glass.css",
@@ -18,7 +17,7 @@
     "./theme-switch": "./src/theme-switch.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit",
+    "check-types": "node node_modules/typescript7/bin/tsc --noEmit",
     "verify:palette": "bun scripts/verify-palette.ts"
   },
   "dependencies": {
@@ -48,7 +47,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "typescript7": "npm:typescript@7.0.2"
   },
   "peerDependencies": {
     "react": "19.2.4",

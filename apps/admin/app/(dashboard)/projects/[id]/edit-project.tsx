@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, Input, Sheet, SheetContent, SheetHeader, SheetTitle } from "@repo/ui";
+import { Button, Field, Input, Sheet, SheetBody, SheetContent, SheetHeader, SheetTitle } from "@repo/ui";
+import { DateField } from "@/components/os/date-field";
 
 import { updateProjectDetails } from "@/app/(dashboard)/_actions/projects";
+import { useSheetSide } from "@/app/(dashboard)/calendar/sheet-shell";
 
 export interface EditableProject {
   id: string;
   name: string;
-  /** ISO string or null. */
   targetLaunchDate: string | null;
   stagingUrl: string | null;
   liveUrl: string | null;
@@ -22,12 +23,11 @@ export function EditProjectButton({ project }: { project: EditableProject }) {
   const [open, setOpen] = React.useState(false);
   return (
     <>
-      <Button variant="outline" onClick={() => setOpen(true)}>
+      <Button variant="outline" className="pointer-coarse:h-11" onClick={() => setOpen(true)}>
         <Pencil className="size-3.5" />
         Edit
       </Button>
       <EditProjectSheet
-        // Remount per opening so the form always starts from the saved record.
         key={open ? "open" : "closed"}
         open={open}
         onOpenChange={setOpen}
@@ -47,6 +47,7 @@ function EditProjectSheet({
   project: EditableProject;
 }) {
   const router = useRouter();
+  const sheet = useSheetSide();
   const [busy, startTransition] = React.useTransition();
   const [error, setError] = React.useState<string | null>(null);
   const [name, setName] = React.useState(project.name);
@@ -56,12 +57,13 @@ function EditProjectSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="end" className="w-full sm:max-w-md">
+      <SheetContent side={sheet.side} width="md" className={sheet.className}>
         <SheetHeader>
           <SheetTitle>Edit project</SheetTitle>
         </SheetHeader>
+        <SheetBody className="overflow-y-auto">
         <form
-          className="space-y-3 p-4"
+          className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
             setError(null);
@@ -76,34 +78,30 @@ function EditProjectSheet({
                 setError(result.message);
                 return;
               }
-              if (result.changed) toast.success("Project saved.");
-              else toast("Nothing changed.");
+              if (result.changed) toast.success(result.message);
+              else toast(result.message);
               onOpenChange(false);
               router.refresh();
             });
           }}
         >
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Name</span>
+          <Field label="Name">
             <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
               required
               maxLength={200}
             />
-          </label>
+          </Field>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Target launch</span>
-            <Input type="date" value={target} onChange={(event) => setTarget(event.target.value)} />
-            <span className="block text-meta text-subtle-foreground">
-              The date promised to the client. Leave empty if none was agreed. The actual launch
-              date is recorded when the phase moves to Launched.
-            </span>
-          </label>
+          <Field
+            label="Target launch"
+            hint="The date promised to the client. Leave empty if none was agreed. The actual launch date is recorded when the phase moves to Launched."
+          >
+            <DateField value={target} onChange={setTarget} />
+          </Field>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Staging URL</span>
+          <Field label="Staging URL">
             <Input
               type="url"
               inputMode="url"
@@ -112,10 +110,9 @@ function EditProjectSheet({
               placeholder="https://staging.example.com"
               maxLength={500}
             />
-          </label>
+          </Field>
 
-          <label className="block space-y-1">
-            <span className="telemetry block text-subtle-foreground">Live URL</span>
+          <Field label="Live URL">
             <Input
               type="url"
               inputMode="url"
@@ -124,7 +121,7 @@ function EditProjectSheet({
               placeholder="https://example.com"
               maxLength={500}
             />
-          </label>
+          </Field>
 
           {error && (
             <p role="alert" className="text-meta text-danger">
@@ -133,14 +130,15 @@ function EditProjectSheet({
           )}
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="ghost" className="pointer-coarse:h-11" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="brand" disabled={busy || !name.trim()}>
+            <Button type="submit" variant="brand" className="pointer-coarse:h-11" disabled={busy || !name.trim()}>
               {busy ? "Saving…" : "Save"}
             </Button>
           </div>
         </form>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

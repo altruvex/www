@@ -15,10 +15,6 @@ function isThemeChoice(value: string | undefined): value is ThemeChoice {
 }
 
 interface ThemeToggleProps {
-  /**
-   * `switch` — a pill switch whose thumb carries the sun or moon (the header bar).
-   * `segmented` — light, dark or follow the system (the index panel, the drawer).
-   */
   variant?: "switch" | "segmented";
   className?: string;
 }
@@ -27,8 +23,6 @@ export function ThemeToggle({ variant = "switch", className }: ThemeToggleProps)
   const t = useTranslations("nav");
   const { theme, resolvedTheme } = useTheme();
   const switchTheme = useThemeSwitch();
-  // The theme is only known on the client; until then nothing may claim a
-  // value, or the server HTML and the first client render disagree.
   const mounted = useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -60,8 +54,6 @@ export function ThemeToggle({ variant = "switch", className }: ThemeToggleProps)
   const ready = mounted && !!resolvedTheme;
   const isDark = resolvedTheme === "dark";
 
-  // Both glyphs stay mounted inside the thumb and cross over as it travels —
-  // the thumb's side and its glyph say the same thing twice, on purpose.
   const glyph =
     "absolute size-3.5 transition-[opacity,transform] duration-(--motion-drawer) ease-smooth";
 

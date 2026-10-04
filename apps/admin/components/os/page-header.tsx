@@ -3,14 +3,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * §30 — every page answers the same five questions in the same place:
- *   What is this?        → title + breadcrumb
- *   What state is it in? → status slot, immediately after the title
- *   What changed?        → meta line
- *   What needs me?       → alert slot (only rendered when something does)
- *   What can I do?       → actions, always end-aligned, primary action last
- */
 export interface Crumb {
   label: string;
   href?: string;
@@ -85,7 +77,6 @@ export function PageHeader({
   );
 }
 
-/** A single labelled fact on the header meta line. */
 export function MetaItem({
   label,
   children,

@@ -199,7 +199,43 @@ The repository the event names, matched against the product's **repository URL**
   would file one product's history on another's page. Use the per-product ingest
   tokens there, where the pipeline states which product it means.
 
-### Setup
+### Setup — the Altruvex GitHub App (the usual path)
+
+One App, installed once per GitHub account or organization. Nobody on the team
+needs GitHub permissions in Altruvex OS: after the install, connecting a product
+is only its **Repository** field (Products → a product → GitHub). Registering the
+App is a manual step on github.com — **Settings → Developer settings → GitHub
+Apps → New GitHub App** (on the organization, if the repositories live there):
+
+| Field | Value |
+| --- | --- |
+| Webhook | Active |
+| Webhook URL | `https://admin.altruvex.com/api/ingest/github` |
+| Webhook secret | the same string as `GITHUB_WEBHOOK_SECRET` |
+| Repository permissions | **Actions: Read-only**, **Deployments: Read-only**, **Metadata: Read-only** (mandatory) — nothing else |
+| Subscribe to events | **Workflow run**, **Deployment status** (installation events arrive on their own) |
+| Where can it be installed | Only on this account (or Any account, for client-owned repositories) |
+| Callback URL / user authorization / setup URL | leave empty |
+
+Then **Install App** → the account → *Only select repositories* (or all) →
+set each product's Repository field to its repository.
+
+- The receiver uses only the webhook. It holds **no App private key and calls no
+  GitHub API**, so the App ID and private key GitHub generates are not needed
+  on the server — if one is generated, it stays off the server.
+- The payload is the repository webhook's plus an `installation` key, signed with
+  the same `X-Hub-Signature-256`. `ping`, `installation` and
+  `installation_repositories` are answered `200` and write nothing — installing
+  the App does not make a product "connected"; only a recorded run does.
+- An event for a repository no product names is a `404` from a repository
+  webhook (set up by hand, so it is a mistake) but a `200 ignored` from the App,
+  which sees every repository it was given. Link the repository, then
+  **Redeliver** the event to record it.
+- A repository reached by both the App and a repository webhook gets every event
+  twice under different delivery IDs. The run's `externalId` keeps it one row,
+  but it is announced and audited twice — pick one.
+
+### Setup — a webhook on one repository (still supported)
 
 Repository → **Settings → Webhooks → Add webhook**:
 

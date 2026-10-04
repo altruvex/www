@@ -2,18 +2,12 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 
 import { EmptyInline } from "@/components/os/empty-state";
-import { EntityLink } from "@/components/os/entity-link";
+import { List, ListRow } from "@/components/os/list-row";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
-import { dateTime, when } from "@/lib/format";
+import { when } from "@/lib/format";
 import { httpUrl } from "@/lib/http-url";
 import type { listLogs } from "@/lib/engineering";
-
-/**
- * Pieces the deployment and build pages share. They live beside the routes
- * rather than in `components/os` because nothing outside engineering renders a
- * build duration or a CI-written URL.
- */
 
 export function duration(ms: number | null | undefined): string {
   if (ms == null) return "—";
@@ -23,7 +17,6 @@ export function duration(ms: number | null | undefined): string {
   return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, "0")}s`;
 }
 
-/** Elapsed time between two stamps, when both exist. */
 export function span(
   start: Date | null | undefined,
   end: Date | null | undefined,
@@ -32,12 +25,6 @@ export function span(
   return Math.max(0, end.getTime() - start.getTime());
 }
 
-/**
- * A URL CI wrote, as a link only when it is http(s). The ingest schema checks
- * this on the way in, but rows written before that check — or by the GitHub
- * webhook — are not guaranteed, and an `<a href="javascript:…">` is the cost
- * of trusting them.
- */
 export function safeHttpUrl(value: string | null | undefined): string | null {
   if (!value) return null;
   return httpUrl.safeParse(value).success ? value : null;
@@ -73,11 +60,6 @@ export function clientName(client: {
 
 type LogPage = Awaited<ReturnType<typeof listLogs>>;
 
-/**
- * The most recent lines a deploy or build wrote, with the way out to the full
- * explorer. Twenty is enough to see whether it is noisy or failing; reading
- * further belongs on /logs, which filters and paginates.
- */
 export function RecentLogs({
   page,
   total,
@@ -110,51 +92,30 @@ export function RecentLogs({
           that does not send one leaves this empty.
         </EmptyInline>
       ) : (
-        <ul className="divide-y divide-border">
+        <List label={`Recent log lines for this ${scope}`}>
           {rows.map((entry) => (
-            <li
+            <ListRow
               key={entry.id}
-              className="flex flex-wrap items-start gap-x-3 gap-y-1 px-3 py-2"
-            >
-              <StatusPill
-                registry="logLevel"
-                value={entry.level}
-                variant="dot"
-                className="pt-0.5"
-              />
-              <span className="min-w-0 flex-1 basis-60">
-                <span className="block break-words font-mono text-meta">
-                  {entry.message}
-                </span>
-                <span className="block truncate text-meta text-subtle-foreground">
-                  {entry.source ?? "unknown source"}
-                  {entry.requestId ? ` · ${entry.requestId}` : ""}
-                  {entry.incident ? (
-                    <>
-                      {" · "}
-                      <EntityLink type="incident" id={entry.incident.id} muted>
-                        Incident #{entry.incident.number}
-                      </EntityLink>
-                    </>
-                  ) : null}
-                </span>
-              </span>
-              <time
-                className="shrink-0 font-mono text-micro tabular-nums text-subtle-foreground"
-                dateTime={entry.timestamp.toISOString()}
-                title={dateTime(entry.timestamp)}
-              >
-                {when(entry.timestamp)}
-              </time>
-            </li>
+              dense
+              href={`${allHref}${allHref.includes("?") ? "&" : "?"}inspect=${entry.id}`}
+              title={<span className="font-mono">{entry.message}</span>}
+              meta={[
+                when(entry.timestamp),
+                entry.source ?? "unknown source",
+                entry.requestId,
+                entry.incident ? `Incident #${entry.incident.number}` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              trailing={<StatusPill registry="logLevel" value={entry.level} variant="dot" />}
+            />
           ))}
-        </ul>
+        </List>
       )}
     </Panel>
   );
 }
 
-/** Previous / next record in the same history, or a plain dash at either end. */
 export function Neighbours({
   previous,
   next,

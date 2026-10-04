@@ -16,7 +16,6 @@ function parseInline(text: string): ReactNode[] {
   });
 }
 
-/** `**Label**: value` — a line that names a thing and then states it. */
 const LABELLED_LINE = /^\*\*([^*]+)\*\*\s*[:：]\s*(.+)$/;
 
 export function LegalList({ items, className }: { items: string[]; className?: string }) {
@@ -87,9 +86,6 @@ export function LegalProse({
           );
         }
 
-        // Several `**Label**: value` lines in one block are a reference table
-        // (the subprocessor register), not a paragraph — joined into one
-        // paragraph they ran together into an unreadable line.
         const labelled = lines.map((line) => LABELLED_LINE.exec(line.trim()));
         if (lines.length > 1 && labelled.every(Boolean)) {
           return (

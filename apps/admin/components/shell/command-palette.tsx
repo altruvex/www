@@ -2,6 +2,7 @@
 
 import type { EntityKind } from "@/lib/entity-links";
 import { ALL_NAV_ITEMS, canSee, type Role } from "@/lib/nav";
+import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Kbd } from "@repo/ui";
@@ -30,6 +31,7 @@ import {
   Sun,
   Target,
   Wallet,
+  CalendarPlus,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useThemeSwitch } from "@/lib/use-theme-switch";
@@ -37,11 +39,9 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { NavIcon } from "./nav-icon";
 
-/** One search result, as /api/admin/search returns it. */
 type Hit = {
   id: string;
   kind: EntityKind;
-  /** The record's noun from lib/entity-links ("Incident", "Retainer"). */
   noun: string;
   title: string;
   subtitle?: string;
@@ -78,11 +78,6 @@ export function CommandPalette({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /**
-   * "proposal" narrows the palette to a client picker: a proposal is written
-   * for a client and is created from that client's page, so "New proposal"
-   * starts by choosing who it is for rather than at a route that has no client.
-   */
   mode?: PaletteMode;
   onModeChange?: (mode: PaletteMode) => void;
   role?: Role;
@@ -112,7 +107,7 @@ export function CommandPalette({
   );
 
   React.useEffect(() => {
-    if (trimmedQuery.length < 2) {
+    if (!open || (!picking && trimmedQuery.length < 2)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setHits([]);
       setLoading(false);
@@ -155,10 +150,8 @@ export function CommandPalette({
       controller.abort();
       clearTimeout(timer);
     };
-  }, [trimmedQuery, picking]);
+  }, [open, trimmedQuery, picking]);
 
-  // The same role rule as the sidebar: a destination the role cannot open is
-  // not offered here either.
   const visibleNav = React.useMemo(
     () => ALL_NAV_ITEMS.filter((item) => canSee(item, role)),
     [role]
@@ -174,6 +167,39 @@ export function CommandPalette({
     );
   }, [trimmedQuery, visibleNav]);
 
+  const createMatches = React.useMemo(() => {
+    const actions = [
+      can(role, "create", "client") && {
+        id: "client",
+        label: "New client",
+        hint: "",
+        icon: Plus,
+        href: "/clients/new" as string | null,
+      },
+      can(role, "create", "proposal") && {
+        id: "proposal",
+        label: "New proposal…",
+        hint: "choose the client",
+        icon: FileText,
+        href: null,
+      },
+      can(role, "create", "meeting") && {
+        id: "meeting",
+        label: "New meeting",
+        hint: "on the calendar",
+        icon: CalendarPlus,
+        href: "/calendar?new=meeting",
+      },
+    ].filter((a): a is Exclude<typeof a, false> => Boolean(a));
+    const needle = trimmedQuery.toLowerCase();
+    if (!needle) return actions;
+    return actions.filter(
+      (a) =>
+        a.label.toLowerCase().includes(needle) ||
+        ["new", "create", "add"].some((word) => word.startsWith(needle)),
+    );
+  }, [role, trimmedQuery]);
+
   const switchMode = React.useCallback(
     (next: PaletteMode) => {
       setQuery("");
@@ -185,16 +211,16 @@ export function CommandPalette({
   );
 
   const emptyMessage =
-    trimmedQuery.length < 2
-      ? picking
-        ? "Type at least two letters of the client's name."
-        : "Type to search. Everything in the system is reachable from here."
+    !picking && trimmedQuery.length < 2
+      ? "Type to search. Everything in the system is reachable from here."
       : loading
         ? "Searching…"
         : hasError
           ? "Something went wrong. Please try again."
           : picking
-            ? `No client matches “${query}”.`
+            ? trimmedQuery
+              ? `No client matches “${query}”.`
+              : "No clients yet — add the client first."
             : `Nothing matches “${query}”.`;
 
   const go = React.useCallback(
@@ -254,7 +280,6 @@ export function CommandPalette({
                 value={query}
                 onValueChange={setQuery}
                 onKeyDown={(event) => {
-                  // Backspace on an empty picker returns to plain search.
                   if (picking && event.key === "Backspace" && query === "") {
                     event.preventDefault();
                     switchMode("search");
@@ -276,8 +301,6 @@ export function CommandPalette({
               <Command.Empty className="px-3 py-8 text-center text-base text-muted-foreground">
                 {emptyMessage}
               </Command.Empty>
-              {/* The picker always offers "Add the client first", so cmdk's
-                  empty slot never shows there; the hint is rendered directly. */}
               {picking && hits.length === 0 && (
                 <p className="px-3 py-4 text-center text-base text-muted-foreground">
                   {emptyMessage}
@@ -318,45 +341,44 @@ export function CommandPalette({
               )}
               {picking ? (
                 <Group heading="Or">
-                  <Item
-                    value="picker-new-client"
-                    onSelect={() => go("/clients/new")}
-                    onMouseEnter={() => prefetch("/clients/new")}
-                  >
-                    <NavIcon icon={Plus} size={16} className="text-subtle-foreground" />
-                    Add the client first
-                  </Item>
+                  {can(role, "create", "client") && (
+                    <Item
+                      value="picker-new-client"
+                      onSelect={() => go("/clients/new")}
+                      onMouseEnter={() => prefetch("/clients/new")}
+                    >
+                      <NavIcon icon={Plus} size={16} className="text-subtle-foreground" />
+                      Add the client first
+                    </Item>
+                  )}
                   <Item value="picker-back" onSelect={() => switchMode("search")}>
                     <NavIcon icon={ArrowLeft} size={16} className="text-subtle-foreground" />
                     Back to search
                   </Item>
                 </Group>
               ) : (
-                <Group heading="Create">
-                  <Item
-                    value="create-client"
-                    onSelect={() => go("/clients/new")}
-                    onMouseEnter={() => prefetch("/clients/new")}
-                  >
-                    <NavIcon icon={Plus} size={16} className="text-subtle-foreground" />
-                    New client
-                  </Item>
-                  <Item value="create-proposal" onSelect={() => switchMode("proposal")}>
-                    <NavIcon icon={FileText} size={16} className="text-subtle-foreground" />
-                    New proposal…
-                    <span className="truncate text-meta text-subtle-foreground">
-                      choose the client
-                    </span>
-                  </Item>
-                  <Item
-                    value="create-lead"
-                    onSelect={() => go("/leads")}
-                    onMouseEnter={() => prefetch("/leads")}
-                  >
-                    <NavIcon icon={Target} size={16} className="text-subtle-foreground" />
-                    Triage leads
-                  </Item>
-                </Group>
+                createMatches.length > 0 && (
+                  <Group heading="Create">
+                    {createMatches.map((action) => (
+                      <Item
+                        key={action.id}
+                        value={`create-${action.id}`}
+                        onSelect={() =>
+                          action.href ? go(action.href) : switchMode("proposal")
+                        }
+                        onMouseEnter={action.href ? () => prefetch(action.href!) : undefined}
+                      >
+                        <NavIcon icon={action.icon} size={16} className="text-subtle-foreground" />
+                        {action.label}
+                        {action.hint && (
+                          <span className="truncate text-meta text-subtle-foreground">
+                            {action.hint}
+                          </span>
+                        )}
+                      </Item>
+                    ))}
+                  </Group>
+                )
               )}
               {!picking && navMatches.length > 0 && (
                 <Group heading="Go to">

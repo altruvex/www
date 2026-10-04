@@ -10,20 +10,6 @@ import {
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 
-/**
- * The frame every numbered section on /services/consulting sits in.
- *
- * Four sections were each hand-rolling the same thing — a hairline top rule,
- * the section rhythm, an eyebrow, a two-clause heading with the world-coloured
- * emphasis clause, a lede, and a small honesty note at the bottom — with their own
- * `clamp()` for the heading instead of the house `.section-title`. That is four
- * places for the page to drift from itself and from the rest of the site.
- *
- * The heading itself is `SectionHeading`, the site's own: it already owns the
- * type scale, the `italicWorld` accent clause, the heading-left /
- * description-right split, and the three refs the section motion hooks attach
- * to. Nothing here re-implements it.
- */
 export function AuditSection({
   id,
   titleId,
@@ -41,7 +27,6 @@ export function AuditSection({
   title: ReactNode;
   titleAccent?: ReactNode;
   description?: ReactNode;
-  /** The small print under the device — what it does and does not claim. */
   note?: ReactNode;
   bodyClassName?: string;
   children: ReactNode;
@@ -70,7 +55,7 @@ export function AuditSection({
           descriptionRef={descriptionRef}
         />
 
-        <div className={cn("mt-12", bodyClassName)}>{children}</div>
+        <div className={cn("mt-(--heading-gap)", bodyClassName)}>{children}</div>
 
         {note ? (
           <p className="mt-6 max-w-[64ch] text-xs leading-relaxed text-muted-foreground">

@@ -1,36 +1,9 @@
 import type { ComplexityId, ServiceId } from "./ids";
 import type { PriceRange, Versioned, WeekRange } from "./types";
 
-/**
- * Core productized services and their price/timeline matrices.
- *
- * These matrices are the root authority for every project number Altruvex
- * publishes or quotes. `/pricing`, `/transparency`, the estimate PDF, and the
- * proposal generator all resolve to a cell here — none of them holds a figure
- * of its own.
- *
- * v3 (2026-09-09) recalibrates the whole matrix to the Egyptian market and
- * caps delivery. Two problems were being published at once:
- *
- *   1. The top of the matrix (a 495,000 EGP PWA) priced against a market that
- *      does not exist here. It also made `/pricing` and `/transparency` read as
- *      two different companies: the flagship card said "from 280,000" while the
- *      estimator one click later could reach 570,000 on the same answers.
- *   2. The week table ran to 26 weeks before modifiers, which the timeline
- *      factors could stretch past 37. Nothing this studio sells takes nine
- *      months, and saying so on a transparency page was the worst possible
- *      place to overstate.
- *
- * The ladder now moves in one direction with no overlap between bands, and the
- * whole matrix fits under `MAX_DELIVERY_WEEKS`. Scope that genuinely cannot
- * land inside that window is sold as phases, each of which is its own cell —
- * not as one engagement with a longer promise.
- */
 export interface Service extends Versioned {
   readonly id: ServiceId;
-  /** EGP range per complexity band. */
   readonly price: Readonly<Record<ComplexityId, PriceRange>>;
-  /** Delivery window in weeks per complexity band. */
   readonly weeks: Readonly<Record<ComplexityId, WeekRange>>;
 }
 
@@ -84,7 +57,6 @@ export const SERVICES: Readonly<Record<ServiceId, Service>> = {
   },
 };
 
-/** The lowest published figure across the whole matrix — the engagement floor. */
 export function minimumEngagement(): number {
   return Math.min(
     ...Object.values(SERVICES).map((service) => service.price.basic.min),

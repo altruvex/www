@@ -1,13 +1,11 @@
 "use client";
 
 import {
-  LegalContactSection,
   LegalPageLayout,
   LegalSection,
 } from "@/components/legal/legal-page-layout";
 import { LegalProse } from "@/components/legal/legal-prose";
 import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
-import { SITE_CONFIG } from "@/lib/metadata";
 import { useTranslations } from "next-intl";
 
 type TermsPageClientProps = {
@@ -16,10 +14,6 @@ type TermsPageClientProps = {
 
 export default function TermsPageClient({ formattedDate }: TermsPageClientProps) {
   const t = useTranslations("terms");
-  // The warranty section states the post-launch support window, which is the
-  // same term the contract grants and /transparency publishes. It is carried
-  // as a {token} and filled from the resolved pricing, so the two cannot say
-  // different numbers. `t.raw` because the fill happens here, not in ICU.
   const fillTokens = useFillPricingTokens();
 
   return (
@@ -38,12 +32,9 @@ export default function TermsPageClient({ formattedDate }: TermsPageClientProps)
         </LegalSection>
       ))}
 
-      <LegalContactSection
-        number={12}
-        title={t("sections.12.title")}
-        description={t("sections.12.description")}
-        email={SITE_CONFIG.email}
-      />
+      <LegalSection number={12} title={t("sections.12.title")}>
+        <LegalProse content={t("sections.12.description")} />
+      </LegalSection>
     </LegalPageLayout>
   );
 }

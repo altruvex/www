@@ -25,10 +25,6 @@ async function callGraphApi(body: unknown): Promise<GraphApiResponse> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      // Node's fetch has no default timeout. This call runs inline in the
-      // proposal and contract send routes, so a Graph endpoint that accepts
-      // the connection and then says nothing would hold an operator's request
-      // open until the platform kills it.
       signal: AbortSignal.timeout(10_000),
     },
   );
@@ -52,21 +48,13 @@ interface SendTemplateMessageInput {
   phone: string;
   templateName: string;
   bodyParams: string[];
-  /** Parameter for the template's first URL/copy-code button (authentication templates). */
   buttonParam?: string;
-  /** What the message history stores instead of the params — for anything secret. */
   recordBody?: string;
   languageCode?: string;
   relatedProposalId?: string;
   relatedContractId?: string;
 }
 
-/**
- * Sends a pre-approved WhatsApp template message. This is the only way to
- * message a client who hasn't messaged in the last 24h — required for the
- * first outbound send (proposal, contract, onboarding). templateName must
- * match a template already approved in the Meta Business Manager.
- */
 export async function sendTemplateMessage(
   input: SendTemplateMessageInput,
 ): Promise<SendResult> {
@@ -145,10 +133,6 @@ interface SendTextMessageInput {
   relatedContractId?: string;
 }
 
-/**
- * Sends free-form text. Only deliverable inside the 24h window opened by the
- * client's last inbound message — Meta rejects this outside that window.
- */
 export async function sendTextMessage(
   input: SendTextMessageInput,
 ): Promise<SendResult> {

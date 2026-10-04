@@ -33,17 +33,10 @@ export function Sidebar({
   const pathname = usePathname();
   const router = useRouter();
   const [closed, setClosed] = React.useState<Record<string, boolean>>({});
-  const [mounted, setMounted] = React.useState(false);
-
   React.useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
     try {
       const raw = window.localStorage.getItem("avx.nav.closed");
       if (raw) {
-        // Keep only ids that are groups today. State saved under the previous
-        // IA's group ids would otherwise linger forever and be rewritten back
-        // on every toggle; a value that is not an object is discarded.
         const parsed: unknown = JSON.parse(raw);
         const known = new Set(GROUPS.map((g) => g.id));
         const pruned: Record<string, boolean> = {};
@@ -52,6 +45,7 @@ export function Sidebar({
             if (known.has(id) && value === true) pruned[id] = true;
           }
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setClosed(pruned);
         window.localStorage.setItem("avx.nav.closed", JSON.stringify(pruned));
       }
@@ -120,8 +114,7 @@ export function Sidebar({
           ))}
         </ul>
 
-        {mounted &&
-          GROUPS.map((group) => {
+        {GROUPS.map((group) => {
             const items = group.items.filter((i) => canSee(i, role));
             if (items.length === 0) return null;
             const groupActive = items.some(isActive);

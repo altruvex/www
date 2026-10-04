@@ -1,9 +1,8 @@
 "use client";
 
-import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
-
+import * as React from "react";
 import { cn } from "../../lib/utils";
 import {
   menuIndicator,
@@ -12,16 +11,7 @@ import {
   menuSurface,
 } from "../overlays/menu";
 
-/**
- * A Select is a menu with a trigger that looks like an input — so its popover
- * is the SAME plane as a dropdown menu (components/ui/menu.ts) and its trigger
- * sits on the same control rail as Input and Button (--control-h-*). It used to
- * be stock shadcn: 36px tall next to 32px inputs, its own radius and shadow,
- * and physical `pr`/`right` padding that mirrored wrong under RTL.
- */
-
 export const Select = SelectPrimitive.Root;
-/** Wrapped, not re-exported: the trigger's clamp/shrink rules key off this slot. */
 export function SelectValue(props: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
@@ -47,7 +37,6 @@ export function SelectTrigger({
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-invalid:border-danger",
         "h-[var(--control-h)] data-[size=sm]:h-[var(--control-h-sm)] data-[size=sm]:text-base",
-        // min-w-0, or a long value refuses to shrink and shoves the chevron out of the trigger
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
@@ -77,7 +66,7 @@ export function SelectContent({
         sideOffset={sideOffset}
         className={cn(
           menuSurface,
-          "relative max-h-(--radix-select-content-available-height) origin-(--radix-select-content-transform-origin) overflow-y-auto",
+          "relative max-h-(--radix-select-content-available-height) overflow-y-auto origin-(--radix-select-content-transform-origin)",
           position === "popper" && "min-w-[var(--radix-select-trigger-width)]",
           className,
         )}

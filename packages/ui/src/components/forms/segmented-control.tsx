@@ -4,18 +4,6 @@ import * as React from "react";
 import { Check } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-/**
- * One-of-N, always visible.
- *
- * A `Select` hides the options behind a click, which is right for twelve
- * choices and wrong for three — the proposal builder's scope questions are
- * answered faster when every answer is on screen. This is that control, and it
- * is NOT a `Button`: a segment carries a selected state (`border-brand
- * bg-brand-soft`) that no button variant has.
- *
- * Segments sit on the same control rail as everything else (`--control-h`), so
- * a row of them lines up with the inputs above it.
- */
 export function segmentClass({
   selected,
   disabled,
@@ -24,8 +12,6 @@ export function segmentClass({
   disabled?: boolean;
 }) {
   return cn(
-    // min-h, not h: on a narrow screen a two-word label wraps, and a hard 32px
-    // box lets the second line spill outside its own border.
     "flex min-h-[var(--control-h)] items-center gap-1.5 rounded-md border px-2.5 py-1 text-base",
     "transition-colors duration-[var(--dur-state)]",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
@@ -53,11 +39,6 @@ export function SegmentedControl<T extends string>({
 }) {
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
 
-  /**
-   * Radio semantics, so it announces as "1 of 3" and not as three unrelated
-   * toggles — which also means arrow keys have to move the selection, and only
-   * one segment may be in the tab order.
-   */
   function onKeyDown(event: React.KeyboardEvent, index: number) {
     const keys = ["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"];
     if (!keys.includes(event.key)) return;

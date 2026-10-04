@@ -5,13 +5,6 @@ import {
 } from "@repo/database";
 import { NextRequest } from "next/server";
 
-/**
- * Thin wrapper over the shared limiter in `@repo/database`.
- *
- * The implementation moved there so the admin app's public portal endpoints
- * could use the same one rather than carrying a second copy. This signature is
- * unchanged, so existing call sites are untouched.
- */
 type RateLimitConfig = {
   scope: string;
   route: string;

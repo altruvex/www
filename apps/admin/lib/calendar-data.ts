@@ -1,15 +1,9 @@
 import { prisma } from "@repo/database";
-import { paymentSourceHref, paymentSourceLabel } from "@/lib/payment-source";
+import { money } from "@/lib/format";
+import { paymentCurrency, paymentSourceHref, paymentSourceLabel } from "@/lib/payment-source";
 import type { Tone } from "@/lib/status";
+import { PROJECT_CURRENCY_SELECT } from "@/lib/project-currency";
 
-/**
- * §19 — one calendar, five sources.
- *
- * Meetings are the only real "events" in the schema. Everything else on this
- * grid is a DEADLINE derived from a date column somewhere: a proposal's
- * validity, a project's target launch, a payment's due date. Putting them on
- * one grid is the whole point — those are the dates that actually bite.
- */
 export type CalendarKind =
   | "meeting"
   | "proposal-expiry"
@@ -20,31 +14,21 @@ export type CalendarKind =
 export interface CalendarEntry {
   id: string;
   kind: CalendarKind;
-  date: string; // ISO day, yyyy-mm-dd
+  date: string;
   time?: string;
   title: string;
   detail?: string;
   href: string;
   tone: Tone;
   status?: string;
-  /**
-   * Who a meeting is with. `type`/`id` make it an EntityLink; without them it is
-   * a guest who exists only as a name on the booking, shown as plain text.
-   */
   with?: { label: string; type?: "client" | "submission"; id?: string };
 }
 
-/**
- * A YYYY-MM-DD day as LOCAL midnight — the same convention `dayKey` reads back,
- * so a meeting created or moved here lands on the day the grid shows it.
- */
 export const localDay = (ymd: string) => new Date(`${ymd}T00:00:00`);
 
-/** The client name every list shows: company first, person second. */
 export const clientLabel = (c: { name: string | null; company: string | null }) =>
   c.company || c.name || "Unnamed client";
 
-/** Who a meeting is with: the client, else the lead it came from, else the guest. */
 export function meetingWith(m: {
   client: { id: string; name: string | null; company: string | null } | null;
   contactSubmission: { id: string; name: string } | null;
@@ -57,11 +41,6 @@ export function meetingWith(m: {
   return m.guestName ? { label: m.guestName } : undefined;
 }
 
-/**
- * LOCAL day key. `toISOString()` is UTC, and the month grid is built from local
- * dates — mixing the two put anything stored near local midnight on the wrong
- * day. Cairo is UTC+2/+3, so this was a visible off-by-one.
- */
 export const dayKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -107,7 +86,9 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
         amount: true,
         milestone: true,
         status: true,
-        project: { select: { id: true, name: true } },
+        project: {
+          select: { id: true, name: true, ...PROJECT_CURRENCY_SELECT },
+        },
         subscription: { select: { planId: true } },
       },
     }),
@@ -166,7 +147,7 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
       kind: "payment-due" as const,
       date: dayKey(pay.dueDate!),
       title: `Payment due · ${paymentSourceLabel(pay)}`,
-      detail: `${pay.amount.toLocaleString()} EGP`,
+      detail: money(pay.amount, paymentCurrency(pay)),
       href: paymentSourceHref(pay),
       tone: pay.status === "PAID" ? ("success" as Tone) : ("danger" as Tone),
       status: pay.status,

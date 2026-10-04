@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { Button } from "@repo/ui";
 import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
+import { IndustrySelect } from "@/components/os/industry-select";
+import { CountrySelect } from "@/components/os/country-select";
+import { PhoneInput } from "@/components/os/phone-input";
 import { ErrorState } from "@/components/os/error-state";
 
 export function NewClientForm() {
@@ -33,6 +36,7 @@ export function NewClientForm() {
           email: String(form.get("email") ?? "").trim(),
           company: String(form.get("company") ?? "").trim(),
           industry: String(form.get("industry") ?? "").trim(),
+          country: String(form.get("country") ?? "").trim(),
         }),
       });
       const data = (await response.json()) as {
@@ -41,13 +45,11 @@ export function NewClientForm() {
         client?: { id: string };
         existingId?: string;
       };
-      // A refused duplicate names the record that already has this phone, so
-      // the operator can open it instead of creating a second one.
       if (data.existingId) setExistingId(data.existingId);
       if (!response.ok || !data.success || !data.client) {
         throw new Error(data.message || `Request failed (${response.status})`);
       }
-      toast.success("Client created");
+      toast.success(data.message || "Client created.");
       router.push(`/clients/${data.client.id}`);
     } catch (error) {
       setFailure(error instanceof Error ? error.message : "Unknown error");
@@ -58,25 +60,38 @@ export function NewClientForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <Field label="Contact name" hint="The person, not the company">
-        <Input name="name" required placeholder="Layla Hassan" autoComplete="off" />
+        <Input
+          name="name"
+          required
+          placeholder="Layla Hassan"
+          autoComplete="off"
+        />
       </Field>
       <Field
         label="Phone"
-        hint="WhatsApp reaches this number. Include the country code."
+        hint="WhatsApp reaches this number. Pick the country code, or paste the full +… number."
       >
-        <Input name="phone" required placeholder="+20 100 000 0000" inputMode="tel" />
+        <PhoneInput name="phone" required />
       </Field>
       <Field label="Company">
         <Input name="company" placeholder="Nile Logistics" autoComplete="off" />
       </Field>
       <Field label="Email" hint="Optional — WhatsApp is the primary channel">
-        <Input name="email" type="email" placeholder="layla@nilelogistics.com" autoComplete="off" />
+        <Input
+          name="email"
+          type="email"
+          placeholder="layla@nilelogistics.com"
+          autoComplete="off"
+        />
       </Field>
       <Field
         label="Industry"
         hint="Used to suggest the proposal's accent world. Editable later."
       >
-        <Input name="industry" placeholder="Logistics" autoComplete="off" />
+        <IndustrySelect name="industry" />
+      </Field>
+      <Field label="Country" hint="Optional. Editable later.">
+        <CountrySelect name="country" />
       </Field>
 
       {failure && (
@@ -88,7 +103,10 @@ export function NewClientForm() {
       )}
       {existingId && (
         <p className="text-meta">
-          <Link href={`/clients/${existingId}`} className="font-medium underline underline-offset-2">
+          <Link
+            href={`/clients/${existingId}`}
+            className="font-medium underline underline-offset-2"
+          >
             Open the existing client
           </Link>
         </p>
@@ -99,7 +117,12 @@ export function NewClientForm() {
           {busy && <LoadingIcon size="sm" />}
           Create client
         </Button>
-        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={busy}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => router.back()}
+          disabled={busy}
+        >
           Cancel
         </Button>
       </div>

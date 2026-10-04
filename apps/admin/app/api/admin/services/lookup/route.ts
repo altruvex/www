@@ -1,11 +1,6 @@
 import { lookupDomain } from "@/lib/rdap";
 import { badRequest, ok, withAdmin } from "@/lib/with-admin";
 
-/**
- * A domain's registry record, for pre-filling a form before anything is saved.
- * The stored-service equivalent is PATCH /api/admin/services `sync-registry`.
- */
-
 export const dynamic = "force-dynamic";
 
 export const GET = withAdmin(async (request) => {

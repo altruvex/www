@@ -6,14 +6,6 @@ import { toast } from "sonner";
 
 import { Button } from "@repo/ui";
 
-/**
- * Posts to Slack and reports what actually happened (§ honesty rule).
- *
- * The failure path is the point. A button that shows a green toast regardless
- * of what the webhook returned would make a broken integration look healthy,
- * and the operator would only find out when the message they were counting on
- * never arrived.
- */
 export function SlackButton({
   action,
   label,

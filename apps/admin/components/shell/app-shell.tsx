@@ -1,11 +1,12 @@
 "use client";
 
+import { NEW_PROPOSAL_EVENT } from "@/components/os/new-proposal-button";
 import { CommandPalette } from "@/components/shell/command-palette";
 import { MobileBottomBar, MobileNavDrawer } from "@/components/shell/mobile-nav";
 import { ShortcutsSheet } from "@/components/shell/shortcuts";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
-import { gotoShortcutsFor, type BadgeKey, type Role } from "@/lib/nav";
+import { createShortcutsFor, gotoShortcutsFor, type BadgeKey, type Role } from "@/lib/nav";
 import { TooltipProvider } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -26,12 +27,15 @@ export function AppShell({
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
   const [paletteOpen, setPaletteOpen] = React.useState(false);
-  // "proposal" turns the palette into a client picker: a proposal is always
-  // written for a client, so creating one starts by choosing who it is for.
   const [paletteMode, setPaletteMode] = React.useState<"search" | "proposal">("search");
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
   const gotoArmed = React.useRef(false);
+  const createArmed = React.useRef(false);
+  const create = React.useMemo(
+    () => new Map(createShortcutsFor(role).map((s) => [s.key, s.href])),
+    [role],
+  );
   const goto = React.useMemo(
     () => new Map(gotoShortcutsFor(role).map((s) => [s.key, s.href])),
     [role],
@@ -41,6 +45,12 @@ export function AppShell({
     setPaletteMode(mode);
     setPaletteOpen(true);
   }, []);
+
+  React.useEffect(() => {
+    const onNewProposal = () => openPalette("proposal");
+    window.addEventListener(NEW_PROPOSAL_EVENT, onNewProposal);
+    return () => window.removeEventListener(NEW_PROPOSAL_EVENT, onNewProposal);
+  }, [openPalette]);
 
   React.useEffect(() => {
     const saved = window.localStorage.getItem("avx.sidebar.collapsed");
@@ -85,8 +95,6 @@ export function AppShell({
         openPalette("search");
         return;
       }
-      // The only `?` handler — the sheet itself does not listen, so one press
-      // cannot open and close it in the same tick.
       if (event.key === "?") {
         event.preventDefault();
         setShortcutsOpen((o) => !o);
@@ -99,7 +107,22 @@ export function AppShell({
       }
       if (event.key.toLowerCase() === "g") {
         gotoArmed.current = true;
+        createArmed.current = false;
         window.setTimeout(() => (gotoArmed.current = false), 1200);
+        return;
+      }
+      if (event.key.toLowerCase() === "c" && !gotoArmed.current && !createArmed.current) {
+        createArmed.current = true;
+        window.setTimeout(() => (createArmed.current = false), 1200);
+        return;
+      }
+      if (createArmed.current) {
+        const target = create.get(event.key.toLowerCase());
+        createArmed.current = false;
+        if (target) {
+          event.preventDefault();
+          router.push(target);
+        }
         return;
       }
       if (gotoArmed.current) {
@@ -114,7 +137,7 @@ export function AppShell({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [router, goto, openPalette]);
+  }, [router, goto, create, openPalette]);
 
   return (
     <TooltipProvider delayDuration={400}>
@@ -130,15 +153,16 @@ export function AppShell({
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar
             user={user}
+            role={role}
             unreadCount={unreadCount}
             onOpenPalette={() => openPalette("search")}
             onCreateProposal={() => openPalette("proposal")}
             onOpenMobileNav={() => setMobileNavOpen(true)}
           />
-          <main className="min-w-0 flex-1 p-3 pb-20 sm:p-4 lg:pb-4">{children}</main>
+          <main className="min-w-0 flex-1 p-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-4">{children}</main>
         </div>
       </div>
-      <MobileBottomBar badges={badges} onOpenMore={() => setMobileNavOpen(true)} />
+      <MobileBottomBar role={role} badges={badges} onOpenMore={() => setMobileNavOpen(true)} />
       <MobileNavDrawer
         open={mobileNavOpen}
         onOpenChange={setMobileNavOpen}

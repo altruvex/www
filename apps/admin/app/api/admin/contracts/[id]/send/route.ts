@@ -26,6 +26,16 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       );
     }
 
+    if (contract.status !== "DRAFT" && contract.status !== "SENT") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: `This contract is ${contract.status.toLowerCase()} and can no longer be sent for signature.`,
+        },
+        { status: 409 },
+      );
+    }
+
     if (!contract.fileUrl) {
       return NextResponse.json(
         { success: false, message: "Contract has no generated file to send" },

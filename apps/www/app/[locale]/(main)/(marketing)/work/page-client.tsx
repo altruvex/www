@@ -17,8 +17,6 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { memo } from "react";
 
-/* One brand-mood photograph per build — light on a material, since two of
-   the three clients sell lighting. Mood, never a picture of the client's site. */
 const STAGE_PHOTOS: Record<CaseStudyRecord["slug"], string> = {
   "newlight-lighting-store": "/brand/mood/single-lamp-dark-wall.webp",
   "art-lighting-store": "/brand/mood/blue-light-streaks.webp",
@@ -27,8 +25,6 @@ const STAGE_PHOTOS: Record<CaseStudyRecord["slug"], string> = {
 
 const OWN_SITE: CaseStudyRecord["slug"] = "altruvex-site";
 
-/* Client builds first, our own site last — the order the homepage sentence
-   names them in. */
 const STAGES = [...HOMEPAGE_SUPPORTING_CASE_STUDIES, OWN_SITE]
   .map(getCaseStudyBySlug)
   .filter((cs): cs is CaseStudyRecord => cs !== null);
@@ -43,15 +39,13 @@ export default memo(function WorkIndexPage() {
     <>
       <section className="accent-world-green min-h-screen pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
-          {/* The homepage hero's stack: eyebrow, h1 at the same scale with
-              its accent line, one paragraph - on load, not on scroll. */}
           <div className="mb-16">
             <HeroReveal delay={0.2} className="mb-6">
               <Eyebrow>{t("selectedWork")}</Eyebrow>
             </HeroReveal>
             <HeroHeadline
               as="h1"
-              className="mb-7 max-w-176 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+              className="mb-7 max-w-6xl text-balance font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
             >
               <span className="block">{t("title")}</span>
               <Accent gradient="world">{t("titleItalic")}</Accent>
@@ -74,18 +68,10 @@ export default memo(function WorkIndexPage() {
   );
 });
 
-/**
- * One build as a light stage: a dark inset photograph carrying only the
- * build's identity (who, what, that it is live); the summary and the two
- * links sit beneath it on the page ground. The full problem → built → outcome
- * account is the case study's job, not the index's. Picked from
- * docs/prototypes/2026-10-work (E).
- */
 function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean }) {
   const { slug, externalUrl } = build;
   const t = useTranslations("work");
   const tCase = useTranslations("caseStudies");
-  /* Only the first stage is near the fold on load, so only it opens. */
   const stageRef = useMediaSettle<HTMLDivElement>({ open: first, delay: 0.6 });
 
   return (
@@ -107,10 +93,6 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
           />
         </div>
         <div aria-hidden className="photo-title-scrim" />
-        <p className="absolute end-5 top-5 inline-flex items-center gap-2 rounded-full bg-black/70 px-3 py-1.5 text-xs leading-none text-white sm:end-8 sm:top-8">
-          <span aria-hidden className="size-1.5 rounded-full bg-white" />
-          {t(slug === OWN_SITE ? "labels.thisSite" : "labels.live")}
-        </p>
         <div className="absolute inset-x-5 bottom-5 sm:inset-x-8 sm:bottom-8">
           <p className="eyebrow text-white/80">
             {tCase(`${slug}.client`)} · {tCase(`${slug}.year`)}
@@ -156,12 +138,6 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
   );
 }
 
-/**
- * The record list continues into the close: the next number is set as an
- * unwritten entry, counted from the records above, so the page's one action
- * reads as the next line of the list. It used to offer "See a Real Build",
- * which linked back to this page.
- */
 function WorkEndCta({ nextIndex }: { nextIndex: number }) {
   const t = useTranslations("common.endCta.pages.work");
 
@@ -172,6 +148,7 @@ function WorkEndCta({ nextIndex }: { nextIndex: number }) {
       body={t("body")}
       primary="describeTheBuild"
       secondary="projectRange"
+      world="green"
       aside={
         <div className="flex max-w-xl items-baseline gap-4 border-t border-dashed border-foreground/25 pt-6">
           <span

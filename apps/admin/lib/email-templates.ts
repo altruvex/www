@@ -1,12 +1,3 @@
-/**
- * The default wording for the two documents that go to a client (§26).
- *
- * One source, used twice: the send screen pre-fills from it so an operator has
- * something to edit rather than a blank box, and the route falls back to it
- * when nothing was edited. Two copies of this text would drift, and the drift
- * would only ever be discovered by a client receiving the older one.
- */
-
 export interface EmailDraft {
   subject: string;
   body: string;
@@ -45,17 +36,10 @@ export function contractDraft(clientName: string | null, link: string): EmailDra
   };
 }
 
-/**
- * A change-request quote. The figure and the terms are passed in already
- * formatted — this file holds wording, never a price — and the hourly line says
- * plainly that the bill follows the hours actually spent, so the number a
- * client approves is never read as a cap it is not.
- */
 export function changeRequestQuoteDraft(input: {
   clientName: string | null;
   title: string;
   amount: string;
-  /** e.g. "3 h estimated at EGP 800 / hour", or null for a fixed price. */
   hourlyTerms: string | null;
   validUntil: string | null;
   link: string;
@@ -82,38 +66,16 @@ export function changeRequestQuoteDraft(input: {
   };
 }
 
-/**
- * Guarantees the document is actually in the mail.
- *
- * The body is editable, which means it is deletable. A proposal email whose
- * link was removed while rewriting the note above it is worse than no email: it
- * tells a client something is ready and gives them no way to see it, and
- * nothing about it looks wrong at the moment of sending.
- *
- * So the link is re-appended rather than the send being refused — the operator
- * wanted to send, and the fix is to send something complete.
- */
 export function ensureLink(body: string, link: string): string {
   if (body.includes(link)) return body;
   return `${body.trimEnd()}\n\n${link}\n`;
 }
 
-/**
- * The renewal notice the contract promises ("Altruvex notifies the Client
- * before each renewal date").
- *
- * Figures arrive formatted, like the change-request quote — this file holds
- * wording, never a price. It says what renews, when, for how much, and what
- * the client has to do if they do NOT want it: silence is the renewal, and a
- * notice that hides the way out is not a notice.
- */
 export function serviceRenewalDraft(input: {
   clientName: string | null;
   serviceName: string;
   kindLabel: string;
-  /** "10 October 2026" */
   expires: string;
-  /** "EGP 950 / year" */
   price: string;
 }): EmailDraft {
   return {
@@ -126,6 +88,38 @@ export function serviceRenewalDraft(input: {
       "",
       "Nothing is needed from you to keep it running. If you do not want to renew, reply to this",
       `message before ${input.expires} and we will let it lapse instead.`,
+      "",
+      "Altruvex",
+    ].join("\n"),
+  };
+}
+
+export function paymentReminderDraft(input: {
+  clientName: string | null;
+  what: string;
+  amount: string;
+  due: string | null;
+  overdue: boolean;
+  invoiceNumber: string | null;
+  link: string | null;
+}): EmailDraft {
+  const ref = input.invoiceNumber ? ` (invoice ${input.invoiceNumber})` : "";
+  const when = input.due
+    ? input.overdue
+      ? `was due on ${input.due} and we have not received it yet`
+      : `is due on ${input.due}`
+    : "is now due";
+  return {
+    subject: input.overdue
+      ? `Payment overdue: ${input.what}`
+      : `Payment reminder: ${input.what}`,
+    body: [
+      ...sign(input.clientName || "there"),
+      `A quick reminder that the payment of ${input.amount} for ${input.what}${ref} ${when}.`,
+      "",
+      ...(input.link ? ["Your payment schedule is here:", input.link, ""] : []),
+      "If it is already on its way, thank you and please ignore this. If something is holding it",
+      "up, reply to this message and we will sort it out together.",
       "",
       "Altruvex",
     ].join("\n"),

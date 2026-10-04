@@ -36,7 +36,6 @@ type PaletteItem = {
   id: string;
   group: PaletteGroup;
   label: string;
-  /** Extra strings the fuzzy matcher may hit (other-locale label, synonyms). */
   keywords: string;
   hint?: string;
   icon?: ComponentType<{ className?: string }>;
@@ -44,10 +43,6 @@ type PaletteItem = {
   action?: "theme" | "language" | "copyEmail";
 };
 
-/**
- * Subsequence fuzzy score. 0 = no match. Higher = better.
- * Bonuses: consecutive runs, word-start hits, early first match.
- */
 function fuzzyScore(query: string, target: string): number {
   const q = query.toLowerCase();
   const t = target.toLowerCase();
@@ -179,8 +174,6 @@ export function CommandPalette({
   }, [items, query]);
 
   const grouped = useMemo(() => {
-    // Preserve result (relevance) order inside each group; groups keep a
-    // stable order so the layout doesn't jump while typing.
     return GROUP_ORDER.map((group) => ({
       group,
       items: results.filter((i) => i.group === group),
@@ -192,7 +185,6 @@ export function CommandPalette({
   const clampedActive = Math.min(activeIndex, Math.max(0, flat.length - 1));
   const activeItem = flat[clampedActive];
 
-  // ── Open/close lifecycle: focus capture + GSAP entrance ──────────────────
   useEffect(() => {
     if (!open) return;
     closingRef.current = false;
@@ -230,7 +222,6 @@ export function CommandPalette({
     const panel = panelRef.current;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const finish = () => {
-      // Reset here (an event path, not an effect) so the next open starts clean.
       setQuery("");
       setActiveIndex(0);
       setCopied(false);
@@ -252,13 +243,12 @@ export function CommandPalette({
     });
   }, [onClose]);
 
-  // ── Actions ───────────────────────────────────────────────────────────────
   const runItem = useCallback(
     (item: PaletteItem) => {
       trackEvent("command_palette_select", { id: item.id });
       if (item.action === "theme") {
         switchTheme(resolvedTheme === "dark" ? "light" : "dark");
-        return; // stay open — the theme change is the feedback
+        return;
       }
       if (item.action === "language") {
         const next = locale === "ar" ? "en" : "ar";
@@ -287,8 +277,6 @@ export function CommandPalette({
     [switchTheme, resolvedTheme, locale, router, pathname, params, animateClose],
   );
 
-  // ── Keyboard model: focus stays in the input (trap), arrows move the
-  //    active descendant, Tab is captured so focus can never escape. ─────────
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -320,7 +308,6 @@ export function CommandPalette({
     [flat.length, activeItem, runItem, animateClose],
   );
 
-  // Keep the active option in view as the selection moves.
   useEffect(() => {
     if (!open || !activeItem) return;
     const el = listRef.current?.querySelector(`[data-item-id="${activeItem.id}"]`);

@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 
-/**
- * System health and integrations are one screen. The checks this page used to
- * render are the same `lib/system-health.ts` checks the Integrations screen
- * shows, so the route stays only for links and bookmarks that still name it.
- */
-export default function HealthPage() {
+import { gateRoute } from "@/lib/page-gate";
+
+export default async function HealthPage() {
+  const denied = await gateRoute("/health", "system health");
+  if (denied) return denied;
   redirect("/integrations");
 }

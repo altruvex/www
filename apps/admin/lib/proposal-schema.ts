@@ -3,11 +3,6 @@ import { z } from "zod";
 
 import { CLIENT_SERVICE_KINDS } from "./service-lifecycle";
 
-// The complete, per-client content of a proposal deck. Every string the
-// generator renders comes from here — the generator itself holds no client
-// content of its own. Shared by the Admin form and the server-side gate so
-// the two can never disagree about what "valid" means.
-
 const nonEmpty = (label: string, max = 400) =>
   z.string().trim().min(1, `${label} is required`).max(max);
 
@@ -16,14 +11,8 @@ const percent = z
   .refine((v) => Number.isFinite(v), "Must be a number")
   .refine((v) => v >= 0 && v <= 100, "Must be between 0 and 100");
 
-/**
- * Recurring services print as a block on the investment slide, under the
- * payment split. Six rows is what fits beside a typical line-item table; the
- * generator's own fit check (proposal-builder.ts) is the real limit.
- */
 export const MAX_PROPOSAL_SERVICES = 6;
 
-/** At least one item, and every list stays reorderable in the Admin. */
 const list = <T extends z.ZodTypeAny>(item: T, label: string) =>
   z.array(item).min(1, `${label} needs at least one item`);
 
@@ -59,8 +48,6 @@ export const timelinePhaseSchema = z.object({
   name: nonEmpty("Phase name", 120),
   deliverable: nonEmpty("Phase deliverable", 240),
   durationLabel: nonEmpty("Duration label", 16),
-  // Drives the bar height on the weekly-load chart. Deliberately separate
-  // from durationLabel: a one-week phase can still be the heaviest week.
   weeklyLoad: percent,
 });
 
@@ -73,8 +60,6 @@ export const paymentScheduleSchema = z.object({
   label: nonEmpty("Payment label", 80),
   trigger: nonEmpty("Payment trigger", 240),
   percent,
-  // No amount field by design — it is computed from the investment total at
-  // render time so it can never drift from the items.
 });
 
 export const keyTermSchema = z.object({
@@ -82,57 +67,17 @@ export const keyTermSchema = z.object({
   value: nonEmpty("Term value", 400),
 });
 
-/**
- * An optional reduction applied to the line-item subtotal.
- *
- * Deliberately NOT a negative investment item: a discount has to survive
- * every downstream reader (contract, payments, analytics) as a distinct
- * number, and an item with a minus sign in front of it would be summed into
- * the subtotal it is supposed to reduce.
- *
- * `mode` is the discriminator rather than a nullable object so that turning a
- * discount off keeps the operator's last percentage and label — switching to
- * "none" hides it from every surface without erasing what was typed.
- */
 export const discountSchema = z.object({
   mode: z.enum(["none", "percent", "amount"]),
-  /**
-   * What kind of reduction this is.
-   *
-   * "audit-credit" is not a discount the operator negotiated — it is the
-   * published rule that a paid Technical Audit comes off the project price,
-   * and the client has already read it on the site. Marking it as its own
-   * kind is what lets the gate below pin the figure to the schema and the
-   * contract name the audit in its own clause: an anonymous amount with a
-   * hand-typed label could drift from what was published the moment either
-   * one was edited, and the document a client signs is the wrong place to
-   * discover that.
-   */
   kind: z.enum(["manual", "audit-credit"]).default("manual"),
-  /** Percent of subtotal when mode is "percent"; absolute money when "amount". */
   value: z
     .number()
     .refine((v) => Number.isFinite(v), "Must be a number")
     .refine((v) => v >= 0, "Cannot be negative"),
   label: z.string().trim().max(80),
-  /** Internal note — never printed in the deck. */
   reason: z.string().trim().max(240),
 });
 
-/**
- * A recurring third-party service the proposal commits to: the domain, the
- * hosting, the mailboxes.
- *
- * Deliberately NOT an investment item. The pricing rule is that pass-through
- * services are billed separately and never folded into the project fee, so
- * nothing here reaches `investmentTotal`, `netTotal`, the milestone payments
- * or the discount. `price` is the renewal price per term the client agrees to;
- * `firstTermIncluded` records the contract's "Year 1 included" per service
- * rather than as one sentence covering everything.
- *
- * On signing, each becomes a PENDING ClientService row
- * (lib/client-services.ts) — the thing that later raises the renewal alerts.
- */
 export const proposalServiceSchema = z.object({
   kind: z.enum(CLIENT_SERVICE_KINDS),
   name: nonEmpty("Service name", 120),
@@ -141,10 +86,9 @@ export const proposalServiceSchema = z.object({
     .number()
     .int("Term must be whole months")
     .min(1, "Term must be at least one month")
-    .max(120, "Term cannot exceed ten years"),
+    .max(120, "Term cannot exceed ten years")
+    .nullable(),
   firstTermIncluded: z.boolean().default(false),
-  // A service priced at zero is quoted to the client as free for every term
-  // after the first — never what anyone meant by leaving the field blank.
   price: z
     .number()
     .int("Price must be a whole amount")
@@ -159,10 +103,6 @@ export const whyUsSchema = z.object({
   cta: nonEmpty("CTA question", 200),
 });
 
-// A section's standing copy: the mono eyebrow, and the heading split into
-// its bold lead-in and the one light-italic accent word. The split is the
-// design — the accent word is a separate field so it can never be lost by
-// someone editing the heading as one string.
 export const sectionHeadingSchema = z.object({
   eyebrow: nonEmpty("Section eyebrow", 80),
   lead: nonEmpty("Heading lead-in", 120),
@@ -178,29 +118,18 @@ export const sectionsSchema = z.object({
   timeline: sectionHeadingSchema,
   investment: sectionHeadingSchema,
   scope: sectionHeadingSchema,
-  // The closing slide's heading carries no accent word — its accent line is
-  // whyUs.headlineLine2.
   closing: z.object({
     eyebrow: nonEmpty("Section eyebrow", 80),
     heading: nonEmpty("Closing heading", 120),
   }),
 });
 
-/**
- * A label that must keep a placeholder, because the generator substitutes a
- * computed value into it. Rewording is free; dropping the token would
- * silently delete the number from the slide, so the schema refuses it.
- */
 const templateLabel = (label: string, token: string, max = 240) =>
   nonEmpty(label, max).refine(
     (value) => value.includes(token),
     `${label} must contain ${token}`,
   );
 
-// Fixed chrome: the column headers, block labels and cover wording. These
-// are the document's furniture rather than its argument, so they default to
-// the same strings for every client — but they live here so changing one
-// never needs a deploy.
 export const labelsSchema = z.object({
   cover: z.object({
     eyebrow: templateLabel("Cover eyebrow", "{date}", 160),
@@ -221,8 +150,6 @@ export const labelsSchema = z.object({
   scopeIncluded: nonEmpty("Included column", 40),
   scopeNotIncluded: nonEmpty("Not-included column", 40),
   keyTerms: nonEmpty("Key terms label", 40),
-  // Added with recurring services. Defaulted so a proposal saved before they
-  // existed still parses — the block only prints when a service does.
   services: nonEmpty("Services block label", 60).default("RECURRING SERVICES"),
   servicesNote: nonEmpty("Services note", 200).default(
     "Billed separately from the project fee, per term, at the price shown.",
@@ -240,12 +167,7 @@ export const proposalContentSchema = z
     performanceScores: list(performanceScoreSchema, "Performance scores"),
     timelinePhases: list(timelinePhaseSchema, "Timeline phases"),
     investmentItems: list(investmentItemSchema, "Investment items"),
-    // Proposals written before discounts existed carry no `discount` key.
-    // Defaulting here (rather than at each read site) means every consumer —
-    // the deck, the contract, the detail pages — sees the same shape.
     discount: discountSchema.default({ mode: "none", kind: "manual", value: 0, label: "Discount", reason: "" }),
-    // Optional and outside the fee — see proposalServiceSchema. Proposals
-    // written before services existed read back as an empty list.
     services: z
       .array(proposalServiceSchema)
       .max(MAX_PROPOSAL_SERVICES, `A proposal can list at most ${MAX_PROPOSAL_SERVICES} services`)
@@ -257,8 +179,6 @@ export const proposalContentSchema = z
     whyUs: whyUsSchema,
   })
   .superRefine((content, ctx) => {
-    // Percentages must land on exactly 100 — anything else silently
-    // misstates what the client owes.
     const total = content.paymentSchedule.reduce((sum, row) => sum + row.percent, 0);
     if (Math.abs(total - 100) > 0.001) {
       ctx.addIssue({
@@ -268,8 +188,6 @@ export const proposalContentSchema = z
       });
     }
 
-    // A discount that is switched on but says nothing, or that wipes out the
-    // whole fee, produces a deck nobody meant to send.
     const { discount } = content;
     if (discount.mode !== "none") {
       if (!discount.label.trim()) {
@@ -301,10 +219,6 @@ export const proposalContentSchema = z
           message: "The discount is larger than the line-item subtotal",
         });
       }
-      // The credit is a published promise, so the gate re-derives it rather
-      // than trusting what arrived. A proposal drafted before a rate change,
-      // or a value edited in the payload, is refused here instead of being
-      // signed at a number the site never offered.
       if (discount.kind === "audit-credit") {
         const credit = auditCreditFor(content.meta.currency);
         if (credit === null) {
@@ -345,7 +259,6 @@ export interface CompanyDetails {
   brandColorDark: string;
 }
 
-/** Trims trailing zeros so "100" reads as 100, not 100.00. */
 export function formatPercent(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "");
 }
@@ -354,7 +267,6 @@ export function investmentTotal(items: { amount: number }[]): number {
   return items.reduce((sum, item) => sum + (Number.isFinite(item.amount) ? item.amount : 0), 0);
 }
 
-/** No discount at all — the shape every pre-discount proposal reads back as. */
 export const NO_DISCOUNT: Discount = {
   mode: "none",
   kind: "manual",
@@ -363,25 +275,12 @@ export const NO_DISCOUNT: Discount = {
   reason: "",
 };
 
-/**
- * How the credit is named on the investment slide and in the contract.
- *
- * Pinned here rather than taken from the site's consulting copy: the deck and
- * the agreement are English-only documents whose wording outlives a marketing
- * edit, exactly as the service and band spellings are. The *figure* is not
- * pinned — it resolves from the schema on every read.
- */
 export const AUDIT_CREDIT_LABEL = "Technical Audit credit";
 
-/**
- * The credit a proposal in this currency can carry, or null when the audit
- * fee has no published figure in it. Null is a refusal, never a zero credit.
- */
 export function auditCreditFor(currency: string): number | null {
   return consultingCreditIn(currency as Currency);
 }
 
-/** The discount an operator applies when this build follows a paid audit. */
 export function auditCreditDiscount(currency: string): Discount | null {
   const amount = auditCreditFor(currency);
   if (amount === null) return null;
@@ -394,14 +293,6 @@ export function auditCreditDiscount(currency: string): Discount | null {
   };
 }
 
-/**
- * What the discount is actually worth in money.
- *
- * Clamped to [0, subtotal] on the way out so no consumer can ever be handed a
- * negative fee or a reduction bigger than the thing it reduces — the schema
- * rejects those, but the deck, the contract and the payment rows all read
- * this and none of them should have to re-check.
- */
 export function discountAmount(
   items: { amount: number }[],
   discount: Discount | null | undefined,
@@ -414,11 +305,6 @@ export function discountAmount(
   return Math.min(Math.round(raw), subtotal);
 }
 
-/**
- * The number the client actually pays, and the number stored on the Proposal
- * row. Everything downstream — contract value, VAT, milestone payments,
- * pipeline value, analytics — is the NET figure, never the subtotal.
- */
 export function netTotal(
   items: { amount: number }[],
   discount: Discount | null | undefined,
@@ -426,12 +312,6 @@ export function netTotal(
   return investmentTotal(items) - discountAmount(items, discount);
 }
 
-/**
- * The one place a payment amount is ever produced. Never stored — a stored
- * amount goes stale the moment an investment item or the discount changes.
- * Takes the content rather than the items so a caller cannot quietly bill the
- * pre-discount figure.
- */
 export function paymentAmount(
   content: { investmentItems: { amount: number }[]; discount?: Discount | null },
   rowPercent: number,
@@ -439,16 +319,6 @@ export function paymentAmount(
   return Math.round((netTotal(content.investmentItems, content.discount) * rowPercent) / 100);
 }
 
-/**
- * Re-price the line items so their subtotal is exactly `target`, keeping each
- * item's share of the total.
- *
- * This is what the price control writes: the operator names a number, and the
- * table underneath it stays internally consistent instead of being overridden
- * by a single figure that no longer matches its own rows. Items are rounded to
- * `rounding` and the remainder lands on the largest item, so the sum is exact
- * rather than approximately right.
- */
 export function rescaleInvestmentItems<T extends { amount: number }>(
   items: T[],
   target: number,
@@ -458,7 +328,6 @@ export function rescaleInvestmentItems<T extends { amount: number }>(
   const safeTarget = Math.max(0, Math.round(target));
   const current = investmentTotal(items);
 
-  // With nothing to scale from, an even split is the only honest guess.
   const shares =
     current > 0
       ? items.map((item) => item.amount / current)
@@ -470,8 +339,6 @@ export function rescaleInvestmentItems<T extends { amount: number }>(
     amount: Math.max(0, Math.round((safeTarget * shares[i]) / step) * step),
   }));
 
-  // Rounding leaves a remainder; put it on the biggest row, where it is the
-  // smallest proportional lie.
   const drift = safeTarget - investmentTotal(scaled);
   if (drift !== 0) {
     let biggest = 0;
@@ -490,7 +357,6 @@ export function paymentPercentTotal(rows: { percent: number }[]): number {
   return rows.reduce((sum, row) => sum + (Number.isFinite(row.percent) ? row.percent : 0), 0);
 }
 
-/** "Valid until" date, derived from the proposal date + validity window. */
 export function validUntilDate(meta: {
   proposalDate: string;
   validityDays: number;
@@ -501,11 +367,6 @@ export function validUntilDate(meta: {
   return end;
 }
 
-/**
- * The one spelling of a date in a proposal. The deck used to format inline and
- * the editor showed nothing at all, so an operator setting "30 days" could not
- * see the date the client would read.
- */
 export function formatDocDate(date: Date): string | null {
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString("en-US", {
@@ -515,17 +376,12 @@ export function formatDocDate(date: Date): string | null {
   });
 }
 
-/**
- * Estimated delivery: the proposal date plus the timeline's own total weeks.
- * Derived, never stored — a stored date drifts the moment a phase is edited.
- */
 export function deliveryDate(proposalDate: string, weeks: number): Date {
   const end = new Date(proposalDate);
   end.setDate(end.getDate() + Math.round(weeks * 7));
   return end;
 }
 
-/** Fills {token} placeholders in a label. */
 export function fillTemplate(
   template: string,
   values: Record<string, string | number>,
@@ -541,7 +397,6 @@ export interface ValidationIssue {
   message: string;
 }
 
-/** Flattens Zod issues into something both the form and the API can render. */
 export function validateProposalContent(value: unknown): {
   ok: boolean;
   content?: ProposalContent;

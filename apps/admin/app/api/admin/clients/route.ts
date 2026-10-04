@@ -88,6 +88,7 @@ const createClientSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")),
   company: z.string().trim().optional(),
   industry: z.string().trim().optional(),
+  country: z.string().trim().max(120).optional(),
 });
 
 export const POST = withAdmin(async (request, { session, actor }) => {
@@ -95,10 +96,6 @@ export const POST = withAdmin(async (request, { session, actor }) => {
   const phone = normalizePhone(validatedData.phone);
   if (!phone) throw badRequest("Enter a valid phone number");
 
-  // Phone is how WhatsApp threads, website leads and the sign flow find a
-  // client, so a second record on the same number splits that history in two.
-  // The column is not unique (imported leads predate the rule), so the check
-  // lives here and points the operator at the record that already exists.
   const existing = await prisma.client.findFirst({
     where: { phone },
     select: { id: true, name: true, company: true },
@@ -122,6 +119,7 @@ export const POST = withAdmin(async (request, { session, actor }) => {
       email: validatedData.email || undefined,
       company: validatedData.company || undefined,
       industry: validatedData.industry || undefined,
+      country: validatedData.country || undefined,
       source: "MANUAL",
       addedBy: session.user.id,
     },

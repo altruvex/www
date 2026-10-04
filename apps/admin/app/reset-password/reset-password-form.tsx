@@ -1,23 +1,27 @@
 "use client";
 
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { AlertCircle } from "lucide-react";
 
 import { Button, Field, Input, LoadingIcon } from "@repo/ui";
 
+import { AuthNotice, authControl } from "@/app/login/auth-shell";
 import { authClient } from "@/lib/auth-client";
 
-/** Better Auth's own minimum; the server refuses anything shorter. */
 const MIN_PASSWORD = 8;
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  const mismatch = confirm.length > 0 && confirm !== password;
+  const tooShort = password.length > 0 && password.length < MIN_PASSWORD;
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -48,10 +52,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
   if (done) {
     return (
       <div className="space-y-4">
-        <p className="text-base text-muted-foreground">
+        <AuthNotice tone="success">
           Your password is set. Any other session on this account has been signed out.
-        </p>
-        <Button variant="brand" className="h-9 w-full" onClick={() => router.push("/login")}>
+        </AuthNotice>
+        <Button variant="brand" size="lg" className="w-full" onClick={() => router.push("/login")}>
           Sign in
         </Button>
       </div>
@@ -59,38 +63,56 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      <Field label="New password" hint={`At least ${MIN_PASSWORD} characters.`}>
-        <Input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="new-password"
-          className="h-9"
-          required
-          autoFocus
-        />
+    <form onSubmit={submit} className="space-y-3" noValidate>
+      <Field
+        label="New password"
+        hint={tooShort ? undefined : `At least ${MIN_PASSWORD} characters.`}
+        error={tooShort ? `At least ${MIN_PASSWORD} characters.` : undefined}
+      >
+        <div className="relative">
+          <Input
+            type={show ? "text" : "password"}
+            name="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            minLength={MIN_PASSWORD}
+            className={`${authControl} pe-10`}
+            required
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => setShow((value) => !value)}
+            className="absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-e-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 pointer-coarse:w-11"
+            aria-label={show ? "Hide password" : "Show password"}
+            aria-pressed={show}
+          >
+            {show ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+          </button>
+        </div>
       </Field>
-      <Field label="Repeat it">
+      <Field label="Repeat it" error={mismatch ? "The two passwords do not match." : undefined}>
         <Input
-          type="password"
+          type={show ? "text" : "password"}
+          name="confirm-password"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           autoComplete="new-password"
-          className="h-9"
+          minLength={MIN_PASSWORD}
+          className={authControl}
           required
         />
       </Field>
-      {error && (
-        <p
-          role="alert"
-          className="flex items-center gap-2 rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
-        >
-          <AlertCircle className="size-4 shrink-0" />
-          <span>{error}</span>
-        </p>
-      )}
-      <Button type="submit" variant="brand" className="h-9 w-full" disabled={pending} aria-busy={pending}>
+      <div aria-live="polite">{error && <AuthNotice tone="danger">{error}</AuthNotice>}</div>
+      <Button
+        type="submit"
+        variant="brand"
+        size="lg"
+        className="w-full"
+        disabled={pending}
+        aria-busy={pending}
+      >
         {pending && <LoadingIcon size="sm" />}
         {pending ? "Saving…" : "Set password"}
       </Button>

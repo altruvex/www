@@ -7,12 +7,6 @@ import { deliveryWindowFrom } from "@repo/pricing-schema";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-/**
- * The phases for the window this request resolved. The window arrives as the
- * `deliveryWeeks*` pricing tokens (so an admin edit to a cell reaches these
- * pages like it reaches the price cards); outside the provider it falls back to
- * the shipped matrix.
- */
 export function useProcessPhases(): readonly PhaseLength[] {
   const tokens = usePricingTokens();
 
@@ -29,7 +23,6 @@ export function useProcessPhases(): readonly PhaseLength[] {
   }, [tokens.deliveryWeeksMin, tokens.deliveryWeeksMax]);
 }
 
-/** The length a visitor reads for one phase: "1 session", "3 days", "2 – 5 days". */
 export function usePhaseLength(): (phase: PhaseLength) => string {
   const t = useTranslations("process");
   const locale = useLocale();

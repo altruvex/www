@@ -64,7 +64,7 @@ export default async function WorkCaseStudyPage({
   return (
     <>
       <JsonLd schemas={buildCaseStudyPageSchemas(locale, cs)} />
-      <Container className="pt-24 md:pt-32">
+      <Container className="pt-(--section-y-top)">
         <Breadcrumbs
           items={getCaseStudyBreadcrumbTrail(locale, cs)}
           className="mb-0"

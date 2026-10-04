@@ -14,17 +14,6 @@ type TechnicalFaq = {
    q: string;
 };
 
-/*
- * The consulting page's reference content, split in two because the halves do
- * different jobs and belong at different points of the page. The scope answers
- * "what would you actually look at, and what would I get" - it has to come
- * before the fixed-price offer, or the price arrives before its contents. The
- * FAQ answers the objections a visitor has once they have seen that price, so
- * it sits between the offer and the closing call to action. Both stay server
- * components and reach the client page as slots, so this text ships as HTML
- * with no client JavaScript.
- */
-
 export function ConsultingFaqSection({
    pricing,
 }: {

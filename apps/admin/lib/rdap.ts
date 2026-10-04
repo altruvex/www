@@ -1,22 +1,6 @@
-/**
- * Reading a domain's expiry from its registry, over RDAP.
- *
- * RDAP is the registries' own structured replacement for WHOIS: public, free,
- * no account. rdap.org redirects each query to the registry that is
- * authoritative for the TLD, so the date comes from the source rather than
- * from a reseller's dashboard.
- *
- * Its limits are stated rather than papered over: not every ccTLD publishes
- * RDAP (.eg does not), and hosting, email and certificates have no equivalent
- * at all. When the registry says nothing, the caller is told so and the date
- * stays whatever the operator typed — never a guess.
- */
-
 const DOMAIN_PATTERN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
-/** DNS caps a name at 253 characters. */
 const MAX_DOMAIN_LENGTH = 253;
 
-/** Lowercase, scheme and path stripped: "https://www.Nile.com/x" → "www.nile.com". */
 export function normaliseDomain(input: string): string | null {
   const trimmed = input
     .trim()
@@ -50,7 +34,6 @@ const eventDate = (events: RdapEvent[], action: string): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-/** Pure: the fields this app uses out of an RDAP domain response. */
 export function parseRdapDomain(json: unknown): RegistryRecord {
   const body = (json ?? {}) as { events?: RdapEvent[]; entities?: RdapEntity[] };
   const events = Array.isArray(body.events) ? body.events : [];
@@ -69,12 +52,6 @@ export type RegistryLookup =
   | ({ ok: true; domain: string } & RegistryRecord)
   | { ok: false; reason: string };
 
-/**
- * Looks a domain up. Never throws: every failure is a reason for the screen.
- *
- * The host is fixed and the domain is validated before it is put in the URL,
- * so this cannot be pointed at anything but a registry.
- */
 export async function lookupDomain(input: string): Promise<RegistryLookup> {
   const domain = normaliseDomain(input);
   if (!domain) return { ok: false, reason: `"${input}" is not a domain name.` };

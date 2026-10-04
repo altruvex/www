@@ -1,49 +1,69 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ScrollText } from "lucide-react";
 
 import { prisma, type DeployEnvironment, type LogLevel } from "@repo/database";
 import { Button } from "@repo/ui";
 
-import { FilterChip } from "@/components/os/data-table";
+import { DeleteRecordButton } from "@/components/os/delete-record";
 import { EmptyState } from "@/components/os/empty-state";
 import { EntityLink } from "@/components/os/entity-link";
+import {
+  ActiveFilters,
+  FilterBar,
+  FilterChip,
+} from "@/components/os/filter-bar";
+import { InspectSheet, inspectHref } from "@/components/os/inspect-sheet";
+import { List, ListRow } from "@/components/os/list-row";
 import { PageHeader } from "@/components/os/page-header";
-import { listLogSources, listLogs } from "@/lib/engineering";
+import { Pager } from "@/components/os/pager";
+import { Panel } from "@/components/os/panel";
+import { StatusPill, ToneBadge } from "@/components/ui/badge";
+import {
+  LOG_PAGE_SIZE,
+  isLogLevel,
+  listLogSources,
+  listLogs,
+} from "@/lib/engineering";
 import { dateTime } from "@/lib/format";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
-import { LogExplorer, type LogRow } from "./log-explorer";
+import { CustomRange, IncidentLinker, LogScope } from "./log-explorer";
 
 export const dynamic = "force-dynamic";
 
-const LEVELS = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"] as const;
 const ENVIRONMENTS = ["PRODUCTION", "STAGING", "PREVIEW"] as const;
+const PAGE_SIZES = [50, 100, 200];
 
-/** Relative windows, measured back from the moment the page renders. */
+const LEVEL_CHIPS: { value: LogLevel; label: string }[] = [
+  { value: "INFO", label: "Info+" },
+  { value: "WARN", label: "Warn+" },
+  { value: "ERROR", label: "Error+" },
+  { value: "FATAL", label: "Fatal" },
+];
+
 const RANGES = {
   "1h": { ms: 3_600_000, label: "Last hour" },
-  "24h": { ms: 86_400_000, label: "Last 24 hours" },
-  "7d": { ms: 7 * 86_400_000, label: "Last 7 days" },
+  "24h": { ms: 86_400_000, label: "24 hours" },
+  "7d": { ms: 7 * 86_400_000, label: "7 days" },
 } as const;
 type RangeKey = keyof typeof RANGES;
 
-const asLevel = (v?: string): LogLevel | undefined =>
-  LEVELS.includes(v as LogLevel) ? (v as LogLevel) : undefined;
 const asEnvironment = (v?: string): DeployEnvironment | undefined =>
-  ENVIRONMENTS.includes(v as DeployEnvironment) ? (v as DeployEnvironment) : undefined;
+  ENVIRONMENTS.includes(v as DeployEnvironment)
+    ? (v as DeployEnvironment)
+    : undefined;
 const asRange = (v?: string): RangeKey | undefined =>
   v && v in RANGES ? (v as RangeKey) : undefined;
 
-/** An ISO timestamp from the URL, or nothing — a malformed date is ignored, not a 500. */
 function asDate(v?: string): Date | undefined {
   if (!v) return undefined;
   const date = new Date(v);
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-/**
- * The start of a relative window. A server component renders once per request,
- * so reading the clock here is the request's own "now", not an unstable value.
- */
 function rangeStart(range: RangeKey): Date {
   return new Date(Date.now() - RANGES[range].ms);
 }
@@ -61,295 +81,179 @@ type Params = {
   range?: string;
   from?: string;
   to?: string;
-  cursor?: string;
-  before?: string;
+  page?: string;
+  pageSize?: string;
+  inspect?: string;
 };
 
-/** Every view-state key except the two paging cursors. */
-const FILTER_KEYS = [
-  "product",
-  "level",
-  "environment",
-  "q",
-  "requestId",
-  "source",
-  "deployment",
-  "build",
-  "incident",
-  "range",
-  "from",
-  "to",
-] as const satisfies readonly (keyof Params)[];
-
-/**
- * The same view with some keys replaced or removed. Paging cursors are dropped
- * unless the patch sets one: page 3 of a different filter is meaningless.
- */
-function hrefWith(sp: Params, patch: Partial<Record<keyof Params, string | null>>): string {
+function hrefWith(
+  sp: Params,
+  patch: Partial<Record<keyof Params, string | null>>,
+): string {
   const next = new URLSearchParams();
-  for (const key of FILTER_KEYS) {
-    const value = key in patch ? patch[key] : sp[key];
-    if (value) next.set(key, value);
+  for (const [key, value] of Object.entries({ ...sp, ...patch })) {
+    if (typeof value === "string" && value) next.set(key, value);
   }
-  if (patch.cursor) next.set("cursor", patch.cursor);
-  if (patch.before) next.set("before", patch.before);
+  if (!("page" in patch)) next.delete("page");
   const qs = next.toString();
   return qs ? `/logs?${qs}` : "/logs";
 }
 
-/**
- * The log explorer (§7).
- *
- * Filtering, searching and paging all happen in the database and in the URL —
- * not in component state over a preloaded array. That is the only design that
- * survives a product with a hundred thousand log lines, and it makes any view
- * an operator reaches a link they can paste into a message.
- */
-export default async function LogsPage({ searchParams }: { searchParams: Promise<Params> }) {
+export default async function LogsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Params>;
+}) {
+  const denied = await gateRoute("/logs");
+  if (denied) return denied;
+
   const sp = await searchParams;
 
   const range = asRange(sp.range);
-  // A custom window only counts when it is a real window: both ends parse and
-  // the start comes first. Anything else is ignored rather than guessed at.
   let from = range ? undefined : asDate(sp.from);
   let to = range ? undefined : asDate(sp.to);
   if (from && to && from >= to) {
     from = undefined;
     to = undefined;
   }
+  const staleFrom = Boolean(sp.from) && !from;
+  const staleTo = Boolean(sp.to) && !to;
+  if (staleFrom || staleTo) {
+    redirect(
+      hrefWith(sp, {
+        ...(staleFrom ? { from: null } : {}),
+        ...(staleTo ? { to: null } : {}),
+        page: sp.page ?? null,
+      }),
+    );
+  }
   if (range) from = rangeStart(range);
 
-  const level = asLevel(sp.level);
+  const role = await currentRole();
+  const canDeleteLine = can(role, "delete", "project");
+  const canLinkIncident = can(role, "edit", "incident");
+
+  const minLevel = isLogLevel(sp.level) ? sp.level : undefined;
   const environment = asEnvironment(sp.environment);
   const q = sp.q?.trim() || undefined;
   const requestId = sp.requestId?.trim() || undefined;
   const source = sp.source?.trim() || undefined;
+  const pageSize = PAGE_SIZES.includes(Number(sp.pageSize))
+    ? Number(sp.pageSize)
+    : LOG_PAGE_SIZE;
+  const page = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
-  const [products, sources, page, deployment, build, incident] = await Promise.all([
-    prisma.product.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, slug: true },
-    }),
-    listLogSources(sp.product),
-    listLogs({
-      productId: sp.product,
-      level,
-      environment,
-      q,
-      requestId,
-      source,
-      deploymentId: sp.deployment,
-      buildId: sp.build,
-      incidentId: sp.incident,
-      from,
-      to,
-      cursor: sp.cursor,
-      before: sp.before,
-    }),
-    sp.deployment
-      ? prisma.deployment.findUnique({
-          where: { id: sp.deployment },
-          select: { id: true, number: true, product: { select: { name: true } } },
-        })
-      : null,
-    sp.build
-      ? prisma.build.findUnique({
-          where: { id: sp.build },
-          select: { id: true, number: true, product: { select: { name: true } } },
-        })
-      : null,
-    sp.incident
-      ? prisma.incident.findUnique({
-          where: { id: sp.incident },
-          select: { id: true, number: true, title: true, product: { select: { name: true } } },
-        })
-      : null,
-  ]);
+  const [products, sources, result, deployment, build, incident, inspected] =
+    await Promise.all([
+      prisma.product.findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, slug: true },
+      }),
+      listLogSources(sp.product),
+      listLogs({
+        productId: sp.product,
+        minLevel,
+        environment,
+        q,
+        requestId,
+        source,
+        deploymentId: sp.deployment,
+        buildId: sp.build,
+        incidentId: sp.incident,
+        from,
+        to,
+        page,
+        pageSize,
+      }),
+      sp.deployment
+        ? prisma.deployment.findUnique({
+            where: { id: sp.deployment },
+            select: {
+              id: true,
+              number: true,
+              product: { select: { name: true } },
+            },
+          })
+        : null,
+      sp.build
+        ? prisma.build.findUnique({
+            where: { id: sp.build },
+            select: {
+              id: true,
+              number: true,
+              product: { select: { name: true } },
+            },
+          })
+        : null,
+      sp.incident
+        ? prisma.incident.findUnique({
+            where: { id: sp.incident },
+            select: {
+              id: true,
+              number: true,
+              title: true,
+              product: { select: { name: true } },
+            },
+          })
+        : null,
+      sp.inspect
+        ? prisma.logEntry.findUnique({
+            where: { id: sp.inspect },
+            include: {
+              product: { select: { id: true, name: true } },
+              deployment: { select: { id: true, number: true } },
+              build: { select: { id: true, number: true } },
+              incident: { select: { id: true, number: true, title: true } },
+            },
+          })
+        : null,
+    ]);
 
-  // Only the open incidents of products on this page can be offered as a link
-  // target: a line is evidence for its own product, and a closed incident is
-  // reopened on its own page, not by attaching a log to it.
-  const productIdsOnPage = [...new Set(page.entries.map((e) => e.product.id))];
-  const openIncidents = productIdsOnPage.length
-    ? await prisma.incident.findMany({
-        where: { productId: { in: productIdsOnPage }, status: { not: "RESOLVED" } },
-        orderBy: { detectedAt: "desc" },
-        select: { id: true, number: true, title: true, productId: true },
-      })
-    : [];
-
-  const rows: LogRow[] = page.entries.map((entry) => ({
-    id: entry.id,
-    level: entry.level,
-    environment: entry.environment,
-    message: entry.message,
-    source: entry.source,
-    requestId: entry.requestId,
-    timestamp: entry.timestamp.toISOString(),
-    productId: entry.product.id,
-    productName: entry.product.name,
-    deploymentNumber: entry.deployment?.number ?? null,
-    deploymentId: entry.deployment?.id ?? null,
-    buildNumber: entry.build?.number ?? null,
-    buildId: entry.build?.id ?? null,
-    incident: entry.incident
-      ? { id: entry.incident.id, number: entry.incident.number, title: entry.incident.title }
-      : null,
-    metadata: entry.metadata ? JSON.stringify(entry.metadata, null, 2) : null,
-  }));
+  const openIncidents =
+    inspected && canLinkIncident
+      ? await prisma.incident.findMany({
+          where: {
+            productId: inspected.product.id,
+            status: { not: "RESOLVED" },
+          },
+          orderBy: { detectedAt: "desc" },
+          select: { id: true, number: true, title: true },
+        })
+      : [];
 
   const productName = products.find((p) => p.id === sp.product)?.name;
+  const hasFilters = Boolean(
+    sp.product ||
+    minLevel ||
+    environment ||
+    q ||
+    requestId ||
+    source ||
+    sp.deployment ||
+    sp.build ||
+    sp.incident ||
+    range ||
+    from ||
+    to,
+  );
+  const closeHref = inspectHref("/logs", sp, null);
 
-  // One removable chip per active filter, named rather than shown as an id. A
-  // record id that resolves to nothing still gets a chip — the filter is still
-  // narrowing the list, and the operator needs a way to drop it.
-  const chips: React.ReactNode[] = [];
-  if (sp.product) {
-    chips.push(
-      <FilterChip
-        key="product"
-        label="Product"
-        value={
-          productName ? (
-            <EntityLink type="product" id={sp.product}>
-              {productName}
-            </EntityLink>
-          ) : (
-            "Unknown product"
-          )
-        }
-        clearHref={hrefWith(sp, { product: null, source: null })}
-      />,
-    );
-  }
-  if (level) {
-    chips.push(
-      <FilterChip
-        key="level"
-        label="Level"
-        value={statusOf("logLevel", level).label}
-        clearHref={hrefWith(sp, { level: null })}
-      />,
-    );
-  }
-  if (environment) {
-    chips.push(
-      <FilterChip
-        key="environment"
-        label="Env"
-        value={environment.toLowerCase()}
-        clearHref={hrefWith(sp, { environment: null })}
-      />,
-    );
-  }
-  if (source) {
-    chips.push(
-      <FilterChip key="source" label="Source" value={source} clearHref={hrefWith(sp, { source: null })} />,
-    );
-  }
-  if (q) {
-    chips.push(
-      <FilterChip key="q" label="Search" value={`“${q}”`} clearHref={hrefWith(sp, { q: null })} />,
-    );
-  }
-  if (requestId) {
-    chips.push(
-      <FilterChip
-        key="requestId"
-        label="Trace"
-        value={<span className="font-mono">{requestId}</span>}
-        clearHref={hrefWith(sp, { requestId: null })}
-      />,
-    );
-  }
-  if (sp.deployment) {
-    chips.push(
-      <FilterChip
-        key="deployment"
-        label="Deployment"
-        value={
-          deployment ? (
-            <EntityLink type="deployment" id={deployment.id}>
-              #{deployment.number} · {deployment.product.name}
-            </EntityLink>
-          ) : (
-            "Deleted deployment"
-          )
-        }
-        clearHref={hrefWith(sp, { deployment: null })}
-      />,
-    );
-  }
-  if (sp.build) {
-    chips.push(
-      <FilterChip
-        key="build"
-        label="Build"
-        value={
-          build ? (
-            <EntityLink type="build" id={build.id}>
-              #{build.number} · {build.product.name}
-            </EntityLink>
-          ) : (
-            "Deleted build"
-          )
-        }
-        clearHref={hrefWith(sp, { build: null })}
-      />,
-    );
-  }
-  if (sp.incident) {
-    chips.push(
-      <FilterChip
-        key="incident"
-        label="Incident"
-        value={
-          incident ? (
-            <EntityLink type="incident" id={incident.id}>
-              {incident.product.name} #{incident.number} · {incident.title}
-            </EntityLink>
-          ) : (
-            "Deleted incident"
-          )
-        }
-        clearHref={hrefWith(sp, { incident: null })}
-      />,
-    );
-  }
-  if (range) {
-    chips.push(
-      <FilterChip
-        key="range"
-        label="Time"
-        value={RANGES[range].label}
-        clearHref={hrefWith(sp, { range: null, from: null, to: null })}
-      />,
-    );
-  } else if (from || to) {
-    chips.push(
-      <FilterChip
-        key="window"
-        label="Time"
-        value={`${from ? dateTime(from) : "Start"} → ${to ? dateTime(to) : "now"}`}
-        clearHref={hrefWith(sp, { range: null, from: null, to: null })}
-      />,
-    );
-  }
-
-  const hasFilters = chips.length > 0;
-  const paged = Boolean(sp.cursor || sp.before);
+  const header = (
+    <PageHeader
+      title="Logs"
+      meta={<ToneBadge tone="neutral">Written by CI</ToneBadge>}
+      description="Everything products report, newest first. Lines arrive from each product's pipeline and runtime through the ingest endpoint; nothing here writes one."
+    />
+  );
 
   if (products.length === 0) {
     return (
       <div className="space-y-4">
-        <PageHeader
-          title="Logs"
-          description="Operational log lines from every product Altruvex runs."
-        />
+        {header}
         <EmptyState
           icon={ScrollText}
-          title="No products yet"
-          body="Logs belong to a product. Add the sites and apps Altruvex operates, then point their runtime at the ingest endpoint — log lines are posted in batches and are never generated here."
+          title="No pipeline connected yet"
+          body="Logs belong to a product. Add the sites and apps Altruvex operates, then on each product's page connect its pipeline — issue an ingest token and post log lines in batches to /api/ingest/logs. Lines are never generated here."
           action={
             <Button asChild variant="outline">
               <Link href="/products">Open products</Link>
@@ -362,38 +266,311 @@ export default async function LogsPage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="space-y-4">
-      <PageHeader
-        title="Logs"
-        description="Everything products report, newest first. Filters and paging run in the database, so a URL from this page is a view someone else can open."
-      />
-      <LogExplorer
-        // Remount when the filters change (a chip removed, a link followed) so
-        // the search box and the custom-range inputs show the URL, not what was
-        // typed before. Paging keeps the same key, and so keeps open rows.
-        key={hrefWith(sp, {})}
-        rows={rows}
-        products={products}
-        sources={sources}
-        openIncidents={openIncidents}
-        filters={{
-          product: sp.product ?? "",
-          level: level ?? "",
-          environment: environment ?? "",
-          q: sp.q ?? "",
-          source: source ?? "",
-          range: range ?? (from || to ? "custom" : ""),
-          from: from && !range ? from.toISOString() : "",
-          to: to ? to.toISOString() : "",
-        }}
-        chips={hasFilters ? chips : null}
-        hasFilters={hasFilters}
-        paging={{
-          newerHref: page.hasNewer && page.prevCursor ? hrefWith(sp, { before: page.prevCursor }) : null,
-          olderHref: page.hasMore && page.nextCursor ? hrefWith(sp, { cursor: page.nextCursor }) : null,
-          newestHref: paged ? hrefWith(sp, {}) : null,
-          hasMore: page.hasMore,
-        }}
-      />
+      {header}
+
+      <div className="space-y-2">
+        <FilterBar
+          label="Filter logs"
+          search={{ placeholder: "Search messages…" }}
+          trailing={
+            <>
+              <LogScope products={products} sources={sources} />
+              <CustomRange
+                from={from && !range ? from.toISOString() : ""}
+                to={to ? to.toISOString() : ""}
+              />
+            </>
+          }
+        >
+          <FilterChip param="level" label="All levels" />
+          {LEVEL_CHIPS.map((chip) => (
+            <FilterChip
+              key={chip.value}
+              param="level"
+              value={chip.value}
+              label={chip.label}
+            />
+          ))}
+          <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-border" />
+          {ENVIRONMENTS.map((env) => (
+            <FilterChip
+              key={env}
+              param="environment"
+              value={env}
+              label={statusOf("deployEnvironment", env).label}
+            />
+          ))}
+          <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-border" />
+          {(Object.keys(RANGES) as RangeKey[]).map((key) => (
+            <FilterChip
+              key={key}
+              param="range"
+              value={key}
+              label={RANGES[key].label}
+            />
+          ))}
+        </FilterBar>
+        <ActiveFilters
+          labels={{
+            product: { label: "Product", clears: ["source"] },
+            source: "Source",
+            requestId: "Request",
+            deployment: "Deployment",
+            build: "Build",
+            incident: "Incident",
+            from: "From",
+            to: "To",
+          }}
+          valueLabels={{
+            product: sp.product
+              ? { [sp.product]: productName ?? "Unknown product" }
+              : {},
+            deployment: sp.deployment
+              ? {
+                  [sp.deployment]: deployment
+                    ? `#${deployment.number} · ${deployment.product.name}`
+                    : "Deleted deployment",
+                }
+              : {},
+            build: sp.build
+              ? {
+                  [sp.build]: build
+                    ? `#${build.number} · ${build.product.name}`
+                    : "Deleted build",
+                }
+              : {},
+            incident: sp.incident
+              ? {
+                  [sp.incident]: incident
+                    ? `${incident.product.name} #${incident.number} · ${incident.title}`
+                    : "Deleted incident",
+                }
+              : {},
+            from:
+              from && !range && sp.from ? { [sp.from]: dateTime(from) } : {},
+            to: to && sp.to ? { [sp.to]: dateTime(to) } : {},
+          }}
+        />
+      </div>
+
+      {result.entries.length === 0 ? (
+        <EmptyState
+          icon={ScrollText}
+          title={hasFilters ? "No lines match" : "No logs yet"}
+          body={
+            hasFilters
+              ? "No log line matches every filter. Remove one to widen the view — the newest lines are always at the top."
+              : "No product has posted a log line yet. Connect a pipeline on a product's page (an ingest token), then post lines in batches to /api/ingest/logs."
+          }
+          action={
+            <Button asChild variant="outline">
+              <Link href={hasFilters ? "/logs" : "/products"}>
+                {hasFilters ? "Clear filters" : "Open products"}
+              </Link>
+            </Button>
+          }
+        />
+      ) : (
+        <Panel flush>
+          <List label="Log lines">
+            {result.entries.map((entry) => (
+              <ListRow
+                key={entry.id}
+                inspect={inspectHref("/logs", sp, entry.id)}
+                selected={sp.inspect === entry.id}
+                tone={statusOf("logLevel", entry.level).tone}
+                title={
+                  <span className="font-mono text-meta font-normal">
+                    {entry.message}
+                  </span>
+                }
+                meta={
+                  <>
+                    <time
+                      dateTime={entry.timestamp.toISOString()}
+                      className="font-mono tabular-nums"
+                    >
+                      {dateTime(entry.timestamp)}
+                    </time>
+                    <span className="truncate">{entry.product.name}</span>
+                    {entry.source && (
+                      <span className="max-sm:hidden">{entry.source}</span>
+                    )}
+                    <span className="max-sm:hidden">
+                      {statusOf("deployEnvironment", entry.environment).label}
+                    </span>
+                    {entry.incident && (
+                      <span className="font-mono">
+                        INC #{entry.incident.number}
+                      </span>
+                    )}
+                  </>
+                }
+                trailing={
+                  <StatusPill
+                    registry="logLevel"
+                    value={entry.level}
+                    variant="dot"
+                  />
+                }
+              />
+            ))}
+          </List>
+          <Pager
+            className="border-t border-border px-3 py-2"
+            page={result.page}
+            pageSize={result.pageSize}
+            total={result.total}
+            noun="lines"
+            hrefFor={(n) => hrefWith(sp, { page: String(n), inspect: null })}
+            pageSizes={PAGE_SIZES}
+            pageSizeHref={(size) =>
+              hrefWith(sp, { pageSize: String(size), inspect: null })
+            }
+          />
+        </Panel>
+      )}
+
+      <InspectSheet
+        open={Boolean(inspected)}
+        width="lg"
+        title={
+          inspected
+            ? `${inspected.level} · ${inspected.product.name}`
+            : "Log line"
+        }
+        subtitle={inspected ? dateTime(inspected.timestamp) : undefined}
+        status={
+          inspected ? (
+            <StatusPill registry="logLevel" value={inspected.level} />
+          ) : undefined
+        }
+        footer={
+          inspected && canDeleteLine ? (
+            <DeleteRecordButton
+              entity="log"
+              id={inspected.id}
+              label={inspected.message.slice(0, 60)}
+              redirectTo={closeHref}
+              size="sm"
+            >
+              Delete line
+            </DeleteRecordButton>
+          ) : undefined
+        }
+      >
+        {inspected && (
+          <div className="space-y-4">
+            <p className="text-meta text-subtle-foreground">
+              Written by CI — read-only.
+            </p>
+            <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+              {inspected.message}
+            </pre>
+
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-meta">
+              <Fact label="Product">
+                <EntityLink type="product" id={inspected.product.id}>
+                  {inspected.product.name}
+                </EntityLink>
+              </Fact>
+              <Fact label="Environment">
+                {statusOf("deployEnvironment", inspected.environment).label}
+              </Fact>
+              <Fact label="Source">
+                {inspected.source ? (
+                  <Link
+                    className="text-brand hover:underline"
+                    href={hrefWith(sp, {
+                      source: inspected.source,
+                      product: inspected.product.id,
+                      inspect: null,
+                    })}
+                  >
+                    {inspected.source}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+              <Fact label="Request">
+                {inspected.requestId ? (
+                  <Link
+                    className="break-all font-mono text-brand hover:underline"
+                    href={hrefWith({}, { requestId: inspected.requestId })}
+                  >
+                    {inspected.requestId}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+              <Fact label="Deployment">
+                {inspected.deployment ? (
+                  <EntityLink type="deployment" id={inspected.deployment.id}>
+                    #{inspected.deployment.number}
+                  </EntityLink>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+              <Fact label="Build">
+                {inspected.build ? (
+                  <EntityLink type="build" id={inspected.build.id}>
+                    #{inspected.build.number}
+                  </EntityLink>
+                ) : (
+                  "—"
+                )}
+              </Fact>
+            </dl>
+
+            {inspected.metadata != null && (
+              <div>
+                <p className="telemetry text-subtle-foreground">Metadata</p>
+                <pre className="mt-1 max-h-64 overflow-auto rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+                  {JSON.stringify(inspected.metadata, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <p className="telemetry text-subtle-foreground">Evidence for</p>
+              {canLinkIncident ? (
+                <IncidentLinker
+                  logId={inspected.id}
+                  productName={inspected.product.name}
+                  current={inspected.incident}
+                  options={openIncidents}
+                />
+              ) : inspected.incident ? (
+                <EntityLink type="incident" id={inspected.incident.id}>
+                  #{inspected.incident.number} · {inspected.incident.title}
+                </EntityLink>
+              ) : (
+                <p className="text-meta text-subtle-foreground">
+                  Not attached to an incident.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </InspectSheet>
+    </div>
+  );
+}
+
+function Fact({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <dt className="telemetry text-subtle-foreground">{label}</dt>
+      <dd className="mt-0.5 min-w-0 truncate">{children}</dd>
     </div>
   );
 }

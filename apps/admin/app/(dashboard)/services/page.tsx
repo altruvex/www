@@ -1,41 +1,53 @@
 import { prisma } from "@repo/database";
 
 import { FilterChip } from "@/components/os/data-table";
+import { EntityLink } from "@/components/os/entity-link";
+import { InspectSheet } from "@/components/os/inspect-sheet";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { NewServiceButton } from "@/components/os/services/new-service-button";
-import { ServicesList } from "@/components/os/services/services-list";
+import { ServiceInspectorActions, ServicesList } from "@/components/os/services/services-list";
 import type { ClientOption, ServiceScope } from "@/components/os/services/service-sheet";
-import { clientLabel, listServices } from "@/lib/client-services";
+import { StatusPill } from "@/components/ui/badge";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
+import { clientLabel, listServices, redactMoney, type ServiceScreenRow } from "@/lib/client-services";
 import { emailTransport } from "@/lib/email";
-import { moneyByCurrency } from "@/lib/format";
-import { annualised, ALERT_THRESHOLDS } from "@/lib/service-lifecycle";
+import { date, money, moneyByCurrency } from "@/lib/format";
+import { canSeeFinance } from "@/lib/nav";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
+import {
+  annualised,
+  ALERT_THRESHOLDS,
+  expiryPhrase,
+  isOneTime,
+  KIND_LABEL,
+  perTermLabel,
+} from "@/lib/service-lifecycle";
 
 import { CheckRenewalsButton } from "./check-renewals";
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
 export const dynamic = "force-dynamic";
 
-/**
- * Services & renewals.
- *
- * Every domain, hosting plan and mailbox any client holds through Altruvex, on
- * one screen, sorted by what runs out first. The question it answers is "what
- * lapses this month, and who pays for it" — without opening every client.
- *
- * Nothing here is stored as "expiring". The state of each row, the tiles and
- * the sidebar badge are all derived from `expiresAt` and the clock, so they are
- * right whether or not the scheduled sweep has run.
- */
 export default async function ServicesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client?: string }>;
+  searchParams: Promise<{ client?: string; inspect?: string }>;
 }) {
-  const { client: clientParam } = await searchParams;
-  const clientId = clientParam?.trim() || null;
+  const denied = await gateRoute("/services");
+  if (denied) return denied;
 
-  // `?client=` scopes the whole screen — tiles included — to one client's
-  // services, so a hub can link here instead of re-listing them.
+  const { client: clientParam, inspect } = await searchParams;
+  const clientId = clientParam?.trim() || null;
+  const role = await currentRole();
+  const showMoney = canSeeFinance(role);
+  const canManage = can(role, "edit", "project");
+  const canCreate = can(role, "create", "project");
+  const canRemind = can(role, "send", "message");
+  const canDelete = can(role, "delete", "client");
+
   const [services, clients] = await Promise.all([
     listServices(clientId ? { clientId } : {}),
     prisma.client.findMany({
@@ -43,39 +55,47 @@ export default async function ServicesPage({
         id: true,
         name: true,
         company: true,
-        projects: { select: { id: true, name: true }, orderBy: { createdAt: "desc" } },
+        projects: {
+          select: { id: true, name: true, ...PROJECT_CURRENCY_SELECT },
+          orderBy: { createdAt: "desc" },
+        },
         products: { select: { id: true, name: true }, orderBy: { createdAt: "desc" } },
       },
       orderBy: { createdAt: "desc" },
-      take: 300,
     }),
   ]);
 
   const clientOptions: ClientOption[] = clients.map((client) => ({
     id: client.id,
     label: clientLabel(client),
-    projects: client.projects,
+    projects: client.projects.map((p) => ({ id: p.id, name: p.name, currency: projectCurrency(p) })),
     products: client.products,
   }));
   const scopes: Record<string, ServiceScope> = Object.fromEntries(
     clientOptions.map((client) => [
       client.id,
-      { clientId: client.id, projects: client.projects, products: client.products, currency: "EGP" },
+      {
+        clientId: client.id,
+        projects: client.projects,
+        products: client.products,
+        currency: client.projects[0]?.currency ?? DEFAULT_CURRENCY,
+      },
     ]),
   );
 
-  const due = services.filter(
+  const forScreen = showMoney ? services : services.map(redactMoney);
+  const due = forScreen.filter(
     (s) => s.state === "expired" || s.state === "urgent" || s.state === "renewing-soon",
   );
-  const pending = services.filter((s) => s.state === "pending");
-  const rest = services.filter((s) => s.state === "active" || s.state === "cancelled");
+  const pending = forScreen.filter((s) => s.state === "pending");
+  const rest = forScreen.filter(
+    (s) => s.state === "active" || s.state === "one-time" || s.state === "cancelled",
+  );
 
   const expired = services.filter((s) => s.state === "expired").length;
   const urgent = services.filter((s) => s.state === "urgent").length;
   const soon = services.filter((s) => s.state === "renewing-soon").length;
 
-  // What the client book pays per year in services, per currency — never
-  // summed across currencies. Pending counts: it is agreed revenue.
   const yearly: Record<string, number> = {};
   for (const service of services) {
     if (service.status === "CANCELLED") continue;
@@ -88,6 +108,15 @@ export default async function ServicesPage({
 
   const scheduled = Boolean(process.env.CRON_SECRET);
   const emailConfigured = emailTransport() !== "none";
+  const inspected = inspect ? (forScreen.find((s) => s.id === inspect) ?? null) : null;
+  const termPayment =
+    inspected && showMoney && roleCanOpen(role, "/payments")
+      ? await prisma.payment.findFirst({
+          where: { serviceId: inspected.id },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
+        })
+      : null;
 
   return (
     <div className="space-y-4">
@@ -104,15 +133,26 @@ export default async function ServicesPage({
         }
         actions={
           <>
-            <CheckRenewalsButton />
-            <NewServiceButton scope={{ clientId: "", clients: clientOptions, projects: [], products: [], currency: "EGP" }} />
+            {canManage && <CheckRenewalsButton />}
+            <NewServiceButton
+              scope={{ clientId: "", clients: clientOptions, projects: [], products: [], currency: DEFAULT_CURRENCY }}
+              showMoney={showMoney}
+              canCreate={canCreate}
+            />
           </>
         }
       />
 
-      {clientId && (
+      {(clientId || (inspect && !inspected)) && (
         <div className="flex flex-wrap gap-2">
-          <FilterChip label="Client" value={scopeName} clearHref="/services" />
+          {clientId && <FilterChip label="Client" value={scopeName} clearHref="/services" />}
+          {inspect && !inspected && (
+            <FilterChip
+              label="Service"
+              value="Not found — it may have been deleted"
+              clearHref={clientId ? `/services?client=${clientId}` : "/services"}
+            />
+          )}
         </div>
       )}
 
@@ -137,7 +177,7 @@ export default async function ServicesPage({
         />
         <StatTile
           label="Services per year"
-          value={moneyByCurrency(yearly, true)}
+          value={showMoney ? moneyByCurrency(yearly, true) || "0" : "Finance only"}
           sub={`${services.length - pending.length - services.filter((s) => s.status === "CANCELLED").length} active · ${pending.length} not registered`}
         />
       </div>
@@ -150,6 +190,11 @@ export default async function ServicesPage({
           scopes={scopes}
           showClient
           showProject
+          showMoney={showMoney}
+          canManage={canManage}
+          canRemind={canRemind}
+          canDelete={canDelete}
+          inspectable
           emailConfigured={emailConfigured}
         />
       )}
@@ -162,17 +207,27 @@ export default async function ServicesPage({
           scopes={scopes}
           showClient
           showProject
+          showMoney={showMoney}
+          canManage={canManage}
+          canRemind={canRemind}
+          canDelete={canDelete}
+          inspectable
           emailConfigured={emailConfigured}
         />
       )}
 
       <ServicesList
         title={due.length + pending.length > 0 ? "Everything else" : "All services"}
-        description="Inside their paid term, or cancelled"
+        description="Inside their paid term, bought outright, or cancelled"
         services={rest}
         scopes={scopes}
         showClient
         showProject
+        showMoney={showMoney}
+        canManage={canManage}
+        canRemind={canRemind}
+        canDelete={canDelete}
+        inspectable
         emailConfigured={emailConfigured}
         emptyText={
           services.length === 0
@@ -182,6 +237,130 @@ export default async function ServicesPage({
             : "Nothing else — every service is listed above."
         }
       />
+
+      {inspected && (
+        <ServiceInspector
+          service={inspected}
+          showMoney={showMoney}
+          canManage={canManage}
+          canRemind={canRemind}
+          emailConfigured={emailConfigured}
+          termPaymentId={termPayment?.id ?? null}
+        />
+      )}
     </div>
+  );
+}
+
+const DEFAULT_CURRENCY = "EGP";
+
+function ServiceInspector({
+  service,
+  showMoney,
+  canManage,
+  canRemind,
+  emailConfigured,
+  termPaymentId,
+}: {
+  service: ServiceScreenRow;
+  showMoney: boolean;
+  canManage: boolean;
+  canRemind: boolean;
+  emailConfigured: boolean;
+  termPaymentId: string | null;
+}) {
+  const expires = service.expiresAt ? new Date(service.expiresAt) : null;
+  const oneTime = isOneTime(service);
+  return (
+    <InspectSheet
+      open
+      title={service.name}
+      subtitle={`${KIND_LABEL[service.kind]}${service.provider ? ` · ${service.provider}` : ""}`}
+      status={<StatusPill registry="clientServiceState" value={service.state} variant="dot" />}
+      footer={
+        <ServiceInspectorActions
+          service={service}
+          showMoney={showMoney}
+          canManage={canManage}
+          canRemind={canRemind}
+          emailConfigured={emailConfigured}
+          termPaymentId={termPaymentId}
+        />
+      }
+    >
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-base">
+        <div>
+          <dt className="telemetry text-subtle-foreground">Client</dt>
+          <dd className="mt-1">
+            <EntityLink type="client" id={service.clientId}>
+              {service.clientLabel}
+            </EntityLink>
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Project</dt>
+          <dd className="mt-1 text-muted-foreground">
+            {service.projectId ? (
+              <EntityLink type="project" id={service.projectId}>
+                {service.projectName ?? "Project"}
+              </EntityLink>
+            ) : (
+              "Not on a project"
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Price</dt>
+          <dd className={showMoney ? "mt-1 font-mono tabular-nums" : "mt-1 text-subtle-foreground"}>
+            {showMoney ? `${money(service.price, service.currency)} ${perTermLabel(service.termMonths)}` : "Finance only"}
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Billing</dt>
+          <dd className="mt-1 text-muted-foreground">
+            {oneTime
+              ? service.projectId
+                ? "One payment on the project at purchase — never renews"
+                : "Bought once — recorded by hand on the payments screen"
+              : service.firstTermIncluded
+                ? "First term in the project fee"
+                : service.projectId
+                  ? "Each term opens a payment on the project"
+                  : "Recorded by hand on the payments screen"}
+          </dd>
+        </div>
+        <div>
+          <dt className="telemetry text-subtle-foreground">Expires</dt>
+          <dd className="mt-1 font-mono tabular-nums">
+            {oneTime
+              ? "Never — bought once"
+              : expires
+                ? `${date(expires)} · ${expiryPhrase(expires)}`
+                : "No expiry until registered"}
+          </dd>
+        </div>
+        {!oneTime && (
+          <div>
+            <dt className="telemetry text-subtle-foreground">Reminded</dt>
+            <dd className="mt-1 text-muted-foreground">
+              {service.reminded && service.reminderSentAt ? date(service.reminderSentAt) : "Not this cycle"}
+            </dd>
+          </div>
+        )}
+        {service.reference && (
+          <div>
+            <dt className="telemetry text-subtle-foreground">Reference</dt>
+            <dd className="mt-1 font-mono text-muted-foreground">{service.reference}</dd>
+          </div>
+        )}
+        {service.lastRenewedAt && (
+          <div>
+            <dt className="telemetry text-subtle-foreground">Last renewed</dt>
+            <dd className="mt-1 text-muted-foreground">{date(service.lastRenewedAt)}</dd>
+          </div>
+        )}
+      </dl>
+      {service.notes && <p className="mt-4 whitespace-pre-wrap text-base text-muted-foreground">{service.notes}</p>}
+    </InspectSheet>
   );
 }

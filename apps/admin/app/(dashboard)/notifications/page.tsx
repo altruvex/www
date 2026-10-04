@@ -1,43 +1,106 @@
 import Link from "next/link";
-import { prisma } from "@repo/database";
+import { prisma, type Prisma } from "@repo/database";
 import { Bell } from "lucide-react";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
-import { EmptyState } from "@/components/os/empty-state";
+import { EmptyInline, EmptyState } from "@/components/os/empty-state";
+import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
+import { Pager } from "@/components/os/pager";
 import { when, dateTime } from "@/lib/format";
-import { cn } from "@/lib/utils";
-import { DeleteRecordButton } from "@/components/os/delete-record";
 import { entityHref } from "@/lib/entity-links";
-import { requireAdminPage } from "@/lib/require-admin";
-import { statusOf, toneDot } from "@/lib/status";
+import { getOperator } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { roleCanOpen } from "@/lib/action-center";
+import { notificationType, statusOf } from "@/lib/status";
 import { MarkAllRead } from "./mark-all-read";
-import { NotificationLink } from "./notification-link";
+import { NotificationList, type NotificationRowData } from "./notification-list";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
-  // Writers create one row per operator, so this page is the signed-in
-  // operator's own inbox — never the whole team's rows interleaved.
-  const session = await requireAdminPage();
-  const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 200,
+const PAGE_SIZE = 50;
+const TYPES = Object.keys(notificationType);
+const TYPE_LABELS = Object.fromEntries(TYPES.map((t) => [t, statusOf("notificationType", t).label]));
+
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string; type?: string; page?: string }>;
+}) {
+  const denied = await gateRoute("/notifications");
+  if (denied) return denied;
+
+  const [operator, params] = await Promise.all([getOperator(), searchParams]);
+  if (!operator) return null;
+  const userId = operator.session.user.id;
+  const role = operator.role;
+
+  const unreadOnly = params.filter === "unread";
+  const type = params.type && TYPES.includes(params.type) ? params.type : undefined;
+  const requestedPage = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
+
+  const mine: Prisma.NotificationWhereInput = { userId };
+  const where: Prisma.NotificationWhereInput = {
+    ...mine,
+    ...(unreadOnly ? { read: false } : {}),
+    ...(type ? { type: type as Prisma.NotificationWhereInput["type"] } : {}),
+  };
+
+  const matching = await prisma.notification.count({ where });
+  const page = Math.min(requestedPage, Math.max(1, Math.ceil(matching / PAGE_SIZE)));
+
+  const [total, unread, byType, notifications] = await Promise.all([
+    prisma.notification.count({ where: mine }),
+    prisma.notification.count({ where: { ...mine, read: false } }),
+    prisma.notification.groupBy({
+      by: ["type"],
+      where: { ...mine, ...(unreadOnly ? { read: false } : {}) },
+      _count: { _all: true },
+    }),
+    prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const typeCount = new Map(byType.map((row) => [row.type as string, row._count._all]));
+
+  const rows: NotificationRowData[] = notifications.map((n) => {
+    const href = entityHref(n.entityType, n.entityId);
+    return {
+      id: n.id,
+      type: n.type,
+      title: n.title,
+      message: n.message,
+      read: n.read,
+      href: href && roleCanOpen(role, href) ? href : null,
+      createdAt: n.createdAt.toISOString(),
+      when: when(n.createdAt),
+      at: dateTime(n.createdAt),
+    };
   });
-  const unread = notifications.filter((n) => !n.read);
+
+  const hrefFor = (p: number) => {
+    const next = new URLSearchParams();
+    if (unreadOnly) next.set("filter", "unread");
+    if (type) next.set("type", type);
+    if (p > 1) next.set("page", String(p));
+    const query = next.toString();
+    return query ? `/notifications?${query}` : "/notifications";
+  };
 
   return (
     <div className="space-y-4">
       <PageHeader
         title="Notifications"
         crumbs={[{ label: "Notifications" }]}
-        description="What the system wanted to tell you. Anything that needs a decision also appears in the action centre — this is the record, that is the queue."
-        meta={<span>{unread.length} unread of {notifications.length}</span>}
-        actions={unread.length > 0 ? <MarkAllRead /> : undefined}
+        description="What the system wanted to tell you. Anything that needs a decision is also in the action centre — this is the record, that is the queue."
+        meta={<span>{unread} unread of {total}</span>}
+        actions={unread > 0 ? <MarkAllRead unread={unread} /> : undefined}
       />
 
-      {notifications.length === 0 ? (
+      {total === 0 ? (
         <EmptyState
           icon={Bell}
           title="No notifications"
@@ -49,73 +112,41 @@ export default async function NotificationsPage() {
           }
         />
       ) : (
-        <Panel flush>
-          <ul className="rows">
-            {notifications.map((notification) => {
-              const href = entityHref(notification.entityType, notification.entityId);
-              const type = statusOf("notificationType", notification.type);
-              const body = (
-                <>
-                  <span
-                    className={cn(
-                      "mt-1.5 size-1.5 shrink-0 rounded-full",
-                      toneDot[type.tone],
-                      notification.read && "opacity-30",
-                    )}
-                    title={type.label}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-baseline justify-between gap-3">
-                      <span
-                        className={cn(
-                          "min-w-0 truncate text-base",
-                          notification.read ? "text-muted-foreground" : "font-medium",
-                        )}
-                      >
-                        {notification.title}
-                      </span>
-                      <time
-                        dateTime={notification.createdAt.toISOString()}
-                        title={dateTime(notification.createdAt)}
-                        className="shrink-0 font-mono text-micro tabular-nums text-subtle-foreground"
-                      >
-                        {when(notification.createdAt)}
-                      </time>
-                    </span>
-                    <span className="mt-0.5 block truncate text-meta text-muted-foreground">
-                      {notification.message}
-                    </span>
-                  </span>
-                </>
-              );
-              return (
-                <li key={notification.id} className="flex items-start gap-1 pe-2">
-                  <NotificationLink
-                    id={notification.id}
-                    href={href}
-                    read={notification.read}
-                    className="flex min-w-0 flex-1 gap-2.5 px-3 py-2.5 hover:bg-surface/70"
-                  >
-                    {body}
-                  </NotificationLink>
-                  {/* A notification is a message about a record, not the record
-                      itself — deleting one destroys nothing but the message. */}
-                  <span className="pt-2">
-                    <DeleteRecordButton
-                      entity="notification"
-                      id={notification.id}
-                      label={notification.title}
-                      size="icon-sm"
-                    >
-                      {null}
-                    </DeleteRecordButton>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </Panel>
+        <>
+          <FilterBar label="Filter notifications">
+            <FilterChip param="filter" label="All" count={total} />
+            <FilterChip param="filter" value="unread" label="Unread" count={unread} />
+            <span className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden />
+            <FilterChip param="type" label="Any type" />
+            {TYPES.filter((t) => typeCount.has(t)).map((t) => (
+              <FilterChip key={t} param="type" value={t} label={TYPE_LABELS[t]} count={typeCount.get(t)} />
+            ))}
+          </FilterBar>
+          <ActiveFilters
+            labels={{ filter: "Show", type: "Type" }}
+            valueLabels={{ filter: { unread: "Unread" }, type: TYPE_LABELS }}
+          />
+
+          <Panel flush>
+            {rows.length === 0 ? (
+              <EmptyInline
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/notifications">Show all notifications</Link>
+                  </Button>
+                }
+              >
+                {unreadOnly && unread === 0
+                  ? "Everything is read. New notifications show here unread until you open them."
+                  : "No notification matches this filter."}
+              </EmptyInline>
+            ) : (
+              <NotificationList rows={rows} />
+            )}
+          </Panel>
+
+          <Pager page={page} pageSize={PAGE_SIZE} total={matching} hrefFor={hrefFor} noun="notifications" />
+        </>
       )}
     </div>
   );

@@ -21,7 +21,9 @@ import {
   Textarea,
 } from "@repo/ui";
 
-import type { ServiceRow } from "@/lib/client-services";
+import { DateField } from "@/components/os/date-field";
+import { SearchSelect } from "@/components/os/combobox-select";
+import type { ServiceScreenRow } from "@/lib/client-services";
 import {
   CLIENT_SERVICE_KINDS,
   DEFAULT_TERM_MONTHS,
@@ -30,30 +32,33 @@ import {
   termLabel,
 } from "@/lib/service-lifecycle";
 import type { ClientServiceKind } from "@repo/database";
+import { CURRENCIES } from "@repo/pricing-schema";
 
-/** A client offered for a new service on a screen that is not already inside one. */
+export interface ProjectOption {
+  id: string;
+  name: string;
+  currency?: string | null;
+}
+
 export interface ClientOption {
   id: string;
   label: string;
-  projects: { id: string; name: string }[];
+  projects: ProjectOption[];
   products: { id: string; name: string }[];
 }
 
 export interface ServiceScope {
-  /** Empty when the sheet should ask which client (see `clients`). */
   clientId: string;
-  /** Offered as a picker when `clientId` is empty. */
   clients?: ClientOption[];
-  /** Pre-selected when the sheet is opened from a project. */
   projectId?: string | null;
-  projects: { id: string; name: string }[];
+  projects: ProjectOption[];
   products: { id: string; name: string }[];
   currency: string;
 }
 
 const NONE = "__none__";
 const TERMS = [1, 3, 6, 12, 24, 36, 60, 120];
-const CURRENCIES = ["EGP", "USD"];
+const ONE_TIME = "one-time";
 
 const PLACEHOLDER: Record<ClientServiceKind, string> = {
   DOMAIN: "newlight.com",
@@ -64,7 +69,6 @@ const PLACEHOLDER: Record<ClientServiceKind, string> = {
   OTHER: "What the client holds through us",
 };
 
-/** YYYY-MM-DD for a date input, in UTC — the dates are stored as UTC midnights. */
 function dayValue(value: Date | string | null | undefined): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
@@ -75,14 +79,12 @@ export interface ServiceResponse {
   success: boolean;
   message?: string;
   issues?: { message: string }[];
-  /** Present when the action started a term: whether a payment was opened, or why not. */
   billing?:
-    | { opened: true; amount: number; currency: string }
+    | { opened: true; amount?: number; currency?: string }
     | { opened: false; reason: string }
     | null;
 }
 
-/** Posts to the services route; null on any failure, after telling the operator why. */
 async function send(
   router: ReturnType<typeof useRouter>,
   method: "POST" | "PATCH",
@@ -111,20 +113,15 @@ async function send(
   }
 }
 
-/** The line under a success toast saying what happened to the money. */
 export function billingDescription(data: ServiceResponse | null): string | undefined {
   const billing = data?.billing;
   if (!billing) return undefined;
-  return billing.opened
-    ? `A pending payment of ${new Intl.NumberFormat("en-US", { style: "currency", currency: billing.currency, maximumFractionDigits: 0 }).format(billing.amount)} was added to the project.`
-    : `No payment opened: ${billing.reason}`;
+  if (!billing.opened) return `No payment opened: ${billing.reason}`;
+  const { amount, currency } = billing;
+  if (amount == null || !currency) return "A pending payment was added to the project.";
+  return `A pending payment of ${new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount)} was added to the project.`;
 }
 
-/**
- * "Read from registry" — fetches a domain's expiry over RDAP to pre-fill a
- * date field. It fills, it does not save: the operator still sees the date and
- * submits it, and a registry that has nothing to say says so.
- */
 export function RegistryButton({
   domain,
   onFound,
@@ -171,22 +168,15 @@ export function RegistryButton({
 
 export { send as sendServiceRequest };
 
-/**
- * Adding or editing a client service.
- *
- * "Already registered" is the fork that matters: a service that exists at the
- * provider gets its real dates and starts raising renewal alerts; one that is
- * only agreed stays PENDING with no dates, because an invented expiry would
- * raise alerts against a day that never existed.
- */
 export function ServiceSheet({
   scope,
   service,
+  showMoney = false,
   onClose,
 }: {
   scope: ServiceScope;
-  /** Present = edit. */
-  service?: ServiceRow;
+  service?: ServiceScreenRow;
+  showMoney?: boolean;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -197,10 +187,13 @@ export function ServiceSheet({
   const [name, setName] = React.useState(service?.name ?? "");
   const [provider, setProvider] = React.useState(service?.provider ?? "");
   const [reference, setReference] = React.useState(service?.reference ?? "");
-  const [price, setPrice] = React.useState(service ? String(service.price) : "");
+  const [price, setPrice] = React.useState(service?.price != null ? String(service.price) : "");
   const [cost, setCost] = React.useState(service?.cost != null ? String(service.cost) : "");
   const [currency, setCurrency] = React.useState(service?.currency ?? scope.currency);
-  const [termMonths, setTermMonths] = React.useState(service?.termMonths ?? DEFAULT_TERM_MONTHS.DOMAIN);
+  const [termMonths, setTermMonths] = React.useState<number | null>(
+    service ? service.termMonths : DEFAULT_TERM_MONTHS.DOMAIN,
+  );
+  const oneTime = termMonths === null;
   const [firstTermIncluded, setFirstTermIncluded] = React.useState(service?.firstTermIncluded ?? false);
   const [autoRenew, setAutoRenew] = React.useState(service?.autoRenew ?? false);
   const [projectId, setProjectId] = React.useState(service?.projectId ?? scope.projectId ?? NONE);
@@ -211,9 +204,6 @@ export function ServiceSheet({
   const [startedAt, setStartedAt] = React.useState(dayValue(new Date()));
   const [expiresAt, setExpiresAt] = React.useState(service?.expiresAt ? dayValue(service.expiresAt) : "");
 
-  // Picking a client re-scopes the project and product lists — the server
-  // refuses a project that belongs to somebody else, so offering one would be
-  // offering a guaranteed error.
   const [pickedClientId, setPickedClientId] = React.useState(scope.clientId || scope.clients?.[0]?.id || "");
   const picked = scope.clientId ? null : scope.clients?.find((c) => c.id === pickedClientId) ?? null;
   const clientId = scope.clientId || pickedClientId;
@@ -221,14 +211,16 @@ export function ServiceSheet({
   const products = picked ? picked.products : scope.products;
 
   const priceValue = Number(price);
-  const priceOk = Number.isInteger(priceValue) && priceValue > 0;
+  const moneyFields = showMoney || !service;
+  const priceOk = !moneyFields || (Number.isInteger(priceValue) && priceValue > 0);
   const costValue = cost.trim() === "" ? null : Number(cost);
   const costOk = costValue === null || (Number.isInteger(costValue) && costValue >= 0);
   const canSubmit = name.trim().length > 0 && priceOk && costOk && !busy && Boolean(scope.clientId || pickedClientId);
 
-  // What the expiry will be if left blank, shown rather than applied silently.
   const derivedExpiry =
-    registered && startedAt ? dayValue(firstExpiry(new Date(startedAt), termMonths)) : "";
+    registered && startedAt && termMonths !== null
+      ? dayValue(firstExpiry(new Date(startedAt), termMonths))
+      : "";
 
 
   async function submit(event: React.FormEvent) {
@@ -241,12 +233,11 @@ export function ServiceSheet({
       name: name.trim(),
       provider: provider.trim() || null,
       reference: reference.trim() || null,
-      currency,
-      price: priceValue,
-      cost: costValue,
+      ...(moneyFields ? { currency, price: priceValue } : {}),
+      ...(showMoney ? { cost: costValue } : {}),
       termMonths,
-      firstTermIncluded,
-      autoRenew,
+      firstTermIncluded: oneTime ? false : firstTermIncluded,
+      autoRenew: oneTime ? false : autoRenew,
       projectId: projectId === NONE ? null : projectId,
       productId: productId === NONE ? null : productId,
       notes: notes.trim() || null,
@@ -255,9 +246,7 @@ export function ServiceSheet({
     let saved: boolean;
     if (service) {
       saved = Boolean(await send(router, "PATCH", { action: "update", id: service.id, fields }));
-      // The expiry is its own action server-side, so correcting it is audited
-      // as a date change rather than buried inside a field edit.
-      if (saved && service.status !== "PENDING" && expiresAt && expiresAt !== dayValue(service.expiresAt)) {
+      if (saved && !oneTime && service.status !== "PENDING" && expiresAt && expiresAt !== dayValue(service.expiresAt)) {
         saved = Boolean(await send(router, "PATCH", { action: "set-expiry", id: service.id, expiresAt }));
       }
     } else {
@@ -265,7 +254,7 @@ export function ServiceSheet({
         clientId,
         ...fields,
         startedAt: registered && startedAt ? startedAt : null,
-        expiresAt: registered && expiresAt ? expiresAt : null,
+        expiresAt: registered && !oneTime && expiresAt ? expiresAt : null,
       }));
     }
 
@@ -274,9 +263,13 @@ export function ServiceSheet({
     toast.success(
       service
         ? `${name.trim()} saved.`
-        : registered
-          ? `${name.trim()} added — renewal alerts start 30 days before it expires.`
-          : `${name.trim()} added as not registered. Mark it registered once it is bought.`,
+        : oneTime
+          ? registered
+            ? `${name.trim()} added as bought — it never renews.`
+            : `${name.trim()} added as not bought yet. Mark it bought once it is.`
+          : registered
+            ? `${name.trim()} added — renewal alerts start 30 days before it expires.`
+            : `${name.trim()} added as not registered. Mark it registered once it is bought.`,
     );
     onClose();
     router.refresh();
@@ -296,25 +289,20 @@ export function ServiceSheet({
         <form className="space-y-3 overflow-y-auto p-4" onSubmit={submit}>
           {!editing && !scope.clientId && scope.clients && (
             <FormField label="Client">
-              <Select
+              <SearchSelect
+                ariaLabel="Client"
                 value={pickedClientId}
-                onValueChange={(value) => {
+                onChange={(value) => {
                   setPickedClientId(value);
                   setProjectId(NONE);
                   setProductId(NONE);
+                  const latest = scope.clients?.find((c) => c.id === value)?.projects[0];
+                  setCurrency(latest?.currency ?? scope.currency);
                 }}
-              >
-                <SelectTrigger className="w-full" aria-label="Client">
-                  <SelectValue placeholder="Pick a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {scope.clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={scope.clients.map((client) => ({ value: client.id, label: client.label }))}
+                placeholder="Pick a client"
+                searchPlaceholder="Search clients"
+              />
             </FormField>
           )}
 
@@ -325,7 +313,7 @@ export function ServiceSheet({
                 onValueChange={(value) => {
                   const next = value as ClientServiceKind;
                   setKind(next);
-                  if (!editing) setTermMonths(DEFAULT_TERM_MONTHS[next]);
+                  if (!editing && !oneTime) setTermMonths(DEFAULT_TERM_MONTHS[next]);
                 }}
               >
                 <SelectTrigger className="w-full" aria-label="Type">
@@ -361,110 +349,33 @@ export function ServiceSheet({
             />
           </FormField>
 
-          <div className="grid grid-cols-[1fr_5.5rem] gap-3">
-            <FormField
-              label="Client pays per term"
-              hint={priceOk || price === "" ? undefined : "A whole amount above zero"}
-            >
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                step={1}
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                aria-invalid={price !== "" && !priceOk}
-                className="font-mono tabular-nums"
-                required
-              />
-            </FormField>
-            <FormField label="Currency">
-              <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-full" aria-label="Currency">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((code) => (
-                    <SelectItem key={code} value={code}>
-                      {code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <FormField label="Term">
-              <Select value={String(termMonths)} onValueChange={(v) => setTermMonths(Number(v))}>
-                <SelectTrigger className="w-full" aria-label="Term">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(TERMS.includes(termMonths) ? TERMS : [...TERMS, termMonths].sort((a, b) => a - b)).map(
-                    (months) => (
-                      <SelectItem key={months} value={String(months)}>
-                        {termLabel(months)}
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-            </FormField>
-            <FormField label="Our cost per term" hint="Internal. Never shown to the client.">
-              <Input
-                type="number"
-                inputMode="numeric"
-                min={0}
-                step={1}
-                value={cost}
-                onChange={(e) => setCost(e.target.value)}
-                aria-invalid={!costOk}
-                className="font-mono tabular-nums"
-              />
-            </FormField>
-          </div>
-
-          <SwitchRow
-            label="First term included in the project fee"
-            hint="The contract's “Year 1 included”. Billing starts at the first renewal."
-            checked={firstTermIncluded}
-            onChange={setFirstTermIncluded}
-          />
-          <SwitchRow
-            label="Provider renews it automatically"
-            hint="Alerts still fire — the client still owes the next term."
-            checked={autoRenew}
-            onChange={setAutoRenew}
-          />
-
-          {(projects.length > 0 || products.length > 0) && (
-            <div className="grid grid-cols-2 gap-3">
-              <FormField label="Project">
-                <Select value={projectId} onValueChange={setProjectId}>
-                  <SelectTrigger className="w-full" aria-label="Project">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Not linked</SelectItem>
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {moneyFields && (
+            <div className="grid grid-cols-[1fr_5.5rem] gap-3">
+              <FormField
+                label={oneTime ? "Client pays" : "Client pays per term"}
+                hint={priceOk || price === "" ? undefined : "A whole amount above zero"}
+              >
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  step={1}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  aria-invalid={price !== "" && !priceOk}
+                  className="font-mono tabular-nums"
+                  required
+                />
               </FormField>
-              <FormField label="Serves product">
-                <Select value={productId} onValueChange={setProductId}>
-                  <SelectTrigger className="w-full" aria-label="Product">
+              <FormField label="Currency">
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger className="w-full" aria-label="Currency">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={NONE}>Not linked</SelectItem>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}
+                    {CURRENCIES.map((code) => (
+                      <SelectItem key={code} value={code}>
+                        {code}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -473,42 +384,127 @@ export function ServiceSheet({
             </div>
           )}
 
+          <div className={showMoney ? "grid grid-cols-2 gap-3" : undefined}>
+            <FormField label="Term" hint={oneTime ? "Bought once. Billed once, never renews." : undefined}>
+              <Select
+                value={termMonths === null ? ONE_TIME : String(termMonths)}
+                onValueChange={(v) => setTermMonths(v === ONE_TIME ? null : Number(v))}
+              >
+                <SelectTrigger className="w-full" aria-label="Term">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ONE_TIME}>{termLabel(null)}</SelectItem>
+                  {(termMonths === null || TERMS.includes(termMonths)
+                    ? TERMS
+                    : [...TERMS, termMonths].sort((a, b) => a - b)
+                  ).map((months) => (
+                    <SelectItem key={months} value={String(months)}>
+                      {termLabel(months)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+            {showMoney && (
+              <FormField label={oneTime ? "Our cost" : "Our cost per term"} hint="Internal. Never shown to the client.">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  step={1}
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                  aria-invalid={!costOk}
+                  className="font-mono tabular-nums"
+                />
+              </FormField>
+            )}
+          </div>
+
+          {!oneTime && (
+            <>
+              <SwitchRow
+                label="First term included in the project fee"
+                hint="The contract's “Year 1 included”. Billing starts at the first renewal."
+                checked={firstTermIncluded}
+                onChange={setFirstTermIncluded}
+              />
+              <SwitchRow
+                label="Provider renews it automatically"
+                hint="Alerts still fire — the client still owes the next term."
+                checked={autoRenew}
+                onChange={setAutoRenew}
+              />
+            </>
+          )}
+
+          {(projects.length > 0 || products.length > 0) && (
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Project">
+                <SearchSelect
+                  ariaLabel="Project"
+                  value={projectId}
+                  onChange={(value) => {
+                    setProjectId(value);
+                    if (editing) return;
+                    const projectCurrency = projects.find((p) => p.id === value)?.currency;
+                    if (projectCurrency) setCurrency(projectCurrency);
+                  }}
+                  options={[
+                    { value: NONE, label: "Not linked" },
+                    ...projects.map((project) => ({ value: project.id, label: project.name })),
+                  ]}
+                  searchPlaceholder="Search projects"
+                />
+              </FormField>
+              <FormField label="Serves product">
+                <SearchSelect
+                  ariaLabel="Product"
+                  value={productId}
+                  onChange={setProductId}
+                  options={[
+                    { value: NONE, label: "Not linked" },
+                    ...products.map((product) => ({ value: product.id, label: product.name })),
+                  ]}
+                  searchPlaceholder="Search products"
+                />
+              </FormField>
+            </div>
+          )}
+
           {!editing && (
             <div className="space-y-3 rounded-md border border-border p-3">
               <SwitchRow
-                label="Already registered at the provider"
+                label={oneTime ? "Already bought" : "Already registered at the provider"}
                 hint={
-                  registered
-                    ? "Renewal alerts start 30 days before the expiry date."
-                    : "Saved as not registered — no dates, no alerts, until you mark it registered."
+                  oneTime
+                    ? registered
+                      ? "Owned from the date below. No expiry, no alerts — ever."
+                      : "Saved as not bought yet, until you mark it bought."
+                    : registered
+                      ? "Renewal alerts start 30 days before the expiry date."
+                      : "Saved as not registered — no dates, no alerts, until you mark it registered."
                 }
                 checked={registered}
                 onChange={setRegistered}
               />
               {registered && (
                 <div className="grid grid-cols-2 gap-3">
-                  <FormField label="Started">
-                    <Input
-                      type="date"
-                      value={startedAt}
-                      onChange={(e) => setStartedAt(e.target.value)}
-                      required
-                    />
+                  <FormField label={oneTime ? "Bought on" : "Started"}>
+                    <DateField value={startedAt} onChange={setStartedAt} />
                   </FormField>
-                  <FormField
-                    label="Expires"
-                    hint={expiresAt ? "The provider's date." : `Blank = ${derivedExpiry || "start + term"}`}
-                  >
-                    <Input
-                      type="date"
-                      value={expiresAt}
-                      min={startedAt || undefined}
-                      onChange={(e) => setExpiresAt(e.target.value)}
-                    />
-                  </FormField>
+                  {!oneTime && (
+                    <FormField
+                      label="Expires"
+                      hint={expiresAt ? "The provider's date." : `Blank = ${derivedExpiry || "start + term"}`}
+                    >
+                      <DateField value={expiresAt} min={startedAt || undefined} onChange={setExpiresAt} />
+                    </FormField>
+                  )}
                 </div>
               )}
-              {registered && kind === "DOMAIN" && (
+              {registered && !oneTime && kind === "DOMAIN" && (
                 <RegistryButton
                   domain={name}
                   onFound={(found) => {
@@ -520,10 +516,10 @@ export function ServiceSheet({
             </div>
           )}
 
-          {editing && service!.status !== "PENDING" && (
+          {editing && !oneTime && service!.status !== "PENDING" && (
             <div className="space-y-1">
               <FormField label="Expires" hint="Correct it to what the provider's dashboard says.">
-                <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+                <DateField value={expiresAt} onChange={setExpiresAt} />
               </FormField>
               {kind === "DOMAIN" && (
                 <RegistryButton domain={name} onFound={(found) => setExpiresAt(found.expiresAt)} />
@@ -559,19 +555,22 @@ export function ServiceSheet({
   );
 }
 
-/** Registering a PENDING service: the day it was bought and the provider's expiry. */
 export function ActivateServiceSheet({
   service,
   onClose,
 }: {
-  service: ServiceRow;
+  service: ServiceScreenRow;
   onClose: () => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [startedAt, setStartedAt] = React.useState(dayValue(new Date()));
   const [expiresAt, setExpiresAt] = React.useState("");
-  const derived = startedAt ? dayValue(firstExpiry(new Date(startedAt), service.termMonths)) : "";
+  const oneTime = service.termMonths === null;
+  const derived =
+    startedAt && service.termMonths !== null
+      ? dayValue(firstExpiry(new Date(startedAt), service.termMonths))
+      : "";
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -581,13 +580,16 @@ export function ActivateServiceSheet({
       action: "activate",
       id: service.id,
       startedAt,
-      expiresAt: expiresAt || null,
+      expiresAt: oneTime ? null : expiresAt || null,
     });
     setBusy(false);
     if (!saved) return;
-    toast.success(`${service.name} is registered — expires ${expiresAt || derived}.`, {
-      description: billingDescription(saved),
-    });
+    toast.success(
+      oneTime
+        ? `${service.name} is bought — it never renews.`
+        : `${service.name} is registered — expires ${expiresAt || derived}.`,
+      { description: billingDescription(saved) },
+    );
     onClose();
     router.refresh();
   }
@@ -596,42 +598,44 @@ export function ActivateServiceSheet({
     <Sheet open onOpenChange={(next) => !next && onClose()}>
       <SheetContent side="end" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>Mark {service.name} registered</SheetTitle>
+          <SheetTitle>Mark {service.name} {oneTime ? "bought" : "registered"}</SheetTitle>
           <SheetDescription>
-            From here it counts down to its expiry and raises renewal alerts at 30, 14, 7 and 1
-            days.
+            {oneTime
+              ? "Bought once: no expiry, no renewal alerts, ever."
+              : "From here it counts down to its expiry and raises renewal alerts at 30, 14, 7 and 1 days."}
           </SheetDescription>
         </SheetHeader>
         <form className="space-y-3 p-4" onSubmit={submit}>
           <div className="grid grid-cols-2 gap-3">
-            <FormField label="Registered on">
-              <Input type="date" value={startedAt} onChange={(e) => setStartedAt(e.target.value)} required />
+            <FormField label={oneTime ? "Bought on" : "Registered on"}>
+              <DateField value={startedAt} onChange={setStartedAt} />
             </FormField>
-            <FormField label="Expires" hint={expiresAt ? "The provider's date." : `Blank = ${derived}`}>
-              <Input
-                type="date"
-                value={expiresAt}
-                min={startedAt || undefined}
-                onChange={(e) => setExpiresAt(e.target.value)}
-              />
-            </FormField>
+            {!oneTime && (
+              <FormField label="Expires" hint={expiresAt ? "The provider's date." : `Blank = ${derived}`}>
+                <DateField value={expiresAt} min={startedAt || undefined} onChange={setExpiresAt} />
+              </FormField>
+            )}
           </div>
-          {service.kind === "DOMAIN" && (
+          {!oneTime && service.kind === "DOMAIN" && (
             <RegistryButton domain={service.name} onFound={(found) => setExpiresAt(found.expiresAt)} />
           )}
           <p className="text-meta text-subtle-foreground">
-            {service.firstTermIncluded
-              ? "The first term is inside the project fee, so no payment is opened now."
-              : service.projectId
-                ? `Opens a pending payment for the first term on ${service.projectName ?? "the project"}.`
-                : "Not on a project, so no payment row is opened here — record the first term on the payments screen when you invoice it."}
+            {oneTime
+              ? service.projectId
+                ? `Opens the one pending payment for the purchase on ${service.projectName ?? "the project"}.`
+                : "Not on a project, so no payment row is opened here — record the purchase on the payments screen when you invoice it."
+              : service.firstTermIncluded
+                ? "The first term is inside the project fee, so no payment is opened now."
+                : service.projectId
+                  ? `Opens a pending payment for the first term on ${service.projectName ?? "the project"}.`
+                  : "Not on a project, so no payment row is opened here — record the first term on the payments screen when you invoice it."}
           </p>
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" variant="brand" disabled={busy || !startedAt}>
-              {busy ? "Saving…" : "Mark registered"}
+              {busy ? "Saving…" : oneTime ? "Mark bought" : "Mark registered"}
             </Button>
           </div>
         </form>

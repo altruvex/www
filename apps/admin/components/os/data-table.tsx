@@ -12,7 +12,9 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SelectionDock } from "@/components/os/selection-dock";
+import { SelectionDock, type DockConfirm } from "@/components/os/selection-dock";
+import type { ConfirmResult } from "@/components/os/confirm-dialog";
+import { keepsScroll, useRowOpen } from "@/components/os/row-open";
 import { Checkbox } from "@repo/ui";
 import { Input } from "@repo/ui";
 import { Button } from "@repo/ui";
@@ -27,36 +29,17 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui";
 
-/* --------------------------------------------------------------------------
-   DataTable — the load-bearing component of this application.
-
-   Everything the brief asks a table to do lives here so that no screen has to
-   reimplement it: column visibility, sorting, search, selection, bulk actions,
-   density, saved view persistence, and a genuinely different mobile rendering
-   (cards, not a shrunken table — §33).
-
-   Deliberately NOT a generic virtualised grid. Altruvex operates in the tens
-   to low hundreds of rows per entity; a 40kB table engine would buy nothing
-   and cost interaction latency.
-   -------------------------------------------------------------------------- */
-
 export interface Column<T> {
   id: string;
   header: string;
-  /** Renders the cell. Keep it cheap — this runs for every row on every sort. */
   cell: (row: T) => React.ReactNode;
-  /** Comparable value for sorting. Omit to make the column unsortable. */
   sortValue?: (row: T) => string | number | null;
-  /** Text used by the search box. Omit to exclude the column from search. */
   searchValue?: (row: T) => string | null | undefined;
   width?: string;
   align?: "start" | "end";
-  /** Column can be hidden by the operator. Identity columns should not be. */
   hideable?: boolean;
   defaultHidden?: boolean;
-  /** Numeric/ID columns get tabular figures and the mono face. */
   mono?: boolean;
-  /** Hide below the given breakpoint in the desktop table. */
   minWidth?: "sm" | "md" | "lg" | "xl";
 }
 
@@ -64,45 +47,26 @@ export interface BulkAction<T> {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
   destructive?: boolean;
-  onRun: (rows: T[]) => void | Promise<void>;
+  confirm?: DockConfirm | ((rows: T[]) => DockConfirm);
+  onRun: (rows: T[]) => ConfirmResult | Promise<ConfirmResult>;
 }
 
 export interface DataTableProps<T> {
-  /** Stable id — saved view state (columns, sort, density) is keyed on it. */
   tableId: string;
   rows: T[];
   columns: Column<T>[];
   rowKey: (row: T) => string;
-  /**
-   * Makes the whole row a link. Keyboard users get a real anchor in col 1.
-   * Return undefined for a row that has nowhere to go — that row stays plain
-   * text rather than linking to the page it is already on.
-   */
   rowHref?: (row: T) => string | undefined;
-  /**
-   * Opens a detail surface for the row when the record has no page of its own
-   * (an audit entry, a log line). Mutually exclusive with `rowHref` in practice:
-   * a row that navigates should be a real anchor, not a click handler.
-   */
   onRowClick?: (row: T) => void;
-  /** Column ids shown on the mobile card: [title, subtitle, ...meta]. */
   mobile?: { title: string; subtitle?: string; meta?: string[] };
   selectable?: boolean;
   bulkActions?: BulkAction<T>[];
-  /**
-   * Trailing per-row menu (edit, delete…). Rendered in its own narrow column
-   * so it never competes with the row's own link, and above the stretched
-   * target on the mobile card so it stays tappable.
-   */
   rowActions?: (row: T) => React.ReactNode;
-  /** Singular record noun the selection dock counts in: "lead", "payment". */
   selectionNoun?: string;
   searchPlaceholder?: string;
-  /** Extra controls rendered into the toolbar (status filters, date range…). */
   toolbar?: React.ReactNode;
   empty: React.ReactNode;
   initialSort?: { columnId: string; dir: "asc" | "desc" };
-  /** Rows to show before "show more". Null disables paging. */
   pageSize?: number | null;
 }
 
@@ -127,7 +91,6 @@ function saveView(tableId: string, view: ViewState) {
   try {
     window.localStorage.setItem(`avx.table.${tableId}`, JSON.stringify(view));
   } catch {
-    /* private mode, quota, blocked storage — the table still works */
   }
 }
 
@@ -156,6 +119,7 @@ export function DataTable<T>({
   initialSort = undefined,
   pageSize = 50,
 }: DataTableProps<T>) {
+  const rowOpen = useRowOpen();
   const [query, setQuery] = React.useState("");
   const [sort, setSort] = React.useState<SortState>(initialSort ?? null);
   const [hidden, setHidden] = React.useState<Set<string>>(
@@ -168,12 +132,8 @@ export function DataTable<T>({
   >("comfortable");
   const [hydrated, setHydrated] = React.useState(false);
 
-  // Saved view: read once on mount so SSR markup and first paint agree.
   React.useEffect(() => {
     const view = loadView(tableId);
-    // Deliberate: localStorage does not exist during SSR, so the saved view can
-    // only be applied after hydration. An initializer here would desync the
-    // server and client markup — this rule is waived on purpose.
     /* eslint-disable react-hooks/set-state-in-effect */
     if (view) {
       setHidden(new Set(view.hidden));
@@ -226,7 +186,7 @@ export function DataTable<T>({
       const av = col.sortValue!(a);
       const bv = col.sortValue!(b);
       if (av == null && bv == null) return 0;
-      if (av == null) return 1; // nulls always last, regardless of direction
+      if (av == null) return 1;
       if (bv == null) return -1;
       if (typeof av === "number" && typeof bv === "number")
         return (av - bv) * dir;
@@ -243,7 +203,7 @@ export function DataTable<T>({
     setSort((prev) => {
       if (prev?.columnId !== columnId) return { columnId, dir: "asc" };
       if (prev.dir === "asc") return { columnId, dir: "desc" };
-      return null; // third click clears — sorting is not a trap
+      return null;
     });
   }
 
@@ -262,7 +222,6 @@ export function DataTable<T>({
 
   return (
     <div className="space-y-3">
-      {/* ---- toolbar ---------------------------------------------------- */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1 sm:max-w-64">
           <Search className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
@@ -360,10 +319,6 @@ export function DataTable<T>({
         </div>
       </div>
 
-      {/* ---- bulk actions ------------------------------------------------
-          Not a banner above the rows: a dock floating over them (§33). Ticking
-          a checkbox no longer pushes the whole table down, and the actions stay
-          reachable at row four hundred. */}
       {selectable && (
         <SelectionDock
           count={selected.size}
@@ -373,18 +328,19 @@ export function DataTable<T>({
             label: action.label,
             icon: action.icon,
             destructive: action.destructive,
-            // The selection is dropped once the action resolves — leaving rows
-            // ticked after they have been mutated invites running the next
-            // action on a set the operator has stopped looking at.
+            confirm:
+              typeof action.confirm === "function"
+                ? action.confirm(selectedRows)
+                : action.confirm,
             onRun: async () => {
-              await action.onRun(selectedRows);
-              clearSelection();
+              const result = await action.onRun(selectedRows);
+              if (!(result && result.ok === false)) clearSelection();
+              return result;
             },
           }))}
         />
       )}
 
-      {/* ---- empty ------------------------------------------------------- */}
       {sorted.length === 0 ? (
         query ? (
           <div className="plane px-6 py-12 text-center">
@@ -406,10 +362,7 @@ export function DataTable<T>({
         )
       ) : (
         <>
-          {/* ---- desktop table ------------------------------------------ */}
           <div className="plane hidden overflow-x-auto md:block">
-            {/* table-fixed is load-bearing: without it a long cell expands its column
-                  and `truncate` never fires, so one verbose message overflows the plane. */}
             <table className="w-full table-fixed border-collapse text-base">
               <thead>
                 <tr className="border-b border-border bg-surface">
@@ -492,9 +445,7 @@ export function DataTable<T>({
                     <tr
                       key={key}
                       data-selected={isSelected || undefined}
-                      // A clickable row is a real button for assistive tech and
-                      // for the keyboard — a bare onClick on a <tr> is reachable
-                      // by mouse only.
+                      {...(!onRowClick ? { onClick: rowOpen(rowHref?.(row)) } : {})}
                       {...(onRowClick
                         ? {
                             role: "button" as const,
@@ -514,6 +465,7 @@ export function DataTable<T>({
                         "hover:bg-surface/70 data-[selected]:bg-brand-soft",
                         onRowClick &&
                           "cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
+                        !onRowClick && rowHref && "cursor-pointer",
                       )}
                     >
                       {selectable && (
@@ -546,6 +498,7 @@ export function DataTable<T>({
                           {i === 0 && rowHref?.(row) ? (
                             <Link
                               href={rowHref(row)!}
+                              scroll={!keepsScroll(rowHref(row)!)}
                               className="-mx-1 block truncate rounded-xs px-1 font-medium hover:text-brand"
                             >
                               {c.cell(row)}
@@ -570,9 +523,6 @@ export function DataTable<T>({
             </table>
           </div>
 
-          {/* ---- mobile cards -------------------------------------------
-              §33: not a shrunken table. One record per card, the identity and
-              its state on the first line, everything else as labelled meta. */}
           <div className="space-y-2 md:hidden">
             {visible.map((row) => {
               const key = rowKey(row);
@@ -586,9 +536,6 @@ export function DataTable<T>({
                 .map((id) => columns.find((c) => c.id === id))
                 .filter(Boolean) as Column<T>[];
 
-              // A card cannot be an <a> wrapping other <a>s (phone links, action
-              // buttons) — that is invalid HTML and fails hydration. So the title
-              // carries a stretched link and everything interactive sits above it.
               const body = (
                 <>
                   <div className="flex items-start justify-between gap-3">
@@ -597,13 +544,12 @@ export function DataTable<T>({
                         {rowHref?.(row) ? (
                           <Link
                             href={rowHref(row)!}
+                            scroll={!keepsScroll(rowHref(row)!)}
                             className="after:absolute after:inset-0 after:content-['']"
                           >
                             {titleCol?.cell(row)}
                           </Link>
                         ) : onRowClick ? (
-                          // Same stretched-target trick as the link case, so the
-                          // whole card is tappable without nesting interactives.
                           <button
                             type="button"
                             onClick={() => onRowClick(row)}
@@ -693,25 +639,14 @@ export function DataTable<T>({
   );
 }
 
-/**
- * The removable "filtered by X" chip a scoped list shows above its table.
- *
- * A list reached from a detail page (`/proposals?client=…`) is a different
- * question from the full list, and must say so — otherwise "3 proposals" reads
- * as the whole book. The × is a plain link to the unscoped list, so removing
- * the scope is a real URL like every other view state.
- */
 export function FilterChip({
   label,
   value,
   clearHref,
   className,
 }: {
-  /** What the list is scoped by: "Client", "Stage". */
   label: string;
-  /** The scope, named — a client's name, never its id. */
   value: React.ReactNode;
-  /** The same list without this scope. */
   clearHref: string;
   className?: string;
 }) {

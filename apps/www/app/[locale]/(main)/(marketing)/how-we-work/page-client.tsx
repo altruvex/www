@@ -63,7 +63,7 @@ function OpeningSection() {
           classes={{
             titleWrapper: "space-y-6",
             title:
-              "max-w-[20ch] text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-6xl text-balance text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
             description:
               "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
           }}
@@ -76,20 +76,6 @@ function OpeningSection() {
 const CLAUSES = ["who", "updates", "progress", "changes", "warranty", "ownership"] as const;
 type Clause = (typeof CLAUSES)[number];
 
-/**
- * CLAIM: everything that recurs during a project is settled before it starts.
- * PROOF: artifact - the working agreement itself, six clauses whose answers
- * are written into the blanks. Every answer is read from a source that
- * already binds the studio: the founder record, the published revision rate
- * and warranty (pricing tokens, so an admin edit reaches this page), and the
- * deliverables /process already promises.
- * DEVICE: a form filled in - each answer sits on its own blank line in the
- * margin column, the question and its terms beside it.
- *
- * Signature: when the agreement reaches the reading line, the answers are
- * written into their blanks in reading order. The markup is the filled form;
- * reduced motion renders it untouched.
- */
 function AgreementSection() {
   const t = useTranslations("how-we-work.agreement");
   const locale = useLocale();
@@ -184,7 +170,7 @@ function AgreementSection() {
 
         <figure
           aria-labelledby="agreement-label"
-          className="mt-14 border-t-2 border-foreground lg:mt-20"
+          className="mt-(--heading-gap) border-t-2 border-foreground"
         >
           <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 pt-4 pb-2">
             <Eyebrow id="agreement-label" className="m-0" tone="foreground">
@@ -227,7 +213,7 @@ function Row({
   const locale = useLocale();
 
   return (
-    <li className="grid gap-x-10 gap-y-3 border-b border-border-subtle py-7 md:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1.15fr)] md:py-9">
+    <li className="grid gap-x-10 gap-y-3 py-7 md:grid-cols-[2.5rem_minmax(0,1fr)_minmax(0,1.15fr)] md:py-9">
       <span className="font-mono text-xs text-local-accent-text tabular-nums md:pt-1.5">
         {formatIndex(index + 1, 2, locale)}
       </span>
@@ -237,7 +223,6 @@ function Row({
           {note}
         </p>
       </div>
-      {/* The blank the answer is written into. */}
       <p className="self-start border-b border-foreground/45 pb-2">
         <span
           data-answer
@@ -256,11 +241,6 @@ const ROUTES = [
   { key: "standards", href: "/standards" },
 ] as const;
 
-/**
- * The page's three children, each with the one figure it is built around,
- * read from the same data the child renders - so the hub cannot quote a
- * number its own page has since changed.
- */
 function MapSection() {
   const t = useTranslations("how-we-work.map");
   const tApproach = useTranslations("approach.hero.order");

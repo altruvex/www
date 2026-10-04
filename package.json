@@ -4,7 +4,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "clean": "rm -rf apps/www/.next apps/admin/.next",
+    "clean": "rm -rf apps/www/.next apps/admin/.next apps/admin/.next-scratch",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
@@ -18,12 +18,12 @@
     "@repo/pricing-schema": "workspace:*",
     "prettier": "^3.7.4",
     "turbo": "^2.11.7",
-    "typescript": "6.0.2"
+    "typescript": "7.0.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.9"
   },
-  "packageManager": "bun@1.3.11",
+  "packageManager": "bun@1.4.2",
   "workspaces": [
     "apps/*",
     "packages/*"

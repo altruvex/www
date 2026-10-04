@@ -9,12 +9,16 @@ import { AlertBar } from "@/components/os/error-state";
 import { ThreadList } from "@/components/os/thread-list";
 import { getThreads } from "@/lib/threads";
 import { percent } from "@/lib/format";
+import { gateRoute } from "@/lib/page-gate";
 import { Button } from "@repo/ui";
 import { ChannelTabs } from "../inbox/channel-tabs";
 
 export const dynamic = "force-dynamic";
 
 export default async function WhatsAppPage() {
+  const denied = await gateRoute("/whatsapp", "WhatsApp");
+  if (denied) return denied;
+
   const [threads, byStatus, templates] = await Promise.all([
     getThreads(),
     prisma.whatsAppMessage.groupBy({ by: ["status"], _count: { _all: true } }),
@@ -30,8 +34,6 @@ export default async function WhatsAppPage() {
   const sent = byStatus.reduce((s, row) => s + row._count._all, 0);
   const failed = count("FAILED");
   const delivered = count("DELIVERED") + count("READ");
-  // One failing thread has an obvious destination; several means the fault is
-  // more likely the connection than any single conversation.
   const failingThreads = threads.filter((thread) => thread.failed > 0);
 
   return (
@@ -91,7 +93,11 @@ export default async function WhatsAppPage() {
             }
           />
         ) : (
-          <Panel title="Conversations" description="Unanswered first" flush>
+          <Panel
+            title="Conversations"
+            description="Unanswered first. Threads are read here; replies outside the 24-hour window are template-only, so there is no free-form compose by design."
+            flush
+          >
             <ThreadList threads={threads} />
           </Panel>
         )}

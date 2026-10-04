@@ -29,6 +29,9 @@ export const getArticle = cache(
       const wordsPerMinute = 200;
       const wordCount = content.split(/\s+/).length;
       const readTime = Math.ceil(wordCount / wordsPerMinute);
+      const headings = Array.from(content.matchAll(/^## (.+)$/gm), (m) =>
+        m[1].replace(/`/g, "").trim(),
+      );
 
       return {
         slug,
@@ -38,6 +41,7 @@ export const getArticle = cache(
           locale,
         } as ArticleFrontmatter,
         content,
+        headings,
         locale,
       };
     } catch (error) {
@@ -59,6 +63,7 @@ export const getAllArticles = cache(
         return {
           slug,
           frontmatter: article.frontmatter,
+          headings: article.headings,
         };
       }),
     );

@@ -12,18 +12,10 @@ interface PageHeroProps {
   title: string;
   titleItalic?: string;
   description: ReactNode;
-  /** Facts about the page itself, set under the same 2px ink rule the
-      homepage hero opens its readout with. Omit it rather than invent one. */
   children?: ReactNode;
   className?: string;
-  minHeightClass?: string;
 }
 
-/**
- * The homepage hero's structure for simple pages: bottom-anchored, start
- * aligned, eyebrow → h1 with its Highlight line → one paragraph → an optional
- * record under an ink rule. Same scale, same load-time motion, no status dot.
- */
 export function PageHero({
   eyebrow,
   title,
@@ -31,17 +23,15 @@ export function PageHero({
   description,
   children,
   className,
-  minHeightClass = "lg:min-h-dvh",
 }: PageHeroProps) {
   return (
     <section
       className={cn(
-        "accent-world-blue relative flex w-full flex-col justify-end pt-(--section-y-top) pb-(--section-y-bottom)",
-        minHeightClass,
+        "accent-world-blue relative w-full pt-(--section-y-top) pb-16 md:pb-20",
         className,
       )}
     >
-      <Container className="flex w-full flex-col justify-end py-12 lg:py-0">
+      <Container className="pt-10 md:pt-14">
         {eyebrow && (
           <HeroReveal delay={0.2} className="mb-6">
             <Eyebrow>{eyebrow}</Eyebrow>
@@ -50,7 +40,7 @@ export function PageHero({
 
         <HeroHeadline
           as="h1"
-          className="mb-7 max-w-176 font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+          className="mb-7 max-w-6xl text-balance font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
         >
           {titleItalic ? <span className="block">{title}</span> : title}
           {titleItalic && (

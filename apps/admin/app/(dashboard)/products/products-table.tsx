@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { FolderKanban, Rocket, ScrollText, Siren, Trash2 } from "lucide-react";
+
+import { DropdownMenuItem } from "@repo/ui";
 
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
@@ -25,26 +28,39 @@ export interface ProductRow {
   repositoryUrl: string | null;
   framework: string | null;
   hostingProvider: string | null;
-  /** The last successful PRODUCTION deploy — what the client's visitors are running. */
   lastProductionId: string | null;
   lastProductionAt: string | null;
   lastProductionNumber: number | null;
   lastProductionVersion: string | null;
   openIncidents: number;
   deploymentCount: number;
-  /** False when no CI has ever been pointed at this product. */
-  hasIngestToken: boolean;
+  reporting: boolean;
 }
 
-export function ProductsTable({ rows }: { rows: ProductRow[] }) {
+export interface ProductRowLinks {
+  incident: boolean;
+  project: boolean;
+  deployments: boolean;
+  logs: boolean;
+}
+
+export function ProductsTable({
+  rows,
+  canDelete,
+  links,
+}: {
+  rows: ProductRow[];
+  canDelete: boolean;
+  links: ProductRowLinks;
+}) {
+  const anyLink =
+    links.incident || links.project || links.deployments || links.logs;
   const del = useRecordDelete({ entity: "product" });
   const columns: Column<ProductRow>[] = [
     {
       id: "name",
       header: "Product",
       hideable: false,
-      // The row's own link wraps this cell, so client and project — which are
-      // links of their own — live in the next column rather than nested here.
       cell: (row) => (
         <span className="min-w-0">
           <span className="block truncate">{row.name}</span>
@@ -145,11 +161,8 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
             </span>
           </Link>
         ) : (
-          // Two different kinds of "never deployed" — one is a missing pipeline,
-          // the other is a product that simply has not shipped yet. Saying which
-          // is the difference between a to-do and a non-event.
           <span className="text-meta text-subtle-foreground">
-            {row.hasIngestToken ? "Never to production" : "No CI connected"}
+            {row.reporting ? "Never to production" : "No pipeline connected"}
           </span>
         ),
       sortValue: (row) =>
@@ -187,11 +200,67 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
         }}
         searchPlaceholder="Search products, clients, slugs…"
         initialSort={{ columnId: "incidents", dir: "asc" }}
-        rowActions={(row) => (
-          <RowActions
-            onDelete={() => del.request({ id: row.id, label: row.name })}
-          />
-        )}
+        selectable={canDelete}
+        selectionNoun="product"
+        bulkActions={
+          canDelete
+            ? [
+                {
+                  label: "Delete",
+                  icon: Trash2,
+                  destructive: true,
+                  onRun: (selected: ProductRow[]) =>
+                    del.request(selected.map((row) => ({ id: row.id, label: row.name }))),
+                },
+              ]
+            : []
+        }
+        rowActions={
+          canDelete || anyLink
+            ? (row) => (
+                <RowActions
+                  onDelete={
+                    canDelete
+                      ? () => del.request({ id: row.id, label: row.name })
+                      : undefined
+                  }
+                >
+                  {links.incident && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/incidents?new=incident&product=${row.id}`}>
+                        <Siren className="size-3.5" />
+                        Open incident
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {links.project && row.projectId && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/projects/${row.projectId}`}>
+                        <FolderKanban className="size-3.5" />
+                        Open the project
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {links.deployments && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/deployments?product=${row.id}`}>
+                        <Rocket className="size-3.5" />
+                        Deployments
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {links.logs && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/logs?product=${row.id}`}>
+                        <ScrollText className="size-3.5" />
+                        Logs
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                </RowActions>
+              )
+            : undefined
+        }
         empty={<EmptyInline>No product matches those filters.</EmptyInline>}
       />
       {del.dialog}

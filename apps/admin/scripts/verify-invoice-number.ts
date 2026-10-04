@@ -1,20 +1,3 @@
-/**
- * Invoice numbering — the properties the ledger depends on.
- *
- *   1. A payment is numbered once: issuing again returns the same number and
- *      reports `alreadyIssued`, and the company sequence does not move.
- *   2. Two payments issued at the same moment get two different numbers.
- *   3. Numbers are `${invoicePrefix}-${sequence padded to four}`.
- *   4. A waived payment can still be looked up but the action layer refuses
- *      it — that rule lives in `_actions/billing.ts`, not here.
- *
- * Needs DATABASE_URL; point it at a scratch database. Fixtures are bare
- * payments (no project, no retainer) suffixed with the run's timestamp and
- * removed in `finally`. The sequence counter is left where the run moved it:
- * numbers are never reused, so winding it back would be a lie.
- *
- *   DATABASE_URL=postgresql://…/altruvex_scratch bunx tsx scripts/verify-invoice-number.ts
- */
 import { prisma } from "@repo/database";
 import { formatInvoiceNumber, issueInvoiceNumber } from "../lib/invoice-number";
 
@@ -69,7 +52,6 @@ async function main() {
       "format does not truncate a five-digit sequence",
     );
 
-    // Concurrent issue: two payments at once must get two different numbers.
     const [first, second] = await Promise.all([
       issueInvoiceNumber(a.id),
       issueInvoiceNumber(b.id),
@@ -98,7 +80,6 @@ async function main() {
       );
     }
 
-    // Idempotence: issuing again returns the same number and moves nothing.
     const again = await issueInvoiceNumber(a.id);
     check(
       again.ok && first.ok && again.invoiceNumber === first.invoiceNumber,

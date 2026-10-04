@@ -4,9 +4,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
-import { Button } from "@repo/ui";
-import { LoadingIcon } from "@repo/ui";
-import { convertSubmissionToClient } from "@/app/(dashboard)/_actions/records";
+import { Button, LoadingIcon } from "@repo/ui";
+import { convertSubmission } from "@/app/(dashboard)/_actions/clients";
 
 export function ConvertButton({ submissionId }: { submissionId: string }) {
   const router = useRouter();
@@ -18,16 +17,13 @@ export function ConvertButton({ submissionId }: { submissionId: string }) {
       disabled={busy}
       onClick={async () => {
         setBusy(true);
-        try {
-          const result = await convertSubmissionToClient(submissionId);
-          toast.success(result.created ? "Lead created" : "Linked to an existing client", {
-            description: "This submission is unchanged and now referenced by the client record.",
-          });
+        const result = await convertSubmission(submissionId);
+        if (result.ok) {
+          if (result.linked) toast.success(result.message);
+          else toast.warning(result.message);
           router.push(`/clients/${result.clientId}`);
-        } catch (error) {
-          toast.error("Could not convert", {
-            description: error instanceof Error ? error.message : "Unknown error",
-          });
+        } else {
+          toast.error("Could not convert", { description: result.message });
           setBusy(false);
         }
       }}

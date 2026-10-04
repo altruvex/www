@@ -11,14 +11,6 @@ import { cn } from "@/lib/utils";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 
-/**
- * Today → revenue: recurring revenue, outstanding balance, renewals coming
- * due, and this month's cash. Owned by the revenue domain; the Today page
- * only places it. Every figure links to the list it counts.
- *
- * Renders nothing for a role that may not see finance — the page gates it
- * too, but a money panel decides for itself so that moving it cannot leak.
- */
 export async function RevenuePanel(): Promise<React.ReactNode> {
   if (!canSeeFinance(await currentRole())) return null;
 

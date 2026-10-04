@@ -1,5 +1,5 @@
-import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
+import { DirectionalLink } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
 import { getCommercialCta } from "@/lib/config/commercial";
@@ -8,16 +8,6 @@ import { workedExampleView, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import { SectionHeading } from "./section-heading";
 import { TransparentByDesignRow } from "./transparent-by-design-row";
-
-/*
- * Homepage "Transparent by design" (prototype A of
- * docs/prototypes/2026-10-home-pricing, picked by Ali): one figure carries the
- * section — the worked example's estimate at display size — and three plain
- * facts sit under it. The five-stage walk lives on /pricing only. Every figure
- * is computed from the resolved pricing — admin overrides included — through
- * `workedExampleView`, so the homepage can never print a number the estimator
- * would not.
- */
 
 const FACT_IDS = ["start", "estimate", "pay"] as const;
 
@@ -33,7 +23,6 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
   };
 
   const scopeCta = getCommercialCta("scopeProjects");
-  const estimateCta = getCommercialCta("projectRange");
 
   return (
     <section
@@ -47,7 +36,7 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
           eyebrow={t("home.eyebrow")}
           firstTitle={t("home.title")}
           description={t("home.lead")}
-          className="mb-12 md:mb-16"
+          className="mb-(--heading-gap)"
         />
 
         <div className="border-t-2 border-foreground pt-7">
@@ -62,7 +51,7 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
           </p>
         </div>
 
-        <TransparentByDesignRow className="mt-12 grid list-none grid-cols-1 border-t border-border-subtle md:mt-16 md:grid-cols-3">
+        <TransparentByDesignRow className="mt-(--section-block) grid list-none grid-cols-1 border-t border-border-subtle md:grid-cols-3">
           {FACT_IDS.map((id, index) => (
             <li
               key={id}
@@ -85,22 +74,12 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
           ))}
         </TransparentByDesignRow>
 
-        <div className="mt-10 flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
-          <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-            {t("example.line", {
-              service: example.serviceLabel,
-              band: example.bandLabel,
-              brand: example.brandLabel,
-              content: example.contentLabel,
-              timeline: example.timelineLabel,
-            })}
-          </p>
-          <CtaButtonGroup
-            primary={{ href: estimateCta.href, label: tCTAs("projectRange") }}
-            secondary={{ href: scopeCta.href, label: tCTAs("scopeProjects") }}
-            secondaryArrow
-          />
-        </div>
+        <DirectionalLink
+          href={scopeCta.href}
+          className="mt-(--section-block) min-h-6 rounded-ctl-sm text-base text-foreground transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+        >
+          {tCTAs("scopeProjects")}
+        </DirectionalLink>
       </Container>
     </section>
   );

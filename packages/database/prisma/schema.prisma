@@ -2,10 +2,6 @@ generator client {
   provider            = "prisma-client"
   output              = "../generated/prisma"
   moduleFormat        = "cjs"
-  // Bare specifiers so the generated client resolves both from TypeScript
-  // source (Turbopack transpiles this package via `transpilePackages`) and
-  // from the compiled `dist/` output. A ".js" extension only resolves once
-  // compiled, which makes a missing `dist/` a hard module-not-found.
   importFileExtension = ""
 }
 
@@ -33,7 +29,6 @@ model User {
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
 
-  /// Better Auth two-factor plugin. Set true only after a TOTP code verifies.
   twoFactorEnabled Boolean? @default(false)
 
   contactSubmissions ContactSubmission[]
@@ -50,9 +45,6 @@ model User {
   twoFactors         TwoFactor[]
   clientNotes        ClientNote[]
 
-  /// The operator's role inside the OS (capability permissions, lib/rbac.ts).
-  /// NULL derives it from the auth `role`: SUPERADMIN → OWNER, ADMIN → ADMIN.
-  /// The auth `role` still decides whether the person may sign in at all.
   opsRole ProductRole?
 
   @@index([email])
@@ -101,9 +93,6 @@ model Account {
   @@map("accounts")
 }
 
-/// Better Auth two-factor plugin (TOTP + backup codes). `secret` and
-/// `backupCodes` are encrypted with BETTER_AUTH_SECRET by the plugin before
-/// they reach this table; never select them into a response.
 model TwoFactor {
   id                      String    @id @default(uuid())
   secret                  String
@@ -119,10 +108,6 @@ model TwoFactor {
   @@map("two_factors")
 }
 
-/// Better Auth's own rate limiter (`rateLimit.storage: "database"`). Kept in
-/// the database rather than in memory because every serverless instance would
-/// otherwise count sign-in attempts separately. Distinct from
-/// RateLimitBucket, which the application's public endpoints use.
 model AuthRateLimit {
   id          String @id @default(uuid())
   key         String @unique
@@ -299,9 +284,6 @@ model Meeting {
   contactSubmission ContactSubmission? @relation(fields: [submissionId], references: [id])
   submissionId      String?
 
-  /// The client this meeting is with, once the lead has become one. A booking
-  /// from the site arrives with a submission only; linking it to the client is
-  /// what puts it on the client hub.
   client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
   clientId String?
 
@@ -331,7 +313,6 @@ enum NotificationType {
   NEW_MEETING
   STATUS_CHANGE
   ASSIGNMENT
-  /// A client service (domain, hosting, …) crossed an expiry threshold.
   RENEWAL_DUE
 }
 
@@ -349,9 +330,6 @@ model Notification {
   read   Boolean   @default(false)
   readAt DateTime?
 
-  /// Set by writers that must notify once per fact rather than once per run —
-  /// the renewal sweep keys it on service + expiry date + threshold, so a
-  /// sweep that runs every hour still writes one "expires in 7 days" line.
   dedupeKey String?
 
   createdAt DateTime @default(now())
@@ -362,18 +340,6 @@ model Notification {
   @@map("notifications")
 }
 
-/// A visitor who ran the public estimator and asked for the scoped brief.
-///
-/// The estimator asks five questions; until now only three of the answers were
-/// kept. `brandIdentity` and `contentReadiness` are the two that say how much
-/// groundwork a deal carries before engineering starts, so a lead that arrives
-/// without them cannot be routed or priced for effort — they are recorded here
-/// alongside the rest.
-///
-/// `reference` is the handle the estimate is discussed by: it is shown to the
-/// visitor on the result panel and quoted in the WhatsApp hand-off, so a
-/// conversation that starts in a chat window can be tied back to the exact
-/// answers that produced the range.
 model TransparencyLead {
   id               String    @id @default(uuid())
   reference        String    @unique
@@ -384,14 +350,9 @@ model TransparencyLead {
   projectType      String
   complexity       String
   timeline         String
-  /// "complete" | "partial" | "scratch" — how much of the identity exists.
   brandIdentity    String?
-  /// "provide" | "need-help" | "unsure" — how much copy work the build carries.
   contentReadiness String?
-  /// Unpriced scope notes the buyer ticked (`SCOPE_NOTE_IDS` in @repo/pricing-schema).
-  /// Reviewed in scope review; never a multiplier on the estimate.
   scopeNotes       String[]  @default([])
-  /// Free-text note from the proposal request form.
   note             String?
   priceMin         Int
   priceMax         Int
@@ -428,8 +389,6 @@ model Client {
   company  String?
   industry String?
 
-  /// Business identity, for invoices and the client hub. All optional: a lead
-  /// becomes a client long before anyone knows its tax number.
   website      String?
   country      String?
   address      String?
@@ -439,10 +398,6 @@ model Client {
   source  ClientSource @default(MANUAL)
   addedBy String?
 
-  // Canonical pipeline stage for this client, pre-proposal. Proposal/Contract
-  // status (once those exist) take over as the stage for later funnel steps;
-  // this is the only stage field for MANUAL/TRANSPARENCY_ESTIMATOR clients,
-  // which have no ContactSubmission to source a status from.
   status   SubmissionStatus @default(NEW)
   priority Priority         @default(MEDIUM)
 
@@ -506,10 +461,6 @@ model Proposal {
   colorWorld ColorWorld @default(BLUE)
   accentName String
 
-  // Full editable proposal content — every string the deck renders, per
-  // client. Shape and validation live in apps/admin/lib/proposal-schema.ts.
-  // The scalar columns above stay populated (derived from this document on
-  // save) because the contract builder and the signing flow read them.
   content Json?
 
   fileUrl String?
@@ -536,9 +487,6 @@ model Proposal {
   @@map("proposals")
 }
 
-/// Company-wide branding and contact details. Shared by every proposal —
-/// deliberately NOT per-client: the deck's visual system is fixed and only
-/// its content varies. Single row, id "default".
 model CompanySettings {
   id String @id @default("default")
 
@@ -546,13 +494,9 @@ model CompanySettings {
   email   String
   website String
 
-  // The one brand accent, in its light-surface and dark-surface forms.
-  // Changing these is a company-wide branding decision, not a per-client one.
   brandColor     String @default("0E51AA")
   brandColorDark String @default("3687F2")
 
-  /// Invoice numbering: the prefix and the last number issued. Incremented
-  /// atomically when an invoice is issued.
   invoicePrefix   String @default("INV")
   invoiceSequence Int    @default(0)
 
@@ -589,8 +533,6 @@ model Contract {
   clientId   String
 
   signToken          String?   @unique
-  /// After this instant the sign link refuses to sign. Set at creation and
-  /// renewed when the contract is sent; null only on rows that predate it.
   signTokenExpiresAt DateTime?
 
   fileUrl       String?
@@ -602,21 +544,16 @@ model Contract {
   signedByName    String?
   signedIp        String?
 
-  /// The person allowed to sign. Null falls back to the client record's
-  /// contact, so a contract always has someone a code can be sent to.
   signerName  String?
   signerPhone String?
   signerEmail String?
 
-  /// One-time code a signer must enter before the link accepts a signature.
-  /// Only the SHA-256 is stored, so nobody reading the row can sign with it.
   signCodeHash      String?
   signCodeExpiresAt DateTime?
   signCodeSentAt    DateTime?
   signCodeAttempts  Int                      @default(0)
   signCodeChannel   SignVerificationChannel?
 
-  /// Where the code that authorised the signature was delivered.
   signerVerifiedVia SignVerificationChannel?
   signerVerifiedTo  String?
 
@@ -649,11 +586,17 @@ enum ProjectStatus {
   CANCELLED
 }
 
+enum ProjectOrigin {
+  CONTRACT
+  RECORDED
+}
+
 model Project {
-  id         String   @id @default(uuid())
-  contract   Contract @relation(fields: [contractId], references: [id])
-  contractId String   @unique
-  client     Client   @relation(fields: [clientId], references: [id])
+  id String @id @default(uuid())
+  contract   Contract?     @relation(fields: [contractId], references: [id], onDelete: Restrict)
+  contractId String?       @unique
+  origin     ProjectOrigin @default(CONTRACT)
+  client     Client        @relation(fields: [clientId], references: [id])
   clientId   String
 
   portalToken String @unique @default(uuid())
@@ -662,15 +605,14 @@ model Project {
   phase  ProjectPhase  @default(DISCOVERY)
   status ProjectStatus @default(ACTIVE)
 
+  currency String?
+
   stagingUrl String?
   liveUrl    String?
 
   targetLaunchDate DateTime?
   actualLaunchDate DateTime?
 
-  /// When the engagement was closed. Set only by the close-project flow and
-  /// cleared when the project is moved back out of COMPLETED, so a COMPLETED
-  /// row without it predates the flow rather than contradicting it.
   completedAt DateTime?
 
   payments       Payment[]
@@ -691,13 +633,8 @@ enum PaymentMilestone {
   DEPOSIT_50
   MILESTONE_30
   FINAL_20
-  /// Billed on delivery of a ChangeRequest — work outside the original contract.
   CHANGE_REQUEST
-  /// One term of a ClientService (domain, hosting…) — opened when the service
-  /// is registered without a first term in the fee, and on every renewal.
   SERVICE_RENEWAL
-  /// One billing period of a MaintenanceSubscription — opened on every renewal,
-  /// priced from the plan's schema price at the subscription's interval.
   RETAINER_RENEWAL
   OTHER
 }
@@ -711,12 +648,6 @@ enum PaymentStatus {
 
 model Payment {
   id        String   @id @default(uuid())
-  /// The engagement this payment bills. Optional since 2026-10: a maintenance
-  /// retainer belongs to a Client, not a Project, and its renewals bill through
-  /// `subscriptionId` instead — the service-term precedent (`serviceId`) refuses
-  /// to bill without a project, which for a retainer would mean never billing.
-  /// A row is created with a project or a subscription, never neither; the
-  /// relation stays Restrict so a project delete must still clear its schedule.
   project   Project? @relation(fields: [projectId], references: [id], onDelete: Restrict)
   projectId String?
 
@@ -729,25 +660,14 @@ model Payment {
   method    String?
   reference String?
 
-  /// The persisted invoice number, assigned once from
-  /// `CompanySettings.invoiceSequence` when the invoice is issued and never
-  /// reused — numbering by list position renumbered every invoice whenever a
-  /// row was added or deleted.
   invoiceNumber String?   @unique
   invoicedAt    DateTime?
 
-  /// Set when this payment bills a delivered change request.
   changeRequest ChangeRequest?
 
-  /// Set when this payment bills one term of a client service. Many per
-  /// service — one per term. Survives the service being deleted.
   service   ClientService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
   serviceId String?
 
-  /// Set when this payment bills one period of a maintenance retainer. One per
-  /// period — `dueDate` is that period's start, which is how a renewal is kept
-  /// from opening the same period twice. Survives the retainer being deleted,
-  /// like a service term survives its service.
   subscription   MaintenanceSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   subscriptionId String?
 
@@ -761,8 +681,6 @@ model Payment {
   @@map("payments")
 }
 
-/// Where a change request is in its life. Transitions are enforced in
-/// apps/admin/lib/change-requests.ts, not by the database.
 enum ChangeRequestStatus {
   REQUESTED
   QUOTED
@@ -773,19 +691,12 @@ enum ChangeRequestStatus {
   CANCELLED
 }
 
-/// How the work is charged. WARRANTY is free and only valid inside the
-/// post-launch warranty window.
 enum ChangeRequestPricing {
   HOURLY
   FIXED
   WARRANTY
 }
 
-/// A one-off modification to a project the client pays for separately — the
-/// path for a client with no maintenance retainer. It hangs off the Project
-/// (not a subscription, not a new contract), so a small edit does not need a
-/// new proposal → contract → project chain, and a closed project can still
-/// take one without being reopened.
 model ChangeRequest {
   id String @id @default(uuid())
 
@@ -798,33 +709,19 @@ model ChangeRequest {
   status  ChangeRequestStatus   @default(REQUESTED)
   pricing ChangeRequestPricing?
 
-  /// Hours are stored as whole minutes so a quarter hour stays exact.
   estimatedMinutes Int?
   actualMinutes    Int?
 
-  /// The hourly rate at the moment of quoting. Snapshotted so a later edit on
-  /// /pricing cannot re-price work the client already agreed to.
   hourlyRate Int?
 
-  /// What the client agreed to. Currency is the project's (payment → project
-  /// → contract → proposal), exactly as for Payment.
   quotedAmount Int?
-  /// What was billed on delivery. For HOURLY it follows the actual hours.
   billedAmount Int?
 
-  /// The client's link to review and answer the quote (`/quote/[token]`).
-  /// Unguessable, scoped to this one request, and kept across re-quotes so a
-  /// link already in the client's inbox keeps showing the current number.
   quoteToken         String?   @unique
-  /// When the CURRENT quote was sent. A re-quote clears it: the link then
-  /// refuses an answer until the new number has actually been sent.
   quoteSentAt        DateTime?
-  /// "email" or "whatsapp".
   quoteSentVia       String?
   quoteExpiresAt     DateTime?
-  /// First time the client opened the sent quote. Evidence, not a guess.
   quoteViewedAt      DateTime?
-  /// Who answered on the quote page, and anything they wrote.
   respondedByName    String?
   clientResponseNote String?
 
@@ -888,9 +785,6 @@ model WhatsAppMessage {
   @@map("whatsapp_messages")
 }
 
-/// One row per webhook delivery that was accepted. A signed delivery replayed
-/// later carries the same provider id, hits the unique index, and is refused
-/// instead of rewriting state that has since moved on.
 model WebhookDelivery {
   id         String   @id @default(uuid())
   provider   String
@@ -916,20 +810,6 @@ model RateLimitBucket {
   @@map("rate_limit_buckets")
 }
 
-// ---------------------------------------------------------------------------
-// Pricing overrides
-//
-// `@repo/pricing-schema` holds the typed contract and the shipped defaults;
-// these tables hold only what an admin has actually changed. Resolution is
-// `override ?? default`, so an empty table renders exactly what the last
-// deploy shipped and a database outage degrades to those values rather than
-// taking prices off the marketing site.
-//
-// Only commercially meaningful fields live here. Bilingual names and
-// descriptions stay in the schema package alongside the numbers they describe.
-// ---------------------------------------------------------------------------
-
-/// One cell of the service price matrix: a (service, complexity) pair.
 model PricingCellOverride {
   serviceId    String
   complexityId String
@@ -951,11 +831,9 @@ model PricingCellOverride {
 model MaintenancePlanOverride {
   id String @id
 
-  /// Null means quote-only; the plan renders as "Custom" and shows no figure.
   price                  Int?
   requestsPerCycle       Int?
   overageHourlyRate      Int?
-  /// Internal margin planning. Never rendered on a client surface.
   internalHourEquivalent Int?
   status                 String @default("active")
 
@@ -985,8 +863,6 @@ model ConsultingPackageOverride {
 model AddonOverride {
   id String @id
 
-  /// Null while the real supplier cost is not on file. A null-cost add-on is
-  /// never priced and never shown to a client.
   costBasis    Int?
   markupType   String @default("percent")
   markupValue  Int    @default(0)
@@ -1001,7 +877,6 @@ model AddonOverride {
   @@map("addon_overrides")
 }
 
-/// Singleton. VAT, revision rate, milestone split, and the fixed USD rate.
 model CommercialTermsOverride {
   id String @id @default("default")
 
@@ -1026,11 +901,6 @@ model CommercialTermsOverride {
   @@map("commercial_terms_overrides")
 }
 
-/// Append-only record of every pricing change.
-///
-/// A published price is a commitment a client can read back, so "what did this
-/// cost in March, and who changed it" has to be answerable. The audit found no
-/// such record existed.
 model PricingChangeLog {
   id String @id @default(uuid())
 
@@ -1048,34 +918,14 @@ model PricingChangeLog {
   @@map("pricing_change_log")
 }
 
-// ---------------------------------------------------------------------------
-// Maintenance subscriptions and the client portal
-//
-// A maintenance retainer is ongoing and belongs to a client, not to one
-// project, so it carries its own portal token rather than reusing
-// `Project.portalToken` — a client whose project has launched still needs the
-// portal, and may hold a retainer covering several projects.
-//
-// Plan identity (`planId`) is a MaintenancePlanId from @repo/pricing-schema.
-// The price, the request cap and the overage rate are NOT copied here: they
-// are resolved from the pricing schema at read time, so a plan change reaches
-// existing subscribers instead of leaving them on a stale copy.
-// ---------------------------------------------------------------------------
-
 enum MaintenanceSubscriptionStatus {
-  /// Paid trial period; converts to ACTIVE at `trialEndsAt`.
   TRIALING
   ACTIVE
-  /// Renewal date passed, payment not recorded. Service continues.
   PAST_DUE
-  /// Past due beyond the grace window. Service continues, escalation is due.
   GRACE
-  /// Deliberately halted by Altruvex. Service stopped, subscription retained.
   SUSPENDED
-  /// Halted at the client's request but still inside a paid period.
   PAUSED
   CANCELLED
-  /// Ran to the end of its final period without renewing.
   EXPIRED
 }
 
@@ -1098,50 +948,29 @@ model MaintenanceSubscription {
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId String
 
-  /// A MaintenancePlanId from @repo/pricing-schema ("essential", …).
   planId String
 
   status MaintenanceSubscriptionStatus @default(ACTIVE)
 
-  /// Single-purpose, unguessable portal link. Same posture as
-  /// `Project.portalToken`: no password, one client, one URL.
   portalToken String @unique @default(uuid())
 
-  /// Billing anchor. The monthly cycle runs from this day-of-month, so a
-  /// subscription started on the 15th caps requests 15th-to-14th.
   startedAt   DateTime  @default(now())
   cancelledAt DateTime?
 
   billingInterval BillingInterval @default(MONTHLY)
 
-  /// The agreed MONTHLY figure (EGP) for a quote-only plan such as enterprise.
-  /// Null on a published plan, whose price always comes from
-  /// @repo/pricing-schema — this column is refused there. Stored per month,
-  /// not per invoice, so one pricing rule covers every plan: an invoice is
-  /// `maintenanceIntervalPrice({ price }, interval)` (annual = 10 paid months,
-  /// like the published plans) and changing the interval never needs a
-  /// re-quote. A change applies from the next invoice; opened payments keep
-  /// their amount.
   quotedMonthlyPrice Int?
 
-  /// The period currently paid for. `currentPeriodEnd` IS the renewal date —
-  /// storing one derived from the other is how the two drift apart.
   currentPeriodStart DateTime @default(now())
   currentPeriodEnd   DateTime
 
-  /// False means it runs to `currentPeriodEnd` and then EXPIRES. The renewals
-  /// screen sorts on this: a non-renewing subscription is a churn event with a
-  /// known date, not a surprise.
   autoRenew Boolean @default(true)
 
   trialEndsAt DateTime?
 
-  /// Set when a renewal is invoiced/collected, so PAST_DUE is measurable
-  /// rather than inferred from silence.
   lastRenewedAt DateTime?
 
   requests MaintenanceRequest[]
-  /// One RETAINER_RENEWAL payment per billed period (see `Payment.subscriptionId`).
   payments Payment[]
 
   createdAt DateTime @default(now())
@@ -1164,14 +993,8 @@ model MaintenanceRequest {
 
   status MaintenanceRequestStatus @default(SUBMITTED)
 
-  /// Start of the billing cycle this request counts against, stamped at
-  /// submission. Storing it rather than deriving it later means a change to
-  /// the billing anchor cannot retroactively move a request into another
-  /// cycle and silently push a client over their cap.
   cycleStart DateTime
 
-  /// False for work handled as billable overage rather than against the cap —
-  /// so the count a client sees always matches what they are charged for.
   countsToCap Boolean @default(true)
 
   completedAt DateTime?
@@ -1184,23 +1007,6 @@ model MaintenanceRequest {
   @@map("maintenance_requests")
 }
 
-// ---------------------------------------------------------------------------
-// Activity / audit trail
-//
-// Everything before this model was a *projection*: /activity and /audit read
-// `updatedAt` off business rows and inferred that something had happened. That
-// can show a row changed but never who changed it, from what, to what — which
-// is the only question an audit log exists to answer.
-//
-// This model is written at the mutation site, not derived after the fact.
-// `actorLabel` is denormalised on purpose: an event must stay readable after
-// the user who caused it is deleted, and many actors are not Users at all
-// (a client signing through a portal token, the WhatsApp webhook, a CI token).
-//
-// `before`/`after` hold only the fields that actually changed. Never put a
-// secret in them — see `redactAuditValue` in packages/database/index.ts.
-// ---------------------------------------------------------------------------
-
 enum ActorKind {
   USER
   CLIENT
@@ -1211,26 +1017,19 @@ enum ActorKind {
 model ActivityEvent {
   id String @id @default(uuid())
 
-  /// Dot-namespaced and stable, e.g. "client.created", "deployment.succeeded".
-  /// Parsed nowhere — it is grouped and filtered as an opaque string.
   action String
 
   actorKind  ActorKind @default(SYSTEM)
   actor      User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
   actorId    String?
-  /// Survives actor deletion. "Ali", "CI (github-actions)", "client portal".
   actorLabel String
 
   entityType  String
   entityId    String
-  /// Human-readable at the time of the event, so the feed stays legible even
-  /// after the entity is renamed or removed.
   entityLabel String?
 
-  /// One line, already written for a human. The feed renders this directly.
   summary String
 
-  /// Changed fields only, redacted. `{ status: "DRAFT" }` → `{ status: "SENT" }`.
   before Json?
   after  Json?
 
@@ -1244,24 +1043,6 @@ model ActivityEvent {
   @@index([actorId])
   @@map("activity_events")
 }
-
-// ---------------------------------------------------------------------------
-// Engineering operations: products, builds, deployments, logs, incidents
-//
-// A Project is the *engagement* (a contract being delivered). A Product is the
-// thing that stays alive afterwards: the site or app Altruvex operates for a
-// client. Conflating them is why `Project.stagingUrl`/`liveUrl` could never
-// answer "what is deployed right now" — a project ends, a product does not, and
-// one engagement can ship several products.
-//
-// Environment is an enum, not a table: Altruvex runs production/staging/preview
-// and nothing else, so a join buys a query cost and no expressiveness.
-//
-// Nothing in here is written by the UI. Builds, deployments and logs arrive
-// from CI through the ingest endpoint (`/api/ingest/*`, bearer-authenticated
-// per product). Until a pipeline is pointed at it these tables are empty and
-// the screens say so — they are never seeded with plausible-looking rows.
-// ---------------------------------------------------------------------------
 
 enum ProductKind {
   WEBSITE
@@ -1291,13 +1072,10 @@ model Product {
 
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId  String
-  /// Optional: a product can outlive the project that built it, and can exist
-  /// before any contract does.
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectId String?
 
   name String
-  /// URL-safe identity used by the ingest endpoint, so CI does not need a UUID.
   slug String @unique
 
   kind   ProductKind   @default(WEBSITE)
@@ -1310,8 +1088,6 @@ model Product {
   framework       String?
   hostingProvider String?
 
-  /// SHA-256 of the ingest bearer token. The token itself is shown once at
-  /// creation and never stored — the UI has nothing to leak.
   ingestTokenHash     String?   @unique
   ingestTokenLast4    String?
   ingestTokenIssuedAt DateTime?
@@ -1348,28 +1124,20 @@ model Build {
   environment DeployEnvironment @default(PRODUCTION)
   status      BuildStatus       @default(QUEUED)
 
-  /// Monotonic per product, assigned at ingest. What an operator actually says
-  /// out loud ("build 41 failed") — a UUID is not that.
   number Int
 
-  /// The CI system's own id for the run. The idempotency key for ingest: a
-  /// pipeline posts the same build as it progresses (QUEUED → RUNNING →
-  /// SUCCEEDED) and must update one row, not create three.
   externalId String?
 
   commitSha     String?
   commitMessage String?
   branch        String?
 
-  /// Free text from CI ("github-actions", "ali@altruvex.com"). Not a User FK:
-  /// the actor is frequently a machine that has no account here.
   triggeredBy String?
 
   startedAt  DateTime?
   finishedAt DateTime?
   durationMs Int?
 
-  /// Why it failed, in one line. The detail belongs in the linked logs.
   failureReason String?
 
   deployments Deployment[]
@@ -1407,7 +1175,6 @@ model Deployment {
 
   number Int
 
-  /// Idempotency key from the deploying system, same contract as `Build`.
   externalId String?
 
   version   String?
@@ -1419,8 +1186,6 @@ model Deployment {
   startedAt  DateTime?
   finishedAt DateTime?
 
-  /// Set on the deployment that was rolled back, pointing at the one that
-  /// replaced it. Reading "what undid this" is the common direction.
   rolledBackBy   Deployment?  @relation("Rollback", fields: [rolledBackById], references: [id], onDelete: SetNull)
   rolledBackById String?
   rollbackOf     Deployment[] @relation("Rollback")
@@ -1458,16 +1223,11 @@ model LogEntry {
   environment DeployEnvironment @default(PRODUCTION)
   level       LogLevel          @default(INFO)
 
-  /// Emitting subsystem: "web", "worker", "build", "edge".
   source  String?
   message String
 
-  /// Ties a log line to the request that produced it, so an operator can pull
-  /// the whole trace from one error.
   requestId String?
 
-  /// When the event happened at the source — NOT when it arrived here. Ingest
-  /// can lag, and sorting by arrival reorders an incident's timeline.
   timestamp DateTime @default(now())
 
   build   Build?  @relation(fields: [buildId], references: [id], onDelete: Cascade)
@@ -1511,7 +1271,6 @@ model Incident {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
 
-  /// The deployment suspected of causing it, when there is one.
   deployment   Deployment? @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
   deploymentId String?
 
@@ -1530,7 +1289,6 @@ model Incident {
   acknowledgedAt DateTime?
   resolvedAt     DateTime?
 
-  /// Written after the fact. Absent on an unresolved incident.
   resolution String?
 
   updates IncidentUpdate[]
@@ -1551,7 +1309,6 @@ model IncidentUpdate {
   incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
   incidentId String
 
-  /// Status the incident moved to with this update, when it moved at all.
   status IncidentStatus?
 
   body String
@@ -1565,15 +1322,6 @@ model IncidentUpdate {
   @@index([incidentId, createdAt])
   @@map("incident_updates")
 }
-
-// ---------------------------------------------------------------------------
-// Delivery tasks
-//
-// Replaces a screen that synthesised three tasks per project from its phase and
-// toasted "Task created successfully" without writing anything. Either the work
-// items are real rows an operator can assign and close, or the screen should
-// not exist.
-// ---------------------------------------------------------------------------
 
 enum TaskStatus {
   TODO
@@ -1598,15 +1346,11 @@ model ProjectTask {
   assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   assigneeId String?
 
-  /// Phase this task belongs to, so a board can group by delivery stage
-  /// instead of inventing its own parallel taxonomy.
   phase ProjectPhase?
 
   dueDate     DateTime?
   completedAt DateTime?
 
-  /// Manual ordering within a column. Sparse (steps of 1000) so a reorder
-  /// touches one row instead of renumbering the board.
   position Int @default(0)
 
   createdBy String?
@@ -1624,19 +1368,11 @@ enum EmailMessageStatus {
   QUEUED
   SENT
   FAILED
-  /// Set by a provider webhook, never by this application. Until one is wired
-  /// up no row ever reaches these — a status nothing can set is better than one
-  /// the UI invents.
   DELIVERED
   BOUNCED
   COMPLAINED
 }
 
-/// One outbound email, recorded the way `WhatsAppMessage` records one message.
-///
-/// Deliberately the same shape: both are a thing sent to a client about a
-/// proposal or a contract, and a client's history is worth less if the two
-/// channels are stored as different kinds of fact.
 model EmailMessage {
   id       String @id @default(uuid())
   client   Client @relation(fields: [clientId], references: [id])
@@ -1644,11 +1380,7 @@ model EmailMessage {
 
   status EmailMessageStatus @default(QUEUED)
 
-  /// The transport's own id — Resend's, or the Message-ID an SMTP server
-  /// assigned. What a delivery question quotes.
   providerMessageId String? @unique
-  /// Which transport sent it, because one client's history can span a move
-  /// from one to the other.
   transport         String
 
   toAddress String
@@ -1658,7 +1390,6 @@ model EmailMessage {
   relatedProposalId String?
   relatedContractId String?
 
-  /// Why the transport refused it, in its own words.
   failureReason String?
 
   sentAt      DateTime?
@@ -1671,29 +1402,6 @@ model EmailMessage {
   @@map("email_messages")
 }
 
-// ---------------------------------------------------------------------------
-// Client services: domains, hosting, business email and anything else a client
-// holds through Altruvex that expires
-//
-// A project ends; the domain it launched on renews every year. Until this
-// existed that renewal lived in someone's memory, and the first sign it was
-// forgotten would have been the client's site going dark.
-//
-// `price` is what the CLIENT pays per term and is entered per service, not
-// resolved from @repo/pricing-schema: a registrar's price for one TLD is a fact
-// about that one domain, not a published tier. `cost` is what Altruvex pays the
-// supplier — internal margin data, never rendered on a client surface.
-//
-// Stored status is what an operator decided (PENDING until it is actually
-// registered, ACTIVE, CANCELLED). Whether an active service is "expiring" or
-// "expired" is derived from `expiresAt` and the clock in
-// apps/admin/lib/service-lifecycle.ts — the same rule the retainers follow, so
-// the renewals screen is correct on a system whose cron has not run.
-//
-// Never store a registrar or hosting password here. `reference` is an order or
-// account id, the thing a support ticket quotes.
-// ---------------------------------------------------------------------------
-
 enum ClientServiceKind {
   DOMAIN
   HOSTING
@@ -1704,8 +1412,6 @@ enum ClientServiceKind {
 }
 
 enum ClientServiceStatus {
-  /// Agreed (usually through a signed proposal) but not yet registered, so it
-  /// has no real expiry date and raises no renewal alert.
   PENDING
   ACTIVE
   CANCELLED
@@ -1716,53 +1422,35 @@ model ClientService {
 
   client     Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId   String
-  /// The engagement it was sold with. Optional: a service outlives its project
-  /// and can be added for a client who never had one.
   project    Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectId  String?
-  /// The site or app it serves, when that product is tracked.
   product    Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId  String?
-  /// The proposal whose accepted terms created it. Null for one added by hand.
   proposal   Proposal? @relation(fields: [proposalId], references: [id], onDelete: SetNull)
   proposalId String?
 
   kind      ClientServiceKind
-  /// "newlight.com", "Vercel Pro", "Google Workspace — 5 seats".
   name      String
   provider  String?
-  /// Registrar order id or account handle. Never a credential.
   reference String?
 
   status ClientServiceStatus @default(PENDING)
 
   currency          String  @default("EGP")
-  /// What the client pays per term.
   price             Int
-  /// What Altruvex pays the supplier per term. Internal only.
   cost              Int?
-  /// Length of one billing term. 12 for an annual domain, 1 for monthly hosting.
-  termMonths        Int     @default(12)
-  /// The first term is covered by the project fee (the contract's "Year 1
-  /// included"); billing starts at the first renewal.
+  termMonths        Int?    @default(12)
   firstTermIncluded Boolean @default(false)
-  /// Renews at the provider without anyone acting. Alerts still fire — a
-  /// renewal the provider charges is still one the client owes.
   autoRenew         Boolean @default(false)
 
   startedAt     DateTime?
-  /// The renewal date. Required once ACTIVE; null only while PENDING.
   expiresAt     DateTime?
   lastRenewedAt DateTime?
   cancelledAt   DateTime?
 
-  /// The expiry date the client was last reminded about, and when. Compared
-  /// with `expiresAt` rather than reset on renewal: "reminded this cycle" is
-  /// `reminderSentFor == expiresAt`, so a renewal re-arms it without a write.
   reminderSentFor DateTime?
   reminderSentAt  DateTime?
 
-  /// One payment per billed term.
   payments Payment[]
 
   notes String?
@@ -1777,8 +1465,6 @@ model ClientService {
   @@map("client_services")
 }
 
-/// The operator's role inside the OS. Decides capabilities (lib/rbac.ts), not
-/// sign-in — that is still `User.role`.
 enum ProductRole {
   OWNER
   ADMIN
@@ -1788,9 +1474,6 @@ enum ProductRole {
   VIEWER
 }
 
-/// A note an operator writes on a client — calls, context, decisions. The
-/// client hub shows them with the audit trail; a note is hard-deleted through
-/// the delete registry like every record.
 model ClientNote {
   id       String @id @default(uuid())
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)

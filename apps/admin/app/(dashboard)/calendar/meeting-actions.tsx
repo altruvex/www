@@ -4,29 +4,80 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
-import { Button } from "@repo/ui";
+import { Button, LoadingIcon } from "@repo/ui";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { setMeetingStatus } from "@/app/(dashboard)/_actions/records";
 
-/**
- * The status moves an operator can make from here. A request (PENDING) is
- * approved or declined; a meeting that has been agreed is marked done or
- * cancelled. Finished meetings (completed / cancelled / rejected) offer none.
- */
+async function moveMeeting(
+  meetingId: string,
+  next: string,
+  success: string,
+): Promise<{ ok: boolean; message: string }> {
+  try {
+    await setMeetingStatus(meetingId, next);
+    return { ok: true, message: success };
+  } catch (error) {
+    return {
+      ok: false,
+      message: `${error instanceof Error && error.message ? error.message : "The server refused the change."} Nothing was changed.`,
+    };
+  }
+}
+
+type Pending = { next: "REJECTED" | "COMPLETED" | "CANCELLED" } | null;
+
+const CONFIRM: Record<
+  NonNullable<Pending>["next"],
+  {
+    title: (t: string) => string;
+    body: string;
+    label: string;
+    done: string;
+    tone: "danger" | "default";
+  }
+> = {
+  REJECTED: {
+    title: (t) => `Decline “${t}”?`,
+    body: "The request stays on the record as declined. Nothing is sent to the guest — tell them yourself if they should know.",
+    label: "Decline request",
+    done: "Request declined.",
+    tone: "danger",
+  },
+  COMPLETED: {
+    title: (t) => `Mark “${t}” as completed?`,
+    body: "Records that the meeting took place, stamped with today’s date.",
+    label: "Mark completed",
+    done: "Meeting marked completed.",
+    tone: "default",
+  },
+  CANCELLED: {
+    title: (t) => `Cancel “${t}”?`,
+    body: "The meeting leaves the calendar but stays on the record as cancelled. Nothing is sent to the guest — tell them yourself.",
+    label: "Cancel meeting",
+    done: "Meeting cancelled.",
+    tone: "danger",
+  },
+};
+
 export function MeetingActions({
   meetingId,
   title,
   status = "PENDING",
   afterDeleteHref,
+  canApprove = true,
+  canDelete = true,
 }: {
   meetingId: string;
   title: string;
   status?: string;
-  /** Where to go once the meeting is deleted — the open sheet would otherwise point at nothing. */
   afterDeleteHref?: string;
+  canApprove?: boolean;
+  canDelete?: boolean;
 }) {
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
+  const [pending, setPending] = React.useState<Pending>(null);
   const del = useRecordDelete({
     entity: "meeting",
     onDeleted: () => {
@@ -34,55 +85,102 @@ export function MeetingActions({
     },
   });
 
-  function act(next: string, label: string) {
+  function approve() {
     startTransition(async () => {
-      try {
-        await setMeetingStatus(meetingId, next);
-        toast.success(label);
-        router.refresh();
-      } catch (error) {
-        toast.error("Could not update the meeting", {
-          description: error instanceof Error ? error.message : "Unknown error",
-        });
-      }
+      const result = await moveMeeting(
+        meetingId,
+        "APPROVED",
+        "Meeting approved. It is on the calendar.",
+      );
+      toast[result.ok ? "success" : "error"](result.message);
+      if (result.ok) router.refresh();
     });
   }
 
   const agreed = status === "APPROVED" || status === "RESCHEDULED";
+  const confirm = pending ? CONFIRM[pending.next] : null;
+  if (!canApprove && !canDelete) return null;
 
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-      {status === "PENDING" && (
+      {canApprove && status === "PENDING" && (
         <>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => act("APPROVED", "Meeting approved")}>
-            <Check className="size-3.5" />
+          <Button
+            size="sm"
+            variant="outline"
+            className="pointer-coarse:h-11"
+            disabled={busy}
+            onClick={approve}
+          >
+            {busy ? <LoadingIcon size="sm" /> : <Check className="size-3.5" />}
             Approve
           </Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => act("REJECTED", "Meeting declined")}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="pointer-coarse:h-11"
+            disabled={busy}
+            onClick={() => setPending({ next: "REJECTED" })}
+          >
             <X className="size-3.5" />
             Decline
           </Button>
         </>
       )}
-      {agreed && (
+      {canApprove && agreed && (
         <>
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => act("COMPLETED", "Meeting marked completed")}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="pointer-coarse:h-11"
+            disabled={busy}
+            onClick={() => setPending({ next: "COMPLETED" })}
+          >
             <Check className="size-3.5" />
             Mark completed
           </Button>
-          <Button size="sm" variant="ghost" disabled={busy} onClick={() => act("CANCELLED", "Meeting cancelled")}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="pointer-coarse:h-11"
+            disabled={busy}
+            onClick={() => setPending({ next: "CANCELLED" })}
+          >
             <X className="size-3.5" />
             Cancel meeting
           </Button>
         </>
       )}
-      {/* Declining keeps the request on the record; deleting is for a booking
-          that was never real — spam, or a duplicate of the one below it. */}
-      <RowActions
-        onDelete={() => del.request({ id: meetingId, label: title })}
-        deleteLabel="Delete meeting"
-      />
+      {canDelete && (
+        <RowActions
+          onDelete={() => del.request({ id: meetingId, label: title })}
+          deleteLabel="Delete meeting"
+        />
+      )}
       {del.dialog}
+
+      {confirm && pending && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPending(null);
+          }}
+          tone={confirm.tone}
+          title={confirm.title(title)}
+          body={confirm.body}
+          confirmLabel={confirm.label}
+          cancelLabel="Keep it"
+          onConfirm={async () => {
+            const result = await moveMeeting(
+              meetingId,
+              pending.next,
+              confirm.done,
+            );
+            if (result.ok) router.refresh();
+            return result;
+          }}
+        />
+      )}
     </div>
   );
 }

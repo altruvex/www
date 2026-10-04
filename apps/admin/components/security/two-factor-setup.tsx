@@ -9,7 +9,6 @@ import { twoFactor } from "@/lib/auth-client";
 
 type Stage = "idle" | "confirm" | "done";
 
-/** The base32 secret an authenticator app needs, pulled out of the otpauth URI. */
 function secretFrom(totpURI: string): string {
   try {
     return new URL(totpURI).searchParams.get("secret") ?? "";
@@ -18,7 +17,6 @@ function secretFrom(totpURI: string): string {
   }
 }
 
-/** Groups the key into fours so it can be read off the screen and typed. */
 function readable(secret: string): string {
   return secret.replace(/(.{4})/g, "$1 ").trim();
 }
@@ -33,8 +31,6 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  // Turning it off and re-issuing backup codes both re-confirm the password:
-  // an unattended browser must not be able to weaken the account.
   const [mode, setMode] = useState<"disable" | "regenerate" | null>(null);
 
   async function start(event: React.FormEvent) {
@@ -93,8 +89,6 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
       setError(failed?.message || "That password was not accepted.");
       return;
     }
-    // The old codes are void from this moment; the new ones are shown once
-    // and live only in this component's state until the page is left.
     setBackupCodes(data.backupCodes ?? []);
     setCopied(false);
     setMode(null);

@@ -7,7 +7,7 @@ import { CheckCheck } from "lucide-react";
 import { Button } from "@repo/ui";
 import { markNotificationsRead } from "@/app/(dashboard)/_actions/records";
 
-export function MarkAllRead() {
+export function MarkAllRead({ unread }: { unread: number }) {
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
 
@@ -18,19 +18,24 @@ export function MarkAllRead() {
       onClick={() =>
         startTransition(async () => {
           try {
-            await markNotificationsRead();
-            toast.success("All notifications marked read");
+            const result = await markNotificationsRead();
+            if (!result.ok) {
+              toast.error("Could not mark them read", { description: result.message });
+              return;
+            }
+            if (result.changed) toast.success(result.message);
+            else toast.info(result.message);
             router.refresh();
           } catch (error) {
-            toast.error("Could not update", {
-              description: error instanceof Error ? error.message : "Unknown error",
+            toast.error("Could not mark them read", {
+              description: error instanceof Error && error.message ? error.message : "The server refused the change.",
             });
           }
         })
       }
     >
-      <CheckCheck className="size-3.5" />
-      Mark all read
+      <CheckCheck className="size-3.5" aria-hidden />
+      {busy ? "Marking…" : `Mark ${unread} read`}
     </Button>
   );
 }

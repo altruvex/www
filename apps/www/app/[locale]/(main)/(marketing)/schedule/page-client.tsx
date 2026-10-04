@@ -9,7 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/www";
+} from "@repo/ui";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { useRouter } from "@/i18n/navigation";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
@@ -24,8 +24,6 @@ export default function SchedulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("schedule");
-  // next-intl's usePathname strips the locale prefix, so reading the locale
-  // off the path sent "schedule" to the API and every booking fell back to en.
   const locale = useLocale();
 
   const [formData, setFormData] = useState({
@@ -72,8 +70,6 @@ export default function SchedulePage() {
     if (!formData.time) {
       e.time = t("form.time.error");
     } else if (formData.date && !e.date) {
-      // The date check is by day, so today with an hour already gone got
-      // through here and was refused by the server after submit.
       const [h, m] = formData.time.split(":").map(Number);
       const at = new Date(formData.date);
       at.setHours(h, m, 0, 0);
@@ -121,13 +117,11 @@ export default function SchedulePage() {
 
   const blank =
     "rounded-none border-0 border-b border-foreground/45 bg-transparent px-[0.12em] py-0 font-light text-brand-text outline-none transition-colors duration-(--motion-drawer) placeholder:text-muted-foreground/70 focus-visible:border-brand focus-visible:shadow-[0_1px_0_hsl(var(--brand))] aria-invalid:border-destructive";
-  // Radix triggers carry their own height, type size and ring; the sentence
-  // needs them to read as text, so those are reset to inherit here.
   const blankTrigger = cn(
     blank,
     "inline-flex h-auto! w-auto gap-0 align-baseline text-[length:inherit]! leading-[inherit] shadow-none focus-visible:ring-0 hover:text-brand-text [&_svg]:hidden data-placeholder:text-muted-foreground/70",
   );
-  const timeLabel = new Intl.DateTimeFormat(locale.startsWith("ar") ? "ar-EG" : "en-US", {
+  const timeLabel = new Intl.DateTimeFormat(locale.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-US", {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -152,7 +146,7 @@ export default function SchedulePage() {
           </HeroReveal>
           <HeroHeadline
             as="h1"
-            className="mb-6 max-w-[16ch] font-sans text-[clamp(2.25rem,5vw,4.75rem)] leading-[1.04] font-light tracking-[-0.035em] text-foreground select-none rtl:leading-[1.3] rtl:tracking-normal"
+            className="mb-6 max-w-5xl text-balance font-sans text-[clamp(2.25rem,5vw,4.75rem)] leading-[1.04] font-light tracking-[-0.035em] text-foreground select-none rtl:leading-[1.3] rtl:tracking-normal"
           >
             {t("title")}
           </HeroHeadline>
@@ -166,11 +160,9 @@ export default function SchedulePage() {
               <li>{t("facts.hours")}</li>
             </ul>
           </HeroReveal>
-          {/* The whole form is one sentence the visitor completes: four blanks
-              at display size under the 2px ink rule /contact opens with. */}
           <HeroReveal delay={0.65} className="mt-12 border-t-2 border-foreground pt-10 md:mt-16 md:pt-14">
             <form onSubmit={onSubmit} noValidate>
-              <p className="max-w-[26ch] font-sans text-[clamp(1.625rem,3.6vw,3.375rem)] leading-[1.5] font-light tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal">
+              <p className="max-w-[46ch] font-sans text-[clamp(1.625rem,3.6vw,3.375rem)] leading-[1.5] font-light tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal">
                 {t.rich("sentence", {
                   name: () => (
                     <input
@@ -182,7 +174,7 @@ export default function SchedulePage() {
                       aria-label={t("form.name.label")}
                       aria-invalid={!!errors.name}
                       disabled={isSubmitting}
-                      className={cn(blank, "w-[9ch] max-w-full")}
+                      className={cn(blank, "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
                     />
                   ),
                   phone: () => (
@@ -196,7 +188,7 @@ export default function SchedulePage() {
                       aria-label={t("form.phone.label")}
                       aria-invalid={!!errors.phone}
                       disabled={isSubmitting}
-                      className={cn(blank, "w-[14ch] max-w-full")}
+                      className={cn(blank, "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
                     />
                   ),
                   date: () => (
@@ -277,7 +269,6 @@ export default function SchedulePage() {
   );
 }
 
-// The hours the call can start in, in the steps the booking API has always taken.
 const TIMES = Array.from({ length: 10 }, (_, i) => i + 9).flatMap((h) =>
   ["00", "15", "30", "45"].map((m) => `${String(h).padStart(2, "0")}:${m}`),
 );

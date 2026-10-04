@@ -20,11 +20,6 @@ import {
   type ServiceId,
 } from "@repo/pricing-schema";
 
-// Starting point for a new proposal's content. This is a SEED for the Admin
-// form only — the generator never reads it. Once a proposal is saved, its
-// stored content is the sole source of truth, so editing these defaults can
-// never retroactively change a deck that has already been written.
-
 const DEFAULT_WHY_US = {
   headlineLine1: "We don't build templates.",
   headlineLine2: "We engineer systems.",
@@ -39,9 +34,6 @@ const DEFAULT_WHY_US = {
   ],
 };
 
-// The deck's standing copy. Identical for every client out of the box —
-// it lives in the content document so Ali can change a heading for one
-// proposal without a deploy, not because it is expected to vary.
 const DEFAULT_SECTIONS = {
   problems: {
     eyebrow: "02 — Project Understanding",
@@ -59,8 +51,6 @@ const DEFAULT_SECTIONS = {
   closing: { eyebrow: "07 — Why Altruvex", heading: "Why Altruvex" },
 };
 
-// The deck's furniture, exactly as the approved reference prints it.
-// {date}, {weeks} and {n} are substituted at render time.
 const DEFAULT_LABELS = {
   cover: {
     eyebrow: "ALTRUVEX · WEB ENGINEERING · PROJECT PROPOSAL · {date}",
@@ -86,9 +76,6 @@ const DEFAULT_LABELS = {
   servicesNote: "Billed separately from the project fee, per term, at the price shown.",
 };
 
-// Percentages and trigger wording both come from the schema, so a proposal,
-// the contract generated from it and the public pricing page cannot disagree
-// about the milestone split or about what the middle milestone is.
 const PAYMENT_LABELS = ["First Payment", "Second Payment", "Final Payment"] as const;
 
 function defaultPaymentSchedule(pricing: ResolvedPricing) {
@@ -112,20 +99,12 @@ export interface DefaultContentInput {
   validityDays?: number;
 }
 
-/**
- * `pricing` is the resolved set (override ?? default) the calling surface can
- * reach; the admin new-proposal page passes what `lib/pricing-store` resolved
- * so the seeded split and validity match the estimate beside them. Callers
- * with no datastore get the shipped defaults.
- */
 export function buildDefaultProposalContent(
   input: DefaultContentInput,
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): ProposalContent {
   const phases = getTimelinePhases(input.projectType, input.timelineWeeks);
   const scheduledWeeks = phases.reduce((sum, phase) => sum + phase.weeks, 0);
-  // One load value per phase, sampled off the same curve the chart used to
-  // hardcode. Admin can retune any of them afterwards.
   const load = getWeeklyLoad(phases.length);
   const date = input.proposalDate ?? new Date();
 
@@ -166,10 +145,7 @@ export function buildDefaultProposalContent(
       item: item.name,
       amount: item.amount,
     })),
-    // Off by default: a discount is a deliberate act, never a starting state.
     discount: { ...NO_DISCOUNT },
-    // Empty by default: a domain or hosting line is added when this client
-    // actually needs one, with the price for that one registrar and term.
     services: [],
     paymentSchedule: defaultPaymentSchedule(pricing),
     scopeIncluded: [...SCOPE_INCLUDED],

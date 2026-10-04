@@ -1,48 +1,51 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
-import { Download, ExternalLink, FileText } from "lucide-react";
+import {
+  CopyPlus,
+  Download,
+  ExternalLink,
+  FileSignature,
+  FileText,
+  History,
+  Layers,
+  ListChecks,
+  Receipt,
+  Server,
+} from "lucide-react";
+import { Button } from "@repo/ui";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { PageHeader, MetaItem } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
-import { TabNav } from "@/components/os/tab-nav";
-import { DetailLayout, MetaList, QuickActions } from "@/components/os/detail-layout";
+import { MetaList, QuickActions } from "@/components/os/detail-layout";
+import { Dossier, DossierSection } from "@/components/os/section-index";
 import { Timeline } from "@/components/os/timeline";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { EmptyInline } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
+import { ManualStatusMenu } from "@/components/os/manual-status";
+import { SendDocument } from "@/components/os/send-document";
+import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { StatusPill } from "@/components/ui/badge";
+import { GenerateContractButton } from "@/components/proposal/generate-contract";
+import { proposalSendProps } from "@/components/proposal/send-props";
 import { buildActivity } from "@/lib/activity";
-import { documentUrl } from "@/lib/storage";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
+import { roleCanOpen } from "@/lib/action-center";
+import { canExtendValidity, needsNewVersion } from "../reissue";
+import { ExtendValidityButton } from "@/components/proposal/extend-validity";
 import {
   discountAmount,
   investmentTotal,
   proposalContentSchema,
 } from "@/lib/proposal-schema";
-import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
 import { statusOf } from "@/lib/status";
 import { date, dateTime, daysFromNow, money, when } from "@/lib/format";
-import { LifecycleButton } from "@/app/(dashboard)/clients/[id]/client-actions";
-import { ManualStatusMenu } from "@/components/os/manual-status";
-import { Button } from "@repo/ui";
-import { headers } from "next/headers";
-
-import { SendDocument } from "@/components/os/send-document";
-import { proposalDraft } from "@/lib/email-templates";
-import { emailTransport } from "@/lib/email";
-import { publicBaseUrlFromHeaders } from "@/lib/public-url";
-import { whatsappConfigured } from "@/lib/sign-verification";
 
 export const dynamic = "force-dynamic";
-
-const TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "content", label: "Content" },
-  { id: "pricing", label: "Pricing" },
-  { id: "versions", label: "Versions" },
-  { id: "activity", label: "Activity" },
-];
 
 interface LineItem {
   item?: string;
@@ -52,14 +55,14 @@ interface LineItem {
 
 export default async function ProposalDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
+  const denied = await gateRoute("/proposals/[id]");
+  if (denied) return denied;
+
   const { id } = await params;
-  const { tab: tabParam } = await searchParams;
-  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "overview";
+  const role = await currentRole();
 
   const proposal = await prisma.proposal.findUnique({
     where: { id },
@@ -70,29 +73,13 @@ export default async function ProposalDetailPage({
   });
   if (!proposal) notFound();
 
-  // The draft the send screen opens with, built from the same template the
-  // route falls back to — two copies of this wording would drift, and only a
-  // client would ever notice.
-  const docUrl = await documentUrl(proposal.pdfUrl ?? proposal.fileUrl);
-  const pdfUrl = await documentUrl(proposal.pdfUrl);
-  // Client-facing, so the base is the configured public origin
-  // (BETTER_AUTH_URL), never the request host — same rule as the send route.
-  const absoluteDoc =
-    docUrl && /^https?:\/\//.test(docUrl)
-      ? docUrl
-      : docUrl
-        ? `${publicBaseUrlFromHeaders(await headers())}${docUrl.startsWith("/") ? "" : "/"}${docUrl}`
-        : "";
-  const draft = proposalDraft(proposal.client.name, absoluteDoc);
+  const { pdfUrl, send } = await proposalSendProps(proposal);
 
-  // `createdBy` stores a user id. Showing the raw uuid in the sidebar leaks an
-  // internal identifier where a person's name belongs.
   const author = await prisma.user.findUnique({
     where: { id: proposal.createdBy },
     select: { name: true, email: true },
   });
 
-  // Every proposal ever issued to this client — the version history (§7).
   const siblings = await prisma.proposal.findMany({
     where: { clientId: proposal.clientId },
     select: {
@@ -110,9 +97,6 @@ export default async function ProposalDetailPage({
   const parsed = proposalContentSchema.safeParse(proposal.content);
   const content = parsed.success ? parsed.data : null;
 
-  // The stored lineItems carry the discount as a negative row so a reader of
-  // that column alone cannot mistake the subtotal for the fee. The table below
-  // wants the two separated again.
   const storedItems = Array.isArray(proposal.lineItems)
     ? (proposal.lineItems as LineItem[])
     : [];
@@ -137,7 +121,24 @@ export default async function ProposalDetailPage({
   const expiresIn = daysFromNow(proposal.validUntil);
   const isOpen = ["SENT", "DELIVERED", "READ", "VIEWED"].includes(proposal.status);
 
+  const expired = expiresIn != null && expiresIn < 0;
   const activity = buildActivity({ proposals: [proposal] });
+  const services = content?.services ?? [];
+
+  const canSend = can(role, "send", "proposal");
+  const canEdit = can(role, "edit", "proposal");
+  const canCreate = can(role, "create", "proposal");
+  const canDelete = can(role, "delete", "proposal");
+  const canContract = can(role, "create", "contract");
+
+  const sendable =
+    send && canSend && (proposal.status === "DRAFT" || (proposal.status === "SENT" && !expired));
+  const generate = proposal.status === "ACCEPTED" && !proposal.contract && canContract;
+  const reissueHref = `/clients/${proposal.clientId}/new-proposal?from=${proposal.id}`;
+  const reissue =
+    canCreate && roleCanOpen(role, "/clients") && needsNewVersion(proposal.status, proposal.validUntil);
+  const extendable =
+    canEdit && canExtendValidity(proposal.status, proposal.validUntil, proposal.contract != null);
 
   return (
     <div className="space-y-4">
@@ -151,11 +152,6 @@ export default async function ProposalDetailPage({
         status={<StatusPill registry="proposalStatus" value={proposal.status} />}
         meta={
           <>
-            <MetaItem label="Client">
-              <EntityLink type="client" id={proposal.clientId}>
-                {clientName}
-              </EntityLink>
-            </MetaItem>
             <MetaItem label="Value">{money(proposal.totalPrice, proposal.currency)}</MetaItem>
             {reduction > 0 && (
               <MetaItem label={discountLabel}>
@@ -170,69 +166,95 @@ export default async function ProposalDetailPage({
         actions={
           <>
             {pdfUrl && (
-              <Button asChild variant="outline">
+              <Button asChild variant="ghost">
                 <a href={pdfUrl} target="_blank" rel="noreferrer">
-                  <Download className="size-3.5" />
+                  <Download className="size-3.5" aria-hidden />
                   PDF
                 </a>
               </Button>
             )}
-            {proposal.status === "DRAFT" && docUrl && (
-              <SendDocument
-                label="Send proposal"
-                endpoint={`/api/admin/proposals/${proposal.id}/send`}
-                defaultSubject={draft.subject}
-                defaultBody={draft.body}
-                clientEmail={proposal.client.email}
-                emailConfigured={emailTransport() !== "none"}
-                whatsappConfigured={whatsappConfigured()}
-              />
-            )}
-            {!proposal.contract && (
+            {!proposal.contract && canEdit && (
               <ManualStatusMenu entity="proposal" id={proposal.id} status={proposal.status} />
             )}
-            {proposal.status === "ACCEPTED" && !proposal.contract && (
-              <LifecycleButton
-                label="Generate contract"
-                busyLabel="Generating…"
-                endpoint="/api/admin/contracts"
-                body={{ proposalId: proposal.id }}
-                variant="brand"
+            {canDelete && (
+              <DeleteRecordButton
+                entity="proposal"
+                id={proposal.id}
+                label={`${proposal.projectType} · ${clientName}`}
+                redirectTo="/proposals"
               />
             )}
-            <DeleteRecordButton
-              entity="proposal"
-              id={proposal.id}
-              label={`${proposal.projectType} · ${proposal.client.company ?? proposal.client.name ?? "Client"}`}
-              redirectTo="/proposals"
-            />
+            {proposal.contract && roleCanOpen(role, "/contracts") && (
+              <Button asChild variant="outline">
+                <Link href={`/contracts/${proposal.contract.id}`}>
+                  <FileSignature className="size-3.5" aria-hidden />
+                  Open the contract
+                </Link>
+              </Button>
+            )}
+            {!reissue && canCreate && roleCanOpen(role, "/clients") && (
+              <Button asChild variant="ghost">
+                <Link href={reissueHref}>
+                  <CopyPlus className="size-3.5" aria-hidden />
+                  Duplicate
+                </Link>
+              </Button>
+            )}
+            {reissue && (
+              <Button asChild variant={sendable && proposal.status === "DRAFT" ? "outline" : "brand"}>
+                <Link href={reissueHref}>
+                  <CopyPlus className="size-3.5" aria-hidden />
+                  New version
+                </Link>
+              </Button>
+            )}
+            {generate ? (
+              <GenerateContractButton proposalId={proposal.id} clientName={clientName} />
+            ) : sendable ? (
+              <SendDocument
+                {...send}
+                label="Send proposal"
+                resend={proposal.status !== "DRAFT"}
+                variant={proposal.status === "DRAFT" ? "brand" : "outline"}
+              />
+            ) : null}
           </>
         }
         alert={
-          isOpen && expiresIn != null && expiresIn <= 7 ? (
-            expiresIn < 0 ? (
-              <AlertBar
-                tone="danger"
-                href={`/clients/${proposal.clientId}/new-proposal?from=${proposal.id}`}
-                cta="Reissue the proposal"
-              >
-                {`This proposal expired ${Math.abs(expiresIn)} day${Math.abs(expiresIn) === 1 ? "" : "s"} ago. The price is no longer committed — reissue it before the client accepts.`}
-              </AlertBar>
-            ) : (
-              <AlertBar
-                tone="warning"
-                href={`/whatsapp/${proposal.clientId}`}
-                cta="Chase on WhatsApp"
-              >
-                {`Expires in ${expiresIn} day${expiresIn === 1 ? "" : "s"}. Chase it or extend the validity.`}
-              </AlertBar>
-            )
+          proposal.status === "DRAFT" && !send ? (
+            <AlertBar
+              tone="warning"
+              {...(canCreate
+                ? { href: reissueHref, cta: "Rebuild as a new version" }
+                : { action: null })}
+            >
+              No document was generated for this draft, so there is nothing to send yet.
+            </AlertBar>
+          ) : isOpen && expiresIn != null && expiresIn <= 7 ? (
+            <AlertBar
+              tone={expired ? "danger" : "warning"}
+              {...(canCreate
+                ? { href: reissueHref, cta: "Reissue as a new version" }
+                : { action: null })}
+            >
+              {expired
+                ? `This proposal expired ${Math.abs(expiresIn)} day${Math.abs(expiresIn) === 1 ? "" : "s"} ago. The price is no longer committed — extend its validity or reissue it before the client accepts.`
+                : `Expires in ${expiresIn} day${expiresIn === 1 ? "" : "s"}. To give the client longer, extend its validity or reissue it as a new version.`}
+            </AlertBar>
           ) : null
         }
-        tabs={<TabNav tabs={TABS} active={tab} basePath={`/proposals/${proposal.id}`} />}
       />
 
-      <DetailLayout
+      <Dossier
+        label="Proposal sections"
+        sections={[
+          { id: "engagement", label: "Engagement", icon: <ListChecks /> },
+          { id: "content", label: "Content", icon: <FileText /> },
+          { id: "pricing", label: "Pricing & split", icon: <Receipt /> },
+          { id: "services", label: "Services", icon: <Server />, count: services.length },
+          { id: "versions", label: "Versions", icon: <Layers />, count: siblings.length },
+          { id: "history", label: "History", icon: <History /> },
+        ]}
         aside={
           <>
             <Panel title="Record" flush>
@@ -250,166 +272,159 @@ export default async function ProposalDetailPage({
                   { label: "Complexity", value: proposal.complexity },
                   { label: "Accent", value: `${proposal.accentName} (${proposal.colorWorld})` },
                   { label: "Created", value: dateTime(proposal.createdAt) },
-                  { label: "Sent", value: proposal.sentAt ? dateTime(proposal.sentAt) : "—" },
-                  { label: "Delivered", value: proposal.deliveredAt ? dateTime(proposal.deliveredAt) : "—" },
-                  { label: "Read", value: proposal.readAt ? dateTime(proposal.readAt) : "—" },
-                  { label: "Answered", value: proposal.respondedAt ? dateTime(proposal.respondedAt) : "—" },
                   {
                     label: "Author",
                     value:
                       author?.name ??
                       author?.email ?? (
-                        <span className="font-mono text-micro">
-                          {proposal.createdBy.slice(0, 8)}
-                        </span>
+                        <span className="text-subtle-foreground">Account removed</span>
                       ),
                   },
                 ]}
               />
             </Panel>
 
-            <Panel title="Next step" flush>
+            <Panel title="Next step">
               <QuickActions>
                 {proposal.contract ? (
                   <Button asChild variant="outline">
                     <Link href={`/contracts/${proposal.contract.id}`}>
-                      <ExternalLink className="size-3.5 text-subtle-foreground" />
+                      <ExternalLink className="size-3.5 text-subtle-foreground" aria-hidden />
                       Open contract ({statusOf("contractStatus", proposal.contract.status).label})
                     </Link>
                   </Button>
                 ) : (
                   <p className="text-base text-muted-foreground">
                     {proposal.status === "ACCEPTED"
-                      ? "Accepted. Generate the contract to turn this offer into a commitment."
-                      : "A contract can be generated once the client accepts. If they agreed outside the system, use Record manually → Accepted."}
+                      ? canContract
+                        ? "Accepted. Generate the contract to turn this offer into a commitment."
+                        : "Accepted. Someone who may create contracts generates it next."
+                      : proposal.status === "REJECTED" || proposal.status === "EXPIRED"
+                        ? "This offer is closed. To quote the client again, issue a new version — the builder starts from this one."
+                        : proposal.status === "DRAFT"
+                        ? "Send it to the client, or record it as sent if it went out another way."
+                        : "A contract can be generated once the client accepts. If they agreed outside the system, use Record manually → Accepted."}
                   </p>
                 )}
-                <Button asChild variant="outline">
-                  <Link href={`/whatsapp/${proposal.clientId}`}>
-                    Open conversation
-                  </Link>
-                </Button>
+                {extendable && (
+                  <ExtendValidityButton
+                    proposalId={proposal.id}
+                    validUntil={proposal.validUntil.toISOString()}
+                  />
+                )}
               </QuickActions>
             </Panel>
           </>
         }
       >
-        {tab === "overview" && (
-          <>
-            <Panel title="Delivery and engagement" description="What happened after it was sent">
-              <ol className="space-y-2.5">
-                <Stage label="Drafted" at={proposal.createdAt} done />
-                <Stage label="Sent" at={proposal.sentAt} done={Boolean(proposal.sentAt)} />
-                <Stage label="Delivered" at={proposal.deliveredAt} done={Boolean(proposal.deliveredAt)} />
-                <Stage label="Read by client" at={proposal.readAt} done={Boolean(proposal.readAt)} />
-                <Stage
-                  label={proposal.status === "REJECTED" ? "Rejected" : "Accepted"}
-                  at={proposal.respondedAt}
-                  done={Boolean(proposal.respondedAt)}
-                  tone={proposal.status === "REJECTED" ? "danger" : "success"}
-                />
-              </ol>
-            </Panel>
+        <DossierSection
+          id="engagement"
+          title="Delivery and engagement"
+          description="What happened after it was sent"
+        >
+          <ol className="space-y-2.5">
+            <Stage label="Drafted" at={proposal.createdAt} done />
+            <Stage label="Sent" at={proposal.sentAt} done={Boolean(proposal.sentAt)} />
+            <Stage label="Delivered" at={proposal.deliveredAt} done={Boolean(proposal.deliveredAt)} />
+            <Stage label="Read by client" at={proposal.readAt} done={Boolean(proposal.readAt)} />
+            <Stage
+              label={proposal.status === "REJECTED" ? "Rejected" : "Accepted"}
+              at={proposal.respondedAt}
+              done={Boolean(proposal.respondedAt)}
+              tone={proposal.status === "REJECTED" ? "danger" : "success"}
+            />
+          </ol>
+        </DossierSection>
 
-            {content && (
-              <Panel title="The argument" description="How the deck frames the work">
-                <div className="space-y-3">
-                  <div>
-                    <p className="telemetry text-subtle-foreground">Problems named</p>
-                    <ul className="mt-1 space-y-1">
-                      {content.problems.map((problem) => (
-                        <li key={problem.title} className="text-base">
-                          <span className="font-medium">{problem.title}</span>
-                          <span className="text-muted-foreground"> — {problem.description}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="border-t border-border pt-3">
-                    <p className="telemetry text-subtle-foreground">Modules proposed</p>
-                    <ul className="mt-1 space-y-1">
-                      {content.solutionModules.map((module) => (
-                        <li key={module.title} className="text-base">
-                          <span className="font-medium">{module.title}</span>
-                          <span className="text-muted-foreground"> — {module.description}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Panel>
-            )}
-          </>
-        )}
+        <DossierSection
+          id="content"
+          title="Deck content"
+          description="Every string the generated document renders"
+          action={
+            canCreate ? (
+              <Button asChild variant="ghost" size="sm">
+                <Link href={reissueHref}>Edit as a new version</Link>
+              </Button>
+            ) : undefined
+          }
+        >
+          {!content ? (
+            <EmptyInline>
+              This proposal predates the structured content editor, or its stored content does not
+              match the current schema. The generated PDF is still the record of what the client
+              received.
+            </EmptyInline>
+          ) : (
+            <div className="space-y-5">
+              <Block title="Problems named">
+                <ul className="space-y-1">
+                  {content.problems.map((problem) => (
+                    <li key={problem.title} className="text-base">
+                      <span className="font-medium">{problem.title}</span>
+                      <span className="text-muted-foreground"> — {problem.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+              <Block title="Modules proposed">
+                <ul className="space-y-1">
+                  {content.solutionModules.map((module) => (
+                    <li key={module.title} className="text-base">
+                      <span className="font-medium">{module.title}</span>
+                      <span className="text-muted-foreground"> — {module.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+              <Block title="Timeline">
+                <ul className="rows -mx-3">
+                  {content.timelinePhases.map((phase) => (
+                    <li
+                      key={phase.name}
+                      className="grid grid-cols-[1fr_auto] gap-x-3 px-3 py-1.5 sm:flex sm:items-center"
+                    >
+                      <span className="truncate text-base font-medium sm:w-32 sm:shrink-0">
+                        {phase.name}
+                      </span>
+                      <span className="col-span-2 row-start-2 min-w-0 text-meta text-muted-foreground sm:flex-1 sm:truncate">
+                        {phase.deliverable}
+                      </span>
+                      <span className="shrink-0 font-mono text-micro text-subtle-foreground">
+                        {phase.durationLabel}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+              <Block title="In scope">
+                <ul className="grid gap-1 sm:grid-cols-2">
+                  {content.scopeIncluded.map((entry) => (
+                    <li key={entry} className="flex gap-1.5 text-base">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-success" aria-hidden />
+                      {entry}
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+              <Block title="Explicitly not in scope">
+                <ul className="grid gap-1 sm:grid-cols-2">
+                  {content.scopeNotIncluded.map((entry) => (
+                    <li key={entry} className="flex gap-1.5 text-base text-muted-foreground">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-danger" aria-hidden />
+                      {entry}
+                    </li>
+                  ))}
+                </ul>
+              </Block>
+            </div>
+          )}
+        </DossierSection>
 
-        {tab === "content" && (
-          <Panel
-            title="Deck content"
-            description="Every string the generated document renders"
-            action={
-              <Link
-                href={`/clients/${proposal.clientId}/new-proposal?from=${proposal.id}`}
-                className="text-meta text-muted-foreground hover:text-foreground"
-              >
-                Edit as a new version →
-              </Link>
-            }
-          >
-            {!content ? (
-              <EmptyInline>
-                This proposal predates the structured content editor, or its stored
-                content does not match the current schema. The generated PDF is still
-                the record of what the client received — open it from the header.
-              </EmptyInline>
-            ) : (
-              <div className="space-y-4">
-                <Block title="Timeline">
-                  <ul className="rows -mx-3">
-                    {content.timelinePhases.map((phase) => (
-                      <li key={phase.name} className="flex items-center gap-3 px-3 py-1.5">
-                        <span className="w-32 shrink-0 truncate text-base font-medium">{phase.name}</span>
-                        <span className="min-w-0 flex-1 truncate text-meta text-muted-foreground">
-                          {phase.deliverable}
-                        </span>
-                        <span className="shrink-0 font-mono text-micro text-subtle-foreground">
-                          {phase.durationLabel}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </Block>
-                <Block title="In scope">
-                  <ul className="grid gap-1 sm:grid-cols-2">
-                    {content.scopeIncluded.map((entry) => (
-                      <li key={entry} className="flex gap-1.5 text-base">
-                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-success" aria-hidden />
-                        {entry}
-                      </li>
-                    ))}
-                  </ul>
-                </Block>
-                <Block title="Explicitly not in scope">
-                  <ul className="grid gap-1 sm:grid-cols-2">
-                    {content.scopeNotIncluded.map((entry) => (
-                      <li key={entry} className="flex gap-1.5 text-base text-muted-foreground">
-                        <span className="mt-1.5 size-1 shrink-0 rounded-full bg-danger" aria-hidden />
-                        {entry}
-                      </li>
-                    ))}
-                  </ul>
-                </Block>
-              </div>
-            )}
-          </Panel>
-        )}
-
-        {tab === "pricing" && (
-          <>
+        <DossierSection id="pricing" title="Pricing and payment split">
+          <div className="space-y-4">
             <Panel title="Line items" flush>
               {lineItems.length === 0 ? (
-                <EmptyInline>
-                  This proposal stores a total but no itemised breakdown.
-                </EmptyInline>
+                <EmptyInline>This proposal stores a total but no itemised breakdown.</EmptyInline>
               ) : (
                 <table className="w-full text-base">
                   <thead>
@@ -426,7 +441,7 @@ export default async function ProposalDetailPage({
                     {lineItems.map((item, i) => (
                       <tr key={`${item.item ?? item.label ?? i}`} className="border-b border-border">
                         <td className="px-3 py-2">{item.item ?? item.label ?? "—"}</td>
-                        <td className="px-3 py-2 text-end font-mono text-meta tabular-nums">
+                        <td className="px-3 py-2 text-end font-mono text-meta tabular-nums whitespace-nowrap">
                           {money(item.amount ?? 0, proposal.currency)}
                         </td>
                       </tr>
@@ -435,7 +450,7 @@ export default async function ProposalDetailPage({
                       <>
                         <tr className="border-b border-border">
                           <td className="px-3 py-2 text-muted-foreground">Subtotal</td>
-                          <td className="px-3 py-2 text-end font-mono text-meta tabular-nums text-muted-foreground">
+                          <td className="px-3 py-2 text-end font-mono text-meta tabular-nums whitespace-nowrap text-muted-foreground">
                             {money(subtotal, proposal.currency)}
                           </td>
                         </tr>
@@ -450,7 +465,7 @@ export default async function ProposalDetailPage({
                                 : ""}
                             </span>
                           </td>
-                          <td className="px-3 py-2 text-end font-mono text-meta tabular-nums text-danger">
+                          <td className="px-3 py-2 text-end font-mono text-meta tabular-nums whitespace-nowrap text-danger">
                             −{money(reduction, proposal.currency)}
                           </td>
                         </tr>
@@ -460,7 +475,7 @@ export default async function ProposalDetailPage({
                       <td className="px-3 py-2 font-medium">
                         {reduction > 0 ? "Total after discount" : "Total"}
                       </td>
-                      <td className="px-3 py-2 text-end font-mono text-md font-medium tabular-nums">
+                      <td className="px-3 py-2 text-end font-mono text-md font-medium tabular-nums whitespace-nowrap">
                         {money(proposal.totalPrice, proposal.currency)}
                       </td>
                     </tr>
@@ -470,19 +485,24 @@ export default async function ProposalDetailPage({
             </Panel>
 
             <Panel title="Payment schedule" description="What triggers each instalment">
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {[
                   { label: "On signature", pct: split.first ?? 50 },
                   { label: "At the agreed milestone", pct: split.second ?? 30 },
                   { label: "On handover", pct: split.final ?? 20 },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center gap-3">
-                    <span className="w-44 shrink-0 text-base text-muted-foreground">{row.label}</span>
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                      <span className="block h-full rounded-full bg-brand" style={{ width: `${row.pct}%` }} />
+                  <div
+                    key={row.label}
+                    className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 sm:flex"
+                  >
+                    <span className="text-base text-muted-foreground sm:w-44 sm:shrink-0">
+                      {row.label}
                     </span>
-                    <span className="w-28 shrink-0 text-end font-mono text-meta tabular-nums">
+                    <span className="text-end font-mono text-meta tabular-nums sm:order-last sm:w-32 sm:shrink-0">
                       {row.pct}% · {money(Math.round((proposal.totalPrice * row.pct) / 100), proposal.currency)}
+                    </span>
+                    <span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-surface-2 sm:flex-1">
+                      <span className="block h-full rounded-full bg-brand" style={{ width: `${row.pct}%` }} />
                     </span>
                   </div>
                 ))}
@@ -494,23 +514,35 @@ export default async function ProposalDetailPage({
                 </p>
               )}
             </Panel>
+          </div>
+        </DossierSection>
 
-            {content && (
-              <ServiceTermsPanel
-                services={content.services}
-                currency={proposal.currency}
-                liveHref={`/clients/${proposal.clientId}?tab=services`}
-              />
-            )}
-          </>
-        )}
+        <DossierSection
+          id="services"
+          title="Services outside the fee"
+          description="Domains, hosting and the like — billed per term, never part of the total"
+        >
+          {services.length === 0 ? (
+            <EmptyInline>
+              {content
+                ? "This proposal carries no services. Anything a client holds through you can still be added on their record after signing."
+                : "This proposal predates the services list, so it carries none."}
+            </EmptyInline>
+          ) : (
+            <ServiceTermsPanel
+              services={services}
+              currency={proposal.currency}
+              liveHref={`/clients/${proposal.clientId}?tab=services`}
+            />
+          )}
+        </DossierSection>
 
-        {tab === "versions" && (
-          <Panel
-            title="Every proposal issued to this client"
-            description="Nothing is overwritten — a new price is a new record"
-            flush
-          >
+        <DossierSection
+          id="versions"
+          title="Every proposal issued to this client"
+          description="Nothing is overwritten — a new price is a new record"
+        >
+          <Panel flush>
             <ul className="rows">
               {siblings.map((sibling) => (
                 <li
@@ -521,9 +553,13 @@ export default async function ProposalDetailPage({
                       : "flex items-center gap-3 px-3 py-2.5"
                   }
                 >
-                  <FileText className="size-3.5 shrink-0 text-subtle-foreground" />
+                  <FileText className="size-3.5 shrink-0 text-subtle-foreground" aria-hidden />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/proposals/${sibling.id}`} className="text-base font-medium hover:text-brand">
+                    <Link
+                      href={`/proposals/${sibling.id}`}
+                      aria-current={sibling.id === proposal.id ? "page" : undefined}
+                      className="text-base font-medium hover:text-brand"
+                    >
                       {money(sibling.totalPrice, sibling.currency)} · {sibling.timelineWeeks} weeks
                       {sibling.id === proposal.id && (
                         <span className="ms-2 text-meta font-normal text-muted-foreground">this one</span>
@@ -536,17 +572,17 @@ export default async function ProposalDetailPage({
               ))}
             </ul>
           </Panel>
-        )}
+        </DossierSection>
 
-        {tab === "activity" && (
-          <>
+        <DossierSection id="history" title="History">
+          <div className="space-y-4">
             <Panel title="Activity" flush bodyClassName="p-2">
               <Timeline events={activity} emptyLabel="Nothing recorded for this proposal." />
             </Panel>
             <EntityAudit type="proposal" id={proposal.id} />
-          </>
-        )}
-      </DetailLayout>
+          </div>
+        </DossierSection>
+      </Dossier>
     </div>
   );
 }

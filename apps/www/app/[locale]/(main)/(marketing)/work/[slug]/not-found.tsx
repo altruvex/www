@@ -13,7 +13,7 @@ export default function WorkCaseStudyNotFound() {
   return (
     <section className="accent-world-green flex min-h-screen items-center pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
-        <div className="max-w-2xl py-32">
+        <div className="max-w-2xl">
           <Eyebrow className="mb-4 block">{t("caseStudy")}</Eyebrow>
           <h1 className="mb-4 font-sans text-[clamp(28px,4.5vw,52px)] font-normal leading-[1.05] tracking-[-0.02em] text-primary">
             {t("notFoundTitle")}

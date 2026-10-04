@@ -4,7 +4,6 @@ import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { useRouter } from "@/i18n/navigation";
-import { WifiOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
@@ -23,18 +22,10 @@ export default function OfflinePage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center bg-background overflow-hidden">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-background overflow-hidden pt-(--section-y-top) pb-(--section-y-bottom)">
       <Container>
         <div className="flex flex-col items-center justify-center text-center max-w-lg mx-auto">
-          <div className="mb-10 relative">
-            <div className="w-20 h-20 rounded-panel-sm border border-border-subtle bg-foreground/2 flex items-center justify-center">
-              <WifiOff className="w-8 h-8 text-primary/30" strokeWidth={1.5} />
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-foreground/2 px-3 py-1.5 mb-8">
-            <div className="h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
-            <Eyebrow>{t("status")}</Eyebrow>
-          </div>
+          <Eyebrow className="mb-8">{t("status")}</Eyebrow>
           <h1
             className="mb-6 font-sans font-normal text-primary leading-[1.03]"
             style={{
@@ -47,31 +38,17 @@ export default function OfflinePage() {
           <p className="mb-4 text-base text-primary/60 leading-relaxed max-w-[40ch]">
             {t("description")} {t("description2")}
           </p>
-          {stillOffline && (
-            <div className="mb-6 px-4 py-2.5 rounded-panel-sm border border-destructive/30 bg-destructive/8">
-              <p className="font-mono text-sm leading-normal tracking-wider text-destructive/80 uppercase">
-                Still offline - please check your connection
-              </p>
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2">
-            <MagneticButton
-              size="lg"
-              variant="primary"
-              onClick={handleRetry}
-              className="justify-center sm:w-auto"
-            >
-              {t("tryAgain")}
-            </MagneticButton>
-            <MagneticButton
-              size="lg"
-              variant="secondary"
-              onClick={() => window.history.back()}
-              className="justify-center sm:w-auto"
-            >
-              {t("goBack")}
-            </MagneticButton>
-          </div>
+          <p aria-live="polite" className="mb-6 min-h-5 text-sm text-destructive">
+            {stillOffline ? "Still offline - please check your connection" : null}
+          </p>
+          <MagneticButton
+            size="lg"
+            variant="primary"
+            onClick={handleRetry}
+            className="justify-center sm:w-auto"
+          >
+            {t("tryAgain")}
+          </MagneticButton>
         </div>
       </Container>
     </div>

@@ -14,12 +14,6 @@ const PRINCIPLES = ["direct", "scope", "pricing", "ownership"] as const;
 
 type Principle = (typeof PRINCIPLES)[number];
 
-/**
- * What the name commits us to, as an index: one hairline row per principle,
- * the principle itself at display size, and behind each one what it costs
- * us. Every row is a real disclosure; the first is open so the pattern
- * (claim, then its price) is read before anything is clicked.
- */
 export function PrincipleIndexSection() {
   const t = useTranslations("about.principles");
   const locale = useLocale();
@@ -58,7 +52,7 @@ export function PrincipleIndexSection() {
           }}
         />
 
-        <ol ref={listRef} className="mt-10 border-b border-border-subtle lg:mt-14">
+        <ol ref={listRef} className="mt-(--heading-gap) border-b border-border-subtle">
           {PRINCIPLES.map((key, index) => (
             <PrincipleRow
               key={key}

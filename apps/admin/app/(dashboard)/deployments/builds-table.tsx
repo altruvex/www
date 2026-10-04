@@ -1,5 +1,10 @@
 "use client";
 
+import Link from "next/link";
+import { Siren } from "lucide-react";
+
+import { DropdownMenuItem } from "@repo/ui";
+
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
@@ -26,22 +31,25 @@ export interface BuildRow {
   failureReason: string | null;
   deploymentCount: number;
   at: string;
+  inspectHref: string;
 }
 
 export function BuildsTable({
   rows,
   toolbar,
   empty,
+  canDelete,
+  canOpenIncident = false,
 }: {
   rows: BuildRow[];
   toolbar?: React.ReactNode;
   empty: React.ReactNode;
+  canDelete: boolean;
+  canOpenIncident?: boolean;
 }) {
   const del = useRecordDelete({ entity: "build" });
   const columns: Column<BuildRow>[] = [
     {
-      // The identity column is the row's link (DataTable wraps it), so it holds
-      // no links of its own; product and client get their own column below.
       id: "build",
       header: "Build",
       hideable: false,
@@ -94,6 +102,16 @@ export function BuildsTable({
       searchValue: (row) => statusOf("buildStatus", row.status).label,
     },
     {
+      id: "environment",
+      header: "Env",
+      width: "116px",
+      cell: (row) => (
+        <StatusPill registry="deployEnvironment" value={row.environment} variant="dot" />
+      ),
+      sortValue: (row) => ["PRODUCTION", "STAGING", "PREVIEW"].indexOf(row.environment),
+      searchValue: (row) => statusOf("deployEnvironment", row.environment).label,
+    },
+    {
       id: "commit",
       header: "Commit",
       minWidth: "lg",
@@ -108,6 +126,17 @@ export function BuildsTable({
       ),
       searchValue: (row) =>
         `${row.commitMessage ?? ""} ${row.failureReason ?? ""}`,
+    },
+    {
+      id: "triggeredBy",
+      header: "Triggered by",
+      width: "150px",
+      minWidth: "lg",
+      cell: (row) => (
+        <span className="block truncate text-muted-foreground">{row.triggeredBy ?? "—"}</span>
+      ),
+      sortValue: (row) => (row.triggeredBy ?? "").toLowerCase(),
+      searchValue: (row) => row.triggeredBy ?? "",
     },
     {
       id: "duration",
@@ -150,25 +179,40 @@ export function BuildsTable({
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        rowHref={(row) => `/deployments/builds/${row.id}`}
+        rowHref={(row) => row.inspectHref}
         mobile={{
           title: "build",
           subtitle: "product",
-          meta: ["status", "duration", "at"],
+          meta: ["status", "environment", "at"],
         }}
         searchPlaceholder="Search product, branch, commit…"
         initialSort={{ columnId: "at", dir: "asc" }}
-        rowActions={(row) => (
-          <RowActions
-            onDelete={() =>
-              del.request({
-                id: row.id,
-                label: `${row.productName} · build ${row.number}`,
-              })
-            }
-          />
-        )}
-        // The list is one cursor page; DataTable's own pager would page inside it.
+        rowActions={canDelete || canOpenIncident ? (row) => {
+          const raise = canOpenIncident && row.status === "FAILED";
+          if (!canDelete && !raise) return null;
+          return (
+            <RowActions
+              onDelete={
+                canDelete
+                  ? () =>
+                      del.request({
+                        id: row.id,
+                        label: `${row.productName} · build ${row.number}`,
+                      })
+                  : undefined
+              }
+            >
+              {raise && (
+                <DropdownMenuItem asChild>
+                  <Link href={`/incidents?new=incident&product=${row.productId}`}>
+                    <Siren className="size-3.5" />
+                    Open an incident
+                  </Link>
+                </DropdownMenuItem>
+              )}
+            </RowActions>
+          );
+        } : undefined}
         pageSize={null}
         toolbar={toolbar}
         empty={<EmptyInline>{empty}</EmptyInline>}

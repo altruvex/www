@@ -9,11 +9,12 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "check-types": "tsc --noEmit"
+    "check-types": "node node_modules/typescript7/bin/tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.10.2",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "typescript7": "npm:typescript@7.0.2"
   }
 }

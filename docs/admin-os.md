@@ -161,6 +161,25 @@ operator to trust numbers that are not real, which is a worse outcome than an em
 | `ui/segmented-control` | one-of-N, always visible. Radio semantics with arrow-key selection; exports `segmentClass` so the filter chips (activity, invoices, automations) and the board/list switch share the exact visual without pretending to be a form control |
 | `ui/input` → `Field` | the label/hint/error wiring, passed down by CONTEXT, not by cloning the child. A wrapped control (leading icon, colour swatch, suffix) would otherwise leave the label pointing at a `div` |
 
+### Reconstruction kit (2026-10)
+
+Built first for the OS reconstruction; pages use these and never hand-roll copies.
+
+| component | job |
+|---|---|
+| `os/confirm-dialog` → `ConfirmDialog` | the one confirmation for destructive and money actions. States the consequence on its own line, disables both buttons while pending, stays open on `{ ok: false, message }` and shows the server's message inline, toasts only a message the server returned. `requireText` gates confirm behind a typed word. Trigger element or controlled `open` |
+| `os/inspect-sheet` → `InspectSheet`, `inspectHref` | the list inspector, opened by `?inspect=<id>` and rendered by the server, so it deep-links and survives refresh. Closing hides it at once and drops only `inspect`. Right panel ≥768px, bottom sheet below. `inspectHref(pathname, searchParams, id)` is server-callable (the client half lives in `inspect-sheet-client.tsx`) and keeps every other param, `page` included |
+| `os/section-index` → `Dossier`, `DossierSection` | the detail page as one scroll: sticky 180px index on lg, sticky chip row under the topbar below lg, optional facts aside (sticky column on xl, above the sections below). IntersectionObserver scroll-spy on the window, `aria-current="location"`, smooth jumps unless reduced motion |
+| `os/list-row` → `List`, `ListRow` | the one non-table row: 28px tone square, title, meta, trailing, chevron. `href` navigates, `inspect` opens the inspector without scrolling, `expandable` reveals in place (`aria-expanded`), none is static. Controls go in `actions`, outside the clickable area |
+| `os/pager` → `Pager` | server pagination as links: "41–60 of 312", prev/next disabled at the edges, optional per-page sizes. No `"use client"`, so `hrefFor` is passed from the server page |
+| `os/filter-bar` → `FilterBar`, `FilterChip`, `ActiveFilters` | filters as URL params via `router.replace` (no scroll, `page` dropped on change); search debounced 250ms; chips share `segmentClass`; `ActiveFilters` shows removable chips with readable labels |
+| `os/soon` → `Soon`, `SoonButton` | the honesty valve for one control: a neutral SOON mark whose tooltip (and screen-reader text) names the missing backend piece. `SoonButton` is a disabled Button wrapped so its tooltip still opens. `planned` stays for whole modules |
+| `os/page-skeleton` → `ListPageSkeleton`, `DetailPageSkeleton`, `OverviewSkeleton` | `loading.tsx` skeletons drawn on the same grid as the real page (header → strip → filters → table; header → index + sections + aside; strip → stream + aside), so nothing jumps when it lands |
+| `os/pager` → `CursorPager` | the cursor twin of `Pager` for feeds that page by cursor rather than offset (`/audit`, where events keep arriving and offsets would drift): "Newer" / "Older" links, either edge disabled when there is nothing on that side |
+| `os/data-table` `BulkAction.confirm` | a bulk action that destroys or moves money declares `{ title, description?, consequence?, confirmLabel?, tone? }` (or a function of the selected rows) and runs through `ConfirmDialog`; `onRun` may return `{ ok, message }` so a refusal is shown, not toasted as success |
+| `os/filter-bar` `ActiveFilters` `clears` | a filter chip may name the params that depend on it (`product` clears `source`), so removing it never leaves an orphaned narrower filter. Filter changes drop `page` and `cursor` |
+| `os/error-state` → `AlertBar` | `action` / `href` are optional — a warning that has no recovery step says so without an empty button |
+
 ### The control rail
 
 Every interactive control resolves its height from three tokens in
@@ -225,6 +244,22 @@ records over the network (debounced, abortable), so it is usable the millisecond
   sent and the settings page says so.
 - The renewal cron sweep writes notifications but no `ActivityEvent`; `/integrations`
   infers its last run from the newest `RENEWAL_DUE` notification.
+- Invoices have no legal name, address or tax rate: `CompanySettings` has no columns for
+  them, so the issuer falls back to one constant and the tax line says no rate is configured.
+  The contract page prints the studio name as a literal for the same reason.
+- Plans are schema rows with no admin table; editing a plan reads Soon on `/pricing`.
+- `setProjectPhase`, `setProjectStatus` and `setMeetingStatus` in `_actions/records.ts` still
+  throw on refusal; every caller wraps them and shows the message, but a new caller must too.
+- The services API (`/api/admin/services`) is gated on project capabilities, so a PM may
+  add and edit services without reading money: for a role outside `canSeeFinance` the edit
+  sheet leaves price, cost and currency out of the request, and the route answers with no
+  price, cost or opened amount. Other admin APIs have not been audited for the same split.
+- The leads badge and `/leads?stage=new` read every proposal a client has, while
+  `deriveClientStage` reads only the newest; a client whose newest proposal is a draft but who
+  once received an older one counts as contacted in the badge. The two agree on every client
+  with one proposal.
+- The action centre reads 25 rows per source and engineering health shows at most 8 products;
+  both say "more" rather than counting what they did not read.
 
 ## 8. What the visual QA pass found
 
@@ -383,3 +418,172 @@ Verification for this pass: `verify:security`, `verify:lifecycle`, `verify:servi
 `verify:engineering`, `verify:admin-api`, `verify:maintenance`, `verify:delete`,
 `verify:invoice-number`. The migration `20261003150000_os_completion` must be deployed to
 production before this code runs there.
+
+## 12. The reconstruction (2026-10-03)
+
+One pass over every page, section and component under one direction, chosen as a hybrid of
+the three prototypes:
+
+- **Shell** — sidebar + topbar on desktop; on a phone a bottom bar (Today · Inbox · Clients ·
+  Products · Menu) whose slots fall back along a route chain per role, so no tab is dead or
+  doubled, and a Menu sheet that reaches every surface including the ones without a sidebar row.
+  The breadcrumb drops a group crumb that would repeat the page name.
+- **Today ("Now")** — one count strip where every number links to the list that applies the
+  same predicate (`/proposals?status=open`, `/contracts?status=SENT`,
+  `/deployments?tab=builds&status=FAILED&window=24h`, `/tasks?due=week`,
+  `/payments?status=overdue`, `/renewals?attention=1`, `/leads?stage=new`,
+  `/inbox?filter=waiting`), then the attention stream and the engineering/revenue aside. A tile
+  whose list the role cannot open is not rendered.
+- **Lists** — ledger tables (`DataTable`) with `FilterBar` / `ActiveFilters` in the URL and a
+  server-rendered `InspectSheet` opened by `?inspect=<id>`, so an inspected row deep-links.
+  `lib/entity-links.ts` now sends payments and services to their inspectors.
+- **Detail pages** — the `Dossier`: one scroll, sticky section index with scroll-spy, facts aside.
+- **Actions** — destructive and money actions go through `ConfirmDialog` with the consequence
+  and the amount; toasts carry the server's own message; refusals stay inline.
+
+### Access, decided once
+
+`lib/page-gate.ts` `gateRoute` runs on every dashboard page (50/50), and the sidebar, the
+phone bar, the Menu sheet and the palette derive visibility from the same `ROUTE_GATES` through
+`pageDecision`, so a role never sees a link to a page that refuses it
+(`NAV_WIDER_THAN_GATE` is empty and should stay empty). Money is a second, finer gate:
+`canSeeFinance` hides figures — prices, payment amounts, service prices, the confirmation
+amounts — for roles that may still open the page.
+
+Where the line sits (a ruling, open to revisit): **deal values** — proposal and contract totals —
+are visible to every role that may view proposals, because selling needs them; `canSeeFinance`
+gates the **money ledger**: payments, invoices, service price and cost, retainer amounts and
+revenue. Ledger money is stripped **on the server** (`toSubscriptionView`, `redactMoney`, the
+change-request rate and amounts, the dashboard feed's `NOT` clause on finance and pricing
+events) — a figure never travels to a browser that hides it. A control the server would refuse
+is hidden, or disabled with a `Hint` when hiding would leave a confusing hole; links into a
+route the role cannot open go through `roleCanOpen`.
+
+### Filters added so a count can link to its list
+
+- `/deployments?window=24h|7d|30d` (on `createdAt`, kept across tabs).
+- `/renewals?attention=1` — exactly `RenewalRow.needsAttention`, the predicate the sidebar badge
+  counts (`countRenewalsNeedingAttention`).
+- `/leads?stage=new` — `UNCONTACTED_WHERE` in `lib/dashboard-data.ts`, shared with the badge.
+- `/incidents?deployment=<id>` — the incidents a deployment opened.
+
+### Server refusals added in this pass
+
+- The proposal and contract send routes refuse a record that is no longer DRAFT or SENT (409),
+  matching the condition the UI already used to show the button.
+- Converting a submission marked SPAM to a client is refused with the reason.
+- Length limits in messages are formatted from the constant they check, never typed twice.
+
+### Verification
+
+`tsc --noEmit` 0 errors; eslint clean on every changed file; `bun run validate` (price-literal
+guard, parity report, billing-cycle checks); all thirteen `verify:*` scripts, the
+database-backed ones against a scratch database — never production.
+
+A route sweep opened all 53 dashboard routes as each of the five roles (OWNER, SALES, PM,
+FINANCE, VIEWER), on desktop and on a 390px phone, against a seeded scratch database. Dark mode
+was only screenshotted for OWNER, on seven pages; the other roles were not checked in dark.
+What the sweep found, and what was fixed from it:
+
+- Dossier pages (client, contract, incident, product, project, proposal) were wider than a
+  phone: the section index's single implicit grid column sized to its chip row. Now
+  `minmax(0,1fr)` (`components/os/section-index.tsx`).
+- `/logs` was wider than a phone: the filter bar's trailing group could not wrap
+  (`components/os/filter-bar.tsx`).
+- Builds and deployments showed a delete control to every role, while `deleteRecords` allows
+  it to OWNER only (`delete project`). The tables and both detail pages now ask `can()` first.
+- The Today feed and a client's history linked every event to its record, including records
+  the viewer's role cannot open (a submission, for PM and FINANCE). Each event now carries
+  `linkable`, decided on the server with `roleCanOpen`; an unopenable record is named without
+  a link. Re-checked by opening every link on Today as PM, FINANCE, SALES and VIEWER: none
+  lands on "Not in your role".
+- Rows opened their inspector only from the title. A click anywhere on a list row, a task
+  card or a service row now opens it (`components/os/row-open.ts`); clicks on a control inside
+  the row keep their own meaning, and the title is still the keyboard's way in.
+
+Not confirmed: a React "unique key" warning on `/deployments` (the filter element now carries
+a key, not re-checked in a browser), and one report of `/contracts?inspect=<signed contract>`
+not opening — the server renders that inspector, and it did not reproduce.
+
+## 13. Recorded projects (2026-10-04)
+
+A project used to exist only as the child of a signed contract (`Project.contractId` was
+required and unique), so work built before this system — and anything a client had made
+elsewhere — had no row for a domain, a retainer, a change request or a charge to attach to.
+Inventing a proposal and a contract to open one would have been a record of a signature that
+never happened.
+
+- `Project.contractId` is now optional (still unique; the foreign key still restricts a contract
+  delete). `Project.origin` says how the row came to be: `CONTRACT` (opened by
+  `handleContractSigned`, the normal route) or `RECORDED` (entered by hand). `Project.currency`
+  is set only for a recorded project; a contract project keeps reading its proposal's currency.
+  Migration `20261004120000_project_origin`.
+- One resolver, `projectCurrency` in `apps/admin/lib/project-currency.ts`, answers a project's
+  currency for both kinds (`contract.proposal.currency ?? currency`). Every screen, action,
+  the client portal and the verify scripts read through it; `PROJECT_CURRENCY_SELECT` /
+  `PROJECT_CURRENCY_INCLUDE` are the fields it needs.
+- Recording is `recordPastProject` (`_actions/projects.ts`): client, name, currency, finished or
+  still supported, optional live/staging URL, optional launch and completion dates. Unknown dates
+  stay null. It creates no payments, tasks or services and writes `project.recorded` with
+  `metadata.manual = true`. Creating the row already COMPLETED is the documented exception to
+  "COMPLETED only through Close project" — there is nothing to close.
+- The sheet starts from what the client's record already holds, so the operator only adds what
+  is missing. On picking a client (or arriving with `?client=`), fields the operator has not typed
+  in are filled: the name from the first product not yet on a project; the live URL from that
+  product's production URL, else the client's website, else a DOMAIN service's host name; the
+  staging URL from the product; the currency from the first loose service, else the client's
+  latest proposal. A hint under the client names each source, or says the record holds nothing.
+  Nothing is saved unseen — these are starting values in the form.
+- **Attach.** The client's products and services that belong to no project yet (`projectId`
+  null; cancelled services excluded) are listed ticked under *Attach to this project*; unticked
+  ones stay where they are. In one transaction the project is created and the ticked rows —
+  re-checked on the server to be that client's and still loose — get its `projectId`. Attaching
+  moves existing rows and never creates one; it needs `edit client` on top of `create project`
+  (a role without it is refused with a message, nothing written). The audit event's `after`
+  carries `attachedProducts` / `attachedServices` (names).
+- Where to find it: the *Record a past project* button on `/projects` (roles that may create a
+  project), `/projects?new=recorded&client=<id>` from a client's Next steps, and the sheet in
+  `projects/record-project-sheet.tsx`.
+- What a recorded project shows: a *Recorded* pill on its page and in the client hub; "Recorded —
+  no contract" where the contract link would be; no contract value row and "—" in the projects
+  table. Never a zero. Contract revenue (`lib/revenue-metrics.ts`) is read from contract rows, so a
+  recorded project contributes nothing to it. Its dates read *Recorded* where a contract project
+  reads *Started* (page header, aside and the projects table's Started column), the Elapsed row is
+  omitted, the timeline opens with "Recorded in this system", and its empty Money section says
+  payments made before it was recorded were not carried over — never the 50/30/20 promise.
+- A client with any project derives as **Signed** (`deriveClientStage`): work delivered is business
+  won, so a client whose only project is recorded leaves Leads, the uncontacted count
+  (`UNCONTACTED_WHERE`) and the nav's "waiting" badge. Every caller of `deriveClientStage` selects
+  `projects: { select: { id: true }, take: 1 }`.
+- Browser-verified on the scratch database 2026-10-04: the record sheet (pre-fill, validation,
+  redirect), the recorded project page, `?new=task|charge|retainer|incident` pre-fills, the client
+  stage change, and the projects row menu. The same day: the record-derived pre-fill (on arrival
+  with `?client=` and on picking a client) and attaching — a ticked product and domain service
+  moved onto the new project, an unticked hosting service left loose, the audit row naming both.
+- Pinned by `verify:admin-api` ("Recorded project (no contract)"): created without a contract,
+  `projectCurrency` reads its own currency, the client page lists no payments for it, the delete
+  registry plans and removes it with its origin in the snapshot.
+
+## 14. One-time services (2026-10-04)
+
+A client sometimes asks Altruvex to buy something once on their behalf — a theme, a lifetime
+plugin licence. That is a `ClientService` with `termMonths` null (migration
+`20261004150000_one_time_service`), not a new model, so price, internal cost, provider,
+reference and the project/product links work exactly as for a recurring service.
+
+- `isOneTime` in `lib/service-lifecycle.ts` is the one test every surface uses. An ACTIVE one-time
+  service derives the state `one-time` (label "Owned", success tone), never pending/expiring/expired,
+  never crosses an alert threshold, and `needsAttention` is false.
+- Billing: "Mark bought" (PATCH `activate`) opens exactly one PENDING payment through the same
+  `termBilling` path as a recurring first term. Renew, remind, set-expiry and the renewal sweep refuse
+  or skip it (`renewRefusal` — the route answers with it, the screens hide the action on it).
+- Totals: `annualised(price, null)` is 0, so a purchase never inflates a yearly services figure;
+  `termLabel` reads "One-time".
+- Proposals: a service line may be one-time; the deck prints "ONE-TIME", the contract
+  "One-time · Bought once", and signing opens a one-time PENDING service (`firstTermIncluded` false).
+  Older proposal JSON with a number keeps parsing. The deck block heading is still the editable
+  `labels.services` default ("Recurring services") — rename it per proposal when it holds only
+  one-time lines.
+- Pinned by `verify:services` (lifecycle cases + proposal → deck → contract → signed service).
+- Known parity gap, shared with recurring services: creating a service with `startedAt` already set
+  opens no payment.

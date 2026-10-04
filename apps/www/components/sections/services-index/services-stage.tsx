@@ -3,8 +3,7 @@
 import { SectionHeading } from "@/components/sections/section-heading";
 import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Container } from "@/components/shared/container";
-import { ArrowLabel } from "@/components/shared/directional-link";
-import { Num } from "@/components/ui/num";
+import { ArrowIcon, ArrowLabel } from "@/components/shared/directional-link";
 import { Link } from "@/i18n/navigation";
 import { accentWorldClass } from "@/lib/config/accent-world";
 import { MOTION, useBatch } from "@/lib/motion";
@@ -12,14 +11,12 @@ import { cn } from "@/lib/utils/utils";
 import { gsap } from "@/lib/utils/gsap";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { LIFE_MOMENTS, serviceById, type ServiceEntry } from "./data";
 
 const LINK_CLASS =
   "group inline-flex min-h-6 items-center font-medium text-foreground underline decoration-foreground/45 underline-offset-4 transition-colors duration-(--motion-hover) hover:text-local-accent-text hover:decoration-current pointer-coarse:min-h-11";
 
-/* One discipline inside the field of the moment it belongs to: its name in
-   its world colour, what a client leaves with, the terms, and the door. */
 function Discipline({ service }: { service: ServiceEntry }) {
   const t = useTranslations("servicesPage");
   const pricingTokens = usePricingTokens();
@@ -28,7 +25,10 @@ function Discipline({ service }: { service: ServiceEntry }) {
   return (
     <div className={accentWorldClass(service.world)}>
       <h4 className="m-0 flex items-center gap-2 text-sm font-medium text-local-accent-text">
-        <span aria-hidden className="size-1.75 shrink-0 rounded-full bg-local-accent" />
+        <span
+          aria-hidden
+          className="size-1.75 shrink-0 rounded-full bg-local-accent"
+        />
         {name}
       </h4>
       <p className="mt-3 mb-4.5 text-balance text-[clamp(1.3125rem,1.75vw,1.6875rem)] leading-[1.2] tracking-[-0.02em] text-foreground rtl:leading-normal rtl:tracking-normal">
@@ -50,10 +50,8 @@ function Discipline({ service }: { service: ServiceEntry }) {
   );
 }
 
-/* Scroll the photograph takes to open from its inset card to the full viewport, in viewports. */
 const PHOTO_OPEN = 1.5;
 
-/* The stair photograph and the four constants that hold across every discipline. */
 function PhotoLayer() {
   const t = useTranslations("servicesPage");
   const plateItems = t.raw("chapters.plate.items") as string[];
@@ -139,7 +137,12 @@ function PhotoLayer() {
       style={{ height: `${PHOTO_OPEN * 100 + 100}svh` }}
     >
       <div className="sticky top-0 h-svh overflow-hidden">
-        <div ref={frameRef} className="absolute inset-0 bg-black">
+        <div
+          ref={frameRef}
+          data-scene="inverted"
+          data-scene-lock="dark"
+          className="absolute inset-0 bg-black!"
+        >
           <div className="absolute inset-0 rtl:-scale-x-100">
             <div ref={imageRef} className="absolute inset-0">
               <Image
@@ -196,29 +199,91 @@ function PhotoLayer() {
   );
 }
 
-/* Field widths on desktop: the build holds two disciplines, so it is widest;
-   the live field runs past the container to the viewport edge — it does not
-   end. */
 const FIELD_CLASS = {
-  before: "",
-  build: "",
-  live: "lg:rounded-e-none lg:-me-[max(4rem,calc((100vw-88rem)/2+4rem))]",
+  before: "w-[min(26rem,86vw)]",
+  build: "w-[min(54rem,90vw)]",
+  live: "w-[min(30rem,86vw)]",
 } as const;
 
-/**
- * Where each discipline sits. A system has three moments — before it is
- * built, the build, once it is live — and each is a tinted field holding the
- * disciplines that work in it, all readable at once. Fields separate by tint
- * and gap, never by vertical rules. How a build runs phase by phase is
- * /process's subject (lib/process-phases.ts), so this section links there
- * instead of carrying a second process model.
- */
+const TRACK_INSET =
+  "[--gutter:1.5rem] sm:[--gutter:2rem] md:[--gutter:3rem] lg:[--gutter:4rem] ps-[max(var(--gutter),calc((100%-88rem)/2+var(--gutter)))] pe-[max(var(--gutter),calc((100%-88rem)/2+var(--gutter)))] scroll-ps-[max(var(--gutter),calc((100%-88rem)/2+var(--gutter)))] scroll-pe-[max(var(--gutter),calc((100%-88rem)/2+var(--gutter)))]";
+
+const STEP_CLASS =
+  "inline-flex size-11 items-center justify-center rounded-full border border-foreground/45 text-foreground transition-colors duration-(--motion-hover) hover:bg-foreground hover:text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-35";
+
 export function ServicesStage() {
   const t = useTranslations("servicesPage.stage");
   const fieldsRef = useBatch<HTMLDivElement>({
     selector: "[data-field]",
     trigger: MOTION.trigger.late,
   });
+  const trackRef = useRef<HTMLDivElement>(null);
+  const stepTween = useRef<gsap.core.Tween | null>(null);
+  const [edge, setEdge] = useState({ start: true, end: false });
+
+  const measure = useCallback(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const offset = Math.abs(track.scrollLeft);
+    const start = offset < 2;
+    const end = offset + track.clientWidth >= track.scrollWidth - 2;
+    setEdge((prev) =>
+      prev.start === start && prev.end === end ? prev : { start, end },
+    );
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    return () => observer.disconnect();
+  }, [measure]);
+
+  const step = (forward: boolean) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const style = getComputedStyle(track);
+    const rtl = style.direction === "rtl";
+    const pad = parseFloat(style.paddingInlineStart) || 0;
+    const bounds = track.getBoundingClientRect();
+    const offsets = Array.from(
+      track.querySelectorAll<HTMLElement>("[data-field]"),
+      (card) => {
+        const r = card.getBoundingClientRect();
+        return (rtl ? bounds.right - r.right : r.left - bounds.left) - pad;
+      },
+    );
+    const delta = forward
+      ? offsets.find((o) => o > 4)
+      : offsets.findLast((o) => o < -4);
+    if (delta === undefined) return;
+    const from = track.scrollLeft;
+    const to = Math.max(
+      -(track.scrollWidth - track.clientWidth),
+      Math.min(
+        track.scrollWidth - track.clientWidth,
+        from + (rtl ? -delta : delta),
+      ),
+    );
+    stepTween.current?.kill();
+    track.style.scrollSnapType = "none";
+    const pos = { x: from };
+    stepTween.current = gsap.to(pos, {
+      x: to,
+      duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? 0
+        : 0.7,
+      ease: MOTION.ease.gentle,
+      onUpdate: () => {
+        track.scrollLeft = pos.x;
+      },
+      onComplete: () => {
+        track.style.scrollSnapType = "";
+      },
+    });
+  };
 
   return (
     <>
@@ -233,20 +298,52 @@ export function ServicesStage() {
             eyebrow={t("label")}
             firstTitle={t("title")}
             secondTitle={t("titleItalic")}
-            description={t("hint")}
-            className="mb-[clamp(3rem,8vh,5.5rem)]"
+            description={
+              <>
+                <span className="block">{t("hint")}</span>
+                <span className="mt-5 flex gap-2 lg:justify-end">
+                  <button
+                    type="button"
+                    aria-label={t("prev")}
+                    disabled={edge.start}
+                    onClick={() => step(false)}
+                    className={STEP_CLASS}
+                  >
+                    <ArrowIcon direction="back" motion="none" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={t("next")}
+                    disabled={edge.end}
+                    onClick={() => step(true)}
+                    className={STEP_CLASS}
+                  >
+                    <ArrowIcon direction="forward" motion="none" />
+                  </button>
+                </span>
+              </>
+            }
+            className="mb-(--heading-gap)"
             classes={{
               title:
                 "max-w-[18ch] text-[clamp(2.125rem,4.4vw,4.25rem)] font-light leading-[1.04] tracking-[-0.035em] rtl:leading-[1.35] rtl:tracking-normal",
-              description: "text-[0.8125rem] text-muted-foreground lg:max-w-[22rem]",
+              description:
+                "text-[0.8125rem] text-muted-foreground lg:w-[22rem] lg:max-w-[22rem]",
             }}
           />
+        </Container>
 
+        <div ref={fieldsRef}>
           <div
-            ref={fieldsRef}
-            className="grid gap-2.5 lg:grid-cols-[1fr_2fr_1.35fr]"
+            ref={trackRef}
+            onScroll={measure}
+            data-lenis-prevent-horizontal
+            className={cn(
+              "flex snap-x snap-mandatory items-stretch gap-2.5 overflow-x-auto overscroll-x-contain scrollbar-none [&::-webkit-scrollbar]:hidden",
+              TRACK_INSET,
+            )}
           >
-            {LIFE_MOMENTS.map((moment, m) => {
+            {LIFE_MOMENTS.map((moment) => {
               const services = moment.services.map((id) => serviceById(id));
               const single = services.length === 1 ? services[0] : null;
               return (
@@ -255,14 +352,12 @@ export function ServicesStage() {
                   data-field
                   aria-labelledby={`services-stage-${moment.id}`}
                   className={cn(
-                    "relative flex flex-col justify-between gap-12 overflow-hidden rounded-panel-lg bg-local-accent-soft p-[clamp(1.5rem,2.6vw,2.5rem)] lg:min-h-[clamp(30rem,64vh,38.75rem)]",
+                    "@container relative flex shrink-0 snap-start last:snap-end flex-col justify-between gap-12 overflow-hidden rounded-panel-lg bg-local-accent-soft p-[clamp(1.5rem,2.6vw,2.5rem)] lg:min-h-[clamp(30rem,64vh,38.75rem)]",
                     accentWorldClass(services[0].world),
                     FIELD_CLASS[moment.id],
                   )}
                 >
                   {single ? null : (
-                    /* The build wears both its worlds: the first discipline's tint
-                       underneath, the second's fading in toward its own side. */
                     <span
                       aria-hidden
                       className={cn(
@@ -272,12 +367,9 @@ export function ServicesStage() {
                     />
                   )}
                   <div className="relative">
-                    <span className="block text-[0.8125rem] tabular-nums text-muted-foreground ltr:font-mono">
-                      <Num value={m + 1} pad={2} /> / <Num value={LIFE_MOMENTS.length} pad={2} />
-                    </span>
                     <h3
                       id={`services-stage-${moment.id}`}
-                      className="m-0 mt-3.5 text-[clamp(2rem,3.5vw,3.5rem)] font-light leading-[1.02] tracking-[-0.035em] text-foreground rtl:leading-[1.3] rtl:tracking-normal"
+                      className="m-0 text-[clamp(2rem,3.5vw,3.5rem)] font-light leading-[1.02] tracking-[-0.035em] text-foreground rtl:leading-[1.3] rtl:tracking-normal"
                     >
                       {t(`moments.${moment.id}.title`)}
                     </h3>
@@ -288,7 +380,8 @@ export function ServicesStage() {
                   <div
                     className={cn(
                       "relative grid gap-10",
-                      !single && "xl:grid-cols-2 xl:gap-[clamp(1.25rem,2.4vw,2.5rem)]",
+                      !single &&
+                        "@xl:grid-cols-2 @xl:gap-[clamp(1.25rem,2.4vw,2.5rem)]",
                     )}
                   >
                     {services.map((service) => (
@@ -299,28 +392,14 @@ export function ServicesStage() {
               );
             })}
           </div>
+        </div>
 
-          <p className="mt-5 flex items-center gap-4 text-[0.9375rem] text-muted-foreground">
-            <svg
-              aria-hidden
-              viewBox="0 0 400 34"
-              preserveAspectRatio="none"
-              className="hidden h-8.5 w-[clamp(7.5rem,40%,32.5rem)] shrink-0 overflow-visible text-foreground/45 lg:block rtl:-scale-x-100"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.25}
-            >
-              <path
-                d="M400 2 C 400 30, 380 32, 340 32 L 8 32 L 2 26"
-                strokeDasharray="4 5"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path d="M2 26 L 10 24 M2 26 L 5 18" vectorEffect="non-scaling-stroke" />
-            </svg>
-            <span>{t("return")}</span>
+        <Container>
+          <p className="mt-5 text-[0.9375rem] text-muted-foreground">
+            {t("return")}
           </p>
 
-          <div className="mt-[clamp(3.5rem,8vh,5.5rem)] flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-5 text-[0.9375rem] text-muted-foreground">
+          <div className="mt-(--section-block) flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-5 text-[0.9375rem] text-muted-foreground">
             <span>{t("processLead")}</span>
             <Link href="/process" className={LINK_CLASS}>
               <ArrowLabel>{t("processLink")}</ArrowLabel>

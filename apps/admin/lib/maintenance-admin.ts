@@ -18,6 +18,7 @@ import {
   intervalPriceLabel,
   MAINTENANCE_INTERVAL,
 } from "@/lib/billing-interval";
+import { intervalOfPeriod } from "@/lib/period-invoice";
 import { RETAINER_CURRENCY } from "@/lib/payment-source";
 import { isPaymentOverdue } from "@/lib/payment-overdue";
 import { money } from "@/lib/format";
@@ -27,7 +28,6 @@ import { recordActivity, recordChange, systemActor, type Actor } from "@/lib/act
 import {
   computeRenewal,
   deriveStatus,
-  INTERVAL_MONTHS,
   nextPeriodEnd,
   renewalView,
   STATUS_LABEL,
@@ -51,30 +51,19 @@ export interface AdminSubscription {
   readonly clientName: string;
   readonly planId: string;
   readonly planName: string;
-  /** The price of one invoice at this subscription's interval, or the custom-quote wording. */
   readonly planPriceLabel: string;
-  /** "/ month", "/ year" — empty on a quote-only plan. */
   readonly planPriceSuffix: string;
-  /** What an operator set. PAUSED/SUSPENDED/CANCELLED only get here by hand. */
   readonly status: MaintenanceSubscriptionStatus;
-  /** What the calendar says today — see `deriveStatus`. */
   readonly effectiveStatus: MaintenanceSubscriptionStatus;
   readonly effectiveStatusLabel: string;
   readonly billingInterval: BillingInterval;
   readonly billingIntervalLabel: string;
-  /**
-   * True when the current period was paid at a different interval than the
-   * stored one — i.e. the interval was changed mid-period and applies from the
-   * next renewal. Derived from the period's length, so it needs no column.
-   */
   readonly billingIntervalPending: boolean;
   readonly autoRenew: boolean;
   readonly currentPeriodStart: string;
   readonly currentPeriodEnd: string;
-  /** Alias of `currentPeriodEnd`: the renewal date IS the period end. */
   readonly renewsAt: string;
   readonly renewalUrgency: RenewalUrgency;
-  /** Negative once the renewal date has passed. */
   readonly daysUntilRenewal: number;
   readonly trialEndsAt: string | null;
   readonly lastRenewedAt: string | null;
@@ -82,36 +71,16 @@ export interface AdminSubscription {
   readonly startedAt: string;
   readonly cycleStart: string;
   readonly cycleEnd: string;
-  /** Null on a quote-only plan, which publishes no cap. */
   readonly requestsPerCycle: number | null;
   readonly requestsUsed: number;
   readonly openRequests: number;
   readonly requests: readonly AdminRequest[];
-  /**
-   * What the next renewal will invoice at the subscription's interval: the
-   * schema price, or the quoted monthly figure times the interval's paid
-   * months. Null on a quote-only plan with no quote set — nothing is guessed.
-   */
   readonly invoiceAmount: number | null;
-  /** True when the plan publishes no price and bills from `quotedMonthlyPrice`. */
   readonly quoteOnly: boolean;
-  /**
-   * One invoice at each interval for THIS retainer, worded by the server from
-   * the price it bills at (schema or quote) — the interval dialog shows these,
-   * so a quoted retainer never reads "Custom" once it has a figure.
-   */
   readonly intervalPrices: readonly { value: BillingInterval; label: string; price: string }[];
-  /** The agreed monthly figure on a quote-only plan; null until set, always null on a published plan. */
   readonly quotedMonthlyPrice: number | null;
   readonly currency: string;
-  /**
-   * The payment opened for the current period, or null when the period was
-   * opened before renewals wrote payments (2026-10) — never a placeholder.
-   * `status` is derived: a PENDING payment reads OVERDUE from the day after
-   * its due date (`lib/payment-overdue.ts`), never from the due instant.
-   */
   readonly currentPeriodPayment: AdminPeriodPayment | null;
-  /** Every period invoice ever opened on this retainer, newest period first. */
   readonly payments: readonly AdminPeriodPayment[];
 }
 
@@ -131,11 +100,6 @@ function planName(planId: string): string {
   return isPlanId(planId) ? pricingCopy("en").maintenance[planId].name : planId;
 }
 
-/**
- * The audit trail's name for a retainer: "Growth · ACME Ltd". A raw plan id
- * is not a label — the trail is read by people, and two clients on the same
- * plan would otherwise be indistinguishable in it.
- */
 function retainerLabel(sub: {
   planId: string;
   client: { name: string | null; company: string | null };
@@ -187,7 +151,6 @@ export async function listSubscriptions(
   return subscriptions.map((sub) => toAdminSubscription(sub, pricing, now));
 }
 
-/** One retainer for its detail page, shaped exactly like a row of the list. */
 export async function getSubscription(
   id: string,
   now: Date = new Date(),
@@ -206,7 +169,6 @@ function toAdminSubscription(
 ): AdminSubscription {
   const copy = pricingCopy("en");
 
-  // The allowance window is always monthly; the invoice interval is not.
   const cycle = currentBillingCycle(sub.startedAt, now);
   const planId = isPlanId(sub.planId) ? sub.planId : null;
   const plan = planId ? pricing.maintenance[planId] : null;
@@ -222,7 +184,6 @@ function toAdminSubscription(
       r.cycleStart.getTime() < cycle.end.getTime(),
   );
 
-  // One payment per period, keyed by the period's start (see `renewSubscription`).
   const periodPayment =
     sub.payments.find((p) => p.dueDate?.getTime() === sub.currentPeriodStart.getTime()) ??
     null;
@@ -232,14 +193,9 @@ function toAdminSubscription(
     clientId: sub.client.id,
     clientName: sub.client.company || sub.client.name || "Unnamed client",
     planId: sub.planId,
-    // A plan id the schema no longer knows about is shown as-is rather than
-    // hidden, so a renamed plan surfaces as something to fix.
     planName: planId ? copy.maintenance[planId].name : `${sub.planId} (unknown)`,
     planPriceLabel: price.price,
     planPriceSuffix: price.suffix,
-    // Stored status is what an operator set; effective status is what the
-    // calendar says today. Both are exposed so a screen can show "Active"
-    // that has silently become "Past due" without a write.
     status: sub.status,
     effectiveStatus: effective,
     effectiveStatusLabel: STATUS_LABEL[effective],
@@ -300,13 +256,6 @@ export const REQUEST_STATUSES = [
 ] as const;
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 
-/**
- * Statuses an operator may set by hand.
- *
- * PAST_DUE, GRACE and EXPIRED are deliberately absent: those are *derived* from
- * the billing period by `deriveStatus`, and letting someone set them by hand
- * would put the stored value and the calendar into permanent disagreement.
- */
 export const SUBSCRIPTION_STATUSES = [
   "TRIALING",
   "ACTIVE",
@@ -316,13 +265,6 @@ export const SUBSCRIPTION_STATUSES = [
 ] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
-/**
- * Moves a request's status.
- *
- * `completedAt` follows the status rather than being set independently, so a
- * request cannot end up marked done with no completion date, or reopened while
- * still carrying one.
- */
 export async function setRequestStatus(
   id: string,
   status: RequestStatus,
@@ -358,13 +300,6 @@ export async function setRequestStatus(
   return true;
 }
 
-/**
- * Reclassifies a request as counting against the cap, or as billable overage.
- *
- * This changes what a client is charged and what their portal shows as used, so
- * it is written to the same change log as a price edit — an operator moving a
- * request out of someone's allowance should leave a record.
- */
 export async function setRequestBilling(
   id: string,
   countsToCap: boolean,
@@ -412,8 +347,6 @@ export async function setSubscriptionStatus(
     include: { client: { select: { name: true, company: true } } },
   });
   if (!before) return false;
-  // Re-selecting the current status is not a change: nothing is written and
-  // the audit trail does not gain an event that says "moved to Active" twice.
   if (before.status === status) return true;
 
   await prisma.maintenanceSubscription.update({
@@ -421,8 +354,6 @@ export async function setSubscriptionStatus(
     data: {
       status,
       cancelledAt: status === "CANCELLED" ? (before.cancelledAt ?? new Date()) : null,
-      // Moving off a trial by hand clears the trial deadline, so `deriveStatus`
-      // cannot later read the row back as still trialing.
       trialEndsAt: status === "TRIALING" ? before.trialEndsAt : null,
     },
   });
@@ -445,22 +376,6 @@ export async function setSubscriptionStatus(
   return true;
 }
 
-/**
- * Moves a retainer onto another plan.
- *
- * The allowance follows the plan at once: `requestsPerCycle` is read from the
- * plan on every screen, so the client's cap changes the moment this is saved.
- * Billing follows at the next renewal — the current period's invoice was
- * opened at the old plan's price and is left alone, the same rule
- * `changeBillingInterval` and `setQuotedMonthlyPrice` already follow. The
- * price itself is never written here; `periodAmount` resolves it from the
- * schema (override ?? default) when the next period opens.
- *
- * A quote belongs only to a plan that publishes no price, so moving onto a
- * published plan clears it rather than leaving a figure the schema would
- * ignore — or worse, that a later move back to a quoted plan would silently
- * reuse.
- */
 export async function changePlan(
   id: string,
   planId: MaintenancePlanId,
@@ -524,35 +439,6 @@ export async function changePlan(
   };
 }
 
-/**
- * Advances a subscription into its next billing period (§10) and opens the
- * invoice for it.
- *
- * The new period is anchored to the end of the one that just closed, never to
- * `now` — see `computeRenewal`. Renewing three days late must not move the
- * billing anchor three days later, every time, forever.
- *
- * The period and its PENDING `RETAINER_RENEWAL` payment are written in one
- * transaction, the way a service term opens its payment. The amount is the
- * plan's schema price at the subscription's interval (override ?? default);
- * a quote-only plan publishes no price, so the operator enters the agreed
- * figure and the renewal refuses without it rather than inventing one. The
- * payment's `dueDate` is the period's start, which is also the idempotency
- * key: a period that already has its payment is never opened twice, and the
- * update is guarded on the period end it read so two clicks cannot both move
- * the anchor.
- *
- * There is still no payment provider: `lastRenewedAt` means "an operator
- * confirmed the renewal", and the payment is marked paid by hand from the
- * payments screen when the money arrives.
- */
-/**
- * What one period of a subscription invoices at an interval: the schema price
- * (override ?? default) on a published plan, or the quoted monthly figure
- * times the interval's paid months on a quote-only one — the same
- * `maintenanceIntervalPrice` rule either way. Never a guess: a quote-only
- * plan with no quote set is refused.
- */
 async function periodAmount(
   sub: { planId: string; quotedMonthlyPrice: number | null },
   interval: BillingInterval,
@@ -582,11 +468,6 @@ async function periodAmount(
   };
 }
 
-/**
- * Opens the PENDING invoice for one period inside the caller's transaction.
- * `dueDate` is the period's start and the idempotency key: a period that
- * already has its payment gets it back, never a second one.
- */
 async function openPeriodPayment(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   input: { subscriptionId: string; dueDate: Date; amount: number; reference: string },
@@ -636,14 +517,10 @@ export async function renewSubscription(
 
   const result = await prisma.$transaction(async (tx) => {
     const moved = await tx.maintenanceSubscription.updateMany({
-      // Guarded on the period end this call read: a second click after the
-      // first one landed finds nothing to move, and opens nothing.
       where: { id, currentPeriodEnd: before.currentPeriodEnd },
       data: {
         ...period,
         lastRenewedAt: now,
-        // Renewing resolves whatever lapsed state the calendar had derived, and
-        // converts a trial into a normal paid subscription.
         status: before.status === "TRIALING" ? "ACTIVE" : before.status,
         trialEndsAt: null,
       },
@@ -694,36 +571,6 @@ export async function renewSubscription(
   };
 }
 
-/**
- * The interval that produced the current period, read from its length. The
- * stored interval describes the NEXT invoice once it was changed mid-period,
- * so it cannot be trusted for the period that is already running. Null when
- * no interval fits — a period edited by hand, say — and the caller refuses
- * rather than guessing.
- */
-function intervalOfPeriod(period: {
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
-}): BillingInterval | null {
-  for (const interval of Object.keys(INTERVAL_MONTHS) as BillingInterval[]) {
-    if (nextPeriodEnd(period.currentPeriodStart, interval).getTime() === period.currentPeriodEnd.getTime()) {
-      return interval;
-    }
-  }
-  return null;
-}
-
-/**
- * Opens the invoice for the period that is running now, by an operator's hand.
- *
- * Periods renewed before 2026-10 were never invoiced in this system, and they
- * are not backfilled: a row nobody asked for is an invented record. This is the
- * explicit action instead. It prices the period at the interval that actually
- * produced it (see `intervalOfPeriod`), refuses when that cannot be known,
- * when the plan is quote-only with no quote set, or when the period already
- * has its payment, and marks the audit event
- * `manual` — recorded by an operator, not issued at renewal.
- */
 export async function recordPeriodInvoice(
   id: string,
   actor: string | null,
@@ -789,14 +636,6 @@ export async function recordPeriodInvoice(
   };
 }
 
-/**
- * Sets the agreed monthly figure on a quote-only retainer, or clears it with
- * `null` (after which nothing can be invoiced until a new quote is set). It
- * applies from the next invoice — a payment already opened for a period keeps
- * its amount, since the figure a client was asked for is a record, not a
- * formula. Refused on a published plan: its price is the schema's, and a
- * second source would let the two disagree.
- */
 export async function setQuotedMonthlyPrice(
   id: string,
   quotedMonthlyPrice: number | null,
@@ -877,18 +716,6 @@ export async function setQuotedMonthlyPrice(
   };
 }
 
-/**
- * Changes how often a subscription is invoiced, from its next renewal.
- *
- * The current period was paid at the old interval and is left exactly as it
- * is: nothing is prorated, no payment is opened, and the allowance window (a
- * monthly one whatever the interval) does not move. Only `billingInterval` is
- * written; `computeRenewal` reads it at the next renewal, which is where the
- * new length and the new price first apply.
- *
- * Because the stored interval then describes the NEXT invoice, every screen
- * that shows it must say so next to the current period end.
- */
 export async function changeBillingInterval(
   id: string,
   interval: BillingInterval,
@@ -944,16 +771,6 @@ export async function changeBillingInterval(
   };
 }
 
-/**
- * Turns auto-renewal on or off.
- *
- * Off is not a cancellation: the retainer runs to the end of its paid period
- * and then EXPIRES. The renewals screen shows it as "Not renewing" from the
- * moment it enters the horizon, so a churn event is visible before the date
- * rather than discovered after it.
- *
- * Returns false only when the subscription does not exist.
- */
 export async function setAutoRenew(
   id: string,
   autoRenew: boolean,
@@ -966,9 +783,6 @@ export async function setAutoRenew(
   });
   if (!before) return false;
 
-  // Idempotent: setting the value it already holds succeeds silently and writes
-  // no activity line. `false` is reserved for "no such subscription", which is
-  // the only case the caller should turn into a 404.
   if (before.autoRenew === autoRenew) return true;
 
   await prisma.maintenanceSubscription.update({ where: { id }, data: { autoRenew } });
@@ -999,7 +813,6 @@ export async function createSubscription(
   const client = await prisma.client.findUnique({ where: { id: clientId } });
   if (!client) return { ok: false, message: "That client no longer exists." };
 
-  // A quote belongs only to a plan that publishes no price (see `setQuotedMonthlyPrice`).
   const quotedMonthlyPrice = options.quotedMonthlyPrice ?? null;
   if (quotedMonthlyPrice !== null) {
     if (!Number.isInteger(quotedMonthlyPrice) || quotedMonthlyPrice <= 0) {
@@ -1013,8 +826,6 @@ export async function createSubscription(
     }
   }
 
-  // One live retainer per client: two active subscriptions would give the same
-  // client two separate allowances and two portal links.
   const existing = await prisma.maintenanceSubscription.findFirst({
     where: {
       clientId,
@@ -1028,12 +839,6 @@ export async function createSubscription(
     };
   }
 
-  // The first period is invoiced the way every later one is: `periodAmount`
-  // resolves the schema price (override ?? default) or the quote, and the
-  // PENDING payment is keyed on the period start. A quote-only plan with no
-  // quote yet is still started — the client needs the portal — but nothing is
-  // invoiced for it until the quote is set, and the message says so rather
-  // than claiming an invoice that does not exist.
   const priced = await periodAmount({ planId, quotedMonthlyPrice }, interval, "invoice the first period");
 
   const startedAt = new Date();
@@ -1046,8 +851,6 @@ export async function createSubscription(
         quotedMonthlyPrice,
         startedAt,
         currentPeriodStart: startedAt,
-        // The first period is computed the same way every later renewal is, so a
-        // subscription's first renewal date is never a special case.
         currentPeriodEnd: nextPeriodEnd(startedAt, interval),
       },
     });

@@ -18,8 +18,6 @@ export function AuditLeadCapture({
   className,
 }: AuditLeadCaptureProps) {
   const t = useTranslations("auditLead");
-  // The description quotes the audit fee and its credit; both come from the
-  // resolved pricing, so the copy carries {tokens} and is filled here.
   const fillTokens = useFillPricingTokens();
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,13 +63,13 @@ export function AuditLeadCapture({
   return (
     <section
       className={cn(
-        "rounded-panel-sm border border-border-subtle bg-foreground/2 p-8",
+        "border-t border-border-subtle pt-8",
         className,
       )}
     >
       {isSuccess ? (
-        <div className="text-center">
-          <Eyebrow className="text-foreground/40 mb-3">
+        <div>
+          <Eyebrow className="text-muted-foreground mb-3">
             {t("successTitle")}
           </Eyebrow>
           <p className="text-sm text-foreground/60 leading-relaxed">
@@ -80,7 +78,7 @@ export function AuditLeadCapture({
         </div>
       ) : (
         <>
-          <Eyebrow className="text-foreground/40 mb-3">
+          <Eyebrow className="text-muted-foreground mb-3">
             {t("eyebrow")}
           </Eyebrow>
           <h3 className="text-xl md:text-2xl font-medium text-foreground tracking-tight mb-3">
@@ -89,22 +87,11 @@ export function AuditLeadCapture({
           <p className="text-sm text-foreground/60 leading-relaxed mb-6 max-w-xl">
             {fillTokens(t.raw("description"))}
           </p>
-          <div className="mb-6 grid grid-cols-3 gap-3 max-w-md">
-            {[
-              { key: "noPitch" },
-              { key: "noCommitment" },
-              { key: "founderAccess" },
-            ].map(({ key }) => (
-              <div
-                key={key}
-                className="rounded-panel-sm border border-border-subtle bg-background/40 px-3 py-2.5 text-center"
-              >
-                <p className="text-xs font-medium text-foreground/70">
-                  {t(`stats.${key}`)}
-                </p>
-              </div>
-            ))}
-          </div>
+          <p className="mb-6 text-xs font-medium text-foreground/70">
+            {["noPitch", "noCommitment", "founderAccess"]
+              .map((key) => t(`stats.${key}`))
+              .join(" · ")}
+          </p>
           <form
             onSubmit={handleSubmit}
             className="flex flex-col sm:flex-row gap-4 sm:items-end max-w-xl"
@@ -112,7 +99,7 @@ export function AuditLeadCapture({
             <div className="flex-1">
               <div
                 className={cn(
-                  "flex items-center border-b border-border-subtle pb-2 gap-2",
+                  "flex items-center border-b border-foreground/45 pb-2 gap-2 focus-within:border-foreground",
                   error && "border-destructive",
                 )}
               >
@@ -131,7 +118,7 @@ export function AuditLeadCapture({
                   disabled={isSubmitting}
                   className={cn(
                     "flex-1 bg-transparent text-sm text-foreground w-full",
-                    "placeholder:text-foreground/30 outline-none",
+                    "placeholder:text-muted-foreground outline-none",
                   )}
                 />
               </div>
@@ -140,7 +127,7 @@ export function AuditLeadCapture({
               )}
               <p
                 id="audit-lead-phone-hint"
-                className="text-xs text-foreground/30 mt-1.5"
+                className="text-xs text-muted-foreground mt-1.5"
               >
                 {t("phoneHint")}
               </p>

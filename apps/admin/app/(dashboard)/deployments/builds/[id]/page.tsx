@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Siren } from "lucide-react";
 
 import { prisma } from "@repo/database";
+import { Button } from "@repo/ui";
 
 import { DetailLayout, MetaList } from "@/components/os/detail-layout";
 import { DeleteRecordButton } from "@/components/os/delete-record";
@@ -11,28 +13,32 @@ import { EntityLink } from "@/components/os/entity-link";
 import { AlertBar } from "@/components/os/error-state";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
-import { StatusPill } from "@/components/ui/badge";
+import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { getBuild, listLogs } from "@/lib/engineering";
 import { dateTime, when } from "@/lib/format";
 import { githubRepoSlug } from "@/lib/github";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { ExternalUrl, Neighbours, RecentLogs, clientName, duration, span } from "../../shared";
 
 export const dynamic = "force-dynamic";
 
-/**
- * One build, as CI reported it — the compile-and-test half of a release.
- *
- * Read-only for the same reason as a deployment: the pipeline ran it, this app
- * only records what it said. The useful thing this page adds is the thread to
- * what came of it — the deployments it produced, and the lines it logged.
- */
 export default async function BuildPage({ params }: { params: Promise<{ id: string }> }) {
+  const denied = await gateRoute("/deployments/builds/[id]");
+  if (denied) return denied;
+  const role = await currentRole();
+  const canDelete = can(role, "delete", "project");
+  const canOpenIncident =
+    can(role, "create", "incident") && roleCanOpen(role, "/incidents");
+
   const { id } = await params;
   const build = await getBuild(id);
   if (!build) notFound();
 
   const [logs, repo] = await Promise.all([
-    listLogs({ buildId: build.id }),
+    listLogs({ buildId: build.id, pageSize: 20 }),
     prisma.product.findUnique({
       where: { id: build.productId },
       select: { repositoryUrl: true },
@@ -45,8 +51,13 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
     repoSlug && build.commitSha && /^[0-9a-f]{7,40}$/i.test(build.commitSha)
       ? `https://github.com/${repoSlug}/commit/${build.commitSha}`
       : null;
-  // The pipeline's own figure when it sent one; otherwise what the two stamps say.
   const elapsed = build.durationMs ?? span(build.startedAt, build.finishedAt);
+  const incidentHref =
+    canOpenIncident && build.status === "FAILED"
+      ? `/incidents?new=incident&product=${product.id}${
+          build.deployments[0] ? `&deployment=${build.deployments[0].id}` : ""
+        }`
+      : null;
 
   return (
     <div className="space-y-4">
@@ -54,12 +65,13 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
         title={`${product.name} · build #${build.number}`}
         crumbs={[
           { label: "Deployments", href: "/deployments?tab=builds" },
-          { label: product.name, href: `/products/${product.id}?tab=builds` },
+          { label: product.name, href: `/products/${product.id}#builds` },
           { label: `Build #${build.number}` },
         ]}
         status={<StatusPill registry="buildStatus" value={build.status} />}
         meta={
           <span className="inline-flex flex-wrap items-center gap-2 text-meta text-subtle-foreground">
+            <ToneBadge tone="neutral">Written by CI</ToneBadge>
             <StatusPill registry="deployEnvironment" value={build.environment} variant="dot" />
             {build.branch ? <span className="font-mono">{build.branch}</span> : null}
             <span>{when(build.finishedAt ?? build.createdAt)}</span>
@@ -74,12 +86,26 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
           ) : null
         }
         actions={
-          <DeleteRecordButton
-            entity="build"
-            id={build.id}
-            label={`${product.name} · build ${build.number}`}
-            redirectTo="/deployments?tab=builds"
-          />
+          canDelete || incidentHref ? (
+            <>
+              {incidentHref && (
+                <Button asChild variant="outline">
+                  <Link href={incidentHref}>
+                    <Siren className="size-3.5" aria-hidden />
+                    Open an incident
+                  </Link>
+                </Button>
+              )}
+              {canDelete && (
+                <DeleteRecordButton
+                  entity="build"
+                  id={build.id}
+                  label={`${product.name} · build ${build.number}`}
+                  redirectTo="/deployments?tab=builds"
+                />
+              )}
+            </>
+          ) : undefined
         }
       />
 

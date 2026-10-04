@@ -24,7 +24,7 @@ import {
   type ScopeNoteId,
   type ServiceId,
 } from "@repo/pricing-schema";
-import { Input, Label, formControlClasses } from "@repo/ui/www";
+import { Input, Label, Textarea } from "@repo/ui";
 import { Check, Download, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -32,10 +32,8 @@ import { CONDITION_QUESTIONS } from "./constants";
 import type { HeadingLevel } from "./questions";
 import type { AnswerMap, MoneyFormats, QuestionKey, Translator } from "./types";
 
-/** The lead route caps the note at this length; the field says so by stopping. */
 const NOTE_MAX = 1000;
 
-/** Which factor group prices each condition question. */
 const FACTOR_GROUP: Partial<Record<QuestionKey, FactorGroupId>> = {
   brandIdentity: "brand",
   contentReadiness: "content",
@@ -54,10 +52,6 @@ function DriverRow({ label, children }: { label: string; children: ReactNode }) 
   );
 }
 
-/**
- * What set the range and what moved it: the service and band that resolve the
- * published cell, then each condition with the real delta the schema prints.
- */
 function ScopeDrivers({
   answers,
   pricing,
@@ -322,13 +316,10 @@ export function ResultPanel({
   useEffect(() => {
     if (formOpen) phoneRef.current?.focus();
   }, [formOpen]);
-  // A refused submit returns focus to the field that refused it.
   useEffect(() => {
     if (phoneError) phoneRef.current?.focus();
   }, [phoneError]);
 
-  // The matrix's own window, so the ceiling reads as a stretch of the weeks
-  // the price cells quote rather than a contradiction of them.
   const matrixWindow = deliveryWindowFrom(pricing);
   const schedule = paymentScheduleView(locale, pricing);
   const chosenNotes = scopeNoteViews(locale).filter((n) =>
@@ -356,7 +347,7 @@ export function ResultPanel({
   return (
     <section
       aria-labelledby="estimate-result-heading"
-      className="mt-16 border-t border-border-subtle pt-10 animate-in fade-in slide-in-from-bottom-4 duration-(--motion-base) ease-smooth lg:mt-24"
+      className="mt-(--section-block) border-t border-border-subtle pt-10 animate-in fade-in slide-in-from-bottom-4 duration-(--motion-base) ease-smooth"
     >
       <div className="lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16">
         <header className="lg:col-span-4">
@@ -636,13 +627,12 @@ export function ResultPanel({
                   >
                     {labelFor("note")}
                   </Label>
-                  <textarea
+                  <Textarea
                     id="estimate-note"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     maxLength={NOTE_MAX}
                     rows={3}
-                    className={cn(formControlClasses, "resize-y")}
                   />
                 </div>
               </div>

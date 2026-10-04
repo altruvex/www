@@ -9,10 +9,8 @@ import { useLocale } from "next-intl";
 import { useEffect, useState, type MouseEvent } from "react";
 
 type ContentsRailItem = {
-  /** Element id of the target section. */
   id: string;
   label: string;
-  /** Printed after the label, e.g. how many questions a topic holds. */
   count?: number;
 };
 
@@ -22,16 +20,8 @@ type ContentsRailProps = {
   className?: string;
 };
 
-/** Clears the fixed nav when a section is scrolled to. */
 const SCROLL_OFFSET = 112;
 
-/**
- * Moves to an in-page section from an `#id` link: through Lenis when Lenis
- * owns the scroll (a native jump underneath it is overwritten on the next
- * frame), clearing the fixed nav, and moving focus so keyboard and screen
- * reader users land where the eye does. Returns false when the target is
- * missing, leaving the browser's own anchor jump to happen.
- */
 export function jumpToSection(
   event: MouseEvent<HTMLAnchorElement>,
   id: string,
@@ -52,13 +42,6 @@ export function jumpToSection(
   return true;
 }
 
-/**
- * A long reference page's table of contents: a sticky rail on wide screens,
- * a native disclosure above the content below `lg`. The active entry follows
- * the section crossing the upper third of the viewport.
- *
- * Links are real `#id` anchors, so they work with JavaScript off.
- */
 export function ContentsRail({ title, items, className }: ContentsRailProps) {
   const locale = useLocale();
   const [activeId, setActiveId] = useState(items[0]?.id);

@@ -31,17 +31,13 @@ import { CONTRACT_COLORS } from "./document-colors";
 import { termLabel } from "./service-lifecycle";
 import { applyVat, COMMERCIAL_TERMS, type ServiceId } from "@repo/pricing-schema";
 
-// ---- Locked layout (ported from ~/.claude/skills/altruvex-contract Step 5) ----
-// Altruvex Sans as installed from packages/brand-font/dist/desktop; the docx
-// names it and embeds nothing. The site has no mono, so the clause numbers and
-// figures that were Courier New share the body face.
 const FONT_BODY = "Altruvex Sans";
 const FONT_MONO = "Altruvex Sans";
-const SIZE_BODY = 21; // 10.5pt, in half-points
-const SIZE_H1 = 32; // 16pt
-const SIZE_H2 = 24; // 12pt
-const SIZE_SMALL = 18; // 9pt
-const MARGIN = 1440; // 1" in twips
+const SIZE_BODY = 21;
+const SIZE_H1 = 32;
+const SIZE_H2 = 24;
+const SIZE_SMALL = 18;
+const MARGIN = 1440;
 
 
 type ContractWithRelations = Contract & {
@@ -156,11 +152,6 @@ function formatCurrency(amount: number, currency: string): string {
   }).format(amount);
 }
 
-/**
- * Contract prose spells a count and repeats it in digits ("Three (3) rounds").
- * The wording is legal text already present in signed agreements, so the
- * number is sourced from the schema while the phrasing is preserved exactly.
- */
 function spellSmallNumber(n: number): string {
   const words = [
     "Zero", "One", "Two", "Three", "Four", "Five",
@@ -175,9 +166,6 @@ function paymentTable(proposal: Proposal): Table {
     second: number;
     final: number;
   };
-  // Trigger wording is the schema's, so the contract names the same milestone
-  // the pricing page and the proposal deck do. The split itself is the
-  // proposal's own, as the client accepted it.
   const [startTrigger, milestoneTrigger, finalTrigger] = paymentTriggers();
   const rows = [
     ["First Payment", startTrigger, `${split.first}%`, formatCurrency((proposal.totalPrice * split.first) / 100, proposal.currency)],
@@ -230,7 +218,11 @@ function servicesTable(services: ProposalService[], currency: string): Table {
               cell(service.provider ? `${service.name} (${service.provider})` : service.name),
               cell(termLabel(service.termMonths)),
               cell(
-                service.firstTermIncluded ? "Included in the project fee" : "Billed at the price shown",
+                service.termMonths === null
+                  ? "Bought once"
+                  : service.firstTermIncluded
+                    ? "Included in the project fee"
+                    : "Billed at the price shown",
               ),
               cell(formatCurrency(service.price, currency), { align: AlignmentType.RIGHT }),
             ],
@@ -246,13 +238,8 @@ export async function buildContractDocx(
   const { client, proposal } = contract;
   const clientName = client.company || client.name || "Client";
   const signatoryName = client.name || "Authorized Signatory";
-  // VAT is charged on what is actually invoiced, so it follows the net figure
-  // in `totalPrice` — never the pre-discount list price.
   const { vat: vatAmount, gross: grandTotal } = applyVat(proposal.totalPrice);
 
-  // A discount has to be stated in the agreement, not just in the deck: the
-  // client signs the reduced fee, and the reduction is what makes the number
-  // in §3 differ from the one on the proposal's line items.
   const parsedContent = proposalContentSchema.safeParse(proposal.content);
   const reduction = parsedContent.success
     ? discountAmount(parsedContent.data.investmentItems, parsedContent.data.discount)
@@ -263,16 +250,8 @@ export async function buildContractDocx(
   const discountLabel = parsedContent.success
     ? parsedContent.data.discount.label.trim() || "discount"
     : "discount";
-  // A credited audit fee is not a negotiated discount, and the agreement says
-  // so in its own words: the client paid for the audit, the published rule is
-  // that the fee comes off the build, and both halves of that rule are what
-  // they read before they bought it. A generic "a discount has been applied"
-  // line would leave the signed document silent about the term that made the
-  // audit worth buying.
   const isAuditCredit =
     parsedContent.success && parsedContent.data.discount.kind === "audit-credit";
-  // Printed only when the accepted proposal listed some. A contract generated
-  // from a proposal that predates services is word-for-word what it was.
   const services = parsedContent.success ? parsedContent.data.services : [];
   const modules = getSolutionModules(proposal.projectType as ServiceId);
   const effectiveDate = new Date(contract.createdAt).toLocaleDateString("en-US", {
@@ -318,7 +297,7 @@ export async function buildContractDocx(
     ...(services.length > 0
       ? [
           body(
-            "Recurring services. The following third-party services are provided through Altruvex and billed separately from the project fee above. They are not part of the milestone payments and are not reduced by any discount. Each renews for the term shown at the price shown; Altruvex notifies the Client before each renewal date, and either party may end a service by written notice given before that date.",
+            "Recurring services. The following third-party services are provided through Altruvex and billed separately from the project fee above. They are not part of the milestone payments and are not reduced by any discount. Each renews for the term shown at the price shown; Altruvex notifies the Client before each renewal date, and either party may end a service by written notice given before that date. A service marked One-time is bought once at the price shown, billed once, and does not renew.",
           ),
           servicesTable(services, proposal.currency),
         ]

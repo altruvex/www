@@ -9,15 +9,10 @@ import {
 } from "./proposal-schema";
 import { DECK_COLORS } from "./document-colors";
 
-// QA gate for the proposal generator. The palette is fixed for every client,
-// so contrast is checkable without rendering anything — this runs on every
-// generation, before a single slide is built.
-
 interface ContrastPair {
   name: string;
   fg: string;
   bg: string;
-  /** WCAG "large text": >=18pt regular or >=14pt bold. Everything else needs 4.5:1. */
   large: boolean;
 }
 
@@ -25,12 +20,6 @@ const C = DECK_COLORS;
 const PAPER = C.paper;
 const DARK = C.darkBg;
 
-/**
- * Every (foreground, background) combination the generator paints. The two
- * brand entries are resolved from company settings, so changing the brand
- * color re-runs the check against the new value rather than against a
- * hardcoded one.
- */
 function contrastPairs(company: CompanyDetails): ContrastPair[] {
   return [
     { name: "ink on paper (headings)", fg: C.ink, bg: PAPER, large: false },
@@ -42,9 +31,6 @@ function contrastPairs(company: CompanyDetails): ContrastPair[] {
     { name: "brand accent word (18pt italic)", fg: company.brandColor, bg: PAPER, large: true },
     { name: "brand score value (10.5pt bold)", fg: company.brandColor, bg: PAPER, large: false },
     { name: "brand total amount (15.25pt bold)", fg: company.brandColor, bg: PAPER, large: true },
-    // Payment-split labels are paper-on-fill, not --foreground-on-fill:
-    // against the 737373 segment, FAFAFA clears AA (4.54:1) where F0F0F0
-    // would not (4.16:1).
     { name: "paper % label on split segment 1 (muted fill)", fg: PAPER, bg: C.muted, large: false },
     { name: "paper % label on split segment 2 (label fill)", fg: PAPER, bg: C.label, large: false },
     { name: "paper % label on split segment 3 (ink fill)", fg: PAPER, bg: C.ink, large: false },
@@ -54,11 +40,6 @@ function contrastPairs(company: CompanyDetails): ContrastPair[] {
   ];
 }
 
-// Decorative-only pairs.
-// These are not readable content: losing them costs a viewer nothing, and
-// changing them would stop the output matching the signed-off design. They
-// are listed (not silently omitted) so the ratio stays visible and any new
-// low-contrast pair still has to be an explicit decision.
 const DECORATIVE_EXCEPTIONS: ContrastPair[] = [
   { name: "numeralWarm index on paper (decorative)", fg: C.numeralWarm, bg: PAPER, large: false },
   { name: "hairline ghost numeral on paper (decorative)", fg: C.hairline, bg: PAPER, large: true },
@@ -107,7 +88,6 @@ export class ProposalQaError extends Error {
   }
 }
 
-/** Fails generation if any content-bearing color pair drops below WCAG AA. */
 export function runProposalContrastGate(company: CompanyDetails): void {
   const failures = checkProposalContrast(company).filter((r) => !r.pass && !r.decorative);
   if (failures.length > 0) {
@@ -121,10 +101,6 @@ export function runProposalContrastGate(company: CompanyDetails): void {
   }
 }
 
-/**
- * Server-side content gate. Deliberately re-runs everything the Admin form
- * checks: client-side validation is a convenience, never the guarantee.
- */
 export function runProposalContentGate(value: unknown): ProposalContent {
   const result = validateProposalContent(value);
   if (!result.ok || !result.content) {
@@ -134,8 +110,6 @@ export function runProposalContentGate(value: unknown): ProposalContent {
   const content = result.content;
   const issues: ValidationIssue[] = [];
 
-  // Belt and braces on the two numeric invariants that silently produce a
-  // wrong document rather than a broken one.
   const percentTotal = paymentPercentTotal(content.paymentSchedule);
   if (Math.abs(percentTotal - 100) > 0.001) {
     issues.push({
@@ -149,7 +123,6 @@ export function runProposalContentGate(value: unknown): ProposalContent {
       message: "Investment total must be greater than zero",
     });
   }
-  // A discount can only ever reduce, never zero out or invert, the fee.
   if (netTotal(content.investmentItems, content.discount) <= 0) {
     issues.push({
       path: "discount",

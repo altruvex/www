@@ -4,20 +4,6 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 
-/**
- * The site's one arrow. Every affordance arrow on the marketing site draws
- * from here — nine pages had hand-copied this same 24-viewBox path with four
- * different durations, which is how a hover nudge ends up feeling different
- * on /process than on /contact.
- *
- * `direction` carries the RTL logic so a call site never mirrors by hand:
- * forward flips in Arabic, back points the other way and flips back, external
- * mirrors instead of rotating (an up-right arrow rotated is a down-right one).
- *
- * `motion="none"` is for arrows that are not a hover nudge — a reveal that
- * slides in from nothing, or a static list glyph. It drops the translate so a
- * call site's own transform is not fighting this one.
- */
 const ARROW_BASE = "h-4 w-4 shrink-0 transition-all duration-(--motion-hover) ease-default";
 
 const ARROW_ROTATE = {
@@ -35,7 +21,7 @@ const ARROW_NUDGE = {
 const ARROW_PATH = {
   forward: "M17 8l4 4m0 0l-4 4m4-4H3",
   back: "M17 8l4 4m0 0l-4 4m4-4H3",
-  external: "M7 17 17 7M7 7h10v10",
+  external: "M4 20 20 4M9 4h11v11",
 } as const;
 
 type ArrowDirection = keyof typeof ARROW_PATH;
@@ -48,7 +34,6 @@ export function ArrowIcon({
 }: {
   className?: string;
   direction?: ArrowDirection;
-  /** "none" when the call site owns the transform. */
   motion?: "nudge" | "none";
   strokeWidth?: number;
 }) {

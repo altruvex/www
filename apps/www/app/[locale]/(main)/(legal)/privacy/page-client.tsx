@@ -1,13 +1,11 @@
 "use client";
 
 import {
-  LegalContactSection,
   LegalPageLayout,
   LegalSection,
   LegalSummary,
 } from "@/components/legal/legal-page-layout";
 import { LegalDetails, LegalList, LegalProse } from "@/components/legal/legal-prose";
-import { SITE_CONFIG } from "@/lib/metadata";
 import { localizeNumbers } from "@/lib/utils/number";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -83,12 +81,9 @@ export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientPr
         </LegalSection>
       ))}
 
-      <LegalContactSection
-        number={9}
-        title={t("sections.9.title")}
-        description={t("sections.9.description")}
-        email={SITE_CONFIG.email}
-      />
+      <LegalSection number={9} title={t("sections.9.title")}>
+        <LegalProse content={t("sections.9.description")} />
+      </LegalSection>
     </LegalPageLayout>
   );
 }

@@ -7,20 +7,9 @@ function isRTLText(text: string): boolean {
 
 const ACCENT_SELECTOR = "[data-accent-grad]";
 
-// `background-clip:text` is not inherited, so a gradient-clipped phrase split into
-// per-word/char spans would normally tear into one flat-colored fragment per piece.
-// Fixed via CSS instead of skipping the split: globals.css gives every `.m-word`/
-// `.m-char` *inside* `[data-accent-grad]` `background-image: inherit` (pulls the
-// parent's resolved gradient) - then this function repaints each fragment's
-// `background-size`/`background-position` so collectively they show one continuous
-// sweep across the whole phrase, like a single gradient sliced into pieces. Lets the
-// colored phrase animate word-by-word/char-by-char in sync with the rest of the
-// sentence instead of moving as one rigid block.
 function alignAccentGradients(root: HTMLElement): void {
   const accents = root.querySelectorAll<HTMLElement>(ACCENT_SELECTOR);
   accents.forEach((accentEl) => {
-    // `animate` mode (bg-size-[200%_auto] + animate-text-gradient) owns its own
-    // background-size for the decorative sweep - don't fight it.
     if (accentEl.classList.contains("animate-text-gradient")) return;
 
     const fragments = Array.from(
@@ -31,17 +20,12 @@ function alignAccentGradients(root: HTMLElement): void {
     const accentRect = accentEl.getBoundingClientRect();
     if (!accentRect.width) return;
 
-    // Read every rect first, then write: interleaving a write with the next
-    // read forces a synchronous layout per fragment (layout thrash).
     const offsets = fragments.map(
       (fragment) => fragment.getBoundingClientRect().left - accentRect.left,
     );
 
     fragments.forEach((fragment, i) => {
       fragment.style.backgroundSize = `${accentRect.width}px 100%`;
-      // --sweep-x (inherited from the accent, default 0px) lets useText pan
-      // every fragment's gradient as one sheet for the `animate="sweep"` wipe
-      // without touching the per-fragment alignment offsets.
       fragment.style.backgroundPositionX = `calc(${-offsets[i]}px + var(--sweep-x, 0px))`;
     });
   });
@@ -64,11 +48,6 @@ function splitIntoChars(element: HTMLElement): Element[] {
     const raw = textNode.textContent ?? "";
     const fragment = document.createDocumentFragment();
 
-    /* Each word is one nowrap box, and the characters live inside it.
-       Without the box every `.m-char` is an independent inline-block, so the
-       browser is free to break a line *inside* a word — a display headline
-       reads "already te / lling you". The box changes nothing for callers:
-       `.m-char` is still what gets animated. */
     let word: HTMLSpanElement | null = null;
     const closeWord = () => {
       if (word) {

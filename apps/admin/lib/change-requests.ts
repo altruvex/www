@@ -1,35 +1,6 @@
 import { changeRequestQuoteDraft, type EmailDraft } from "./email-templates";
 import { date, money } from "./format";
 
-/**
- * Change requests and project closure — the pure half.
- *
- * A client with no maintenance retainer can still ask for a change to a
- * project we delivered. Before this existed the only honest path was a new
- * proposal → contract → project chain with a 50/30/20 split, which is absurd
- * for a two-hour edit and leaves the work detached from the project it
- * changes. A change request hangs off the project instead.
- *
- * Deliberately isomorphic (no `server-only`, no Prisma client): the project
- * page, the server actions and `scripts/verify-change-requests.ts` all derive
- * the same transitions, quotes and warranty window from the same functions.
- *
- * Rules that hold here:
- *
- *  1. **No price is written in this file.** The hourly rate is the published
- *     revision rate from `@repo/pricing-schema` (override ?? default), passed
- *     in by the caller and snapshotted onto the row at quote time, so a later
- *     edit on /pricing cannot re-price work a client already agreed to.
- *  2. **Warranty is derived, never stored.** It is a pure function of the
- *     launch date, the published warranty length and the clock — the same
- *     posture as `deriveStatus` in `lib/subscription-lifecycle.ts`. Free work
- *     outside the window is not "warranty"; it is a fixed quote of zero, and
- *     it is recorded as exactly that.
- *  3. **Closing a project is a checklist, not a dropdown.** Unpaid payments
- *     and open change requests are soft blocks an OWNER can override; the
- *     override is written into the audit event.
- */
-
 export const CHANGE_REQUEST_STATUSES = [
   "REQUESTED",
   "QUOTED",
@@ -42,7 +13,6 @@ export const CHANGE_REQUEST_STATUSES = [
 
 export type ChangeRequestStatusValue = (typeof CHANGE_REQUEST_STATUSES)[number];
 
-/** Statuses nothing moves out of. */
 export const TERMINAL_STATUSES: readonly ChangeRequestStatusValue[] = [
   "DELIVERED",
   "DECLINED",
@@ -53,11 +23,6 @@ export function isOpen(status: string): boolean {
   return !TERMINAL_STATUSES.includes(status as ChangeRequestStatusValue);
 }
 
-/**
- * Every legal move. QUOTED → QUOTED is a re-quote (the client pushed back on
- * the number). REQUESTED → APPROVED exists only for warranty cover, which
- * needs no quote; `canTransition` enforces that.
- */
 const TRANSITIONS: Record<ChangeRequestStatusValue, readonly ChangeRequestStatusValue[]> = {
   REQUESTED: ["QUOTED", "APPROVED", "DECLINED", "CANCELLED"],
   QUOTED: ["QUOTED", "APPROVED", "DECLINED", "CANCELLED"],
@@ -79,11 +44,6 @@ export function canTransition(
   return true;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Hours and money                                                            */
-/* -------------------------------------------------------------------------- */
-
-/** The operator types hours; the row stores whole minutes. */
 export function hoursToMinutes(hours: number): number {
   return Math.round(hours * 60);
 }
@@ -95,17 +55,11 @@ export function formatHours(minutes: number | null | undefined): string {
   return `${text} h`;
 }
 
-/** The two revision rates the schema publishes, one per price list. */
 export interface RevisionRates {
   revisionHourlyRate: number;
   revisionHourlyRateUsd: number;
 }
 
-/**
- * The published hourly rate for a project's currency, or null when there is
- * none. USD is its own price list, not a conversion (see `modifiers.ts`), so a
- * currency without a published rate cannot be quoted by the hour at all.
- */
 export function rateFor(currency: string, rates: RevisionRates): number | null {
   if (currency === "EGP") return rates.revisionHourlyRate;
   if (currency === "USD") return rates.revisionHourlyRateUsd;
@@ -116,7 +70,6 @@ export function hourlyAmount(minutes: number, rate: number): number {
   return Math.round((minutes / 60) * rate);
 }
 
-/** What gets billed on delivery. */
 export function billedAmountFor(row: {
   pricing: string | null;
   hourlyRate: number | null;
@@ -137,10 +90,6 @@ export function billedAmountFor(row: {
   throw new Error("This request was never priced.");
 }
 
-/* -------------------------------------------------------------------------- */
-/* Warranty window                                                            */
-/* -------------------------------------------------------------------------- */
-
 const DAY = 86_400_000;
 
 export type WarrantyState = "not-launched" | "active" | "ended";
@@ -148,7 +97,6 @@ export type WarrantyState = "not-launched" | "active" | "ended";
 export interface WarrantyView {
   state: WarrantyState;
   endsAt: Date | null;
-  /** Whole days left, only while active. */
   daysLeft: number | null;
 }
 
@@ -167,7 +115,6 @@ export function warrantyWindow(
   };
 }
 
-/** Warranty is judged against when the client ASKED, not when we got to it. */
 export function coveredByWarranty(
   requestedAt: Date,
   actualLaunchDate: Date | null | undefined,
@@ -178,16 +125,11 @@ export function coveredByWarranty(
   return requestedAt.getTime() >= actualLaunchDate.getTime() && requestedAt.getTime() <= endsAt;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Closing a project                                                          */
-/* -------------------------------------------------------------------------- */
-
 export interface ClosureCheck {
   id: "launched" | "payments" | "change-requests";
   ok: boolean;
   label: string;
   detail: string;
-  /** A failing check with `blocks` stops the close unless an OWNER overrides it. */
   blocks: boolean;
 }
 
@@ -210,8 +152,6 @@ export function closureChecks(input: {
       detail: launched
         ? "The project reached launch."
         : "The project never reached the Launched phase. Closing it now records it as finished anyway.",
-      // Advisory only: a project can legitimately end before launch (the client
-      // took the build in-house). Cancelled is the status for one that failed.
       blocks: false,
     },
     {
@@ -243,15 +183,6 @@ export function closureChecks(input: {
   ];
 }
 
-/* -------------------------------------------------------------------------- */
-/* The quote a client receives                                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Whether the client's quote page may accept an answer right now. The page
- * and the answer endpoint both ask this, so the page can never offer a button
- * the endpoint will refuse.
- */
 export function quoteAnswerable(
   row: { status: string; quoteSentAt: Date | null; quoteExpiresAt: Date | null },
   now: Date = new Date(),
@@ -271,10 +202,6 @@ export function quoteExpiry(sentAt: Date, validityDays: number): Date {
   return new Date(sentAt.getTime() + validityDays * DAY);
 }
 
-/**
- * The default wording for a quote, built from the row. One function for the
- * send dialog's pre-fill and the server's fallback, so they cannot drift.
- */
 export function quoteDraftFor(
   row: { title: string; pricing: string | null; quotedAmount: number | null; estimatedMinutes: number | null; hourlyRate: number | null },
   clientName: string | null,

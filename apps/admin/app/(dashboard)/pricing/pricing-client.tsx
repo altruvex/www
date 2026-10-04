@@ -1,29 +1,26 @@
 "use client";
 
-import { Construction } from "lucide-react";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { Panel } from "@/components/os/panel";
+import { Soon } from "@/components/os/soon";
 import { StatTile } from "@/components/os/stat-tile";
 import { formatMoney, maintenanceIntervalPrice } from "@repo/pricing-schema";
 import { Button, Input } from "@repo/ui";
-import { LoadingIcon } from "@repo/ui";
 import { cn } from "@/lib/utils";
 
-/** Serialisable view of resolved pricing, built on the server. */
 export interface PricingSnapshot {
   cells: {
     serviceId: string; complexityId: string; serviceName: string; bandName: string;
     priceMin: number; priceMax: number; weeksMin: number; weeksMax: number;
   }[];
-  /** Cells the public range grid publishes, unnamed. */
   publishedRanges: number;
   maintenance: {
     id: string; name: string; price: number | null; requestsPerCycle: number | null;
     overageHourlyRate: number | null; internalHourEquivalent: number | null; status: string;
-    /** Retainers on this plan whose derived status still bills. */
     activeRetainers: number;
-    /** What saving a new price does to those retainers — the rule the renewal code applies, in words. */
     repriceNote: string;
   }[];
   consulting: { id: string; name: string; price: number; durationBusinessDays: number; status: string }[];
@@ -44,84 +41,108 @@ export interface PricingSnapshot {
   }[];
 }
 
-const egp = (n: number) => new Intl.NumberFormat("en-US").format(n);
+type Draft<T> = { [K in keyof T]: T[K] extends number ? number | null : T[K] };
 
-/** Client-visible only when active. Everything else carries a SOON badge. */
-function SoonBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta uppercase tracking-wider text-muted-foreground">
-      <Construction className="size-3" />
-      Soon
-    </span>
-  );
+interface FieldSpec<T> {
+  key: keyof T;
+  label: string;
+  nullable?: boolean;
+  nullLabel?: string;
+  suffix?: string;
 }
 
-function useSave() {
-  const [saving, setSaving] = React.useState<string | null>(null);
+interface Change {
+  label: string;
+  before: string;
+  after: string;
+}
 
-  const save = React.useCallback(
-    async (key: string, body: Record<string, unknown>): Promise<boolean> => {
-      setSaving(key);
+const num = new Intl.NumberFormat("en-US");
+
+function show(value: unknown, nullLabel = "blank"): string {
+  if (value === null || value === undefined || value === "") return nullLabel;
+  if (typeof value === "number") return num.format(value);
+  return String(value);
+}
+
+function diff<T extends object>(before: T, draft: Draft<T>, fields: FieldSpec<T>[]): Change[] {
+  const out: Change[] = [];
+  for (const field of fields) {
+    const a = before[field.key] as unknown;
+    const b = draft[field.key] as unknown;
+    if (a === b) continue;
+    const nullLabel = field.nullable ? field.nullLabel : "blank";
+    out.push({
+      label: field.label + (field.suffix ? ` (${field.suffix})` : ""),
+      before: show(a, nullLabel),
+      after: show(b, nullLabel),
+    });
+  }
+  return out;
+}
+
+function blanks<T extends object>(draft: Draft<T>, fields: FieldSpec<T>[]): string[] {
+  return fields
+    .filter((field) => !field.nullable && (draft[field.key] as unknown) === null)
+    .map((field) => field.label);
+}
+
+type SaveResult = { ok: boolean; message?: string };
+
+function useSave() {
+  const router = useRouter();
+  return React.useCallback(
+    async (body: Record<string, unknown>): Promise<SaveResult> => {
       try {
         const res = await fetch("/api/admin/pricing", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const data = await res.json();
-        if (res.status === 401) {
-          toast.error("Your session expired. Sign in again.");
-          return false;
-        }
-        if (!data.success) {
-          toast.error(data.message ?? "The change could not be saved.");
-          return false;
-        }
-        if (data.changes === 0) {
-          toast.success("No change to save.");
-        } else if (data.publicSiteRevalidated) {
-          toast.success(`Saved — ${data.changes} field(s) updated and live.`);
-        } else {
-          // Saved is saved. Say so plainly, and be specific about the delay
-          // rather than letting it read as a failure.
-          toast.success(`Saved — ${data.changes} field(s) updated.`, {
-            description:
-              "The public site will pick this up within 5 minutes; it could not be refreshed immediately.",
-          });
-        }
-        return true;
+        const data = (await res.json().catch(() => ({}))) as {
+          success?: boolean;
+          message?: string;
+          changes?: number;
+          publicSiteRevalidated?: boolean;
+        };
+        if (res.status === 401) return { ok: false, message: "Your session expired. Sign in again." };
+        if (!data.success) return { ok: false, message: data.message ?? "The change could not be saved." };
+        router.refresh();
+        if (data.changes === 0) return { ok: true, message: "No change to save." };
+        if (data.publicSiteRevalidated) return { ok: true, message: `Saved — ${data.changes} field(s) updated and live.` };
+        return {
+          ok: true,
+          message: `Saved — ${data.changes} field(s) updated. The public site picks this up within 5 minutes.`,
+        };
       } catch {
-        toast.error("The change could not be saved.");
-        return false;
-      } finally {
-        setSaving(null);
+        return { ok: false, message: "Could not reach the server." };
       }
     },
-    [],
+    [router],
   );
-
-  return { saving, save };
 }
 
+const CanEditContext = React.createContext(true);
+
 function NumberField({
-  label, value, onChange, disabled, suffix,
+  label, value, onChange, suffix, invalid,
 }: {
   label: string; value: number | null; onChange: (v: number | null) => void;
-  disabled?: boolean; suffix?: string;
+  suffix?: string; invalid?: boolean;
 }) {
+  const canEdit = React.useContext(CanEditContext);
   return (
     <label className="flex flex-col gap-1">
       <span className="text-meta uppercase tracking-wider text-muted-foreground">{label}</span>
       <span className="flex items-center gap-1.5">
         <Input
           type="number"
-          inputMode="numeric"
+          inputMode="decimal"
           value={value ?? ""}
-          disabled={disabled}
-          onChange={(e) =>
-            onChange(e.target.value === "" ? null : Number(e.target.value))
-          }
-          className="font-mono"
+          disabled={!canEdit}
+          aria-invalid={invalid || undefined}
+          onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+          className={cn("font-mono", invalid && "border-destructive")}
         />
         {suffix && <span className="text-meta text-muted-foreground">{suffix}</span>}
       </span>
@@ -129,18 +150,171 @@ function NumberField({
   );
 }
 
-export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
-  const { saving, save } = useSave();
-  const [cells, setCells] = React.useState(snapshot.cells);
-  const [plans, setPlans] = React.useState(snapshot.maintenance);
-  const [packages, setPackages] = React.useState(snapshot.consulting);
-  const [addons, setAddons] = React.useState(snapshot.addons);
-  const [terms, setTerms] = React.useState(snapshot.terms);
+function SaveDiff({
+  label, title, changes, missing, consequence, onConfirm,
+}: {
+  label: string;
+  title: string;
+  changes: Change[];
+  missing: string[];
+  consequence: React.ReactNode;
+  onConfirm: () => Promise<SaveResult>;
+}) {
+  const canEdit = React.useContext(CanEditContext);
+  if (!canEdit) return null;
+  if (missing.length > 0) {
+    return (
+      <div className="space-y-1">
+        <Button size="sm" variant="secondary" disabled>
+          {label}
+        </Button>
+        <p className="text-meta text-destructive">
+          Blank: {missing.join(", ")}. A blank field is never saved as 0 — type the value or restore the old one.
+        </p>
+      </div>
+    );
+  }
+  if (changes.length === 0) {
+    return (
+      <Button size="sm" variant="secondary" disabled>
+        No change
+      </Button>
+    );
+  }
+  return (
+    <ConfirmDialog
+      trigger={
+        <Button size="sm" variant="secondary">
+          {label}
+        </Button>
+      }
+      title={title}
+      body={
+        <dl className="space-y-1 font-mono text-meta">
+          {changes.map((change) => (
+            <div key={change.label} className="flex flex-wrap items-baseline gap-x-2">
+              <dt className="font-sans text-muted-foreground">{change.label}</dt>
+              <dd>
+                <span className="text-muted-foreground line-through">{change.before}</span>
+                <span className="mx-1.5 text-muted-foreground">→</span>
+                <span className="font-medium text-foreground">{change.after}</span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      }
+      consequence={consequence}
+      confirmLabel={`Save ${changes.length} change${changes.length === 1 ? "" : "s"}`}
+      onConfirm={onConfirm}
+    />
+  );
+}
+
+const PUBLIC_CONSEQUENCE =
+  "Written as an override on top of the shipped default. Public pages, the estimator and every new proposal read the new value; proposals and payments already issued keep theirs.";
+
+type Cell = PricingSnapshot["cells"][number];
+type Plan = PricingSnapshot["maintenance"][number];
+type Pkg = PricingSnapshot["consulting"][number];
+type Addon = PricingSnapshot["addons"][number];
+
+const CELL_FIELDS: FieldSpec<Cell>[] = [
+  { key: "priceMin", label: "Min", suffix: "EGP" },
+  { key: "priceMax", label: "Max", suffix: "EGP" },
+  { key: "weeksMin", label: "Weeks min" },
+  { key: "weeksMax", label: "Weeks max" },
+];
+
+const PLAN_FIELDS: FieldSpec<Plan>[] = [
+  { key: "price", label: "Price", suffix: "EGP/mo", nullable: true, nullLabel: "custom quote" },
+  { key: "requestsPerCycle", label: "Requests / month", nullable: true, nullLabel: "uncapped" },
+  { key: "overageHourlyRate", label: "Overage rate", suffix: "EGP/hr", nullable: true, nullLabel: "none" },
+  { key: "internalHourEquivalent", label: "Internal hours", suffix: "hrs", nullable: true, nullLabel: "none" },
+];
+
+const PKG_FIELDS: FieldSpec<Pkg>[] = [
+  { key: "price", label: "Fixed price", suffix: "EGP" },
+  { key: "durationBusinessDays", label: "Duration", suffix: "business days" },
+];
+
+const ADDON_FIELDS: FieldSpec<Addon>[] = [
+  { key: "costBasis", label: "Our cost", suffix: "EGP", nullable: true, nullLabel: "pending" },
+  { key: "markupValue", label: "Margin" },
+];
+
+interface TermsDraft {
+  vatPercent: number;
+  revisionHourlyRate: number;
+  revisionHourlyRateUsd: number;
+  includedRevisionRounds: number;
+  paymentSplitFirst: number;
+  paymentSplitSecond: number;
+  paymentSplitFinal: number;
+  proposalValidityDays: number;
+  postLaunchWarrantyDays: number;
+  usdEgpRate: number;
+}
+
+const TERMS_FIELDS: FieldSpec<TermsDraft>[] = [
+  { key: "vatPercent", label: "VAT", suffix: "%" },
+  { key: "revisionHourlyRate", label: "Revision rate", suffix: "EGP/hr" },
+  { key: "revisionHourlyRateUsd", label: "Revision rate (USD-native)", suffix: "USD/hr" },
+  { key: "includedRevisionRounds", label: "Included rounds" },
+  { key: "paymentSplitFirst", label: "Milestone 1", suffix: "%" },
+  { key: "paymentSplitSecond", label: "Milestone 2", suffix: "%" },
+  { key: "paymentSplitFinal", label: "Final", suffix: "%" },
+  { key: "usdEgpRate", label: "USD rate", suffix: "EGP/USD" },
+  { key: "proposalValidityDays", label: "Proposal validity", suffix: "days" },
+  { key: "postLaunchWarrantyDays", label: "Post-launch warranty", suffix: "days" },
+];
+
+function termsDraft(terms: PricingSnapshot["terms"]): TermsDraft {
+  return {
+    vatPercent: Math.round(terms.vatRate * 100),
+    revisionHourlyRate: terms.revisionHourlyRate,
+    revisionHourlyRateUsd: terms.revisionHourlyRateUsd,
+    includedRevisionRounds: terms.includedRevisionRounds,
+    paymentSplitFirst: terms.paymentSplitFirst,
+    paymentSplitSecond: terms.paymentSplitSecond,
+    paymentSplitFinal: terms.paymentSplitFinal,
+    proposalValidityDays: terms.proposalValidityDays,
+    postLaunchWarrantyDays: terms.postLaunchWarrantyDays,
+    usdEgpRate: terms.usdEgpRate,
+  };
+}
+
+const PLANNED_REASON = "Marked planned in the pricing schema. Clients never see it until its status is active.";
+
+export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingSnapshot; canEdit?: boolean }) {
+  const save = useSave();
+  const [cells, setCells] = React.useState<Draft<Cell>[]>(snapshot.cells);
+  const [plans, setPlans] = React.useState<Draft<Plan>[]>(snapshot.maintenance);
+  const [packages, setPackages] = React.useState<Draft<Pkg>[]>(snapshot.consulting);
+  const [addons, setAddons] = React.useState<Draft<Addon>[]>(snapshot.addons);
+  const [terms, setTerms] = React.useState<Draft<TermsDraft>>(() => termsDraft(snapshot.terms));
+
+  const [seenSnapshot, setSeenSnapshot] = React.useState(snapshot);
+  if (seenSnapshot !== snapshot) {
+    setSeenSnapshot(snapshot);
+    setCells(snapshot.cells);
+    setPlans(snapshot.maintenance);
+    setPackages(snapshot.consulting);
+    setAddons(snapshot.addons);
+    setTerms(termsDraft(snapshot.terms));
+  }
 
   const plannedCount = addons.filter((a) => a.status !== "active").length;
+  const termsBefore = React.useMemo(() => termsDraft(snapshot.terms), [snapshot.terms]);
+  const splitTotal = (terms.paymentSplitFirst ?? 0) + (terms.paymentSplitSecond ?? 0) + (terms.paymentSplitFinal ?? 0);
 
   return (
+    <CanEditContext value={canEdit}>
     <div className="space-y-4">
+      {!canEdit && (
+        <p className="text-meta text-muted-foreground">
+          Read-only: changing a price needs edit access to settings. Your role can read every figure here but not save one.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Source"
@@ -162,44 +336,62 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
       </div>
 
       <Panel
+        className="bg-none bg-card"
         title="Project price matrix"
         description="Service × complexity. The public range grid, the estimator and every proposal read these cells — none of them can quote a figure this table does not carry."
       >
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left">
+          <table className="w-full border-collapse text-start">
             <thead>
               <tr className="border-b border-border">
-                {["Service", "Band", "Min (EGP)", "Max (EGP)", "Weeks min", "Weeks max", ""].map((h) => (
-                  <th key={h} className="py-2 pe-3 text-meta uppercase tracking-wider text-muted-foreground">{h}</th>
+                {["Service", "Band", "Min (EGP)", "Max (EGP)", "Weeks min", "Weeks max", ""].map((h, i) => (
+                  <th
+                    key={h || "action"}
+                    className={cn(
+                      "py-2 pe-3 text-start text-meta uppercase tracking-wider text-muted-foreground",
+                      i === 0 && "sticky start-0 z-10 bg-card",
+                    )}
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {cells.map((cell, i) => {
-                const key = `cell:${cell.serviceId}:${cell.complexityId}`;
-                const patch = (next: Partial<typeof cell>) =>
+                const before = snapshot.cells[i];
+                const patch = (next: Partial<Draft<Cell>>) =>
                   setCells((prev) => prev.map((c, j) => (j === i ? { ...c, ...next } : c)));
+                const missing = blanks(cell, CELL_FIELDS);
                 return (
-                  <tr key={key} className="border-b border-border align-middle">
-                    <td className="py-2 pe-3 text-base text-foreground">{cell.serviceName}</td>
+                  <tr key={`${cell.serviceId}:${cell.complexityId}`} className="border-b border-border align-middle">
+                    <td className="sticky start-0 z-10 bg-card py-2 pe-3 text-base text-foreground">{cell.serviceName}</td>
                     <td className="py-2 pe-3 text-base text-muted-foreground">{cell.bandName}</td>
                     {(["priceMin", "priceMax", "weeksMin", "weeksMax"] as const).map((field) => (
                       <td key={field} className="py-2 pe-3">
                         <Input
                           type="number"
-                          value={cell[field]}
-                          onChange={(e) => patch({ [field]: Number(e.target.value) } as Partial<typeof cell>)}
-                          className="w-28 font-mono"
+                          inputMode="decimal"
+                          value={cell[field] ?? ""}
+                          disabled={!canEdit}
+                          aria-label={`${cell.serviceName} ${cell.bandName} ${field}`}
+                          aria-invalid={cell[field] === null || undefined}
+                          onChange={(e) =>
+                            patch({ [field]: e.target.value === "" ? null : Number(e.target.value) } as Partial<Draft<Cell>>)
+                          }
+                          className={cn("w-28 font-mono", cell[field] === null && "border-destructive")}
                         />
                       </td>
                     ))}
                     <td className="py-2">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        disabled={saving === key}
-                        onClick={() =>
-                          save(key, {
+                      <SaveDiff
+                        label="Save"
+                        title={`Save ${cell.serviceName} · ${cell.bandName}`}
+                        changes={diff(before, cell, CELL_FIELDS)}
+                        missing={missing}
+                        consequence={PUBLIC_CONSEQUENCE}
+                        onConfirm={() =>
+                          save({
                             kind: "cell",
                             serviceId: cell.serviceId,
                             complexityId: cell.complexityId,
@@ -209,9 +401,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                             weeksMax: cell.weeksMax,
                           })
                         }
-                      >
-                        {saving === key ? <LoadingIcon size="sm" /> : "Save"}
-                      </Button>
+                      />
                     </td>
                   </tr>
                 );
@@ -225,17 +415,15 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
         <Panel title="Maintenance plans" description="Scope is a cap on edit requests, never hours.">
           <div className="space-y-5">
             {plans.map((plan, i) => {
-              const key = `maintenance:${plan.id}`;
-              const patch = (next: Partial<typeof plan>) =>
+              const before = snapshot.maintenance[i];
+              const patch = (next: Partial<Draft<Plan>>) =>
                 setPlans((prev) => prev.map((p, j) => (j === i ? { ...p, ...next } : p)));
-              // Derived from the figure being typed, so the operator sees what
-              // an override does to the yearly invoice before saving it.
-              const annual = maintenanceIntervalPrice(plan, "annual");
+              const annual = maintenanceIntervalPrice({ price: plan.price }, "annual");
               return (
                 <div key={plan.id} className="space-y-2 border-b border-border pb-4 last:border-0">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium text-foreground">{plan.name}</span>
-                    {plan.status !== "active" && <SoonBadge />}
+                    {plan.status !== "active" && <Soon reason={PLANNED_REASON} />}
                   </div>
                   <p className="text-meta text-muted-foreground">
                     Billed yearly:{" "}
@@ -253,12 +441,12 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                       suffix="EGP/mo"
                     />
                     <NumberField
-                      label="Requests / month"
+                      label="Requests / month (blank = uncapped)"
                       value={plan.requestsPerCycle}
                       onChange={(v) => patch({ requestsPerCycle: v })}
                     />
                     <NumberField
-                      label="Overage rate"
+                      label="Overage rate (blank = none)"
                       value={plan.overageHourlyRate}
                       onChange={(v) => patch({ overageHourlyRate: v })}
                       suffix="EGP/hr"
@@ -270,12 +458,18 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                       suffix="hrs"
                     />
                   </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={saving === key}
-                    onClick={() =>
-                      save(key, {
+                  <SaveDiff
+                    label="Save plan"
+                    title={`Save ${plan.name}`}
+                    changes={diff(before, plan, PLAN_FIELDS)}
+                    missing={blanks(plan, PLAN_FIELDS)}
+                    consequence={
+                      <>
+                        {PUBLIC_CONSEQUENCE} {before.repriceNote}
+                      </>
+                    }
+                    onConfirm={() =>
+                      save({
                         kind: "maintenance",
                         id: plan.id,
                         price: plan.price,
@@ -285,42 +479,48 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                         status: plan.status,
                       })
                     }
-                  >
-                    {saving === key ? <LoadingIcon size="sm" /> : "Save plan"}
-                  </Button>
+                  />
                 </div>
               );
             })}
           </div>
+          <p className="mt-4 flex items-center gap-1.5 text-meta text-subtle-foreground">
+            Adding, renaming or retiring a plan
+            <Soon reason="Plans are rows of the pricing schema, not database records: there is no plan table to write a new one into. Fields above are overrides on the shipped plans." />
+          </p>
         </Panel>
 
         <Panel title="Consulting" description="Fixed-scope engagements.">
           <div className="space-y-5">
             {packages.map((pkg, i) => {
-              const key = `consulting:${pkg.id}`;
-              const patch = (next: Partial<typeof pkg>) =>
+              const before = snapshot.consulting[i];
+              const patch = (next: Partial<Draft<Pkg>>) =>
                 setPackages((prev) => prev.map((p, j) => (j === i ? { ...p, ...next } : p)));
               return (
                 <div key={pkg.id} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium text-foreground">{pkg.name}</span>
-                    {pkg.status !== "active" && <SoonBadge />}
+                    {pkg.status !== "active" && <Soon reason={PLANNED_REASON} />}
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <NumberField label="Fixed price" value={pkg.price}
-                      onChange={(v) => patch({ price: v ?? 0 })} suffix="EGP" />
-                    <NumberField label="Duration" value={pkg.durationBusinessDays}
-                      onChange={(v) => patch({ durationBusinessDays: v ?? 1 })} suffix="business days" />
+                    <NumberField label="Fixed price" value={pkg.price} invalid={pkg.price === null}
+                      onChange={(v) => patch({ price: v })} suffix="EGP" />
+                    <NumberField label="Duration" value={pkg.durationBusinessDays} invalid={pkg.durationBusinessDays === null}
+                      onChange={(v) => patch({ durationBusinessDays: v })} suffix="business days" />
                   </div>
-                  <Button size="sm" variant="secondary" disabled={saving === key}
-                    onClick={() =>
-                      save(key, {
+                  <SaveDiff
+                    label="Save package"
+                    title={`Save ${pkg.name}`}
+                    changes={diff(before, pkg, PKG_FIELDS)}
+                    missing={blanks(pkg, PKG_FIELDS)}
+                    consequence={PUBLIC_CONSEQUENCE}
+                    onConfirm={() =>
+                      save({
                         kind: "consulting", id: pkg.id, price: pkg.price,
                         durationBusinessDays: pkg.durationBusinessDays, status: pkg.status,
                       })
-                    }>
-                    {saving === key ? <LoadingIcon size="sm" /> : "Save package"}
-                  </Button>
+                    }
+                  />
                 </div>
               );
             })}
@@ -334,11 +534,11 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
       >
         <div className="space-y-5">
           {addons.map((addon, i) => {
-            const key = `addon:${addon.id}`;
-            const patch = (next: Partial<typeof addon>) =>
+            const before = snapshot.addons[i];
+            const patch = (next: Partial<Draft<Addon>>) =>
               setAddons((prev) => prev.map((a, j) => (j === i ? { ...a, ...next } : a)));
             const computed =
-              addon.costBasis === null
+              addon.costBasis === null || addon.markupValue === null
                 ? null
                 : addon.markupType === "percent"
                   ? addon.costBasis + Math.round((addon.costBasis * addon.markupValue) / 100)
@@ -354,7 +554,7 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                       </span>
                     )}
                   </span>
-                  {addon.status !== "active" && <SoonBadge />}
+                  {addon.status !== "active" && <Soon reason={PLANNED_REASON} />}
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <NumberField
@@ -366,25 +566,30 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
                   <NumberField
                     label={addon.markupType === "percent" ? "Margin %" : "Margin (EGP)"}
                     value={addon.markupValue}
-                    onChange={(v) => patch({ markupValue: v ?? 0 })}
+                    invalid={addon.markupValue === null}
+                    onChange={(v) => patch({ markupValue: v })}
                   />
                   <div className="flex flex-col gap-1">
                     <span className="text-meta uppercase tracking-wider text-muted-foreground">Client pays</span>
                     <span className={cn("font-mono text-base", computed === null && "text-muted-foreground")}>
-                      {computed === null ? "Pricing pending" : `${egp(computed)} EGP`}
+                      {computed === null ? "Pricing pending" : `${num.format(computed)} EGP`}
                     </span>
                   </div>
                 </div>
-                <Button size="sm" variant="secondary" disabled={saving === key}
-                  onClick={() =>
-                    save(key, {
+                <SaveDiff
+                  label="Save add-on"
+                  title={`Save ${addon.name}`}
+                  changes={diff(before, addon, ADDON_FIELDS)}
+                  missing={blanks(addon, ADDON_FIELDS)}
+                  consequence={PUBLIC_CONSEQUENCE}
+                  onConfirm={() =>
+                    save({
                       kind: "addon", id: addon.id, costBasis: addon.costBasis,
                       markupType: addon.markupType, markupValue: addon.markupValue,
                       billingCycle: addon.billingCycle, status: addon.status,
                     })
-                  }>
-                  {saving === key ? <LoadingIcon size="sm" /> : "Save add-on"}
-                </Button>
+                  }
+                />
               </div>
             );
           })}
@@ -396,66 +601,80 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
         description="Published on /pricing and used by every generated proposal and contract."
       >
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <NumberField label="VAT %" value={Math.round(terms.vatRate * 100)}
-            onChange={(v) => setTerms({ ...terms, vatRate: (v ?? 0) / 100 })} />
-          <NumberField label="Revision rate" value={terms.revisionHourlyRate}
-            onChange={(v) => setTerms({ ...terms, revisionHourlyRate: v ?? 0 })} suffix="EGP/hr" />
-          <NumberField label="Revision rate (USD-native)" value={terms.revisionHourlyRateUsd}
-            onChange={(v) => setTerms({ ...terms, revisionHourlyRateUsd: v ?? 0 })} suffix="USD/hr" />
-          <NumberField label="Included rounds" value={terms.includedRevisionRounds}
-            onChange={(v) => setTerms({ ...terms, includedRevisionRounds: v ?? 0 })} />
-          <NumberField label="Milestone 1" value={terms.paymentSplitFirst}
-            onChange={(v) => setTerms({ ...terms, paymentSplitFirst: v ?? 0 })} suffix="%" />
-          <NumberField label="Milestone 2" value={terms.paymentSplitSecond}
-            onChange={(v) => setTerms({ ...terms, paymentSplitSecond: v ?? 0 })} suffix="%" />
-          <NumberField label="Final" value={terms.paymentSplitFinal}
-            onChange={(v) => setTerms({ ...terms, paymentSplitFinal: v ?? 0 })} suffix="%" />
-          <NumberField label="USD rate" value={terms.usdEgpRate}
-            onChange={(v) => setTerms({ ...terms, usdEgpRate: v ?? 1 })} suffix="EGP/USD" />
-          <NumberField label="Proposal validity" value={terms.proposalValidityDays}
-            onChange={(v) => setTerms({ ...terms, proposalValidityDays: v ?? 1 })} suffix="days" />
-          <NumberField label="Post-launch warranty" value={terms.postLaunchWarrantyDays}
-            onChange={(v) => setTerms({ ...terms, postLaunchWarrantyDays: v ?? 0 })} suffix="days" />
+          {TERMS_FIELDS.map((field) => (
+            <NumberField
+              key={String(field.key)}
+              label={field.label}
+              suffix={field.suffix}
+              value={terms[field.key]}
+              invalid={terms[field.key] === null}
+              onChange={(v) => setTerms((prev) => ({ ...prev, [field.key]: v }))}
+            />
+          ))}
         </div>
         <p className="mt-3 text-meta text-muted-foreground">
           Milestones total{" "}
-          <span className={cn(
-            "font-mono",
-            terms.paymentSplitFirst + terms.paymentSplitSecond + terms.paymentSplitFinal !== 100 &&
-              "text-destructive",
-          )}>
-            {terms.paymentSplitFirst + terms.paymentSplitSecond + terms.paymentSplitFinal}%
-          </span>
-          . The USD revision rate is a separate price list, not a conversion of the EGP rate.
+          <span className={cn("font-mono", splitTotal !== 100 && "text-destructive")}>{splitTotal}%</span>. The USD
+          revision rate is a separate price list, not a conversion of the EGP rate.
         </p>
-        <Button className="mt-3" size="sm" variant="secondary" disabled={saving === "terms"}
-          onClick={() => save("terms", { kind: "terms", ...terms })}>
-          {saving === "terms" ? <LoadingIcon size="sm" /> : "Save terms"}
-        </Button>
+        <div className="mt-3">
+          <SaveDiff
+            label="Save terms"
+            title="Save commercial terms"
+            changes={diff(termsBefore, terms, TERMS_FIELDS)}
+            missing={blanks(terms, TERMS_FIELDS)}
+            consequence={
+              splitTotal !== 100
+                ? `The milestones total ${splitTotal}%, not 100% — the server will refuse this. ${PUBLIC_CONSEQUENCE}`
+                : PUBLIC_CONSEQUENCE
+            }
+            onConfirm={() => {
+              const { vatPercent, ...rest } = terms;
+              if (vatPercent === null) {
+                toast.error("VAT is blank.");
+                return Promise.resolve({ ok: false, message: "VAT is blank." });
+              }
+              return save({
+                kind: "terms",
+                ...rest,
+                vatRate: vatPercent / 100,
+                usdRateReviewedOn: snapshot.terms.usdRateReviewedOn,
+              });
+            }}
+          />
+        </div>
       </Panel>
 
-      <Panel title="Change history" description="Every pricing change, with who made it.">
+      <Panel className="bg-none bg-card" title="Change history" description="Every pricing change, with who made it.">
         {snapshot.history.length === 0 ? (
           <p className="text-base text-muted-foreground">
             No pricing changes recorded. Everything is showing its shipped default.
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-start">
               <thead>
                 <tr className="border-b border-border">
-                  {["When", "Entity", "Field", "From", "To", "By"].map((h) => (
-                    <th key={h} className="py-2 pe-3 text-meta uppercase tracking-wider text-muted-foreground">{h}</th>
+                  {["When", "Entity", "Field", "From", "To", "By"].map((h, i) => (
+                    <th
+                      key={h}
+                      className={cn(
+                        "py-2 pe-3 text-start text-meta uppercase tracking-wider text-muted-foreground",
+                        i === 0 && "sticky start-0 z-10 bg-card",
+                      )}
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {snapshot.history.map((h) => (
                   <tr key={h.id} className="border-b border-border">
-                    <td className="py-2 pe-3 font-mono text-meta text-muted-foreground">
+                    <td className="sticky start-0 z-10 whitespace-nowrap bg-card py-2 pe-3 font-mono text-meta text-muted-foreground">
                       {new Date(h.createdAt).toLocaleString("en-GB")}
                     </td>
-                    <td className="py-2 pe-3 text-base text-foreground">{h.entityType} · {h.entityId}</td>
+                    <td className="py-2 pe-3 whitespace-nowrap text-base text-foreground">{h.entityType} · {h.entityId}</td>
                     <td className="py-2 pe-3 font-mono text-meta">{h.field}</td>
                     <td className="py-2 pe-3 font-mono text-meta text-muted-foreground">{h.oldValue ?? "—"}</td>
                     <td className="py-2 pe-3 font-mono text-meta text-foreground">{h.newValue ?? "—"}</td>
@@ -468,5 +687,6 @@ export function PricingClient({ snapshot }: { snapshot: PricingSnapshot }) {
         )}
       </Panel>
     </div>
+    </CanEditContext>
   );
 }

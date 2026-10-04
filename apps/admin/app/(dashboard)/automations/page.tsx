@@ -1,42 +1,28 @@
 import Link from "next/link";
-import { ArrowRight, Construction } from "lucide-react";
+import { ArrowRight, Construction, Workflow } from "lucide-react";
 
 import { prisma } from "@repo/database";
 import { Button } from "@repo/ui";
 
+import { List, ListRow } from "@/components/os/list-row";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { ToneBadge } from "@/components/ui/badge";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
 import { when } from "@/lib/format";
 import { CRON_JOBS } from "@/lib/cron-jobs";
+import { gateRoute } from "@/lib/page-gate";
 
 export const dynamic = "force-dynamic";
-
-/**
- * What this system does on its own (§17, §18).
- *
- * The previous version of this page listed invented rules with invented run
- * counts (`runCount: 14`, `lastRunAt: three days ago`), a toggle that only set
- * React state, and a "test run" button that answered with
- * `toast.success("Executed automation")` while executing nothing. It described
- * an automation engine that does not exist.
- *
- * There is no rules engine here, and pretending otherwise is worse than saying
- * so. What Altruvex actually has is a handful of behaviours hard-wired into
- * specific code paths. This page is the honest version: each entry names the
- * real trigger, the file that implements it, and a run count taken from the
- * activity log — so a rule that has never fired says zero rather than fourteen.
- */
 
 interface Wired {
   id: string;
   name: string;
   trigger: string;
   does: string[];
-  /** Where it actually lives, so the claim is checkable. */
   source: string;
-  /** Activity actions that evidence a run. Empty when nothing records one. */
   actions: string[];
   note?: string;
 }
@@ -67,7 +53,7 @@ const WIRED: Wired[] = [
     ],
     source: "app/api/whatsapp/webhook/route.ts",
     actions: [],
-    note: "Runs only while the webhook signature secret is configured — see Integrations.",
+    note: "Runs only while the webhook signature secret is configured; without it every payload is refused — see Integrations.",
   },
   {
     id: "whatsapp-status",
@@ -83,7 +69,7 @@ const WIRED: Wired[] = [
   {
     id: "deploy-live",
     name: "Production deploy succeeded → product state",
-    trigger: "CI posts a successful production deployment to the ingest endpoint",
+    trigger: "A production deployment reaches the ingest writers — posted by CI or translated from a GitHub deployment_status webhook",
     does: [
       "Records the deployment, its commit and the build it came from",
       "Moves the product to LIVE and updates its production URL",
@@ -91,19 +77,20 @@ const WIRED: Wired[] = [
     ],
     source: "app/api/ingest/deployments/route.ts",
     actions: ["deployment.succeeded", "deployment.failed"],
+    note: "Every recorded deployment counts here once, whichever route delivered it.",
   },
   {
     id: "github-ingest",
-    name: "GitHub workflow run or deployment → build and deployment records",
-    trigger: "GitHub delivers a workflow_run or deployment_status webhook for a linked repository",
+    name: "GitHub workflow run → build record",
+    trigger: "GitHub delivers a workflow_run webhook for a linked repository",
     does: [
       "Verifies the delivery signature and attributes it to the product that owns the repository",
-      "Writes the build or deployment through the same ingest writers CI uses",
-      "Moves the product to LIVE when a production deployment succeeds",
+      "Writes the build through the same ingest writers CI uses",
+      "Hands a deployment_status event to the deploy rule above",
     ],
     source: "app/api/ingest/github/route.ts",
-    actions: ["build.succeeded", "build.failed", "deployment.succeeded", "deployment.failed"],
-    note: "Builds and deployments posted directly by a pipeline through /api/ingest/* record the same actions, so this count covers both routes.",
+    actions: ["build.succeeded", "build.failed"],
+    note: "Builds posted directly by a pipeline through /api/ingest/builds record the same actions, so this count covers both routes.",
   },
   {
     id: "renewal-sweep",
@@ -132,7 +119,6 @@ const WIRED: Wired[] = [
   },
 ];
 
-/** Deferred deliberately — each names what has to exist first (§17). */
 const PLANNED = [
   {
     name: "Proposal accepted → draft contract",
@@ -153,9 +139,14 @@ const PLANNED = [
 ];
 
 export default async function AutomationsPage() {
-  // Real run counts. A rule with no recorded action reports "not recorded"
-  // rather than borrowing a number from somewhere else.
-  const tracked = WIRED.flatMap((rule) => rule.actions);
+  const denied = await gateRoute("/automations", "automations");
+  if (denied) return denied;
+
+  const role = await currentRole();
+  const seesAudit = roleCanOpen(role, "/audit");
+  const seesIntegrations = roleCanOpen(role, "/integrations");
+
+  const tracked = [...new Set(WIRED.flatMap((rule) => rule.actions))];
   const [counts, latest] = await Promise.all([
     tracked.length
       ? prisma.activityEvent.groupBy({
@@ -186,7 +177,9 @@ export default async function AutomationsPage() {
     return { ...rule, runs, lastAt: lastAt ?? null, tracked: rule.actions.length > 0 };
   });
 
-  const totalRuns = rules.reduce((sum, r) => sum + r.runs, 0);
+  const totalRuns = tracked.reduce((sum, a) => sum + (countByAction.get(a) ?? 0), 0);
+  const untracked = rules.filter((r) => !r.tracked).length;
+  const auditHref = `/audit?action=${encodeURIComponent(tracked.join(","))}`;
 
   return (
     <div className="space-y-4">
@@ -200,35 +193,34 @@ export default async function AutomationsPage() {
         <StatTile
           label="Recorded runs"
           value={totalRuns}
-          sub="From the activity log"
+          sub={totalRuns > 0 ? "Distinct events in the activity log" : "Nothing recorded yet"}
           tone={totalRuns > 0 ? "success" : "neutral"}
-          href={totalRuns > 0 ? "/audit" : undefined}
+          href={seesAudit && totalRuns > 0 ? auditHref : undefined}
         />
         <StatTile
           label="Untracked"
-          value={rules.filter((r) => !r.tracked).length}
+          value={untracked}
           sub="Run, but write no activity event"
-          tone={rules.some((r) => !r.tracked) ? "warning" : "neutral"}
+          tone={untracked > 0 ? "warning" : "neutral"}
         />
         <StatTile label="Deferred" value={PLANNED.length} sub="Named, not built" />
       </div>
 
       <Panel
         title="Wired today"
-        description="Each of these runs automatically, every time its trigger fires"
+        description="Each runs every time its trigger fires. Open a row for what it does and where it lives."
         flush
       >
-        <ul className="divide-y divide-border">
+        <List label="Wired behaviours">
           {rules.map((rule) => (
-            <li key={rule.id} className="space-y-2 px-3 py-3">
-              <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                <div className="min-w-0">
-                  <h3 className="text-base font-medium">{rule.name}</h3>
-                  <p className="mt-0.5 text-meta text-subtle-foreground">
-                    When: {rule.trigger}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
+            <ListRow
+              key={rule.id}
+              icon={<Workflow />}
+              tone={rule.tracked && rule.runs > 0 ? "success" : "neutral"}
+              title={rule.name}
+              meta={<span className="min-w-0">When: {rule.trigger}</span>}
+              trailing={
+                <>
                   {rule.tracked ? (
                     <ToneBadge tone={rule.runs > 0 ? "success" : "neutral"}>
                       {rule.runs} run{rule.runs === 1 ? "" : "s"}
@@ -239,33 +231,43 @@ export default async function AutomationsPage() {
                     </ToneBadge>
                   )}
                   {rule.lastAt && (
-                    <span className="text-meta text-subtle-foreground">
+                    <span className="hidden text-meta text-subtle-foreground sm:inline">
                       last {when(rule.lastAt)}
                     </span>
                   )}
+                </>
+              }
+              expandable={
+                <div className="space-y-2">
+                  <ul className="space-y-1">
+                    {rule.does.map((line) => (
+                      <li key={line} className="flex gap-2 text-base text-muted-foreground">
+                        <span
+                          className="mt-1.5 size-1 shrink-0 rounded-full bg-border-strong"
+                          aria-hidden
+                        />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {rule.note && <p className="text-meta text-muted-foreground">{rule.note}</p>}
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-meta text-subtle-foreground">
+                    <span>{rule.source}</span>
+                    {rule.lastAt && <span className="sm:hidden">last {when(rule.lastAt)}</span>}
+                    {seesAudit && rule.tracked && rule.runs > 0 && (
+                      <Link
+                        href={`/audit?action=${encodeURIComponent(rule.actions.join(","))}`}
+                        className="font-sans text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                      >
+                        See the {rule.runs} event{rule.runs === 1 ? "" : "s"}
+                      </Link>
+                    )}
+                  </p>
                 </div>
-              </div>
-
-              <ul className="space-y-1">
-                {rule.does.map((line) => (
-                  <li key={line} className="flex gap-2 text-base text-muted-foreground">
-                    <span
-                      className="mt-1.5 size-1 shrink-0 rounded-full bg-border-strong"
-                      aria-hidden
-                    />
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {rule.note && (
-                <p className="text-meta text-muted-foreground">{rule.note}</p>
-              )}
-
-              <p className="font-mono text-meta text-subtle-foreground">{rule.source}</p>
-            </li>
+              }
+            />
           ))}
-        </ul>
+        </List>
       </Panel>
 
       <Panel
@@ -279,32 +281,36 @@ export default async function AutomationsPage() {
         }
         flush
       >
-        <ul className="divide-y divide-border">
+        <List label="Deferred automations">
           {PLANNED.map((item) => (
-            <li key={item.name} className="px-3 py-2.5">
-              <h3 className="text-base">{item.name}</h3>
-              <p className="mt-0.5 flex gap-2 text-meta text-muted-foreground">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-warning" aria-hidden />
-                <span>{item.blocked}</span>
-              </p>
-            </li>
+            <ListRow
+              key={item.name}
+              title={item.name}
+              meta={<span className="min-w-0 whitespace-normal">{item.blocked}</span>}
+            />
           ))}
-        </ul>
+        </List>
       </Panel>
 
-      <Panel title="Where automatic changes show up">
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/audit">
-              Audit log
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/integrations">Integrations and health</Link>
-          </Button>
-        </div>
-      </Panel>
+      {(seesAudit || seesIntegrations) && (
+        <Panel title="Where automatic changes show up">
+          <div className="flex flex-wrap gap-2">
+            {seesAudit && (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/audit">
+                  Audit log
+                  <ArrowRight className="size-3.5" />
+                </Link>
+              </Button>
+            )}
+            {seesIntegrations && (
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/integrations">Integrations and health</Link>
+              </Button>
+            )}
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

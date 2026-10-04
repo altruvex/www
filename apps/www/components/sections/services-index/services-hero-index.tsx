@@ -19,7 +19,7 @@ export function ServicesHeroIndex() {
   return (
     <section
       aria-labelledby="services-hero-heading"
-      className="accent-world-orange relative pt-(--section-y-top) pb-16 md:pb-24"
+      className="accent-world-orange relative pt-(--section-y-top)"
     >
       <Container>
         <SectionHeading
@@ -39,7 +39,7 @@ export function ServicesHeroIndex() {
           classes={{
             titleWrapper: "space-y-6",
             title:
-              "max-w-[16ch] text-[clamp(2.75rem,6vw,5.75rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
             description:
               "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
           }}

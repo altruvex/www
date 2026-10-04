@@ -2,31 +2,44 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Mail, MessageCircle, Send } from "lucide-react";
+import { RotateCw, Send } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button, Input } from "@repo/ui";
+import {
+  Button,
+  Field,
+  Input,
+  SegmentedControl,
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  Textarea,
+} from "@repo/ui";
 
-import { Panel } from "@/components/os/panel";
 import { cn } from "@/lib/utils";
 
-/**
- * Sending a proposal or a contract to a client (§26).
- *
- * Two things this screen exists for, and neither is decoration:
- *
- * - **The channel is a choice.** WhatsApp needs a verified business, a
- *   registered number and a payment method; email needs none of them. Which one
- *   works is a fact about the day, not about the document.
- * - **The wording is editable.** The default is a shortcut, not a script. The
- *   difference between "your proposal is ready" and "as we discussed, I moved
- *   QA a week earlier" is the difference between a notification and somebody
- *   following up on a deal.
- *
- * The link is guaranteed server-side. An operator rewriting the note above it
- * can delete it without noticing, and a proposal email with no proposal in it
- * looks entirely normal as it is sent.
- */
+const WIDE_QUERY = "(min-width: 768px)";
+
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function useWide() {
+  return React.useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => true,
+  );
+}
+
+type Channel = "email" | "whatsapp";
+
 export function SendDocument({
   endpoint,
   defaultSubject,
@@ -35,6 +48,10 @@ export function SendDocument({
   emailConfigured,
   whatsappConfigured,
   label = "Send",
+  resend = false,
+  variant = "brand",
+  size,
+  className,
 }: {
   endpoint: string;
   defaultSubject: string;
@@ -43,24 +60,29 @@ export function SendDocument({
   emailConfigured: boolean;
   whatsappConfigured: boolean;
   label?: string;
+  resend?: boolean;
+  variant?: "brand" | "outline";
+  size?: "sm";
+  className?: string;
 }) {
   const router = useRouter();
+  const wide = useWide();
   const [open, setOpen] = React.useState(false);
-  // Email first when it is the one that can actually deliver today.
-  const [channel, setChannel] = React.useState<"email" | "whatsapp">(
-    emailConfigured && clientEmail ? "email" : "whatsapp",
+  const canEmail = emailConfigured && Boolean(clientEmail);
+  const [channel, setChannel] = React.useState<Channel>(
+    canEmail || !whatsappConfigured ? "email" : "whatsapp",
   );
   const [subject, setSubject] = React.useState(defaultSubject);
   const [body, setBody] = React.useState(defaultBody);
   const [busy, setBusy] = React.useState(false);
+  const [failure, setFailure] = React.useState<string | null>(null);
 
-  const canEmail = emailConfigured && Boolean(clientEmail);
   const blocked =
     channel === "email"
       ? !clientEmail
-        ? "This client has no email address on file."
+        ? "This client has no email address on file. Add one on the client record, or send over WhatsApp."
         : !emailConfigured
-          ? "No mail transport is configured."
+          ? "No mail transport is configured, so nothing can be emailed from here."
           : null
       : !whatsappConfigured
         ? "WhatsApp is not configured, so nothing can be sent over it."
@@ -68,139 +90,157 @@ export function SendDocument({
 
   async function send() {
     setBusy(true);
+    setFailure(null);
     try {
       const response = await fetch(`${endpoint}?channel=${channel}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        // Sent for both channels; the WhatsApp path ignores it, and posting one
-        // shape from one button is less to get wrong than two.
         body: JSON.stringify({ subject, body }),
       });
-      const data = (await response.json()) as { success?: boolean; message?: string };
+      const data = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
       if (!response.ok || !data.success) {
-        throw new Error(data.message || `Request failed (${response.status})`);
+        setFailure(
+          `${data.message || `The request failed (${response.status}).`} Nothing was changed — you can retry safely.`,
+        );
+        return;
       }
-      toast.success(channel === "email" ? `Sent to ${clientEmail}` : "Sent over WhatsApp");
+      toast.success(
+        data.message ||
+          (channel === "email" ? `Emailed to ${clientEmail}` : "Sent over WhatsApp"),
+      );
       setOpen(false);
       router.refresh();
-    } catch (error) {
-      toast.error("Sending failed", {
-        description:
-          error instanceof Error
-            ? `${error.message} Nothing was changed — you can retry safely.`
-            : "Unknown error. Nothing was changed.",
-      });
+    } catch {
+      setFailure("The server could not be reached. Nothing was changed — you can retry safely.");
     } finally {
       setBusy(false);
     }
   }
 
-  if (!open) {
-    return (
-      <Button variant="brand" onClick={() => setOpen(true)}>
-        <Send className="size-3.5" />
-        {label}
-      </Button>
-    );
-  }
+  const title = resend ? `Resend ${label.replace(/^(Send|Resend)\s+/i, "")}` : label;
 
   return (
-    <Panel
-      title={label}
-      description="Edit anything here before it goes. The document link is added back if you remove it."
-      className="w-full"
-      flush
-    >
-      <div className="space-y-3 p-3">
-        <div>
-          <p className="telemetry text-subtle-foreground">Channel</p>
-          <div className="mt-1 flex items-center gap-1.5">
-            <Button
-              type="button"
-              size="sm"
-              variant={channel === "email" ? "outline" : "ghost"}
-              onClick={() => setChannel("email")}
-            >
-              <Mail className="size-3.5" />
-              Email
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={channel === "whatsapp" ? "outline" : "ghost"}
-              onClick={() => setChannel("whatsapp")}
-            >
-              <MessageCircle className="size-3.5" />
-              WhatsApp
-            </Button>
-          </div>
-          <p className="mt-1 text-meta text-subtle-foreground">
-            {channel === "email"
-              ? clientEmail
-                ? `To ${clientEmail}`
-                : "No address on file for this client."
-              : "Uses an approved WhatsApp template, so the wording below is not used."}
-          </p>
-        </div>
+    <>
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        className={className}
+        onClick={() => {
+          setFailure(null);
+          setOpen(true);
+        }}
+      >
+        {resend ? <RotateCw className="size-3.5" aria-hidden /> : <Send className="size-3.5" aria-hidden />}
+        {resend ? "Resend" : label}
+      </Button>
 
-        {channel === "email" && (
-          <>
-            <label className="block space-y-1">
-              <span className="telemetry block text-subtle-foreground">Subject</span>
-              <Input
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-                maxLength={200}
-                disabled={!canEmail}
-              />
-            </label>
+      <Sheet open={open} onOpenChange={(next) => !busy && setOpen(next)}>
+        <SheetContent
+          side={wide ? "end" : "bottom"}
+          width="md"
+          className={cn(!wide && "max-h-[92dvh] pb-[env(safe-area-inset-bottom)]")}
+        >
+          <SheetHeader>
+            <SheetTitle>{title}</SheetTitle>
+            <SheetDescription>
+              {resend
+                ? "It goes out again with a fresh link. Edit anything before it goes; the document link is added back if you remove it."
+                : "Edit anything before it goes. The document link is added back if you remove it."}
+            </SheetDescription>
+          </SheetHeader>
 
-            <label className="block space-y-1">
-              <span className="telemetry block text-subtle-foreground">Message</span>
-              <textarea
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-                rows={12}
-                maxLength={20000}
-                disabled={!canEmail}
-                className={cn(
-                  "w-full rounded-ctl border border-border bg-background px-3 py-2 font-mono text-meta leading-relaxed",
-                  "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                  "disabled:opacity-50",
-                )}
-              />
-            </label>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-meta text-subtle-foreground">
-                Plain text. It arrives as written.
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSubject(defaultSubject);
-                  setBody(defaultBody);
+          <SheetBody className="space-y-4">
+            <div className="space-y-1.5">
+              <SegmentedControl<Channel>
+                label="Channel"
+                columns={2}
+                value={channel}
+                onChange={(next) => {
+                  setChannel(next);
+                  setFailure(null);
                 }}
-              >
-                Reset to default
-              </Button>
+                options={[
+                  { value: "email", label: "Email" },
+                  { value: "whatsapp", label: "WhatsApp" },
+                ]}
+              />
+              <p className="text-meta text-subtle-foreground">
+                {channel === "email"
+                  ? clientEmail
+                    ? `To ${clientEmail}`
+                    : "No address on file for this client."
+                  : "Uses an approved WhatsApp template, so the wording below is not used."}
+              </p>
             </div>
-          </>
-        )}
 
-        {blocked && <p className="text-meta text-warning">{blocked}</p>}
+            {channel === "email" && (
+              <>
+                <Field label="Subject">
+                  <Input
+                    value={subject}
+                    onChange={(event) => setSubject(event.target.value)}
+                    maxLength={200}
+                    disabled={!canEmail || busy}
+                  />
+                </Field>
+                <Field label="Message" hint="Plain text. It arrives as written.">
+                  <Textarea
+                    value={body}
+                    onChange={(event) => setBody(event.target.value)}
+                    rows={12}
+                    maxLength={20000}
+                    disabled={!canEmail || busy}
+                    className="font-mono text-meta"
+                  />
+                </Field>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={busy || (subject === defaultSubject && body === defaultBody)}
+                  onClick={() => {
+                    setSubject(defaultSubject);
+                    setBody(defaultBody);
+                  }}
+                >
+                  Reset to template
+                </Button>
+              </>
+            )}
 
-        <div className="flex justify-end gap-2 border-t border-border pt-3">
-          <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
-            Cancel
-          </Button>
-          <Button type="button" variant="brand" onClick={send} disabled={busy || blocked !== null}>
-            <Send className="size-3.5" />
-            {busy ? "Sending…" : channel === "email" ? "Send email" : "Send over WhatsApp"}
-          </Button>
-        </div>
-      </div>
-    </Panel>
+            {blocked && (
+              <p className="rounded-sm border border-border bg-surface px-3 py-2 text-meta text-warning" role="status">
+                {blocked}
+              </p>
+            )}
+            {failure && (
+              <p className="rounded-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger" role="alert">
+                {failure}
+              </p>
+            )}
+          </SheetBody>
+
+          <SheetFooter>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={busy}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="brand"
+              onClick={send}
+              disabled={busy || blocked !== null}
+              aria-busy={busy}
+            >
+              <Send className="size-3.5" aria-hidden />
+              {busy ? "Sending…" : channel === "email" ? "Send email" : "Send over WhatsApp"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

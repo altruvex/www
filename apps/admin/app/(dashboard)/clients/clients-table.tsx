@@ -1,17 +1,19 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Archive, CheckCircle2, Trash2 } from "lucide-react";
+import { Archive, CheckCircle2, FilePlus2, Trash2 } from "lucide-react";
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
-import { Avatar } from "@repo/ui";
+import { Avatar, DropdownMenuItem, Hint } from "@repo/ui";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { money, phone as fmtPhone, when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
-import { bulkSetClientStatus } from "@/app/(dashboard)/_actions/records";
+import { bulkChangeClientStatus } from "@/app/(dashboard)/_actions/clients";
 
 export interface ClientRow {
   id: string;
@@ -39,12 +41,25 @@ export interface ClientRow {
   activeProjectId: string | null;
 }
 
-export function ClientsTable({ rows }: { rows: ClientRow[] }) {
+export function ClientsTable({
+  rows,
+  showMoney,
+  canEdit,
+  canDelete,
+  canPropose,
+}: {
+  rows: ClientRow[];
+  showMoney: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canPropose: boolean;
+}) {
   const del = useRecordDelete({ entity: "client" });
   const router = useRouter();
   const [, startTransition] = React.useTransition();
+  const [losing, setLosing] = React.useState<ClientRow[] | null>(null);
 
-  const columns: Column<ClientRow>[] = [
+  const allColumns: Column<ClientRow>[] = [
     {
       id: "client",
       header: "Client",
@@ -109,17 +124,20 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
       mono: true,
       cell: (row) =>
         row.lifetimeValue ? (
-          <span
-            className="text-success"
-            title={
+          <Hint
+            label={
               row.mixedCurrency
                 ? "This client has accepted work in more than one currency"
                 : undefined
             }
           >
-            {money(row.lifetimeValue, row.lifetimeCurrency)}
-            {row.mixedCurrency && <span className="ms-1 text-warning">*</span>}
-          </span>
+            <span className="text-success">
+              {money(row.lifetimeValue, row.lifetimeCurrency)}
+              {row.mixedCurrency && (
+                <span className="ms-1 text-warning">*</span>
+              )}
+            </span>
+          </Hint>
         ) : (
           <span className="text-subtle-foreground">—</span>
         ),
@@ -202,27 +220,60 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
     },
   ];
 
-  function runBulk(status: string, label: string) {
+  const columns = showMoney
+    ? allColumns
+    : allColumns.filter((c) => c.id !== "value" && c.id !== "lifetime");
+
+  function runBulk(status: string) {
     return (selected: ClientRow[]) => {
       startTransition(async () => {
-        try {
-          await bulkSetClientStatus(
-            selected.map((r) => r.id),
-            status,
-          );
-          toast.success(
-            `${selected.length} client${selected.length === 1 ? "" : "s"} ${label}`,
-          );
+        const result = await bulkChangeClientStatus(
+          selected.map((r) => r.id),
+          status,
+        );
+        if (result.ok) {
+          toast.success(result.message);
           router.refresh();
-        } catch (error) {
-          toast.error("Could not update", {
-            description:
-              error instanceof Error ? error.message : "Unknown error",
-          });
+        } else {
+          toast.error("Nothing was changed", { description: result.message });
         }
       });
     };
   }
+
+  const bulkActions = [
+    ...(canEdit
+      ? [
+          {
+            label: "Qualify",
+            icon: CheckCircle2,
+            onRun: runBulk("QUALIFIED"),
+          },
+          {
+            label: "Mark lost",
+            icon: Archive,
+            destructive: true,
+            onRun: (selected: ClientRow[]) => setLosing(selected),
+          },
+        ]
+      : []),
+    ...(canDelete
+      ? [
+          {
+            label: "Delete",
+            icon: Trash2,
+            destructive: true,
+            onRun: (selected: ClientRow[]) =>
+              del.request(
+                selected.map((row) => ({
+                  id: row.id,
+                  label: row.company || row.name || row.phone,
+                })),
+              ),
+          },
+        ]
+      : []),
+  ];
 
   return (
     <>
@@ -234,48 +285,42 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
         rowHref={(row) => `/clients/${row.id}`}
         searchPlaceholder="Search clients, phones, projects…"
         initialSort={{ columnId: "updated", dir: "desc" }}
-        selectable
+        selectable={bulkActions.length > 0}
         selectionNoun="client"
         mobile={{
           title: "client",
           subtitle: "phone",
-          meta: ["stage", "value", "source", "updated"],
+          meta: showMoney
+            ? ["stage", "value", "source", "updated"]
+            : ["stage", "source", "updated"],
         }}
-        bulkActions={[
-          {
-            label: "Qualify",
-            icon: CheckCircle2,
-            onRun: runBulk("QUALIFIED", "qualified"),
-          },
-          {
-            label: "Mark lost",
-            icon: Archive,
-            destructive: true,
-            onRun: runBulk("LOST", "marked lost"),
-          },
-          {
-            label: "Delete",
-            icon: Trash2,
-            destructive: true,
-            onRun: (selected) =>
-              del.request(
-                selected.map((row) => ({
-                  id: row.id,
-                  label: row.company || row.name || row.phone,
-                })),
-              ),
-          },
-        ]}
-        rowActions={(row) => (
-          <RowActions
-            onDelete={() =>
-              del.request({
-                id: row.id,
-                label: row.company || row.name || row.phone,
-              })
-            }
-          />
-        )}
+        bulkActions={bulkActions}
+        rowActions={
+          canDelete || canPropose
+            ? (row) => (
+                <RowActions
+                  onDelete={
+                    canDelete
+                      ? () =>
+                          del.request({
+                            id: row.id,
+                            label: row.company || row.name || row.phone,
+                          })
+                      : undefined
+                  }
+                >
+                  {canPropose && (
+                    <DropdownMenuItem asChild>
+                      <Link href={`/clients/${row.id}/new-proposal`}>
+                        <FilePlus2 className="size-3.5" />
+                        New proposal
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                </RowActions>
+              )
+            : undefined
+        }
         empty={
           <div className="plane px-6 py-12 text-center text-muted-foreground">
             No client matches.
@@ -283,6 +328,25 @@ export function ClientsTable({ rows }: { rows: ClientRow[] }) {
         }
       />
       {del.dialog}
+      <ConfirmDialog
+        open={losing !== null}
+        onOpenChange={(open) => !open && setLosing(null)}
+        tone="danger"
+        title={`Mark ${losing?.length ?? 0} client${losing?.length === 1 ? "" : "s"} lost?`}
+        consequence="They leave the pipeline board. Their proposals, contracts and history stay, and the status can be changed back."
+        confirmLabel="Mark lost"
+        onConfirm={async () => {
+          const result = await bulkChangeClientStatus(
+            (losing ?? []).map((r) => r.id),
+            "LOST",
+          );
+          if (result.ok) {
+            setLosing(null);
+            router.refresh();
+          }
+          return result;
+        }}
+      />
     </>
   );
 }

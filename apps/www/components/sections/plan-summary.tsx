@@ -6,17 +6,6 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 
-/**
- * The head of a priced plan: name, recommendation, figure, fit, and the one
- * action. /pricing renders it inside a card and the maintenance page inside a
- * comparison column — one anatomy, so a buyer who has read one price on this
- * site already knows how to read the next.
- *
- * The recommendation and its action are always the brand colour, never the
- * section's world accent: a price is where a buyer decides, and the colour
- * that marks the decision must not change from page to page. The world accent
- * stays with the heading around it.
- */
 export function PlanSummary({
   name,
   nameAs: Name = "div",
@@ -33,23 +22,17 @@ export function PlanSummary({
   size = "lg",
 }: {
   name: ReactNode;
-  /** A heading inside a card; a plain element inside a table header cell. */
   nameAs?: "div" | "h2" | "h3";
   badge?: ReactNode;
   subtitle?: ReactNode;
   price: ReactNode;
   cycle?: ReactNode;
-  /** A second fact priced with the figure, e.g. the delivery window. */
   meta?: { label: ReactNode; value: ReactNode };
   bestForLabel?: ReactNode;
   bestFor: ReactNode;
   cta: { href: string; label: ReactNode; ariaLabel?: string };
-  /** When set, badge and recommended CTA use the section's --local-accent
-      (e.g. the green world) instead of the brand blue.  Opt-in so the default
-      (brand-always) behaviour stays in place everywhere else. */
   useWorldAccent?: boolean;
   recommended?: boolean;
-  /** `md` fits a price range into a four-column card grid. */
   size?: "lg" | "md";
 }) {
   const pillClasses = useWorldAccent
@@ -64,9 +47,6 @@ export function PlanSummary({
 
   return (
     <>
-      {/* Side by side in a table column, a narrow card wraps the badge under
-          the name and drops that one price below its neighbours'. Cards give
-          it a line of its own, held open in every card so the figures align. */}
       {size === "md" && badge ? (
         <div
           aria-hidden={recommended ? undefined : true}

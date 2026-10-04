@@ -1,12 +1,12 @@
 "use client";
 
+import { ArrowIcon } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
 import { useSectionCardGrid } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
 import { AuditSection } from "./audit-section";
 
-/** The channels an audit opens, in the order the scope is written. */
 const CHANNELS = [
   "architecture",
   "performance",
@@ -16,18 +16,6 @@ const CHANNELS = [
   "ownership",
 ] as const;
 
-/**
- * "Six questions. Six written answers."
- *
- * It turns each channel the audit opens into the question an owner already
- * asks, and sets it beside what comes back in
- * writing. Every row is visible at once — a ledger to read, not a control to
- * operate — and what gets looked at is demoted to one quiet line under the
- * question, because it is the method, not the product.
- *
- * The questions describe the scope, never a client's system; the note under
- * the ledger says so.
- */
 export function ScanChannels() {
   const t = useTranslations("serviceDetails.consulting.audit.channels");
   const separator = useLocale() === "ar" ? "، " : " · ";
@@ -62,7 +50,7 @@ export function ScanChannels() {
             <li
               key={id}
               data-channel-row
-              className="grid gap-x-10 gap-y-6 border-b border-border-subtle py-[clamp(1.75rem,3vw,2.5rem)] lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
+              className="grid gap-x-10 gap-y-6 border-b border-border-subtle py-8 lg:py-10 lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
             >
               <span
                 aria-hidden
@@ -92,19 +80,17 @@ export function ScanChannels() {
 
               <div>
                 <Eyebrow className="mb-3 lg:sr-only">{t("returnsLabel")}</Eyebrow>
-                <ul className="list-none border-t border-border-subtle lg:mt-1.5">
+                <ul className="list-none lg:mt-1.5">
                   {returns.map((item) => (
                     <li
                       key={item}
-                      className="grid grid-cols-[1.5rem_minmax(0,1fr)] border-b border-border-subtle py-3 text-base leading-normal text-foreground"
+                      className="flex items-start gap-3 border-b border-border-subtle py-3 first:pt-0 last:border-b-0 last:pb-0 text-base leading-normal text-foreground"
                     >
-                      <span
-                        aria-hidden
-                        className="inline-block text-local-accent-text rtl:-scale-x-100"
-                      >
-                        →
-                      </span>
-                      {item}
+                      <ArrowIcon
+                        motion="none"
+                        className="mt-[0.35em] size-4 shrink-0 text-local-accent-text"
+                      />
+                      <span className="min-w-0">{item}</span>
                     </li>
                   ))}
                 </ul>

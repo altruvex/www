@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
+import { gateRoute } from "@/lib/page-gate";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { EditClientForm } from "./edit-client-form";
@@ -11,6 +12,9 @@ export default async function EditClientPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const denied = await gateRoute("/clients/[id]/edit", "this client");
+  if (denied) return denied;
+
   const { id } = await params;
 
   const client = await prisma.client.findUnique({

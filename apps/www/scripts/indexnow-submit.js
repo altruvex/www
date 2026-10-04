@@ -1,8 +1,3 @@
-// Submits every URL in the live sitemap to IndexNow (Bing, Yandex, etc.)
-// Usage: bun scripts/indexnow-submit.js [siteUrl]
-// Requires INDEXNOW_KEY in the environment and the matching
-// public/<key>.txt verification file already deployed.
-
 const siteUrl = process.argv[2] ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://www.altruvex.com";
 const key = process.env.INDEXNOW_KEY;
 

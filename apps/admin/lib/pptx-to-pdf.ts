@@ -9,13 +9,6 @@ import { sofficeFontEnv } from "./soffice-fonts";
 
 const execFileAsync = promisify(execFile);
 
-/**
- * Renders a pptx buffer to PDF via a local LibreOffice install. Returns null
- * (instead of throwing) when the binary isn't available or conversion fails
- * — pdfUrl is a nice-to-have preview, not something the proposal flow should
- * ever hard-fail on. Most hosting platforms (e.g. Vercel) don't ship
- * LibreOffice by default; this only works where it's installed.
- */
 export async function convertPptxToPdf(pptxBuffer: Buffer): Promise<Buffer | null> {
   let workDir: string | null = null;
   try {
@@ -23,10 +16,6 @@ export async function convertPptxToPdf(pptxBuffer: Buffer): Promise<Buffer | nul
     const pptxPath = path.join(workDir, "input.pptx");
     await writeFile(pptxPath, pptxBuffer);
 
-    // Its own LibreOffice profile, for the same reason the preview renderer
-    // has one: a second soffice sharing the default profile exits silently
-    // and writes nothing, so a generate running beside a preview (or beside
-    // the operator's own open LibreOffice) loses its PDF for no stated cause.
     await execFileAsync(
       "soffice",
       [

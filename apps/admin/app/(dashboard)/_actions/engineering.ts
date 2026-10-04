@@ -5,16 +5,7 @@ import { z } from "zod";
 import { prisma } from "@repo/database";
 
 import { authorize } from "@/lib/authorize";
-import { recordActivity, userActor } from "@/lib/activity-log";
-
-/**
- * Server actions for the engineering screens.
- *
- * Builds, deployments and log lines are written by CI alone. The one write the
- * admin app makes on a log line is the operator's judgement that it is evidence
- * for an incident — `LogEntry.incidentId`, nothing else — and that judgement is
- * recorded on the incident, because the incident is the record people read.
- */
+import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
 
 export type EngineeringResult = { ok: true; message: string } | { ok: false; message: string };
 
@@ -26,11 +17,6 @@ const linkSchema = z.object({
 const incidentLabel = (incident: { number: number; product: { name: string } }) =>
   `${incident.product.name} #${incident.number}`;
 
-/**
- * Links a log line to an incident of the same product, or clears the link
- * (`incidentId: null`). Moving a line from one incident to another records the
- * unlink on the old incident and the link on the new one.
- */
 export async function linkLogToIncident(input: {
   logId: string;
   incidentId: string | null;
@@ -137,5 +123,75 @@ export async function linkLogToIncident(input: {
   } catch (error) {
     console.error("linkLogToIncident failed", error);
     return { ok: false, message: "The link could not be saved. Nothing was changed." };
+  }
+}
+
+const INCIDENT_DETAIL_MAX_LENGTH = 5000;
+
+const incidentTextSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().min(1, "An incident needs a title.").max(300, "Keep the title under 300 characters."),
+  detail: z
+    .string()
+    .trim()
+    .max(
+      INCIDENT_DETAIL_MAX_LENGTH,
+      `Keep the detail under ${INCIDENT_DETAIL_MAX_LENGTH.toLocaleString("en-US")} characters.`,
+    )
+    .nullable()
+    .transform((value) => (value ? value : null)),
+});
+
+export async function updateIncidentText(input: {
+  id: string;
+  title: string;
+  detail: string | null;
+}): Promise<EngineeringResult> {
+  let session;
+  try {
+    session = await authorize("edit", "incident");
+  } catch {
+    return { ok: false, message: "Your role cannot edit incidents." };
+  }
+
+  const parsed = incidentTextSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "That request is incomplete." };
+  }
+  const { id, title, detail } = parsed.data;
+
+  try {
+    const incident = await prisma.incident.findUnique({
+      where: { id },
+      select: { id: true, number: true, title: true, detail: true, product: { select: { name: true } } },
+    });
+    if (!incident) return { ok: false, message: "That incident no longer exists." };
+    if (incident.title === title && (incident.detail ?? null) === detail) {
+      return { ok: true, message: "Nothing changed." };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.incident.update({ where: { id }, data: { title, detail } });
+      await recordChange(
+        {
+          action: "incident.changed",
+          actor: userActor(session),
+          entityType: "incident",
+          entityId: id,
+          entityLabel: incidentLabel(incident),
+          summary: `Edited the wording of ${incidentLabel(incident)}`,
+          before: { title: incident.title, detail: incident.detail },
+          after: { title, detail },
+        },
+        tx,
+      );
+    });
+
+    revalidatePath("/incidents");
+    revalidatePath(`/incidents/${id}`);
+    return { ok: true, message: "Incident updated." };
+  } catch (error) {
+    console.error("updateIncidentText failed", error);
+    return { ok: false, message: "The incident could not be saved. Nothing was changed." };
   }
 }

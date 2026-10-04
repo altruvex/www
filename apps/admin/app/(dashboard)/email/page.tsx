@@ -9,11 +9,14 @@ import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { MetaList } from "@/components/os/detail-layout";
 import { AlertBar } from "@/components/os/error-state";
-import { FilterChip } from "@/components/os/data-table";
+import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
 import { EntityLink } from "@/components/os/entity-link";
+import { List, ListRow } from "@/components/os/list-row";
+import { Pager } from "@/components/os/pager";
 import { ToneBadge } from "@/components/ui/badge";
 import { dateTime } from "@/lib/format";
-import { emailTransport } from "@/lib/email";
+import { emailTransport, fromAddress } from "@/lib/email";
+import { gateRoute } from "@/lib/page-gate";
 import { ChannelTabs } from "../inbox/channel-tabs";
 import { EmailReplyNote } from "../inbox/email-reply-note";
 
@@ -30,47 +33,81 @@ const STATUS_TONE = {
 
 type EmailStatus = keyof typeof STATUS_TONE;
 
+const PAGE_SIZE = 50;
+
+function titleCase(status: string): string {
+  return status.charAt(0) + status.slice(1).toLowerCase();
+}
+
+function senderOrReason(): string {
+  try {
+    return fromAddress();
+  } catch {
+    return "Not set — EMAIL_FROM is required with Resend";
+  }
+}
+
 export default async function EmailPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client?: string; status?: string }>;
+  searchParams: Promise<{ client?: string; status?: string; q?: string; page?: string }>;
 }) {
+  const denied = await gateRoute("/email", "the email log");
+  if (denied) return denied;
+
   const params = await searchParams;
   const transport = emailTransport();
-  // `?status=` is matched against the enum, never passed through as typed.
   const status = (Object.keys(STATUS_TONE) as EmailStatus[]).find(
     (key) => key.toLowerCase() === params.status?.toLowerCase(),
   );
+  const q = params.q?.trim() ?? "";
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const scopedClient = params.client
     ? await prisma.client.findUnique({
         where: { id: params.client },
         select: { id: true, name: true, company: true, phone: true },
       })
     : null;
-  const scoped = Boolean(scopedClient || status);
+  const scoped = Boolean(scopedClient || status || q);
   const where = {
     ...(scopedClient ? { clientId: scopedClient.id } : {}),
     ...(status ? { status } : {}),
+    ...(q
+      ? {
+          OR: [
+            { subject: { contains: q, mode: "insensitive" as const } },
+            { toAddress: { contains: q, mode: "insensitive" as const } },
+            { client: { is: { name: { contains: q, mode: "insensitive" as const } } } },
+            { client: { is: { company: { contains: q, mode: "insensitive" as const } } } },
+          ],
+        }
+      : {}),
   };
-  const [messages, matching, total, failed] = await Promise.all([
+  const [messages, matching, total, byStatus] = await Promise.all([
     prisma.emailMessage.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: 100,
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: { client: { select: { id: true, name: true, company: true } } },
     }),
     prisma.emailMessage.count({ where }),
     prisma.emailMessage.count(),
-    prisma.emailMessage.count({ where: { status: "FAILED" } }),
+    prisma.emailMessage.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
+  const countOf = new Map(byStatus.map((row) => [row.status, row._count._all]));
+  const failed = countOf.get("FAILED") ?? 0;
   const scopedName = scopedClient
     ? scopedClient.company || scopedClient.name || scopedClient.phone
     : null;
-  // Removing one chip keeps the other.
-  const without = (drop: "client" | "status") => {
+  const from = transport === "none" ? "—" : senderOrReason();
+
+  const hrefFor = (nextPage: number) => {
     const next = new URLSearchParams();
-    if (drop !== "client" && scopedClient) next.set("client", scopedClient.id);
-    if (drop !== "status" && status) next.set("status", status.toLowerCase());
+    if (scopedClient) next.set("client", scopedClient.id);
+    if (status) next.set("status", status.toLowerCase());
+    if (q) next.set("q", q);
+    if (nextPage > 1) next.set("page", String(nextPage));
     const query = next.toString();
     return query ? `/email?${query}` : "/email";
   };
@@ -85,8 +122,9 @@ export default async function EmailPage({
         alert={
           transport === "none" ? (
             <AlertBar tone="warning" href="/integrations" cta="Integrations">
-              No mail transport is configured, so nothing can be sent. Set RESEND_API_KEY, or
-              SMTP_HOST, SMTP_USER and SMTP_PASSWORD.
+              No mail transport is configured, so nothing is sent — a Send action on a proposal or
+              contract records nothing and says so. Set RESEND_API_KEY, or SMTP_HOST, SMTP_USER and
+              SMTP_PASSWORD, then redeploy.
             </AlertBar>
           ) : failed > 0 && status !== "FAILED" ? (
             <AlertBar tone="danger" href="/email?status=failed" cta="See them">
@@ -120,7 +158,7 @@ export default async function EmailPage({
         <MetaList
           items={[
             { label: "Transport", value: transport === "none" ? "—" : transport },
-            { label: "From", value: process.env.EMAIL_FROM || process.env.SMTP_USER || "—" },
+            { label: "From", value: <span className="font-mono text-meta">{from}</span> },
             { label: "Recorded", value: String(total) },
             { label: "Refused", value: String(failed) },
           ]}
@@ -136,36 +174,48 @@ export default async function EmailPage({
         </div>
       </Panel>
 
-      {scoped && (
-        <div className="flex flex-wrap items-center gap-2">
-          {scopedClient && (
-            <FilterChip label="Client" value={scopedName} clearHref={without("client")} />
-          )}
-          {status && (
-            <FilterChip
-              label="Status"
-              value={status.charAt(0) + status.slice(1).toLowerCase()}
-              clearHref={without("status")}
-            />
-          )}
-          {scopedClient && (
-            <Link
-              href={`/inbox?client=${scopedClient.id}`}
-              className="text-meta text-brand hover:underline"
-            >
-              Whole conversation, both channels
-            </Link>
-          )}
-        </div>
-      )}
+      <div className="space-y-2">
+        <FilterBar
+          search={{ placeholder: "Search subject, address or client…" }}
+          label="Email filters"
+          trailing={
+            scopedClient ? (
+              <Link
+                href={`/inbox?client=${scopedClient.id}`}
+                className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Whole conversation, both channels
+              </Link>
+            ) : undefined
+          }
+        >
+          <FilterChip param="status" label="All" count={total} />
+          {(Object.keys(STATUS_TONE) as EmailStatus[])
+            .filter((key) => key === "SENT" || key === "FAILED" || (countOf.get(key) ?? 0) > 0)
+            .map((key) => (
+              <FilterChip
+                key={key}
+                param="status"
+                value={key.toLowerCase()}
+                label={titleCase(key)}
+                count={countOf.get(key) ?? 0}
+              />
+            ))}
+        </FilterBar>
+        <ActiveFilters
+          labels={{ client: "Client", status: "Status", q: "Search" }}
+          valueLabels={{
+            ...(scopedClient && scopedName ? { client: { [scopedClient.id]: scopedName } } : {}),
+            status: Object.fromEntries(
+              (Object.keys(STATUS_TONE) as EmailStatus[]).map((key) => [key.toLowerCase(), titleCase(key)]),
+            ),
+          }}
+        />
+      </div>
 
       <Panel
         title={status === "FAILED" ? "Refused mail" : "Sent mail"}
-        description={
-          matching > messages.length
-            ? `Newest first — showing ${messages.length} of ${matching}`
-            : "Newest first"
-        }
+        description="Newest first. Open a row for the body as it went out."
         flush
       >
         {messages.length === 0 ? (
@@ -196,39 +246,91 @@ export default async function EmailPage({
             }
           />
         ) : (
-          <ul className="rows">
-            {messages.map((message) => (
-              <li key={message.id} className="flex flex-wrap items-start gap-3 px-3 py-2.5">
-                <ToneBadge tone={STATUS_TONE[message.status]}>
-                  {message.status.toLowerCase()}
-                </ToneBadge>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-base font-medium">{message.subject}</p>
-                  <p className="truncate text-meta text-muted-foreground">
-                    <EntityLink type="client" id={message.client.id}>
-                      {message.client.company || message.client.name || "Unnamed client"}
-                    </EntityLink>
-                    {" · "}
-                    <span className="font-mono">{message.toAddress}</span>
-                  </p>
-                  {message.failureReason && (
-                    <p className="mt-0.5 text-meta text-danger">{message.failureReason}</p>
-                  )}
-                </div>
-                <span className="flex shrink-0 flex-col items-end gap-0.5">
-                  <span className="font-mono text-micro text-subtle-foreground">
-                    {dateTime(message.createdAt)}
-                  </span>
-                  <Link
-                    href={`/inbox?client=${message.client.id}`}
-                    className="text-micro text-muted-foreground hover:text-foreground hover:underline"
-                  >
-                    Conversation
-                  </Link>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <List label="Email messages">
+            {messages.map((message) => {
+              const clientName = message.client.company || message.client.name || "Unnamed client";
+              return (
+                <ListRow
+                  key={message.id}
+                  icon={<Mail />}
+                  tone={STATUS_TONE[message.status]}
+                  title={message.subject}
+                  meta={
+                    <>
+                      <EntityLink type="client" id={message.client.id}>
+                        {clientName}
+                      </EntityLink>
+                      <span className="font-mono">{message.toAddress}</span>
+                      {message.failureReason && (
+                        <span className="min-w-0 truncate text-danger">{message.failureReason}</span>
+                      )}
+                    </>
+                  }
+                  trailing={
+                    <>
+                      <ToneBadge tone={STATUS_TONE[message.status]}>
+                        {message.status.toLowerCase()}
+                      </ToneBadge>
+                      <time
+                        dateTime={message.createdAt.toISOString()}
+                        className="hidden font-mono text-micro text-subtle-foreground sm:inline"
+                      >
+                        {dateTime(message.createdAt)}
+                      </time>
+                    </>
+                  }
+                  expandable={
+                    <div className="space-y-3">
+                      <MetaList
+                        items={[
+                          { label: "To", value: <span className="font-mono text-meta">{message.toAddress}</span> },
+                          { label: "Sent", value: dateTime(message.createdAt) },
+                          { label: "Transport", value: message.transport ?? "—" },
+                          {
+                            label: "Provider id",
+                            value: (
+                              <span className="font-mono text-meta">{message.providerMessageId ?? "—"}</span>
+                            ),
+                          },
+                          ...(message.failureReason
+                            ? [{ label: "Refused", value: <span className="text-danger">{message.failureReason}</span> }]
+                            : []),
+                        ]}
+                      />
+                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-surface p-3 font-sans text-base text-muted-foreground">
+                        {message.body}
+                      </pre>
+                      <div className="flex flex-wrap gap-2">
+                        {message.relatedProposalId && (
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/proposals/${message.relatedProposalId}`}>Proposal</Link>
+                          </Button>
+                        )}
+                        {message.relatedContractId && (
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/contracts/${message.relatedContractId}`}>Contract</Link>
+                          </Button>
+                        )}
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/inbox?client=${message.client.id}`}>Conversation</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  }
+                />
+              );
+            })}
+          </List>
+        )}
+        {matching > PAGE_SIZE && (
+          <Pager
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={matching}
+            hrefFor={hrefFor}
+            noun="messages"
+            className="border-t border-border px-3 py-2"
+          />
         )}
       </Panel>
     </div>

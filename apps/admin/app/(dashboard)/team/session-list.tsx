@@ -1,11 +1,9 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { MonitorSmartphone } from "lucide-react";
 
-import { Button, LoadingIcon } from "@repo/ui";
+import { Button, Hint } from "@repo/ui";
 import {
   Sheet,
   SheetBody,
@@ -18,13 +16,9 @@ import {
 } from "@repo/ui";
 
 import { revokeAllSessions, revokeSession } from "@/app/(dashboard)/_actions/team";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { dateTime, when } from "@/lib/format";
 
-/**
- * One signed-in browser, as the page may show it. The server strips the
- * session token before this leaves the request: a token is a login, and the
- * screen only needs to know which row is the browser you are reading it in.
- */
 export interface SessionRow {
   id: string;
   ipAddress: string | null;
@@ -35,7 +29,6 @@ export interface SessionRow {
   current: boolean;
 }
 
-/** "Chrome on macOS" from a user-agent string, or the raw string when unsure. */
 export function describeAgent(userAgent: string | null): string {
   if (!userAgent) return "Unknown browser";
   const browser = /Edg\//.test(userAgent)
@@ -70,23 +63,10 @@ export function SessionList({
   emptyText = "No active sessions.",
 }: {
   sessions: SessionRow[];
-  /** Whether the viewer may end these sessions (their own, or with the team capability). */
   canRevoke: boolean;
   emptyText?: string;
 }) {
   const router = useRouter();
-  const [pendingId, setPendingId] = React.useState<string | null>(null);
-
-  function end(session: SessionRow) {
-    setPendingId(session.id);
-    revokeSession(session.id)
-      .then((result) => {
-        if (result.ok) toast.success(result.message ?? "Session ended.");
-        else toast.error(result.message);
-        router.refresh();
-      })
-      .finally(() => setPendingId(null));
-  }
 
   if (sessions.length === 0) {
     return <p className="px-3 py-6 text-center text-meta text-muted-foreground">{emptyText}</p>;
@@ -112,56 +92,85 @@ export function SessionList({
               </p>
             )}
           </div>
-          {canRevoke && (
-            <Button
-              variant="destructive-ghost"
-              size="sm"
-              disabled={session.current || pendingId !== null}
-              title={session.current ? "Sign out to end this one" : undefined}
-              onClick={() => end(session)}
-            >
-              {pendingId === session.id && <LoadingIcon size="sm" />}
-              End
-            </Button>
-          )}
+          {canRevoke &&
+            (session.current ? (
+              <Hint label="Sign out to end this one">
+                <span className="inline-flex">
+                  <Button variant="destructive-ghost" size="sm" disabled aria-disabled>
+                    End
+                  </Button>
+                </span>
+              </Hint>
+            ) : (
+              <ConfirmDialog
+                trigger={
+                  <Button variant="destructive-ghost" size="sm">
+                    End
+                  </Button>
+                }
+                title="End this session?"
+                body={`${describeAgent(session.userAgent)}${session.ipAddress ? ` from ${session.ipAddress}` : ""}, last seen ${when(session.updatedAt)}.`}
+                consequence="That browser is signed out at its next request and has to sign in again. The ending is written to the audit log."
+                confirmLabel="End session"
+                tone="danger"
+                onConfirm={async () => {
+                  const result = await revokeSession(session.id);
+                  if (result.ok) router.refresh();
+                  return result;
+                }}
+              />
+            ))}
         </li>
       ))}
     </ul>
   );
 }
 
-/** Ends every listed session but the current one, with the server deciding what that means. */
 export function EndAllSessionsButton({
   userId,
   count,
   own,
 }: {
   userId: string;
-  /** Sessions that would be ended; the button is disabled at zero. */
   count: number;
   own: boolean;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = React.useTransition();
+  const label = own ? "End all other sessions" : "End all sessions";
 
-  function endAll() {
-    startTransition(async () => {
-      const result = await revokeAllSessions(userId);
-      if (result.ok) toast.success(result.message ?? "Sessions ended.");
-      else toast.error(result.message);
-      router.refresh();
-    });
+  if (count === 0) {
+    return (
+      <Button variant="outline" size="sm" disabled>
+        {label}
+      </Button>
+    );
   }
 
   return (
-    <Button variant="outline" size="sm" disabled={pending || count === 0} onClick={endAll}>
-      {pending && <LoadingIcon size="sm" />}
-      {own ? "End all other sessions" : "End all sessions"}
-    </Button>
+    <ConfirmDialog
+      trigger={
+        <Button variant="outline" size="sm">
+          {label}
+        </Button>
+      }
+      title={own ? "End all other sessions?" : "End all sessions?"}
+      body={`${count} signed-in browser${count === 1 ? "" : "s"}${own ? " besides this one" : ""}.`}
+      consequence={
+        own
+          ? "Every other browser is signed out at its next request. This one stays signed in. Each ending is written to the audit log."
+          : "Every browser this account is signed in from is signed out at its next request; they have to sign in again. Each ending is written to the audit log."
+      }
+      confirmLabel={label}
+      tone="danger"
+      onConfirm={async () => {
+        const result = await revokeAllSessions(userId);
+        if (result.ok) router.refresh();
+        return result;
+      }}
+    />
   );
 }
 
-/** A member's sessions behind a button, for the team list. */
 export function MemberSessions({
   userId,
   label,

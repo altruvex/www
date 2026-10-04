@@ -12,21 +12,6 @@ import {
   withIngestToken,
 } from "@/lib/ingest";
 
-/**
- * Log ingest (§7).
- *
- *   POST /api/ingest/logs
- *   Authorization: Bearer avx_ingest_…
- *   { "entries": [ { "level": "ERROR", "message": "…", "requestId": "…" } ] }
- *
- * Batched, because a per-line request would cost one round trip and one row
- * lock per log line. Capped at MAX_LOG_BATCH so a runaway job fails loudly at
- * the edge instead of quietly filling the table.
- *
- * No activity event is written here: logs are already the record, and one
- * activity line per log line would make the audit feed useless.
- */
-
 export const dynamic = "force-dynamic";
 
 const entrySchema = z.object({
@@ -34,15 +19,10 @@ const entrySchema = z.object({
   message: z.string().min(1).max(MAX_LOG_MESSAGE_LENGTH),
   source: z.string().max(100).optional(),
   requestId: z.string().max(200).optional(),
-  /** Source time. Falls back to arrival time, which reorders a trace — send it. */
   timestamp: z.coerce.date().optional(),
   environment: environmentSchema,
-  /** Optional links, resolved by the CI system's own ids. */
   buildExternalId: z.string().max(200).optional(),
   deploymentExternalId: z.string().max(200).optional(),
-  // Free-form, and the only field on a log line with no natural ceiling. A
-  // batch of 500 entries each carrying a megabyte of JSON is a storage bill,
-  // not telemetry.
   metadata: z
     .record(z.string(), z.unknown())
     .refine((value) => JSON.stringify(value).length <= MAX_LOG_METADATA_BYTES, {
@@ -58,8 +38,6 @@ const bodySchema = z.object({
 export const POST = withIngestToken(async (request, { product }) => {
   const { entries } = await readIngestJson(request, bodySchema);
 
-  // Resolve the (usually one or two) distinct build/deployment references once
-  // rather than per line.
   const buildIds = [...new Set(entries.map((e) => e.buildExternalId).filter(Boolean))] as string[];
   const deploymentIds = [
     ...new Set(entries.map((e) => e.deploymentExternalId).filter(Boolean)),

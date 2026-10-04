@@ -3,44 +3,33 @@
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
+import { jumpToSection } from "@/components/shared/contents-rail";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
 import { bodyMarks, renderBodyText } from "@/components/ui/rich-text";
+import { STRIKE_LINE } from "@/components/ui/strike";
 import {
-  STRIKE_DRAWN,
-  STRIKE_LINE,
-  STRIKE_UNDRAWN,
-} from "@/components/ui/strike";
-import {
-  MOTION,
   useSectionCardGrid,
   useSectionDescription,
   useSectionElement,
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
-import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
+import { ScrollTrigger } from "@/lib/utils/gsap";
 import { cn, splitHeadline } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef } from "react";
-import { DecisionOrder } from "./decision-order";
+import { useEffect, useRef, type ReactNode } from "react";
 
 export default function ApproachPage() {
   return (
     <div className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
       <OpeningSection />
       <ErrorBoundary>
-        <ContrastsSection />
+        <OrderSection />
       </ErrorBoundary>
       <ErrorBoundary>
-        <PrinciplesSection />
-      </ErrorBoundary>
-      <ErrorBoundary>
-        <ConstraintsSection />
-      </ErrorBoundary>
-      <ErrorBoundary>
-        <DirectionSection />
+        <RefusalsSection />
       </ErrorBoundary>
       <ClosingSection />
     </div>
@@ -49,22 +38,23 @@ export default function ApproachPage() {
 
 const BODY = "text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75]";
 
-/**
- * The page's statement, and under it the order decisions are made in - the
- * statement drawn, so "we do not design pages first" is something a visitor
- * sees rather than takes on trust.
- */
+const LAYERS = ["data", "architecture", "features", "page"] as const;
+type Layer = (typeof LAYERS)[number];
+
+const chapterId = (layer: Layer) => `ch-${layer}`;
+
 function OpeningSection() {
   const t = useTranslations("approach.hero");
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
   const descRef = useSectionDescription();
+  const orderRef = useSectionElement<HTMLDivElement>();
   const { first, second } = splitHeadline(t("title"));
 
   return (
     <section
       aria-labelledby="approach-hero-heading"
-      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
@@ -80,159 +70,29 @@ function OpeningSection() {
           classes={{
             titleWrapper: "space-y-6",
             title:
-              "max-w-[20ch] text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-6xl text-balance text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
             description:
               "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
           }}
         />
-        <DecisionOrder />
-      </Container>
-    </section>
-  );
-}
-
-const CONTRASTS = ["1", "2", "3"] as const;
-
-/**
- * Three sentences set as a register: what is usually said on the left, what is
- * said here on the right, read across one line. Quiet on purpose - the page's
- * two drawn moments sit above and below it.
- */
-function ContrastsSection() {
-  const t = useTranslations("approach.contrasts");
-  const sectionRef = useSectionCardGrid<HTMLElement>({
-    selector: "[data-contrast-row]",
-  });
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-
-  return (
-    <section
-      ref={sectionRef}
-      aria-labelledby="approach-contrasts-heading"
-      className="accent-world-green border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
-    >
-      <Container>
-        <SectionHeading
-          titleId="approach-contrasts-heading"
-          eyebrowRef={eyebrowRef}
-          titleRef={titleRef}
-          eyebrow={t("eyebrow")}
-          firstTitle={t("title")}
-          secondTitle={t("titleItalic")}
-          accent="world"
-          classes={{ title: "max-w-[22ch]" }}
-        />
-
-        <div className="mt-14 lg:mt-20">
-          <div
-            aria-hidden
-            className="hidden border-t-2 border-foreground pt-4 pb-6 md:grid md:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)] md:gap-x-10"
-          >
-            <span />
-            <Eyebrow className="m-0">{t("label.common")}</Eyebrow>
-            <Eyebrow tone="accent" className="m-0">
-              {t("label.altruvex")}
-            </Eyebrow>
-          </div>
-
-          <ol className="border-t-2 border-foreground md:border-t-0">
-            {CONTRASTS.map((key, index) => (
-              <li
-                key={key}
-                data-contrast-row
-                className="grid gap-y-5 border-b border-border-subtle py-8 md:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1fr)] md:gap-x-10 md:py-10 md:first:border-t"
-              >
-                <span className="font-mono text-xs text-muted-foreground tabular-nums md:pt-2">
-                  <Num value={index + 1} pad={2} />
-                </span>
-                <div>
-                  <Eyebrow className="m-0 mb-2 md:hidden">{t("label.common")}</Eyebrow>
-                  <p className="max-w-[30ch] text-xl leading-snug font-light text-muted-foreground md:text-2xl">
-                    {t(`${key}.common`)}
-                  </p>
-                </div>
-                <div>
-                  <Eyebrow tone="accent" className="m-0 mb-2 md:hidden">
-                    {t("label.altruvex")}
-                  </Eyebrow>
-                  <p className="max-w-[30ch] text-xl leading-snug text-foreground md:text-2xl">
-                    {t(`${key}.altruvex`)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-const PRINCIPLES = ["data", "scale", "maintenance", "handoff"] as const;
-
-/**
- * Four decisions fixed before implementation, set in the quarters of one
- * drafting cross rather than as four cards. The cross is the only line in the
- * section; below `md` it becomes the rules between the stacked principles.
- */
-function PrinciplesSection() {
-  const t = useTranslations("approach.decisions");
-  const gridRef = useSectionCardGrid<HTMLDivElement>({
-    selector: "[data-principle]",
-  });
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const { first, second } = splitHeadline(t("title"));
-
-  return (
-    <section
-      aria-labelledby="approach-principles-heading"
-      className="accent-world-green border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
-    >
-      <Container>
-        <SectionHeading
-          titleId="approach-principles-heading"
-          eyebrowRef={eyebrowRef}
-          titleRef={titleRef}
-          eyebrow={t("eyebrow")}
-          firstTitle={first}
-          secondTitle={second}
-          classes={{ title: "max-w-[22ch]" }}
-        />
 
         <div
-          ref={gridRef}
-          className="relative mt-14 grid md:auto-rows-fr md:grid-cols-2 lg:mt-20"
+          ref={orderRef}
+          className="mt-14 flex flex-wrap items-baseline gap-x-4 gap-y-2 border-t border-border-subtle pt-5 text-[clamp(1.125rem,1.8vw,1.5rem)] text-muted-foreground"
         >
-          <span
-            aria-hidden
-            className="absolute inset-y-0 start-1/2 hidden w-px bg-border-subtle md:block"
-          />
-          <span
-            aria-hidden
-            className="absolute inset-x-0 top-1/2 hidden h-px bg-border-subtle md:block"
-          />
-          {PRINCIPLES.map((key, index) => (
-            <article
-              key={key}
-              data-principle
-              className={cn(
-                "border-t border-border-subtle py-10 md:border-t-0 md:py-12",
-                index % 2 === 0 ? "md:pe-12" : "md:ps-12",
-                index < 2 ? "md:pt-0" : "md:pb-0",
-              )}
+          <Eyebrow className="m-0 basis-full">{t("order.usual")}</Eyebrow>
+          {[...LAYERS].reverse().map((layer, index) => (
+            <span
+              key={layer}
+              className="inline-flex items-baseline gap-x-4 whitespace-nowrap"
             >
-              <span className="eyebrow text-local-accent-text tabular-nums">
-                <Num value={index + 1} pad={2} />
-              </span>
-              <h3 className="mt-4 text-2xl leading-tight font-medium tracking-[-0.015em] text-foreground md:text-[1.75rem]">
-                {t(`${key}.title`)}
-              </h3>
-              <p className={cn(BODY, "mt-4 max-w-[44ch] text-muted-foreground")}>
-                {t(`${key}.description`)}
-              </p>
-            </article>
+              {index > 0 && (
+                <span aria-hidden className="inline-block rtl:-scale-x-100">
+                  →
+                </span>
+              )}
+              <span>{t(`order.items.${layer}`)}</span>
+            </span>
           ))}
         </div>
       </Container>
@@ -240,224 +100,337 @@ function PrinciplesSection() {
   );
 }
 
-const REFUSALS = ["1", "2", "3", "4", "5"] as const;
-
-/**
- * CLAIM: constraints are a design tool, and we apply them to ourselves first.
- * Constraints and "what we will not do" used to be two sections arguing the
- * same thing; the refusals are now the proof set beside the argument.
- *
- * Signature: the refusals are a list crossed off - each strike draws across
- * its line in reading order. The strike is a background on the inline text,
- * so it follows the words across wrapped lines and mirrors in RTL. Reduced
- * motion renders the list already crossed off.
- */
-function ConstraintsSection() {
-  const t = useTranslations("approach.constraints");
-  const tBounds = useTranslations("approach.boundaries");
-  const eyebrowRef = useSectionEyebrow();
-  const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
-  const listHeadRef = useSectionElement();
-  const listRef = useRef<HTMLOListElement>(null);
-  const { first, second } = splitHeadline(t("title"));
+function OrderSection() {
+  const t = useTranslations("approach");
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
+    const body = bodyRef.current;
+    const rail = railRef.current;
+    if (!body || !rail) return;
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const strikes = list.querySelectorAll("[data-strike]");
-        gsap.set(strikes, { backgroundSize: STRIKE_UNDRAWN });
+    const chapters = LAYERS.map((layer) =>
+      document.getElementById(chapterId(layer)),
+    );
+    const rows = LAYERS.map((layer) =>
+      rail.querySelector<HTMLElement>(`[data-layer="${layer}"]`),
+    );
 
-        const tween = gsap.to(strikes, {
-          backgroundSize: STRIKE_DRAWN,
-          duration: MOTION.duration.base,
-          ease: MOTION.ease.gentle,
-          stagger: MOTION.stagger.sequence,
-          paused: true,
-        });
-
-        const trigger = ScrollTrigger.create({
-          trigger: list,
-          start: MOTION.trigger.inView,
-          once: true,
-          onEnter: () => tween.play(),
-        });
-
-        return () => {
-          trigger.kill();
-          tween.kill();
-        };
+    const update = () => {
+      const middle = window.innerHeight / 2;
+      let current = -1;
+      const progress = chapters.map((chapter, index) => {
+        if (!chapter) return 0;
+        const rect = chapter.getBoundingClientRect();
+        if (rect.top < middle) current = index;
+        return Math.min(1, Math.max(0, (middle - rect.top) / rect.height));
       });
-    }, list);
+      rows.forEach((row, index) => {
+        if (!row) return;
+        row.style.setProperty("--p", String(progress[index]));
+        row.toggleAttribute("data-laid", progress[index] > 0);
+        if (index === current) row.setAttribute("aria-current", "step");
+        else row.removeAttribute("aria-current");
+      });
+    };
 
-    return () => ctx.revert();
+    const trigger = ScrollTrigger.create({
+      trigger: body,
+      start: "top bottom",
+      end: "bottom top",
+      onUpdate: update,
+      onRefresh: update,
+    });
+    update();
+
+    return () => trigger.kill();
   }, []);
 
   return (
     <section
-      aria-labelledby="approach-constraints-heading"
-      className="accent-world-orange border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+      aria-label={t("hero.order.label")}
+      className="accent-world-blue border-t border-border-subtle pb-(--section-y-bottom)"
     >
-      <Container className="grid gap-16 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-6">
-          <SectionHeading
-            titleId="approach-constraints-heading"
-            eyebrowRef={eyebrowRef}
-            titleRef={titleRef}
-            eyebrow={t("eyebrow")}
-            firstTitle={first}
-            secondTitle={second}
-            classes={{ title: "max-w-[18ch]" }}
-          />
-          <div ref={descRef} className="mt-10 max-w-[56ch] space-y-6">
-            {t
-              .raw("paragraphs")
-              .split("\n\n")
-              .map((paragraph: string, i: number) => (
-                <p key={i} className={cn(BODY, "text-muted-foreground")}>
-                  {renderBodyText(paragraph)}
-                </p>
-              ))}
-          </div>
-        </div>
-
-        <div className="lg:col-span-5 lg:col-start-8 lg:pt-2">
-          <div ref={listHeadRef}>
-            <h3 className="text-2xl leading-tight font-medium tracking-[-0.015em] text-foreground">
-              {tBounds("title")}
-            </h3>
-            <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted-foreground">
-              {tBounds("intro")}
-            </p>
-          </div>
-
-          <ol
-            ref={listRef}
-            className="mt-8 border-t-2 border-foreground"
+      <Container>
+        <div
+          ref={bodyRef}
+          className="grid lg:grid-cols-[13.75rem_minmax(0,1fr)] lg:gap-x-[clamp(2rem,6vw,6rem)]"
+        >
+          <nav
+            ref={railRef}
+            aria-label={t("hero.order.label")}
+            className="sticky top-14 z-10 -mx-6 bg-background px-6 sm:-mx-8 sm:px-8 md:-mx-12 md:px-12 py-2.5 lg:top-28 lg:mx-0 lg:self-start lg:bg-transparent lg:px-0 lg:pt-(--section-y-top) lg:pb-0"
           >
-            {REFUSALS.map((key, index) => (
-              <li
-                key={key}
-                className="grid grid-cols-[2.5rem_minmax(0,1fr)] border-b border-border-subtle py-5"
-              >
-                <span className="pt-1 font-mono text-xs text-muted-foreground tabular-nums">
-                  <Num value={index + 1} pad={2} />
-                </span>
-                <p className="text-lg leading-[1.6] text-foreground md:text-xl">
-                  <span
-                    data-strike
-                    className={STRIKE_LINE}
+            <Eyebrow className="m-0 mb-3 hidden lg:block">{t("rail.label")}</Eyebrow>
+            <ol className="flex gap-1.5 lg:flex-col-reverse lg:gap-0">
+              {LAYERS.map((layer, index) => (
+                <li key={layer} className="min-w-0 flex-1">
+                  <a
+                    href={`#${chapterId(layer)}`}
+                    data-layer={layer}
+                    onClick={(event) => jumpToSection(event, chapterId(layer))}
+                    className="group relative flex items-baseline gap-3.5 border-b border-border-subtle py-2 text-xs text-muted-foreground transition-colors duration-(--motion-base) ease-smooth outline-none focus-visible:text-foreground focus-visible:underline data-laid:text-foreground lg:pt-4 lg:pb-3 lg:text-lg lg:tracking-[-0.01em]"
                   >
-                    {tBounds(`items.${key}`)}
-                  </span>
-                </p>
-              </li>
-            ))}
-          </ol>
+                    <span className="hidden min-w-[2ch] text-xs tabular-nums lg:inline">
+                      <Num value={index + 1} pad={2} />
+                    </span>
+                    <span className="truncate group-aria-[current=step]:text-local-accent-text">
+                      {t(`hero.order.items.${layer}`)}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-0 -bottom-px h-0.5 origin-left bg-foreground [transform:scaleX(var(--p,0))] rtl:origin-right"
+                    />
+                  </a>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-5 hidden max-w-[24ch] text-[0.8125rem] leading-relaxed text-muted-foreground lg:block">
+              {t("rail.note")}
+            </p>
+          </nav>
+
+          <div>
+            <Chapter layer="data" index={0}>
+              <Lead>{t("decisions.data.description")}</Lead>
+              <Contrast contrast="1" />
+            </Chapter>
+
+            <Chapter layer="architecture" index={1}>
+              <Lead>{t("constraints.title")}</Lead>
+              <Prose paragraphs={t.raw("constraints.paragraphs")} />
+              <Principles keys={["scale"]} />
+              <Contrast contrast="2" />
+            </Chapter>
+
+            <Chapter layer="features" index={2}>
+              <Lead>{t("decisions.title")}</Lead>
+              <Principles keys={["handoff", "maintenance"]} />
+              <Contrast contrast="3" />
+            </Chapter>
+
+            <Chapter layer="page" index={3}>
+              <Lead>{t("hero.order.note")}</Lead>
+              <Prose paragraphs={t.raw("multilingual.paragraphs")} />
+              <Specimen />
+            </Chapter>
+          </div>
         </div>
       </Container>
     </section>
   );
 }
 
+function Chapter({
+  layer,
+  index,
+  children,
+}: {
+  layer: Layer;
+  index: number;
+  children: ReactNode;
+}) {
+  const t = useTranslations("approach.hero.order.items");
+  const titleRef = useSectionElement<HTMLHeadingElement>();
+
+  return (
+    <article
+      id={chapterId(layer)}
+      tabIndex={-1}
+      aria-labelledby={`${chapterId(layer)}-title`}
+      className="border-t border-border-subtle py-[clamp(3.5rem,9vh,6.25rem)] outline-none first:border-t-0 lg:first:pt-(--section-y-top)"
+    >
+      <p className="text-[0.8125rem] text-local-accent-text tabular-nums">
+        <Num value={index + 1} pad={2} /> / <Num value={LAYERS.length} pad={2} />
+      </p>
+      <h2
+        ref={titleRef}
+        id={`${chapterId(layer)}-title`}
+        className="mt-2.5 text-[clamp(2.5rem,5.4vw,5.25rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground"
+      >
+        {t(layer)}
+      </h2>
+      {children}
+    </article>
+  );
+}
+
+function Lead({ children }: { children: ReactNode }) {
+  const ref = useSectionElement<HTMLParagraphElement>();
+  return (
+    <p
+      ref={ref}
+      className="mt-5 max-w-[30ch] text-[clamp(1.25rem,2vw,1.75rem)] leading-[1.3] tracking-[-0.015em] text-foreground"
+    >
+      {children}
+    </p>
+  );
+}
+
+function Prose({ paragraphs }: { paragraphs: string }) {
+  const ref = useSectionElement<HTMLDivElement>();
+  return (
+    <div ref={ref} className="mt-8 max-w-[60ch] space-y-4">
+      {paragraphs.split("\n\n").map((paragraph, i) => (
+        <p key={i} className={cn(BODY, "text-muted-foreground")}>
+          {renderBodyText(paragraph)}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+type Principle = "scale" | "handoff" | "maintenance";
+
+function Principles({ keys }: { keys: Principle[] }) {
+  const t = useTranslations("approach.decisions");
+  const gridRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-principle]",
+  });
+
+  return (
+    <div ref={gridRef} className="mt-12 grid gap-x-12 gap-y-8 md:grid-cols-2">
+      {keys.map((key) => (
+        <div key={key} data-principle>
+          <h3 className="text-[1.375rem] leading-tight font-medium tracking-[-0.02em] text-foreground">
+            {t(`${key}.title`)}
+          </h3>
+          <p className={cn(BODY, "mt-2 max-w-[42ch] text-muted-foreground")}>
+            {t(`${key}.description`)}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Contrast({ contrast }: { contrast: "1" | "2" | "3" }) {
+  const t = useTranslations("approach.contrasts");
+  const ref = useSectionElement<HTMLDListElement>();
+
+  return (
+    <dl
+      ref={ref}
+      className="mt-12 grid max-w-180 grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2.5 border-t-2 border-foreground pt-5 text-lg"
+    >
+      <dt className="pt-1 text-[0.8125rem] text-muted-foreground">
+        {t("label.common")}
+      </dt>
+      <dd className="text-muted-foreground">
+        <span className={STRIKE_LINE}>{t(`${contrast}.common`)}</span>
+      </dd>
+      <dt className="pt-1 text-[0.8125rem] text-local-accent-text">
+        {t("label.altruvex")}
+      </dt>
+      <dd className="text-foreground">{t(`${contrast}.altruvex`)}</dd>
+    </dl>
+  );
+}
+
 const TYPE_NOTES = ["face", "leading", "tracking", "direction"] as const;
 
-/**
- * The old version proved bilingual design with a toggle over "Example
- * Heading" - English placeholder copy inside the Arabic page. This sets the
- * section's own heading in both scripts, each in its own direction and face,
- * and names what changes between them.
- */
-function DirectionSection() {
-  const t = useTranslations("approach.multilingual");
-  const eyebrowRef = useSectionEyebrow();
+function Specimen() {
+  const t = useTranslations("approach.multilingual.specimen");
+  const ref = useSectionElement<HTMLElement>();
+
+  return (
+    <figure
+      ref={ref}
+      aria-labelledby="approach-specimen-label"
+      className="mt-12 border-t border-border-subtle pt-7"
+    >
+      <figcaption>
+        <Eyebrow id="approach-specimen-label" className="m-0">
+          {t("label")}
+        </Eyebrow>
+      </figcaption>
+
+      <div className="mt-5 grid gap-8 md:grid-cols-2">
+        <div>
+          <p className="text-[0.8125rem] text-muted-foreground">{t("en.label")}</p>
+          <p
+            lang="en"
+            dir="ltr"
+            className="mt-2 text-start font-sans text-[clamp(1.625rem,3vw,2.625rem)] leading-[1.15] font-light tracking-[-0.03em] text-foreground"
+          >
+            {t("en.text")}
+          </p>
+        </div>
+        <div>
+          <p className="text-[0.8125rem] text-local-accent-text">{t("ar.label")}</p>
+          <p
+            lang="ar"
+            dir="rtl"
+            className="mt-2 text-start font-sans text-[clamp(1.625rem,3vw,2.625rem)] leading-(--lh-heading-ar) font-(--weight-ar-display-light) tracking-normal text-foreground"
+          >
+            {t("ar.text")}
+          </p>
+        </div>
+      </div>
+
+      <dl className="mt-10 grid gap-x-10 gap-y-8 sm:grid-cols-2">
+        {TYPE_NOTES.map((key) => (
+          <div key={key}>
+            <dt className="eyebrow text-muted-foreground">
+              {t(`notes.${key}.term`)}
+            </dt>
+            <dd className="mt-2 max-w-[36ch] text-[0.9375rem] leading-relaxed text-foreground">
+              {t(`notes.${key}.value`)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </figure>
+  );
+}
+
+const REFUSALS = ["1", "2", "3", "4", "5"] as const;
+
+function RefusalsSection() {
+  const t = useTranslations("approach.boundaries");
   const titleRef = useSectionTitle();
-  const descRef = useSectionDescription();
-  const specimenRef = useSectionElement<HTMLElement>();
-  const { first, second } = splitHeadline(t("title"));
+  const introRef = useSectionDescription();
+  const listRef = useSectionCardGrid<HTMLOListElement>({
+    selector: "[data-refusal]",
+  });
 
   return (
     <section
-      aria-labelledby="approach-direction-heading"
+      aria-labelledby="approach-refusals-heading"
       className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
-          <SectionHeading
-            titleId="approach-direction-heading"
-            eyebrowRef={eyebrowRef}
-            titleRef={titleRef}
-            eyebrow={t("eyebrow")}
-            firstTitle={first}
-            secondTitle={second}
-            className="lg:col-span-5"
-            classes={{ title: "max-w-[18ch]" }}
-          />
-          <div ref={descRef} className="max-w-[56ch] space-y-6 lg:col-span-6 lg:col-start-7 lg:pt-10">
-            {t
-              .raw("paragraphs")
-              .split("\n\n")
-              .map((paragraph: string, i: number) => (
-                <p key={i} className={cn(BODY, "text-muted-foreground")}>
-                  {renderBodyText(paragraph)}
-                </p>
-              ))}
-          </div>
-        </div>
-
-        <figure
-          ref={specimenRef}
-          aria-labelledby="approach-specimen-label"
-          className="mt-16 border-t-2 border-foreground lg:mt-24"
+        <h2
+          ref={titleRef}
+          id="approach-refusals-heading"
+          className="text-[clamp(2.5rem,5.4vw,5.25rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground"
         >
-          <figcaption className="pt-4">
-            <Eyebrow id="approach-specimen-label" className="m-0">
-              {t("specimen.label")}
-            </Eyebrow>
-          </figcaption>
+          {t("title")}
+        </h2>
+        <p
+          ref={introRef}
+          className="mt-4 text-[clamp(1.0625rem,1.05vw,1.125rem)] text-muted-foreground"
+        >
+          {t("intro")}
+        </p>
 
-          <div className="grid md:grid-cols-2">
-            <div className="border-b border-border-subtle py-10 md:border-e md:border-b-0 md:py-14 md:pe-10">
-              <Eyebrow className="m-0">{t("specimen.en.label")}</Eyebrow>
-              <p
-                lang="en"
-                dir="ltr"
-                className="mt-6 text-start font-sans text-[clamp(2rem,4vw,3.5rem)] leading-[1.08] font-light tracking-[-0.02em] text-foreground"
-              >
-                {t("specimen.en.text")}
+        <ol ref={listRef} className="mt-10">
+          {REFUSALS.map((key, index) => (
+            <li
+              key={key}
+              data-refusal
+              className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-t border-border-subtle py-5 md:grid-cols-[4rem_minmax(0,1fr)]"
+            >
+              <span className="pt-2 text-[0.8125rem] text-muted-foreground tabular-nums">
+                <Num value={index + 1} pad={2} />
+              </span>
+              <p className="max-w-[48ch] text-[clamp(1.1875rem,1.8vw,1.625rem)] leading-snug tracking-[-0.015em] text-foreground">
+                {t(`items.${key}`)}
               </p>
-            </div>
-            <div className="py-10 md:py-14 md:ps-10">
-              <Eyebrow tone="accent" className="m-0">
-                {t("specimen.ar.label")}
-              </Eyebrow>
-              <p
-                lang="ar"
-                dir="rtl"
-                className="mt-6 text-start font-sans text-[clamp(2rem,4vw,3.5rem)] leading-(--lh-heading-ar) font-(--weight-ar-display-light) tracking-normal text-foreground"
-              >
-                {t("specimen.ar.text")}
-              </p>
-            </div>
-          </div>
-
-          <dl className="grid gap-x-10 gap-y-8 border-t border-border-subtle pt-10 sm:grid-cols-2 lg:grid-cols-4">
-            {TYPE_NOTES.map((key) => (
-              <div key={key}>
-                <dt className="eyebrow text-muted-foreground">
-                  {t(`specimen.notes.${key}.term`)}
-                </dt>
-                <dd className="mt-2 max-w-[32ch] text-[0.9375rem] leading-relaxed text-foreground">
-                  {t(`specimen.notes.${key}.value`)}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </figure>
+            </li>
+          ))}
+        </ol>
       </Container>
     </section>
   );
@@ -465,28 +438,14 @@ function DirectionSection() {
 
 function ClosingSection() {
   const t = useTranslations("approach.closing");
-  const tContact = useTranslations("contact");
-  const email = tContact("emailValue");
 
   return (
     <SectionEndCta
       title={t("title")}
       titleAccent={t("titleItalic")}
       body={t.rich("description", bodyMarks)}
-      footnote={null}
       primary="technicalCall"
       secondary="projectRange"
-      aside={
-        // The page is read by people who would rather write than book, so the
-        // address is a first-class way in beside the buttons, not small print.
-        <a
-          href={`mailto:${email}`}
-          className="group inline-flex min-h-6 items-center gap-3 rounded-ctl-sm text-base text-muted-foreground transition-colors duration-(--motion-drawer) hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11"
-        >
-          <span aria-hidden className="h-px w-8 bg-local-accent" />
-          {t("cta")}
-        </a>
-      }
     />
   );
 }

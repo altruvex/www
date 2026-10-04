@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Blocks } from "lucide-react";
+import { List, ListRow } from "@/components/os/list-row";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
@@ -8,27 +9,22 @@ import { AlertBar } from "@/components/os/error-state";
 import { MetaList } from "@/components/os/detail-layout";
 import { getHealthChecks, STATE_LABEL, STATE_TONE, type HealthCheck } from "@/lib/system-health";
 import { dateTime } from "@/lib/format";
-import { Button } from "@repo/ui";
+import { gateRoute } from "@/lib/page-gate";
+import { Button, Hint } from "@repo/ui";
 import { SlackButton } from "@/components/os/slack-button";
 
 export const dynamic = "force-dynamic";
 
-/** Integrations Altruvex has decided on but has not wired yet (§26). */
 const PLANNED = [
   { name: "Stripe", why: "Card and link payments against an invoice, with webhook reconciliation." },
   { name: "Dropbox Sign / DocuSign", why: "Qualified e-signature behind the existing contract status field." },
   { name: "Google Workspace", why: "Two-way calendar sync for meetings and launch dates." },
 ];
 
-/**
- * Integrations and system health are one screen (§26 / §27). The former
- * `/health` page listed the same checks under a different heading; it now
- * redirects here. Every state below comes from `lib/system-health.ts`, which
- * touches the dependency or reports "unknown" — nothing here is a flag
- * reporting on itself, and no secret value is ever rendered, only whether one
- * is configured.
- */
 export default async function IntegrationsPage() {
+  const denied = await gateRoute("/integrations", "integrations");
+  if (denied) return denied;
+
   const checks = await getHealthChecks();
   const integrations = checks.filter((c) => c.category === "integration");
   const infrastructure = checks.filter((c) => c.category === "infrastructure");
@@ -87,18 +83,17 @@ export default async function IntegrationsPage() {
         description="These are on the roadmap. Nothing here is connected, and nothing pretends to be."
         flush
       >
-        <ul className="rows">
+        <List label="Planned integrations">
           {PLANNED.map((item) => (
-            <li key={item.name} className="flex items-start gap-3 px-3 py-2.5">
-              <Blocks className="mt-0.5 size-3.5 shrink-0 text-subtle-foreground" aria-hidden />
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-medium">{item.name}</p>
-                <p className="text-meta text-muted-foreground">{item.why}</p>
-              </div>
-              <span className="telemetry shrink-0 text-subtle-foreground">planned</span>
-            </li>
+            <ListRow
+              key={item.name}
+              icon={<Blocks />}
+              title={item.name}
+              meta={<span className="min-w-0 whitespace-normal">{item.why}</span>}
+              trailing={<span className="telemetry text-subtle-foreground">planned</span>}
+            />
           ))}
-        </ul>
+        </List>
       </Panel>
     </div>
   );
@@ -116,13 +111,16 @@ function CheckCard({ check }: { check: HealthCheck }) {
               <Link href={check.setup.href}>{check.setup.label}</Link>
             </Button>
           )}
-          {/* Slack is configured by environment variable, so it has no screen
-              to link to — but it does have something a person can press.
-              Posting a real message is the only check that proves a write-only
-              webhook works. */}
-          {check.id === "slack" && check.state !== "unconfigured" && (
-            <SlackButton action="test" label="Send a test" pendingLabel="Sending…" />
-          )}
+          {check.id === "slack" &&
+            (check.state === "unconfigured" ? (
+              <Hint label="Set SLACK_WEBHOOK_URL and redeploy — there is nothing to post to yet">
+                <span className="inline-flex">
+                  <SlackButton action="test" label="Send a test" pendingLabel="Sending…" disabled />
+                </span>
+              </Hint>
+            ) : (
+              <SlackButton action="test" label="Send a test" pendingLabel="Sending…" />
+            ))}
           <ToneBadge tone={STATE_TONE[check.state]}>{STATE_LABEL[check.state]}</ToneBadge>
         </div>
       }

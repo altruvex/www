@@ -8,32 +8,39 @@ import { DetailLayout, MetaList } from "@/components/os/detail-layout";
 import { Timeline } from "@/components/os/timeline";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
+import { NextSteps } from "@/components/os/next-steps";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
 import { dateTime, phone as fmtPhone } from "@/lib/format";
+import { leadStepPermissions } from "../lead-permissions";
+import { convertedLeadSteps } from "../lead-steps";
 import { ConvertButton } from "./convert-button";
 import { NotesPanel } from "./notes-panel";
 import { TriagePanel } from "./triage-panel";
 import { ViewedMarker } from "./viewed-marker";
 import { Button } from "@repo/ui";
+import { FilePlus2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-/**
- * §16 — the immutable record.
- *
- * This page shows what the website received, byte for byte, plus the metadata
- * that lets you tell a real lead from a bot: locale, referrer, UTM, user agent,
- * IP. The payload is never editable; only the triage fields (status, priority,
- * owner) are. Working the lead happens on the client record.
- */
 export default async function SubmissionDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const denied = await gateRoute("/submissions/[id]", "this submission");
+  if (denied) return denied;
+
   const { id } = await params;
+  const role = await currentRole();
+  const canConvert = can(role, "create", "client");
+  const canTriage = can(role, "edit", "lead");
+  const canDelete = can(role, "delete", "lead");
+  const allowed = leadStepPermissions(role);
 
   const team = await prisma.user.findMany({
     where: { role: { in: ["ADMIN", "SUPERADMIN"] } },
@@ -45,7 +52,9 @@ export default async function SubmissionDetailPage({
     where: { id },
     include: {
       client: { select: { id: true, name: true, company: true, status: true } },
-      notes: { include: { createdBy: { select: { name: true, email: true } } } },
+      notes: {
+        include: { createdBy: { select: { name: true, email: true } } },
+      },
       tags: true,
       meetings: true,
       assignedTo: { select: { id: true, name: true, email: true } },
@@ -61,18 +70,27 @@ export default async function SubmissionDetailPage({
   return (
     <div className="space-y-4">
       <PageHeader
-        crumbs={[{ label: "Form submissions", href: "/submissions" }, { label: submission.name }]}
+        crumbs={[
+          { label: "Form submissions", href: "/submissions" },
+          { label: submission.name },
+        ]}
         title={submission.name}
-        status={<StatusPill registry="submissionStatus" value={submission.status} />}
+        status={
+          <StatusPill registry="submissionStatus" value={submission.status} />
+        }
         meta={
           <>
-            <MetaItem label="Received">{dateTime(submission.submittedAt)}</MetaItem>
+            <MetaItem label="Received">
+              {dateTime(submission.submittedAt)}
+            </MetaItem>
             <MetaItem label="Locale">{submission.locale}</MetaItem>
             <MetaItem label="Phone">{fmtPhone(submission.phone)}</MetaItem>
             {submission.client && (
               <MetaItem label="Client">
                 <EntityLink type="client" id={submission.client.id}>
-                  {submission.client.company || submission.client.name || "Unnamed client"}
+                  {submission.client.company ||
+                    submission.client.name ||
+                    "Unnamed client"}
                 </EntityLink>
               </MetaItem>
             )}
@@ -81,48 +99,112 @@ export default async function SubmissionDetailPage({
         actions={
           <>
             {submission.client ? (
-              <Button asChild variant="outline">
-                <Link href={`/clients/${submission.client.id}`}>
-                  Open client record
-                </Link>
-              </Button>
-            ) : (
+              <>
+                <Button asChild variant="outline">
+                  <Link href={`/clients/${submission.client.id}`}>
+                    Open client record
+                  </Link>
+                </Button>
+                {allowed.propose && (
+                  <Button asChild variant="brand">
+                    <Link href={`/clients/${submission.client.id}/new-proposal`}>
+                      <FilePlus2 className="size-3.5" aria-hidden />
+                      New proposal
+                    </Link>
+                  </Button>
+                )}
+              </>
+            ) : canConvert && submission.status !== "SPAM" ? (
               <ConvertButton submissionId={submission.id} />
+            ) : null}
+            {canDelete && (
+              <DeleteRecordButton
+                entity="submission"
+                id={submission.id}
+                label={submission.name}
+                redirectTo="/submissions"
+              />
             )}
-            <DeleteRecordButton
-              entity="submission"
-              id={submission.id}
-              label={submission.name}
-              redirectTo="/submissions"
-            />
           </>
         }
       />
 
-      {!submission.firstViewedAt && <ViewedMarker submissionId={submission.id} />}
+      {!submission.firstViewedAt && (
+        <ViewedMarker submissionId={submission.id} />
+      )}
 
       <DetailLayout
         aside={
           <>
-            <TriagePanel
-              key={`${submission.status}|${submission.priority}|${submission.assignedToId ?? ""}`}
-              submissionId={submission.id}
-              status={submission.status}
-              priority={submission.priority}
-              assignedToId={submission.assignedToId}
-              team={team.map((member) => ({ id: member.id, label: member.name || member.email }))}
-            />
+            {submission.client && (
+              <NextSteps
+                steps={convertedLeadSteps(submission.client.id, allowed)}
+              />
+            )}
+            {canTriage ? (
+              <TriagePanel
+                key={`${submission.status}|${submission.priority}|${submission.assignedToId ?? ""}`}
+                submissionId={submission.id}
+                status={submission.status}
+                priority={submission.priority}
+                assignedToId={submission.assignedToId}
+                team={team.map((member) => ({
+                  id: member.id,
+                  label: member.name || member.email,
+                }))}
+              />
+            ) : (
+              <Panel
+                title="Triage"
+                description="Who owns this and how urgent it is"
+                flush
+              >
+                <MetaList
+                  items={[
+                    {
+                      label: "Status",
+                      value: (
+                        <StatusPill
+                          registry="submissionStatus"
+                          value={submission.status}
+                        />
+                      ),
+                    },
+                    {
+                      label: "Priority",
+                      value: statusOf("priority", submission.priority).label,
+                    },
+                    {
+                      label: "Assigned to",
+                      value: submission.assignedTo
+                        ? submission.assignedTo.name ||
+                          submission.assignedTo.email
+                        : "Unassigned",
+                    },
+                  ]}
+                />
+              </Panel>
+            )}
 
-            <Panel title="Attribution" description="How they found the site" flush>
+            <Panel
+              title="Attribution"
+              description="How they found the site"
+              flush
+            >
               <MetaList
                 items={[
                   { label: "utm_source", value: submission.utmSource ?? "—" },
                   { label: "utm_medium", value: submission.utmMedium ?? "—" },
-                  { label: "utm_campaign", value: submission.utmCampaign ?? "—" },
+                  {
+                    label: "utm_campaign",
+                    value: submission.utmCampaign ?? "—",
+                  },
                   {
                     label: "Referrer",
                     value: submission.referrer ? (
-                      <span className="break-all font-mono text-micro">{submission.referrer}</span>
+                      <span className="break-all font-mono text-micro">
+                        {submission.referrer}
+                      </span>
                     ) : (
                       "direct"
                     ),
@@ -132,13 +214,19 @@ export default async function SubmissionDetailPage({
               />
             </Panel>
 
-            <Panel title="Request metadata" description="Kept for abuse triage only" flush>
+            <Panel
+              title="Request metadata"
+              description="Kept for abuse triage only"
+              flush
+            >
               <MetaList
                 items={[
                   {
                     label: "IP",
                     value: submission.ipAddress ? (
-                      <span className="font-mono text-micro">{submission.ipAddress}</span>
+                      <span className="font-mono text-micro">
+                        {submission.ipAddress}
+                      </span>
                     ) : (
                       "not recorded"
                     ),
@@ -155,11 +243,15 @@ export default async function SubmissionDetailPage({
                   },
                   {
                     label: "First opened",
-                    value: submission.firstViewedAt ? dateTime(submission.firstViewedAt) : "never",
+                    value: submission.firstViewedAt
+                      ? dateTime(submission.firstViewedAt)
+                      : "never",
                   },
                   {
                     label: "First contacted",
-                    value: submission.firstContactedAt ? dateTime(submission.firstContactedAt) : "never",
+                    value: submission.firstContactedAt
+                      ? dateTime(submission.firstContactedAt)
+                      : "never",
                   },
                 ]}
               />
@@ -167,8 +259,13 @@ export default async function SubmissionDetailPage({
           </>
         }
       >
-        <Panel title="What they wrote" description="Unedited, exactly as submitted">
-          <p className="max-w-prose whitespace-pre-wrap text-md">{submission.message}</p>
+        <Panel
+          title="What they wrote"
+          description="Unedited, exactly as submitted"
+        >
+          <p className="max-w-prose whitespace-pre-wrap text-md">
+            {submission.message}
+          </p>
           <dl className="mt-4 grid gap-3 border-t border-border pt-3 sm:grid-cols-3">
             <Fact label="Service">
               {submission.serviceInterest
@@ -181,7 +278,9 @@ export default async function SubmissionDetailPage({
                 : "not stated"}
             </Fact>
             <Fact label="Budget">
-              {submission.budget ? statusOf("budgetRange", submission.budget).label : "not stated"}
+              {submission.budget
+                ? statusOf("budgetRange", submission.budget).label
+                : "not stated"}
             </Fact>
           </dl>
           {submission.tags.length > 0 && (
@@ -198,10 +297,18 @@ export default async function SubmissionDetailPage({
           )}
         </Panel>
 
-        <NotesPanel submissionId={submission.id} initialNotes={submission.notes} />
+        <NotesPanel
+          submissionId={submission.id}
+          initialNotes={submission.notes}
+          canWrite={canTriage}
+          canDelete={can(role, "delete", "note")}
+        />
 
         <Panel title="Activity" flush bodyClassName="p-2">
-          <Timeline events={activity} emptyLabel="Nothing beyond the submission itself." />
+          <Timeline
+            events={activity}
+            emptyLabel="Nothing beyond the submission itself."
+          />
         </Panel>
 
         <EntityAudit type="submission" id={submission.id} />
@@ -210,7 +317,13 @@ export default async function SubmissionDetailPage({
   );
 }
 
-function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+function Fact({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <dt className="telemetry text-subtle-foreground">{label}</dt>

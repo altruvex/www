@@ -1,17 +1,3 @@
-/**
- * Where every record lives in this application — the one map.
- *
- * Audit events, notifications, Slack messages, search results and every
- * "related record" cell resolve a record to its page through `entityHref`, so a
- * new detail route is added here once and every surface links to it.
- *
- * Writers are not consistent about the type string: the audit trail uses
- * lower camel or snake case ("changeRequest", "client_service"), notifications
- * written by the marketing site use Prisma model names ("ContactSubmission")
- * or short words ("contact"). `normalizeEntityType` folds all of them onto one
- * key, so a link never breaks because two writers spelled a type differently.
- */
-
 export type EntityKind =
   | "client"
   | "submission"
@@ -65,7 +51,6 @@ const ALIASES: Record<string, EntityKind> = {
   companysettings: "settings",
 };
 
-/** Folds "ClientService", "client_service" and "clientService" onto one key. */
 export function normalizeEntityType(type: string | null | undefined): EntityKind | null {
   if (!type) return null;
   return ALIASES[type.replace(/[_\-\s]/g, "").toLowerCase()] ?? null;
@@ -79,28 +64,26 @@ const PATH: Record<EntityKind, ((id: string) => string) | null> = {
   contract: (id) => `/contracts/${id}`,
   project: (id) => `/projects/${id}`,
   product: (id) => `/products/${id}`,
-  payment: (id) => `/payments?payment=${id}`,
+  payment: (id) => `/payments?inspect=${id}`,
   subscription: (id) => `/maintenance/${id}`,
   maintenance_request: () => "/maintenance",
   change_request: () => "/projects",
   incident: (id) => `/incidents/${id}`,
   deployment: (id) => `/deployments/${id}`,
   build: (id) => `/deployments/builds/${id}`,
-  task: (id) => `/tasks?task=${id}`,
+  task: (id) => `/tasks?inspect=${id}`,
   meeting: (id) => `/calendar?meeting=${id}`,
-  client_service: (id) => `/services#service-${id}`,
+  client_service: (id) => `/services?inspect=${id}`,
   user: () => "/team",
   settings: () => "/settings",
 };
 
-/** The in-app path for a record, or null when the type has no page. */
 export function entityHref(type: string | null | undefined, id: string | null | undefined): string | null {
   const kind = normalizeEntityType(type);
   if (!kind || !id) return null;
   return PATH[kind]?.(id) ?? null;
 }
 
-/** The singular noun shown before a label ("Contract · ACME-2026-01"). */
 export const ENTITY_NOUN: Record<EntityKind, string> = {
   client: "Client",
   submission: "Lead",

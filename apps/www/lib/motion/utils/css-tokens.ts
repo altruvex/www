@@ -1,12 +1,5 @@
 import { MOTION } from "../tokens";
 
-/**
- * CSS transitions read the duration scale from `--motion-*` in globals.css;
- * GSAP reads it from MOTION.duration. The two are declared in two languages,
- * so this compares them once at boot in development and warns on any drift —
- * the only way a hover and a scroll reveal could fall out of one clock.
- * `micro` is an alias of `hover` and has no CSS twin.
- */
 export function checkCssMotionTokens(): void {
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") return;
   const style = getComputedStyle(document.documentElement);

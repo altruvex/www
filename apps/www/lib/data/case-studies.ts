@@ -22,9 +22,6 @@ export type CaseStudyRecord = {
   slug: CaseStudySlug;
   summary: LocalizedValue;
   year: string;
-  /** The service pages this project is evidence for. A service page lists only
-      the work tagged with it, so a store never stands in as proof of interface
-      design, and a new project appears on its page by being tagged here. */
   services: readonly ServiceSlug[];
   externalUrl?: string;
 };

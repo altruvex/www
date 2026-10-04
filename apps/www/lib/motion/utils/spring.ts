@@ -1,34 +1,14 @@
 import { gsap } from "@/lib/utils/gsap";
 import type { SpringConfig } from "../tokens";
 
-/**
- * Analytic damped-harmonic-oscillator spring.
- *
- * Why analytic instead of Euler stepping: the closed-form solution is exact
- * for any frame delta, so a 16ms frame, a 33ms dropped frame and a 2s tab-hide
- * all land on the same curve — no substep tuning, no instability at high
- * stiffness. Retargeting (`set`) re-bases the solution from the CURRENT
- * position and velocity, which is what makes a hover that reverses mid-flight
- * feel continuous instead of restarting an ease.
- *
- * All springs share one `gsap.ticker` listener that is attached only while at
- * least one spring is moving, so an idle page costs nothing. Values are handed
- * to a setter each frame; pair with `gsap.quickSetter` so writes go through
- * GSAP's transform cache (composes with other tweens on the same element,
- * no per-frame allocation).
- */
 interface Spring {
-  /** Retarget, preserving current position + velocity. */
   set(target: number): void;
-  /** Teleport to a value with zero velocity (no animation). */
   jump(value: number): void;
-  /** Swap the physics without discontinuity (e.g. press-in vs release). */
   retune(config: SpringConfig): void;
   readonly value: number;
   readonly velocity: number;
   readonly target: number;
   readonly active: boolean;
-  /** Stop and detach. Leaves the element at its current value. */
   kill(): void;
 }
 
@@ -84,7 +64,6 @@ function tune(n: Node, config: SpringConfig): void {
   n.restSpeed = config.restSpeed ?? 0.1;
 }
 
-/** Re-base the closed-form solution from the current state. */
 function rebase(n: Node): void {
   n.x0 = n.value - n.target;
   n.v0 = n.velocity;
@@ -98,7 +77,6 @@ function step(n: Node, time: number): void {
   let v: number;
 
   if (zeta < 1) {
-    // Underdamped: decaying oscillation.
     const wd = w0 * Math.sqrt(1 - zeta * zeta);
     const decay = Math.exp(-zeta * w0 * t);
     const B = (v0 + zeta * w0 * x0) / wd;
@@ -107,13 +85,11 @@ function step(n: Node, time: number): void {
     x = decay * (x0 * cos + B * sin);
     v = -zeta * w0 * x + decay * (-x0 * wd * sin + B * wd * cos);
   } else if (zeta === 1) {
-    // Critically damped: fastest settle with no overshoot.
     const decay = Math.exp(-w0 * t);
     const B = v0 + w0 * x0;
     x = (x0 + B * t) * decay;
     v = -w0 * x + B * decay;
   } else {
-    // Overdamped: two real exponentials.
     const s = w0 * Math.sqrt(zeta * zeta - 1);
     const r1 = -zeta * w0 + s;
     const r2 = -zeta * w0 - s;

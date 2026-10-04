@@ -17,13 +17,6 @@ export interface FilterOption {
   label: string;
 }
 
-/**
- * The filter selects for /deployments.
- *
- * The filters themselves live in the URL and the page reads them on the server
- * — this island only turns a pick into a navigation. Changing a filter drops
- * the page cursor: an id from the old result set means nothing in the new one.
- */
 export function DeploymentFilters({
   filters,
 }: {
@@ -42,8 +35,6 @@ export function DeploymentFilters({
     const next = new URLSearchParams(searchParams.toString());
     if (value === ALL) next.delete(param);
     else next.set(param, value);
-    // The product list is scoped to the chosen client, so a product from
-    // another client would sit in the select as a value it no longer offers.
     if (param === "client") next.delete("product");
     next.delete("cursor");
     const query = next.toString();

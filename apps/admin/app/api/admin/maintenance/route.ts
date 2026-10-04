@@ -18,8 +18,6 @@ import {
 } from "@/lib/maintenance-admin";
 import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
-/** Admin-only management of maintenance retainers and the requests on them. */
-
 export const dynamic = "force-dynamic";
 
 const billingInterval = z.enum(["MONTHLY", "QUARTERLY", "ANNUAL"]);
@@ -51,7 +49,6 @@ const patchSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("subscription-quote"),
     id: z.string().min(1),
-    /** Null clears the quote; the retainer then cannot be invoiced until one is set. */
     quotedMonthlyPrice: z.number().int().positive().nullable(),
   }),
   z.object({
@@ -100,13 +97,9 @@ export const POST = withAdmin(async (request, { session, actor }) => {
 }, { can: ["create", "payment"] });
 
 export const PATCH = withAdmin(async (request, { session, actor }) => {
-  // A body that fails the schema is answered 400 by `withAdmin`.
   const body = await readJson(request, patchSchema);
   const by = session.user.email ?? session.user.id ?? null;
 
-  // A renewal, a plan or interval change and a quote can fail for a *business*
-  // reason rather than a missing row, so they return their own message instead
-  // of being flattened into the boolean the others share.
   switch (body.action) {
     case "subscription-renew":
     case "subscription-record-invoice":

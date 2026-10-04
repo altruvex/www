@@ -2,30 +2,43 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Receipt, Printer, X, Eye, FileText } from "lucide-react";
-import { Button, segmentClass } from "@repo/ui";
+import { Check, Copy, Eye, FileText, Printer, Receipt, RotateCcw } from "lucide-react";
+import {
+  Button,
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  segmentClass,
+} from "@repo/ui";
 import { DataTable, type Column } from "@/components/os/data-table";
+import { EmptyState } from "@/components/os/empty-state";
+import { CopyValueButton } from "@/components/os/copy-button";
 import { EntityLink } from "@/components/os/entity-link";
+import { inspectHref } from "@/components/os/inspect-sheet";
 import { StatusPill } from "@/components/ui/badge";
 import { entityHref } from "@/lib/entity-links";
 import { money, date, dueLabel } from "@/lib/format";
 import { paymentMethodLabel } from "@/lib/payment-source";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import { issueInvoice } from "@/app/(dashboard)/_actions/billing";
+import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { issueInvoice, reopenPayment } from "@/app/(dashboard)/_actions/billing";
+import { RecordPaymentDialog } from "../payments/record-payment-dialog";
 
 export interface InvoiceRecord {
   id: string;
-  /** Null until issued — the list shows "Not issued", never a made-up number. */
   invoiceNumber: string | null;
   invoicedAt: string | null;
   createdAt: string;
   sourceType: "project" | "subscription" | "client_service" | null;
   sourceId: string | null;
   sourceName: string;
-  /** The invoice line: "Deposit · 50% · Acme website". */
   lineLabel: string;
   clientId: string | null;
   clientName: string;
@@ -47,24 +60,27 @@ export interface InvoiceRecord {
   reference: string | null;
 }
 
+export interface InvoiceIssuer {
+  name: string;
+  phone: string;
+  email: string;
+  website: string;
+}
+
 const STATUS_ORDER = ["OVERDUE", "PENDING", "PAID", "WAIVED"];
 
 type Filter = "all" | "unissued" | "PENDING" | "OVERDUE" | "PAID" | "WAIVED";
 
 export function InvoicesClient({
   invoices,
-  initialOpenId,
-  company,
+  canEdit = true,
 }: {
   invoices: InvoiceRecord[];
-  /** `?payment=<id>` opens that invoice's document on arrival. */
-  initialOpenId: string | null;
-  company: { name: string; phone: string; email: string; website: string };
+  canEdit?: boolean;
 }) {
   const router = useRouter();
-  const [open, setOpen] = React.useState<InvoiceRecord | null>(
-    () => invoices.find((i) => i.id === initialOpenId) ?? null,
-  );
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [filter, setFilter] = React.useState<Filter>("all");
   const [busyId, setBusyId] = React.useState<string | null>(null);
 
@@ -73,6 +89,9 @@ export function InvoicesClient({
     if (filter === "unissued") return invoices.filter((i) => !i.invoiceNumber);
     return invoices.filter((i) => i.status === filter);
   }, [invoices, filter]);
+
+  const inspect = (row: InvoiceRecord) =>
+    router.push(inspectHref(pathname, searchParams, row.id), { scroll: false });
 
   async function issue(row: InvoiceRecord) {
     setBusyId(row.id);
@@ -89,6 +108,41 @@ export function InvoicesClient({
     }
   }
 
+  async function issueMany(selected: InvoiceRecord[]) {
+    const issuable = selected.filter((row) => !row.invoiceNumber && row.status !== "WAIVED");
+    const skipped = selected.length - issuable.length;
+    if (issuable.length === 0) {
+      return { ok: false, message: "Every selected invoice is already issued or waived." };
+    }
+    let issued = 0;
+    const refused: { row: InvoiceRecord; reason: string }[] = [];
+    for (const row of issuable) {
+      try {
+        const result = await issueInvoice(row.id);
+        if (result.ok) issued += 1;
+        else refused.push({ row, reason: result.message });
+      } catch (error) {
+        refused.push({
+          row,
+          reason: error instanceof Error && error.message ? error.message : "Nothing was reported back.",
+        });
+      }
+    }
+    for (const { row, reason } of refused) {
+      toast.error(`Not issued: ${row.lineLabel}`, { description: reason });
+    }
+    if (issued > 0) router.refresh();
+    const notes = [
+      refused.length > 0 ? `${refused.length} refused` : null,
+      skipped > 0 ? `${skipped} already issued or waived, left out` : null,
+    ].filter(Boolean);
+    const tail = notes.length > 0 ? ` (${notes.join(", ")})` : "";
+    if (issued === 0) {
+      return { ok: false, message: `No invoices issued${tail}.` };
+    }
+    return { ok: true, message: `Issued ${issued} ${issued === 1 ? "invoice" : "invoices"}${tail}.` };
+  }
+
   const columns: Column<InvoiceRecord>[] = [
     {
       id: "invoiceNumber",
@@ -98,13 +152,17 @@ export function InvoicesClient({
       hideable: false,
       cell: (row) =>
         row.invoiceNumber ? (
-          <button
-            type="button"
-            onClick={() => setOpen(row)}
-            className="cursor-pointer text-left font-semibold text-foreground rounded-xs underline-offset-2 hover:underline"
-          >
-            {row.invoiceNumber}
-          </button>
+          <span className="inline-flex items-center gap-1">
+            <Link
+              href={inspectHref(pathname, searchParams, row.id)}
+              scroll={false}
+              onClick={(event) => event.stopPropagation()}
+              className="font-semibold text-foreground rounded-xs underline-offset-2 hover:underline"
+            >
+              {row.invoiceNumber}
+            </Link>
+            <CopyValueButton value={row.invoiceNumber} label="Invoice number" />
+          </span>
         ) : (
           <span className="text-subtle-foreground">Not issued</span>
         ),
@@ -125,7 +183,11 @@ export function InvoicesClient({
             </span>
             <span className="block truncate text-meta font-normal text-subtle-foreground">
               {href ? (
-                <Link href={href} className="rounded-xs underline-offset-2 hover:underline">
+                <Link
+                  href={href}
+                  onClick={(event) => event.stopPropagation()}
+                  className="rounded-xs underline-offset-2 hover:underline"
+                >
                   {row.sourceName}
                 </Link>
               ) : (
@@ -195,9 +257,9 @@ export function InvoicesClient({
             size="icon-sm"
             onClick={(event) => {
               event.stopPropagation();
-              setOpen(row);
+              inspect(row);
             }}
-            aria-label="Open invoice"
+            aria-label={`Open invoice ${row.invoiceNumber}`}
           >
             <Eye />
           </Button>
@@ -252,137 +314,316 @@ export function InvoicesClient({
         rows={filtered}
         columns={columns}
         rowKey={(row) => row.id}
+        onRowClick={inspect}
         searchPlaceholder="Search invoice number, client or project…"
         initialSort={{ columnId: "invoiceNumber", dir: "desc" }}
         mobile={{ title: "client", subtitle: "invoiceNumber", meta: ["status", "amount", "dates"] }}
-        empty={<div className="plane px-6 py-12 text-center text-muted-foreground">No invoices match.</div>}
+        selectable={canEdit}
+        selectionNoun="invoice"
+        bulkActions={[
+          {
+            label: "Issue",
+            icon: FileText,
+            confirm: (rows) => {
+              const count = rows.filter((row) => !row.invoiceNumber && row.status !== "WAIVED").length;
+              const skipped = rows.length - count;
+              return {
+                title: `Issue ${count} ${count === 1 ? "invoice" : "invoices"}?`,
+                description:
+                  skipped > 0
+                    ? `${skipped} of the selection ${skipped === 1 ? "is" : "are"} already issued or waived and will be left out.`
+                    : undefined,
+                consequence:
+                  "Each one draws the next invoice number. A number once issued is not taken back.",
+                confirmLabel: "Issue",
+                tone: "default",
+              };
+            },
+            onRun: issueMany,
+          },
+        ]}
+        empty={
+          filter === "all" ? (
+            <EmptyState
+              icon={Receipt}
+              title="No invoices yet"
+              body="Invoices are drawn from the payment schedule. Once a project, subscription or service has a payment, it appears here to issue."
+              action={
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/payments">Open payments</Link>
+                </Button>
+              }
+            />
+          ) : (
+            <EmptyState
+              icon={Receipt}
+              title={`No invoices in “${filters.find((tab) => tab.id === filter)?.label ?? filter}”`}
+              body="Nothing matches this filter right now. Pick another chip above, or clear it."
+              action={
+                <Button variant="outline" size="sm" onClick={() => setFilter("all")}>
+                  Clear filters
+                </Button>
+              }
+            />
+          )
+        }
       />
-
-      {open && open.invoiceNumber && <InvoiceDocument invoice={open} company={company} onClose={() => setOpen(null)} />}
     </div>
   );
 }
 
-/**
- * The printable document. It claims only what the record holds: the issued
- * number and date, the client's billing identity when it was captured, one
- * line for the payment. No tax line is computed because no tax rate is
- * configured anywhere — the footer says so instead of printing "Included".
- */
-function InvoiceDocument({
+export function InvoiceInspectorActions({
   invoice,
-  company,
-  onClose,
+  issuer,
+  canEdit = true,
 }: {
   invoice: InvoiceRecord;
-  company: { name: string; phone: string; email: string; website: string };
-  onClose: () => void;
+  issuer: InvoiceIssuer;
+  canEdit?: boolean;
+}) {
+  const router = useRouter();
+  const [showDocument, setShowDocument] = React.useState(false);
+  const [recording, setRecording] = React.useState(false);
+  const [busy, startTransition] = React.useTransition();
+
+  const unpaid = invoice.status === "PENDING" || invoice.status === "OVERDUE";
+  const canIssue = canEdit && !invoice.invoiceNumber && invoice.status !== "WAIVED";
+  const settled = invoice.status === "PAID" || invoice.status === "WAIVED";
+
+  function issue() {
+    startTransition(async () => {
+      const result = await issueInvoice(invoice.id);
+      if (!result.ok) {
+        toast.error("Invoice not issued", { description: result.message });
+        return;
+      }
+      toast.success(`Issued ${result.invoiceNumber}`, { description: invoice.lineLabel });
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {invoice.invoiceNumber && (
+        <Button variant="brand" size="sm" onClick={() => setShowDocument(true)}>
+          <Receipt className="size-3.5" />
+          Open document
+        </Button>
+      )}
+      {invoice.invoiceNumber && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(invoice.invoiceNumber!);
+              toast.success("Invoice number copied", { description: invoice.invoiceNumber! });
+            } catch {
+              toast.error("The browser refused the clipboard. Select the number and copy it by hand.", {
+                description: invoice.invoiceNumber!,
+              });
+            }
+          }}
+        >
+          <Copy className="size-3.5" />
+          Copy number
+        </Button>
+      )}
+      {canIssue && (
+        <Button variant="brand" size="sm" onClick={issue} disabled={busy}>
+          <FileText className="size-3.5" />
+          Issue invoice
+        </Button>
+      )}
+      {canEdit && unpaid && (
+        <Button variant="outline" size="sm" onClick={() => setRecording(true)}>
+          <Check className="size-3.5" />
+          Record payment
+        </Button>
+      )}
+      {canEdit && settled && (
+        <ConfirmDialog
+          trigger={
+            <Button variant="outline" size="sm">
+              <RotateCcw className="size-3.5" />
+              Set back to pending
+            </Button>
+          }
+          title="Set back to pending?"
+          body={invoice.lineLabel}
+          consequence={
+            invoice.status === "PAID"
+              ? `${money(invoice.amount, invoice.currency)} reads as owed again and the paid date (${date(invoice.paidAt)}) is cleared. The audit trail keeps it, and recording the payment again offers that day back.`
+              : `${money(invoice.amount, invoice.currency)} reads as owed again.`
+          }
+          confirmLabel="Set pending"
+          onConfirm={async () => {
+            const result = await reopenPayment(invoice.id);
+            if (result.ok) router.refresh();
+            return result.ok ? { ok: true, message: "Set back to pending." } : result;
+          }}
+        />
+      )}
+      {invoice.invoiceNumber && (
+        <InvoiceDocument invoice={invoice} issuer={issuer} open={showDocument} onOpenChange={setShowDocument} />
+      )}
+      {recording && (
+        <RecordPaymentDialog
+          target={{
+            id: invoice.id,
+            label: invoice.lineLabel,
+            reference: invoice.reference,
+            amountLabel: money(invoice.amount, invoice.currency),
+          }}
+          onClose={() => setRecording(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+const PRINT_RULES = `
+@media print {
+  body * { visibility: hidden !important; }
+  [data-invoice-print], [data-invoice-print] * { visibility: visible !important; }
+  [data-invoice-print] {
+    position: fixed !important; inset: 0 !important; width: 100% !important; max-width: none !important;
+    height: auto !important; max-height: none !important; overflow: visible !important;
+    border: 0 !important; box-shadow: none !important; transform: none !important; background: white !important;
+  }
+  [data-invoice-print] * { overflow: visible !important; }
+}
+`;
+
+export function InvoiceDocument({
+  invoice,
+  issuer,
+  open,
+  onOpenChange,
+}: {
+  invoice: InvoiceRecord;
+  issuer: InvoiceIssuer;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
   const client = invoice.client;
   const billedName = client?.company || client?.name || invoice.clientName;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-n-8/25 p-4 backdrop-blur-[1px]">
-      <div className="relative w-full max-w-2xl space-y-6 rounded-lg border border-border bg-card p-6 shadow-[var(--elev-2)] duration-[var(--dur-panel)] animate-in fade-in sm:p-8">
-        <div className="flex items-center justify-between border-b border-border pb-4 print:hidden">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent width="lg" data-invoice-print="">
+        <style>{PRINT_RULES}</style>
+        <SheetHeader className="print:hidden">
           <div className="flex items-center gap-2">
-            <Receipt className="size-5 text-brand" />
-            <span className="font-mono text-md font-semibold">{invoice.invoiceNumber}</span>
+            <Receipt className="size-4 text-brand" />
+            <SheetTitle className="font-mono">{invoice.invoiceNumber}</SheetTitle>
             <StatusPill registry="paymentStatus" value={invoice.status} variant="dot" />
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => window.print()}>
-              <Printer />
-              Print
-            </Button>
-            <Button variant="outline" size="icon-sm" onClick={onClose} aria-label="Close invoice">
-              <X />
-            </Button>
-          </div>
-        </div>
+          <SheetDescription>{invoice.lineLabel}</SheetDescription>
+        </SheetHeader>
 
-        <div className="space-y-6 text-foreground">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="font-sans text-xl font-bold tracking-tight">{company.name.toUpperCase()}</h2>
-              <p className="mt-1 font-mono text-meta text-muted-foreground">
-                {company.email}
-                {company.phone && ` · ${company.phone}`}
-              </p>
-              {company.website && <p className="font-mono text-meta text-muted-foreground">{company.website}</p>}
+        <SheetBody className="print:p-0">
+          <div className="space-y-6 text-foreground sm:p-2">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-sans text-xl font-bold tracking-tight">{issuer.name.toUpperCase()}</h2>
+                <p className="mt-1 font-mono text-meta text-muted-foreground">
+                  {issuer.email}
+                  {issuer.phone && ` · ${issuer.phone}`}
+                </p>
+                {issuer.website && <p className="font-mono text-meta text-muted-foreground">{issuer.website}</p>}
+              </div>
+              <div className="text-end">
+                <span className="block font-mono text-meta uppercase tracking-widest text-muted-foreground">Invoice</span>
+                <span className="block font-mono text-base font-bold">{invoice.invoiceNumber}</span>
+                <p className="mt-1 font-mono text-meta text-muted-foreground">Issued {date(invoice.invoicedAt)}</p>
+                {invoice.dueDate && (
+                  <p className="font-mono text-meta text-muted-foreground">Due {date(invoice.dueDate)}</p>
+                )}
+              </div>
             </div>
-            <div className="text-right">
-              <span className="block font-mono text-meta uppercase tracking-widest text-muted-foreground">Invoice</span>
-              <span className="block font-mono text-base font-bold">{invoice.invoiceNumber}</span>
-              <p className="mt-1 font-mono text-meta text-muted-foreground">Issued {date(invoice.invoicedAt)}</p>
-              {invoice.dueDate && (
-                <p className="font-mono text-meta text-muted-foreground">Due {date(invoice.dueDate)}</p>
+
+            <div className="rounded-lg border border-border/80 bg-surface/50 p-3.5">
+              <span className="mb-1 block font-mono text-micro uppercase tracking-wider text-muted-foreground">Billed to</span>
+              <p className="text-md font-semibold">{billedName}</p>
+              {client?.company && client.name && <p className="text-meta text-muted-foreground">Attn: {client.name}</p>}
+              {client?.address && <p className="whitespace-pre-line text-meta text-muted-foreground">{client.address}</p>}
+              {client?.country && <p className="text-meta text-muted-foreground">{client.country}</p>}
+              {client?.email && <p className="font-mono text-meta text-muted-foreground">{client.email}</p>}
+              {client?.taxId && <p className="font-mono text-meta text-muted-foreground">Tax ID {client.taxId}</p>}
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-border">
+              <table className="w-full text-start text-meta">
+                <thead className="border-b border-border bg-surface font-mono text-micro uppercase text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-2.5 text-start">Description</th>
+                    <th className="px-4 py-2.5 text-end">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-3">
+                      <span className="block font-medium">{invoice.lineLabel}</span>
+                      {invoice.reference && (
+                        <span className="block font-mono text-micro text-muted-foreground">{invoice.reference}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-end font-mono font-semibold">
+                      {money(invoice.amount, invoice.currency)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end">
+              <div className="w-64 space-y-1.5 border-t border-border pt-3">
+                <div className="flex justify-between text-meta text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span className="font-mono">{money(invoice.amount, invoice.currency)}</span>
+                </div>
+                <div className="flex justify-between border-t border-border pt-1.5 text-md font-bold">
+                  <span>
+                    {invoice.status === "PAID" ? "Paid" : invoice.status === "WAIVED" ? "Waived — nothing is due" : "Total due"}
+                  </span>
+                  <span className="font-mono text-brand">
+                    {invoice.status === "WAIVED" ? money(0, invoice.currency) : money(invoice.amount, invoice.currency)}
+                  </span>
+                </div>
+                <p className="text-micro text-subtle-foreground">
+                  No tax line: no tax rate is configured for invoices.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-1 border-t border-border pt-4 text-meta text-muted-foreground">
+              {invoice.status === "PAID" ? (
+                <p>
+                  Paid {date(invoice.paidAt)}
+                  {invoice.method && ` by ${paymentMethodLabel(invoice.method)?.toLowerCase()}`}.
+                </p>
+              ) : invoice.status === "WAIVED" ? (
+                <p>This invoice was waived: nothing is due and no payment is expected.</p>
+              ) : (
+                <p>
+                  Please quote <span className="font-mono font-medium text-foreground">{invoice.invoiceNumber}</span> on
+                  the bank transfer, and send the confirmation to {issuer.email}.
+                </p>
               )}
             </div>
           </div>
+        </SheetBody>
 
-          <div className="rounded-lg border border-border/80 bg-surface/50 p-3.5">
-            <span className="mb-1 block font-mono text-micro uppercase tracking-wider text-muted-foreground">Billed to</span>
-            <p className="text-md font-semibold">{billedName}</p>
-            {client?.company && client.name && <p className="text-meta text-muted-foreground">Attn: {client.name}</p>}
-            {client?.address && <p className="whitespace-pre-line text-meta text-muted-foreground">{client.address}</p>}
-            {client?.country && <p className="text-meta text-muted-foreground">{client.country}</p>}
-            {client?.email && <p className="font-mono text-meta text-muted-foreground">{client.email}</p>}
-            {client?.taxId && <p className="font-mono text-meta text-muted-foreground">Tax ID {client.taxId}</p>}
-          </div>
-
-          <div className="overflow-hidden rounded-lg border border-border">
-            <table className="w-full text-left text-meta">
-              <thead className="border-b border-border bg-surface font-mono text-micro uppercase text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-2.5">Description</th>
-                  <th className="px-4 py-2.5 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td className="px-4 py-3">
-                    <span className="block font-medium">{invoice.lineLabel}</span>
-                    {invoice.reference && (
-                      <span className="block font-mono text-micro text-muted-foreground">{invoice.reference}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono font-semibold">
-                    {money(invoice.amount, invoice.currency)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div className="flex justify-end">
-            <div className="w-64 space-y-1.5 border-t border-border pt-3">
-              <div className="flex justify-between text-meta text-muted-foreground">
-                <span>Subtotal</span>
-                <span className="font-mono">{money(invoice.amount, invoice.currency)}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-1.5 text-md font-bold">
-                <span>{invoice.status === "PAID" ? "Paid" : "Total due"}</span>
-                <span className="font-mono text-brand">{money(invoice.amount, invoice.currency)}</span>
-              </div>
-              <p className="text-micro text-subtle-foreground">Tax not configured.</p>
-            </div>
-          </div>
-
-          <div className="space-y-1 border-t border-border pt-4 text-meta text-muted-foreground">
-            {invoice.status === "PAID" ? (
-              <p>
-                Paid {date(invoice.paidAt)}
-                {invoice.method && ` by ${paymentMethodLabel(invoice.method)?.toLowerCase()}`}.
-              </p>
-            ) : (
-              <p>
-                Please quote <span className="font-mono font-medium text-foreground">{invoice.invoiceNumber}</span> on
-                the bank transfer, and send the confirmation to {company.email}.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+        <SheetFooter className="print:hidden">
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          <Button variant="brand" size="sm" onClick={() => window.print()}>
+            <Printer className="size-3.5" />
+            Print
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -6,32 +6,14 @@ import { prisma, type Product } from "@repo/database";
 import { integrationActor, recordActivity } from "@/lib/activity-log";
 import { productForIngestToken } from "@/lib/ingest-auth";
 
-/**
- * Shared plumbing for `/api/ingest/*` (§7).
- *
- * These endpoints are the only writers of build, deployment and log rows. The
- * admin UI deliberately cannot create them: a deployment record that a human
- * typed is a claim, not evidence, and the whole point of this section of the OS
- * is that what it shows actually happened.
- *
- * Until a pipeline is pointed at these endpoints the tables stay empty and the
- * screens say so, rather than being seeded with plausible-looking history.
- */
-
 export const ENVIRONMENTS = ["PRODUCTION", "STAGING", "PREVIEW"] as const;
 
 export const environmentSchema = z.enum(ENVIRONMENTS).default("PRODUCTION");
 
-/** Bounded so one runaway CI job cannot fill the table with a single request. */
 export const MAX_LOG_BATCH = 500;
 
-/**
- * Cap on a single log message, in characters. A stack trace is welcome; a
- * base64 payload is not — this is a log table, not a blob store.
- */
 export const MAX_LOG_MESSAGE_LENGTH = 10_000;
 
-/** Ceiling on one entry's `metadata` object, measured as serialised JSON. */
 export const MAX_LOG_METADATA_BYTES = 8_000;
 
 export interface IngestContext {
@@ -43,13 +25,6 @@ export type IngestHandler = (
   context: IngestContext,
 ) => Promise<NextResponse> | NextResponse;
 
-/**
- * Authenticates by product ingest token and hands the handler the product.
- *
- * A 401 here is deliberately identical for "no token", "malformed token" and
- * "unknown token" — an unauthenticated caller learns nothing about which
- * products exist.
- */
 export function withIngestToken(handler: IngestHandler) {
   return async (request: Request): Promise<NextResponse> => {
     const product = await productForIngestToken(request.headers);
@@ -84,13 +59,6 @@ export function withIngestToken(handler: IngestHandler) {
   };
 }
 
-/**
- * A body ceiling for the ingest endpoints.
- *
- * A build agent posts a few kilobytes. Nothing here needs megabytes, and
- * `request.json()` will happily buffer whatever the platform lets through, so
- * the limit is stated here rather than inherited from the host.
- */
 export const MAX_INGEST_BODY_BYTES = 1_000_000;
 
 export class PayloadTooLargeError extends Error {
@@ -109,7 +77,6 @@ export async function readIngestJson<T>(request: Request, schema: z.ZodType<T>):
   let raw: unknown;
   try {
     const text = await request.text();
-    // A caller that sends no content-length, or lies about it, is caught here.
     if (text.length > MAX_INGEST_BODY_BYTES) throw new PayloadTooLargeError();
     raw = JSON.parse(text);
   } catch (error) {
@@ -121,14 +88,6 @@ export async function readIngestJson<T>(request: Request, schema: z.ZodType<T>):
   return schema.parse(raw);
 }
 
-/**
- * Allocates the next per-product sequence number for builds, deployments and
- * incidents.
- *
- * Runs inside the caller's transaction and takes a row lock on the product, so
- * two CI jobs finishing at the same instant cannot both claim number 42 and
- * trip the `@@unique([productId, number])` constraint.
- */
 export async function nextNumber(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   table: "builds" | "deployments" | "incidents",

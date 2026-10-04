@@ -22,7 +22,6 @@ export function splitHeadline(value: string): {
   };
 }
 
-/** A URL's bare host for display: no scheme, no `www.`. */
 export function getDomainName(url: string): string {
   try {
     return new URL(url).hostname.replace(/^www\./, "");

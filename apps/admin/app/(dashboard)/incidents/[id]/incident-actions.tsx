@@ -22,15 +22,20 @@ const STATUSES = ["INVESTIGATING", "IDENTIFIED", "MONITORING", "RESOLVED"] as co
 const KEEP = "__keep__";
 const NONE = "__none__";
 
-/**
- * Posts a timeline update, optionally moving the status with it. This is the
- * only place an incident is resolved or reopened from its page, so the note and
- * the move always land together in one update.
- */
-export function PostUpdate({ id, status }: { id: string; status: string }) {
+export function PostUpdate({
+  id,
+  status,
+  resolveFirst = false,
+}: {
+  id: string;
+  status: string;
+  resolveFirst?: boolean;
+}) {
   const router = useRouter();
   const [note, setNote] = React.useState("");
-  const [next, setNext] = React.useState<string>(KEEP);
+  const [next, setNext] = React.useState<string>(
+    resolveFirst && status !== "RESOLVED" ? "RESOLVED" : KEEP,
+  );
   const [busy, setBusy] = React.useState(false);
 
   const resolved = status === "RESOLVED";
@@ -127,11 +132,6 @@ export function PostUpdate({ id, status }: { id: string; status: string }) {
   );
 }
 
-/**
- * Severity, owner and suspected deployment. Each applies on its own when
- * picked: these are single facts, and a separate Save button would let the
- * screen show a value the database does not hold.
- */
 export function ManageIncident({
   id,
   severity,

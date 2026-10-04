@@ -8,13 +8,20 @@ import { toast } from "sonner";
 import { Button } from "@repo/ui";
 import { LoadingIcon } from "@repo/ui";
 import { Field, Input } from "@repo/ui";
+import { IndustrySelect } from "@/components/os/industry-select";
+import { UrlInput } from "@/components/os/url-input";
+import { CountrySelect } from "@/components/os/country-select";
+import { PhoneInput } from "@/components/os/phone-input";
 import { ErrorState } from "@/components/os/error-state";
+import { taxIdHint } from "@/lib/tax-id";
 
 export function EditClientForm({
   clientId,
   initial,
+  onDone,
 }: {
   clientId: string;
+  onDone?: () => void;
   initial: {
     name: string;
     phone: string;
@@ -32,6 +39,9 @@ export function EditClientForm({
   const [busy, setBusy] = React.useState(false);
   const [failure, setFailure] = React.useState<string | null>(null);
   const [existingId, setExistingId] = React.useState<string | null>(null);
+  const [country, setCountry] = React.useState(initial.country);
+  const [taxId, setTaxId] = React.useState(initial.taxId);
+  const taxCheck = taxIdHint(country, taxId);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,8 +77,10 @@ export function EditClientForm({
       if (!response.ok || !data.success) {
         throw new Error(data.message || `Request failed (${response.status})`);
       }
-      toast.success("Client updated");
-      router.push(`/clients/${clientId}`);
+      toast.success(data.message || "Client details saved.");
+      setBusy(false);
+      if (onDone) onDone();
+      else router.push(`/clients/${clientId}`);
       router.refresh();
     } catch (error) {
       setFailure(error instanceof Error ? error.message : "Unknown error");
@@ -79,13 +91,26 @@ export function EditClientForm({
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       <Field label="Contact name" hint="The person, not the company">
-        <Input name="name" defaultValue={initial.name} placeholder="Not set" autoComplete="off" />
+        <Input
+          name="name"
+          defaultValue={initial.name}
+          placeholder="Not set"
+          autoComplete="off"
+        />
       </Field>
-      <Field label="Phone" hint="WhatsApp reaches this number. Include the country code.">
-        <Input name="phone" required defaultValue={initial.phone} inputMode="tel" />
+      <Field
+        label="Phone"
+        hint="WhatsApp reaches this number. Pick the country code, or paste the full +… number."
+      >
+        <PhoneInput name="phone" required defaultValue={initial.phone} />
       </Field>
       <Field label="Company">
-        <Input name="company" defaultValue={initial.company} placeholder="Not set" autoComplete="off" />
+        <Input
+          name="company"
+          defaultValue={initial.company}
+          placeholder="Not set"
+          autoComplete="off"
+        />
       </Field>
       <Field label="Email" hint="Optional — WhatsApp is the primary channel">
         <Input
@@ -96,13 +121,18 @@ export function EditClientForm({
           autoComplete="off"
         />
       </Field>
-      <Field label="Industry" hint="Used to suggest the proposal's accent world.">
-        <Input name="industry" defaultValue={initial.industry} placeholder="Not set" autoComplete="off" />
+      <Field
+        label="Industry"
+        hint="Used to suggest the proposal's accent world."
+      >
+        <IndustrySelect name="industry" defaultValue={initial.industry} />
       </Field>
 
-      <p className="telemetry border-t border-border pt-3 text-subtle-foreground">Company identity</p>
+      <p className="telemetry border-t border-border pt-3 text-subtle-foreground">
+        Company identity
+      </p>
       <Field label="Website" hint="Include https://">
-        <Input
+        <UrlInput
           name="website"
           type="url"
           defaultValue={initial.website}
@@ -111,22 +141,40 @@ export function EditClientForm({
         />
       </Field>
       <Field label="Country">
-        <Input name="country" defaultValue={initial.country} placeholder="Not set" autoComplete="off" />
+        <CountrySelect
+          name="country"
+          defaultValue={initial.country}
+          onChange={setCountry}
+        />
       </Field>
       <Field label="Address" hint="As it should appear on an invoice">
-        <Input name="address" defaultValue={initial.address} placeholder="Not set" autoComplete="off" />
-      </Field>
-      <Field label="Billing email" hint="Where invoices go, if not the contact's own email">
         <Input
-          name="billingEmail"
-          type="email"
-          defaultValue={initial.billingEmail}
+          name="address"
+          defaultValue={initial.address}
           placeholder="Not set"
           autoComplete="off"
         />
       </Field>
-      <Field label="Tax ID">
-        <Input name="taxId" defaultValue={initial.taxId} placeholder="Not set" autoComplete="off" />
+      <Field
+        label="Billing email"
+        hint="Where invoices go, if not the contact's own email"
+      >
+        <Input
+          name="billingEmail"
+          type="email"
+          defaultValue={initial.billingEmail}
+          placeholder={initial.email || "Not set"}
+          autoComplete="off"
+        />
+      </Field>
+      <Field label="Tax ID" hint={taxCheck.hint ?? undefined}>
+        <Input
+          name="taxId"
+          defaultValue={initial.taxId}
+          onChange={(event) => setTaxId(event.target.value)}
+          placeholder="Not set"
+          autoComplete="off"
+        />
       </Field>
 
       {failure && (
@@ -138,7 +186,10 @@ export function EditClientForm({
       )}
       {existingId && (
         <p className="text-meta">
-          <Link href={`/clients/${existingId}`} className="font-medium underline underline-offset-2">
+          <Link
+            href={`/clients/${existingId}`}
+            className="font-medium underline underline-offset-2"
+          >
             Open the client that already has this number
           </Link>
         </p>
@@ -149,7 +200,12 @@ export function EditClientForm({
           {busy && <LoadingIcon size="sm" />}
           Save changes
         </Button>
-        <Button type="button" variant="ghost" onClick={() => router.back()} disabled={busy}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => (onDone ? onDone() : router.back())}
+          disabled={busy}
+        >
           Cancel
         </Button>
       </div>

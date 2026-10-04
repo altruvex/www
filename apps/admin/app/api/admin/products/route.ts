@@ -45,7 +45,6 @@ const createSchema = z.object({
   hostingProvider: z.string().max(100).nullable().optional(),
 });
 
-/** How an edited field is named in the activity summary. */
 const FIELD_LABEL: Record<string, string> = {
   name: "name",
   projectId: "project",
@@ -209,8 +208,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     omit: { ingestTokenHash: true },
   });
 
-  // Name what changed in the summary, so the activity feed reads "status,
-  // production URL" rather than a bare "Updated" an operator has to open.
   const changed = Object.keys(patch).filter(
     (k) =>
       existing[k as keyof typeof existing] !== patch[k as keyof typeof patch],

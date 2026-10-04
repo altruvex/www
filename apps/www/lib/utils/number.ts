@@ -1,35 +1,17 @@
-export function localizeNumbers(input: string, locale: string): string {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so call sites keep their shape
+export function localizeNumbers(input: string, _locale: string): string {
   if (!input) return "";
 
   const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
   const latinDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-  const lang = locale.split("-")[0];
-
   let result = input;
-
-  if (lang === "ar") {
-    for (let i = 0; i < 10; i++) {
-      result = result.replace(new RegExp(latinDigits[i], "g"), arabicDigits[i]);
-    }
-    // Separators are converted only in numeric context. This function also
-    // receives whole translated sentences, so a bare `.` must stay a full
-    // stop and a bare `,` must stay a comma — only a separator sitting
-    // BETWEEN two digits is a numeric separator, and only a `%` attached to
-    // a digit is a percent sign.
-    // Lookahead, not a capture, so runs of separators ("1,234,567", "1.2.3")
-    // all match instead of the regex eating the digit the next match needs.
-    result = result.replace(/([٠-٩])\.(?=[٠-٩])/g, "$1٫");
-    result = result.replace(/([٠-٩]),(?=[٠-٩])/g, "$1٬");
-    result = result.replace(/([٠-٩])(\s*)%/g, "$1$2٪");
-  } else {
-    for (let i = 0; i < 10; i++) {
-      result = result.replace(new RegExp(arabicDigits[i], "g"), latinDigits[i]);
-    }
-    result = result.replace(/([0-9])٫(?=[0-9])/g, "$1.");
-    result = result.replace(/([0-9])٬(?=[0-9])/g, "$1,");
-    result = result.replace(/([0-9])(\s*)٪/g, "$1$2%");
+  for (let i = 0; i < 10; i++) {
+    result = result.replace(new RegExp(arabicDigits[i], "g"), latinDigits[i]);
   }
+  result = result.replace(/([0-9])٫(?=[0-9])/g, "$1.");
+  result = result.replace(/([0-9])٬(?=[0-9])/g, "$1,");
+  result = result.replace(/([0-9])(\s*)٪/g, "$1$2%");
 
   return result;
 }
@@ -49,9 +31,6 @@ export function normalizeNumeralsToEnglish(input: string): string {
     result = result.replace(new RegExp(persianDigits[i], "g"), latinDigits[i]);
   }
 
-  // Arabic decimal/thousands/percent marks have no meaning to `Number()` or to
-  // the validation schemas that call this, so they are always folded back to
-  // their ASCII forms — unlike localizeNumbers, this direction is unambiguous.
   result = result
     .replace(/٫/g, ".")
     .replace(/٬/g, ",")
@@ -60,19 +39,10 @@ export function normalizeNumeralsToEnglish(input: string): string {
   return result;
 }
 
-/**
- * An index label ("01 / 03"). Arabic counts without the leading zero
- * ("١ / ٣", not "٠١ / ٠٣"): the padded index is a Latin typographic habit
- * that reads as noise in Arabic. `<Num pad>` is the JSX form of this.
- */
 export function formatIndex(
   value: string | number,
   pad: number,
   locale: string,
 ): string {
-  const text =
-    locale.split("-")[0] === "ar"
-      ? String(value)
-      : String(value).padStart(pad, "0");
-  return localizeNumbers(text, locale);
+  return localizeNumbers(String(value).padStart(pad, "0"), locale);
 }

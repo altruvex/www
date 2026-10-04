@@ -1,7 +1,6 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
 import { Num } from "@/components/ui/num";
 import {
   MOTION,
@@ -21,14 +20,6 @@ interface Problem {
   readonly description: string;
 }
 
-/**
- * CLAIM: what an agency hands over once the site is yours.
- *
- * Five hairline rows, each a framed line drawing of that one problem, its
- * title and a one-line cost. Signature: as a row enters, its drawing draws
- * itself stroke by stroke, the accent stroke last. The markup at rest is
- * fully drawn, which is also what reduced motion and no-JS render.
- */
 export function ProblemSection() {
   const t = useTranslations("problem");
 
@@ -58,8 +49,6 @@ export function ProblemSection() {
           );
           if (!strokes.length) return;
 
-          // Undrawn: dash fully offset, and hidden until its own start so a
-          // round cap never shows as a dot before the stroke draws.
           gsap.set(strokes, {
             strokeDasharray: "1 1",
             strokeDashoffset: 1,
@@ -112,7 +101,7 @@ export function ProblemSection() {
           firstTitle={t("title")}
           secondTitle={t("titleItalic")}
           description={t("subtitle")}
-          className="mb-14 md:mb-20"
+          className="mb-(--heading-gap)"
         />
 
         <ol ref={listRef} className="list-none border-t-2 border-foreground">
@@ -142,13 +131,6 @@ export function ProblemSection() {
             </li>
           ))}
         </ol>
-
-        <div className="mt-10 flex items-center gap-5 lg:mt-14">
-          <p className="max-w-[46ch] text-[clamp(1.25rem,1.9vw,1.5rem)] leading-snug text-foreground">
-            {t("closingPre")} <Highlight>{t("closingHighlight")}</Highlight>
-          </p>
-          <span aria-hidden className="hidden h-px flex-1 bg-border-subtle sm:block" />
-        </div>
       </Container>
     </section>
   );

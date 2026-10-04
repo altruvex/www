@@ -1,10 +1,8 @@
 "use client";
 
-import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/config/commercial";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { readMotionEnv, scrollToY } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
@@ -13,25 +11,8 @@ import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
-/*
- * The curtain footer — prototype A of docs/prototypes/2026-10-footer, with the
- * wordmark Ali asked to keep (2026-10-03).
- *
- * The page lifts off a dark ground that was under it all along: the content
- * wrapper in main-layout-content.tsx carries the background and a panel-lg
- * bottom edge, and this footer sits beneath it, sticky at the bottom. When the
- * footer is taller than the viewport, a negative `bottom` pins its TOP instead,
- * so the reveal always starts at the closing line. Locked dark in both themes:
- * the closing page of the dark sandwich (ADI RUL-134).
- *
- * The wordmark is fitted to the column, never cropped: its width is
- * WORDMARK_EM × font-size in Altruvex Sans 700 at -0.05em, so a font-size of
- * 100cqi / WORDMARK_EM spans the container exactly (globals.css keeps the
- * Latin face and tracking under RTL). It rises once from its own baseline when
- * the page uncovers it; with reduced motion it simply rests.
- */
-const WORDMARK_EM = 3.547; // "Altruvex" advance width, measured
-const WORDMARK_FONT_SIZE = `${Math.floor((100 / WORDMARK_EM) * 10) / 10}cqi`; // 28.1cqi
+const WORDMARK_EM = 3.547;
+const WORDMARK_FONT_SIZE = `${Math.floor((100 / WORDMARK_EM) * 10) / 10}cqi`;
 
 const linkClass =
   "relative inline-flex min-h-8 items-center text-[0.9375rem] text-muted-foreground transition-colors duration-(--motion-instant) hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-xs pointer-coarse:min-h-11 after:absolute after:inset-x-0 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-brand after:transition-transform after:duration-(--motion-drawer) after:ease-(--ease-strong) hover:after:scale-x-100 focus-visible:after:scale-x-100 rtl:after:origin-right";
@@ -41,7 +22,6 @@ type MarkState = "rest" | "armed" | "in";
 export const Footer = memo(function Footer() {
   const t = useTranslations("footer");
   const navT = useTranslations("nav");
-  const tCTAs = useTranslations("commercial.ctas");
   const locale = useLocale();
 
   const footerRef = useRef<HTMLElement>(null);
@@ -49,8 +29,6 @@ export const Footer = memo(function Footer() {
   const [overhang, setOverhang] = useState(0);
   const [markState, setMarkState] = useState<MarkState>("rest");
 
-  // Sticky bottom only holds while the footer fits the viewport; past that,
-  // a negative offset keeps its top in view as the page lifts away.
   useEffect(() => {
     const footer = footerRef.current;
     if (!footer) return;
@@ -66,8 +44,6 @@ export const Footer = memo(function Footer() {
     };
   }, []);
 
-  // The footer is in the viewport from the first frame, under the page, so
-  // "in view" means uncovered: the sheet's bottom edge has passed the mark.
   useEffect(() => {
     const mark = markRef.current;
     const sheet = footerRef.current?.previousElementSibling;
@@ -141,7 +117,6 @@ export const Footer = memo(function Footer() {
       aria-labelledby="footer-close"
       data-scene="inverted"
       data-scene-lock="dark"
-      data-nav-invert
       className="sticky z-0 -mt-(--radius-panel-lg) w-full bg-background"
       style={{ bottom: `${overhang}px` }}
     >
@@ -155,27 +130,14 @@ export const Footer = memo(function Footer() {
             {t("closeLine")}{" "}
             <span className="text-muted-foreground">{t("closeLineDim")}</span>
           </p>
-          <div className="grid items-end gap-7 xl:grid-cols-[1fr_auto]">
-            <p className="max-w-[52ch] text-base leading-relaxed text-muted-foreground">
-              {t("description")}
-            </p>
-            <CtaButtonGroup
-              primary={{
-                href: getCommercialCta("projectRange").href,
-                label: tCTAs("projectRange"),
-              }}
-              secondary={{
-                href: getCommercialCta("technicalCall").href,
-                label: tCTAs("technicalCall"),
-              }}
-              secondaryArrow
-            />
-          </div>
+          <p className="max-w-[52ch] text-base leading-relaxed text-muted-foreground">
+            {t("description")}
+          </p>
         </div>
 
         <nav
           aria-label={t("navLabel")}
-          className="mt-[clamp(3rem,5vw,4.5rem)] grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border-subtle pt-8 lg:grid-cols-4"
+          className="mt-(--section-block) grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border-subtle pt-8 lg:grid-cols-4"
         >
           {linkColumns.map(({ title, links }) => (
             <div key={title}>

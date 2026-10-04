@@ -12,21 +12,10 @@ import type { Role } from "@/lib/nav";
 import { ROLE_LABELS, can, isRole, resolveRole } from "@/lib/rbac";
 import { roleChangeRefusal } from "@/lib/team-rules";
 
-/**
- * Team actions: who is in the OS, what they may do, and which browsers they
- * are signed in from. Every refusal is returned as a sentence, never thrown,
- * because production Next.js replaces a thrown message with a digest.
- *
- * Nothing here ever sees a password or a token. An invitation is Better Auth's
- * own set-password link, generated and mailed inside `auth.api`; this file
- * only asks for it to be sent.
- */
-
 export type ActionResult = { ok: true; message?: string } | { ok: false; message: string };
 
 const refuse = (message: string): ActionResult => ({ ok: false, message });
 
-/** Users who currently resolve to Owner: an explicit opsRole, or a superadmin with none. */
 const OWNERS: Prisma.UserWhereInput = {
   OR: [{ opsRole: "OWNER" }, { opsRole: null, role: "SUPERADMIN" }],
 };
@@ -34,7 +23,6 @@ const OWNERS: Prisma.UserWhereInput = {
 const TEAM_PATHS = ["/team", "/settings"];
 const refresh = () => TEAM_PATHS.forEach((path) => revalidatePath(path));
 
-/** Where the set-password link lands. Must be a public path in proxy.ts. */
 const SET_PASSWORD_PATH = "/reset-password";
 
 export async function inviteMember(input: {
@@ -65,8 +53,6 @@ export async function inviteMember(input: {
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (existing) return refuse("Someone with that email already has an account.");
 
-  // The auth role is ADMIN for everyone invited here: it is what lets them
-  // past the proxy at all. What they may then do is the product role.
   const user = await prisma.user.create({
     data: { email, name, role: "ADMIN", opsRole: role, emailVerified: false },
     select: { id: true, name: true, email: true },
@@ -92,10 +78,6 @@ export async function inviteMember(input: {
   return { ok: true, message: `Invitation sent to ${user.email}.` };
 }
 
-/**
- * Re-sends the set-password link to a member — the invitation again for
- * someone who never set a password, a reset for someone who has.
- */
 export async function sendAccessLink(userId: string): Promise<ActionResult> {
   const operator = await getOperator();
   if (!operator || !can(operator.role, "edit", "team")) {
@@ -139,12 +121,6 @@ export async function sendAccessLink(userId: string): Promise<ActionResult> {
   };
 }
 
-/**
- * Better Auth generates the token, stores its expiry and calls the
- * `sendResetPassword` hook in lib/auth.ts with the URL. The token never
- * passes through this file. An unknown address is answered with success by
- * design (no enumeration), which is fine here: the row was just created.
- */
 async function sendSetPasswordLink(email: string): Promise<ActionResult> {
   try {
     await auth.api.requestPasswordReset({
@@ -199,11 +175,6 @@ export async function setMemberRole(userId: string, next: string): Promise<Actio
   return { ok: true, message: `${label} is now ${ROLE_LABELS[next]}.` };
 }
 
-/**
- * Ends one signed-in browser. Anyone may end their own other sessions; ending
- * someone else's needs the team capability. The session you are using right
- * now is not revocable from here — that is signing out.
- */
 export async function revokeSession(sessionId: string): Promise<ActionResult> {
   const operator = await getOperator();
   if (!operator) return refuse("Sign in again.");
@@ -249,7 +220,6 @@ export async function revokeSession(sessionId: string): Promise<ActionResult> {
   return { ok: true, message: "Session ended." };
 }
 
-/** Ends every session of one member — all but the current one when it is you. */
 export async function revokeAllSessions(userId: string): Promise<ActionResult> {
   const operator = await getOperator();
   if (!operator) return refuse("Sign in again.");

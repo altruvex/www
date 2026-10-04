@@ -1,13 +1,5 @@
 import type { PricingCopy } from "./types";
 
-/**
- * AR copy for every priced entity.
- *
- * Names and descriptions live next to the numbers they describe so a plan
- * cannot be renamed in one surface and not another. Page chrome — headings,
- * eyebrows, FAQ prose — stays in the app's next-intl catalogue; only copy that
- * names or describes a priced thing belongs here.
- */
 export const AR_COPY: PricingCopy = {
   services: {
     website: {
@@ -121,7 +113,7 @@ export const AR_COPY: PricingCopy = {
         "مكالمة إحاطة مدتها ساعة",
       ],
       durationLabel: "المدة",
-      duration: "٥ أيام عمل",
+      duration: "5 أيام عمل",
       priceLabel: "سعر ثابت",
       ctaLabel: "ابدأ بالمراجعة",
       eyebrow: "عرض مدخل محدد النطاق",
@@ -169,7 +161,7 @@ export const AR_COPY: PricingCopy = {
     markupLabel: "الهامش",
     totalLabel: "ما تدفعه",
     pendingLabel: "التسعير قيد الإعداد",
-    vatExcluded: "جميع الأرقام لا تشمل ضريبة القيمة المضافة بنسبة {rate}٪.",
+    vatExcluded: "جميع الأرقام لا تشمل ضريبة القيمة المضافة بنسبة {rate}%.",
     paymentTriggers: [
       "{p} عند البدء",
       "{p} عند مرحلة تطوير متفق عليها",
@@ -260,9 +252,6 @@ export const AR_COPY: PricingCopy = {
         "التحديثات والمراقبة والنسخ الاحتياطي وطلبات التعديل بعد الإطلاق.",
       how: "خطة شهرية",
     },
-    // A matrix window always lands in the 3-10 band in Arabic, which takes the
-    // plural "أسابيع" — the singular accusative "أسبوعاً" is for 11-99 and is
-    // what a literal translation of the EN template would have produced.
     weeksValue: "{weeks} أسابيع",
   },
 };

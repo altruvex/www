@@ -15,9 +15,7 @@ interface DatePickerProps {
   date?: Date;
   onDateChange?: (date: Date | undefined) => void;
   disabled?: boolean;
-  /** Required, with the locale, so no caller can ship English into another language. */
   placeholder: string;
-  /** The page's locale ("en", "ar", ...): picks the date wording, digits and direction. */
   locale: string;
   className?: string;
   minDate?: Date;
@@ -35,13 +33,9 @@ export function DatePicker({
   maxDate,
 }: DatePickerProps) {
   const arabic = locale.startsWith("ar");
-  // Egyptian Arabic writes the date in Arabic-Indic digits, as the rest of
-  // the Arabic site does; Intl does it without a formatting table of our own.
-  // Arabic weekday names do not fit a 32px cell ("خميسجمعة"); the narrow
-  // form is the one Arabic calendars print.
-  const weekday = new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-US", { weekday: arabic ? "narrow" : "short" });
+  const weekday = new Intl.DateTimeFormat(arabic ? "ar-EG-u-nu-latn" : "en-US", { weekday: arabic ? "narrow" : "short" });
   const label = date
-    ? new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-US", { dateStyle: "long" }).format(date)
+    ? new Intl.DateTimeFormat(arabic ? "ar-EG-u-nu-latn" : "en-US", { dateStyle: "long" }).format(date)
     : null;
 
   return (
@@ -68,8 +62,6 @@ export function DatePicker({
           mode="single"
           selected={date}
           onSelect={onDateChange}
-          // In react-day-picker v9, fromDate/toDate only bound navigation - a
-          // past day stayed clickable and the form rejected it after the fact.
           disabled={
             disabled || [
               ...(minDate ? [{ before: minDate }] : []),

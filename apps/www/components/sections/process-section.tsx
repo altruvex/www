@@ -27,9 +27,6 @@ import { SectionHeading } from "./section-heading";
 const HEADLINE_CLASS =
   "max-w-[22ch] text-[clamp(1.5rem,3vw,2.75rem)] leading-[1.15] font-light tracking-[-0.025em] text-balance text-foreground rtl:leading-[1.45] rtl:tracking-normal";
 
-/* The headline read word by word on scroll, as on /process. Only the phase
-   that is open on arrival gets it: a phase the reader opens by hand is
-   already in view, and a scrubbed read would leave it half lit. */
 function ReadHeadline({ text }: { text: string }) {
   const readRef = useWordRead<HTMLParagraphElement>();
   return (
@@ -65,7 +62,6 @@ function PhaseItem({
   const headline = t(`phases.${phase.key}.headline`);
   const panelId = `home-phase-${phase.key}`;
 
-  /* The panel changes the page's height, so every trigger below it moves. */
   const onPanelSettled = (event: TransitionEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) ScrollTrigger.refresh();
   };
@@ -135,16 +131,6 @@ function PhaseItem({
   );
 }
 
-/**
- * CLAIM: the same five phases every time, and none starts before your part
- * in the one before is done.
- * PROOF: /process in short. The homepage draws the pieces /process draws -
- * its phase index, its chapter (name, headline, gate) and its scope bars -
- * so the two surfaces cannot say different things.
- * DEVICE: the phase index as an accordion, one phase open at a time
- * (development on arrival, the longest), then both scopes on one scale and
- * one door to /process. An accordion, not a pin: the homepage keeps zero.
- */
 export const ProcessSection = memo(function ProcessSection() {
   const t = useTranslations("process");
 
@@ -177,7 +163,7 @@ export const ProcessSection = memo(function ProcessSection() {
           firstTitle={first}
           secondTitle={second}
           description={t.rich("subtitle", bodyMarks)}
-          className="mb-14 lg:mb-20"
+          className="mb-(--heading-gap)"
         />
 
         <ol ref={indexRef} className="border-t border-border-mid">
@@ -197,7 +183,7 @@ export const ProcessSection = memo(function ProcessSection() {
           ))}
         </ol>
 
-        <div className="mt-14 lg:mt-20">
+        <div className="mt-(--section-block)">
           <Eyebrow className="mb-8 text-muted-foreground">
             {t("page.scope.title")} {t("page.scope.titleItalic")}
           </Eyebrow>
@@ -206,7 +192,7 @@ export const ProcessSection = memo(function ProcessSection() {
 
         <div
           ref={footerRef}
-          className="mt-12 flex flex-wrap items-center justify-between gap-x-12 gap-y-6 lg:mt-16"
+          className="mt-(--section-block) flex flex-wrap items-center justify-between gap-x-12 gap-y-6"
         >
           <p className="max-w-[46ch] text-[clamp(1.0625rem,1.5vw,1.25rem)] text-foreground">
             {t("footer")}

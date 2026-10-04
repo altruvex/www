@@ -1,114 +1,49 @@
 import { THEME_CROSSFADE } from "@repo/ui/theme-switch";
 
-/**
- * Motion tokens — the single source of truth for every duration, easing
- * curve, spring, travel distance, stagger and scroll-trigger position used by
- * the motion system. Components and presets reference these by name; no
- * magic numbers at call sites.
- *
- * Two families of motion, two kinds of token:
- *
- *   - Time-based (enter/exit reveals, route transitions, scroll-linked):
- *     `duration` + `ease`. The eases are CSS `cubic-bezier()` strings so the
- *     same token drives a CSS transition or a GSAP tween; `lib/utils/gsap.ts`
- *     registers each string as a CustomEase under its own literal.
- *
- *   - Interaction-driven (hover pull, press, tilt): `spring`. A spring has no
- *     duration — it has stiffness/damping/mass and carries velocity across
- *     retargets, which is what makes a hover that changes direction mid-flight
- *     feel physical instead of restarting an ease. Solved analytically in
- *     `utils/spring.ts`.
- *
- * `MOTION.md` at the app root documents the system.
- */
-
 export interface SpringConfig {
-  /** Restoring force (N/m). Higher = faster. */
   stiffness: number;
-  /** Friction. ζ = damping / (2·√(stiffness·mass)); ζ < 1 overshoots. */
   damping: number;
-  /** Inertia. Default 1. */
   mass?: number;
-  /** Rest threshold on displacement (units of the animated value). Default 0.01. */
   restDelta?: number;
-  /** Rest threshold on velocity (units/s). Default 0.1. */
   restSpeed?: number;
 }
 
 export const MOTION = {
-  /**
-   * Eases — CSS cubic-bezier strings. Ease-out dominant for entrances
-   * (design-principles M1); `exit` is the only ease-in.
-   */
   ease: {
-    /** Text reveals: fast start, long settle. */
     text: "cubic-bezier(0.2, 0, 0, 1)",
-    /** Default reveal ease. */
     smooth: "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-    /** Symmetric ease-in-out for scale-type reveals. */
     gentle: "cubic-bezier(0.65, 0, 0.35, 1)",
-    /** Material-style UI ease for small state changes. */
     ui: "cubic-bezier(0.4, 0, 0.2, 1)",
-    /** Quintic-out: hero/route arrivals. */
     strong: "cubic-bezier(0.23, 1, 0.32, 1)",
-    /** Exits may accelerate. */
     exit: "cubic-bezier(0.55, 0, 1, 0.45)",
-    /** Hero headline arrival (GSAP-native quartic-out; no CSS twin). */
     display: "power4.out",
-    /** Opacity-only crossfade in / out: reduced-motion paths and overlay
-        backdrops, where there is no travel for a stronger curve to shape. */
     fade: "power1.out",
     fadeOut: "power1.in",
   },
 
-  /** Durations (seconds). Scale, not use-site names. */
   duration: {
-    /** Press-down, hover colour changes. */
     hover: 0.15,
     micro: 0.15,
-    /** Opacity flips, reduced-motion crossfades. */
     instant: 0.2,
-    /** Drawers, route enter. */
     drawer: 0.3,
-    /** Small element reveals. */
     fast: 0.4,
-    /** Standard reveal. */
     base: 0.7,
-    /** Text reveals. */
     text: 0.9,
-    /** Counters, slides. */
     slow: 1.0,
-    /** Hero headline (word stagger on top). */
     display: 1.1,
-    /** A large media block opening from an inset (useMediaSettle). */
     settle: 1.4,
-    /** A one-shot demonstration the visitor watches play (the maintenance
-        month sweep). The only duration above the reveal scale. */
     sweep: 2.6,
   },
 
-  /**
-   * Springs for interaction-driven motion. ζ noted per token so the feel is
-   * reviewable without running it: ζ≈1 no overshoot, ζ≈0.5 one soft bounce.
-   */
   spring: {
-    /** Press-down: stiff and quick, ζ≈0.64. Settles in ~180ms. */
     press: { stiffness: 700, damping: 34, mass: 1 },
-    /** Press release: one soft overshoot back to rest, ζ≈0.51. */
     release: { stiffness: 380, damping: 20, mass: 1 },
-    /** Magnetic follow: responsive but never snaps, ζ≈0.81. */
     magnetic: { stiffness: 220, damping: 24, mass: 1 },
-    /** Tilt follow, ζ≈0.85. */
-    tilt: { stiffness: 200, damping: 24, mass: 1 },
-    /** General-purpose: crisp, minimal overshoot, ζ≈0.80. */
     snappy: { stiffness: 500, damping: 36, mass: 1 },
-    /** General-purpose: critically damped, ζ≈1.0. */
     gentle: { stiffness: 170, damping: 26, mass: 1 },
-    /** Playful, ζ≈0.46. Use sparingly. */
     bouncy: { stiffness: 300, damping: 16, mass: 1 },
   } satisfies Record<string, SpringConfig>,
 
-  /** Travel distances (px) for reveals. */
   distance: {
     xs: 8,
     sm: 16,
@@ -116,126 +51,82 @@ export const MOTION = {
     lg: 40,
   },
 
-  /** Stagger between siblings (seconds). */
   stagger: {
     tight: 0.04,
-    /** Heading words. */
     word: 0.05,
     base: 0.06,
-    /** Hero headline words. */
     display: 0.07,
     loose: 0.08,
-    /** Between whole headline lines arriving at first paint (utils/arrival.ts):
-        roughly one line's worth of word stagger. */
     line: 0.12,
-    /** Between marks on an annotated document (the consulting brief):
-        slow enough to read each mark land before the next. */
     annotate: 0.15,
-    /** Deliberate one-by-one sequence (the /approach refusals). */
     sequence: 0.22,
   },
 
-  /** ScrollTrigger start positions. */
   trigger: {
     default: "top bottom",
     late: "top 85%",
     latest: "top 75%",
-    /** Early: fires as the block's top clears the bottom tenth. */
     early: "top 90%",
-    /** Hero: fires even slightly below the fold. */
     hero: "top 95%",
-    /** Above-the-fold counters: fire immediately. */
     immediate: "top 110%",
-    /**
-     * A one-shot demonstration the visitor should watch happen (the
-     * maintenance month sweep): waits until the thing is well inside the
-     * viewport, not merely peeking in, so it cannot play out unseen below
-     * the fold or while the page is still settling.
-     */
     inView: "top 60%",
   },
 
-  /** Parallax speeds (fraction of viewport travel) and scrub lag. */
   parallax: {
     slow: 0.15,
-    /** Seconds of scrub catch-up. */
     scrub: 1.5,
   },
 
-  /**
-   * Scroll-owned motion: scrubbed reads, tracks and assemblies, and the glide
-   * a programmatic jump takes (scrollToY). One place, so every scrubbed
-   * sequence on the site keeps the same catch-up feel.
-   */
   scroll: {
-    /** Seconds a programmatic scroll glides through Lenis. */
     glide: 1.1,
-    /** Word-by-word read: starts as the block enters, done well before it leaves. */
     readStart: "top 78%",
     readEnd: "bottom 45%",
-    /** Scrub catch-up (seconds a scrubbed timeline lags the scroll), by
-        role — every `scrub: n` on the site is one of these. */
     scrub: {
-      /** Diagrams that should track the finger almost exactly. */
       tight: 0.3,
-      /** Kinetic tracks. */
       track: 0.5,
-      /** Pieces assembling. */
       assemble: 0.6,
-      /** Pinned stages and staircases. */
       stage: 0.9,
-      /** Pinned tracks and media that should feel weighted. */
       pin: 1,
     },
   },
 
-  /**
-   * prefers-reduced-motion tier. Opacity is a visual change, not vestibular
-   * movement, so a short crossfade stays safe while keeping "new content
-   * arrived" legible. Pressed controls dim instead of scaling.
-   */
   reduced: {
     duration: 0.18,
     ease: "power1.out",
     pressOpacity: 0.7,
   },
 
-  /** Text-reveal shapes per role. Consumed by presets + section hooks. */
   text: {
     heading: { byWord: true, blur: true, duration: 1.1, stagger: 0.05, distance: 40 },
     body: { duration: 0.8, distance: 20 },
     element: { direction: "up" as const, duration: 0.7, distance: 16 },
     card: { duration: 0.7, stagger: 0.08, distance: 24 },
-    /** Max word/char targets that may receive a blur filter. */
     blurCap: 16,
-    /** Total stagger across a phrase is capped so long headlines stay brisk. */
     maxTotalStagger: 0.6,
   },
 
-  /** Section choreography offsets (seconds after the title fires). */
   section: {
     eyebrow: 0,
     description: 0.15,
     element: 0.25,
   },
 
-  /** Anticipation beat shape (design-principles M2). */
   anticipation: { travel: 0.08, durationShare: 0.18, opacity: 0.35 },
 
+  loader: {
+    enter: 0.2,
+    greetHold: 1.0,
+    handover: 0.15,
+    markHold: 0.6,
+    markLift: 0.6,
+  },
+
   accent: {
-    // Gradient shimmer loop (CSS keyframe pan) - seconds per cycle.
     shimmer: { slow: 9, base: 6, fast: 3.5 },
-    // One-shot gradient sweep, orchestrated by useText against the phrase
-    // reveal: duration = text duration * sweepRatio, offset by sweepDelay so
-    // the ink arrives just after the words do.
     sweepRatio: 1.25,
     sweepDelay: 0.12,
   },
 
-  /**
-   * Theme switch crossfade — `{ duration (s), easing }`. Defined once
-   * in @repo/ui/theme-switch so admin and www switch on the same clock.
-   */
   theme: THEME_CROSSFADE,
 
   lenis: {

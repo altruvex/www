@@ -16,59 +16,30 @@ import {
 } from "@/lib/payment-source";
 import { deriveStatus, REVENUE_BEARING } from "@/lib/subscription-lifecycle";
 import { countRenewalsNeedingAttention } from "@/lib/renewals";
-
-/**
- * Recurring revenue and receivables, derived — never stored.
- *
- * MRR counts a retainer when its DERIVED status is revenue-bearing (trialing,
- * active, past due, grace): a row whose stored status is ACTIVE but whose
- * period ended with auto-renew off is expired, and is not revenue. The price
- * per retainer is resolved exactly the way the renewal invoice resolves it
- * (`billedPlanPrice` in lib/billing-interval.ts, the same rule
- * `lib/maintenance-admin.ts` bills by): the plan's published price first,
- * the retainer's quoted monthly price only when the plan is quote-only.
- *
- * Two MRR figures are reported because annual billing is ten paid months per
- * twelve (`MAINTENANCE_PAID_MONTHS`): "contracted" is the monthly rate every
- * active retainer is on; "billed" is what the invoices actually average out
- * to per month once the free months are counted. Whichever is shown, the
- * screen says which — the two differ by exactly the annual discount.
- *
- * Retainers bill in EGP (`RETAINER_CURRENCY`); the figures are keyed by
- * currency anyway so a second retainer currency would appear as a second
- * figure rather than being silently added to the first.
- */
+import { PROJECT_CURRENCY_SELECT, type ProjectCurrencySource } from "@/lib/project-currency";
 
 export interface PlanRevenue {
   planId: string;
   planName: string;
   activeRetainers: number;
-  /** Retainers counted but unpriced: quote-only plan with no quoted figure. */
   unpriced: number;
   contractedMrr: number;
   billedMrr: number;
 }
 
 export interface RevenueMetrics {
-  /** Σ monthly rate of every revenue-bearing retainer, per currency. */
   contractedMrr: Record<string, number>;
-  /** Σ monthly rate × paid months ÷ months in the interval, per currency. */
   billedMrr: Record<string, number>;
   activeRetainers: number;
-  /** Counted in `activeRetainers` but with no resolvable price. */
   unpricedRetainers: number;
   byPlan: PlanRevenue[];
-  /** Unpaid (pending + overdue) payments, per currency. */
   outstanding: Record<string, number>;
   outstandingCount: number;
   overdue: Record<string, number>;
   overdueCount: number;
-  /** The three longest-overdue payments, for a short list with links. */
   topOverdue: OverduePayment[];
-  /** Pending, not overdue, due within `DUE_SOON_DAYS` (lib/payment-overdue.ts). */
   dueSoon: Record<string, number>;
   dueSoonCount: number;
-  /** PAID with `paidAt` in the current calendar month, per currency. */
   collectedThisMonth: Record<string, number>;
   renewalsNeedingAttention: number;
 }
@@ -80,7 +51,6 @@ export interface OverduePayment {
   currency: string;
 }
 
-/** "Annual retainers bill 10 of 12 months" — from the schema, so the screen cannot drift from the rule. */
 export const ANNUAL_BILLING_NOTE = `Annual retainers bill ${MAINTENANCE_PAID_MONTHS.annual} of ${
   MAINTENANCE_PAID_MONTHS.annual + maintenanceFreeMonths("annual")
 } months`;
@@ -124,7 +94,7 @@ export async function getRevenueMetrics(
           select: {
             id: true,
             name: true,
-            contract: { select: { proposal: { select: { currency: true } } } },
+            ...PROJECT_CURRENCY_SELECT,
           },
         },
         subscription: { select: { planId: true } },
@@ -141,7 +111,7 @@ export async function getRevenueMetrics(
         amount: true,
         project: {
           select: {
-            contract: { select: { proposal: { select: { currency: true } } } },
+            ...PROJECT_CURRENCY_SELECT,
           },
         },
         service: { select: { currency: true } },
@@ -190,8 +160,6 @@ export async function getRevenueMetrics(
       const interval = MAINTENANCE_INTERVAL[sub.billingInterval];
       const paidMonths = MAINTENANCE_PAID_MONTHS[interval];
       const totalMonths = paidMonths + maintenanceFreeMonths(interval);
-      // Rounded per retainer so the total is a sum of whole-unit figures,
-      // the same way each retainer's own invoice is a whole-unit amount.
       const billed = Math.round((monthly * paidMonths) / totalMonths);
       entry.contractedMrr += monthly;
       entry.billedMrr += billed;
@@ -213,7 +181,6 @@ export async function getRevenueMetrics(
     if (isPaymentOverdue(payment, now)) {
       overdueCount += 1;
       add(overdue, currency, payment.amount);
-      // `unpaid` is ordered by due date, so the first three are the longest overdue.
       if (topOverdue.length < 3) {
         topOverdue.push({
           id: payment.id,
@@ -252,9 +219,8 @@ export async function getRevenueMetrics(
   };
 }
 
-/** A service term bills in the service's currency; everything else follows the project's contract, retainers EGP. */
 function currencyOf(payment: {
-  project: { contract: { proposal: { currency: string } } } | null;
+  project: ProjectCurrencySource | null;
   service: { currency: string } | null;
 }): string {
   return payment.service?.currency ?? paymentCurrency(payment);

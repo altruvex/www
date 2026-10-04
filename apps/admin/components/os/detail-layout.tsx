@@ -1,15 +1,7 @@
 import * as React from "react";
+import { Hint } from "@repo/ui";
 import { cn } from "@/lib/utils";
 
-/**
- * §30 — the fixed anatomy of every detail page:
- *   header (identity · status · primary actions)   — passed in above this
- *   main   (overview, related entities, timeline)
- *   aside  (metadata, owner, dates, tags, quick actions)
- *
- * The aside is BELOW main on mobile, not hidden: metadata is often the reason
- * you opened the record on your phone.
- */
 export function DetailLayout({
   children,
   aside,
@@ -27,7 +19,6 @@ export function DetailLayout({
   );
 }
 
-/** Definition list used in the aside. Labels are mono, values are readable. */
 export function MetaList({
   items,
   className,
@@ -39,9 +30,18 @@ export function MetaList({
     <dl className={cn("divide-y divide-border", className)}>
       {items.map((item) => (
         <div key={item.label} className="flex items-start justify-between gap-3 px-3 py-2">
-          <dt className="telemetry shrink-0 pt-0.5 text-subtle-foreground" title={item.hint}>
-            {item.label}
-          </dt>
+          <Hint label={item.hint}>
+            <dt
+              tabIndex={item.hint ? 0 : undefined}
+              className={cn(
+                "telemetry shrink-0 pt-0.5 text-subtle-foreground",
+                item.hint &&
+                  "cursor-help rounded-xs underline decoration-dotted underline-offset-2 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+              )}
+            >
+              {item.label}
+            </dt>
+          </Hint>
           <dd className="min-w-0 text-end text-base">{item.value ?? "—"}</dd>
         </div>
       ))}
@@ -49,11 +49,7 @@ export function MetaList({
   );
 }
 
-/** Vertical stack of quick actions in the aside. */
 export function QuickActions({ children }: { children: React.ReactNode }) {
-  // A stacked list of full-width actions reads as a menu, so the label starts at
-  // the inline edge — Button centres its content by default, which is right for a
-  // toolbar and wrong for a stack.
   return (
     <div className="flex flex-col gap-1.5 p-3 [&>*]:w-full [&>*]:justify-start">{children}</div>
   );

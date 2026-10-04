@@ -1,6 +1,9 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink, Siren } from "lucide-react";
+
+import { DropdownMenuItem } from "@repo/ui";
 
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
@@ -26,25 +29,27 @@ export interface DeploymentRow {
   rolledBackByNumber: number | null;
   failureReason: string | null;
   url: string | null;
-  /** `url` when it parses as http(s) — decided on the server; null means "do not link". */
   safeUrl: string | null;
   at: string;
+  inspectHref: string;
 }
 
 export function DeploymentsTable({
   rows,
   toolbar,
   empty,
+  canDelete,
+  canOpenIncident = false,
 }: {
   rows: DeploymentRow[];
   toolbar?: React.ReactNode;
   empty: React.ReactNode;
+  canDelete: boolean;
+  canOpenIncident?: boolean;
 }) {
   const del = useRecordDelete({ entity: "deployment" });
   const columns: Column<DeploymentRow>[] = [
     {
-      // The identity column is the row's link (DataTable wraps it), so it holds
-      // no links of its own; product and client get their own column below.
       id: "deployment",
       header: "Deploy",
       hideable: false,
@@ -94,8 +99,6 @@ export function DeploymentsTable({
           variant="dot"
         />
       ),
-      // Failures first: this table is scanned for what went wrong, not for what
-      // routinely worked.
       sortValue: (row) =>
         [
           "FAILED",
@@ -124,7 +127,6 @@ export function DeploymentsTable({
       id: "version",
       header: "Version",
       width: "150px",
-      // The identity column already shows the version; this one adds the sha.
       defaultHidden: true,
       mono: true,
       cell: (row) => (
@@ -215,7 +217,7 @@ export function DeploymentsTable({
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        rowHref={(row) => `/deployments/${row.id}`}
+        rowHref={(row) => row.inspectHref}
         mobile={{
           title: "deployment",
           subtitle: "product",
@@ -223,17 +225,34 @@ export function DeploymentsTable({
         }}
         searchPlaceholder="Search product, version, commit…"
         initialSort={{ columnId: "at", dir: "asc" }}
-        rowActions={(row) => (
-          <RowActions
-            onDelete={() =>
-              del.request({
-                id: row.id,
-                label: `${row.productName} · deployment ${row.number}`,
-              })
-            }
-          />
-        )}
-        // The list is one cursor page; DataTable's own pager would page inside it.
+        rowActions={canDelete || canOpenIncident ? (row) => {
+          const raise = canOpenIncident && row.status === "FAILED";
+          if (!canDelete && !raise) return null;
+          return (
+            <RowActions
+              onDelete={
+                canDelete
+                  ? () =>
+                      del.request({
+                        id: row.id,
+                        label: `${row.productName} · deployment ${row.number}`,
+                      })
+                  : undefined
+              }
+            >
+              {raise && (
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/incidents?new=incident&product=${row.productId}&deployment=${row.id}`}
+                  >
+                    <Siren className="size-3.5" />
+                    Open an incident
+                  </Link>
+                </DropdownMenuItem>
+              )}
+            </RowActions>
+          );
+        } : undefined}
         pageSize={null}
         toolbar={toolbar}
         empty={<EmptyInline>{empty}</EmptyInline>}

@@ -4,14 +4,6 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
-/**
- * The side panel. This app's default for contextual editing.
- *
- * Design law: a modal dialog steals the whole screen to ask one question and
- * hides the record you are editing. A side panel keeps the list visible behind
- * it, so an operator can see the row change. Modals here are reserved for
- * genuinely destructive confirmation (see alert-dialog).
- */
 export const Sheet = DialogPrimitive.Root;
 export const SheetTrigger = DialogPrimitive.Trigger;
 
@@ -60,6 +52,7 @@ export function SheetContent({
         <DialogPrimitive.Close
           className={cn(
             "absolute end-3 top-3 rounded-sm p-1 text-subtle-foreground",
+            "pointer-coarse:end-0.5 pointer-coarse:top-0.5 pointer-coarse:p-[15px]",
             "transition-colors duration-[var(--dur-state)] hover:bg-surface-2 hover:text-foreground",
           )}
         >

@@ -6,21 +6,10 @@ import { prisma, type Client, type Contract, type SignVerificationChannel } from
 import { emailTransport, looksLikeAnAddress, sendEmail } from "@/lib/email";
 import { sendTemplateMessage } from "@/lib/whatsapp-api";
 
-/**
- * Proving the signer is the designated person, not whoever holds the link.
- *
- * A sign link can be forwarded, left open on a shared screen, or read over a
- * shoulder. So the link alone no longer signs: a six-digit code goes to the
- * signer's own WhatsApp or mailbox, and the signature is accepted only with it.
- * What that proves is control of that number or address — the evidence is
- * recorded on the contract as exactly that, never as proof of identity.
- */
-
 export const CODE_TTL_MINUTES = 10;
 export const MAX_ATTEMPTS = 5;
 export const RESEND_COOLDOWN_SECONDS = 60;
 
-/** Must exist as an approved authentication template in Meta Business Manager. */
 export const WHATSAPP_CODE_TEMPLATE = "signature_code";
 
 export type ChannelKey = "whatsapp" | "email";
@@ -46,7 +35,6 @@ export function whatsappConfigured(): boolean {
   return Boolean(process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID);
 }
 
-/** Channels a code can actually be delivered on — an address exists and a transport is set up. */
 export function availableChannels(signer: Signer): { channel: ChannelKey; hint: string }[] {
   const channels: { channel: ChannelKey; hint: string }[] = [];
   if (signer.phone && whatsappConfigured()) {
@@ -89,10 +77,6 @@ export class CodeDeliveryError extends Error {
   }
 }
 
-/**
- * Issues a fresh code and delivers it. The previous code stops working the
- * moment this one is stored, and the attempt counter starts again.
- */
 export async function issueSignCode(input: {
   contract: Pick<Contract, "id" | "clientId">;
   client: Pick<Client, "name" | "company">;
@@ -144,7 +128,6 @@ export async function issueSignCode(input: {
     });
     return { hint: maskEmail(signer.email), expiresAt };
   } catch (error) {
-    // A code nobody received must not stay valid.
     await prisma.contract.update({
       where: { id: contract.id },
       data: { signCodeHash: null, signCodeExpiresAt: null },

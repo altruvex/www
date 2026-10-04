@@ -19,7 +19,6 @@ export interface BatchConfig {
   trigger?: string | MotionTrigger;
   once?: boolean;
   selector?: string;
-  /** Alternate odd/even items from opposite inline sides (needs a horizontal direction). */
   alternate?: boolean;
   batchMax?: number;
 }
@@ -45,7 +44,6 @@ const OPPOSITE: Partial<Record<RevealDirection, RevealDirection>> = {
   end: "start",
 };
 
-/** Reduced-motion stagger: kept tiny because it costs no vestibular risk and preserves "arriving as a group". */
 const REDUCED_STAGGER = 0.02;
 
 export function useBatch<T extends HTMLElement = HTMLDivElement>(
@@ -91,7 +89,6 @@ export function useBatch<T extends HTMLElement = HTMLDivElement>(
           (context) => {
             const { reduced } = context.conditions as { reduced: boolean };
 
-            // ── Reduced-motion tier ──────────────────────────────────────
             if (reduced) {
               gsap.fromTo(
                 items,

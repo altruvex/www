@@ -1,13 +1,5 @@
 import type { PricingCopy } from "./types";
 
-/**
- * EN copy for every priced entity.
- *
- * Names and descriptions live next to the numbers they describe so a plan
- * cannot be renamed in one surface and not another. Page chrome — headings,
- * eyebrows, FAQ prose — stays in the app's next-intl catalogue; only copy that
- * names or describes a priced thing belongs here.
- */
 export const EN_COPY: PricingCopy = {
   services: {
     website: {

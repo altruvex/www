@@ -3,19 +3,6 @@
 import { fillTemplate } from "@repo/pricing-schema";
 import * as React from "react";
 
-/**
- * Resolved pricing tokens for prose.
- *
- * Some client-facing copy is a sentence that happens to quote a price — an FAQ
- * answer, the homepage quote artifact. Those live in the next-intl catalogue
- * because they are prose, and they carry a `{token}` where the figure goes.
- *
- * Resolution has to happen on the server (the overrides live in the database),
- * but the components that render this prose are client components, and one of
- * them is behind a dynamic import. Passing a resolved token map down through
- * context is what lets those components stay client-side without every page in
- * between having to know about pricing.
- */
 const PricingTokensContext = React.createContext<Readonly<Record<string, string>>>({});
 
 export function PricingTokensProvider({
@@ -32,25 +19,10 @@ export function PricingTokensProvider({
   );
 }
 
-/**
- * The resolved token map itself.
- *
- * `t.rich` parses its message as ICU and returns a ReactNode, so prose that
- * carries both rich tags and a `{token}` cannot be post-processed as a string
- * — the token has to be handed to next-intl as a value instead. This is the
- * hook for that case; everything else wants `useFillPricingTokens`.
- */
 export function usePricingTokens(): Readonly<Record<string, string>> {
   return React.useContext(PricingTokensContext);
 }
 
-/**
- * Fills `{token}` placeholders in a prose string.
- *
- * Falls back to leaving the text untouched if no provider is present, so a
- * component rendered outside the tree degrades to showing the raw copy rather
- * than crashing.
- */
 export function useFillPricingTokens(): (text: string) => string {
   const tokens = React.useContext(PricingTokensContext);
   return React.useCallback((text: string) => fillTemplate(text, tokens), [tokens]);

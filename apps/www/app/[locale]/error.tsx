@@ -75,7 +75,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
       <div
         aria-hidden="true"
-        className="pointer-events-none select-none absolute bottom-0 ltr:right-0 rtl:left-0 leading-none font-sans font-semibold tracking-tighter text-foreground/1.5"
+        className="pointer-events-none select-none absolute bottom-0 end-0 leading-none font-sans font-semibold tracking-tighter text-foreground/1.5"
         style={{ fontSize: "clamp(120px, 22vw, 340px)", lineHeight: 0.85 }}
       >
         {errorInfo.code}
@@ -115,7 +115,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
               {errorInfo.message}
             </p>
             {error.digest && (
-              <div className="mb-12 w-full max-w-md text-left rtl:text-right">
+              <div className="mb-12 w-full max-w-md text-start">
                 <details className="group rounded-panel-sm border border-border-subtle bg-foreground/1.5 p-4 transition-all hover:border-foreground/20 hover:bg-foreground/2">
                   <summary
                     className={cn(

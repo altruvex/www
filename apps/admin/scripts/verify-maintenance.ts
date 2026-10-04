@@ -1,18 +1,3 @@
-/**
- * End-to-end maintenance checks against a real database.
- *
- * The client portal and the admin screen compute allowance usage from the same
- * cycle logic and the same resolved plan. If they ever disagree, a client is
- * told one thing and billed another — so the agreement is asserted here rather
- * than assumed from the fact that both call the same helper.
- *
- * Needs a database. Skips cleanly without one, so it can sit in a pipeline that
- * does not always have Postgres:
- *
- *   cd apps/admin && DATABASE_URL=... bun run verify:maintenance
- *
- * It writes and then removes its own records; point it at a scratch database.
- */
 import { prisma } from "@repo/database";
 import { formatMoney, maintenanceIntervalPrice, pricingCopy } from "@repo/pricing-schema";
 import {
@@ -61,9 +46,6 @@ try {
     `plan and cap resolve from the pricing schema (${sub.planName}, cap ${sub.requestsPerCycle})`,
   );
 
-  // Starting a retainer invoices its first period, at the schema's price for
-  // the interval, in the same transaction — a retainer is never live and
-  // unbilled by accident.
   const firstPrice = maintenanceIntervalPrice((await getPricing()).maintenance.essential, "monthly");
   check(
     sub.payments.length === 1 && sub.currentPeriodPayment !== null,
@@ -133,7 +115,6 @@ try {
       yearlyAdmin.planPriceSuffix === yearlyPortal.planPriceSuffix,
     "admin and the client portal price the year the same way",
   );
-  // The cap is per month on every interval (ruling 2026-10-02).
   check(
     yearlyAdmin.requestsPerCycle === 2 && yearlyPortal.requestsPerCycle === 2,
     "the cap is still the monthly one, not twelve months of it",
@@ -149,9 +130,6 @@ try {
   );
 
   console.log("\n[7] A quoted retainer");
-  // Enterprise publishes no price. Until a quote is set both sides read the
-  // custom-quote wording; once set, both price the interval from it by the
-  // schema's rule, and they agree.
   await setSubscriptionStatus(yearly.id!, "CANCELLED", "verify");
   const quotedSub = await createSubscription(client.id, "enterprise", "verify", "ANNUAL");
   check(quotedSub.ok, "an enterprise retainer can be started");
@@ -211,8 +189,6 @@ try {
   await setSubscriptionStatus(quotedSub.id!, "CANCELLED", "verify");
   check(!(await changePlan(quotedSub.id!, "essential", "verify")).ok, "a cancelled retainer cannot change plan");
 } finally {
-  // Cascades remove the subscription and its requests with the client; the
-  // period payments it opened would survive (SetNull), so they go first.
   await prisma.payment.deleteMany({ where: { subscription: { clientId: client.id } } }).catch(() => {});
   await prisma.pricingChangeLog.deleteMany({ where: { changedBy: "verify" } });
   await prisma.client.delete({ where: { id: client.id } }).catch(() => {});

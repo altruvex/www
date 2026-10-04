@@ -16,11 +16,30 @@ node_modules
 !.env.example
 !.env.*.example
 
-# Agent / tooling state
+# Agent / tooling state — AI assistant instructions, skills and memory stay local
 .claude
 .agents
 skills-lock.json
 graphify-out/
+CLAUDE.md
+CLAUDE.local.md
+docs/claude/
+AGENTS.md
+GEMINI.md
+.mcp.json
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.codex/
+.gemini/
+.aider*
+.github/copilot-instructions.md
+
+# Internal working material (not published)
+docs/prototypes/
+docs/*audit*
+SECURITY.md
 
 # Testing
 coverage
@@ -81,3 +100,7 @@ ehthumbs.db
 # Internal security notes (not published)
 SECURITY_AUDIT.md
 SECURITY_TODO.md
+.env*
+
+# Production env exports for the Vercel dashboard (secrets)
+altruvex-*.env

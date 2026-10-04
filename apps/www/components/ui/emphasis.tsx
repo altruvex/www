@@ -60,21 +60,9 @@ interface AccentProps extends ComponentPropsWithoutRef<"span"> {
 
 const HIGHLIGHT_TONES = {
   muted: "text-muted-foreground",
-  // Solid in RTL: the motion splitter wraps each Arabic word in its own span
-  // (lib/motion/utils/splite.ts) to animate word-by-word, and cursive Arabic
-  // shaping doesn't survive that split cleanly — adjacent word spans can get
-  // slightly overlapping glyph boxes. Two overlapping *translucent* fills
-  // compound their alpha and read as a darker, doubled ghost at the seam; a
-  // solid fill can't compound. `--muted-foreground` is the same token the
-  // sibling description text already renders at, so the dimmed line stays
-  // legible instead of merely matching its LTR alpha value.
   soft: "text-foreground/45 rtl:text-muted-foreground",
   surface: "text-s-mid",
   contrast: "text-foreground",
-  /* The italic clause wearing its section's world gradient instead of a
-     dimmed ink. Only meaningful inside an `accent-world-*` wrapper; it keeps
-     the italic face, only the colour changes. `box-decoration-break: clone` gives each wrapped line
-     the whole gradient rather than one line starting mid-sweep. */
   world:
     "accent-world bg-clip-text text-transparent from-(--grad-from) via-(--grad-via) to-(--grad-to) bg-linear-to-r rtl:bg-linear-to-l [box-decoration-break:clone] [-webkit-box-decoration-break:clone] pe-[0.08em]",
 } as const;
@@ -90,16 +78,8 @@ export const Highlight = forwardRef<HTMLElement, HighlightProps>(
     return (
       <em
         ref={ref}
-        // The text splitter keys on this attribute to repaint the gradient per
-        // word (lib/motion/utils/splite.ts); without it a split clause would
-        // tear into transparent fragments.
         {...(tone === "world" ? { "data-accent-grad": "", "data-accent-italic": "" } : {})}
         className={cn(
-          // The drawn italic of Altruvex Sans for the Latin emphasis clause
-          // (2026-10-03), replacing the Georgia stopgap of 2026-10-02 (a
-          // mechanically slanted Altruvex Sans had been judged worse than
-          // Georgia). Arabic has no italic, so Arabic emphasis stays the brand
-          // face in bold.
           "italic font-light",
           HIGHLIGHT_TONES[tone],
           "rtl:font-sans rtl:not-italic rtl:font-bold",
@@ -152,15 +132,6 @@ export const Accent = forwardRef<HTMLSpanElement, AccentProps>(
             ? "text-local-accent-text"
             : cn(
                 "bg-clip-text text-transparent",
-                // background-clip:text paints only inside the element's box, and the box is the
-                // line box (inline-block) or the font's content area (inline), both shallower than
-                // Arabic ink: dots under yeh/beh and deep descenders below, shadda/fatha above, and
-                // a Latin descender's tail past the end of a tracked-in line. Each value is the
-                // measured need in the brand fonts (Altruvex Sans, line-height 1.3 AR / 1.08 EN,
-                // 48-120px, weights 400/700) plus a hair; the equal negative margin cancels it so
-                // the layout box does not move. packages/brand-font/proofs/a4-regress.html mirrors
-                // these six classes and tests/test_regress.py fails when they differ. A caller that
-                // sets its own top margin must subtract the top pad (section-heading.tsx does).
                 "pt-[0.36em] pb-[0.13em] pe-[0.02em] -mt-[0.36em] -mb-[0.13em] -me-[0.02em]",
                 DIRECTION_CLASSES[direction],
                 accentClass,

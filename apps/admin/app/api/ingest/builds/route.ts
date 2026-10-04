@@ -4,26 +4,9 @@ import { z } from "zod";
 import { environmentSchema, readIngestJson, withIngestToken } from "@/lib/ingest";
 import { announceBuild, writeBuild } from "@/lib/ingest-writers";
 
-/**
- * Build telemetry from CI (§7).
- *
- *   POST /api/ingest/builds
- *   Authorization: Bearer avx_ingest_…
- *   { "externalId": "run-8412", "status": "RUNNING", "branch": "main", … }
- *
- * Upserts on `externalId` so a pipeline can post the same build repeatedly as
- * it progresses (QUEUED → RUNNING → SUCCEEDED) without creating three rows.
- * A pipeline that posts no `externalId` gets a new build each time, which is
- * the correct reading of "this is a different build".
- *
- * The row itself is written by `lib/ingest-writers.ts`, shared with the GitHub
- * webhook receiver so both transports produce an identical build.
- */
-
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
-  /** The CI system's own id for the run. The idempotency key. */
   externalId: z.string().min(1).max(200).optional(),
   status: z.enum(["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]),
   environment: environmentSchema,

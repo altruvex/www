@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Siren } from "lucide-react";
 
 import { Button } from "@repo/ui";
 import { prisma } from "@repo/database";
@@ -13,10 +13,14 @@ import { EntityLink } from "@/components/os/entity-link";
 import { AlertBar } from "@/components/os/error-state";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel, PanelLink } from "@/components/os/panel";
-import { StatusPill } from "@/components/ui/badge";
+import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { getDeployment, listLogs } from "@/lib/engineering";
 import { dateTime, when } from "@/lib/format";
 import { githubRepoSlug } from "@/lib/github";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
 import {
   ExternalUrl,
@@ -30,26 +34,24 @@ import {
 
 export const dynamic = "force-dynamic";
 
-/**
- * One deployment, as CI reported it.
- *
- * Read-only on purpose: every field here was written by a pipeline through
- * `/api/ingest/*` or the GitHub webhook. A redeploy or rollback button would
- * be a claim this app cannot back — the pipeline is what deploys — so the page
- * links out to where the evidence lives instead (the build, the commit, the
- * logs, the incidents raised against it).
- */
 export default async function DeploymentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const denied = await gateRoute("/deployments/[id]");
+  if (denied) return denied;
+  const role = await currentRole();
+  const canDelete = can(role, "delete", "project");
+  const canOpenIncident =
+    can(role, "create", "incident") && roleCanOpen(role, "/incidents");
+
   const { id } = await params;
   const deployment = await getDeployment(id);
   if (!deployment) notFound();
 
   const [logs, repo] = await Promise.all([
-    listLogs({ deploymentId: deployment.id }),
+    listLogs({ deploymentId: deployment.id, pageSize: 20 }),
     prisma.product.findUnique({
       where: { id: deployment.productId },
       select: { repositoryUrl: true },
@@ -65,6 +67,10 @@ export default async function DeploymentPage({
   const visit = safeHttpUrl(deployment.url);
   const openIncidents = deployment.incidents.filter((i) => i.status !== "RESOLVED");
   const elapsed = span(deployment.startedAt, deployment.finishedAt);
+  const raiseIncident =
+    canOpenIncident &&
+    deployment.status === "FAILED" &&
+    openIncidents.length === 0;
 
   return (
     <div className="space-y-4">
@@ -78,6 +84,7 @@ export default async function DeploymentPage({
         status={<StatusPill registry="deploymentStatus" value={deployment.status} />}
         meta={
           <span className="inline-flex items-center gap-2 text-meta text-subtle-foreground">
+            <ToneBadge tone="neutral">Written by CI</ToneBadge>
             <StatusPill registry="deployEnvironment" value={deployment.environment} variant="dot" />
             {deployment.version ? <span className="font-mono">{deployment.version}</span> : null}
             <span>{when(deployment.finishedAt ?? deployment.createdAt)}</span>
@@ -106,12 +113,24 @@ export default async function DeploymentPage({
                 </a>
               </Button>
             )}
-            <DeleteRecordButton
-              entity="deployment"
-              id={deployment.id}
-              label={`${product.name} · deployment ${deployment.number}`}
-              redirectTo="/deployments"
-            />
+            {raiseIncident && (
+              <Button asChild variant="outline">
+                <Link
+                  href={`/incidents?new=incident&product=${product.id}&deployment=${deployment.id}`}
+                >
+                  <Siren className="size-3.5" aria-hidden />
+                  Open an incident
+                </Link>
+              </Button>
+            )}
+            {canDelete && (
+              <DeleteRecordButton
+                entity="deployment"
+                id={deployment.id}
+                label={`${product.name} · deployment ${deployment.number}`}
+                redirectTo="/deployments"
+              />
+            )}
           </>
         }
       />

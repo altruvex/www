@@ -7,15 +7,6 @@ import {
   type ServiceId,
 } from "@repo/pricing-schema";
 
-/**
- * The three payment triggers, in `paymentSplit` order, without their figures.
- *
- * The schema sentence is "{percent} at a development milestone"; a proposal
- * deck and a contract print the percent in its own column, so the trigger is
- * that sentence with the figure removed. Reading it from the schema is what
- * keeps the pricing page, the deck and the signed contract naming the same
- * milestone — none of them types "design approval" or "midpoint" on its own.
- */
 export function paymentTriggers(
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): [string, string, string] {
@@ -28,7 +19,6 @@ export function paymentTriggers(
   return [wording(0), wording(1), wording(2)];
 }
 
-/** The PAYMENT key term: the schedule in one line, figures from the schema. */
 export function paymentTermText(
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): string {
@@ -115,8 +105,6 @@ const PROGRESS_TARGETS: { label: string; percent: number }[] = [
   { label: "SEO Readiness", percent: 100 },
 ];
 
-// Phase allocation as a share of the total timeline — same structure
-// regardless of project type, only the deliverable copy varies.
 const PHASE_SHARE: { name: string; share: number }[] = [
   { name: "Discovery", share: 0.1 },
   { name: "Design", share: 0.2 },
@@ -186,8 +174,6 @@ export function getTimelinePhases(
   const floored = rawWeeks.map((w) => Math.max(1, Math.floor(w)));
   let remainder = totalWeeks - floored.reduce((sum, w) => sum + w, 0);
 
-  // Distribute leftover weeks to the phases with the largest fractional
-  // remainder first, so the phases always sum to exactly totalWeeks.
   const byFracDesc = rawWeeks
     .map((w, i) => ({ i, frac: w - Math.floor(w) }))
     .sort((a, b) => b.frac - a.frac);
@@ -198,13 +184,6 @@ export function getTimelinePhases(
     remainder--;
   }
 
-  // The Math.max(1, ...) floor above can push the total *past* totalWeeks
-  // for a short timeline (many phases each rounding up to a 1-week
-  // minimum) — remainder goes negative. Claw the excess back from the
-  // phases with the weakest claim to their current week (smallest
-  // fractional share first), never below the 1-week floor, so every
-  // timeline always sums to exactly totalWeeks instead of silently
-  // drifting over it.
   const byFracAsc = [...byFracDesc].reverse();
   for (const { i } of byFracAsc) {
     if (remainder >= 0) break;
@@ -220,10 +199,6 @@ export function getTimelinePhases(
   }));
 }
 
-// Effort curve across the project's weeks, as a percentage of peak load:
-// slow start, peak during build, taper into launch. The reference deck's
-// six-week chart IS this profile; other durations resample it, so the shape
-// holds instead of every bar rendering at one constant height.
 const WEEKLY_LOAD_PROFILE = [30, 60, 100, 75, 45, 35];
 
 export function getWeeklyLoad(totalWeeks: number): number[] {
@@ -249,8 +224,6 @@ const LINE_ITEM_SPLIT: { name: string; share: number }[] = [
   { name: "Project Management", share: 0.1 },
 ];
 
-/** Default line-item breakdown for a total price — the calculator's
- * starting point; Ali edits amounts/names before generating (§5.1 rule 3). */
 export function getDefaultLineItems(totalPrice: number): LineItem[] {
   const rounding = 500;
   const items = LINE_ITEM_SPLIT.map((item) => ({
@@ -277,8 +250,6 @@ export const CONTACT = {
   website: "altruvex.com",
 };
 
-// Shared between the proposal (slide 6) and the contract (SOW clause) so the
-// two documents never quote different scope for the same deal.
 export const SCOPE_INCLUDED = [
   "Custom design & development",
   "Responsive, mobile-first build",

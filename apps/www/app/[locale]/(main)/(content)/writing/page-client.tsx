@@ -1,14 +1,13 @@
 "use client";
-import { localizeNumbers } from "@/lib/utils/number";
-import { Num } from "@/components/ui/num";
 import { Container } from "@/components/shared/container";
-import { PageHero } from "@/components/sections/page-hero";
+import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { Link } from "@/i18n/navigation";
-import { useSectionCardGrid, useSectionDescription } from "@/lib/motion";
+import { Highlight } from "@/components/ui/emphasis";
+import { Eyebrow } from "@/components/ui/eyebrow";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
+import { WritingIndex } from "./writing-index";
 
 type WritingPageClientProps = {
   articles: ArticleListItem[];
@@ -22,14 +21,12 @@ export default function WritingPage({
   return (
     <div className="relative min-h-screen w-full">
       <OpeningSection />
-      <IntroSection />
-      <ListSection articles={articles} locale={locale} />
+      <WritingIndex articles={articles} locale={locale} />
       <WritingEndCta />
     </div>
   );
 }
 
-/** A reader is early; the close offers the estimator, which needs no call. */
 function WritingEndCta() {
   const t = useTranslations("common.endCta.pages.writing");
 
@@ -48,107 +45,35 @@ function OpeningSection() {
   const t = useTranslations("writing");
 
   return (
-    <PageHero
-      eyebrow={t("eyebrow")}
-      title={t("hero.title")}
-      titleItalic={t("hero.titleItalic")}
-      description={t("hero.description")}
-    />
-  );
-}
+    <section className="accent-world-blue pt-(--section-y-top)">
+      <Container className="pt-10 md:pt-14">
+        <HeroReveal delay={0.2} className="mb-6">
+          <Eyebrow>{t("eyebrow")}</Eyebrow>
+        </HeroReveal>
 
-function IntroSection() {
-  const t = useTranslations("writing.intro");
-  const descRef = useSectionDescription<HTMLDivElement>();
-
-  return (
-    <section className="accent-world-blue pt-(--section-y-top) pb-0">
-      <Container>
-        <div
-          ref={descRef}
-          className="max-w-3xl space-y-5 text-base text-primary/60 leading-relaxed"
+        <HeroHeadline
+          as="h1"
+          className="max-w-[14ch] text-balance font-sans text-[clamp(2.75rem,7vw,7rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground select-none rtl:max-w-[16ch] rtl:leading-[1.2] rtl:tracking-normal"
         >
-          <p>{t.rich("paragraph1", bodyMarks)}</p>
-          <p>{t.rich("paragraph2", bodyMarks)}</p>
-        </div>
-      </Container>
-    </section>
-  );
-}
+          <span className="block">{t("hero.title")}</span>
+          <Highlight tone="soft" className="block tracking-[-0.02em] rtl:tracking-normal">
+            {t("hero.titleItalic")}
+          </Highlight>
+        </HeroHeadline>
 
-function ListSection({ articles, locale }: WritingPageClientProps) {
-  const t = useTranslations("writing");
-  const sectionRef = useSectionCardGrid<HTMLElement>({ selector: "[data-article]" });
-
-  return (
-    <section
-      ref={sectionRef}
-      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom) border-t border-border-subtle"
-    >
-      <Container>
-        <div className="h-px w-full bg-foreground/8 mb-0" />
-        <div>
-          {articles.map((article, i) => (
-            <Link
-              key={article.slug}
-              href={`/writing/${article.slug}`}
-              data-article
-              className="group block border-b border-border-subtle py-8 md:py-10 overflow-hidden relative cursor-pointer px-4"
-            >
-              <div
-                aria-hidden
-                className="absolute inset-0 rounded-panel-sm bg-foreground/2 pointer-events-none origin-left scale-x-0 group-hover:scale-x-100 group-focus-visible:scale-x-100 transition-all duration-(--motion-drawer) ease-default rtl:origin-right"
-              />
-              <div className="relative z-10 grid gap-6 md:grid-cols-[56px_1fr_auto] items-start">
-                <span
-                  className="font-mono text-sm leading-normal tracking-wider font-light text-primary/20 group-hover:text-primary/50 transition-all duration-(--motion-drawer) pt-1"
-                  style={{
-                    fontSize: "clamp(16px, 1.5vw, 20px)",
-                    letterSpacing: "-0.02em",
-                  }}
-                >
-                  <Num value={i + 1} pad={2} />
-                </span>
-                <div>
-                  <h2
-                    className="font-sans font-medium text-primary mb-2 transition-all duration-(--motion-drawer) ltr:group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5"
-                    style={{
-                      fontSize: "clamp(17px, 2vw, 22px)",
-                      letterSpacing: "-0.015em",
-                    }}
-                  >
-                    {article.frontmatter.title}
-                  </h2>
-                  <p className="text-base text-primary/60 leading-relaxed">
-                    {article.frontmatter.excerpt}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 font-mono text-sm leading-normal tracking-wider uppercase text-muted-foreground shrink-0 pt-1">
-                  <span>
-                    {new Date(article.frontmatter.date).toLocaleDateString(
-                      // Bare "ar" resolves to Latin digits in current ICU; only
-                      // a region-qualified tag keeps Arabic-Indic numbering.
-                      locale === "ar" ? "ar-EG" : "en-US",
-                      {
-                        year: "numeric",
-                        month: "long",
-                      },
-                    )}
-                  </span>
-                  <span>·</span>
-                  <span>
-                    {t("readTime", {
-                      count: article.frontmatter.readTimeMinutes,
-                      minutes: localizeNumbers(
-                        String(article.frontmatter.readTimeMinutes),
-                        locale,
-                      ),
-                    })}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
+        <div className="mt-10 grid gap-8 md:mt-14 lg:grid-cols-12 lg:gap-12">
+          <HeroReveal delay={0.5} className="lg:col-span-5">
+            <p className="max-w-[38ch] text-[clamp(1.0625rem,1.3vw,1.25rem)] leading-[1.6] text-foreground">
+              {t("hero.description")}
+            </p>
+          </HeroReveal>
+          <HeroReveal
+            delay={0.6}
+            className="max-w-[62ch] space-y-4 text-base leading-relaxed text-muted-foreground lg:col-span-6 lg:col-start-7"
+          >
+            <p>{t.rich("intro.paragraph1", bodyMarks)}</p>
+            <p>{t.rich("intro.paragraph2", bodyMarks)}</p>
+          </HeroReveal>
         </div>
       </Container>
     </section>

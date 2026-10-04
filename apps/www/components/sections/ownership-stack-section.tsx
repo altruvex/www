@@ -1,7 +1,6 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
 import {
@@ -13,19 +12,6 @@ import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { SectionHeading } from "./section-heading";
 
-/**
- * "Lift the surface": each layer is a sheet, and scrolling lifts one away to
- * show the next already lying beneath it, a shade deeper. The depth is the
- * claim — a template is the top sheet only.
- *
- * The lift is CSS sticky, not a pin (the homepage has none): every sheet below
- * the first is held up at the same line by `bottom`, under the sheet before it,
- * so the page never stops scrolling. Below lg, and under reduced motion, the
- * sheets are a plain stack.
- *
- * `inverted` puts the two deepest sheets on the dark scene in both themes;
- * `tint` is brand blue over the sheet's ground, so no colour is written here.
- */
 const SHEETS = [
   { id: "interface", inverted: false, tint: null, z: "z-50" },
   { id: "components", inverted: false, tint: "bg-brand/5", z: "z-40" },
@@ -56,9 +42,8 @@ export function OwnershipStackSection() {
           eyebrow={t("eyebrow")}
           firstTitle={t("title")}
           secondTitle={t("titleAccent")}
-          accent="world"
           description={t("subtitle")}
-          className="mb-12 lg:mb-16"
+          className="mb-(--heading-gap)"
         />
         <ol className="isolate list-none space-y-3 [--sheet-h:clamp(26rem,58vh,35rem)] [--sheet-top:16vh] lg:motion-safe:space-y-0">
           {SHEETS.map(({ id, inverted, tint, z }, i) => (
@@ -91,9 +76,6 @@ export function OwnershipStackSection() {
                     <Num value={i + 1} pad={2} /> /{" "}
                     <Num value={SHEETS.length} pad={2} />
                   </span>
-                  <Eyebrow className="text-end">
-                    {t(`layers.${id}.spec`)}
-                  </Eyebrow>
                 </div>
                 <h3 className="self-end font-sans text-[clamp(2.75rem,8vw,8rem)] font-light leading-none tracking-[-0.035em] rtl:text-[clamp(2.5rem,7vw,6.75rem)] rtl:leading-tight rtl:tracking-normal">
                   {t(`layers.${id}.name`)}
@@ -122,9 +104,6 @@ export function OwnershipStackSection() {
             </li>
           ))}
         </ol>
-        <p className="mt-12 max-w-[30ch] text-[clamp(1.375rem,2.2vw,2rem)] leading-tight text-foreground lg:mt-20 rtl:leading-normal">
-          <Highlight>{t("closing")}</Highlight>
-        </p>
       </Container>
     </section>
   );

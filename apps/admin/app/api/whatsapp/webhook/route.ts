@@ -15,13 +15,6 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-/**
- * Compares the handshake token in constant time.
- *
- * The token only gates Meta's subscription handshake, so a leak buys little —
- * but `===` on a secret is a habit, and the file four lines down already does
- * this properly for the signature.
- */
 export function verifyTokenMatches(
   provided: string,
   expected = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
@@ -40,16 +33,6 @@ export function isValidSignature(
   isProduction = process.env.NODE_ENV === "production",
 ): boolean {
   if (!appSecret) {
-    // Fails closed in production. This endpoint is exempt from the session
-    // guard and writes to the CRM — an unsigned payload accepted here becomes a
-    // client row and an inbound message nobody sent. The previous version
-    // accepted anything when the secret was absent and left a comment asking
-    // for it to be set before real traffic; a comment is not an enforcement,
-    // and production ran open on exactly that gap.
-    //
-    // Local development keeps the tolerance on purpose: Meta cannot reach a
-    // laptop, so the only way to exercise this handler there is to post to it
-    // by hand.
     if (isProduction) {
       console.error(
         "WhatsApp webhook rejected: WHATSAPP_APP_SECRET is not set, so no payload can be verified.",
@@ -196,7 +179,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Meta requires 200 regardless of internal processing outcome, or it will
-  // retry (and eventually disable) the webhook.
   return NextResponse.json({ success: true });
 }

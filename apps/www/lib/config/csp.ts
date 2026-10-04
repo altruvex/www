@@ -1,4 +1,3 @@
-/** Content-Security-Policy aligned with Next.js, Vercel Analytics, and on-site assets. */
 export function buildContentSecurityPolicy(): string {
   const isDev = process.env.NODE_ENV === "development";
 

@@ -1,19 +1,3 @@
-/**
- * Transport selection and address validation, without sending anything.
- *
- * Two things fail silently here. Choosing the wrong transport sends from the
- * wrong address — a proposal that should have come from the studio's domain
- * arriving from a personal mailbox is not an error anything reports. And a
- * malformed address is refused by the provider *after* the request, so
- * catching it first is the difference between a clear message and a 422 nobody
- * can read.
- *
- *   cd apps/admin && bun run verify:email
- *
- * Actually delivering needs a real transport and a real inbox — send a proposal
- * by email and look at /email, which records what the transport answered rather
- * than claiming success.
- */
 import { emailTransport, fromAddress, looksLikeAnAddress, replyToAddress } from "@/lib/email";
 import { contractDraft, ensureLink, proposalDraft } from "@/lib/email-templates";
 
@@ -149,10 +133,6 @@ console.log("\nDrafts");
 
 console.log("\nThe link survives editing");
 {
-  // The body is editable, which means it is deletable. A proposal email whose
-  // link was removed while rewriting the note above it tells a client something
-  // is ready and gives them no way to see it — and nothing about it looks wrong
-  // at the moment of sending.
   const link = "https://admin.altruvex.com/sign/abc123";
   check(
     ensureLink("Hi Mohamed, here it is: " + link, link) === "Hi Mohamed, here it is: " + link,

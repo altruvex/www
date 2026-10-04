@@ -9,7 +9,6 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { getAllCaseStudies } from "@/lib/data/case-studies";
 import { normalizeLocale, SITE_CONFIG } from "@/lib/metadata";
 import { getLenis } from "@/lib/motion/lenis-instance";
-import { ScrollTrigger } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
 import {
   Drawer,
@@ -18,7 +17,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@repo/ui/www";
+} from "@repo/ui";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -48,8 +47,6 @@ const NAV_ITEMS = [
   { key: "contact", href: "/contact" },
 ] as const;
 
-// The pages that explain how a project runs. They have no overview page of
-// their own, so "Method" opens on How we work and lists all five beneath it.
 const METHOD_ITEMS = [
   { key: "process", href: "/process" },
   { key: "how-we-work", href: "/how-we-work" },
@@ -58,8 +55,6 @@ const METHOD_ITEMS = [
   { key: "faq", href: "/faq" },
 ] as const;
 
-// The pages that sit under a top-level link. Labels come from the footer's
-// service names so the two lists can never name a discipline differently.
 const SERVICE_ITEMS = [
   { key: "webDesign", href: "/services/interface-design" },
   { key: "development", href: "/services/development" },
@@ -71,13 +66,9 @@ type SubItem = { href: string; label: string };
 
 type NavKey = (typeof NAV_ITEMS)[number]["key"];
 
-// Items whose own page is an overview of their children get an "All …" link.
 const HAS_OVERVIEW: ReadonlySet<NavKey> = new Set(["work", "services"]);
 
 const CTA_HREF = "/transparency";
-
-// Past this depth a scroll down tucks the bar away; any scroll up brings it back.
-const HIDE_AFTER = 420;
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -103,7 +94,6 @@ interface GroupToggleProps {
   className?: string;
 }
 
-// Opens a page's sub-pages in place; the page link beside it still navigates.
 function GroupToggle({
   open,
   controls,
@@ -165,13 +155,11 @@ export function Nav() {
   const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isTucked, setIsTucked] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isIndexOpen, setIsIndexOpen] = useState(false);
   const [isNavInverted, setIsNavInverted] = useState(false);
   const [isOverStage, setIsOverStage] = useState(false);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  // undefined = untouched, so the group of the page you are on starts open.
   const [openGroup, setOpenGroup] = useState<NavKey | null | undefined>(
     undefined,
   );
@@ -193,7 +181,6 @@ export function Nav() {
   const subItems: Partial<Record<NavKey, SubItem[]>> = {
     work: getAllCaseStudies().map((study) => ({
       href: `/work/${study.slug}`,
-      // A case-study name is "Project - its headline"; a menu needs the project.
       label: study.name[lang].split(/\s[-–—]\s/)[0] ?? study.name[lang],
     })),
     services: SERVICE_ITEMS.map((item) => ({
@@ -207,76 +194,46 @@ export function Nav() {
   };
 
   useEffect(() => {
-    let inverted: ScrollTrigger[] = [];
-    let observer: MutationObserver | null = null;
-
-    const sync = (self: ScrollTrigger) => {
-      const y = self.scroll();
-      setIsScrolled(y > 20);
-      setIsTucked(y > HIDE_AFTER && self.direction === 1);
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      const header = headerRef.current;
+      if (!header) return;
+      setIsScrolled(window.scrollY > 20);
+      const under = document
+        .elementsFromPoint(window.innerWidth / 2, header.offsetHeight / 2)
+        .find((el) => !header.contains(el) && !el.closest("[data-nav-skip]"));
+      const scene =
+        under?.closest<HTMLElement>('[data-scene="inverted"]') ?? null;
       const dark = document.documentElement.classList.contains("dark");
       setIsNavInverted(
-        inverted.some(
-          (trigger) =>
-            trigger.isActive &&
-            !(
-              dark &&
-              (trigger.trigger as HTMLElement | undefined)?.dataset
-                .sceneLock === "dark"
-            ),
-        ),
+        scene !== null && !(dark && scene.dataset.sceneLock === "dark"),
       );
-      setIsOverStage(
-        inverted.some(
-          (trigger) =>
-            trigger.isActive &&
-            (trigger.trigger as HTMLElement | undefined)?.hasAttribute(
-              "data-nav-stage",
-            ) === true,
-        ),
-      );
+      setIsOverStage(scene?.hasAttribute("data-nav-stage") === true);
     };
-    const page = ScrollTrigger.create({
-      start: 0,
-      end: "max",
-      onUpdate: sync,
-      onRefresh: sync,
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
     });
-    const settle = () => sync(page);
-    ScrollTrigger.addEventListener("scrollEnd", settle);
-    const attach = () => {
-      const islands = [
-        document.getElementById("services-wrapper"),
-        ...Array.from(
-          document.querySelectorAll<HTMLElement>("[data-nav-invert]"),
-        ),
-      ].filter((el): el is HTMLElement => el !== null);
-      if (islands.length === 0) return false;
-      const midline = () => (headerRef.current?.offsetHeight ?? 64) / 2;
-      inverted = islands.map((island) =>
-        ScrollTrigger.create({
-          trigger: island,
-          start: () => `top ${midline()}px`,
-          end: () => `bottom ${midline()}px`,
-          refreshPriority: -1,
-          onToggle: settle,
-        }),
-      );
-      settle();
-      return true;
-    };
-    if (!attach()) {
-      observer = new MutationObserver(() => {
-        if (attach()) observer?.disconnect();
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-    }
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["data-scene"],
+      subtree: true,
+    });
 
     return () => {
-      observer?.disconnect();
-      ScrollTrigger.removeEventListener("scrollEnd", settle);
-      page.kill();
-      inverted.forEach((trigger) => trigger.kill());
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      observer.disconnect();
     };
   }, [pathname]);
 
@@ -288,9 +245,6 @@ export function Nav() {
     };
   }, [isOpen]);
 
-  // One rule for all links: it rests under the current page and travels to
-  // whichever link is hovered or focused. Measured against the list in
-  // physical pixels, so the same translateX serves LTR and RTL.
   const placeRule = useCallback(() => {
     const link = ruleKey ? linkRefs.current[ruleKey] : null;
     const list = link?.closest("ul");
@@ -323,8 +277,6 @@ export function Nav() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeIndex(true);
     };
-    // The panel only exists at desktop width; shrinking past it closes it so
-    // the page is never left with scrolling stopped behind a hidden panel.
     const desktop = window.matchMedia("(min-width: 1024px)");
     const onWidth = () => {
       if (!desktop.matches) closeIndex();
@@ -338,7 +290,6 @@ export function Nav() {
   }, [isIndexOpen, closeIndex]);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const tucked = isTucked && !isOpen;
 
   return (
     <>
@@ -346,7 +297,7 @@ export function Nav() {
         aria-hidden
         onClick={() => closeIndex()}
         className={cn(
-          "fixed inset-0 z-30 hidden bg-foreground/25 backdrop-blur-[2px] transition-opacity duration-(--motion-drawer) ease-smooth lg:block dark:bg-black/50",
+          "fixed inset-0 z-30 hidden bg-foreground/25 transition-opacity duration-(--motion-drawer) ease-smooth lg:block dark:bg-black/50",
           isIndexOpen ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       />
@@ -356,16 +307,11 @@ export function Nav() {
         data-scene={isNavInverted && !isOpen ? "inverted" : undefined}
         data-over-stage={isOverStage && !isOpen ? "" : undefined}
         data-index-open={isIndexOpen ? "" : undefined}
-        onFocusCapture={() => setIsTucked(false)}
         className={cn(
-          "group/nav fixed top-0 w-full transition-[background-color,border-color,box-shadow,transform] duration-(--motion-drawer) ease-smooth",
-          tucked && "-translate-y-full",
+          "group/nav fixed top-0 w-full text-foreground transition-[color,background-color,border-color,box-shadow] duration-(--motion-drawer) ease-smooth",
           isMobileMenuOpen ? "z-60" : "z-40",
         )}
       >
-        {/* The material lives on its own layer, not on the header: a
-            backdrop-filter on the header would make it the backdrop root, and
-            the glass dropdowns hanging below it would blur nothing. */}
         <div
           aria-hidden
           className={cn(
@@ -373,7 +319,7 @@ export function Nav() {
             isMobileMenuOpen
               ? null
               : isIndexOpen
-                ? "liquid-glass-panel rounded-none! border-x-0! border-t-0! shadow-none"
+                ? "liquid-glass-clear liquid-glass-clear-dense rounded-none! border-x-0! border-t-0! shadow-none"
                 : isScrolled && "liquid-glass-nav",
           )}
         />
@@ -431,10 +377,8 @@ export function Nav() {
                         )}
                       </Link>
                       {subs && (
-                        // Opens on hover and whenever focus is inside the item,
-                        // so Tab walks from the link straight into its pages.
-                        <div className="invisible absolute top-full left-1/2 z-10 -translate-x-1/2 translate-y-1 pt-2 opacity-0 transition-[opacity,transform,visibility] duration-(--motion-instant) ease-smooth group-focus-within/item:visible group-focus-within/item:translate-y-0 group-focus-within/item:opacity-100 group-hover/item:visible group-hover/item:translate-y-0 group-hover/item:opacity-100 group-data-[index-open]/nav:hidden">
-                          <div className="liquid-glass-panel min-w-60 rounded-panel-sm p-1.5">
+                        <div className="invisible absolute top-full left-1/2 z-10 -translate-x-1/2 translate-y-1 pt-2 transition-[transform,visibility] duration-(--motion-instant) ease-smooth group-focus-within/item:visible group-focus-within/item:translate-y-0 group-hover/item:visible group-hover/item:translate-y-0 group-data-[index-open]/nav:hidden">
+                          <div className="liquid-glass-clear min-w-60 rounded-panel-sm p-1.5 opacity-0 [transition:opacity_var(--motion-instant)_var(--ease-smooth)]! group-focus-within/item:opacity-100 group-hover/item:opacity-100">
                             <ul>
                               {subs.map((sub) => (
                                 <li key={sub.href}>
@@ -454,19 +398,21 @@ export function Nav() {
                               ))}
                             </ul>
                             {HAS_OVERVIEW.has(item.key) && (
-                              <Link
-                                href={item.href}
-                                className={cn(
-                                  "group/all mt-1.5 flex min-h-10 items-center justify-between gap-3 rounded-ctl-sm border-t border-border-subtle px-3 pt-1.5 text-sm font-medium text-nowrap text-foreground transition-colors duration-(--motion-instant) ease-smooth hover:text-brand-text",
-                                  focusRing,
-                                )}
-                              >
-                                {t(`all.${item.key}`)}
-                                <ArrowRight
-                                  aria-hidden
-                                  className="size-4 transition-transform duration-(--motion-instant) ease-smooth group-hover/all:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/all:-translate-x-0.5"
-                                />
-                              </Link>
+                              <div className="mt-1.5 border-t border-border-subtle pt-1.5">
+                                <Link
+                                  href={item.href}
+                                  className={cn(
+                                    "group/all flex min-h-10 items-center justify-between gap-3 rounded-ctl-sm px-3 text-sm font-medium text-nowrap text-foreground transition-colors duration-(--motion-instant) ease-smooth hover:bg-foreground/[0.05] hover:text-brand-text",
+                                    focusRing,
+                                  )}
+                                >
+                                  {t(`all.${item.key}`)}
+                                  <ArrowRight
+                                    aria-hidden
+                                    className="size-4 transition-transform duration-(--motion-instant) ease-smooth group-hover/all:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/all:-translate-x-0.5"
+                                  />
+                                </Link>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -489,7 +435,6 @@ export function Nav() {
               </ul>
             </nav>
             <div className="flex items-center justify-self-end gap-1 text-nowrap">
-              {/* Below xl the six links need the room; both settings stay in the index. */}
               <div className="hidden items-center gap-1 xl:flex">
                 <LanguageSwitcherBase variant="inline" />
                 <ThemeChanger />
@@ -573,7 +518,7 @@ export function Nav() {
                                   "text-sm tabular-nums",
                                   active
                                     ? "text-brand-text"
-                                    : "text-foreground/55",
+                                    : "text-muted-foreground",
                                 )}
                               >
                                 <Num value={idx + 1} pad={2} />
@@ -750,13 +695,13 @@ export function Nav() {
               <DrawerContent
                 dir={dir}
                 data-lenis-prevent
-                className="liquid-glass-panel rounded-b-none! border-b-0! outline-none data-[vaul-drawer-direction=bottom]:max-h-[88svh] lg:hidden"
+                className="liquid-glass-clear liquid-glass-clear-dense rounded-b-none! border-b-0! outline-none data-[vaul-drawer-direction=bottom]:max-h-[88svh] lg:hidden"
               >
                 <DrawerHeader className="sr-only">
                   <DrawerTitle>{t("menuTitle")}</DrawerTitle>
                   <DrawerDescription>{t("menuDescription")}</DrawerDescription>
                 </DrawerHeader>
-                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] scrollbar-none sm:px-8 [&::-webkit-scrollbar]:hidden">
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-8 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] scrollbar-none [&::-webkit-scrollbar]:hidden">
                   <nav aria-label={t("primaryLabel")}>
                     <Eyebrow>{t("pages")}</Eyebrow>
                     <ol className="mt-4 border-t border-border-subtle">
@@ -784,7 +729,7 @@ export function Nav() {
                                     "w-7 shrink-0 text-sm tabular-nums",
                                     active
                                       ? "text-brand-text"
-                                      : "text-foreground/55",
+                                      : "text-muted-foreground",
                                   )}
                                 >
                                   <Num value={idx + 1} pad={2} />
@@ -805,7 +750,6 @@ export function Nav() {
                                   </span>
                                 </span>
                                 {!subs && (
-                                  // Sized like the group toggle so every row ends on one line.
                                   <span
                                     aria-hidden
                                     className="flex size-11 shrink-0 items-center justify-center"

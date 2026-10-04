@@ -1,9 +1,9 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
-import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import {
+  ArrowIcon,
   DirectionalLink,
   ExternalDirectionalLink,
 } from "@/components/shared/directional-link";
@@ -24,22 +24,36 @@ import {
   pricingCopy,
   type Locale,
 } from "@repo/pricing-schema";
-import { Input, SelectField, Textarea } from "@repo/ui/www";
-import { AlertCircle } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from "@repo/ui/www";
+import {
+  AlertCircle,
+  ArrowUpRight,
+  CheckCircle2,
+  Clock3,
+  Mail,
+  MessageCircle,
+  Phone,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
   type ChangeEvent,
-  type FormEvent,
-  type ReactNode,
+  type FormEvent
 } from "react";
 
-/** Mirrors the schema's `message.max` — the counter shows the real limit. */
 const MESSAGE_MAX = 1000;
 const CAIRO = "Africa/Cairo";
 
@@ -51,25 +65,41 @@ const SERVICES = [
 ] as const;
 
 type Service = (typeof SERVICES)[number];
+
 type Field = "name" | "phone" | "message";
+
 type FieldErrors = Partial<Record<Field, string>>;
-type Values = { name: string; phone: string; service: Service | ""; message: string };
+
+type Values = {
+  name: string;
+  phone: string;
+  service: Service | "";
+  message: string;
+};
+
+const EMPTY: Values = {
+  name: "",
+  phone: "",
+  service: "",
+  message: "",
+};
 
 const FIELDS: readonly Field[] = ["name", "phone", "message"];
-const EMPTY: Values = { name: "", phone: "", service: "", message: "" };
 
 const SERVICE_LABEL_KEYS = {
-  "interface-design": "serviceWebDesign",
-  development: "serviceDevelopment",
-  consulting: "serviceConsulting",
-  maintenance: "serviceMaintenance",
+  "interface-design": "letter.serviceWebDesign",
+  development: "letter.serviceDevelopment",
+  consulting: "letter.serviceConsulting",
+  maintenance: "letter.serviceMaintenance",
 } as const satisfies Record<Service, string>;
+
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 function isService(value: string | null): value is Service {
   return SERVICES.some((service) => service === value);
 }
 
-/** The database knows fewer services than the page offers; the rest are OTHER. */
 function toServiceInterest(service: Values["service"]) {
   if (service === "development") return "web-development";
   if (service === "interface-design") return "ui-ux";
@@ -81,7 +111,7 @@ function isField(key: string): key is Field {
 }
 
 function formatCairoTime(locale: string, date: Date): string {
-  return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-GB", {
+  return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
@@ -94,13 +124,9 @@ function subscribeToMinute(onChange: () => void) {
   return () => window.clearInterval(id);
 }
 
-/**
- * The time in Cairo, read from the visitor's clock. It renders nothing on the
- * server — a server-rendered minute would be stale by the time it is read and
- * would mismatch on hydration.
- */
 function useCairoTime(): string | null {
   const locale = useLocale();
+
   return useSyncExternalStore(
     subscribeToMinute,
     () => formatCairoTime(locale, new Date()),
@@ -111,71 +137,64 @@ function useCairoTime(): string | null {
 export default function ContactPage() {
   return (
     <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
-      <ContactSection />
+      <ContactExperience />
     </main>
   );
 }
 
-/**
- * CLAIM: you write to the person who builds it, and you know what happens to
- * the message before you send it.
- * PROOF: artifact — the form is set as the letter it actually is, addressed to
- * a named founder rather than to a sales inbox: To / From / Reply to / About,
- * then the body.
- *
- * Signature: sending turns the letter into its receipt — the time it was
- * received in Cairo and the three things that happen next. The receipt is the
- * finished markup; reduced motion swaps it in without the entrance.
- *
- * Layout: the letter is the page — one column, nothing beside it. The direct
- * lines are a single row beneath it, for the visitor who would rather not write.
- */
-function ContactSection() {
+function ContactExperience() {
   const t = useTranslations("contactPage");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
-  const letterRef = useSectionElement();
-  const linesRef = useSectionElement();
+  const contentRef = useSectionElement();
 
   return (
     <section
       aria-labelledby="contact-heading"
-      className="accent-world-blue pt-(--section-y-top) pb-(--section-y-bottom)"
+      className="relative pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <SectionHeading
-          titleAs="h1"
-          titleId="contact-heading"
-          eyebrowRef={eyebrowRef}
-          titleRef={titleRef}
-          eyebrow={t("eyebrow")}
-          firstTitle={t("heroTitle")}
-          secondTitle={t("heroTitleItalic")}
-          classes={{
-            container: "lg:flex-col lg:items-start",
-            titleWrapper: "space-y-6",
-            title:
-              "max-w-[16ch] text-[clamp(2.5rem,4.6vw,4.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
-          }}
-        />
-
-        <div ref={letterRef} className="mt-14 max-w-205 lg:mt-20">
-          <Letter />
-        </div>
-
-        <div ref={linesRef} className="mt-20 lg:mt-28">
-          <DirectLines />
+        <div ref={contentRef}>
+          <div className="max-w-6xl">
+            <Eyebrow ref={eyebrowRef} className="mb-5">
+              {t("eyebrow")}
+            </Eyebrow>
+            <h1
+              ref={titleRef}
+              id="contact-heading"
+              className="max-w-6xl text-balance text-[clamp(3rem,7vw,7.25rem)] font-light leading-[0.94] tracking-[-0.055em] text-foreground rtl:text-[clamp(2.75rem,5.4vw,5.75rem)] rtl:leading-[1.2] rtl:tracking-normal"
+            >
+              {t("heroTitle")}{" "}
+              <span className="text-muted-foreground">
+                {t("heroTitleItalic")}
+              </span>
+            </h1>
+            <p className="mt-8 max-w-176 text-[clamp(1.05rem,1.4vw,1.3rem)] leading-[1.7] text-muted-foreground">
+              {t("letter.heading")}
+            </p>
+          </div>
+          <div className="mt-16 border-t-2 border-foreground pt-8 md:mt-24 md:pt-10">
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-20 xl:gap-28">
+              <div className="min-w-0">
+                <ConversationForm />
+              </div>
+              <aside className="mt-16 lg:mt-0">
+                <DirectChannels />
+              </aside>
+            </div>
+          </div>
         </div>
       </Container>
     </section>
   );
 }
 
-function Letter() {
-  const t = useTranslations("contactPage.letter");
+function ConversationForm() {
+  const t = useTranslations("contactPage");
   const tValidations = useTranslations("validations");
   const tFounder = useTranslations("about.founder");
+
   const locale = useLocale();
   const searchParams = useSearchParams();
 
@@ -184,34 +203,62 @@ function Letter() {
     [tValidations],
   );
 
-  // A service arriving in the URL (`/contact?service=maintenance`) prefills the
-  // About line; read once, as the initial value, so it never overwrites a choice.
-  // A maintenance plan arriving with it (`&plan=professional&billing=annual`)
-  // opens the message with that choice as a sentence: the lead stores no plan
-  // field, so the message is the one place it is both seen and sent.
   const [values, setValues] = useState<Values>(() => {
     const incoming = searchParams.get("service");
+
     const plan = MAINTENANCE_PLAN_IDS.find(
       (id) => id === searchParams.get("plan"),
     );
+
     return {
       ...EMPTY,
       service: isService(incoming) ? incoming : "",
       message:
         incoming === "maintenance" && plan
-          ? t("planMessage", {
-              plan: pricingCopy(locale as Locale).maintenance[plan].name,
-              billing:
-                searchParams.get("billing") === "annual" ? "annual" : "monthly",
-            })
+          ? t("letter.planMessage", {
+            plan: pricingCopy(locale as Locale).maintenance[plan].name,
+            billing:
+              searchParams.get("billing") === "annual"
+                ? "annual"
+                : "monthly",
+          })
           : "",
     };
   });
+
   const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<
+    Partial<Record<Field, boolean>>
+  >({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receivedAt, setReceivedAt] = useState<Date | null>(null);
+
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useIsomorphicLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.from("[data-contact-part]", {
+          y: 18,
+          opacity: 0,
+          duration: MOTION.duration.base,
+          ease: MOTION.ease.strong,
+          stagger: MOTION.stagger.loose,
+        });
+      });
+
+      return () => mm.revert();
+    }, root);
+
+    return () => ctx.revert();
+  }, []);
 
   const payloadOf = (next: Values) => ({
     name: next.name,
@@ -223,43 +270,74 @@ function Letter() {
 
   const errorsOf = (next: Values): FieldErrors => {
     const result = schema.safeParse(payloadOf(next));
+
     if (result.success) return {};
+
     const found: FieldErrors = {};
+
     for (const issue of result.error.issues) {
       const key = String(issue.path[0] ?? "");
-      if (isField(key) && !found[key]) found[key] = issue.message;
+
+      if (isField(key) && !found[key]) {
+        found[key] = issue.message;
+      }
     }
+
     return found;
   };
 
   const update = (field: keyof Values) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-      const next = { ...values, [field]: event.target.value };
+    (
+      event: ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
+      const next = {
+        ...values,
+        [field]: event.target.value,
+      };
+
       setValues(next);
-      // Once a line has been marked, it clears the moment it becomes valid —
-      // it does not wait for the next blur to stop accusing the visitor.
+      setTouched((prev) => ({
+        ...prev,
+        [field as Field]: true,
+      }));
+
       if (isField(field) && errors[field]) {
-        setErrors((current) => ({ ...current, [field]: errorsOf(next)[field] }));
+        setErrors((current) => ({
+          ...current,
+          [field]: errorsOf(next)[field],
+        }));
+      }
+
+      if (formError) {
+        setFormError(null);
       }
     };
 
-  // Validated on blur, and only once something has been typed: tabbing through
-  // an empty letter should not paint it red.
   const validateOnBlur = (field: Field) => () => {
-    if (!values[field]) return;
-    setErrors((current) => ({ ...current, [field]: errorsOf(values)[field] }));
+    if (!touched[field]) return;
+
+    setErrors((current) => ({
+      ...current,
+      [field]: errorsOf(values)[field],
+    }));
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     setFormError(null);
 
     const found = errorsOf(values);
     const firstInvalid = FIELDS.find((field) => found[field]);
+
     if (firstInvalid) {
       setErrors(found);
       setFormError(t("errorFix"));
-      document.getElementById(`contact-${firstInvalid}`)?.focus();
+      document
+        .getElementById(`contact-${firstInvalid}`)
+        ?.focus();
       return;
     }
 
@@ -269,26 +347,43 @@ function Letter() {
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...schema.parse(payloadOf(values)), locale }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...schema.parse(payloadOf(values)),
+          locale,
+        }),
       });
+
       const result: unknown = await response.json();
+
       const body =
         result && typeof result === "object"
-          ? (result as { success?: boolean; message?: string; errors?: Record<string, string> })
+          ? (result as {
+            success?: boolean;
+            message?: string;
+            errors?: Record<string, string>;
+          })
           : {};
 
       if (response.ok && body.success) {
         setValues(EMPTY);
+        setTouched({});
+        setErrors({});
         setReceivedAt(new Date());
         return;
       }
 
       if (body.errors && typeof body.errors === "object") {
         const serverErrors: FieldErrors = {};
+
         for (const [key, message] of Object.entries(body.errors)) {
-          if (isField(key)) serverErrors[key] = message;
+          if (isField(key)) {
+            serverErrors[key] = message;
+          }
         }
+
         setErrors(serverErrors);
         setFormError(t("errorFix"));
         return;
@@ -304,42 +399,57 @@ function Letter() {
 
   if (receivedAt) {
     return (
-      <Receipt
-        receivedAt={receivedAt}
-        onWriteAnother={() => setReceivedAt(null)}
-      />
+      <div ref={rootRef}>
+        <Receipt
+          receivedAt={receivedAt}
+          onWriteAnother={() => setReceivedAt(null)}
+        />
+      </div>
     );
   }
 
-  const describedBy = (field: Field, extra?: string) =>
-    [extra, errors[field] ? `contact-${field}-error` : null]
-      .filter(Boolean)
-      .join(" ") || undefined;
+  const inlineField =
+    "inline-block max-w-full rounded-none border-0 border-b border-foreground/35 bg-transparent px-1 py-0.5 font-light text-foreground outline-none transition-all duration-300 placeholder:text-muted-foreground/55 hover:border-foreground/70 focus:border-brand focus:shadow-[0_1px_0_hsl(var(--brand))] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive";
+
+  const inlineWidth = {
+    name: "w-[7.5ch] sm:w-[9ch]",
+    phone: "w-[14ch]",
+  };
 
   return (
-    <form
-      aria-labelledby="contact-letter-heading"
-      onSubmit={handleSubmit}
-      noValidate
-      className="relative border-t-2 border-foreground pt-6"
-    >
-      <h2
-        id="contact-letter-heading"
-        className="text-xl font-medium leading-tight tracking-[-0.015em] text-foreground"
+    <div ref={rootRef} className="max-w-5xl">
+      <div
+        data-contact-part
+        className="flex flex-col gap-3 border-b border-border-subtle pb-6 sm:flex-row sm:items-end sm:justify-between"
       >
-        {t("heading")}
-      </h2>
-
-      <div className="mt-8 space-y-7">
-        <LetterLine label={t("toLabel")}>
-          <p className="py-2.5 text-lg leading-snug text-foreground">
-            {tFounder("name")}
-            <span className="text-muted-foreground"> — {tFounder("role")}</span>
+        <div>
+          <Eyebrow className="m-0 text-brand-text">
+            {t("letter.heading")}
+          </Eyebrow>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {tFounder("name")}{" "}
+            <span className="text-muted-foreground/70">
+              — {tFounder("role")}
+            </span>
           </p>
-        </LetterLine>
-
-        <LetterLine label={t("fromLabel")} htmlFor="contact-name" error={errors.name} field="name">
-          <Input
+        </div>
+        <span className="font-mono text-xs tracking-[0.16em] text-muted-foreground">
+          {localizeNumbers("01", locale)}
+        </span>
+      </div>
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        className="relative pt-10 md:pt-14"
+      >
+        <div
+          data-contact-part
+          className="text-[clamp(1.625rem,3.6vw,3.375rem)] font-light leading-[1.5] tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal"
+        >
+          <span className="text-muted-foreground">
+            {t("letter.fromLabel")}{" "}
+          </span>
+          <input
             id="contact-name"
             name="name"
             type="text"
@@ -347,203 +457,299 @@ function Letter() {
             value={values.name}
             onChange={update("name")}
             onBlur={validateOnBlur("name")}
-            placeholder={t("namePlaceholder")}
+            placeholder={t("letter.namePlaceholder")}
+            aria-label={t("letter.fromLabel")}
             aria-required
             aria-invalid={Boolean(errors.name)}
-            aria-describedby={describedBy("name")}
             disabled={isSubmitting}
-            className="text-lg"
+            className={cn(inlineField, inlineWidth.name)}
           />
-        </LetterLine>
-
-        <LetterLine
-          label={t("replyLabel")}
-          htmlFor="contact-phone"
-          error={errors.phone}
-          field="phone"
-          hint={<span id="contact-phone-hint">{t("replyHint")}</span>}
-        >
-          <Input
+          <span className="text-muted-foreground">
+            ,{" "}
+            {t("letter.aboutLabel")}{" "}
+          </span>
+          <Select
+            name="service"
+            value={values.service || undefined}
+            onValueChange={(service) =>
+              update("service")({
+                target: { value: service },
+              } as ChangeEvent<HTMLSelectElement>)
+            }
+            disabled={isSubmitting}
+          >
+            <SelectTrigger
+              id="contact-service"
+              aria-label={t("letter.aboutLabel")}
+              className={cn(
+                inlineField,
+                "h-auto! w-auto gap-0 align-baseline text-[length:inherit]! leading-[inherit] shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent [&_svg]:hidden data-placeholder:text-muted-foreground/70",
+              )}
+            >
+              <SelectValue placeholder={t("letter.servicePlaceholder")} />
+            </SelectTrigger>
+            <SelectContent position="popper" align="start">
+              {SERVICES.map((service) => (
+                <SelectItem key={service} value={service}>
+                  {t(SERVICE_LABEL_KEYS[service])}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-muted-foreground">
+            .{" "}
+            {t("letter.replyLabel")}{" "}
+          </span>
+          <input
             id="contact-phone"
             name="phone"
             type="tel"
+            dir="ltr"
             inputMode="tel"
             autoComplete="tel"
-            normalize
             value={values.phone}
             onChange={update("phone")}
             onBlur={validateOnBlur("phone")}
-            placeholder={t("phonePlaceholder")}
+            placeholder={t("letter.phonePlaceholder")}
+            aria-label={t("letter.replyLabel")}
             aria-required
             aria-invalid={Boolean(errors.phone)}
-            aria-describedby={describedBy("phone", "contact-phone-hint")}
             disabled={isSubmitting}
-            className="text-lg"
+            className={cn(inlineField, inlineWidth.phone)}
           />
-        </LetterLine>
-
-        <LetterLine
-          label={
-            <>
-              {t("aboutLabel")}
-              <span className="block text-xs text-muted-foreground">
-                {t("optional")}
-              </span>
-            </>
-          }
-          htmlFor="contact-service"
-        >
-          <SelectField
-            id="contact-service"
-            name="service"
-            value={values.service}
-            onChange={update("service")}
-            disabled={isSubmitting}
-            className={cn(
-              "text-lg",
-              !values.service && "text-muted-foreground",
-            )}
-          >
-            <option value="">{t("servicePlaceholder")}</option>
-            {SERVICES.map((service) => (
-              <option key={service} value={service} className="text-foreground">
-                {t(SERVICE_LABEL_KEYS[service])}
-              </option>
-            ))}
-          </SelectField>
-        </LetterLine>
-      </div>
-
-      <div className="mt-12">
-        <div className="flex items-baseline justify-between gap-4">
-          <label
-            htmlFor="contact-message"
-            className="text-sm font-medium text-foreground"
-          >
-            {t("messageLabel")}
-          </label>
-          <span
-            id="contact-message-count"
-            className={cn(
-              "text-xs tabular-nums",
-              values.message.length > MESSAGE_MAX
-                ? "text-destructive"
-                : "text-muted-foreground",
-            )}
-          >
-            {t("count", {
-              count: localizeNumbers(String(values.message.length), locale),
-              max: localizeNumbers(String(MESSAGE_MAX), locale),
-            })}
-          </span>
+          <span className="text-muted-foreground">.</span>
         </div>
-        <Textarea
-          id="contact-message"
-          name="message"
-          rows={8}
-          value={values.message}
-          onChange={update("message")}
-          onBlur={validateOnBlur("message")}
-          placeholder={t("messagePlaceholder")}
-          aria-required
-          aria-invalid={Boolean(errors.message)}
-          aria-describedby={describedBy("message", "contact-message-count")}
-          disabled={isSubmitting}
-          className="mt-3 text-lg"
-        />
-        <FieldError field="message" message={errors.message} />
-      </div>
-
-      {/* Honeypot: invisible to people and to assistive technology. */}
-      <div aria-hidden className="absolute -start-[9999px] h-px w-px overflow-hidden">
-        <label htmlFor="contact-website">Website</label>
-        <input
-          id="contact-website"
-          type="text"
-          name="website"
-          tabIndex={-1}
-          autoComplete="off"
-          value={website}
-          onChange={(event) => setWebsite(event.target.value)}
-        />
-      </div>
-
-      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-        <MagneticButton
-          type="submit"
-          variant="primary"
-          size="lg"
-          className="w-full sm:w-auto"
-          disabled={isSubmitting}
-          aria-busy={isSubmitting}
+        <div
+          data-contact-part
+          className="mt-14 border-t border-border-subtle pt-8 md:mt-20 md:pt-10"
         >
-          {isSubmitting ? t("submitting") : t("submit")}
-        </MagneticButton>
-        <p className="text-sm leading-snug text-muted-foreground">
-          {t("assurance")}
-        </p>
-      </div>
-
-      <div aria-live="assertive" className="mt-5 empty:hidden">
-        {formError ? (
-          <p className="flex items-start gap-2 text-sm leading-snug text-destructive">
-            <AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
-            {formError}
-          </p>
-        ) : null}
-      </div>
-    </form>
-  );
-}
-
-function LetterLine({
-  label,
-  htmlFor,
-  field,
-  error,
-  hint,
-  children,
-}: {
-  label: ReactNode;
-  htmlFor?: string;
-  field?: Field;
-  error?: string;
-  hint?: ReactNode;
-  children: ReactNode;
-}) {
-  const labelClass =
-    "text-sm font-medium leading-snug text-muted-foreground sm:pt-3.5";
-
-  return (
-    <div className="grid gap-1 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-6">
-      {htmlFor ? (
-        <label htmlFor={htmlFor} className={labelClass}>
-          {label}
-        </label>
-      ) : (
-        <span className={labelClass}>{label}</span>
-      )}
-      <div className="min-w-0">
-        {children}
-        {hint ? (
-          <p className="mt-2 text-xs leading-snug text-muted-foreground">{hint}</p>
-        ) : null}
-        {field ? <FieldError field={field} message={error} /> : null}
-      </div>
+          <div className="flex items-center justify-between gap-4">
+            <label
+              htmlFor="contact-message"
+              className="text-sm font-medium text-foreground"
+            >
+              {t("letter.messageLabel")}
+            </label>
+            <span
+              className={cn(
+                "font-mono text-xs tabular-nums text-muted-foreground",
+                values.message.length > MESSAGE_MAX &&
+                "text-destructive",
+              )}
+            >
+              {t("letter.count", {
+                count: localizeNumbers(
+                  String(values.message.length),
+                  locale,
+                ),
+                max: localizeNumbers(String(MESSAGE_MAX), locale),
+              })}
+            </span>
+          </div>
+          <Textarea
+            id="contact-message"
+            name="message"
+            rows={7}
+            value={values.message}
+            onChange={update("message")}
+            onBlur={validateOnBlur("message")}
+            placeholder={t("letter.messagePlaceholder")}
+            aria-label={t("letter.messageLabel")}
+            aria-required
+            aria-invalid={Boolean(errors.message)}
+            disabled={isSubmitting}
+            className="mt-4 min-h-[11rem] resize-y rounded-none border-0 border-b border-border-subtle bg-transparent px-0 py-4 text-[clamp(1.125rem,2vw,1.5rem)] leading-[1.65] text-foreground shadow-none transition-colors placeholder:text-muted-foreground/50 focus-visible:border-brand focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+          />
+          {errors.message ? (
+            <FieldError field="message" message={errors.message} />
+          ) : null}
+        </div>
+        <div
+          aria-hidden
+          className="absolute inset-s-[-9999px] h-px w-px overflow-hidden"
+        >
+          <label htmlFor="contact-website">Website</label>
+          <input
+            id="contact-website"
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(event) => setWebsite(event.target.value)}
+          />
+        </div>
+        <div
+          aria-live="assertive"
+          className="mt-5 min-h-5 empty:hidden"
+        >
+          {formError ? (
+            <p className="flex items-start gap-2 text-sm leading-snug text-destructive">
+              <AlertCircle
+                aria-hidden
+                className="mt-0.5 size-4 shrink-0"
+              />
+              {formError}
+            </p>
+          ) : null}
+        </div>
+        <div
+          data-contact-part
+          className="mt-8 flex flex-col gap-5 border-t border-border-subtle pt-8 sm:flex-row sm:items-center sm:justify-between md:mt-10 md:pt-10"
+        >
+          <div className="max-w-sm">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {t("letter.assurance")}
+            </p>
+          </div>
+          <MagneticButton
+            type="submit"
+            variant="primary"
+            size="lg"
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
+          >
+            {isSubmitting
+              ? t("letter.submitting")
+              : t("letter.submit")}
+          </MagneticButton>
+        </div>
+      </form>
     </div>
   );
 }
 
-function FieldError({ field, message }: { field: Field; message?: string }) {
-  if (!message) return null;
+function DirectChannels() {
+  const t = useTranslations("contactPage");
+  const tContact = useTranslations("contact");
+
+  const cairoTime = useCairoTime();
+
+  const email = tContact("emailValue");
+  const phone = t("phoneValue");
+
   return (
-    <p
-      id={`contact-${field}-error`}
-      className="mt-2 flex items-start gap-1.5 text-sm leading-snug text-destructive"
+    <div className="lg:sticky lg:top-24">
+      <div className="border-t-2 border-foreground pt-6">
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <Eyebrow className="m-0">
+              {t("lines.heading")}
+            </Eyebrow>
+            <p className="mt-3 max-w-[24ch] text-sm leading-relaxed text-muted-foreground">
+              {t("lines.address1")} · {t("lines.address2")}
+            </p>
+          </div>
+          <span className="font-mono text-xs text-muted-foreground">
+            {localizeNumbers("02", useLocale())}
+          </span>
+        </div>
+      </div>
+      <div className="mt-8 divide-y divide-border-subtle border-y border-border-subtle">
+        <Channel
+          icon={MessageCircle}
+          label={t("lines.whatsappLabel")}
+          note={t("lines.whatsappNote")}
+          value={t("lines.whatsappValue")}
+          href={`https://wa.me/${phone.replace(/\D/g, "")}`}
+          external
+        />
+        <Channel
+          icon={Mail}
+          label={t("lines.emailLabel")}
+          value={email}
+          href={`mailto:${email}`}
+        />
+        <Channel
+          icon={Phone}
+          label={t("lines.phoneLabel")}
+          value={phone}
+          href={`tel:${phone.replace(/\s/g, "")}`}
+        />
+        <Channel
+          icon={Clock3}
+          label={t("callLead")}
+          value={t("scheduleCall")}
+          href="/schedule"
+        />
+      </div>
+      {cairoTime ? (
+        <div className="mt-6 flex items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span>{t("lines.localTime", { time: cairoTime })}</span>
+          <span className="font-mono tracking-[0.12em]">
+            CAI
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function Channel({
+  icon: Icon,
+  label,
+  note,
+  value,
+  href,
+  external = false,
+}: {
+  icon: typeof MessageCircle;
+  label: string;
+  note?: string;
+  value: string;
+  href: string;
+  external?: boolean;
+}) {
+  const classes =
+    "group block py-5 transition-colors duration-300 hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
+
+  const content = (
+    <>
+      <div className="flex items-start justify-between gap-5">
+        <div className="flex min-w-0 items-start gap-3">
+          <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-brand" />
+          <div className="min-w-0">
+            <Eyebrow className="m-0">
+              {label}
+            </Eyebrow>
+            <span className="mt-2 block wrap-break-word text-sm leading-snug text-foreground">
+              {value}
+            </span>
+            {note ? (
+              <span className="mt-1.5 block text-xs leading-snug text-muted-foreground">
+                {note}
+              </span>
+            ) : null}
+          </div>
+        </div>
+        <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand" />
+      </div>
+    </>
+  );
+
+  if (external) {
+    return (
+      <ExternalDirectionalLink href={href} className={classes}>
+        {content}
+      </ExternalDirectionalLink>
+    );
+  }
+
+  if (href === "/schedule") {
+    return (
+      <DirectionalLink href={href} className={classes}>
+        {content}
+      </DirectionalLink>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      className={cn(classes, "dir-ltr rtl:text-end")}
     >
-      <AlertCircle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-      {message}
-    </p>
+      {content}
+    </a>
   );
 }
 
@@ -559,12 +765,11 @@ function Receipt({
   const t = useTranslations("contactPage.receipt");
   const tFounder = useTranslations("about.founder");
   const locale = useLocale();
+
   const rootRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
-  useEffect(() => {
-    // Focus follows the letter into its receipt, so a keyboard or screen
-    // reader user lands on the confirmation instead of on a removed button.
+  useIsomorphicLayoutEffect(() => {
     headingRef.current?.focus();
 
     const root = rootRef.current;
@@ -572,6 +777,7 @@ function Receipt({
 
     const ctx = gsap.context(() => {
       const mm = gsap.matchMedia();
+
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         gsap.from("[data-receipt-part]", {
           y: 14,
@@ -580,51 +786,86 @@ function Receipt({
           ease: MOTION.ease.strong,
           stagger: MOTION.stagger.loose,
         });
+
         gsap.from("[data-receipt-rule]", {
           scaleX: 0,
-          transformOrigin: document.documentElement.dir === "rtl" ? "right center" : "left center",
+          transformOrigin:
+            document.documentElement.dir === "rtl"
+              ? "right center"
+              : "left center",
           duration: MOTION.duration.base,
           ease: MOTION.ease.strong,
         });
       });
+
+      return () => mm.revert();
     }, root);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <div ref={rootRef} role="status" className="relative pt-6">
+    <div
+      ref={rootRef}
+      role="status"
+      className="max-w-4xl pt-6"
+    >
       <span
         aria-hidden
         data-receipt-rule
         className="absolute inset-x-0 top-0 h-0.5 bg-local-accent"
       />
-      <Eyebrow tone="accent" data-receipt-part className="m-0">
+
+      <Eyebrow
+        tone="accent"
+        data-receipt-part
+        className="m-0"
+      >
         {t("eyebrow")}
       </Eyebrow>
+
       <h2
         ref={headingRef}
         tabIndex={-1}
         data-receipt-part
-        className="mt-4 max-w-[22ch] text-[clamp(1.75rem,3vw,2.5rem)] font-light leading-[1.1] tracking-[-0.02em] text-foreground outline-none"
+        className="mt-5 max-w-[18ch] text-[clamp(2.5rem,5vw,5rem)] font-light leading-[0.98] tracking-[-0.04em] text-foreground outline-none rtl:leading-[1.15] rtl:tracking-normal"
       >
-        {t("title", { founder: tFounder("name") })}
+        {t("title", {
+          founder: tFounder("name"),
+        })}
       </h2>
-      <p data-receipt-part className="mt-3 text-base text-muted-foreground">
-        {t("sentAt", { time: formatCairoTime(locale, receivedAt) })}
+
+      <p
+        data-receipt-part
+        className="mt-5 text-sm text-muted-foreground"
+      >
+        {t("sentAt", {
+          time: formatCairoTime(locale, receivedAt),
+        })}
       </p>
 
-      <div data-receipt-part className="mt-12">
-        <h3 className="text-sm font-medium text-foreground">{t("nextLabel")}</h3>
-        <ol className="mt-5 space-y-6">
+      <div
+        data-receipt-part
+        className="mt-16 border-t border-border-subtle pt-6"
+      >
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="size-4 text-brand" />
+
+          <h3 className="text-sm font-medium text-foreground">
+            {t("nextLabel")}
+          </h3>
+        </div>
+
+        <ol className="mt-7 space-y-7">
           {RECEIPT_STEPS.map((step, index) => (
             <li
               key={step}
-              className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline"
+              className="grid grid-cols-[3rem_minmax(0,1fr)] items-start gap-3 border-b border-border-subtle pb-7 last:border-b-0"
             >
-              <span className="text-sm tabular-nums text-local-accent-text">
+              <span className="font-mono text-xs tabular-nums text-local-accent-text">
                 <Num value={index + 1} pad={2} />
               </span>
+
               <span className="max-w-[52ch] text-base leading-relaxed text-foreground">
                 {t(`steps.${step}`)}
               </span>
@@ -637,85 +878,37 @@ function Receipt({
         type="button"
         data-receipt-part
         onClick={onWriteAnother}
-        className="mt-12 text-sm text-foreground underline underline-offset-4 decoration-foreground/40 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        className="mt-10 inline-flex items-center gap-2 text-sm text-foreground underline underline-offset-4 decoration-foreground/35 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       >
         {t("another")}
+        <ArrowIcon
+          direction="forward"
+          className="size-3.5"
+        />
       </button>
     </div>
   );
 }
 
-function DirectLines() {
-  const t = useTranslations("contactPage");
-  const tContact = useTranslations("contact");
-  const cairoTime = useCairoTime();
-
-  const email = tContact("emailValue");
-  const phone = t("phoneValue");
-
-  const valueClass =
-    "mt-2 block text-lg leading-snug text-foreground wrap-anywhere transition-colors duration-(--motion-drawer) hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
-
-  return (
-    <section aria-labelledby="contact-lines-heading">
-      <h2 id="contact-lines-heading" className="sr-only">
-        {t("lines.heading")}
-      </h2>
-
-      <ul className="grid gap-y-8 border-t border-border-subtle pt-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Line label={t("lines.whatsappLabel")} note={t("lines.whatsappNote")}>
-          <ExternalDirectionalLink
-            href={`https://wa.me/${phone.replace(/\D/g, "")}`}
-            className={valueClass}
-          >
-            {t("lines.whatsappValue")}
-          </ExternalDirectionalLink>
-        </Line>
-        <Line label={t("lines.emailLabel")}>
-          <a href={`mailto:${email}`} dir="ltr" className={cn(valueClass, "rtl:text-end")}>
-            {email}
-          </a>
-        </Line>
-        <Line label={t("lines.phoneLabel")}>
-          <a
-            href={`tel:${phone.replace(/\s/g, "")}`}
-            dir="ltr"
-            className={cn(valueClass, "rtl:text-end")}
-          >
-            {phone}
-          </a>
-        </Line>
-        <Line label={t("callLead")}>
-          <DirectionalLink href="/schedule" className={valueClass}>
-            {t("scheduleCall")}
-          </DirectionalLink>
-        </Line>
-      </ul>
-
-      <p className="mt-10 text-sm leading-relaxed text-muted-foreground">
-        {t("lines.address1")} · {t("lines.address2")}
-        {cairoTime ? <> · {t("lines.localTime", { time: cairoTime })}</> : null}
-      </p>
-    </section>
-  );
-}
-
-function Line({
-  label,
-  note,
-  children,
+function FieldError({
+  field,
+  message,
 }: {
-  label: string;
-  note?: string;
-  children: ReactNode;
+  field: Field;
+  message?: string;
 }) {
+  if (!message) return null;
+
   return (
-    <li className="min-w-0 sm:pe-6 lg:border-s lg:border-border-subtle lg:ps-6 lg:first:border-s-0 lg:first:ps-0">
-      <Eyebrow className="m-0">{label}</Eyebrow>
-      {children}
-      {note ? (
-        <span className="mt-1.5 block text-sm text-muted-foreground">{note}</span>
-      ) : null}
-    </li>
+    <p
+      id={`contact-${field}-error`}
+      className="mt-3 flex items-start gap-1.5 text-sm leading-snug text-destructive"
+    >
+      <AlertCircle
+        aria-hidden
+        className="mt-0.5 size-3.5 shrink-0"
+      />
+      {message}
+    </p>
   );
-}
+} 

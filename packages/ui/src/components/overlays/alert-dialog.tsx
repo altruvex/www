@@ -1,23 +1,9 @@
 "use client";
 
-import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
-
+import * as React from "react";
 import { cn } from "../../lib/utils";
 import { buttonVariants } from "../primitives/button";
-
-/**
- * The ONE modal in the OS.
- *
- * Contextual editing belongs in a `Sheet` — it keeps the row visible behind it.
- * A modal is reserved for a destructive confirmation, where hiding the rest of
- * the screen is the point: stop, read this, decide.
- *
- * Surface, elevation, radius and motion are the app's, not stock shadcn's: the
- * same `--elev-2` plane as every popover, `--dur-panel` timing, 13px body text,
- * and logical inset properties so it centres correctly under RTL.
- */
-
 export const AlertDialog = AlertDialogPrimitive.Root;
 export const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
@@ -40,7 +26,6 @@ export function AlertDialogOverlay({
   );
 }
 
-/** Elements that already own Enter: they act on it themselves. */
 const OWNS_ENTER = "textarea, button, a, select, summary, [role='combobox'], [contenteditable='true']";
 
 export function AlertDialogContent({
@@ -48,7 +33,6 @@ export function AlertDialogContent({
   onKeyDown,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
-  // Enter runs the dialog's primary action, as it does in a native dialog.
   const confirmOnEnter = (event: React.KeyboardEvent<HTMLDivElement>) => {
     onKeyDown?.(event);
     if (event.defaultPrevented || event.key !== "Enter") return;
@@ -63,8 +47,6 @@ export function AlertDialogContent({
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
-      {/* Centred by the grid, not by a -50% translate: a translate has to be
-          flipped by hand under RTL, and a wrapper never does. */}
       <div className="pointer-events-none fixed inset-0 z-50 grid place-items-center p-4">
         <AlertDialogPrimitive.Content
           data-slot="alert-dialog-content"

@@ -9,10 +9,6 @@ export async function GET(
   try {
     const { token } = await params;
 
-    // Public by design — the caller holds only the link — so the read is
-    // limited per IP and per token, the same shape the client portal and the
-    // sign link already use. Without it the one endpoint that returns a
-    // client's payment schedule answers as fast as anyone can ask.
     for (const [route, identifier, limit] of [
       ["portal_read_ip", clientIpFromHeaders(request.headers), 60],
       ["portal_read_token", token, 120],
@@ -60,7 +56,6 @@ export async function GET(
         payments: project.payments.map((payment) => ({
           milestone: payment.milestone,
           amount: payment.amount,
-          // Same rule as the admin screens: late from the day after the due date.
           status:
             payment.status === "PENDING" && isPaymentOverdue(payment) ? "OVERDUE" : payment.status,
           dueDate: payment.dueDate,

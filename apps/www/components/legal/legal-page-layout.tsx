@@ -1,11 +1,9 @@
 "use client";
 
-import { LegalProse } from "@/components/legal/legal-prose";
 import { PageHero } from "@/components/sections/page-hero";
 import { Container } from "@/components/shared/container";
 import { ContentsRail, jumpToSection } from "@/components/shared/contents-rail";
 import { DirectionalLink } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { formatIndex } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
@@ -17,9 +15,7 @@ type LegalPageLayoutProps = {
   namespace: LegalNamespace;
   formattedDate: string;
   accentClass?: string;
-  /** Section numbers and titles, in page order — they build the contents rail. */
   contents: Array<{ number: number; title: string }>;
-  /** Plain-language facts set above the clauses, each pointing at its clause. */
   summary?: ReactNode;
   children: ReactNode;
 };
@@ -28,12 +24,6 @@ function legalSectionId(number: number) {
   return `section-${number}`;
 }
 
-/**
- * A legal page is a document someone reads to find one clause, not a
- * marketing page read top to bottom. So: a short hero, a contents rail that
- * holds still beside the text, headings sized for scanning rather than for
- * display, and a measure that stays inside a readable line length.
- */
 export function LegalPageLayout({
   namespace,
   formattedDate,
@@ -45,14 +35,11 @@ export function LegalPageLayout({
   const t = useTranslations(namespace);
 
   return (
-    // overflow-x-clip, not -hidden: a hidden ancestor would silently stop
-    // the contents rail from sticking.
     <div className="relative min-h-screen w-full overflow-x-clip bg-background">
       <PageHero
         eyebrow={t("hero.eyebrow")}
         title={t("title")}
         description={t("hero.description")}
-        minHeightClass="min-h-[56vh]"
         className={accentClass}
       >
         <p className="text-sm leading-normal text-muted-foreground">
@@ -84,16 +71,11 @@ export function LegalPageLayout({
         </Container>
       </section>
 
-      {/* A legal page closes on who to ask, not on a sales pitch. */}
       <LegalContactRow />
     </div>
   );
 }
 
-/**
- * Set on the same grid as the clauses, so the question sits under the text it
- * is about rather than as a banner across the page.
- */
 function LegalContactRow() {
   const t = useTranslations("common.legalContact");
   const tContact = useTranslations("contact");
@@ -105,7 +87,7 @@ function LegalContactRow() {
       aria-labelledby="legal-contact-label"
       className="border-t border-border-subtle"
     >
-      <Container className="grid gap-10 py-12 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20 lg:py-16 xl:grid-cols-[17rem_minmax(0,1fr)]">
+      <Container className="grid gap-10 pt-(--section-y-top) pb-(--section-y-bottom) lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-20 xl:grid-cols-[17rem_minmax(0,1fr)]">
         <div className="min-w-0 max-w-[46rem] lg:col-start-2">
           <h2
             id="legal-contact-label"
@@ -177,45 +159,8 @@ export function LegalSection({
   );
 }
 
-export function LegalContactSection({
-  number,
-  title,
-  description,
-  email,
-}: {
-  number: number;
-  title: string;
-  description: string;
-  email: string;
-}) {
-  const tContact = useTranslations("contact");
-
-  return (
-    <LegalSection number={number} title={title}>
-      <LegalProse content={description} />
-      <div className="mt-8 border-t border-border-subtle pt-6">
-        <Eyebrow className="mb-2">{tContact("email")}</Eyebrow>
-        <a
-          dir="ltr"
-          href={`mailto:${email}`}
-          className="inline-flex min-h-11 items-center text-[clamp(1.25rem,2vw,1.625rem)] text-foreground underline decoration-border decoration-1 underline-offset-[6px] transition-colors hover:text-local-accent-text hover:decoration-local-accent-text"
-        >
-          {email}
-        </a>
-      </div>
-    </LegalSection>
-  );
-}
-
 type LegalSummaryItem = { section: number; text: string };
 
-/**
- * "In short": the policy's load-bearing facts in plain sentences, each one a
- * restatement of a clause below and linked to it. It adds no term the clauses
- * do not already carry — the note under it says the numbered sections are
- * the policy — so it can be read by someone who will never read the rest,
- * without becoming a second, looser version of the agreement.
- */
 export function LegalSummary({
   eyebrow,
   items,
@@ -230,7 +175,7 @@ export function LegalSummary({
   return (
     <section
       aria-labelledby="legal-summary-title"
-      className="mb-14 border-t-2 border-foreground pt-5 md:mb-16"
+      className="mb-(--section-block) border-t-2 border-foreground pt-5"
     >
       <h2 id="legal-summary-title" className="eyebrow m-0 font-normal text-foreground">
         {eyebrow}

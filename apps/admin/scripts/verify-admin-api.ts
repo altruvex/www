@@ -1,17 +1,3 @@
-/**
- * End-to-end checks for the admin mutation routes and the audit trail.
- *
- * The handlers are exercised through the same functions the routes export, with
- * the session gate stubbed — the gate itself is covered by `withAdmin` and by
- * the ingest suite's 401 cases. What is asserted here is the part that is easy
- * to get wrong and impossible to see from a rendered page: that a mutation
- * actually persists, that it writes an audit event with the right actor and
- * diff, and that the subscription state machine moves the way the UI claims.
- *
- *   cd apps/admin && DATABASE_URL=... bun run verify:admin-api
- *
- * Writes and then removes its own records; point it at a scratch database.
- */
 import { prisma } from "@repo/database";
 
 import { recordActivity, recordChange, redactRecord, userActor } from "../lib/activity-log";
@@ -31,6 +17,7 @@ import { getPricing } from "../lib/pricing-store";
 import { DELETABLES } from "../lib/deletable";
 import { clientPayments } from "../lib/client-payments";
 import { maintenanceIntervalPrice, pricingCopy } from "@repo/pricing-schema";
+import { PROJECT_CURRENCY_INCLUDE, projectCurrency } from "../lib/project-currency";
 
 if (!process.env.DATABASE_URL) {
   console.log("verify:admin-api — skipped (no DATABASE_URL).");
@@ -56,7 +43,6 @@ const client = await prisma.client.create({
 });
 
 const actor = userActor({ user: { id: user.id, name: user.name, email: user.email } });
-// Retainer payments outlive their subscription (SetNull), so cleanup needs their ids.
 const retainerPaymentIds: string[] = [];
 
 try {
@@ -102,7 +88,6 @@ try {
     check(event?.actorKind === "USER", "actor kind is recorded");
     check(event?.actorLabel === "Verify Operator", "actor label is denormalised onto the event");
 
-    // A no-op save must not produce an audit line.
     const wrote = await recordChange({
       action: "client.updated",
       actor,
@@ -137,12 +122,10 @@ try {
       "an unchanged field is left out of the diff",
     );
 
-    // Recording must never break the mutation it describes.
     await recordActivity({
       action: "client.updated",
       actor,
       entityType: "client",
-      // A deliberately impossible payload: the write fails, the call must not.
       entityId: "x".repeat(5000),
       summary: "Should not throw",
     });
@@ -171,13 +154,9 @@ try {
     check(sub.autoRenew === true, "auto-renew defaults on");
     check(deriveStatus(sub) === "ACTIVE", "a fresh subscription reads as active");
 
-    // One live retainer per client.
     const dupe = await createSubscription(client.id, "essential", user.email, "MONTHLY", actor);
     check(!dupe.ok, "a second live retainer for the same client is refused");
 
-    // Force it three days overdue, then renew. The new period must start where
-    // the lapsed one ENDED, not at today — otherwise a late renewal walks the
-    // billing anchor forward a little every cycle.
     const lapsedEnd = new Date(Date.now() - 3 * 86_400_000);
     await prisma.maintenanceSubscription.update({
       where: { id: sub.id },
@@ -206,7 +185,6 @@ try {
     });
     check(renewEvent != null, "renewal writes an audit event");
 
-    // Auto-renew is idempotent, and switching it off changes the derived state.
     check(await setAutoRenew(sub.id, false, user.email, actor), "auto-renew can be switched off");
     check(
       await setAutoRenew(sub.id, false, user.email, actor),
@@ -234,7 +212,6 @@ try {
 
   console.log("\nAnnual interval");
   {
-    // One live retainer per client: retire the monthly one above first.
     await prisma.maintenanceSubscription.updateMany({
       where: { clientId: client.id },
       data: { status: "CANCELLED" },
@@ -251,14 +228,12 @@ try {
       sub.currentPeriodEnd.getTime() === nextPeriodEnd(sub.currentPeriodStart, "ANNUAL").getTime(),
       "the first period runs a full year",
     );
-    // Creating the retainer opens the first period's invoice, due on its start.
     const firstPeriod = await prisma.payment.findMany({ where: { subscriptionId: sub.id } });
     check(
       firstPeriod.length === 1 && firstPeriod[0]?.dueDate?.getTime() === sub.currentPeriodStart.getTime(),
       `creating the retainer opens exactly one payment, for the first period (saw ${firstPeriod.length})`,
     );
 
-    // Lapse it and renew: the next year starts where the old one ended.
     const lapsedEnd = new Date(Date.now() - 3 * 86_400_000);
     await prisma.maintenanceSubscription.update({
       where: { id: sub.id },
@@ -275,9 +250,6 @@ try {
       "the renewal adds a year to the old period end",
     );
 
-    // The renewal opens the new year's invoice: one PENDING payment at the schema
-    // price for the interval, due on the day the period starts. Payments are
-    // counted per period (by due date): the first period already has its own.
     const pricing = await getPricing();
     const annualPrice = maintenanceIntervalPrice(pricing.maintenance.professional, "annual");
     const allPayments = await prisma.payment.findMany({ where: { subscriptionId: sub.id } });
@@ -298,8 +270,6 @@ try {
     const meta = renewEvent?.metadata as Record<string, unknown> | null;
     check(meta?.paymentId === pay?.id && meta?.amountSource === "schema", "the audit event names the payment and where its amount came from");
 
-    // Replaying the same period (the row was reset to the same end) must not
-    // open a second invoice for it.
     await prisma.maintenanceSubscription.update({
       where: { id: sub.id },
       data: { currentPeriodStart: sub.currentPeriodStart, currentPeriodEnd: lapsedEnd },
@@ -312,7 +282,6 @@ try {
       "the same period never gets a second payment",
     );
 
-    // The screen reads the period's payment, and marks it overdue by the clock.
     const row = (await listSubscriptions()).find((s) => s.id === sub.id);
     check(row?.invoiceAmount === annualPrice, "the admin row knows what the next renewal invoices");
     check(row?.currentPeriodPayment?.id === pay?.id, "the admin row carries the period's payment");
@@ -331,8 +300,6 @@ try {
 
   console.log("\nBilling interval change");
   {
-    // The annual retainer above is the live one. Switching it to monthly must
-    // leave the paid year alone and only show up at the renewal that follows.
     const sub = await prisma.maintenanceSubscription.findFirstOrThrow({
       where: { clientId: client.id, status: "ACTIVE" },
     });
@@ -370,7 +337,6 @@ try {
     check(listed?.billingIntervalLabel === "Monthly", "the admin row names the new interval");
     check(listed?.billingIntervalPending === true, "the admin row knows the new interval starts at the renewal");
 
-    // The next renewal runs a month from where the paid year ends.
     const lapsedEnd = new Date(Date.now() - 3 * 86_400_000);
     await prisma.maintenanceSubscription.update({
       where: { id: sub.id },
@@ -405,8 +371,6 @@ try {
 
   console.log("\nQuote-only retainer");
   {
-    // Enterprise publishes no price. A renewal must not invent one: it refuses
-    // without an agreed amount and bills exactly what the operator entered.
     await prisma.maintenanceSubscription.updateMany({
       where: { clientId: client.id },
       data: { status: "CANCELLED" },
@@ -432,8 +396,6 @@ try {
       "a refused renewal moves nothing",
     );
 
-    // The quote is one monthly figure on the subscription; the interval rule
-    // prices every invoice from it exactly as it prices a published plan.
     check(!(await setQuotedMonthlyPrice(sub.id, 0, user.email, actor)).ok, "a zero quote is refused");
     check(!(await setQuotedMonthlyPrice(sub.id, 12.5, user.email, actor)).ok, "a fractional quote is refused");
     const quoted = 1234;
@@ -468,7 +430,6 @@ try {
     });
     check((event?.metadata as Record<string, unknown> | null)?.amountSource === "quote", "the audit event says the quote set the amount");
 
-    // Changing the quote never rewrites a payment already opened.
     const requoted = quoted + 1;
     check((await setQuotedMonthlyPrice(sub.id, requoted, user.email, actor)).ok, "the quote can be changed");
     check(
@@ -476,7 +437,6 @@ try {
       "the opened payment keeps its amount",
     );
 
-    // Annual = 10 paid months of the quote, the same rule as a published plan.
     check((await changeBillingInterval(sub.id, "ANNUAL", user.email, actor)).ok, "the quoted retainer moves to annual billing");
     const annualQuoted = maintenanceIntervalPrice({ price: requoted }, "annual");
     const annualRow = (await listSubscriptions()).find((s) => s.id === sub.id);
@@ -490,7 +450,6 @@ try {
       "every interval the dialog offers is priced from the quote, none reads as custom",
     );
 
-    // Clearing the quote: audited, payments untouched, then nothing can be invoiced.
     const cleared = await setQuotedMonthlyPrice(sub.id, null, user.email, actor);
     check(cleared.ok, "the quote can be cleared");
     const clearedRow = (await listSubscriptions()).find((s) => s.id === sub.id);
@@ -523,7 +482,6 @@ try {
     const clearedTwice = await setQuotedMonthlyPrice(sub.id, null, user.email, actor);
     check(clearedTwice.ok && /No quoted monthly price/.test(clearedTwice.message), "a second clear is an ok no-op");
 
-    // Deleting the retainer keeps its payments as records, detached.
     await setSubscriptionStatus(sub.id, "CANCELLED", user.email, actor);
     const plan = await DELETABLES.maintenanceSubscription!.plan(sub.id);
     check(plan?.notes.some((n) => /1 payment/.test(n)) === true, "the delete plan says the payment stays");
@@ -534,10 +492,6 @@ try {
 
   console.log("\nRecorded invoices");
   {
-    // A period opened before renewals wrote payments has no invoice. Nothing
-    // backfills it; the operator records it by hand, once, at the price of the
-    // interval that produced the period. Creating a retainer now opens the first
-    // period's invoice, so the legacy row is staged by removing that payment.
     const created = await createSubscription(client.id, "professional", user.email, "QUARTERLY", actor);
     check(created.ok, "a quarterly subscription is created");
     const sub = await prisma.maintenanceSubscription.findUniqueOrThrow({ where: { id: created.id! } });
@@ -582,12 +536,10 @@ try {
       "the admin row shows the recorded invoice as this period's payment",
     );
 
-    // The client page reads project and retainer payments through one helper;
-    // the retainer payment appears there exactly once.
     const page = await prisma.client.findUniqueOrThrow({
       where: { id: client.id },
       include: {
-        projects: { include: { payments: true, contract: { select: { proposal: { select: { currency: true } } } } } },
+        projects: { include: { payments: true, ...PROJECT_CURRENCY_INCLUDE } },
         subscriptions: { include: { payments: true } },
       },
     });
@@ -599,8 +551,6 @@ try {
       "it carries the plan, not a project",
     );
 
-    // An interval changed mid-period applies to the NEXT period. The current
-    // one was produced by the old interval, and that is what it bills at.
     await prisma.payment.deleteMany({ where: { subscriptionId: sub.id } });
     const changed = await changeBillingInterval(sub.id, "MONTHLY", user.email, actor);
     check(changed.ok, "the interval is changed to monthly mid-period");
@@ -626,7 +576,6 @@ try {
       "the audit event records both the derived and the stored interval",
     );
 
-    // A period whose length fits no interval cannot be priced; refuse, never guess.
     await prisma.payment.deleteMany({ where: { subscriptionId: sub.id } });
     await prisma.maintenanceSubscription.update({
       where: { id: sub.id },
@@ -638,7 +587,6 @@ try {
     await setSubscriptionStatus(sub.id, "CANCELLED", user.email, actor);
     check(!(await recordPeriodInvoice(sub.id, user.email, actor)).ok, "a cancelled retainer cannot be invoiced");
 
-    // A quote-only plan needs its quote here too; a published plan refuses one.
     check(
       !(await createSubscription(client.id, "essential", user.email, "MONTHLY", actor, { quotedMonthlyPrice: 4321 })).ok,
       "a published plan refuses a quote at creation",
@@ -657,7 +605,6 @@ try {
     );
     await setSubscriptionStatus(quote.id!, "CANCELLED", user.email, actor);
 
-    // A quote given at creation is stored; a published plan never takes one.
     const born = await createSubscription(client.id, "enterprise", user.email, "QUARTERLY", actor, { quotedMonthlyPrice: 2000 });
     check(born.ok, "an enterprise subscription is created with its quote");
     const bornRow = (await listSubscriptions()).find((s) => s.id === born.id);
@@ -676,8 +623,6 @@ try {
 
   console.log("\nTasks");
   {
-    // A task needs a project, which needs a contract and a proposal. Build the
-    // real chain rather than stubbing it — the FKs are part of what is tested.
     const proposal = await prisma.proposal.create({
       data: {
         clientId: client.id,
@@ -719,13 +664,46 @@ try {
     });
     check(reopened.completedAt === null, "reopening a task clears completedAt");
 
-    // Cascade: deleting the project must not orphan its tasks.
     await prisma.projectTask.deleteMany({ where: { projectId: project.id } });
     await prisma.payment.deleteMany({ where: { projectId: project.id } });
     await prisma.project.delete({ where: { id: project.id } });
     await prisma.contract.delete({ where: { id: contract.id } });
     await prisma.proposal.delete({ where: { id: proposal.id } });
     check(true, "the project chain tears down cleanly");
+  }
+
+  console.log("\nRecorded project (no contract)");
+  {
+    const recorded = await prisma.project.create({
+      data: {
+        origin: "RECORDED",
+        clientId: client.id,
+        name: "Verify Recorded Project",
+        currency: "USD",
+        status: "COMPLETED",
+        phase: "LAUNCHED",
+      },
+      include: PROJECT_CURRENCY_INCLUDE,
+    });
+    check(recorded.contractId === null, "a recorded project has no contract");
+    check(recorded.origin === "RECORDED", "its origin is RECORDED");
+    check(projectCurrency(recorded) === "USD", "projectCurrency reads the currency it was given");
+    check(recorded.completedAt === null, "an unknown completion date stays null — never defaulted to now");
+
+    const page = await prisma.client.findUniqueOrThrow({
+      where: { id: client.id },
+      include: {
+        projects: { include: { payments: true, ...PROJECT_CURRENCY_INCLUDE } },
+        subscriptions: { include: { payments: true } },
+      },
+    });
+    check(clientPayments(page).every((r) => r.projectId !== recorded.id), "it contributes no payments to the client page");
+
+    const plan = await DELETABLES.project!.plan(recorded.id);
+    check(plan != null && plan.block === null, "the delete plan reads it without a contract and raises no block");
+    check((plan?.snapshot as { origin?: string } | undefined)?.origin === "RECORDED", "the delete snapshot keeps its origin");
+    await DELETABLES.project!.remove(recorded.id);
+    check((await prisma.project.findUnique({ where: { id: recorded.id } })) === null, "the delete registry removes it");
   }
 
   console.log("\nIncident numbering");

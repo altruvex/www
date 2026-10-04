@@ -7,18 +7,8 @@ import {
   type Prisma,
 } from "@repo/database";
 
-/**
- * Reads for the engineering side of the OS (§6–§8).
- *
- * Everything here is server-side and filtered in the database, not in the page.
- * Logs in particular are the one table in this system that can reach six
- * figures of rows, so `listLogs` pages at the query and never loads a product's
- * full history to count it (§24).
- */
-
 export const LOG_PAGE_SIZE = 100;
 
-/** Cross-product operational summary — what the Overview and nav badges read. */
 export async function getEngineeringSummary(now: Date = new Date()) {
   const dayAgo = new Date(now.getTime() - 86_400_000);
   const weekAgo = new Date(now.getTime() - 7 * 86_400_000);
@@ -57,14 +47,21 @@ export async function getEngineeringSummary(now: Date = new Date()) {
     failedBuilds,
     recentErrors,
     lastDeployment,
-    /** True when nothing has ever been ingested — the screens say so plainly. */
     isEmpty: products === 0,
   };
 }
 
-export async function listProducts(filters: { clientId?: string; projectId?: string } = {}) {
+export interface ProductListFilters {
+  clientId?: string;
+  projectId?: string;
+}
+
+export async function listProducts(filters: ProductListFilters = {}) {
   const products = await prisma.product.findMany({
-    where: { clientId: filters.clientId, projectId: filters.projectId },
+    where: {
+      clientId: filters.clientId,
+      projectId: filters.projectId,
+    },
     orderBy: [{ status: "asc" }, { name: "asc" }],
     include: {
       client: { select: { id: true, name: true, company: true } },
@@ -73,44 +70,28 @@ export async function listProducts(filters: { clientId?: string; projectId?: str
     },
   });
 
-  // The last deployment per product, and the open-incident count, are what an
-  // operator actually scans this list for. Two grouped queries beat N+1.
-  const [lastDeployments, openIncidents] = await Promise.all([
-    prisma.deployment.findMany({
-      where: { productId: { in: products.map((p) => p.id) }, status: "SUCCEEDED" },
-      orderBy: [{ finishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
-      select: {
-        id: true,
-        productId: true,
-        number: true,
-        finishedAt: true,
-        version: true,
-        environment: true,
-      },
-    }),
+  const [lastProduction, openIncidents] = await Promise.all([
+    Promise.all(
+      products.map((product) =>
+        prisma.deployment.findFirst({
+          where: { productId: product.id, status: "SUCCEEDED", environment: "PRODUCTION" },
+          orderBy: [{ finishedAt: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+          select: { id: true, number: true, finishedAt: true, createdAt: true, version: true },
+        }),
+      ),
+    ),
     prisma.incident.groupBy({
       by: ["productId"],
-      where: { status: { not: "RESOLVED" } },
+      where: { status: { not: "RESOLVED" }, productId: { in: products.map((p) => p.id) } },
       _count: { _all: true },
     }),
   ]);
 
-  const latestByProduct = new Map<string, (typeof lastDeployments)[number]>();
-  const latestProductionByProduct = new Map<string, (typeof lastDeployments)[number]>();
-  for (const d of lastDeployments) {
-    if (!latestByProduct.has(d.productId)) latestByProduct.set(d.productId, d);
-    if (d.environment === "PRODUCTION" && !latestProductionByProduct.has(d.productId)) {
-      latestProductionByProduct.set(d.productId, d);
-    }
-  }
   const openByProduct = new Map(openIncidents.map((i) => [i.productId, i._count._all]));
 
-  return products.map((product) => ({
+  return products.map((product, index) => ({
     ...product,
-    /** Last successful deploy to any environment — a preview counts. */
-    lastDeployment: latestByProduct.get(product.id) ?? null,
-    /** Last successful deploy to PRODUCTION — what "last deploy" means to a client. */
-    lastProductionDeployment: latestProductionByProduct.get(product.id) ?? null,
+    lastProductionDeployment: lastProduction[index] ?? null,
     openIncidents: openByProduct.get(product.id) ?? 0,
   }));
 }
@@ -130,6 +111,7 @@ export async function getProduct(id: string) {
           provider: true,
           status: true,
           expiresAt: true,
+          termMonths: true,
           autoRenew: true,
         },
       },
@@ -155,7 +137,6 @@ export interface DeploymentFilters {
   productId?: string;
   environment?: DeployEnvironment;
   status?: string;
-  /** Via the product's client. */
   clientId?: string;
 }
 
@@ -223,48 +204,39 @@ export async function listBuilds(filters: BuildFilters = {}, take = 100) {
   });
 }
 
+export const LOG_LEVELS = ["DEBUG", "INFO", "WARN", "ERROR", "FATAL"] as const satisfies readonly LogLevel[];
+
+export function isLogLevel(value: unknown): value is LogLevel {
+  return typeof value === "string" && (LOG_LEVELS as readonly string[]).includes(value);
+}
+
+export function levelsAtLeast(min: LogLevel): LogLevel[] {
+  return LOG_LEVELS.slice(LOG_LEVELS.indexOf(min));
+}
+
 export interface LogFilters {
   productId?: string;
   environment?: DeployEnvironment;
-  level?: LogLevel;
-  /** Free text, matched against the message. */
+  minLevel?: LogLevel;
   q?: string;
   requestId?: string;
   deploymentId?: string;
   buildId?: string;
   incidentId?: string;
-  /** Emitting subsystem, exact match ("web", "worker"). */
   source?: string;
-  /** Inclusive lower bound on the source timestamp. */
   from?: Date;
-  /** Exclusive upper bound on the source timestamp. */
   to?: Date;
-  /** Opaque cursor: the id of the last row on the previous page (older). */
-  cursor?: string;
-  /**
-   * Opaque cursor for walking back: the id of the first row on the page the
-   * operator is leaving. The page returned is the one just newer than it.
-   * Ignored when `cursor` is set.
-   */
-  before?: string;
+  page?: number;
+  pageSize?: number;
 }
 
-/**
- * One page of logs, newest first.
- *
- * Cursor-paginated rather than offset-paginated: `skip: 50_000` makes Postgres
- * walk fifty thousand rows to throw them away, and the offset shifts under you
- * as new lines arrive. The cursor is stable against both.
- *
- * Deliberately returns no total count — `COUNT(*)` over a large log table is
- * the expensive query on this page, and "how many errors are there exactly" is
- * not a question anyone asks while debugging.
- */
 export async function listLogs(filters: LogFilters = {}) {
+  const pageSize = filters.pageSize ?? LOG_PAGE_SIZE;
+  const page = Math.max(1, Math.floor(filters.page ?? 1));
   const where: Prisma.LogEntryWhereInput = {
     productId: filters.productId,
     environment: filters.environment,
-    level: filters.level,
+    ...(filters.minLevel ? { level: { in: levelsAtLeast(filters.minLevel) } } : {}),
     requestId: filters.requestId,
     deploymentId: filters.deploymentId,
     buildId: filters.buildId,
@@ -276,64 +248,25 @@ export async function listLogs(filters: LogFilters = {}) {
     ...(filters.q ? { message: { contains: filters.q, mode: "insensitive" } } : {}),
   };
 
-  const include = {
-    product: { select: { id: true, name: true, slug: true } },
-    deployment: { select: { id: true, number: true } },
-    build: { select: { id: true, number: true } },
-    incident: { select: { id: true, number: true, title: true } },
-  } satisfies Prisma.LogEntryInclude;
-
-  // Walking back is the same cursor read in the opposite order, then flipped:
-  // the rows just newer than the page being left, oldest first, so the extra
-  // row answers "is there an even newer page".
-  if (filters.before && !filters.cursor) {
-    const rows = await prisma.logEntry.findMany({
+  const [entries, total] = await Promise.all([
+    prisma.logEntry.findMany({
       where,
-      orderBy: [{ timestamp: "asc" }, { id: "asc" }],
-      take: LOG_PAGE_SIZE + 1,
-      cursor: { id: filters.before },
-      skip: 1,
-      include,
-    });
-    const hasNewer = rows.length > LOG_PAGE_SIZE;
-    const entries = (hasNewer ? rows.slice(0, LOG_PAGE_SIZE) : rows).reverse();
-    return {
-      entries,
-      // Coming back from an older page means an older page exists.
-      hasMore: entries.length > 0,
-      nextCursor: entries[entries.length - 1]?.id ?? null,
-      hasNewer,
-      prevCursor: hasNewer ? (entries[0]?.id ?? null) : null,
-    };
-  }
+      orderBy: [{ timestamp: "desc" }, { id: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        product: { select: { id: true, name: true, slug: true } },
+        deployment: { select: { id: true, number: true } },
+        build: { select: { id: true, number: true } },
+        incident: { select: { id: true, number: true, title: true } },
+      },
+    }),
+    prisma.logEntry.count({ where }),
+  ]);
 
-  const rows = await prisma.logEntry.findMany({
-    where,
-    orderBy: [{ timestamp: "desc" }, { id: "desc" }],
-    take: LOG_PAGE_SIZE + 1,
-    ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
-    include,
-  });
-
-  // One extra row is fetched purely to answer "is there another page", without
-  // a second count query.
-  const hasMore = rows.length > LOG_PAGE_SIZE;
-  const entries = hasMore ? rows.slice(0, LOG_PAGE_SIZE) : rows;
-
-  return {
-    entries,
-    hasMore,
-    nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null,
-    // A page reached through a cursor always has the rows before it.
-    hasNewer: Boolean(filters.cursor) && entries.length > 0,
-    prevCursor: filters.cursor ? (entries[0]?.id ?? null) : null,
-  };
+  return { entries, total, page, pageSize };
 }
 
-/**
- * The distinct `source` values products report, for the source filter. A
- * grouped query, so it runs in the database rather than reading every row.
- */
 export async function listLogSources(productId?: string, take = 50): Promise<string[]> {
   const groups = await prisma.logEntry.groupBy({
     by: ["source"],
@@ -348,39 +281,58 @@ export interface IncidentFilters {
   status?: IncidentStatus;
   severity?: IncidentSeverity;
   productId?: string;
-  /** Via the product's client. */
   clientId?: string;
   deploymentId?: string;
+  unowned?: boolean;
+  q?: string;
 }
 
-export async function listIncidents(openOnly = false, filters: IncidentFilters = {}) {
-  return prisma.incident.findMany({
-    where: {
-      ...(openOnly ? { status: { not: "RESOLVED" as const } } : {}),
-      ...(filters.status ? { status: filters.status } : {}),
-      severity: filters.severity,
-      productId: filters.productId,
-      deploymentId: filters.deploymentId,
-      ...(filters.clientId ? { product: { clientId: filters.clientId } } : {}),
-    },
-    orderBy: [{ resolvedAt: { sort: "asc", nulls: "first" } }, { detectedAt: "desc" }],
-    include: {
-      product: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          client: { select: { id: true, name: true, company: true } },
+export const INCIDENT_PAGE_SIZE = 50;
+
+export async function listIncidents(
+  openOnly = false,
+  filters: IncidentFilters = {},
+  paging: { page?: number; pageSize?: number } = {},
+) {
+  const pageSize = paging.pageSize ?? INCIDENT_PAGE_SIZE;
+  const page = Math.max(1, Math.floor(paging.page ?? 1));
+  const where: Prisma.IncidentWhereInput = {
+    ...(openOnly ? { status: { not: "RESOLVED" as const } } : {}),
+    ...(filters.status ? { status: filters.status } : {}),
+    severity: filters.severity,
+    productId: filters.productId,
+    deploymentId: filters.deploymentId,
+    ...(filters.unowned ? { ownerId: null } : {}),
+    ...(filters.q ? { title: { contains: filters.q, mode: "insensitive" } } : {}),
+    ...(filters.clientId ? { product: { clientId: filters.clientId } } : {}),
+  };
+
+  const [incidents, total] = await Promise.all([
+    prisma.incident.findMany({
+      where,
+      orderBy: [{ resolvedAt: { sort: "asc", nulls: "first" } }, { detectedAt: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            client: { select: { id: true, name: true, company: true } },
+          },
         },
+        owner: { select: { id: true, name: true, email: true } },
+        deployment: { select: { id: true, number: true, environment: true } },
+        updates: { orderBy: { createdAt: "desc" }, take: 1 },
       },
-      owner: { select: { id: true, name: true, email: true } },
-      deployment: { select: { id: true, number: true, environment: true } },
-      updates: { orderBy: { createdAt: "desc" }, take: 1 },
-    },
-  });
+    }),
+    prisma.incident.count({ where }),
+  ]);
+
+  return { incidents, total, page, pageSize };
 }
 
-/** Mean time to resolve, in hours, over incidents closed in the window. */
 export async function incidentStats(sinceDays = 90, now: Date = new Date()) {
   const since = new Date(now.getTime() - sinceDays * 86_400_000);
   const resolved = await prisma.incident.findMany({
@@ -402,10 +354,6 @@ export async function incidentStats(sinceDays = 90, now: Date = new Date()) {
 
 export const DEPLOYMENT_PAGE_SIZE = 50;
 
-/**
- * One page of deployments, newest first, cursor-paginated like logs. `cursor`
- * is the id of the last row on the previous page.
- */
 export async function listDeploymentsPage(filters: DeploymentFilters = {}, cursor?: string) {
   const rows = await prisma.deployment.findMany({
     where: deploymentWhere(filters),
@@ -430,7 +378,6 @@ export async function listDeploymentsPage(filters: DeploymentFilters = {}, curso
   return { entries, hasMore, nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null };
 }
 
-/** One page of builds, same contract as `listDeploymentsPage`. */
 export async function listBuildsPage(filters: BuildFilters = {}, cursor?: string) {
   const rows = await prisma.build.findMany({
     where: buildWhere(filters),
@@ -454,11 +401,6 @@ export async function listBuildsPage(filters: BuildFilters = {}, cursor?: string
   return { entries, hasMore, nextCursor: hasMore ? (entries[entries.length - 1]?.id ?? null) : null };
 }
 
-/**
- * The last successful PRODUCTION deploy of a product. "Last deploy" on a
- * product means what the client's visitors are running; a preview deploy of a
- * branch is not that.
- */
 export async function lastProductionDeployment(productId: string) {
   return prisma.deployment.findFirst({
     where: { productId, environment: "PRODUCTION", status: "SUCCEEDED" },
@@ -467,7 +409,6 @@ export async function lastProductionDeployment(productId: string) {
   });
 }
 
-/** A deployment with everything its detail page links to. */
 export async function getDeployment(id: string) {
   const deployment = await prisma.deployment.findUnique({
     where: { id },
@@ -503,8 +444,6 @@ export async function getDeployment(id: string) {
   });
   if (!deployment) return null;
 
-  // Neighbours in the same product and environment, by number — the order an
-  // operator reads a release history in.
   const [previous, next] = await Promise.all([
     prisma.deployment.findFirst({
       where: {
@@ -529,7 +468,6 @@ export async function getDeployment(id: string) {
   return { ...deployment, previous, next };
 }
 
-/** A build with everything its detail page links to. */
 export async function getBuild(id: string) {
   const build = await prisma.build.findUnique({
     where: { id },
@@ -576,7 +514,6 @@ export async function getBuild(id: string) {
   return { ...build, previous, next };
 }
 
-/** An incident with its full timeline and the evidence linked to it. */
 export async function getIncident(id: string) {
   return prisma.incident.findUnique({
     where: { id },
@@ -626,11 +563,6 @@ export async function getIncident(id: string) {
   });
 }
 
-/**
- * Engineering state of one project: its products, the latest deployment per
- * product (any status — a failed one is the news), open incidents and task
- * counts. Grouped queries, not one per product.
- */
 export async function getProjectEngineering(projectId: string) {
   const products = await prisma.product.findMany({
     where: { projectId },
@@ -649,9 +581,6 @@ export async function getProjectEngineering(projectId: string) {
   const productIds = products.map((p) => p.id);
 
   const [deployments, openIncidents, taskGroups] = await Promise.all([
-    // One indexed findFirst per product rather than `distinct`, which Prisma
-    // resolves in memory over every deployment the products ever had. A
-    // project has a handful of products; their histories can be long.
     Promise.all(
       productIds.map((productId) =>
         prisma.deployment.findFirst({

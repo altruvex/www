@@ -7,7 +7,7 @@
       },
       "02": {
         "q": "Are there hidden recurring costs?",
-        "a": "<strong>No hidden fees.</strong> All figures exclude VAT at {vatRate}. <span class=\"text-foreground/60\">Renewals, paid third-party tools and channels like SMS are billed only if your scope actually uses them, and a maintenance plan is billed, monthly or yearly, only if you choose one.</span>"
+        "a": "<strong>No hidden fees.</strong> All figures exclude VAT at {vatRate}%. <span class=\"text-foreground/60\">Renewals, paid third-party tools and channels like SMS are billed only if your scope actually uses them, and a maintenance plan is billed, monthly or yearly, only if you choose one.</span>"
       },
       "03": {
         "q": "What does the payment schedule look like?",

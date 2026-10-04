@@ -1,4 +1,5 @@
 import "server-only";
+import { format } from "date-fns";
 import { prisma } from "@repo/database";
 import { isPaymentDueSoon, isPaymentOverdue } from "@/lib/payment-overdue";
 import { deriveStatus, REVENUE_BEARING } from "@/lib/subscription-lifecycle";
@@ -10,19 +11,15 @@ import {
   RETAINER_CURRENCY,
 } from "@/lib/payment-source";
 import type { PaymentRow } from "./payments-table";
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
-/**
- * One loader for every Billing tab, so Payments, Outstanding and Invoices
- * never disagree about a row's client, currency or effective status.
- *
- * Currency is the one thing a payment cannot say for itself: a project
- * payment reads it from its contract's proposal, a service term from the
- * service, a retainer from the plan's published currency. Status is stored
- * PENDING and reads OVERDUE here once the due day has passed — the table is
- * where the derivation happens, so nothing has to write OVERDUE back.
- */
-
-export const BILLING_STATUS_FILTERS = ["overdue", "due", "pending", "paid", "waived"] as const;
+export const BILLING_STATUS_FILTERS = [
+  "overdue",
+  "due",
+  "pending",
+  "paid",
+  "waived",
+] as const;
 export type BillingStatusFilter = (typeof BILLING_STATUS_FILTERS)[number];
 
 export const BILLING_STATUS_LABEL: Record<BillingStatusFilter, string> = {
@@ -33,8 +30,9 @@ export const BILLING_STATUS_LABEL: Record<BillingStatusFilter, string> = {
   waived: "Waived",
 };
 
-/** `?status=` is read case-insensitively; the Today page links "PAID" and "overdue" alike. */
-export function parseStatusFilter(value: string | undefined): BillingStatusFilter | null {
+export function parseStatusFilter(
+  value: string | undefined,
+): BillingStatusFilter | null {
   const lower = value?.toLowerCase();
   return (BILLING_STATUS_FILTERS as readonly string[]).includes(lower ?? "")
     ? (lower as BillingStatusFilter)
@@ -42,7 +40,6 @@ export function parseStatusFilter(value: string | undefined): BillingStatusFilte
 }
 
 export interface BillingRow extends PaymentRow {
-  /** True while the row is unpaid and inside the chasing window. */
   dueSoon: boolean;
   invoicedAt: string | null;
   createdAt: string;
@@ -71,9 +68,37 @@ const CLIENT_SELECT = {
   },
 } as const;
 
-export function clientDisplayName(client: { name: string | null; company: string | null } | null): string {
+export function clientDisplayName(
+  client: { name: string | null; company: string | null } | null,
+): string {
   if (!client) return "Retainer (deleted)";
   return client.company || client.name || "Unnamed client";
+}
+
+async function previousPaidDays(
+  paymentIds: string[],
+): Promise<Map<string, string>> {
+  const days = new Map<string, string>();
+  if (paymentIds.length === 0) return days;
+  const events = await prisma.activityEvent.findMany({
+    where: {
+      entityType: "payment",
+      entityId: { in: paymentIds },
+      action: "payment.status_changed",
+      after: { path: ["status"], equals: "PENDING" },
+    },
+    orderBy: { createdAt: "desc" },
+    select: { entityId: true, before: true },
+  });
+  for (const event of events) {
+    if (days.has(event.entityId)) continue;
+    const before = event.before as { paidAt?: unknown } | null;
+    if (typeof before?.paidAt !== "string") continue;
+    const paidAt = new Date(before.paidAt);
+    if (!Number.isNaN(paidAt.getTime()))
+      days.set(event.entityId, format(paidAt, "yyyy-MM-dd"));
+  }
+  return days;
 }
 
 export async function loadBillingRows(now = new Date()): Promise<BillingRow[]> {
@@ -84,17 +109,25 @@ export async function loadBillingRows(now = new Date()): Promise<BillingRow[]> {
           id: true,
           name: true,
           client: CLIENT_SELECT,
-          contract: { select: { proposal: { select: { currency: true } } } },
+          ...PROJECT_CURRENCY_SELECT,
         },
       },
-      subscription: { select: { id: true, planId: true, client: CLIENT_SELECT } },
-      service: { select: { id: true, name: true, currency: true, client: CLIENT_SELECT } },
+      subscription: {
+        select: { id: true, planId: true, client: CLIENT_SELECT },
+      },
+      service: {
+        select: { id: true, name: true, currency: true, client: CLIENT_SELECT },
+      },
     },
     orderBy: [{ status: "asc" }, { dueDate: "asc" }],
   });
+  const previousPaid = await previousPaidDays(
+    payments.filter((p) => p.status === "PENDING").map((p) => p.id),
+  );
 
   return payments.map((p) => {
-    const client = p.service?.client ?? p.project?.client ?? p.subscription?.client ?? null;
+    const client =
+      p.service?.client ?? p.project?.client ?? p.subscription?.client ?? null;
     const source = paymentSourceEntity(p);
     const currency = p.service
       ? p.service.currency
@@ -119,13 +152,17 @@ export async function loadBillingRows(now = new Date()): Promise<BillingRow[]> {
       method: p.method,
       reference: p.reference,
       invoiceNumber: p.invoiceNumber,
+      previousPaidOn: previousPaid.get(p.id) ?? null,
       invoicedAt: p.invoicedAt?.toISOString() ?? null,
       createdAt: p.createdAt.toISOString(),
     };
   });
 }
 
-export function matchesStatus(row: BillingRow, filter: BillingStatusFilter): boolean {
+export function matchesStatus(
+  row: BillingRow,
+  filter: BillingStatusFilter,
+): boolean {
   switch (filter) {
     case "overdue":
       return row.status === "OVERDUE";
@@ -140,7 +177,6 @@ export function matchesStatus(row: BillingRow, filter: BillingStatusFilter): boo
   }
 }
 
-/** The project and retainer a new charge can bill: the ones still running. */
 export async function loadChargeTargets(now = new Date()) {
   const [projects, subscriptions] = await Promise.all([
     prisma.project.findMany({
@@ -148,8 +184,9 @@ export async function loadChargeTargets(now = new Date()) {
       select: {
         id: true,
         name: true,
+        clientId: true,
         client: { select: { name: true, company: true } },
-        contract: { select: { proposal: { select: { currency: true } } } },
+        ...PROJECT_CURRENCY_SELECT,
       },
       orderBy: { name: "asc" },
     }),
@@ -162,6 +199,7 @@ export async function loadChargeTargets(now = new Date()) {
         autoRenew: true,
         trialEndsAt: true,
         cancelledAt: true,
+        clientId: true,
         client: { select: { name: true, company: true } },
       },
     }),
@@ -170,7 +208,8 @@ export async function loadChargeTargets(now = new Date()) {
     ...projects.map((p) => ({
       value: `project:${p.id}`,
       label: `${p.name} · ${clientDisplayName(p.client)}`,
-      currency: p.contract.proposal.currency,
+      currency: projectCurrency(p),
+      clientId: p.clientId,
     })),
     ...subscriptions
       .filter((s) => REVENUE_BEARING.has(deriveStatus(s, now)))
@@ -178,6 +217,7 @@ export async function loadChargeTargets(now = new Date()) {
         value: `retainer:${s.id}`,
         label: `${retainerLabel(s)} · ${clientDisplayName(s.client)}`,
         currency: RETAINER_CURRENCY,
+        clientId: s.clientId,
       })),
   ];
 }

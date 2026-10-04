@@ -5,18 +5,12 @@ import { renderPptxToPngs } from "@/lib/pptx-to-images";
 import { getCompanySettings } from "@/lib/company-settings";
 import { ProposalQaError, runProposalContentGate } from "@/lib/proposal-qa";
 
-/**
- * Renders unsaved form state to slide images so the admin can see the deck
- * before committing to a generate. Nothing is persisted here.
- */
 export const POST = withAdmin(async (request) => {
   try {
     const body = await request.json();
 
     let content;
     try {
-      // Same gate as a real generate — a preview that accepts invalid input
-      // would teach the admin the wrong thing about what will pass.
       content = runProposalContentGate(body?.content);
     } catch (error) {
       if (error instanceof ProposalQaError) {
@@ -28,10 +22,6 @@ export const POST = withAdmin(async (request) => {
       throw error;
     }
 
-    // One slide when the caller asked for one. The conversion still walks the
-    // whole deck — that part is LibreOffice's — but rasterising and shipping
-    // a single page instead of seven cuts the response by roughly 7x, which
-    // is most of the wait an operator actually feels.
     const requested = Number(body?.slide);
     const single =
       Number.isInteger(requested) && requested >= 1 && requested <= 20
@@ -46,8 +36,6 @@ export const POST = withAdmin(async (request) => {
     );
 
     if (!render.ok) {
-      // Saying "install LibreOffice" to someone whose render merely timed out
-      // sends them to fix a machine that is already correct.
       const message =
         render.reason === "unavailable"
           ? "Preview needs LibreOffice and poppler on this host. The proposal itself can still be generated."

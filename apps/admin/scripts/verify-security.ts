@@ -1,20 +1,3 @@
-/**
- * Security regression checks that need no database and no running server.
- *
- * Each case pins a fix from SECURITY_AUDIT.md so it cannot quietly come back:
- *
- *   - the post-login redirect only ever stays on this origin (MED-01)
- *   - a URL field never accepts a scheme the admin would render as `<a href>` (MED-04)
- *   - "is this an admin" is one decision, and it refuses a missing or
- *     non-admin session (HIGH-01 — the layout gate calls this)
- *   - an unauthenticated request to the page gate is refused without a
- *     database (HIGH-01)
- *   - the product role resolves from `opsRole` first and the auth role second,
- *     and the route wrapper's capability decision refuses what the matrix
- *     does not grant (roles, 2026-10)
- *
- *   cd apps/admin && bun run verify:security
- */
 import { isAdminSession, requireAdminSession } from "../lib/require-admin";
 import { mfaRequired } from "../lib/mfa";
 import { can, permitted, resolveRole, toProductRole } from "../lib/rbac";
@@ -23,9 +6,14 @@ import { SIGN_LINK_DAYS, signLinkExpired, signLinkExpiry } from "../lib/sign-win
 import { httpUrl } from "../lib/http-url";
 import { safeRedirectPath } from "../lib/safe-redirect";
 import { NextRequest } from "next/server";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CRON_JOBS } from "../lib/cron-jobs";
+import { ALL_NAV_ITEMS, canSee } from "../lib/nav";
+import { ROLES } from "../lib/rbac";
+import { NAV_WIDER_THAN_GATE, pageDecision, ROUTE_GATES, rolesFor, type RouteGate } from "../lib/page-gate";
+import { FALLBACK_ICON, iconForEvent, KNOWN_ACTIONS } from "../lib/activity-icons";
 
 let failures = 0;
 const check = (ok: boolean, what: string) => {
@@ -144,7 +132,6 @@ console.log("\nRoute capability decision (withAdmin { can })");
   check(!permitted("SALES", ["delete", "client"]), "Sales still may not delete a client");
   check(permitted("VIEWER", ["delete", "notification"]), "every role may clear its own inbox");
 
-  // The cron schedule shown on screen is a copy of vercel.json; keep them equal.
   const vercel = JSON.parse(
     readFileSync(fileURLToPath(new URL("../vercel.json", import.meta.url)), "utf8"),
   ) as { crons?: { path: string; schedule: string }[] };
@@ -192,6 +179,135 @@ console.log("\nUnauthenticated request to the session gate (HIGH-01)");
   const anonymous = new NextRequest("http://localhost:3011/pipeline");
   const session = await requireAdminSession(anonymous);
   check(session === null, "no cookie → null (refused), with no database round-trip");
+}
+
+console.log("\nPage gate (lib/page-gate.ts) agrees with the nav and covers every route");
+{
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const dashboard = join(here, "..", "app", "(dashboard)");
+
+  const routes: string[] = [];
+  const walk = (dir: string, segments: string[]) => {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      if (statSync(full).isDirectory()) {
+        walk(full, name.startsWith("(") ? segments : [...segments, name]);
+      } else if (name === "page.tsx") {
+        routes.push(segments.length ? `/${segments.join("/")}` : "/");
+      }
+    }
+  };
+  walk(dashboard, []);
+  const gated = new Set(Object.keys(ROUTE_GATES));
+  check(routes.length > 0, "found the dashboard routes on disk");
+  for (const route of routes) {
+    check(gated.has(route), `ROUTE_GATES has a row for ${route}`);
+  }
+  for (const route of gated) {
+    check(routes.includes(route), `ROUTE_GATES row ${route} is a real page`);
+  }
+
+  const wider = new Set<string>(NAV_WIDER_THAN_GATE);
+  for (const item of ALL_NAV_ITEMS) {
+    const gate = (ROUTE_GATES as Record<string, RouteGate | undefined>)[item.href];
+    check(gate !== undefined, `nav item ${item.href} has a gate`);
+    if (!gate) continue;
+    const admitted = rolesFor(gate);
+    const visible = ROLES.filter((role) => canSee(item, role));
+    check(
+      admitted.every((role) => visible.includes(role)),
+      `${item.href}: the gate admits no role the nav hides it from`,
+    );
+    const refusedButShown = visible.filter((role) => !admitted.includes(role));
+    if (wider.has(item.href)) {
+      check(
+        refusedButShown.length > 0,
+        `${item.href}: still listed in NAV_WIDER_THAN_GATE for a reason (${refusedButShown.join(", ") || "none"})`,
+      );
+    } else {
+      check(
+        refusedButShown.length === 0,
+        `${item.href}: every role that sees it in the nav passes its gate${refusedButShown.length ? ` (refused: ${refusedButShown.join(", ")})` : ""}`,
+      );
+    }
+  }
+  for (const href of wider) {
+    check(ALL_NAV_ITEMS.some((i) => i.href === href), `NAV_WIDER_THAN_GATE entry ${href} is a nav item`);
+  }
+
+  check(!pageDecision(undefined, ["view", "client"]), "no role is refused everywhere");
+  check(!pageDecision(undefined), "no role is refused even by an open page");
+  check(pageDecision("VIEWER"), "an open page admits every role");
+  check(pageDecision("FINANCE", ["view", "payment"], ["OWNER", "ADMIN", "FINANCE"]), "Finance passes Billing");
+  check(!pageDecision("SALES", ["view", "payment"], ["OWNER", "ADMIN", "FINANCE"]), "Sales is refused Billing by the matrix");
+  check(!pageDecision("FINANCE", ["view", "payment"], ["OWNER", "ADMIN"]), "a role allowlist refuses even a role the matrix admits");
+  check(!pageDecision("VIEWER", ["view", "settings"], ["OWNER", "ADMIN"]), "Viewer is refused the audit log");
+  check(pageDecision("ADMIN", ["view", "settings"], ["OWNER", "ADMIN"]), "Admin passes the audit log");
+  check(!pageDecision("PM", ["view", "lead"]), "PM is refused Leads");
+  check(!pageDecision("ADMIN", ["delete", "client"]), "Admin is refused a page that needs client delete");
+  check(rolesFor(ROUTE_GATES["/"]).length === ROLES.length, "every role reaches Today");
+  check(rolesFor(ROUTE_GATES["/team"]).join(",") === "OWNER,ADMIN", "Team is Owner and Admin only");
+}
+
+console.log("\nActivity icons (lib/activity-icons.ts) cover every action the system writes");
+{
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const root = join(here, "..");
+  const read = (rel: string) => readFileSync(join(root, rel), "utf8");
+
+  const prefixes = [
+    "auth", "client", "clientNote", "note", "submission", "transparencyLead", "proposal", "contract",
+    "project", "task", "change_request", "subscription", "maintenanceSubscription", "maintenance_request",
+    "maintenanceRequest", "service", "clientService", "product", "build", "deployment", "log", "incident",
+    "payment", "pricing", "meeting", "user", "settings", "notification",
+  ];
+  const literal = new RegExp(`"(${prefixes.join("|")})\\.([a-z]+(?:_[a-z]+)*)"`, "g");
+  const written = new Set<string>();
+  const scan = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const full = join(dir, name);
+      if (statSync(full).isDirectory()) {
+        if (name !== "node_modules" && name !== ".next") scan(full);
+      } else if (/\.tsx?$/.test(name) && !full.includes("activity-icons")) {
+        for (const match of readFileSync(full, "utf8").matchAll(literal)) written.add(match[0].slice(1, -1));
+      }
+    }
+  };
+  scan(join(root, "lib"));
+  scan(join(root, "app"));
+  scan(join(root, "components"));
+
+  const schema = readFileSync(join(root, "..", "..", "packages", "database", "prisma", "schema.prisma"), "utf8");
+  const enumValues = (name: string): string[] => {
+    const block = schema.match(new RegExp(`enum ${name} \\{([^}]*)\\}`))?.[1] ?? "";
+    return block
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => /^[A-Z_]+$/.test(line));
+  };
+  for (const s of enumValues("BuildStatus")) written.add(`build.${s.toLowerCase()}`);
+  for (const s of enumValues("DeploymentStatus")) written.add(`deployment.${s.toLowerCase()}`);
+  for (const s of enumValues("MaintenanceSubscriptionStatus")) written.add(`subscription.${s.toLowerCase()}`);
+  const registryKeys = [...read("lib/deletable.ts").matchAll(/^  ([a-zA-Z]+): \{$/gm)].map((m) => m[1]!);
+  check(registryKeys.length >= 10, `read ${registryKeys.length} delete-registry keys from lib/deletable.ts`);
+  for (const key of registryKeys) written.add(`${key}.deleted`);
+
+  check(enumValues("BuildStatus").length === 5, "BuildStatus has its five states");
+  check(written.size > 80, `collected ${written.size} actions from the mutation sites`);
+  const known = new Set<string>(KNOWN_ACTIONS);
+  const missing = [...written].filter((action) => !known.has(action)).sort();
+  check(
+    missing.length === 0,
+    missing.length
+      ? `every written action has its own icon — missing: ${missing.join(", ")}`
+      : `every one of the ${written.size} written actions has its own icon`,
+  );
+  const generic = KNOWN_ACTIONS.filter((action) => iconForEvent(action) === FALLBACK_ICON);
+  check(generic.length === 0, `no listed action renders the generic icon${generic.length ? ` (${generic.join(", ")})` : ""}`);
+  check(iconForEvent("client.frobnicated") !== FALLBACK_ICON, "an unknown verb on a known entity gets the entity icon");
+  check(iconForEvent("widget.created") !== FALLBACK_ICON, "a known verb on an unknown entity gets the verb icon");
+  check(iconForEvent("widget.frobnicated", "contract") !== FALLBACK_ICON, "an unknown action falls back to the row's entity type");
+  check(iconForEvent("widget.frobnicated") === FALLBACK_ICON, "only an unknown verb on an unknown entity is generic");
 }
 
 console.log(failures === 0 ? "\nverify:security — all checks passed." : `\nverify:security — ${failures} failure(s).`);

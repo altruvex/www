@@ -1,26 +1,9 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@repo/database";
+import { normalizePhone, prisma } from "@repo/database";
 import { entityHref, entityNoun, type EntityKind } from "@/lib/entity-links";
 import { money } from "@/lib/format";
 import { canSeeFinance } from "@/lib/nav";
-import { toProductRole } from "@/lib/rbac";
 import { withAdmin } from "@/lib/with-admin";
-
-/**
- * Global search behind ⌘K.
- *
- * Deliberately many small parallel `contains` queries rather than one clever
- * union: Postgres plans each of them off an existing index, every result set is
- * capped, and the shape stays obvious. If this ever gets slow the answer is a
- * tsvector column, not a bigger query here.
- *
- * Every result carries its page from `entityHref` and its noun from
- * `entityNoun`, so the palette never builds a path itself and a record type
- * gains a detail route in one place. Money records (payments, retainers and the
- * price on a proposal) are searched only for roles that may see finance.
- *
- * `?type=client` narrows to clients — the palette's "New proposal" picker.
- */
 
 type Result = {
   id: string;
@@ -38,20 +21,29 @@ const clientMatch = (like: { contains: string; mode: "insensitive" }) => ({
   is: { OR: [{ name: like }, { company: like }] },
 });
 
-export const GET = withAdmin(async (request, { session }) => {
+export const GET = withAdmin(async (request, { role }) => {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
-  if (q.length < 2) return NextResponse.json({ results: [] });
+  const onlyClients = request.nextUrl.searchParams.get("type") === "client";
+  if (!onlyClients && q.length < 2) return NextResponse.json({ results: [] });
 
   const like = { contains: q, mode: "insensitive" as const };
-  const onlyClients = request.nextUrl.searchParams.get("type") === "client";
-  const finance = canSeeFinance(toProductRole((session.user as { role?: string }).role));
-  // "#12" or "12" finds incident and deployment number 12.
+  const digits = normalizePhone(q);
+  const phoneTerms = new Set<string>();
+  if (q) phoneTerms.add(q);
+  if (digits.length >= 4) {
+    phoneTerms.add(digits);
+    phoneTerms.add(digits.slice(-9));
+  }
+  const phoneMatch = [...phoneTerms].map((t) => ({ phone: { contains: t } }));
+  const ref = /^[0-9a-f-]{4,36}$/i.test(q) ? q.toLowerCase() : null;
+  const refMatch = ref ? [{ id: { startsWith: ref } }] : [];
+  const finance = canSeeFinance(role);
   const asNumber = /^#?\d{1,9}$/.test(q) ? Number(q.replace("#", "")) : null;
 
   const clients = await prisma.client.findMany({
-    where: {
-      OR: [{ name: like }, { company: like }, { email: like }, { phone: { contains: q } }],
-    },
+    where: q
+      ? { OR: [{ name: like }, { company: like }, { email: like }, ...phoneMatch] }
+      : {},
     select: { id: true, name: true, company: true, phone: true, email: true },
     take: onlyClients ? 10 : 6,
     orderBy: { updatedAt: "desc" },
@@ -85,7 +77,7 @@ export const GET = withAdmin(async (request, { session }) => {
     payments,
   ] = await Promise.all([
     prisma.proposal.findMany({
-      where: { OR: [{ projectType: like }, { client: clientMatch(like) }] },
+      where: { OR: [{ projectType: like }, { client: clientMatch(like) }, ...refMatch] },
       select: {
         id: true,
         projectType: true,
@@ -98,13 +90,13 @@ export const GET = withAdmin(async (request, { session }) => {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.contract.findMany({
-      where: { client: clientMatch(like) },
+      where: { OR: [{ client: clientMatch(like) }, ...refMatch] },
       select: { id: true, status: true, client: { select: { name: true, company: true } } },
       take: 4,
       orderBy: { updatedAt: "desc" },
     }),
     prisma.project.findMany({
-      where: { OR: [{ name: like }, { client: clientMatch(like) }] },
+      where: { OR: [{ name: like }, { client: clientMatch(like) }, ...refMatch] },
       select: { id: true, name: true, phase: true },
       take: 5,
       orderBy: { updatedAt: "desc" },
@@ -149,7 +141,6 @@ export const GET = withAdmin(async (request, { session }) => {
       take: 4,
       orderBy: { createdAt: "desc" },
     }),
-    // Deployments carry no branch; the build that produced one does.
     prisma.build.findMany({
       where: {
         OR: [
@@ -176,14 +167,14 @@ export const GET = withAdmin(async (request, { session }) => {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.contactSubmission.findMany({
-      where: { OR: [{ name: like }, { phone: { contains: q } }, { message: like }] },
+      where: { OR: [{ name: like }, ...phoneMatch, { message: like }] },
       select: { id: true, name: true, status: true, phone: true },
       take: 4,
       orderBy: { submittedAt: "desc" },
     }),
     prisma.transparencyLead.findMany({
       where: {
-        OR: [{ reference: like }, { name: like }, { email: like }, { company: like }, { phone: { contains: q } }],
+        OR: [{ reference: like }, { name: like }, { email: like }, { company: like }, ...phoneMatch],
       },
       select: { id: true, reference: true, name: true, company: true, projectType: true },
       take: 4,
@@ -255,7 +246,7 @@ export const GET = withAdmin(async (request, { session }) => {
       finance ? money(p.totalPrice, p.currency) : words(p.status),
     );
   }
-  for (const c of contracts) push("contract", c.id, label(c.client), words(c.status));
+  for (const c of contracts) push("contract", c.id, label(c.client), `${c.id.slice(0, 8).toUpperCase()} · ${words(c.status)}`);
   for (const p of projects) push("project", p.id, p.name, words(p.phase));
   for (const p of products) push("product", p.id, p.name, p.productionUrl ?? words(p.status));
   for (const i of incidents) {

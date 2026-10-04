@@ -4,11 +4,6 @@ import { MOTION } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
 import { useEffect, useRef, type ReactNode } from "react";
 
-/**
- * The client island of the pricing spine. Each stage settles once as it
- * enters: its figure lands, then the line to the next stage draws down. The
- * markup is the finished spine, so reduced motion renders it untouched.
- */
 export function SpineList({
   className,
   children,

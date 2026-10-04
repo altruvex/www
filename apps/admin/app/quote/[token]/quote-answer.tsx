@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 import { Button } from "@repo/ui";
 
@@ -14,13 +14,8 @@ type State =
   | { kind: "closed" };
 
 const fieldClass =
-  "w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+  "w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-lg text-foreground sm:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
-/**
- * Approve or decline. The figure the client is looking at is posted with the
- * answer, so a quote revised while the page was open is refused rather than
- * approved at a number they never saw.
- */
 export function QuoteAnswer({
   token,
   amount,
@@ -65,10 +60,16 @@ export function QuoteAnswer({
         }),
       });
       const data = (await response.json()) as { success?: boolean; message?: string };
-      if (!response.ok || !data.success) throw new Error(data.message || "Something went wrong.");
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Something went wrong, and your answer was not recorded.");
+      }
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong, and your answer was not recorded. Please try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -78,25 +79,29 @@ export function QuoteAnswer({
     return (
       <Outcome icon={<CheckCircle2 className="size-10 text-success" aria-hidden />} title="Quote approved">
         {state.by ? `Approved by ${state.by}` : "Approved"}
-        {state.on ? ` on ${state.on}` : ""}. We will let you know when the work starts.
+        {state.on ? ` on ${state.on}` : ""}. Your answer is recorded — we will tell you when the
+        work starts. You can close this page.
       </Outcome>
     );
   }
   if (state.kind === "declined") {
     return (
       <Outcome icon={<XCircle className="size-10 text-muted-foreground" aria-hidden />} title="Quote declined">
-        Declined{state.on ? ` on ${state.on}` : ""}. Nothing will be billed. Reply to our message if
-        you would like it scoped differently.
+        Declined{state.on ? ` on ${state.on}` : ""}. Your answer is recorded and nothing will be
+        billed for it. Reply to our message if you would like it scoped differently.
       </Outcome>
     );
   }
   if (state.kind === "expired" || state.kind === "closed" || !answerable) {
     return (
-      <p className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground" role="status">
+      <Outcome
+        icon={<Clock className="size-10 text-muted-foreground" aria-hidden />}
+        title={state.kind === "closed" ? "This request was closed" : "This quote has expired"}
+      >
         {state.kind === "closed"
-          ? "This request was closed."
-          : "This quote has expired. Reply to our message and we will send a current one."}
-      </p>
+          ? "It can no longer be approved or declined, and nothing will be billed for it."
+          : "Its price is no longer held, so it cannot be approved. Reply to our message and we will send a current one."}
+      </Outcome>
     );
   }
 
@@ -128,11 +133,11 @@ export function QuoteAnswer({
           </p>
         )}
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button type="button" variant="outline" className="h-11" onClick={() => setMode("idle")} disabled={busy}>
-            Back
-          </Button>
-          <Button type="submit" variant="destructive" className="h-11" disabled={busy} aria-busy={busy}>
+          <Button type="submit" variant="destructive" className="h-11 sm:order-2" disabled={busy} aria-busy={busy}>
             {busy ? "Sending…" : "Decline the quote"}
+          </Button>
+          <Button type="button" variant="outline" className="h-11 sm:order-1" onClick={() => setMode("idle")} disabled={busy}>
+            Back
           </Button>
         </div>
       </form>
@@ -190,7 +195,7 @@ export function QuoteAnswer({
       </Button>
       <button
         type="button"
-        className="mx-auto block rounded-xs text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+        className="mx-auto flex min-h-11 items-center rounded-xs px-3 text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         onClick={() => {
           setError("");
           setMode("decline");

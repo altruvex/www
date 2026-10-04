@@ -4,38 +4,30 @@ import { prisma, type Prisma } from "@repo/database";
 
 import { recordActivity, recordChange } from "@/lib/activity-log";
 import { clientLabel, listServices, SERVICE_INCLUDE, toServiceRow } from "@/lib/client-services";
+import { canSeeFinance, type Role } from "@/lib/nav";
 import { lookupDomain } from "@/lib/rdap";
 import {
   CLIENT_SERVICE_KINDS,
   firstExpiry,
+  isOneTime,
   KIND_LABEL,
   nextExpiry,
+  renewRefusal,
   termBilling,
   type TermBilling,
 } from "@/lib/service-lifecycle";
-import { badRequest, conflict, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
-
-/**
- * Client services (domains, hosting, business email…) and their renewals.
- *
- * Every mutation writes its audit event here, at the mutation site. There is no
- * DELETE on this route: ending a service is CANCELLED, which keeps the record
- * that it once existed and what it cost. A row that should never have existed
- * goes through `deleteRecords`, which snapshots it into the audit trail first.
- */
+import { badRequest, conflict, HttpError, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
+import { PROJECT_CURRENCY_SELECT, projectCurrency } from "@/lib/project-currency";
 
 export const dynamic = "force-dynamic";
 
 const money = z.number().int().min(0).max(100_000_000);
-/** Blank normalises to null; absent stays absent, so an edit leaves it alone. */
 const optionalText = (max: number) =>
   z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? null : value),
     z.string().trim().max(max).nullish(),
   );
 
-// No `.default()` in here: this shape is also used `.partial()` for edits, and
-// a default inside a partial would quietly reset a field the edit never sent.
 const fieldsSchema = z.object({
   kind: z.enum(CLIENT_SERVICE_KINDS),
   name: z.string().trim().min(1, "Name the service").max(200),
@@ -44,7 +36,7 @@ const fieldsSchema = z.object({
   currency: z.string().trim().toUpperCase().length(3),
   price: money.min(1, "Set what the client pays per term"),
   cost: money.nullish(),
-  termMonths: z.number().int().min(1).max(120),
+  termMonths: z.number().int().min(1).max(120).nullable(),
   firstTermIncluded: z.boolean(),
   autoRenew: z.boolean(),
   projectId: z.string().min(1).nullish(),
@@ -54,9 +46,7 @@ const fieldsSchema = z.object({
 
 const createSchema = fieldsSchema.extend({
   clientId: z.string().min(1),
-  /** Present = it is already registered and running. Absent = PENDING. */
   startedAt: z.coerce.date().nullish(),
-  /** The provider's own date, when known. Otherwise start + term. */
   expiresAt: z.coerce.date().nullish(),
 });
 
@@ -69,9 +59,7 @@ const patchSchema = z.discriminatedUnion("action", [
     expiresAt: z.coerce.date().nullish(),
   }),
   z.object({ action: z.literal("renew"), id: z.string().min(1) }),
-  /** Correct the date to what the provider actually says. */
   z.object({ action: z.literal("set-expiry"), id: z.string().min(1), expiresAt: z.coerce.date() }),
-  /** Read a domain's expiry from its registry (RDAP) and store it. */
   z.object({ action: z.literal("sync-registry"), id: z.string().min(1) }),
   z.object({ action: z.literal("cancel"), id: z.string().min(1) }),
   z.object({ action: z.literal("reactivate"), id: z.string().min(1) }),
@@ -79,7 +67,6 @@ const patchSchema = z.discriminatedUnion("action", [
 
 const iso = (value: Date | null | undefined) => value?.toISOString().slice(0, 10) ?? null;
 
-/** A project or product offered for a client must belong to that client. */
 async function assertOwnership(clientId: string, projectId?: string | null, productId?: string | null) {
   const [project, product] = await Promise.all([
     projectId
@@ -97,18 +84,38 @@ async function assertOwnership(clientId: string, projectId?: string | null, prod
   }
 }
 
-export const GET = withAdmin(async (request) => {
+function rowFor(row: ReturnType<typeof toServiceRow>, role: Role | undefined) {
+  return canSeeFinance(role) ? row : { ...row, price: null, cost: null };
+}
+
+function assertMoneyWritable(role: Role | undefined, fields: { price?: unknown; cost?: unknown; currency?: unknown }, creating: boolean) {
+  if (canSeeFinance(role)) return;
+  const touched = creating
+    ? fields.cost != null
+    : fields.price !== undefined || fields.cost !== undefined || fields.currency !== undefined;
+  if (touched) {
+    throw new HttpError(
+      403,
+      creating
+        ? "Only a finance role can record our cost. Leave it blank and finance will fill it in."
+        : "Only a finance role can change what the client pays, our cost or the currency.",
+    );
+  }
+}
+
+export const GET = withAdmin(async (request, { role }) => {
   const params = request.nextUrl.searchParams;
   const where: Prisma.ClientServiceWhereInput = {};
   const clientId = params.get("clientId");
   const projectId = params.get("projectId");
   if (clientId) where.clientId = clientId;
   if (projectId) where.projectId = projectId;
-  return ok({ services: await listServices(where) });
+  return ok({ services: (await listServices(where)).map((row) => rowFor(row, role)) });
 }, { can: ["view", "project"] });
 
-export const POST = withAdmin(async (request, { actor, session }) => {
+export const POST = withAdmin(async (request, { actor, session, role }) => {
   const body = await readJson(request, createSchema);
+  assertMoneyWritable(role, body, true);
 
   const client = await prisma.client.findUnique({
     where: { id: body.clientId },
@@ -118,11 +125,16 @@ export const POST = withAdmin(async (request, { actor, session }) => {
   await assertOwnership(body.clientId, body.projectId, body.productId);
 
   const startedAt = body.startedAt ?? null;
+  const oneTime = isOneTime(body);
+  if (oneTime && body.expiresAt) throw badRequest("A one-time service has no expiry date.");
   const expiresAt =
-    body.expiresAt ?? (startedAt ? firstExpiry(startedAt, body.termMonths) : null);
+    body.termMonths === null
+      ? null
+      : (body.expiresAt ?? (startedAt ? firstExpiry(startedAt, body.termMonths) : null));
   if (startedAt && expiresAt && expiresAt.getTime() <= startedAt.getTime()) {
     throw badRequest("The expiry date must be after the start date.");
   }
+  const running = oneTime ? startedAt !== null : expiresAt !== null;
 
   const service = await prisma.clientService.create({
     data: {
@@ -137,10 +149,10 @@ export const POST = withAdmin(async (request, { actor, session }) => {
       price: body.price,
       cost: body.cost ?? null,
       termMonths: body.termMonths,
-      firstTermIncluded: body.firstTermIncluded,
-      autoRenew: body.autoRenew,
+      firstTermIncluded: oneTime ? false : body.firstTermIncluded,
+      autoRenew: oneTime ? false : body.autoRenew,
       notes: body.notes,
-      status: expiresAt ? "ACTIVE" : "PENDING",
+      status: running ? "ACTIVE" : "PENDING",
       startedAt,
       expiresAt,
       createdBy: session.user.email ?? session.user.id ?? null,
@@ -154,22 +166,25 @@ export const POST = withAdmin(async (request, { actor, session }) => {
     entityType: "client_service",
     entityId: service.id,
     entityLabel: `${service.name} · ${clientLabel(client)}`,
-    summary: `Added ${KIND_LABEL[service.kind].toLowerCase()} ${service.name}${expiresAt ? `, expiring ${iso(expiresAt)}` : " (not registered yet)"}`,
+    summary: oneTime
+      ? `Added one-time ${KIND_LABEL[service.kind].toLowerCase()} ${service.name}${running ? "" : " (not bought yet)"}`
+      : `Added ${KIND_LABEL[service.kind].toLowerCase()} ${service.name}${expiresAt ? `, expiring ${iso(expiresAt)}` : " (not registered yet)"}`,
     after: {
       kind: service.kind,
       price: service.price,
       currency: service.currency,
       termMonths: service.termMonths,
+      oneTime,
       status: service.status,
       expiresAt: iso(service.expiresAt),
     },
     metadata: { clientId: service.clientId, projectId: service.projectId },
   });
 
-  return ok({ service: toServiceRow(service) });
+  return ok({ service: rowFor(toServiceRow(service), role) });
 }, { can: ["create", "project"] });
 
-export const PATCH = withAdmin(async (request, { actor }) => {
+export const PATCH = withAdmin(async (request, { actor, role }) => {
   const body = await readJson(request, patchSchema);
 
   const current = await prisma.clientService.findUnique({
@@ -189,17 +204,24 @@ export const PATCH = withAdmin(async (request, { actor }) => {
 
   let data: Prisma.ClientServiceUpdateInput;
   let event: { action: string; summary: string } | null = null;
-  /** Set for the two actions that start a term — see `termBilling`. */
   let term: { event: "activate" | "renew"; start: Date } | null = null;
   let registry: { registrar: string | null } | null = null;
 
   switch (body.action) {
     case "update": {
       const fields = body.fields;
+      assertMoneyWritable(role, fields, false);
       await assertOwnership(current.clientId, fields.projectId, fields.productId);
       const { projectId, productId, ...scalar } = fields;
+      const nextTerm = fields.termMonths === undefined ? current.termMonths : fields.termMonths;
+      const termChanged = fields.termMonths !== undefined && fields.termMonths !== current.termMonths;
       data = {
         ...scalar,
+        ...(nextTerm === null
+          ? { firstTermIncluded: false, autoRenew: false, expiresAt: null }
+          : termChanged && isOneTime(current) && current.status === "ACTIVE" && current.startedAt
+            ? { expiresAt: firstExpiry(current.startedAt, nextTerm) }
+            : {}),
         ...(projectId !== undefined
           ? { project: projectId ? { connect: { id: projectId } } : { disconnect: true } }
           : {}),
@@ -211,6 +233,16 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
     case "activate": {
       if (current.status === "ACTIVE") throw conflict("This service is already active.");
+      if (current.termMonths === null) {
+        if (body.expiresAt) throw badRequest("A one-time service has no expiry date.");
+        data = { status: "ACTIVE", startedAt: body.startedAt, expiresAt: null, cancelledAt: null };
+        term = { event: "activate", start: body.startedAt };
+        event = {
+          action: "service.activated",
+          summary: `Bought ${current.name} — one-time, no renewal`,
+        };
+        break;
+      }
       const expiresAt = body.expiresAt ?? firstExpiry(body.startedAt, current.termMonths);
       if (expiresAt.getTime() <= body.startedAt.getTime()) {
         throw badRequest("The expiry date must be after the start date.");
@@ -224,16 +256,14 @@ export const PATCH = withAdmin(async (request, { actor }) => {
       break;
     }
     case "renew": {
-      if (current.status !== "ACTIVE" || !current.expiresAt) {
-        throw conflict("Only an active service with an expiry date can be renewed.");
-      }
-      const expiresAt = nextExpiry(current);
+      const refused = renewRefusal(current);
+      if (refused) throw conflict(refused);
+      const termMonths = current.termMonths as number;
+      const lastExpiry = current.expiresAt as Date;
+      const expiresAt = nextExpiry({ expiresAt: lastExpiry, termMonths });
       data = { expiresAt, lastRenewedAt: new Date() };
-      // The term being bought starts where the last one ended — unless the
-      // renewal re-anchored to today because that end is too far behind.
-      const anchoredToOld =
-        expiresAt.getTime() === firstExpiry(current.expiresAt, current.termMonths).getTime();
-      term = { event: "renew", start: anchoredToOld ? current.expiresAt : new Date() };
+      const anchoredToOld = expiresAt.getTime() === firstExpiry(lastExpiry, termMonths).getTime();
+      term = { event: "renew", start: anchoredToOld ? lastExpiry : new Date() };
       event = {
         action: "service.renewed",
         summary: `Renewed ${current.name} until ${iso(expiresAt)}`,
@@ -242,6 +272,7 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
     case "sync-registry": {
       if (current.kind !== "DOMAIN") throw badRequest("Only a domain has a registry to read.");
+      if (isOneTime(current)) throw conflict("A one-time service has no expiry to read.");
       if (current.status === "PENDING") {
         throw conflict("Mark it registered first — the registry date belongs to a registered domain.");
       }
@@ -249,7 +280,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
       if (!lookup.ok) throw conflict(lookup.reason);
       data = {
         expiresAt: lookup.expiresAt,
-        // Only fill a blank provider: an operator's own label wins.
         ...(current.provider ? {} : { provider: lookup.registrar }),
       };
       registry = { registrar: lookup.registrar };
@@ -260,6 +290,7 @@ export const PATCH = withAdmin(async (request, { actor }) => {
       break;
     }
     case "set-expiry": {
+      if (isOneTime(current)) throw conflict("A one-time service has no expiry date.");
       if (current.status === "PENDING") {
         throw conflict("Register the service first — a pending service has no expiry date.");
       }
@@ -278,23 +309,20 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     }
     case "reactivate": {
       if (current.status !== "CANCELLED") throw conflict("Only a cancelled service can be reactivated.");
-      // Back to where the dates say it was: running if it has one, pending if
-      // it was cancelled before it was ever registered.
-      data = { status: current.expiresAt ? "ACTIVE" : "PENDING", cancelledAt: null };
+      const wasRunning = isOneTime(current) ? Boolean(current.startedAt) : Boolean(current.expiresAt);
+      data = { status: wasRunning ? "ACTIVE" : "PENDING", cancelledAt: null };
       event = { action: "service.reactivated", summary: `Reactivated ${current.name}` };
       break;
     }
   }
 
-  // A term that starts opens its payment in the same transaction as the date
-  // moving, so a renewal can never read as done with nothing to collect.
   let billing: TermBilling | null = null;
   let paymentId: string | null = null;
   if (term) {
     const project = current.projectId
       ? await prisma.project.findUnique({
           where: { id: current.projectId },
-          select: { contract: { select: { proposal: { select: { currency: true } } } } },
+          select: { ...PROJECT_CURRENCY_SELECT },
         })
       : null;
     billing = termBilling({
@@ -303,14 +331,12 @@ export const PATCH = withAdmin(async (request, { actor }) => {
       currency: current.currency,
       firstTermIncluded: current.firstTermIncluded,
       projectId: current.projectId,
-      projectCurrency: project?.contract.proposal.currency ?? null,
+      projectCurrency: project ? projectCurrency(project) : null,
       termStart: term.start,
     });
   }
 
   const updated = await prisma.$transaction(async (tx) => {
-    // Renewal is guarded on the expiry it was read with. Two clicks, or two
-    // operators, would otherwise each add a year and each open a payment.
     if (body.action === "renew") {
       const moved = await tx.clientService.updateMany({
         where: { id: current.id, expiresAt: current.expiresAt },
@@ -348,6 +374,7 @@ export const PATCH = withAdmin(async (request, { actor }) => {
     price: row.price,
     cost: row.cost,
     termMonths: row.termMonths,
+    oneTime: isOneTime(row),
     firstTermIncluded: row.firstTermIncluded,
     autoRenew: row.autoRenew,
     status: row.status,
@@ -381,10 +408,12 @@ export const PATCH = withAdmin(async (request, { actor }) => {
   }
 
   return ok({
-    service: toServiceRow(updated),
+    service: rowFor(toServiceRow(updated), role),
     billing: billing
       ? billing.bill
-        ? { opened: true, amount: billing.amount, currency: current.currency }
+        ? canSeeFinance(role)
+          ? { opened: true, amount: billing.amount, currency: current.currency }
+          : { opened: true }
         : { opened: false, reason: billing.reason }
       : null,
   });

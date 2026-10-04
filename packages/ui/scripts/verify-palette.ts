@@ -1,8 +1,3 @@
-/**
- * Fails when src/palette.ts (the palette as values, for documents) drifts from
- * the CSS it mirrors: styles/tokens.css for every token, apps/www globals.css
- * for the gradient stops. Run: bun run verify:palette
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { GRADIENT_VIA_HSL, PALETTE_HSL } from "../src/palette";

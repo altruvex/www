@@ -9,8 +9,6 @@ import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 
-/* Lenis owns the scroll, so a native anchor jump is overwritten on its next
-   frame; the link glides through scrollToY and keeps its href for no-JS. */
 function goToChapter(event: MouseEvent<HTMLAnchorElement>, key: string) {
   const target = document.getElementById(`phase-${key}`);
   if (!target) return;
@@ -19,16 +17,6 @@ function goToChapter(event: MouseEvent<HTMLAnchorElement>, key: string) {
   history.replaceState(null, "", `#phase-${key}`);
 }
 
-/**
- * CLAIM: no phase starts until you have done your part in the one before.
- * PROOF: sequence - every phase gets the same full chapter, and each chapter
- * ends on its gate: your role, and the phase it releases.
- * DEVICE: chapters (Revelatio /approach, Awwwards SOTD 2026-08-12). A hairline
- * index names all five up front, then each phase is a near-full-viewport
- * chapter: huge name, one line read word by word on scroll, body at the foot.
- * On lg a CSS-sticky rail beside the chapters marks where the reader is -
- * sticky, not a pin, so the page keeps zero pins.
- */
 export function PhaseChapters() {
   const t = useTranslations("process");
   const locale = useLocale();
@@ -38,8 +26,6 @@ export function PhaseChapters() {
   const chaptersRef = useRef<HTMLDivElement>(null);
   const [current, setCurrent] = useState(-1);
 
-  /* The chapter crossing the viewport's middle line is the current one. A
-     state change, not motion: the rail recolours on the site's hover timing. */
   useEffect(() => {
     const root = chaptersRef.current;
     if (!root) return;
@@ -57,7 +43,7 @@ export function PhaseChapters() {
 
   return (
     <>
-      <nav aria-label={t("page.register.eyebrow")} className="mt-14 lg:mt-20">
+      <nav aria-label={t("page.register.eyebrow")} className="mt-(--heading-gap)">
         <ol ref={indexRef} className="border-t border-border-mid">
           {phases.map((phase, i) => (
             <li key={phase.key} data-index-row className="border-b border-border-subtle">

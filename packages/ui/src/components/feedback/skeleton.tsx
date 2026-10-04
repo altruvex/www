@@ -1,9 +1,5 @@
 import { cn } from "../../lib/utils";
 
-/**
- * Skeletons mirror the SHAPE of what is loading, never a generic grey box.
- * A table skeleton is rows at --row-h; a stat tile skeleton is a tile.
- */
 export function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

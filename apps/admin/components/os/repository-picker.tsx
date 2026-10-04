@@ -7,21 +7,6 @@ import { Button, Input } from "@repo/ui";
 
 import { cn } from "@/lib/utils";
 
-/**
- * Attaching a repository to a product, by picking it or by typing it (§26).
- *
- * Both, deliberately. Picking is right for the common case — a repository
- * Altruvex owns, where a typo produces a product no webhook will ever match and
- * no error anybody sees. Typing is right for everything else: an open-source
- * repository, a client's own account, anything no token here can see. Offering
- * only the list would make the second case impossible; offering only the field
- * leaves the first case one character away from silently broken.
- *
- * The list also says which repositories are already attached to another
- * product, because the webhook receiver refuses an event a second product
- * claims — better to see that here than to find out when a build goes missing.
- */
-
 export interface RepositoryOption {
   fullName: string;
   name: string;
@@ -43,30 +28,22 @@ interface ListResponse {
   message?: string;
 }
 
+const SHOWN = 50;
+
 export function RepositoryPicker({
   value,
   onChange,
   onImport,
   excludeProductId,
 }: {
-  /** The repository URL currently on the product, or "". */
   value: string;
   onChange: (url: string) => void;
-  /**
-   * Called when a repository is picked, with everything GitHub knows that a
-   * product has a field for. The caller decides what to pre-fill — this
-   * component does not reach into a form it does not own.
-   */
   onImport?: (repo: RepositoryOption) => void;
-  /** A product may keep its own repository without it reading as taken. */
   excludeProductId?: string;
 }) {
   const [mode, setMode] = React.useState<"pick" | "manual">("pick");
   const [repositories, setRepositories] = React.useState<RepositoryOption[] | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
-  // Starts true rather than being set inside the effect: the fetch is the first
-  // thing that happens on mount, so "loading" is the honest initial state and a
-  // synchronous setState in an effect body only costs an extra render.
   const [loading, setLoading] = React.useState(true);
   const [query, setQuery] = React.useState("");
 
@@ -78,8 +55,6 @@ export function RepositoryPicker({
         if (cancelled) return;
         if (!data.success) {
           setNotice(data.message ?? "Repositories could not be listed.");
-          // Falling back rather than blocking: not being able to *list*
-          // repositories says nothing about whether the operator knows the URL.
           setMode("manual");
           return;
         }
@@ -103,17 +78,17 @@ export function RepositoryPicker({
     };
   }, []);
 
-  const filtered = React.useMemo(() => {
+  const { filtered, matches } = React.useMemo(() => {
     const list = repositories ?? [];
     const q = query.trim().toLowerCase();
-    if (!q) return list.slice(0, 50);
-    return list
-      .filter(
-        (repo) =>
-          repo.fullName.toLowerCase().includes(q) ||
-          (repo.description ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 50);
+    const hits = q
+      ? list.filter(
+          (repo) =>
+            repo.fullName.toLowerCase().includes(q) ||
+            (repo.description ?? "").toLowerCase().includes(q),
+        )
+      : list;
+    return { filtered: hits.slice(0, SHOWN), matches: hits.length };
   }, [repositories, query]);
 
   const selected = value.trim().toLowerCase();
@@ -121,16 +96,13 @@ export function RepositoryPicker({
 
   return (
     <div className="space-y-2">
-      {/* Only a real choice is offered one. When nothing can be listed there is
-          no second mode to switch to, and a disabled tab sitting above a note
-          explaining why it is disabled reads as a fault rather than as a
-          setting nobody has turned on. */}
       {canPick && (
-        <div className="flex items-center gap-1.5">
+        <div role="group" aria-label="How to choose the repository" className="flex items-center gap-1.5">
           <Button
             type="button"
             size="sm"
             variant={mode === "pick" ? "outline" : "ghost"}
+            aria-pressed={mode === "pick"}
             onClick={() => setMode("pick")}
           >
             From GitHub
@@ -139,6 +111,7 @@ export function RepositoryPicker({
             type="button"
             size="sm"
             variant={mode === "manual" ? "outline" : "ghost"}
+            aria-pressed={mode === "manual"}
             onClick={() => setMode("manual")}
           >
             Enter a URL
@@ -162,12 +135,13 @@ export function RepositoryPicker({
       ) : (
         <>
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
+            <Search className="pointer-events-none absolute start-2 top-1/2 size-3.5 -translate-y-1/2 text-subtle-foreground" />
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={loading ? "Loading repositories…" : "Search repositories"}
-              className="pl-7"
+              aria-label="Search repositories"
+              className="ps-7"
               disabled={loading}
             />
           </div>
@@ -185,12 +159,13 @@ export function RepositoryPicker({
                 <li key={repo.fullName} className="border-b border-border last:border-b-0">
                   <button
                     type="button"
+                    aria-pressed={isSelected}
                     onClick={() => {
                       onChange(repo.htmlUrl);
                       onImport?.(repo);
                     }}
                     className={cn(
-                      "flex w-full items-start gap-2 px-3 py-2 text-left transition-colors duration-[var(--dur-state)] hover:bg-surface",
+                      "flex min-h-11 w-full items-start gap-2 px-3 py-2 text-start sm:min-h-0 transition-colors duration-[var(--dur-state)] hover:bg-surface",
                       isSelected && "bg-surface",
                     )}
                   >
@@ -223,6 +198,11 @@ export function RepositoryPicker({
               );
             })}
           </ul>
+          {matches > filtered.length && (
+            <p className="text-meta text-subtle-foreground">
+              Showing the first {filtered.length} of {matches}. Search to narrow the list.
+            </p>
+          )}
         </>
       )}
 

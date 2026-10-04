@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { CircleCheck, FolderKanban, ListChecks, Pencil, Play, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   Button,
+  DropdownMenuItem,
+  Field,
   Input,
   Select,
   SelectContent,
@@ -14,19 +17,29 @@ import {
   SelectTrigger,
   SelectValue,
   Sheet,
+  SheetBody,
   SheetContent,
   SheetHeader,
   SheetTitle,
+  Textarea,
 } from "@repo/ui";
 
+import { SearchSelect } from "@/components/os/combobox-select";
+import { DateField } from "@/components/os/date-field";
 import { EmptyInline } from "@/components/os/empty-state";
+import { InlineSelect } from "@/components/os/inline-select";
 import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
+import { InspectSheet, inspectHref } from "@/components/os/inspect-sheet";
+import { useRowOpen } from "@/components/os/row-open";
+import { List, ListRow } from "@/components/os/list-row";
 import { Panel } from "@/components/os/panel";
 import { StatusPill } from "@/components/ui/badge";
 import { dueLabel } from "@/lib/format";
 import { optionsOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
+import { setTaskAssignee, setTaskDue, setTaskStatus, type TaskActionResult } from "@/app/(dashboard)/_actions/projects";
+import { useSheetSide } from "@/app/(dashboard)/calendar/sheet-shell";
 
 export interface TaskItem {
   id: string;
@@ -49,13 +62,6 @@ export interface TaskItem {
 type ProjectOption = { id: string; name: string; phase: string; clientName: string };
 type UserOption = { id: string; name: string | null; email: string };
 
-/**
- * Columns mirror the `TaskStatus` enum exactly.
- *
- * The board this replaced had five columns (BACKLOG, TODO, IN_PROGRESS, REVIEW,
- * DONE) that existed in no schema anywhere, so a card could sit in a column the
- * database had no way to store.
- */
 const COLUMNS = [
   { id: "TODO", label: "To do" },
   { id: "IN_PROGRESS", label: "In progress" },
@@ -65,59 +71,80 @@ const COLUMNS = [
 const CANCELLED_COLUMN = { id: "CANCELLED", label: "Cancelled" } as const;
 const ALL_COLUMNS = [...COLUMNS, CANCELLED_COLUMN];
 
-/**
- * What the board shows. Cancelled work is off the default board (it is not
- * work anyone will do) but never unreachable: "All" and "Cancelled" bring it
- * back, so a task cancelled by mistake can be found and reopened.
- */
-const VIEWS = [
-  { id: "board", label: "Board" },
-  { id: "all", label: "All, incl. cancelled" },
-  ...ALL_COLUMNS.map((c) => ({ id: c.id as string, label: c.label as string })),
-];
-
-const GRID: Record<number, string> = {
-  1: "grid-cols-1",
-  4: "md:grid-cols-2 xl:grid-cols-4",
-  5: "md:grid-cols-2 xl:grid-cols-5",
-};
-
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 const NONE = "__none__";
 const ALL_PROJECTS = "__all__";
 
+const isOpenStatus = (status: string) => status !== "DONE" && status !== "CANCELLED";
+const isLate = (task: TaskItem) =>
+  isOpenStatus(task.status) && task.dueDate != null && new Date(task.dueDate) < new Date();
+
+function report(result: TaskActionResult, router: ReturnType<typeof useRouter>) {
+  if (!result.ok) {
+    toast.error(result.message);
+    return false;
+  }
+  if (result.message === "Nothing changed.") {
+    toast(result.message);
+    return false;
+  }
+  toast.success(result.message);
+  router.refresh();
+  return true;
+}
+
 export function TasksClient({
   items,
+  totalInScope,
+  filtered,
+  statusFilter,
+  view,
   projects,
   users,
   scopeProjectId,
-  openTaskId,
+  inspectId,
+  inspected,
+  inspectHistory,
+  canEdit,
+  canCreate,
+  canDelete,
+  openCreate = false,
 }: {
   items: TaskItem[];
+  totalInScope: number;
+  filtered: boolean;
+  statusFilter: string | null;
+  view: "board" | "list";
   projects: ProjectOption[];
   users: UserOption[];
-  /** `?project=` — the board is already scoped server-side. */
   scopeProjectId: string | null;
-  /** `?task=` — open this task's sheet on arrival. */
-  openTaskId: string | null;
+  inspectId: string | null;
+  inspected: TaskItem | null;
+  inspectHistory: React.ReactNode;
+  canEdit: boolean;
+  canCreate: boolean;
+  canDelete: boolean;
+  openCreate?: boolean;
 }) {
   const router = useRouter();
-  const [creating, setCreating] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(openTaskId);
-  const [pending, setPending] = React.useState<string | null>(null);
-  const [view, setView] = React.useState<string>(() => {
-    // Arriving on a cancelled task's link should show the card it opened.
-    const opened = items.find((t) => t.id === openTaskId);
-    return opened?.status === "CANCELLED" ? "all" : "board";
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [creating, setCreating] = React.useState(openCreate);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const del = useRecordDelete({
+    entity: "task",
+    onDeleted: () => {
+      if (inspectId) router.replace(inspectHref(pathname, searchParams, null), { scroll: false });
+    },
   });
-  const del = useRecordDelete({ entity: "task" });
 
-  const scopeHref = scopeProjectId ? `/tasks?project=${scopeProjectId}` : "/tasks";
   const columns =
-    view === "board" ? COLUMNS : view === "all" ? ALL_COLUMNS : ALL_COLUMNS.filter((c) => c.id === view);
-  const shown = new Set<string>(columns.map((c) => c.id));
-  const visible = items.filter((task) => shown.has(task.status));
-  const editing = editingId ? (items.find((t) => t.id === editingId) ?? null) : null;
+    statusFilter == null ? COLUMNS : ALL_COLUMNS.filter((c) => c.id === statusFilter);
+  const editing = editingId
+    ? (items.find((t) => t.id === editingId) ?? (inspected?.id === editingId ? inspected : null))
+    : null;
+  const hrefFor = (id: string) => inspectHref(pathname, searchParams, id);
+  const rowOpen = useRowOpen();
 
   async function call(method: "POST" | "PATCH", body: unknown, okMessage: string): Promise<boolean> {
     let data: { success?: boolean; message?: string } = {};
@@ -143,95 +170,168 @@ export function TasksClient({
       toast.error(data.message ?? "That change could not be saved.");
       return false;
     }
-    toast.success(okMessage);
+    toast.success(data.message ?? okMessage);
     router.refresh();
     return true;
   }
 
-  async function move(task: TaskItem, status: string) {
-    if (status === task.status) return;
-    setPending(task.id);
-    await call("PATCH", { id: task.id, status }, `Moved to ${status.replace("_", " ").toLowerCase()}.`);
-    setPending(null);
+  function setCreatingOpen(open: boolean) {
+    setCreating(open);
+    if (!open && searchParams.has("new")) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("new");
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
   }
 
-  function closeEditor() {
-    setEditingId(null);
-    // Drop `?task=` so a refresh does not reopen the sheet just closed.
-    if (openTaskId) router.replace(scopeHref, { scroll: false });
+  async function moveTo(task: TaskItem, status: string) {
+    report(await setTaskStatus(task.id, status), router);
   }
+
+  function rowMenu(task: TaskItem) {
+    return (
+      <RowActions
+        onDelete={canDelete ? () => del.request({ id: task.id, label: task.title }) : undefined}
+      >
+        <DropdownMenuItem asChild>
+          <Link href={`/projects/${task.projectId}`}>
+            <FolderKanban className="size-3.5" />
+            Open the project
+          </Link>
+        </DropdownMenuItem>
+        {canEdit && task.status === "BLOCKED" && (
+          <DropdownMenuItem onSelect={() => void moveTo(task, "IN_PROGRESS")}>
+            <Play className="size-3.5" />
+            Unblock (In progress)
+          </DropdownMenuItem>
+        )}
+        {canEdit && isOpenStatus(task.status) && (
+          <DropdownMenuItem onSelect={() => void moveTo(task, "DONE")}>
+            <CircleCheck className="size-3.5" />
+            Mark done
+          </DropdownMenuItem>
+        )}
+      </RowActions>
+    );
+  }
+
+  function openEditor(id: string) {
+    if (inspectId) router.replace(inspectHref(pathname, searchParams, null), { scroll: false });
+    setEditingId(id);
+  }
+
+  const projectPicker = (
+    <SearchSelect
+      ariaLabel="Filter by project"
+      className="w-40 pointer-coarse:h-11 sm:w-48"
+      value={scopeProjectId ?? ALL_PROJECTS}
+      onChange={(value) => {
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("inspect");
+        if (value === ALL_PROJECTS) next.delete("project");
+        else next.set("project", value);
+        const query = next.toString();
+        router.push(query ? `/tasks?${query}` : "/tasks");
+      }}
+      options={[
+        { value: ALL_PROJECTS, label: "All projects" },
+        ...projects.map((project) => ({ value: project.id, label: project.name })),
+      ]}
+      placeholder="All projects"
+      searchPlaceholder="Search projects"
+    />
+  );
 
   return (
     <>
       <Panel
-        title="Board"
-        description={`${visible.length} task${visible.length === 1 ? "" : "s"}`}
+        title={view === "list" ? "List" : "Board"}
+        description={`${items.length} task${items.length === 1 ? "" : "s"}`}
         action={
           <div className="flex flex-wrap items-center gap-1.5">
-            <Select
-              value={scopeProjectId ?? ALL_PROJECTS}
-              onValueChange={(value) =>
-                router.push(value === ALL_PROJECTS ? "/tasks" : `/tasks?project=${value}`)
-              }
-            >
-              <SelectTrigger className="w-40 sm:w-48" aria-label="Filter by project">
-                <SelectValue placeholder="All projects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_PROJECTS}>All projects</SelectItem>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={view} onValueChange={setView}>
-              <SelectTrigger className="w-36 sm:w-44" aria-label="Filter by status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VIEWS.map((option) => (
-                  <SelectItem key={option.id} value={option.id}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="brand" size="sm" onClick={() => setCreating(true)}>
-              <Plus className="size-3.5" />
-              New task
-            </Button>
+            {projectPicker}
+            {canCreate && (
+              <Button variant="brand" size="sm" className="pointer-coarse:h-11" onClick={() => setCreatingOpen(true)}>
+                <Plus className="size-3.5" />
+                New task
+              </Button>
+            )}
           </div>
         }
         flush
       >
-        {visible.length === 0 ? (
+        {items.length === 0 ? (
           <EmptyInline
             action={
-              items.length === 0 ? (
-                <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+              totalInScope === 0 && canCreate ? (
+                <Button variant="outline" size="sm" onClick={() => setCreatingOpen(true)}>
                   Add the first task
                 </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={() => setView("all")}>
-                  Show every status
+              ) : filtered ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={scopeProjectId ? `/tasks?project=${scopeProjectId}` : "/tasks"}>
+                    Clear the filters
+                  </Link>
                 </Button>
-              )
+              ) : undefined
             }
           >
-            {items.length === 0
+            {totalInScope === 0
               ? scopeProjectId
                 ? "No task on this project yet. A task is a unit of delivery work with an owner and a due date — add one and it appears here and on the project."
                 : "No task has been created yet. A task is a unit of delivery work with an owner and a due date — add one and it appears on this board and on its project."
-              : "No task matches this status filter."}
+              : filtered
+                ? "No task matches these filters."
+                : "Every task in scope is cancelled. The Cancelled chip shows them."}
           </EmptyInline>
+        ) : view === "list" ? (
+          <List label="Tasks">
+            {items.map((task) => (
+              <ListRow
+                key={task.id}
+                icon={<ListChecks />}
+                tone={task.status === "BLOCKED" || isLate(task) ? "danger" : task.status === "DONE" ? "success" : "neutral"}
+                title={task.title}
+                inspect={hrefFor(task.id)}
+                selected={task.id === inspectId}
+                meta={
+                  <>
+                    <span className="truncate">{task.projectName}</span>
+                    <span className={canEdit ? "sm:hidden" : undefined}>{task.assigneeName ?? "Unassigned"}</span>
+                    {task.dueDate && isOpenStatus(task.status) && (
+                      <span className={isLate(task) ? "text-danger" : undefined}>{dueLabel(task.dueDate)}</span>
+                    )}
+                  </>
+                }
+                trailing={<StatusPill registry="priority" value={task.priority} variant="dot" />}
+                actions={
+                  <>
+                    {canEdit ? (
+                      <>
+                        <AssigneeInline task={task} users={users} className="hidden w-32 sm:inline-flex" />
+                        <StatusInline task={task} />
+                      </>
+                    ) : (
+                      <StatusPill registry="taskStatus" value={task.status} />
+                    )}
+                    {rowMenu(task)}
+                  </>
+                }
+              />
+            ))}
+          </List>
         ) : (
-          <div className={cn("grid gap-3 p-3", GRID[columns.length])}>
+          <div
+            className={cn(
+              "grid gap-3 p-3",
+              columns.length === 1 ? "grid-cols-1" : "md:grid-cols-2 xl:grid-cols-4",
+            )}
+          >
             {columns.map((column) => {
-              const columnTasks = visible.filter((task) => task.status === column.id);
+              const columnTasks = items.filter((task) => task.status === column.id);
               return (
-                <section key={column.id} className="min-w-0 space-y-2">
+                <section key={column.id} className="min-w-0 space-y-2" aria-label={column.label}>
                   <header className="flex items-center justify-between gap-2">
                     <h3 className="telemetry text-subtle-foreground">{column.label}</h3>
                     <span className="text-meta tabular-nums text-subtle-foreground">
@@ -248,68 +348,47 @@ export function TasksClient({
                     {columnTasks.map((task) => (
                       <li
                         key={task.id}
+                        onClick={rowOpen(hrefFor(task.id))}
                         className={cn(
-                          "plane space-y-1.5 p-2",
-                          pending === task.id && "opacity-60",
-                          editingId === task.id && "border-brand",
+                          "plane cursor-pointer space-y-1.5 p-2",
+                          inspectId === task.id && "border-brand",
                         )}
                       >
                         <div className="flex items-start justify-between gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setEditingId(task.id)}
-                            className="min-w-0 text-start text-base leading-snug hover:underline"
+                          <Link
+                            href={hrefFor(task.id)}
+                            scroll={false}
+                            aria-haspopup="dialog"
+                            className="min-w-0 py-0.5 text-start text-base leading-snug hover:underline pointer-coarse:py-2"
                           >
                             {task.title}
-                          </button>
-                          <RowActions
-                            onDelete={() => del.request({ id: task.id, label: task.title })}
-                          />
+                          </Link>
+                          {rowMenu(task)}
                         </div>
                         <p className="truncate text-meta text-subtle-foreground">
                           <EntityLink type="project" id={task.projectId} muted>
                             {task.projectName}
                           </EntityLink>
-                          {" · "}
-                          {task.assigneeName ?? "Unassigned"}
                         </p>
                         <div className="flex flex-wrap items-center gap-1.5">
                           <StatusPill registry="priority" value={task.priority} variant="dot" />
                           {task.phase && (
                             <StatusPill registry="projectPhase" value={task.phase} variant="dot" />
                           )}
-                          {task.dueDate && task.status !== "DONE" && task.status !== "CANCELLED" && (
-                            <span
-                              className={cn(
-                                "text-meta",
-                                new Date(task.dueDate) < new Date()
-                                  ? "text-danger"
-                                  : "text-subtle-foreground",
-                              )}
-                            >
+                          {task.dueDate && isOpenStatus(task.status) && (
+                            <span className={cn("text-meta", isLate(task) ? "text-danger" : "text-subtle-foreground")}>
                               {dueLabel(task.dueDate)}
                             </span>
                           )}
                         </div>
-                        <Select
-                          value={task.status}
-                          onValueChange={(value) => move(task, value)}
-                          disabled={pending === task.id}
-                        >
-                          <SelectTrigger
-                            className="h-7 w-full"
-                            aria-label={`Status for ${task.title}`}
-                          >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ALL_COLUMNS.map((option) => (
-                              <SelectItem key={option.id} value={option.id}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {canEdit ? (
+                          <div className="flex min-w-0 items-center justify-between gap-2 text-meta">
+                            <StatusInline task={task} />
+                            <AssigneeInline task={task} users={users} className="justify-end text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <p className="text-meta text-subtle-foreground">{task.assigneeName ?? "Unassigned"}</p>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -320,36 +399,137 @@ export function TasksClient({
         )}
       </Panel>
 
+      <InspectSheet
+        open={inspected != null}
+        title={inspected?.title ?? "Task"}
+        status={inspected ? <StatusPill registry="taskStatus" value={inspected.status} /> : undefined}
+        subtitle={
+          inspected ? (
+            <>
+              <EntityLink type="project" id={inspected.projectId}>
+                {inspected.projectName}
+              </EntityLink>
+              {" · "}
+              <EntityLink type="client" id={inspected.clientId} muted>
+                {inspected.clientName}
+              </EntityLink>
+            </>
+          ) : undefined
+        }
+        footer={
+          inspected ? (
+            <>
+              {canEdit && canDelete && (
+                <Button
+                  variant="destructive-ghost"
+                  onClick={() => del.request({ id: inspected.id, label: inspected.title })}
+                >
+                  <Trash2 className="size-3.5" />
+                  Delete
+                </Button>
+              )}
+              <Button asChild variant="outline" className="ms-auto">
+                <Link href={`/projects/${inspected.projectId}`}>
+                  <FolderKanban className="size-3.5" aria-hidden />
+                  Open the project
+                </Link>
+              </Button>
+              {canEdit && (
+                <Button variant="outline" onClick={() => openEditor(inspected.id)}>
+                  <Pencil className="size-3.5" />
+                  Edit all fields
+                </Button>
+              )}
+            </>
+          ) : undefined
+        }
+      >
+        {inspected && (
+          <div className="space-y-4">
+            {canEdit ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Status">
+                  <StatusSelect task={inspected} />
+                </Field>
+                <Field label="Assignee">
+                  <AssigneeQuick task={inspected} users={users} />
+                </Field>
+                <Field label="Due">
+                  <DueQuick key={inspected.dueDate ?? "none"} task={inspected} />
+                </Field>
+              </div>
+            ) : (
+              <dl className="grid grid-cols-3 gap-3 text-base">
+                <div>
+                  <dt className="telemetry text-subtle-foreground">Status</dt>
+                  <dd><StatusPill registry="taskStatus" value={inspected.status} /></dd>
+                </div>
+                <div>
+                  <dt className="telemetry text-subtle-foreground">Assignee</dt>
+                  <dd>{inspected.assigneeName ?? "Unassigned"}</dd>
+                </div>
+                <div>
+                  <dt className="telemetry text-subtle-foreground">Due</dt>
+                  <dd>{inspected.dueDate ? inspected.dueDate.slice(0, 10) : "No date"}</dd>
+                </div>
+              </dl>
+            )}
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <StatusPill registry="priority" value={inspected.priority} variant="dot" />
+              {inspected.phase && <StatusPill registry="projectPhase" value={inspected.phase} variant="dot" />}
+              {inspected.dueDate && isOpenStatus(inspected.status) && (
+                <span className={cn("text-meta", isLate(inspected) ? "text-danger" : "text-subtle-foreground")}>
+                  {dueLabel(inspected.dueDate)}
+                </span>
+              )}
+              {inspected.completedAt && (
+                <span className="text-meta text-subtle-foreground">
+                  Completed {inspected.completedAt.slice(0, 10)}
+                </span>
+              )}
+            </div>
+
+            <section className="space-y-1">
+              <h3 className="telemetry text-subtle-foreground">Detail</h3>
+              <p className="whitespace-pre-wrap text-base text-muted-foreground">
+                {inspected.detail || "No detail written. Edit all fields to add one."}
+              </p>
+            </section>
+
+            {inspectHistory}
+          </div>
+        )}
+      </InspectSheet>
+
       <CreateTaskSheet
-        // Remount per opening so the form starts clean without an effect.
         key={creating ? `open-${scopeProjectId ?? ""}` : "closed"}
         open={creating}
-        onOpenChange={setCreating}
+        onOpenChange={setCreatingOpen}
         projects={projects}
         users={users}
         defaultProjectId={scopeProjectId ?? projects[0]?.id ?? ""}
         onSubmit={async (body) => {
           const done = await call("POST", body, "Task created.");
-          if (done) setCreating(false);
+          if (done) setCreatingOpen(false);
         }}
       />
 
       <EditTaskSheet
-        // Remount per task so the form always starts from the saved row.
         key={editing?.id ?? "none"}
         task={editing}
-        onClose={closeEditor}
+        onClose={() => setEditingId(null)}
         projects={projects}
         users={users}
         onSubmit={async (patch) => {
           if (!editing) return;
           if (Object.keys(patch).length === 0) {
             toast("Nothing changed.");
-            closeEditor();
+            setEditingId(null);
             return;
           }
           const done = await call("PATCH", { id: editing.id, ...patch }, "Task saved.");
-          if (done) closeEditor();
+          if (done) setEditingId(null);
         }}
       />
 
@@ -358,17 +538,134 @@ export function TasksClient({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function StatusSelect({ task }: { task: TaskItem }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
   return (
-    <label className="block space-y-1">
-      <span className="telemetry block text-subtle-foreground">{label}</span>
-      {children}
-    </label>
+    <Select
+      value={task.status}
+      disabled={pending}
+      onValueChange={(value) =>
+        value !== task.status &&
+        startTransition(async () => {
+          report(await setTaskStatus(task.id, value), router);
+        })
+      }
+    >
+      <SelectTrigger
+        className={cn("w-full pointer-coarse:h-11", pending && "opacity-60")}
+        aria-label={`Status for ${task.title}`}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {ALL_COLUMNS.map((option) => (
+          <SelectItem key={option.id} value={option.id}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
-const textareaClass =
-  "w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand";
+function AssigneeQuick({ task, users }: { task: TaskItem; users: UserOption[] }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const options = withFormerAssignee(task, users);
+  return (
+    <Select
+      value={task.assigneeId ?? NONE}
+      disabled={pending}
+      onValueChange={(value) => {
+        const next = value === NONE ? null : value;
+        if (next === task.assigneeId) return;
+        startTransition(async () => {
+          report(await setTaskAssignee(task.id, next), router);
+        });
+      }}
+    >
+      <SelectTrigger
+        className={cn("w-full pointer-coarse:h-11", pending && "opacity-60")}
+        aria-label={`Assignee for ${task.title}`}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={NONE}>Unassigned</SelectItem>
+        {options.map((user) => (
+          <SelectItem key={user.id} value={user.id}>
+            {user.name || user.email}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function StatusInline({ task }: { task: TaskItem }) {
+  return (
+    <InlineSelect
+      ariaLabel={`Status for ${task.title}`}
+      value={task.status}
+      options={ALL_COLUMNS.map((option) => ({ value: option.id, label: option.label }))}
+      display={(value) => <StatusPill registry="taskStatus" value={value} variant="dot" />}
+      onCommit={(next) => setTaskStatus(task.id, next)}
+    />
+  );
+}
+
+function AssigneeInline({
+  task,
+  users,
+  className,
+}: {
+  task: TaskItem;
+  users: UserOption[];
+  className?: string;
+}) {
+  return (
+    <InlineSelect
+      ariaLabel={`Assignee for ${task.title}`}
+      className={className}
+      value={task.assigneeId ?? NONE}
+      options={[
+        { value: NONE, label: "Unassigned" },
+        ...withFormerAssignee(task, users).map((user) => ({ value: user.id, label: user.name || user.email })),
+      ]}
+      searchPlaceholder="Search the team"
+      onCommit={(next) => setTaskAssignee(task.id, next === NONE ? null : next)}
+    />
+  );
+}
+
+function DueQuick({ task }: { task: TaskItem }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const saved = task.dueDate?.slice(0, 10) ?? "";
+  const [value, setValue] = React.useState(saved);
+  return (
+    <DateField
+      value={value}
+      disabled={pending}
+      ariaLabel={`Due date for ${task.title}`}
+      className="pointer-coarse:h-11"
+      onChange={(next) => {
+        setValue(next);
+        if (next === saved) return;
+        startTransition(async () => {
+          if (!report(await setTaskDue(task.id, next || null), router)) setValue(saved);
+        });
+      }}
+    />
+  );
+}
+
+function withFormerAssignee(task: TaskItem | null, users: UserOption[]): UserOption[] {
+  return task?.assigneeId && !users.some((u) => u.id === task.assigneeId)
+    ? [...users, { id: task.assigneeId, name: task.assigneeName, email: task.assigneeName ?? "Former member" }]
+    : users;
+}
 
 function PrioritySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -397,18 +694,17 @@ function ProjectSelect({
   projects: ProjectOption[];
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full" aria-label="Project">
-        <SelectValue placeholder="Pick a project" />
-      </SelectTrigger>
-      <SelectContent>
-        {projects.map((project) => (
-          <SelectItem key={project.id} value={project.id}>
-            {project.name} · {project.clientName}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <SearchSelect
+      ariaLabel="Project"
+      value={value}
+      onChange={onChange}
+      options={projects.map((project) => ({
+        value: project.id,
+        label: `${project.name} · ${project.clientName}`,
+      }))}
+      placeholder="Pick a project"
+      searchPlaceholder="Search projects or clients"
+    />
   );
 }
 
@@ -438,6 +734,31 @@ function AssigneeSelect({
   );
 }
 
+function FormActions({
+  onCancel,
+  busy,
+  disabled,
+  label,
+  busyLabel,
+}: {
+  onCancel: () => void;
+  busy: boolean;
+  disabled: boolean;
+  label: string;
+  busyLabel: string;
+}) {
+  return (
+    <div className="flex justify-end gap-2 pt-1">
+      <Button type="button" variant="ghost" className="pointer-coarse:h-11" onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button type="submit" variant="brand" className="pointer-coarse:h-11" disabled={busy || disabled}>
+        {busy ? busyLabel : label}
+      </Button>
+    </div>
+  );
+}
+
 function CreateTaskSheet({
   open,
   onOpenChange,
@@ -453,9 +774,8 @@ function CreateTaskSheet({
   defaultProjectId: string;
   onSubmit: (body: Record<string, unknown>) => Promise<void>;
 }) {
+  const sheet = useSheetSide();
   const [busy, setBusy] = React.useState(false);
-  // Seeded once per open; the caller remounts on `open` via `key`, so the
-  // operator's choice is never overwritten while the sheet is on screen.
   const [projectId, setProjectId] = React.useState(defaultProjectId);
   const [title, setTitle] = React.useState("");
   const [detail, setDetail] = React.useState("");
@@ -465,82 +785,78 @@ function CreateTaskSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="end" className="w-full sm:max-w-md">
+      <SheetContent side={sheet.side} width="md" className={sheet.className}>
         <SheetHeader>
           <SheetTitle>New task</SheetTitle>
         </SheetHeader>
-        <form
-          className="space-y-3 overflow-y-auto p-4"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (!title.trim() || !projectId) return;
-            setBusy(true);
-            await onSubmit({
-              projectId,
-              title: title.trim(),
-              detail: detail.trim() || null,
-              priority,
-              assigneeId: assigneeId === NONE ? null : assigneeId,
-              dueDate: dueDate || null,
-            });
-            setBusy(false);
-          }}
-        >
-          <Field label="Project">
-            <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
-          </Field>
-
-          <Field label="Task">
-            <Input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Wire the contact form to the CRM"
-              required
-              maxLength={300}
-            />
-          </Field>
-
-          <Field label="Detail">
-            <textarea
-              value={detail}
-              onChange={(event) => setDetail(event.target.value)}
-              rows={3}
-              maxLength={5000}
-              className={textareaClass}
-            />
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Priority">
-              <PrioritySelect value={priority} onChange={setPriority} />
+        <SheetBody className="overflow-y-auto">
+          <form
+            className="space-y-3"
+            onSubmit={async (event) => {
+              event.preventDefault();
+              if (!title.trim() || !projectId) return;
+              setBusy(true);
+              await onSubmit({
+                projectId,
+                title: title.trim(),
+                detail: detail.trim() || null,
+                priority,
+                assigneeId: assigneeId === NONE ? null : assigneeId,
+                dueDate: dueDate || null,
+              });
+              setBusy(false);
+            }}
+          >
+            <Field label="Project">
+              <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
             </Field>
-            <Field label="Due">
-              <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
+
+            <Field label="Task">
+              <Input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Wire the contact form to the CRM"
+                required
+                maxLength={300}
+              />
             </Field>
-          </div>
 
-          <Field label="Assignee">
-            <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={users} />
-          </Field>
+            <Field label="Detail">
+              <Textarea
+                value={detail}
+                onChange={(event) => setDetail(event.target.value)}
+                rows={3}
+                maxLength={5000}
+              />
+            </Field>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="brand" disabled={busy || !title.trim() || !projectId}>
-              {busy ? "Creating…" : "Create task"}
-            </Button>
-          </div>
-        </form>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Priority">
+                <PrioritySelect value={priority} onChange={setPriority} />
+              </Field>
+              <Field label="Due">
+                <DateField value={dueDate} onChange={setDueDate} />
+              </Field>
+            </div>
+
+            <Field label="Assignee">
+              <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={users} />
+            </Field>
+
+            <FormActions
+              onCancel={() => onOpenChange(false)}
+              busy={busy}
+              disabled={!title.trim() || !projectId}
+              label="Create task"
+              busyLabel="Creating…"
+            />
+          </form>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );
 }
 
-/**
- * Every field the tasks API accepts, in one place. Only the fields that moved
- * are sent, so the audit event names exactly what the operator changed.
- */
 function EditTaskSheet({
   task,
   onClose,
@@ -554,6 +870,7 @@ function EditTaskSheet({
   users: UserOption[];
   onSubmit: (patch: Record<string, unknown>) => Promise<void>;
 }) {
+  const sheet = useSheetSide();
   const [busy, setBusy] = React.useState(false);
   const [title, setTitle] = React.useState(task?.title ?? "");
   const [detail, setDetail] = React.useState(task?.detail ?? "");
@@ -564,12 +881,7 @@ function EditTaskSheet({
   const [assigneeId, setAssigneeId] = React.useState(task?.assigneeId ?? NONE);
   const [dueDate, setDueDate] = React.useState(task?.dueDate?.slice(0, 10) ?? "");
 
-  // An assignee who has since lost admin access is still who the task names;
-  // keep them selectable rather than silently showing a blank picker.
-  const userOptions =
-    task?.assigneeId && !users.some((u) => u.id === task.assigneeId)
-      ? [...users, { id: task.assigneeId, name: task.assigneeName, email: task.assigneeName ?? "Former member" }]
-      : users;
+  const userOptions = withFormerAssignee(task, users);
 
   function changes(): Record<string, unknown> {
     if (!task) return {};
@@ -592,109 +904,104 @@ function EditTaskSheet({
 
   return (
     <Sheet open={task != null} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="end" className="w-full sm:max-w-md">
+      <SheetContent side={sheet.side} width="md" className={sheet.className}>
         <SheetHeader>
           <SheetTitle>Edit task</SheetTitle>
         </SheetHeader>
         {task && (
-          <form
-            className="space-y-3 overflow-y-auto p-4"
-            onSubmit={async (event) => {
-              event.preventDefault();
-              if (!title.trim()) return;
-              setBusy(true);
-              await onSubmit(changes());
-              setBusy(false);
-            }}
-          >
-            <p className="text-meta text-subtle-foreground">
-              On{" "}
-              <EntityLink type="project" id={task.projectId}>
-                {task.projectName}
-              </EntityLink>{" "}
-              for{" "}
-              <EntityLink type="client" id={task.clientId}>
-                {task.clientName}
-              </EntityLink>
-            </p>
+          <SheetBody className="overflow-y-auto">
+            <form
+              className="space-y-3"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                if (!title.trim()) return;
+                setBusy(true);
+                await onSubmit(changes());
+                setBusy(false);
+              }}
+            >
+              <p className="text-meta text-subtle-foreground">
+                On{" "}
+                <EntityLink type="project" id={task.projectId}>
+                  {task.projectName}
+                </EntityLink>{" "}
+                for{" "}
+                <EntityLink type="client" id={task.clientId}>
+                  {task.clientName}
+                </EntityLink>
+              </p>
 
-            <Field label="Task">
-              <Input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                maxLength={300}
+              <Field label="Task">
+                <Input value={title} onChange={(event) => setTitle(event.target.value)} required maxLength={300} />
+              </Field>
+
+              <Field label="Detail">
+                <Textarea
+                  value={detail}
+                  onChange={(event) => setDetail(event.target.value)}
+                  rows={4}
+                  maxLength={5000}
+                />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Status">
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="w-full" aria-label="Status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {optionsOf("taskStatus").map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Priority">
+                  <PrioritySelect value={priority} onChange={setPriority} />
+                </Field>
+              </div>
+
+              <Field label="Project">
+                <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
+              </Field>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Phase">
+                  <Select value={phase} onValueChange={setPhase}>
+                    <SelectTrigger className="w-full" aria-label="Phase">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={NONE}>No phase</SelectItem>
+                      {optionsOf("projectPhase").map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label="Due">
+                  <DateField value={dueDate} onChange={setDueDate} />
+                </Field>
+              </div>
+
+              <Field label="Assignee">
+                <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={userOptions} />
+              </Field>
+
+              <FormActions
+                onCancel={onClose}
+                busy={busy}
+                disabled={!title.trim()}
+                label="Save"
+                busyLabel="Saving…"
               />
-            </Field>
-
-            <Field label="Detail">
-              <textarea
-                value={detail}
-                onChange={(event) => setDetail(event.target.value)}
-                rows={4}
-                maxLength={5000}
-                className={textareaClass}
-              />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Status">
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="w-full" aria-label="Status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {optionsOf("taskStatus").map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Priority">
-                <PrioritySelect value={priority} onChange={setPriority} />
-              </Field>
-            </div>
-
-            <Field label="Project">
-              <ProjectSelect value={projectId} onChange={setProjectId} projects={projects} />
-            </Field>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Phase">
-                <Select value={phase} onValueChange={setPhase}>
-                  <SelectTrigger className="w-full" aria-label="Phase">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>No phase</SelectItem>
-                    {optionsOf("projectPhase").map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Due">
-                <Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} />
-              </Field>
-            </div>
-
-            <Field label="Assignee">
-              <AssigneeSelect value={assigneeId} onChange={setAssigneeId} users={userOptions} />
-            </Field>
-
-            <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="ghost" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="brand" disabled={busy || !title.trim()}>
-                {busy ? "Saving…" : "Save"}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </SheetBody>
         )}
       </SheetContent>
     </Sheet>

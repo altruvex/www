@@ -33,16 +33,15 @@ export function AuditOffer({ audit }: { audit: ConsultingView }) {
           </div>
         </div>
       ) : null}
-      <div className="mt-16 grid gap-10 lg:mt-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
+      <div className="mt-(--section-block) grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16">
         <div>
           <Eyebrow className="mb-4">{audit.includedLabel}</Eyebrow>
           <ul className="list-none">
             {audit.deliverables.map((item) => (
               <li
                 key={item}
-                className="flex gap-3 border-t border-border-subtle py-3 text-sm leading-relaxed text-muted-foreground"
+                className="border-t border-border-subtle py-3 text-sm leading-relaxed text-muted-foreground"
               >
-                <span aria-hidden className="mt-2 size-1.25 shrink-0 rounded-full bg-local-accent" />
                 {item}
               </li>
             ))}

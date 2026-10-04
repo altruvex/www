@@ -47,5 +47,8 @@
   "legalContact": {
     "label": "Questions about this document?",
     "body": "Write to us and a person answers - not an auto-reply."
+  },
+  "loader": {
+    "welcome": "Welcome."
   }
 }

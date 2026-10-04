@@ -2,7 +2,6 @@
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { MagneticButton } from "@/components/magnetic-button";
-import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Container } from "@/components/shared/container";
 import { ArrowLabel } from "@/components/shared/directional-link";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -23,11 +22,6 @@ import { SectionHeading } from "./section-heading";
 
 type ServiceId = ServiceEntry["id"];
 
-/**
- * Where each discipline's own action lands: the contact letter, with the
- * service already filled in (`/contact` reads `?service=`). Consulting opens
- * on the audit, the same link the audit offer uses.
- */
 const ACTION_HREF: Record<ServiceId, string> = {
   website: "/contact?service=interface-design",
   portal: "/contact?service=development",
@@ -35,7 +29,6 @@ const ACTION_HREF: Record<ServiceId, string> = {
   maintenance: "/contact?service=maintenance",
 };
 
-/** Brand-mood photography, one per discipline (public/brand/README.md). */
 const ROW_IMAGE: Record<ServiceId, string> = {
   website: "/brand/mood/blue-wall-light-bands.webp",
   portal: "/brand/mood/blue-concrete.webp",
@@ -43,10 +36,6 @@ const ROW_IMAGE: Record<ServiceId, string> = {
   maintenance: "/brand/mood/blue-ribs-light.webp",
 };
 
-/**
- * The group label every register on the homepage uses (trust, ownership,
- * work): eyebrow, count, then a hairline that runs to the edge.
- */
 function RegisterDivider({ label, count }: { label: string; count: number }) {
   return (
     <div className="flex items-baseline gap-4">
@@ -72,7 +61,6 @@ const DisciplineRow = memo(function DisciplineRow({
 }) {
   const t = useTranslations("services.action");
   const tPage = useTranslations("servicesPage");
-  const pricingTokens = usePricingTokens();
   const panelId = useId();
   const deliverables: string[] = tPage.raw(`services.${service.id}.deliverables`);
 
@@ -147,20 +135,11 @@ const DisciplineRow = memo(function DisciplineRow({
                 </span>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-sm text-muted-foreground">
-                <span>{tPage(`services.${service.id}.engagement`, pricingTokens)}</span>
-                <Link
-                  href={service.href}
-                  className="inline-flex min-h-6 items-center underline decoration-border underline-offset-4 transition-colors hover:text-brand-text hover:decoration-current pointer-coarse:min-h-11"
-                >
-                  <ArrowLabel>{t("delivered")}</ArrowLabel>
-                </Link>
-              </div>
             </div>
 
             <figure
               className={cn(
-                "relative m-0 aspect-16/10 overflow-hidden rounded-panel-md transition-[clip-path] duration-(--motion-text) ease-strong motion-reduce:transition-none",
+                "relative m-0 aspect-16/10 overflow-hidden rounded-panel-sm transition-[clip-path] duration-(--motion-text) ease-strong motion-reduce:transition-none",
                 open
                   ? "[clip-path:inset(0_round_var(--radius-panel-md))]"
                   : "[clip-path:inset(10%_6%_round_var(--radius-panel-md))]",
@@ -186,15 +165,6 @@ const DisciplineRow = memo(function DisciplineRow({
   );
 });
 
-/**
- * "Four disciplines. One delivery standard." Each discipline is one hairline
- * row named at display size; the open row shows what it leaves behind and the
- * one action that starts it. What never varies is written once beneath them,
- * read from `servicesPage.chapters.plate` so /services and the homepage cannot
- * promise different things. The section closes on the fallback action for a
- * visitor who does not know which discipline they need, with the steps the
- * contact receipt promises.
- */
 export const ServicesSection = memo(function ServicesSection() {
   const t = useTranslations("services");
   const tStandard = useTranslations("servicesPage.chapters.plate");
@@ -232,7 +202,7 @@ export const ServicesSection = memo(function ServicesSection() {
           firstTitle={first}
           secondTitle={second}
           description={t("subtitle")}
-          className="mb-14 md:mb-20"
+          className="mb-(--heading-gap)"
         />
 
         <div ref={registerRef}>
@@ -257,7 +227,7 @@ export const ServicesSection = memo(function ServicesSection() {
             ))}
           </ol>
 
-          <div className="mt-16 md:mt-20">
+          <div className="mt-(--section-block)">
             <RegisterDivider
               label={t("standard.label")}
               count={standard.length}
@@ -286,7 +256,7 @@ export const ServicesSection = memo(function ServicesSection() {
 
           <div
             data-register-row
-            className="mt-16 grid gap-10 border-t border-border-subtle pt-[clamp(2rem,4vw,3rem)] md:mt-20 lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start lg:gap-16"
+            className="mt-(--section-block) grid gap-10 border-t border-border-subtle pt-[clamp(2rem,4vw,3rem)] lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-start lg:gap-16"
           >
             <div>
               <h3 className="text-balance text-[clamp(1.625rem,2.8vw,2.5rem)] font-normal leading-[1.12] tracking-[-0.02em] text-foreground rtl:leading-[1.3] rtl:tracking-normal">

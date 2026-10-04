@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/**
- * Deep-linkable tabs.
- *
- * Radix Tabs would be less code, but a detail-page tab is a place an operator
- * pastes into a message ("look at the Contracts tab of this client"). Driving
- * them from a search param keeps every tab a real URL, keeps the page a server
- * component, and makes browser back work the way people expect.
- */
 export interface TabDef {
   id: string;
   label: string;
@@ -26,10 +18,6 @@ export function TabNav({
   active: string;
   basePath: string;
   param?: string;
-  /**
-   * Search params that survive a tab switch — a filter such as `?product=`
-   * or `?client=` scopes every tab, so switching tabs must not drop it.
-   */
   keep?: Record<string, string | undefined | null>;
 }) {
   const hrefFor = (id: string) => {

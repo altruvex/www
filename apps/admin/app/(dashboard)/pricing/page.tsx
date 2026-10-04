@@ -6,24 +6,21 @@ import {
   pricingCopy,
 } from "@repo/pricing-schema";
 import { PageHeader } from "@/components/os/page-header";
+import { currentRole } from "@/lib/authorize";
+import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { getPricing, pricingHistory } from "@/lib/pricing-store";
 import { deriveStatus, REVENUE_BEARING } from "@/lib/subscription-lifecycle";
 import { PricingClient, type PricingSnapshot } from "./pricing-client";
 
 export const dynamic = "force-dynamic";
 
-/**
- * §—  Pricing.
- *
- * The only place a price is edited. Every public surface — /pricing,
- * /services/maintenance, /services/consulting, /transparency — and every
- * generated proposal and contract resolves to what this screen writes.
- *
- * What it renders is `override ?? shipped default`, so a row that has never
- * been touched shows the value the last deploy carried, clearly marked as
- * such. Nothing here invents a number.
- */
 export default async function PricingPage() {
+  const denied = await gateRoute("/pricing");
+  if (denied) return denied;
+
+  const canEdit = can(await currentRole(), "edit", "settings");
+
   const now = new Date();
   const [pricing, history, subscriptions] = await Promise.all([
     getPricing(),
@@ -42,8 +39,6 @@ export default async function PricingPage() {
   ]);
   const copy = pricingCopy("en");
 
-  // Retainers whose derived status still bills (trialing, active, past due,
-  // grace), per plan — the rows a price change here will actually reach.
   const activeByPlan = new Map<string, { count: number; unquoted: number }>();
   for (const sub of subscriptions) {
     if (!REVENUE_BEARING.has(deriveStatus(sub, now))) continue;
@@ -53,10 +48,6 @@ export default async function PricingPage() {
     activeByPlan.set(sub.planId, entry);
   }
 
-  // The rule `periodAmount` in lib/maintenance-admin.ts bills by: a published
-  // plan price is what every retainer's next renewal invoice charges, and a
-  // retainer's own quoted monthly price is used only while the plan has no
-  // published price. Payments already opened keep their amount either way.
   const repriceNote = (planId: string, price: number | null) => {
     const active = activeByPlan.get(planId) ?? { count: 0, unquoted: 0 };
     const retainers = `${active.count} active retainer${active.count === 1 ? "" : "s"}`;
@@ -82,8 +73,6 @@ export default async function PricingPage() {
         weeksMax: pricing.services[serviceId].weeks[complexityId].max,
       })),
     ),
-    // The public site publishes every cell unnamed; the count comes from the
-    // same view /pricing renders, so this tile cannot drift from that grid.
     publishedRanges: investmentMatrixView("en", pricing).cellCount,
     maintenance: Object.values(pricing.maintenance).map((plan) => ({
       id: plan.id,
@@ -146,7 +135,7 @@ export default async function PricingPage() {
         title="Pricing"
         description="The only place a price is edited. Every public page, proposal and contract resolves to what this screen writes."
       />
-      <PricingClient snapshot={snapshot} />
+      <PricingClient snapshot={snapshot} canEdit={canEdit} />
     </div>
   );
 }

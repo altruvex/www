@@ -59,7 +59,7 @@ export default async function SchedulePage({
       <PageClient />
       <section className="border-t border-border-subtle bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
         <Container>
-          <div className="mx-auto max-w-5xl">
+          <div>
             <div className="grid gap-10 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-16">
               <div>
                 <Eyebrow className="mb-4">{t("eyebrow")}</Eyebrow>

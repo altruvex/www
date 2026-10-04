@@ -7,20 +7,15 @@
 @source "../lib/**/*.{js,jsx,ts,tsx}";
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
 @theme inline {
-  /* The palette is packages/ui/src/styles/tokens.css. Only what exists in
-     the admin alone is declared here. */
   --color-sidebar: hsl(var(--sidebar));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
 
-  /* One face, as on the site: headings, body text, labels, figures and code
-     are Altruvex Sans; there is no monospace. --font-brand is set on :root below. */
   --font-sans: var(--font-brand);
   --font-body: var(--font-brand);
   --font-mono: var(--font-brand);
 
-  /* Admin runs a denser type scale than the site: base is 13px. */
   --text-base: 0.8125rem;
   --text-lg: 1rem;
   --text-xl: 1.25rem;
@@ -53,7 +48,6 @@
   --sidebar-w-collapsed: 56px;
   --topbar-h: 48px;
 
-  /* The sidebar is the page ground; its hover/active state is the muted fill. */
   --sidebar: var(--background);
   --sidebar-accent: var(--muted);
   --sidebar-accent-foreground: var(--foreground);
@@ -70,7 +64,6 @@
   --row-h: 48px;
 }
 
-/* In dark the sidebar sits one step above the ground, on the card tone. */
 .dark {
   --sidebar: var(--card);
 }
@@ -161,16 +154,6 @@
     font-weight: 500;
   }
 
-  /* Tailwind's .sr-only is position:absolute with auto insets, so its containing
-     block is the nearest POSITIONED ancestor — and in a page of static boxes that
-     is the document itself. Inside a horizontally scrolling region (the board, a
-     wide table) its static position can be 2000px to the right, and because the
-     document is its containing block, no ancestor's overflow clips it: the whole
-     page grows a horizontal scrollbar that nothing on screen explains, and every
-     screen looks broken at every width. Pinning it to the start takes it out of
-     the document's scrollable overflow and changes nothing a screen reader gets —
-     reading order is DOM order, not geometry. .not-sr-only resets position to
-     static, so a skip link still reveals itself normally. */
   .sr-only {
     inset-block-start: 0;
     inset-inline-start: 0;
@@ -185,13 +168,6 @@
     backdrop-filter: var(--glass-blur-soft);
   }
 
-  /* The selection dock is the one surface in this OS that sits ON TOP of live
-     rows, so it is the one place the glass is allowed to actually read as
-     glass. Every other plane sits on the background, where translucency would
-     buy nothing but noise — which is why the shared --glass-background-strong
-     is deliberately near-opaque and .plane looks like paper. This tier keeps
-     the veil thin enough to see the rows move under it and leans on a real
-     blur to hold the text legible instead. */
   .dock-glass {
     background:
       linear-gradient(180deg, hsl(var(--card) / 0.58), hsl(var(--background) / 0.38));
@@ -201,9 +177,6 @@
       inset 0 -1px 1px hsl(var(--n-8) / 0.04),
       0 18px 40px -18px hsl(var(--n-8) / 0.42),
       0 2px 8px -5px hsl(var(--n-8) / 0.2);
-    /* Not var(--glass-blur): 8px cannot carry a floating surface. The
-       saturation lift is what keeps a status pill scrolling underneath from
-       greying the dock out. */
     -webkit-backdrop-filter: blur(22px) saturate(180%);
     backdrop-filter: blur(22px) saturate(180%);
   }
@@ -220,8 +193,6 @@
     backdrop-filter: blur(24px) saturate(150%);
   }
 
-  /* Same contract as the shared glass utilities: when the operator has asked
-     for less transparency, the dock becomes an ordinary opaque card. */
   @media (prefers-reduced-transparency: reduce) {
     .dock-glass,
     .dark .dock-glass {

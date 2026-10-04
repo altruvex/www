@@ -6,11 +6,10 @@ import { toast } from "sonner";
 import { Send } from "lucide-react";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { Panel } from "@/components/os/panel";
-import { Button } from "@repo/ui";
-import { Textarea } from "@repo/ui";
+import { Button, Hint, Textarea } from "@repo/ui";
 import { EmptyInline } from "@/components/os/empty-state";
 import { dateTime, when } from "@/lib/format";
-import { addSubmissionNote } from "@/app/(dashboard)/_actions/records";
+import { postSubmissionNote } from "../actions";
 
 export interface NoteItem {
   id: string;
@@ -26,16 +25,18 @@ export interface NoteItem {
 export function NotesPanel({
   submissionId,
   initialNotes,
+  canWrite = true,
+  canDelete = true,
 }: {
   submissionId: string;
   initialNotes: NoteItem[];
+  canWrite?: boolean;
+  canDelete?: boolean;
 }) {
   const router = useRouter();
   const [notes, setNotes] = React.useState<NoteItem[]>(initialNotes);
   const [content, setContent] = React.useState("");
   const [isPending, startTransition] = React.useTransition();
-  // The list is local state, so a deleted note has to leave it too —
-  // router.refresh() alone re-renders the same array.
   const [deleting, setDeleting] = React.useState<string | null>(null);
   const del = useRecordDelete({
     entity: "note",
@@ -52,29 +53,15 @@ export function NotesPanel({
     if (!content.trim()) return;
 
     startTransition(async () => {
-      try {
-        const created = await addSubmissionNote(submissionId, content);
-        setNotes((prev) => [
-          ...prev,
-          {
-            id: created.id,
-            content: created.content,
-            type: created.type,
-            createdAt: created.createdAt,
-            createdBy: {
-              name: created.createdBy.name,
-              email: created.createdBy.email,
-            },
-          },
-        ]);
-        setContent("");
-        toast.success("Internal note added");
-        router.refresh();
-      } catch (err) {
-        toast.error("Could not add note", {
-          description: err instanceof Error ? err.message : "Unknown error",
-        });
+      const result = await postSubmissionNote(submissionId, content);
+      if (!result.ok) {
+        toast.error("Could not add note", { description: result.message });
+        return;
       }
+      setNotes((prev) => [...prev, result.note]);
+      setContent("");
+      toast.success(result.message);
+      router.refresh();
     });
   };
 
@@ -84,10 +71,10 @@ export function NotesPanel({
       description="Private team memory. Never shown to clients or visitors."
       flush
     >
-      {/* Existing Notes List */}
       {notes.length === 0 ? (
         <EmptyInline>
-          No notes on this submission. Notes are internal and never leave the system.
+          No notes on this submission. Notes are internal and never leave the
+          system.
         </EmptyInline>
       ) : (
         <ul className="rows divide-y divide-border">
@@ -98,19 +85,23 @@ export function NotesPanel({
                   {note.createdBy.name ?? note.createdBy.email}
                 </span>
                 <span className="flex items-center gap-1">
-                  <span
-                    title={dateTime(note.createdAt)}
-                    className="font-mono text-micro text-subtle-foreground"
-                  >
-                    {when(note.createdAt)}
-                  </span>
-                  <RowActions
-                    onDelete={() => {
-                      setDeleting(note.id);
-                      del.request({ id: note.id, label: note.content.slice(0, 60) });
-                    }}
-                    deleteLabel="Delete note"
-                  />
+                  <Hint label={dateTime(note.createdAt)}>
+                    <span className="font-mono text-micro text-subtle-foreground">
+                      {when(note.createdAt)}
+                    </span>
+                  </Hint>
+                  {canDelete && (
+                    <RowActions
+                      onDelete={() => {
+                        setDeleting(note.id);
+                        del.request({
+                          id: note.id,
+                          label: note.content.slice(0, 60),
+                        });
+                      }}
+                      deleteLabel="Delete note"
+                    />
+                  )}
                 </span>
               </div>
               <p className="whitespace-pre-wrap text-meta text-muted-foreground leading-relaxed">
@@ -121,26 +112,35 @@ export function NotesPanel({
         </ul>
       )}
 
-      {/* Note Composer */}
-      <form onSubmit={handleAddNote} className="border-t border-border p-3 bg-surface/30 space-y-2">
-        <Textarea
-          rows={2}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Add an internal note or call summary…"
-          aria-label="New note"
-          className="resize-none"
-        />
-        <div className="flex items-center justify-between">
-          <span className="font-mono text-micro text-subtle-foreground">
-            Press Post to record note
-          </span>
-          <Button type="submit" variant="secondary" size="sm" disabled={isPending || !content.trim()}>
-            <Send />
-            {isPending ? "Posting…" : "Post note"}
-          </Button>
-        </div>
-      </form>
+      {canWrite && (
+        <form
+          onSubmit={handleAddNote}
+          className="border-t border-border p-3 bg-surface/30 space-y-2"
+        >
+          <Textarea
+            rows={2}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Add an internal note or call summary…"
+            aria-label="New note"
+            className="resize-none"
+          />
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-micro text-subtle-foreground">
+              Press Post to record note
+            </span>
+            <Button
+              type="submit"
+              variant="secondary"
+              size="sm"
+              disabled={isPending || !content.trim()}
+            >
+              <Send />
+              {isPending ? "Posting…" : "Post note"}
+            </Button>
+          </div>
+        </form>
+      )}
       {del.dialog}
     </Panel>
   );

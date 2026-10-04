@@ -4,20 +4,6 @@ import { z } from "zod";
 
 import { loadPortal, submitRequest } from "@/lib/client-portal";
 
-/**
- * The client portal's public endpoints.
- *
- * Access is the portal token in the URL — the same posture as the existing
- * project portal and signing links: one unguessable link, one client, no
- * password. That means both handlers are unauthenticated by design, so both are
- * rate limited: the audit found no public write endpoint in this app had a
- * limit, and this adds one.
- *
- * Reads are limited per IP. Writes are limited per token as well, so one
- * client's leaked or shared link cannot be used to flood the queue, and a
- * shared office IP cannot lock out an unrelated client.
- */
-
 export const dynamic = "force-dynamic";
 
 const submitSchema = z.object({
@@ -36,8 +22,6 @@ function tooMany(retryAfterSeconds: number) {
   );
 }
 
-/** Deliberately identical for an unknown and a cancelled token: a 404 that
- *  distinguished them would confirm which tokens exist. */
 const notFound = () =>
   NextResponse.json(
     { success: false, message: "This portal link is not valid." },
@@ -79,8 +63,6 @@ export async function POST(
 ) {
   const { token } = await params;
 
-  // Per-token as well as per-IP: a leaked link must not become a queue flood,
-  // and one office's shared IP must not lock out a different client.
   for (const [route, identifier, limit] of [
     ["client_portal_submit_ip", clientIpFromHeaders(request.headers), 20],
     ["client_portal_submit_token", token, 10],
@@ -122,8 +104,6 @@ export async function POST(
       parsed.data.title,
       parsed.data.detail?.trim() || null,
     );
-    // Same shape and wording as the read path: never confirm whether a token
-    // exists, and never spread internal result fields into the response.
     if (!outcome.ok) return notFound();
 
     return NextResponse.json({

@@ -1,13 +1,3 @@
-/**
- * Billing-cycle edge cases.
- *
- * A maintenance plan's request cap is per cycle, so a wrong boundary either
- * lets a client exceed their cap silently or tells them they are over it when
- * they are not. Month lengths make this easy to get subtly wrong, so the awkward
- * cases are pinned here rather than discovered in a client's portal.
- *
- * Run by `bun run validate`.
- */
 import {
   currentBillingCycle,
   daysUntilCycleEnd,
