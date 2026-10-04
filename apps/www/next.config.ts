@@ -104,33 +104,11 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    const prodOnlyNextAssetCache =
-      process.env.NODE_ENV === "production"
-        ? [
-            {
-              source: "/_next/static/:path*",
-              headers: [
-                {
-                  key: "Cache-Control",
-                  value: "public, max-age=31536000, immutable",
-                },
-              ],
-            },
-            {
-              source: "/_next/image/:path*",
-              headers: [
-                {
-                  key: "Cache-Control",
-                  value: "public, max-age=86400, stale-while-revalidate=604800",
-                },
-              ],
-            },
-          ]
-        : [];
-
     return [
+      // /_next is left to Next itself: hashed static chunks are immutable, and
+      // /_next/image follows images.minimumCacheTTL.
       {
-        source: "/:path*",
+        source: "/((?!_next/).*)",
         headers: [
           {
             key: "Cache-Control",
@@ -138,7 +116,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      ...prodOnlyNextAssetCache,
       {
         source: "/:path*\\.(svg|jpg|jpeg|png|gif|ico|webp|avif|woff2)",
         headers: [
