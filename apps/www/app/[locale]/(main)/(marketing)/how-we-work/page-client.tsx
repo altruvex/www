@@ -4,11 +4,10 @@ import { usePricingTokens } from "@/components/providers/pricing-tokens-provider
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/config/commercial";
 import {
   MOTION,
   useSectionCardGrid,
@@ -63,9 +62,9 @@ function OpeningSection() {
           classes={{
             titleWrapper: "space-y-6",
             title:
-              "max-w-6xl text-balance text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
             description:
-              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+              "max-w-[40ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
           }}
         />
       </Container>
@@ -73,13 +72,21 @@ function OpeningSection() {
   );
 }
 
-const CLAUSES = ["who", "updates", "progress", "changes", "warranty", "ownership"] as const;
+const CLAUSES = [
+  "who",
+  "updates",
+  "progress",
+  "yourPart",
+  "changes",
+  "launch",
+  "warranty",
+  "ownership",
+] as const;
 type Clause = (typeof CLAUSES)[number];
 
 function AgreementSection() {
   const t = useTranslations("how-we-work.agreement");
   const locale = useLocale();
-  const tFounder = useTranslations("about.founder");
   const tokens = usePricingTokens();
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
@@ -90,8 +97,6 @@ function AgreementSection() {
 
   const value = (clause: Clause): string => {
     switch (clause) {
-      case "who":
-        return tFounder("name");
       case "warranty":
         return t("clauses.warranty.value", {
           n: tokens.warrantyDays ?? "",
@@ -104,8 +109,6 @@ function AgreementSection() {
 
   const note = (clause: Clause): string => {
     switch (clause) {
-      case "who":
-        return t("clauses.who.note", { role: tFounder("role") });
       case "changes":
         return t("clauses.changes.note", { revisionRate: tokens.revisionRate ?? "" });
       default:
@@ -219,7 +222,7 @@ function Row({
       </span>
       <div>
         <h3 className="text-lg leading-snug text-foreground md:text-xl">{question}</h3>
-        <p className="mt-2 max-w-[48ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+        <p className="mt-2 max-w-[48ch] text-base leading-relaxed text-muted-foreground">
           {note}
         </p>
       </div>
@@ -239,17 +242,20 @@ const ROUTES = [
   { key: "approach", href: "/approach" },
   { key: "process", href: "/process" },
   { key: "standards", href: "/standards" },
+  { key: "faq", href: "/faq" },
 ] as const;
 
 function MapSection() {
   const t = useTranslations("how-we-work.map");
   const tApproach = useTranslations("approach.hero.order");
+  const tFaq = useTranslations("faq");
   const locale = useLocale();
   const phases = useProcessPhases();
   const listRef = useSectionCardGrid<HTMLUListElement>({ selector: "[data-route]" });
   const num = (n: number) => localizeNumbers(String(n), locale);
 
   const layers = Object.keys(tApproach.raw("items") as Record<string, string>).length;
+  const questions = Object.keys(tFaq.raw("questions") as Record<string, unknown>).length;
   const minDays = phases.reduce((sum, phase) => sum + phase.min, 0);
   const maxDays = phases.reduce((sum, phase) => sum + phase.max, 0);
 
@@ -265,6 +271,7 @@ function MapSection() {
       checks: num(CHECK_COUNT),
       checksCount: CHECK_COUNT,
     }),
+    faq: t("faq.figure", { n: num(questions), count: questions }),
   };
 
   return (
@@ -286,10 +293,10 @@ function MapSection() {
                 <span className="text-xl font-medium leading-tight tracking-[-0.015em] text-foreground rtl:tracking-normal">
                   {t(`${key}.label`)}
                 </span>
-                <span className="text-[0.9375rem] font-medium text-local-accent-text tabular-nums">
+                <span className="text-base font-medium text-local-accent-text tabular-nums">
                   {figure[key]}
                 </span>
-                <span className="text-[0.9375rem] leading-snug text-muted-foreground transition-colors duration-(--motion-instant) group-hover:text-foreground">
+                <span className="text-base leading-snug text-muted-foreground transition-colors duration-(--motion-instant) group-hover:text-foreground">
                   {t(`${key}.line`)}
                 </span>
                 <ArrowIcon className="hidden h-4 w-4 text-foreground transition-transform duration-(--motion-instant) group-hover:translate-x-1 rtl:group-hover:-translate-x-1 md:block" />
@@ -311,8 +318,8 @@ function ClosingSection() {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("description")}
-      primary="technicalCall"
-      secondary={{ href: getCommercialCta("realBuild").href, label: t("work") }}
+      primary="describeTheBuild"
+      secondary="projectRange"
     />
   );
 }

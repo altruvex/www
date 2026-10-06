@@ -1,127 +1,88 @@
 ---
-title: "When to Hire a Next.js Development Agency"
-excerpt: "The phrase sounds narrow, but the buying decision is not about a framework alone. It is about whether your team needs architecture, speed, SEO, bilingual execution, and a clean handoff under one delivery model."
+title: "Next.js Development Agency: When to Hire One"
+excerpt: "When Next.js is the right framework for your website or web application, when an agency makes more sense than a freelancer or an in-house hire, and the questions that separate a real Next.js team from a template reseller."
 date: "2026-04-10"
-author: "Altruvex Team"
-tags: ["nextjs", "development", "architecture", "b2b", "agency"]
-featured: true
+updated: "2026-10-05"
+author: "Ali Abdelhadi"
+tags: ["next.js agency", "nextjs", "react", "web development", "architecture"]
+featured: false
 topic: "choose"
 ---
 
-Many teams search for a "Next.js development agency" when the real problem is bigger than framework preference.
+<Callout type="info">
+**Short answer.** Next.js suits sites and apps that need fast, search-friendly pages and application features in one codebase. Hire a studio when the work spans architecture, design, development and launch; a freelancer can be enough for a narrow task. Ask how they choose a rendering strategy, who owns the hosting account, and how they handle upgrades.
+</Callout>
 
-They are not buying React components. They are trying to solve a business situation:
+If you are looking for a Next.js agency, you are usually deciding two things: whether Next.js is the right foundation, and who should build on it. This guide covers both.
 
-- the current site is slow
-- SEO is weak
-- the Arabic version feels broken
-- marketing cannot move fast without engineering
-- the next build needs to survive more than one campaign
+## What Next.js is, briefly
 
-That is the right moment to evaluate an agency through a systems lens, not a tooling lens.
+[Next.js](https://nextjs.org/docs) is an open-source React framework. It lets each page be rendered on the server, generated ahead of time, or run in the browser, and it includes routing, image optimisation and server-side code in one project. That flexibility is the point: a content page and an application screen can live side by side, each rendered the way it should be.
 
-## What you should actually expect
+## When Next.js is a good fit
 
-A serious Next.js partner should be able to do more than spin up pages quickly.
+- **Search matters.** Pages are delivered as HTML from the server or built in advance, so search engines and slow phones get content without waiting for JavaScript.
+- **Content and application together.** Marketing pages, a logged-in area and an admin panel can share one codebase, design system and deployment.
+- **More than one language.** Locale-based routing with separate URLs per language fits naturally. See [bilingual architecture](/writing/multilingual-architecture).
+- **Custom integrations.** Server-side code can talk to payment, delivery, CRM or internal systems without exposing keys to the browser.
+- **Room to grow.** Starting with a site and adding a portal or dashboard later does not require a different stack.
 
-They should be able to:
+## When it may not be
 
-- define what belongs in static rendering, dynamic rendering, and cached data flows
-- design page architecture around conversion and content hierarchy
-- handle bilingual delivery without treating Arabic as a late-stage CSS flip
-- make performance decisions that hold up on real mobile devices
-- connect forms, CMS workflows, CRM tools, auth, or product logic cleanly
-- hand off a codebase that another engineer can extend without reverse engineering it
+- **A simple, team-edited site.** If the need is a blog or a few pages edited by a non-technical team, a hosted platform may be the better trade. Next.js can be paired with a content management system, but that is a project of its own.
+- **An internal-only tool.** Server rendering adds little when search does not matter, though Next.js still works.
+- **Nobody to maintain it.** Any custom codebase needs a developer for changes. Plan for that before you start.
 
-If the conversation stays at the level of "we use the App Router" or "we build with TypeScript," the discussion is still too shallow.
+## Who should build a Next.js project?
 
-## The real buying criteria
+<Compare head="Option|Fits best when|Watch for" caption="Who should build your Next.js project">
+<Row cells="Freelancer|A narrow task: a feature, a migration step, a performance fix|Coverage of design, testing and launch; continuity" />
+<Row cells="Studio or agency|A full build from architecture to launch, with one accountable team|Whether the people you meet are the people who build" />
+<Row cells="In-house developer|Software is a permanent part of the business and changes weekly|Hiring time, and one person holding all the knowledge" />
+</Compare>
 
-When evaluating a Next.js agency, these are the questions that matter most.
+Many companies combine them: a studio builds and hands over a documented codebase, and an in-house developer or a website maintenance plan takes it from there.
 
-### 1. Can they handle technical web engineering, not only implementation?
+## Questions to ask a Next.js agency
 
-Implementation alone is not enough for a revenue-critical build.
+1. Which router and version do you build on, and why? Next.js has two routers, the App Router and the older Pages Router. Ask which they use for new work and how they keep up with major versions.
+2. How do you decide the rendering strategy for each page? A good answer names which pages are static, which are server-rendered and why.
+3. How will we edit content? In code, in message files, or through a content management system, and who can make which changes.
+4. Where will it be hosted, and whose account is it? Next.js can run on a managed platform or on your own server, as the [deployment documentation](https://nextjs.org/docs/app/getting-started/deploying) describes. **The account should be yours.**
+5. How do you check performance? Ask for named thresholds, such as Google's [Core Web Vitals](https://web.dev/articles/vitals), and how often they are checked.
+6. Is the code typed and documented? TypeScript and a handover guide make the next developer's job possible.
+7. What happens at handover? Repository, database schema and migrations, environment guide and deployment documentation.
+8. Can I see a live Next.js project you built? Open it on your phone, in both languages if you need two.
 
-You need a partner who can think through:
+For the full list, including questions about process, changes and support, see [questions to ask before hiring a web developer](/writing/evaluating-developers).
 
-- information architecture
-- SEO implications
-- bilingual URL structures
-- content model design
-- performance budgets
-- deployment and rollback strategy
+Want our answers to these eight? <CtaLink cta="technicalCall">Schedule a consultation</CtaLink> and ask them.
 
-That is the difference between a site that looks modern and a system that stays useful.
+## How we work with Next.js
 
-### 2. Can they deliver bilingual quality at the architectural level?
+- **Stack.** We build on the Next.js App Router with TypeScript.
+- **An example.** This site runs in English and Arabic from one codebase, with separate URLs per language and right-to-left layouts built with logical properties.
+- **Performance.** The thresholds we hold to are listed on the [standards page](/standards).
+- **Handover.** The source code in a repository in your account, the database schema and migration history, an environment and secrets guide, and deployment documentation.
 
-For Egypt and the wider MENA market, Arabic and English parity is not optional.
+## Next.js agency: common questions
 
-The wrong partner will:
+### Is Next.js good for SEO?
 
-- mirror layouts without redesigning them for RTL
-- reuse English hierarchy in places where Arabic reading patterns differ
-- ship typography that works in one language and collapses in the other
+It gives you the technical foundation: server-rendered or pre-built HTML, per-page metadata and fast pages. Rankings still depend on content and links, which no framework provides.
 
-The right partner will design both directions as first-class outputs.
+### Is Next.js only for large projects?
 
-If bilingual quality matters to your brand, review how the agency talks about layout logic, content structure, and QA. That will tell you more than mockups.
+No. It works for a small marketing site as well as a large application. The question is whether you need what it offers, or whether a hosted platform would cover the need with less to maintain.
 
-### 3. Do they think in terms of system ownership?
+### Can I move my existing site to Next.js?
 
-A clean Next.js build should leave you with:
+Usually, yes, page by page or all at once. Keep the URLs where you can and redirect the ones that change, as Google's [site move guidance](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes) describes. A [technical audit](/writing/technical-audit-before-rebuild) first shows what is worth keeping.
 
-- clear deployment responsibility
-- documented integrations
-- predictable content editing flows
-- minimal vendor lock-in
-- a maintainable component system
+### How much does a Next.js website cost?
 
-If the partner cannot explain how the project will be maintained after launch, they are optimizing for the build phase only.
+It depends on scope, integrations and languages, not on the framework. Our price ranges are on the [pricing page](/pricing), and the [transparency page](/transparency) shows how an estimate is built.
 
-## Red flags to watch for
+## Talking through a Next.js project
 
-These are common failure patterns:
-
-- quoting a complex portal before understanding workflows and edge cases
-- treating SEO as a plugin or afterthought
-- promising Arabic support without showing real RTL judgment
-- speaking only about animations and visual polish
-- using Next.js as a selling point without discussing business outcomes
-
-Next.js is powerful, but it is not the strategy. It is one part of the system.
-
-## When an agency is the right fit
-
-Hiring a Next.js development agency makes sense when:
-
-- your site or portal matters directly to revenue, sales, or operations
-- the build must be bilingual or region-aware
-- the system needs custom workflows, not template customization
-- your internal team needs a clear handoff instead of a black box
-- the cost of getting architecture wrong is higher than the cost of planning it correctly
-
-If your needs are still simple and disposable, a custom build may be premature. But once speed, trust, operations, and discoverability are on the line, generic implementation becomes expensive.
-
-## What we mean at Altruvex
-
-At Altruvex, "Next.js development" means a full delivery layer:
-
-- technical scoping before execution
-- interface systems designed for actual buyer behavior
-- Arabic and English execution with parity
-- performance targets defined before launch
-- deployment and ownership structured for the long term
-
-If you need that kind of delivery, start with the [Custom Development service](/services/development). If the decision itself still feels risky, begin with a [technical audit](/services/consulting).
-
-## Final filter
-
-Before hiring anyone, ask this:
-
-<Mark gradient="lavender">What decisions would you make before writing code?</Mark>
-
-If the answer is vague, the build will be vague too.
-
-If the answer covers architecture, content, SEO, bilingual logic, data flow, and handoff, you are talking to the right kind of partner.
+<CtaLink cta="technicalCall">Schedule a consultation</CtaLink> to talk your project through, read what [website and web app development](/services/development) includes, or look at [our work](/work).

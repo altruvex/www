@@ -15,7 +15,7 @@ export function AlertDialogOverlay({
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-n-8/25 backdrop-blur-[1px]",
+        "fixed inset-0 z-50 bg-n-8/25",
         "data-[state=open]:animate-in data-[state=open]:fade-in-0",
         "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
         "duration-[var(--dur-panel)]",
@@ -53,7 +53,7 @@ export function AlertDialogContent({
           onKeyDown={confirmOnEnter}
           className={cn(
             "pointer-events-auto grid w-full max-w-md gap-3",
-            "rounded-lg border border-border bg-card p-4 text-foreground shadow-[var(--elev-2)]",
+            "rounded-panel-md border border-border-subtle bg-card p-4 text-foreground shadow-[var(--elev-2)]",
             "focus:outline-none",
             "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",

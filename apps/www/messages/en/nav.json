@@ -10,7 +10,7 @@
   "pricing": "Pricing",
   "primaryLabel": "Primary",
   "process": "Process",
-  "schedule": "Discuss your requirements",
+  "schedule": "Schedule a consultation",
   "services": "Services",
   "theme": "Theme",
   "themeLight": "Light",
@@ -32,16 +32,17 @@
   "settings": "Settings",
   "darkMode": "Dark theme",
   "desc": {
-    "work": "Selected projects",
-    "services": "What we build and look after",
-    "method": "How a project runs",
-    "pricing": "Published prices",
-    "about": "Who we are",
-    "contact": "Write to us"
+    "work": "Selected live work and the decisions behind it",
+    "services": "Website design, development, technical audit, maintenance",
+    "method": "How a project runs: the rules we agree before you sign",
+    "pricing": "Published prices and the cost estimator",
+    "about": "The studio behind the work",
+    "contact": "Start a project or schedule a consultation"
   },
   "all": {
     "work": "All work",
     "services": "All services"
   },
-  "subpages": "{name} pages"
+  "subpages": "{name} pages",
+  "transparencyHint": "Cost estimator"
 }

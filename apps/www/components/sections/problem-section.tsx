@@ -1,7 +1,6 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Num } from "@/components/ui/num";
 import {
   MOTION,
   useSectionDescription,
@@ -114,18 +113,12 @@ export function ProblemSection() {
               <ProblemDrawing index={index} className="col-start-1 row-start-1" />
 
               <div className="col-start-2 row-start-1 min-w-0 lg:col-start-3 lg:text-end">
-                <span
-                  aria-hidden
-                  className="mb-1.5 block text-xs tabular-nums tracking-[0.08em] text-muted-foreground ltr:font-mono rtl:text-sm"
-                >
-                  <Num value={index + 1} pad={2} />
-                </span>
                 <h3 className="text-[clamp(1.5rem,2vw,2rem)] font-normal leading-[1.2] tracking-[-0.01em] text-foreground rtl:font-medium rtl:leading-[1.45]">
                   {item.title}
                 </h3>
               </div>
 
-              <p className="col-span-2 row-start-2 max-w-[44ch] text-[1.0625rem] leading-relaxed text-pretty text-muted-foreground md:text-lg lg:col-span-1 lg:col-start-4 lg:row-start-1 lg:pt-7 rtl:leading-[1.8]">
+              <p className="col-span-2 row-start-2 max-w-[44ch] text-body leading-relaxed text-pretty text-muted-foreground md:text-lg lg:col-span-1 lg:col-start-4 lg:row-start-1 lg:pt-7 rtl:leading-[1.8]">
                 {item.description}
               </p>
             </li>

@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { issueInvoice, reopenPayment } from "@/app/(dashboard)/_actions/billing";
 import { RecordPaymentDialog } from "../payments/record-payment-dialog";
+import { NewChargeButton, type ChargeTarget } from "../payments/new-charge-dialog";
 
 export interface InvoiceRecord {
   id: string;
@@ -74,9 +75,14 @@ type Filter = "all" | "unissued" | "PENDING" | "OVERDUE" | "PAID" | "WAIVED";
 export function InvoicesClient({
   invoices,
   canEdit = true,
+  chargeTargets = null,
+  canRecordProject = false,
 }: {
   invoices: InvoiceRecord[];
   canEdit?: boolean;
+  /** Set when the list is empty and the role may add a charge: the dialog opens right here. */
+  chargeTargets?: ChargeTarget[] | null;
+  canRecordProject?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -349,9 +355,13 @@ export function InvoicesClient({
               title="No invoices yet"
               body="Invoices are drawn from the payment schedule. Once a project, subscription or service has a payment, it appears here to issue."
               action={
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/payments">Open payments</Link>
-                </Button>
+                chargeTargets == null ? undefined : chargeTargets.length > 0 ? (
+                  <NewChargeButton targets={chargeTargets} />
+                ) : canRecordProject ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/projects?new=recorded">Record a project</Link>
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -542,7 +552,7 @@ export function InvoiceDocument({
               </div>
             </div>
 
-            <div className="rounded-lg border border-border/80 bg-surface/50 p-3.5">
+            <div className="rounded-panel-sm border border-border-subtle/80 bg-surface/50 p-3.5">
               <span className="mb-1 block font-mono text-micro uppercase tracking-wider text-muted-foreground">Billed to</span>
               <p className="text-md font-semibold">{billedName}</p>
               {client?.company && client.name && <p className="text-meta text-muted-foreground">Attn: {client.name}</p>}
@@ -552,9 +562,9 @@ export function InvoiceDocument({
               {client?.taxId && <p className="font-mono text-meta text-muted-foreground">Tax ID {client.taxId}</p>}
             </div>
 
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="overflow-hidden rounded-panel-sm border border-border-subtle">
               <table className="w-full text-start text-meta">
-                <thead className="border-b border-border bg-surface font-mono text-micro uppercase text-muted-foreground">
+                <thead className="border-b border-border-subtle bg-surface font-mono text-micro uppercase text-muted-foreground">
                   <tr>
                     <th className="px-4 py-2.5 text-start">Description</th>
                     <th className="px-4 py-2.5 text-end">Amount</th>
@@ -577,12 +587,12 @@ export function InvoiceDocument({
             </div>
 
             <div className="flex justify-end">
-              <div className="w-64 space-y-1.5 border-t border-border pt-3">
+              <div className="w-64 space-y-1.5 border-t border-border-subtle pt-3">
                 <div className="flex justify-between text-meta text-muted-foreground">
                   <span>Subtotal</span>
                   <span className="font-mono">{money(invoice.amount, invoice.currency)}</span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-1.5 text-md font-bold">
+                <div className="flex justify-between border-t border-border-subtle pt-1.5 text-md font-bold">
                   <span>
                     {invoice.status === "PAID" ? "Paid" : invoice.status === "WAIVED" ? "Waived — nothing is due" : "Total due"}
                   </span>
@@ -596,7 +606,7 @@ export function InvoiceDocument({
               </div>
             </div>
 
-            <div className="space-y-1 border-t border-border pt-4 text-meta text-muted-foreground">
+            <div className="space-y-1 border-t border-border-subtle pt-4 text-meta text-muted-foreground">
               {invoice.status === "PAID" ? (
                 <p>
                   Paid {date(invoice.paidAt)}

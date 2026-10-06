@@ -18,7 +18,7 @@ export function EmptyState({
   return (
     <div className={cn("plane flex flex-col items-center px-6 py-12 text-center", className)}>
       {Icon && (
-        <div className="mb-3 flex size-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle-foreground">
+        <div className="mb-3 flex size-9 items-center justify-center rounded-ctl-lg border border-border-subtle bg-surface text-subtle-foreground">
           <Icon className="size-4" />
         </div>
       )}

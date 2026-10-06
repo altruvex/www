@@ -7,8 +7,8 @@ export type LoadingIconSize = keyof typeof SIZES;
 const BARS = 8;
 
 const OUTER = 0.485;
-const INNER = 0.22;
-const THICKNESS = 0.115;
+const INNER = 0.19;
+const THICKNESS = 0.1;
 const CYCLE = 1.2;
 
 export const LoadingIcon = ({

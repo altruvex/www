@@ -1,6 +1,6 @@
 import { FaqSectionView } from "@/components/sections/faq-section";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { plainFaqItems } from "@/lib/faq";
@@ -8,6 +8,10 @@ import { buildFaqPageSchemas, buildPageSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
+
+// The client reads its prefill from the query string; rendering per request keeps the
+// full page in the HTML instead of bailing out to client-only rendering.
+export const dynamic = "force-dynamic";
 
 const metaKey: RouteMetaKey = "schedule";
 const pathSuffix = "/schedule";

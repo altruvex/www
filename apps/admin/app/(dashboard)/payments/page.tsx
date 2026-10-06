@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { Panel } from "@/components/os/panel";
 import { EmptyState } from "@/components/os/empty-state";
-import { EntityLink } from "@/components/os/entity-link";
 import { FilterChip } from "@/components/os/data-table";
 import { InspectSheet } from "@/components/os/inspect-sheet";
 import { List, ListRow } from "@/components/os/list-row";
@@ -29,6 +28,7 @@ import { canSeeFinance } from "@/lib/nav";
 import { can } from "@/lib/rbac";
 import { PaymentsTable, type PaymentRow } from "./payments-table";
 import { BillingTabs } from "./billing-tabs";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { NewChargeButton } from "./new-charge-dialog";
 import { PaymentInspectorActions } from "./focused-payment";
 import { PaymentReminderButton } from "./payment-reminder";
@@ -87,6 +87,15 @@ export default async function PaymentsPage({
   const canEdit = can(role, "edit", "payment");
   const canCharge = can(role, "create", "payment") && canSeeFinance(role);
   const canMessage = roleCanOpen(role, "/whatsapp");
+  const projectCharges = canCharge
+    ? chargeTargets
+        .filter((t) => t.value.startsWith("project:"))
+        .slice(0, 50)
+        .map((t) => ({
+          label: t.label,
+          href: `/payments?new=charge&project=${t.value.slice("project:".length)}&client=${t.clientId}`,
+        }))
+    : [];
   const chargePreset =
     canCharge && params.new === "charge"
       ? { clientId: params.client ?? null, projectId: params.project ?? null }
@@ -166,7 +175,14 @@ export default async function PaymentsPage({
       <PageHeader
         title="Billing"
         description="Every milestone, renewal and charge across every client. A row goes overdue on its own — nobody has to remember to change it."
-        actions={<NewChargeButton targets={chargeTargets} preset={chargePreset} />}
+        actions={
+          <NewChargeButton
+            key={chargePreset ? `${chargePreset.clientId}:${chargePreset.projectId}` : "none"}
+            targets={chargeTargets}
+            preset={chargePreset}
+            scope={params.client ? { clientId: params.client, projectId: null } : null}
+          />
+        }
       />
 
       <BillingTabs
@@ -220,9 +236,13 @@ export default async function PaymentsPage({
           title="No payment schedule yet"
           body="Payments are milestones on a project — deposit, milestone, final — and renewals on a retainer. They appear as soon as a project has a schedule, and go overdue automatically once their due date passes."
           action={
-            <Button asChild variant="outline">
-              <Link href="/projects">Open projects</Link>
-            </Button>
+            projectCharges.length > 0 ? (
+              <PickToOpen label="Add a payment" options={projectCharges} />
+            ) : can(role, "create", "project") ? (
+              <Button asChild variant="outline">
+                <Link href="/projects?new=recorded">Record a project</Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : tab === "outstanding" ? (
@@ -270,7 +290,9 @@ function PaymentInspector({
   reminder: Awaited<ReturnType<typeof loadInspectorReminder>>;
 }) {
   const label = `${statusOf("paymentMilestone", row.milestone).label} · ${row.sourceName}`;
-  const sourceHref = entityHref(row.sourceType, row.sourceId);
+  const sourceLink = entityHref(row.sourceType, row.sourceId);
+  // A project's payments live in its Money section; land there, not on the top of the page.
+  const sourceHref = sourceLink && row.sourceType === "project" ? `${sourceLink}#money` : sourceLink;
   const sourceNoun =
     row.sourceType === "project"
       ? "project"
@@ -369,9 +391,12 @@ function PaymentInspector({
           </Link>
         )}
         {row.clientId && (
-          <EntityLink type="client" id={row.clientId} muted>
+          <Link
+            href={`/clients/${row.clientId}#money`}
+            className="rounded-xs text-muted-foreground underline-offset-2 transition-colors duration-[var(--dur-state)] hover:text-foreground hover:underline"
+          >
             Open client
-          </EntityLink>
+          </Link>
         )}
         {reminder && (
           <PaymentReminderButton

@@ -112,13 +112,13 @@ export async function ProposalInspector({ id, role }: { id: string | null; role:
     >
       <div className="space-y-5">
         {proposal.status === "DRAFT" && !send && (
-          <p className="rounded-sm border border-border bg-surface px-3 py-2 text-meta text-muted-foreground">
+          <p className="rounded-panel-sm border border-border-subtle bg-surface px-3 py-2 text-meta text-muted-foreground">
             No document was generated for this draft, so there is nothing to send. Open the full page
             and rebuild it as a new version.
           </p>
         )}
         {isOpen && expired && (
-          <p className="rounded-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger">
+          <p className="rounded-panel-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger">
             Expired {Math.abs(expiresIn!)} day{Math.abs(expiresIn!) === 1 ? "" : "s"} ago — the price
             is no longer committed. Extend its validity or reissue it as a new version before the client accepts.
           </p>

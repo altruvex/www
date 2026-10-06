@@ -232,7 +232,7 @@ function EstimateInspector({
       }
     >
       <MetaList
-        className="rounded-md border border-border"
+        className="rounded-panel-sm border border-border-subtle"
         items={[
           {
             label: "Phone",

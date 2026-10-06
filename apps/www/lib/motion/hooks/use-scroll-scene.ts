@@ -3,7 +3,6 @@
 import { gsap } from "@/lib/utils/gsap";
 import { useEffect, useRef, type RefObject } from "react";
 import { MOTION } from "../tokens";
-import { inlineSign, readDirection } from "../utils/direction";
 import { whenMotionReady } from "../utils/ready";
 
 function useScene<T extends HTMLElement>(setup: (root: T) => void): RefObject<T | null> {
@@ -74,62 +73,5 @@ export function useMediaSettle<T extends HTMLElement = HTMLDivElement>({
         { scale: 1, ease: "none", scrollTrigger: { trigger: root, start: "top bottom", end: "bottom top", scrub: true } },
       );
     }
-  });
-}
-
-export function useKineticTrack<T extends HTMLElement = HTMLElement>({ wipeAt = 0.6 }: { wipeAt?: number } = {}) {
-  return useScene<T>((root) => {
-    const sign = inlineSign(readDirection(root));
-    const tracks = gsap.utils.toArray<HTMLElement>("[data-track]", root);
-    const wipe = root.querySelector<HTMLElement>("[data-wipe]");
-    const travel = () => (tracks[0]?.scrollWidth ?? 0) - window.innerWidth * 0.4;
-    const tl = gsap.timeline({
-      defaults: { ease: "none" },
-      scrollTrigger: {
-        trigger: root,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: MOTION.scroll.scrub.track,
-        invalidateOnRefresh: true,
-      },
-    });
-    tl.fromTo(tracks, { x: () => sign * window.innerWidth * 0.6 }, { x: () => -sign * travel(), duration: 1 }, 0);
-    if (wipe) {
-      tl.fromTo(wipe, { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.34 }, wipeAt);
-    }
-  });
-}
-
-export function useTileAssemble<T extends HTMLElement = HTMLElement>() {
-  return useScene<T>((root) => {
-    const tiles = gsap.utils.toArray<HTMLElement>("[data-tile]", root);
-    const frame = root.querySelector<HTMLElement>("[data-tile-frame]");
-    const title = root.querySelector<HTMLElement>("[data-tile-title]");
-    const spread = () => (frame?.offsetWidth ?? 800) * 0.45;
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: root,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: MOTION.scroll.scrub.assemble,
-        invalidateOnRefresh: true,
-      },
-    });
-    const rand = gsap.utils.random(-1, 1, 0.001, true);
-    tiles.forEach((tile, i) => {
-      tl.fromTo(
-        tile,
-        {
-          x: () => rand() * spread(),
-          y: () => rand() * spread() * 0.6,
-          rotate: rand() * 24,
-          scale: 0.55 + Math.abs(rand()) * 0.35,
-          autoAlpha: 0,
-        },
-        { x: 0, y: 0, rotate: 0, scale: 1, autoAlpha: 1, ease: MOTION.ease.smooth, duration: 0.7 },
-        (i % 7) * 0.035,
-      );
-    });
-    if (title) tl.fromTo(title, { yPercent: 110 }, { yPercent: 0, ease: MOTION.ease.text, duration: 0.2 }, 0.82);
   });
 }

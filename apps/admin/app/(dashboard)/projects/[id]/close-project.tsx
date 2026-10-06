@@ -97,7 +97,7 @@ export function CloseProjectDialog({
           </div>
         ) : (
           <div className="space-y-3">
-            <ul className="divide-y divide-border rounded-ctl border border-border">
+            <ul className="divide-y divide-border-subtle rounded-ctl border border-border-subtle">
               {plan.checks.map((check) => {
                 const Icon = check.ok ? CheckCircle2 : check.blocks ? AlertTriangle : Info;
                 return (

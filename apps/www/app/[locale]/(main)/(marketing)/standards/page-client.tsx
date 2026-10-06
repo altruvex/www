@@ -4,7 +4,7 @@ import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import {
@@ -52,7 +52,7 @@ function OpeningSection() {
   return (
     <section
       aria-labelledby="standards-hero-heading"
-      className="grid min-h-[84svh] content-end pt-(--section-y-top) pb-[clamp(4rem,10vh,7.5rem)]"
+      className="pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading
@@ -66,11 +66,12 @@ function OpeningSection() {
           secondTitle={t("titleItalic")}
           description={t("description")}
           classes={{
+            container: "lg:flex-col lg:items-start lg:gap-8",
             titleWrapper: "space-y-6",
             title:
-              "max-w-6xl text-balance text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
             description:
-              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+              "max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] lg:max-w-[46ch]",
           }}
         />
       </Container>
@@ -248,15 +249,6 @@ function GateSection() {
           <span className="block text-balance">
             {t("count", { n: String(CHECK_COUNT), count: CHECK_COUNT })}
           </span>
-          <span className="block text-balance">
-            {t("outcomes.fail.state")}{" "}
-            <span className="whitespace-nowrap">
-              <span aria-hidden className="inline-block text-local-accent-text rtl:-scale-x-100">
-                →
-              </span>{" "}
-              {t("outcomes.fail.result")}
-            </span>
-          </span>
         </h2>
 
         <div className="mt-[clamp(3.5rem,9vh,7rem)] grid gap-y-7 border-t border-border-subtle pt-6 min-[900px]:grid-cols-12 min-[900px]:gap-x-[clamp(1rem,2vw,2rem)]">
@@ -294,7 +286,7 @@ function StandardsEndCta() {
       titleAccent={t("titleAccent")}
       body={t("body")}
       primary="technicalAudit"
-      secondary="realBuild"
+      secondary="describeTheBuild"
     />
   );
 }

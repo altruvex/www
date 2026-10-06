@@ -15,25 +15,25 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { memo } from "react";
 import { FitRegisterSection } from "./fit-register";
-import { FounderRouteSection } from "./founder-route";
 import { PrincipleIndexSection } from "./principle-index";
+import { StudioFactsSection } from "./studio-facts";
 
 export default memo(function AboutPageClient() {
   return (
-    <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
       <AboutHero />
       <PhotoStage />
+      <ErrorBoundary>
+        <StudioFactsSection />
+      </ErrorBoundary>
       <ErrorBoundary>
         <PrincipleIndexSection />
       </ErrorBoundary>
       <ErrorBoundary>
         <FitRegisterSection />
       </ErrorBoundary>
-      <ErrorBoundary>
-        <FounderRouteSection />
-      </ErrorBoundary>
       <AboutEndCta />
-    </main>
+    </div>
   );
 });
 
@@ -45,8 +45,8 @@ function AboutEndCta() {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("body")}
-      primary="technicalCall"
-      secondary="describeTheBuild"
+      primary="describeTheBuild"
+      secondary="technicalCall"
     />
   );
 }
@@ -75,12 +75,12 @@ function AboutHero() {
           secondTitle={t("titleItalic")}
           description={t.rich("description", bodyMarks)}
           classes={{
-            container: "lg:gap-12",
-            titleWrapper: "space-y-6 lg:basis-7/12",
+            container: "lg:flex-col lg:items-start lg:gap-8",
+            titleWrapper: "space-y-6",
             title:
-              "max-w-6xl text-balance text-[clamp(2.875rem,7.2vw,7.5rem)] font-light leading-[1] tracking-[-0.035em] rtl:leading-[1.3] rtl:tracking-normal",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[1] tracking-[-0.035em] rtl:leading-[1.3] rtl:tracking-normal",
             description:
-              "max-w-[36ch] text-[clamp(1rem,1.1vw,1.0625rem)] md:max-w-[36ch] lg:max-w-[36ch] lg:basis-5/12 lg:pb-3",
+              "max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] lg:max-w-[46ch]",
           }}
         />
       </Container>
@@ -89,7 +89,6 @@ function AboutHero() {
 }
 
 function PhotoStage() {
-  const t = useTranslations("about.stage");
   const mediaRef = useMediaSettle<HTMLElement>();
 
   return (
@@ -109,10 +108,6 @@ function PhotoStage() {
             className="select-none object-cover"
           />
         </div>
-        <div aria-hidden className="photo-caption-scrim" />
-        <figcaption className="absolute end-5 bottom-5 max-w-[22ch] text-end text-[clamp(1.25rem,2vw,1.75rem)] font-light leading-[1.25] tracking-[-0.02em] text-white sm:end-6 sm:bottom-6 rtl:max-w-[26ch] rtl:leading-[1.6] rtl:tracking-normal">
-          {t("caption")}
-        </figcaption>
       </figure>
     </Container>
   );

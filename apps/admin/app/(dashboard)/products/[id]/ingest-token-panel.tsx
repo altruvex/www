@@ -115,11 +115,11 @@ export function IngestTokenPanel({
       />
 
       {issued && (
-        <div className="border-t border-border bg-surface px-3 py-3">
+        <div className="border-t border-border-subtle bg-surface px-3 py-3">
           <p className="telemetry text-subtle-foreground">
             New token — shown once
           </p>
-          <p className="mt-1.5 break-all rounded-sm border border-border bg-background p-2 font-mono text-meta">
+          <p className="mt-1.5 break-all rounded-ctl border border-border-subtle bg-background p-2 font-mono text-meta">
             {issued}
           </p>
           <p className="mt-1.5 text-meta text-muted-foreground">
@@ -139,7 +139,7 @@ export function IngestTokenPanel({
       )}
 
       {canEdit && (
-        <div className="flex flex-col gap-1.5 border-t border-border p-3">
+        <div className="flex flex-col gap-1.5 border-t border-border-subtle p-3">
           {last4 ? (
             <>
               <ConfirmDialog

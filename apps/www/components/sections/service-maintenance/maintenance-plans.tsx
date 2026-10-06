@@ -1,11 +1,11 @@
 "use client";
 
-import { SegmentedControl } from "@/components/base/segmented-control";
+import { Eyebrow, SegmentedControl } from "@repo/ui/www";
 import { PlanSummary } from "@/components/sections/plan-summary";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { Num } from "@/components/ui/num";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { maintenancePlanHref } from "@/lib/config/commercial";
 import {
   MOTION,
@@ -30,19 +30,13 @@ const QUOTED_TOKENS = 3;
 
 type RowId =
   | "requests"
-  | "cadence"
   | "monitoring"
-  | "reporting"
-  | "support"
   | "turnaround"
   | "portal"
   | "overage";
 
 const ROWS: readonly RowId[] = [
   "requests",
-  "cadence",
-  "reporting",
-  "support",
   "monitoring",
   "turnaround",
   "portal",
@@ -68,7 +62,7 @@ function Tokens({ plan }: { plan: MaintenanceView }) {
               data-token
               className="flex size-6 md:size-8 items-end rounded-ctl-xs md:rounded-ctl-sm bg-local-accent p-0.5 md:p-1 text-local-accent-fg"
             >
-              <span className="text-[9px] md:text-[10px] leading-none tabular-nums ltr:font-mono">
+              <span className="text-micro leading-none tabular-nums ltr:font-mono">
                 <Num value={index + 1} pad={2} />
               </span>
             </li>
@@ -127,11 +121,8 @@ export function MaintenancePlans({
             </span>
           </div>
         );
-      case "cadence":
       case "monitoring":
-      case "reporting":
-      case "support":
-        return plan.compare[row];
+        return plan.compare.monitoring;
       case "turnaround":
         return plan.priorityTurnaround ? (
           <span className="font-medium text-local-accent-text">
@@ -171,8 +162,8 @@ export function MaintenancePlans({
           eyebrow={t("pricing.eyebrow")}
           firstTitle={t("plans.title")}
           secondTitle={t("plans.titleAccent")}
-          accent="mint"
-          description={t("plans.description")}
+          accent="world"
+          description={t.rich("plans.description", bodyMarks)}
           className="mb-(--heading-gap)"
         />
         <div
@@ -273,7 +264,7 @@ export function MaintenancePlans({
                         key={plan.id}
                         className={cn(
                           columnClass(index),
-                          "border-t border-border-subtle px-4 py-4 md:py-5 text-sm md:text-[0.9375rem] leading-snug text-foreground lg:px-6",
+                          "border-t border-border-subtle px-4 py-4 md:py-5 text-sm md:text-base leading-snug text-foreground lg:px-6",
                           row === ROWS[ROWS.length - 1] && index === recommended && "rounded-b-panel-sm"
                         )}
                       >

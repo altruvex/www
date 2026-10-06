@@ -1,57 +1,74 @@
 {
   "eyebrow": "Contact",
-  "heroTitle": "Bring the real problem —",
-  "heroTitleItalic": "not the polished brief.",
+  "heroTitle": "Tell us what you need",
+  "heroTitleItalic": "built, fixed or rebuilt.",
+  "intro": "Describe your project in a few sentences. We reply by call, WhatsApp or email. You do not need a finished brief.",
   "lines": {
     "heading": "Direct lines",
     "emailLabel": "Email",
     "phoneLabel": "Phone",
     "whatsappLabel": "WhatsApp",
     "whatsappValue": "Message us on WhatsApp",
-    "whatsappNote": "Fastest reply",
-    "address1": "Cairo, Egypt",
     "address2": "Remote worldwide",
-    "localTime": "It is {time} in Cairo now."
+    "replyTime": "We reply within 24 hours on business days.",
+    "localTime": "Our time now: {time} ({zone})"
   },
   "phoneValue": "+20 102 312 5493",
   "callLead": "Prefer to talk first?",
-  "scheduleCall": "Book a technical call",
+  "costLead": "Want a cost range first?",
   "letter": {
-    "heading": "Write the brief",
+    "heading": "Your inquiry",
     "toLabel": "To",
+    "recipient": "To Altruvex",
+    "recipientNote": "your message comes straight to us",
     "fromLabel": "From",
     "namePlaceholder": "Your name",
     "replyLabel": "Reply to",
     "phonePlaceholder": "01XXXXXXXXX",
-    "replyHint": "Your phone number. We reply by call or WhatsApp.",
+    "replyHint": "Your phone number and email address. We reply by call, WhatsApp or email.",
+    "emailJoin": "or",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "you@company.com",
     "aboutLabel": "About",
-    "optional": "optional",
     "servicePlaceholder": "Choose what it concerns",
-    "serviceWebDesign": "Interface Design",
-    "serviceDevelopment": "Custom Development",
-    "serviceConsulting": "Technical Consulting",
-    "serviceMaintenance": "Maintenance & Support",
-    "messageLabel": "The problem",
+    "serviceWebDesign": "Website Design",
+    "serviceDevelopment": "Website & Web App Development",
+    "serviceConsulting": "Technical Audit",
+    "serviceMaintenance": "Website Maintenance",
+    "messageLabel": "Your project",
     "planMessage": "I'd like to start the {plan} maintenance plan, billed {billing, select, annual {yearly} other {monthly}}.",
-    "messagePlaceholder": "What are you building, what is not working, or what decision do you need clarity on?",
+    "messagePlaceholder": "What are you building or fixing, what exists today, and is there a deadline or a decision you need to make?",
     "count": "{count} of {max} characters",
-    "submit": "Send the brief",
+    "submit": "Send an inquiry",
     "submitting": "Sending…",
-    "assurance": "Read by the founder · No sales inbox, no commitment",
+    "assurance": "No obligation.",
+    "privacy": "We use these details only to reply to this inquiry.",
+    "privacyLink": "Privacy policy",
     "errorFix": "Check the marked lines, then send again.",
-    "errorGeneric": "Something went wrong. Please try again.",
-    "errorNetwork": "Network error. Check your connection and try again."
+    "requiredNote": "Every field is required except the service.",
+    "errorField": "Check this field, then send again."
   },
   "receipt": {
     "eyebrow": "Sent",
-    "title": "Your brief is with {founder}.",
-    "sentAt": "Received at {time}, Cairo time.",
+    "title": "Altruvex has your inquiry.",
+    "sentAt": "Received at {time}.",
     "nextLabel": "What happens next",
     "steps": {
-      "read": "The founder reads it — no sales inbox in between.",
-      "reply": "A reply by call or WhatsApp within 24 hours on business days.",
-      "call": "If the problem fits what we build, a 30-minute technical call. If it does not, we say so, and why."
+      "read": "We read your message and check it against what we build.",
+      "reply": "We reply by call, WhatsApp or email, using the details you gave.",
+      "call": "If the project fits what we build, we suggest the 30-minute initial project consultation call. If it does not, we say so, and why.",
+      "after": "After the call, we recommend one next step: a technical audit, a written proposal, a project estimate, or a decision not to build yet."
     },
-    "another": "Write another brief"
+    "another": "Send another inquiry"
+  },
+  "guide": {
+    "title": "What to include in your message",
+    "include": {
+      "what": "What you are building or fixing, and who it is for.",
+      "today": "What exists today: a link to the current site or system, if there is one.",
+      "users": "The languages it has to work in, right-to-left included.",
+      "deadline": "Any deadline, launch date or decision the project is tied to."
+    },
+    "includeNote": "A few lines are enough. If something is not decided yet, say so; that is useful too."
   }
 }

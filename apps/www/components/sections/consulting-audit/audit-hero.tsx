@@ -2,16 +2,14 @@
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { getCommercialCta } from "@/lib/config/commercial";
-import type { ConsultingView } from "@repo/pricing-schema";
 import { useTranslations } from "next-intl";
 import { HeroHeadline, HeroReveal } from "../hero-motion-wrappers";
 import { Tick } from "./tick";
 
-export function AuditHero({ audit }: { audit: ConsultingView }) {
+export function AuditHero() {
   const t = useTranslations("serviceDetails.consulting.audit.hero");
   const tCTAs = useTranslations("commercial.ctas");
 
@@ -36,14 +34,17 @@ export function AuditHero({ audit }: { audit: ConsultingView }) {
 
         <div className="mt-11 grid gap-8 lg:grid-cols-2 lg:items-end lg:gap-10">
           <HeroReveal delay={0.5}>
-            <p className="max-w-[46ch] text-[clamp(1rem,1.15vw,1.125rem)] leading-relaxed text-muted-foreground">
+            <p className="max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground">
               {t.rich("description", bodyMarks)}
             </p>
           </HeroReveal>
-          <HeroReveal delay={0.62}>
+          <HeroReveal delay={0.62} className="lg:justify-self-end">
             <CtaButtonGroup
               primaryVariant="accent"
-              primary={{ href: "#audit-offer", label: audit.ctaLabel }}
+              primary={{
+                href: getCommercialCta("technicalAudit").href,
+                label: tCTAs("technicalAudit"),
+              }}
               secondary={{
                 href: getCommercialCta("technicalCall").href,
                 label: tCTAs("technicalCall"),

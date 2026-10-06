@@ -1,8 +1,8 @@
 "use client";
 import { Container } from "@/components/shared/container";
-import { ArrowIcon } from "@/components/shared/directional-link";
-import { MagneticButton } from "@/components/magnetic-button";
+import { DirectionalLink } from "@/components/shared/directional-link";
 import {
+  ArrowIcon,
   DatePicker,
   Select,
   SelectContent,
@@ -10,8 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { MagneticButton } from "@/components/magnetic-button";
+import { Eyebrow } from "@repo/ui/www";
 import { useRouter } from "@/i18n/navigation";
+import {
+  FORM_ERROR_KEY,
+  fieldErrorMessage,
+  readApiResult,
+} from "@/lib/api-errors";
+import {
+  BUSINESS_SLOTS,
+  businessSlotToDate,
+  businessZoneOffsetLabel,
+  formatBusinessHoursRange,
+} from "@/lib/config/business-hours";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { cn } from "@/lib/utils/utils";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
@@ -19,11 +32,14 @@ import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { localeMeta } from "@/i18n/locale-meta";
 
 export default function SchedulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("schedule");
+  const tValidations = useTranslations("validations");
+  const tCta = useTranslations("commercial.ctas");
   const locale = useLocale();
 
   const [formData, setFormData] = useState({
@@ -70,10 +86,8 @@ export default function SchedulePage() {
     if (!formData.time) {
       e.time = t("form.time.error");
     } else if (formData.date && !e.date) {
-      const [h, m] = formData.time.split(":").map(Number);
-      const at = new Date(formData.date);
-      at.setHours(h, m, 0, 0);
-      if (at < new Date()) e.time = t("form.time.errorPast");
+      if (slotInstant(formData.date, formData.time) < new Date())
+        e.time = t("form.time.errorPast");
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -86,9 +100,8 @@ export default function SchedulePage() {
     if (!validateForm()) return;
     setIsSubmitting(true);
     try {
-      const [hours, minutes] = formData.time.split(":");
-      const dt = new Date(formData.date!);
-      dt.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      // The picked slot is Cairo wall-clock time, whatever the visitor's zone.
+      const dt = slotInstant(formData.date!, formData.time);
       const res = await fetch("/api/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -96,20 +109,36 @@ export default function SchedulePage() {
           name: formData.name,
           phone: formData.phone,
           locale,
-          message: "",
           scheduledDate: dt.toISOString(),
           scheduledTime: formData.time,
         }),
       });
-      const result = await res.json();
-      if (res.ok && result.success) {
+      const result = await readApiResult(res);
+      if (result.ok) {
         setSubmitSuccess(true);
-        setTimeout(() => router.push("/"), 2000);
-      } else {
-        setSubmitError(result.message || t("submit.errorGeneric"));
+        return;
       }
+      // The server sends codes, never copy: each maps to a localized line.
+      if (result.code === "validation" && result.fields) {
+        const fallback: Record<string, [string, string]> = {
+          name: ["name", t("form.name.error")],
+          phone: ["phone", t("form.phone.error")],
+          scheduledDate: ["date", tValidations("contact.scheduled-datetime-invalid")],
+          scheduledTime: ["time", t("form.time.error")],
+        };
+        const next: Record<string, string> = {};
+        for (const [key, code] of Object.entries(result.fields)) {
+          const target = fallback[key];
+          if (target) next[target[0]] = fieldErrorMessage(tValidations, code, target[1]);
+        }
+        if (Object.keys(next).length > 0) {
+          setErrors(next);
+          return;
+        }
+      }
+      setSubmitError(tValidations(FORM_ERROR_KEY[result.code]));
     } catch {
-      setSubmitError(t("submit.errorNetwork"));
+      setSubmitError(tValidations(FORM_ERROR_KEY.network));
     } finally {
       setIsSubmitting(false);
     }
@@ -121,9 +150,14 @@ export default function SchedulePage() {
     blank,
     "inline-flex h-auto! w-auto gap-0 align-baseline text-[length:inherit]! leading-[inherit] shadow-none focus-visible:ring-0 hover:text-brand-text [&_svg]:hidden data-placeholder:text-muted-foreground/70",
   );
-  const timeLabel = new Intl.DateTimeFormat(locale.startsWith("ar") ? "ar-EG-u-nu-latn" : "en-US", {
+  const timeLabel = new Intl.DateTimeFormat(localeMeta(locale).intl, {
     hour: "numeric",
     minute: "2-digit",
+  });
+  const locked = isSubmitting || submitSuccess;
+  const hoursLine = t("facts.hours", {
+    range: formatBusinessHoursRange(),
+    zone: businessZoneOffsetLabel(),
   });
   const fieldErrors = [errors.name, errors.phone, errors.date, errors.time].filter(Boolean);
 
@@ -146,7 +180,7 @@ export default function SchedulePage() {
           </HeroReveal>
           <HeroHeadline
             as="h1"
-            className="mb-6 max-w-5xl text-balance font-sans text-[clamp(2.25rem,5vw,4.75rem)] leading-[1.04] font-light tracking-[-0.035em] text-foreground select-none rtl:leading-[1.3] rtl:tracking-normal"
+            className="mb-6 max-w-5xl text-balance font-sans text-[clamp(2.75rem,6vw,6.25rem)] leading-[1.04] font-light tracking-[-0.035em] text-foreground select-none rtl:leading-[1.3] rtl:tracking-normal"
           >
             {t("title")}
           </HeroHeadline>
@@ -155,9 +189,10 @@ export default function SchedulePage() {
               {t.rich("subtitle", bodyMarks)}
             </p>
             <ul className="mt-7 flex flex-wrap gap-x-7 gap-y-2 text-sm text-muted-foreground">
-              <li className="font-medium text-foreground">{t("facts.free")}</li>
+              <li className="font-medium text-foreground">{t("facts.duration")}</li>
+              <li className="font-medium text-foreground">{t("facts.noCharge")}</li>
               <li className="font-medium text-foreground">{t("facts.noCommitment")}</li>
-              <li>{t("facts.hours")}</li>
+              <li>{hoursLine}</li>
             </ul>
           </HeroReveal>
           <HeroReveal delay={0.65} className="mt-12 border-t-2 border-foreground pt-10 md:mt-16 md:pt-14">
@@ -173,7 +208,7 @@ export default function SchedulePage() {
                       placeholder={t("form.name.placeholder")}
                       aria-label={t("form.name.label")}
                       aria-invalid={!!errors.name}
-                      disabled={isSubmitting}
+                      disabled={locked}
                       className={cn(blank, "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
                     />
                   ),
@@ -187,7 +222,7 @@ export default function SchedulePage() {
                       placeholder={t("form.phone.placeholder")}
                       aria-label={t("form.phone.label")}
                       aria-invalid={!!errors.phone}
-                      disabled={isSubmitting}
+                      disabled={locked}
                       className={cn(blank, "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
                     />
                   ),
@@ -195,7 +230,7 @@ export default function SchedulePage() {
                     <DatePicker
                       date={formData.date}
                       onDateChange={(date) => handleInputChange("date", date)}
-                      disabled={isSubmitting}
+                      disabled={locked}
                       placeholder={t("form.date.placeholder")}
                       locale={locale}
                       minDate={new Date()}
@@ -215,7 +250,7 @@ export default function SchedulePage() {
                     <Select
                       value={formData.time}
                       onValueChange={(time) => handleInputChange("time", time)}
-                      disabled={isSubmitting}
+                      disabled={locked}
                     >
                       <SelectTrigger
                         aria-label={t("form.time.label")}
@@ -224,7 +259,7 @@ export default function SchedulePage() {
                         <SelectValue placeholder={t("form.time.placeholder")} />
                       </SelectTrigger>
                       <SelectContent>
-                        {TIMES.map((time) => {
+                        {BUSINESS_SLOTS.map((time) => {
                           const [h, m] = time.split(":").map(Number);
                           return (
                             <SelectItem key={time} value={time}>
@@ -245,7 +280,7 @@ export default function SchedulePage() {
                 </div>
               )}
               <div className="mt-10 flex flex-wrap items-center gap-6 md:mt-14">
-                <MagneticButton type="submit" variant="primary" size="lg" disabled={isSubmitting}>
+                <MagneticButton type="submit" variant="primary" size="lg" disabled={locked}>
                   {isSubmitting ? t("submit.submitting") : t("submit.button")}
                 </MagneticButton>
                 {submitSuccess && (
@@ -261,6 +296,26 @@ export default function SchedulePage() {
                   </p>
                 )}
               </div>
+              <div className="mt-8 max-w-xl space-y-3 border-t border-border-subtle pt-6 text-sm leading-relaxed text-muted-foreground">
+                <p>
+                  {t("privacy")}{" "}
+                  <DirectionalLink
+                    href="/privacy"
+                    className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                  >
+                    {t("privacyLink")}
+                  </DirectionalLink>
+                </p>
+                <p>
+                  {t("writeLead")}{" "}
+                  <DirectionalLink
+                    href={getCommercialCta("describeTheBuild").href}
+                    className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                  >
+                    {tCta("describeTheBuild")}
+                  </DirectionalLink>
+                </p>
+              </div>
             </form>
           </HeroReveal>
         </Container>
@@ -269,9 +324,15 @@ export default function SchedulePage() {
   );
 }
 
-const TIMES = Array.from({ length: 10 }, (_, i) => i + 9).flatMap((h) =>
-  ["00", "15", "30", "45"].map((m) => `${String(h).padStart(2, "0")}:${m}`),
-);
+/** The chosen calendar day at "HH:MM" business time, as an instant. */
+function slotInstant(day: Date, time: string): Date {
+  return businessSlotToDate(
+    day.getFullYear(),
+    day.getMonth(),
+    day.getDate(),
+    time,
+  );
+}
 
 function FieldError({ msg }: { msg: string }) {
   return (

@@ -131,7 +131,7 @@ export default async function SettingsPage({
             <div className="space-y-3">
               <SwatchRow label="Light surface accent" hex={company.brandColor} />
               <SwatchRow label="Dark surface accent" hex={company.brandColorDark} />
-              <p className="border-t border-border pt-3 text-base text-muted-foreground">
+              <p className="border-t border-border-subtle pt-3 text-base text-muted-foreground">
                 Changing these is a company-wide branding decision, not a per-client one.
                 The deck’s visual system is fixed; only its content varies per client.
               </p>
@@ -155,7 +155,7 @@ export default async function SettingsPage({
                 },
               ]}
             />
-            <div className="border-t border-border p-3">
+            <div className="border-t border-border-subtle p-3">
               <InvoicePrefixEditor
                 initialPrefix={numbering.invoicePrefix}
                 next={numbering.next}
@@ -264,7 +264,7 @@ export default async function SettingsPage({
                 </div>
               ))}
             </div>
-            <p className="mt-4 max-w-prose border-t border-border pt-3 text-base text-muted-foreground">
+            <p className="mt-4 max-w-prose border-t border-border-subtle pt-3 text-base text-muted-foreground">
               Six tones, no more. Every enum in the schema maps to exactly one of them in{" "}
               <code className="font-mono text-micro">lib/status.ts</code>, which is why the
               same state never looks different on two screens. A seventh colour would be a
@@ -319,6 +319,7 @@ export default async function SettingsPage({
               <TemplateRow
                 name="Email — proposal, contract, change-request quote, renewal reminder"
                 state={transport === "none" ? "unconfigured" : "live"}
+                href={transport === "none" ? "/integrations#email" : undefined}
                 detail={
                   transport === "none"
                     ? "The wording exists in lib/email-templates.ts and is editable per send, but no mail transport is configured, so nothing is sent. See Integrations."
@@ -387,7 +388,7 @@ export default async function SettingsPage({
               flush
             >
               <SessionList sessions={sessionRows} canRevoke={me !== null} />
-              <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
+              <p className="border-t border-border-subtle px-3 py-2 text-meta text-subtle-foreground">
                 {liveSessions} active session{liveSessions === 1 ? "" : "s"} across the team.{" "}
                 <Link href="/team" className="underline underline-offset-2 hover:text-foreground">
                   Other members’ sessions are managed from Team.
@@ -428,7 +429,7 @@ function SwatchRow({ label, hex }: { label: string; hex: string }) {
   return (
     <div className="flex items-center gap-3">
       <span
-        className="size-8 shrink-0 rounded-md border border-border"
+        className="size-8 shrink-0 rounded-ctl border border-border-subtle"
         style={{ backgroundColor: `#${hex}` }}
         aria-hidden
       />

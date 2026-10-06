@@ -8,7 +8,7 @@ import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 import { createShortcutsFor, gotoShortcutsFor, type BadgeKey, type Role } from "@/lib/nav";
 import { TooltipProvider } from "@repo/ui";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 export function AppShell({
@@ -25,6 +25,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [paletteMode, setPaletteMode] = React.useState<"search" | "proposal">("search");
@@ -33,8 +34,8 @@ export function AppShell({
   const gotoArmed = React.useRef(false);
   const createArmed = React.useRef(false);
   const create = React.useMemo(
-    () => new Map(createShortcutsFor(role).map((s) => [s.key, s.href])),
-    [role],
+    () => new Map(createShortcutsFor(role, pathname).map((s) => [s.key, s.href])),
+    [role, pathname],
   );
   const goto = React.useMemo(
     () => new Map(gotoShortcutsFor(role).map((s) => [s.key, s.href])),

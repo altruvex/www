@@ -1,5 +1,5 @@
 "use client";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { cn } from "@/lib/utils/utils";
 import type { ScopeNoteId, ScopeNoteView } from "@repo/pricing-schema";
@@ -116,7 +116,7 @@ function OptionRows({
             <span className="grid min-w-0 flex-1 gap-1">
               <span
                 className={cn(
-                  "block text-[0.9375rem] font-medium transition-colors sm:text-base",
+                  "block text-base font-medium transition-colors sm:text-base",
                   isSelected
                     ? "text-foreground"
                     : "text-foreground/85 group-hover:text-foreground",
@@ -289,7 +289,7 @@ function ConditionControl({
     <div className="py-7 first:pt-0 last:pb-0">
       <Heading
         id={groupId}
-        className="text-[0.9375rem] font-medium leading-snug text-foreground"
+        className="text-base font-medium leading-snug text-foreground"
       >
         {t(`${base}.title`)}
       </Heading>
@@ -453,7 +453,7 @@ export function ScopeNotesStep({
                 />
               </span>
               <span className="grid min-w-0 flex-1 gap-1">
-                <span className="block text-[0.9375rem] font-medium text-foreground">
+                <span className="block text-base font-medium text-foreground">
                   {note.name}
                 </span>
                 <span className="block text-sm leading-relaxed text-muted-foreground">

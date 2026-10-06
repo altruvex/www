@@ -174,6 +174,9 @@ model ContactSubmission {
   id              String           @id @default(uuid())
   name            String
   phone           String
+  // Nullable: rows before 2026-10-05 were collected without one. The www
+  // contact form requires it for every new submission.
+  email           String?
   message         String
   serviceInterest ServiceType?
   projectTimeline ProjectTimeline?
@@ -208,6 +211,7 @@ model ContactSubmission {
   firstContactedAt DateTime?
 
   @@index([phone])
+  @@index([email])
   @@index([status])
   @@index([priority])
   @@index([submittedAt])
@@ -1087,6 +1091,12 @@ model Product {
 
   framework       String?
   hostingProvider String?
+
+  /// A site that was already running before it came to Altruvex OS (or is kept
+  /// outside it): no CI pipeline is expected, so an empty deployment history reads
+  /// as "not monitored" instead of "not connected". Anything that does report is
+  /// still written and shown.
+  existingSite Boolean @default(false)
 
   ingestTokenHash     String?   @unique
   ingestTokenLast4    String?

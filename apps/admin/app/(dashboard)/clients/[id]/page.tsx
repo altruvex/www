@@ -342,12 +342,12 @@ export default async function ClientDetailPage({
         </DossierSection>
 
         <DossierSection id="delivery" title="Delivery">
-          <DeliveryTab hub={hub} showMoney={showMoney} />
+          <DeliveryTab hub={hub} showMoney={showMoney} role={role} />
         </DossierSection>
 
         <DossierSection id="sites" title="Sites and services">
           <div className="space-y-4">
-            <SitesTab hub={hub} />
+            <SitesTab hub={hub} role={role} />
             <ServicesList
               title="Services"
               description="Everything this client holds through Altruvex that has to be renewed"
@@ -384,7 +384,7 @@ export default async function ClientDetailPage({
         {showMoney && (
           <DossierSection id="money" title="Money">
             <div className="space-y-4">
-              <MoneyTab hub={hub} />
+              <MoneyTab hub={hub} role={role} />
             </div>
           </DossierSection>
         )}
@@ -394,7 +394,7 @@ export default async function ClientDetailPage({
           title="Conversations"
           description="The latest messages both ways; the inbox holds the whole thread"
         >
-          <ConversationsTab hub={hub} />
+          <ConversationsTab hub={hub} role={role} />
         </DossierSection>
 
         <DossierSection id="meetings" title="Meetings">
@@ -456,7 +456,7 @@ export default async function ClientDetailPage({
                   {derived.length}
                 </span>
               </summary>
-              <div className="border-t border-border p-2">
+              <div className="border-t border-border-subtle p-2">
                 <Timeline
                   events={derived}
                   emptyLabel="Nothing recorded for this client yet."
@@ -688,7 +688,7 @@ function Aside({
             )}
           </dl>
           {lead.scopeNotes.length > 0 && (
-            <div className="mt-3 border-t border-border pt-3">
+            <div className="mt-3 border-t border-border-subtle pt-3">
               <p className="telemetry text-subtle-foreground">
                 Scope notes · reviewed in scope, not priced
               </p>
@@ -696,7 +696,7 @@ function Aside({
                 {scopeNoteNames(lead.scopeNotes).map((note) => (
                   <span
                     key={note}
-                    className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                    className="rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
                   >
                     {note}
                   </span>
@@ -705,7 +705,7 @@ function Aside({
             </div>
           )}
           {lead.note && (
-            <div className="mt-3 border-t border-border pt-3">
+            <div className="mt-3 border-t border-border-subtle pt-3">
               <p className="telemetry text-subtle-foreground">Their note</p>
               <p className="mt-1.5 whitespace-pre-wrap text-base">
                 {lead.note}

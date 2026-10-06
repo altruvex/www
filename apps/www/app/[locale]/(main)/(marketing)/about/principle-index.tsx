@@ -2,7 +2,7 @@
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { useSectionCardGrid, useSectionDescription, useSectionTitle } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils/utils";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
-const PRINCIPLES = ["direct", "scope", "pricing", "ownership"] as const;
+const PRINCIPLES = ["writing", "scope", "pricing", "ownership"] as const;
 
 type Principle = (typeof PRINCIPLES)[number];
 
@@ -42,6 +42,7 @@ export function PrincipleIndexSection() {
           titleRef={titleRef}
           descriptionRef={countRef}
           firstTitle={t("title")}
+          secondTitle={t("titleItalic")}
           description={t("count", {
             count: PRINCIPLES.length,
             n: localizeNumbers(String(PRINCIPLES.length), locale),

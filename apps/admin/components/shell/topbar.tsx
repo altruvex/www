@@ -1,8 +1,7 @@
 "use client";
 
 import { signOut } from "@/lib/auth-client";
-import { canSee, groupFor, navItemFor, type Role } from "@/lib/nav";
-import { can } from "@/lib/rbac";
+import { canSee, groupFor, navItemFor, quickCreateFor, type Role } from "@/lib/nav";
 import { CountBadge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -36,7 +35,7 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 const railControl =
-  "inline-flex size-[var(--control-h-sm)] items-center justify-center rounded-md " +
+  "inline-flex size-[var(--control-h-sm)] items-center justify-center rounded-ctl-sm " +
   "text-muted-foreground transition-colors duration-[var(--dur-state)] " +
   "hover:bg-surface hover:text-foreground " +
   "outline-none focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background";
@@ -66,12 +65,8 @@ export function Topbar({
   const item = navItemFor(pathname);
   const group = groupFor(pathname);
   const groupHref = group?.items.find((i) => canSee(i, role))?.href;
-  const create = {
-    client: can(role, "create", "client"),
-    proposal: can(role, "create", "proposal"),
-    meeting: can(role, "create", "meeting"),
-  };
-  const canCreate = create.client || create.proposal || create.meeting;
+  const createItems = React.useMemo(() => quickCreateFor(role, pathname), [role, pathname]);
+  const canCreate = createItems.length > 0;
   const settingsItem = navItemFor("/settings");
   const seesSettings = settingsItem ? canSee(settingsItem, role) : false;
 
@@ -83,7 +78,7 @@ export function Topbar({
 
   return (
     <header
-      className="liquid-glass-toolbar sticky top-0 z-30 flex shrink-0 items-center gap-2 border-x-0 border-t-0 border-b border-border bg-background/85 px-3 backdrop-blur-md"
+      className="sticky top-0 z-30 flex shrink-0 items-center gap-2 border-b border-border-subtle bg-background px-3"
       style={{ height: "var(--topbar-h)" }}
     >
       <button
@@ -101,7 +96,7 @@ export function Topbar({
             {groupHref ? (
               <Link
                 href={groupHref}
-                className="hidden rounded-sm text-subtle-foreground no-underline outline-none transition-colors duration-[var(--dur-state)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand sm:inline"
+                className="hidden rounded-ctl-xs text-subtle-foreground no-underline outline-none transition-colors duration-[var(--dur-state)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand sm:inline"
               >
                 {group.label}
               </Link>
@@ -119,9 +114,9 @@ export function Topbar({
           type="button"
           onClick={onOpenPalette}
           className={cn(
-            "flex h-(--control-h-sm) items-center justify-between gap-4 rounded-md border border-border bg-input p-3",
+            "flex h-(--control-h-sm) items-center justify-between gap-4 rounded-ctl-sm border border-border-subtle bg-input p-3",
             "text-meta text-subtle-foreground outline-none",
-            "transition-colors duration-(--dur-state) hover:border-border-mid hover:text-muted-foreground",
+            "transition-colors duration-(--dur-state) hover:border-foreground/45 hover:text-muted-foreground",
             "focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           )}
           aria-label="Open command palette"
@@ -144,20 +139,37 @@ export function Topbar({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Create</DropdownMenuLabel>
-            {create.client && (
-              <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/clients/new")}>
-                <Link href="/clients/new">Client</Link>
-              </DropdownMenuItem>
-            )}
-            {create.proposal && (
-              <DropdownMenuItem onSelect={() => window.setTimeout(onCreateProposal, 0)}>
-                Proposal…
-              </DropdownMenuItem>
-            )}
-            {create.meeting && (
-              <DropdownMenuItem asChild onMouseEnter={() => router.prefetch("/calendar?new=meeting")}>
-                <Link href="/calendar?new=meeting">Meeting</Link>
-              </DropdownMenuItem>
+            {createItems.map((action) =>
+              action.href ? (
+                <DropdownMenuItem
+                  key={action.id}
+                  asChild
+                  onMouseEnter={() => router.prefetch(action.href!)}
+                >
+                  <Link href={action.href}>
+                    <action.icon strokeWidth={1.75} />
+                    {action.label}
+                    {action.scoped && (
+                      <span className="ms-auto ps-3 text-meta text-subtle-foreground">
+                        {action.hint}
+                      </span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  key={action.id}
+                  onSelect={() => window.setTimeout(onCreateProposal, 0)}
+                >
+                  <action.icon strokeWidth={1.75} />
+                  {action.label}…
+                  {action.scoped && (
+                    <span className="ms-auto ps-3 text-meta text-subtle-foreground">
+                      {action.hint}
+                    </span>
+                  )}
+                </DropdownMenuItem>
+              ),
             )}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -204,7 +216,7 @@ export function Topbar({
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             ) : (
-              <div className="h-20 animate-pulse bg-muted/20 rounded-md" />
+              <div className="h-20 animate-pulse bg-muted/20 rounded-ctl-xl" />
             )}
             <DropdownMenuSeparator />
             {seesSettings && (

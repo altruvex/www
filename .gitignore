@@ -104,3 +104,6 @@ SECURITY_TODO.md
 
 # Production env exports for the Vercel dashboard (secrets)
 altruvex-*.env
+
+# Lighthouse CI output (lighthouserc.json)
+.lighthouseci

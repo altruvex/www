@@ -317,7 +317,7 @@ function CreateIncidentSheet({
               onChange={(event) => setDetail(event.target.value)}
               rows={4}
               maxLength={5000}
-              className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
+              className="w-full rounded-ctl-xl border border-border-subtle bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
               placeholder="Started after the 14:02 deploy. Only affects card, not bank transfer."
             />
           </Field>

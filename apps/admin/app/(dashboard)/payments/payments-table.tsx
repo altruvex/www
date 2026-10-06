@@ -89,7 +89,8 @@ function PaymentRowMenu({
   onDelete?: () => void;
 }) {
   return (
-    <DropdownMenu>
+    // Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -264,6 +265,17 @@ export function PaymentsTable({
           </Link>
         ) : row.status === "WAIVED" ? (
           <span className="text-subtle-foreground">—</span>
+        ) : canEdit ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              issue(row);
+            }}
+            className="rounded-xs font-sans text-meta text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Issue invoice
+          </button>
         ) : (
           <span className="text-subtle-foreground">Not issued</span>
         ),
@@ -367,7 +379,8 @@ export function PaymentsTable({
         ]}
         rowActions={(row) => {
           const Menu = canDelete ? RowActions : PaymentRowMenu;
-          const sourceHref = entityHref(row.sourceType, row.sourceId);
+          const sourceLink = entityHref(row.sourceType, row.sourceId);
+          const sourceHref = sourceLink && row.sourceType === "project" ? `${sourceLink}#money` : sourceLink;
           const source = row.sourceType ? SOURCE_LINK[row.sourceType] : null;
           return (
             <Menu
@@ -385,7 +398,7 @@ export function PaymentsTable({
               )}
               {row.clientId && (
                 <DropdownMenuItem asChild>
-                  <Link href={`/clients/${row.clientId}`}>
+                  <Link href={`/clients/${row.clientId}#money`}>
                     <Building2 className="size-3.5" />
                     Open client
                   </Link>

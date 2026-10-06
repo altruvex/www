@@ -35,11 +35,15 @@ export function Avatar({
   className?: string;
   size?: "sm" | "md" | "lg";
 }) {
-  const sizes = { sm: "size-5 text-micro", md: "size-6 text-meta", lg: "size-9 text-md" };
+  const sizes = {
+    sm: "size-5 rounded-ctl-xs text-micro",
+    md: "size-6 rounded-ctl-xs text-meta",
+    lg: "size-9 rounded-ctl-lg text-md",
+  };
   return (
     <AvatarPrimitive.Root
       className={cn(
-        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md font-medium",
+        "inline-flex shrink-0 items-center justify-center overflow-hidden font-medium",
         tintFor(name ?? "?"),
         sizes[size],
         className,

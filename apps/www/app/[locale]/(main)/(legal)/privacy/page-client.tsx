@@ -9,6 +9,8 @@ import { LegalDetails, LegalList, LegalProse } from "@/components/legal/legal-pr
 import { localizeNumbers } from "@/lib/utils/number";
 import { useLocale, useTranslations } from "next-intl";
 
+const SECTION_COUNT = 13;
+
 type PrivacyPageClientProps = {
   formattedDate: string;
 };
@@ -17,31 +19,13 @@ export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientPr
   const t = useTranslations("privacy");
   const locale = useLocale();
 
-  const sectionTwoItems = [
-    t("sections.2.item1"),
-    t("sections.2.item2"),
-    t("sections.2.item3"),
-    t("sections.2.item4"),
-  ];
-
-  const sectionFourItems = [
-    t("sections.4.item1"),
-    t("sections.4.item2"),
-    t("sections.4.item3"),
-    t("sections.4.item4"),
-  ];
-
-  const sectionOneDetails = [
-    { label: t("sections.1.contactLabel"), value: t("sections.1.contactValue") },
-    { label: t("sections.1.projectLabel"), value: t("sections.1.projectValue") },
-    { label: t("sections.1.techLabel"), value: t("sections.1.techValue") },
-  ];
+  const sections = Array.from({ length: SECTION_COUNT }, (_, i) => i + 1);
 
   return (
     <LegalPageLayout
       namespace="privacy"
       formattedDate={formattedDate}
-      contents={[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => ({
+      contents={sections.map((number) => ({
         number,
         title: t(`sections.${number}.title`),
       }))}
@@ -56,34 +40,25 @@ export default function PrivacyPageClient({ formattedDate }: PrivacyPageClientPr
         />
       }
     >
-      <LegalSection number={1} title={t("sections.1.title")}>
-        <LegalProse content={t("sections.1.description")} />
-        <LegalDetails details={sectionOneDetails} />
-      </LegalSection>
-
-      <LegalSection number={2} title={t("sections.2.title")}>
-        <LegalProse content={t("sections.2.description")} />
-        <LegalList items={sectionTwoItems} />
-      </LegalSection>
-
-      <LegalSection number={3} title={t("sections.3.title")}>
-        <LegalProse content={t("sections.3.description")} />
-      </LegalSection>
-
-      <LegalSection number={4} title={t("sections.4.title")}>
-        <LegalProse content={t("sections.4.description")} />
-        <LegalList items={sectionFourItems} />
-      </LegalSection>
-
-      {[5, 6, 7, 8].map((num) => (
-        <LegalSection key={num} number={num} title={t(`sections.${num}.title`)}>
-          <LegalProse content={t(`sections.${num}.description`)} />
-        </LegalSection>
-      ))}
-
-      <LegalSection number={9} title={t("sections.9.title")}>
-        <LegalProse content={t("sections.9.description")} />
-      </LegalSection>
+      {sections.map((number) => {
+        const key = `sections.${number}`;
+        return (
+          <LegalSection key={number} number={number} title={t(`${key}.title`)}>
+            <LegalProse content={t(`${key}.description`)} />
+            {t.has(`${key}.details`) ? (
+              <LegalDetails
+                details={t.raw(`${key}.details`) as Array<{ label: string; value: string }>}
+              />
+            ) : null}
+            {t.has(`${key}.items`) ? (
+              <LegalList items={t.raw(`${key}.items`) as string[]} />
+            ) : null}
+            {t.has(`${key}.after`) ? (
+              <LegalProse className="mt-6" content={t(`${key}.after`)} />
+            ) : null}
+          </LegalSection>
+        );
+      })}
     </LegalPageLayout>
   );
 }

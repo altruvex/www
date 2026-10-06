@@ -86,7 +86,7 @@ export function PostUpdate({
         rows={3}
         maxLength={5000}
         aria-label="Update"
-        className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
+        className="w-full rounded-ctl-xl border border-border-subtle bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
         placeholder={
           resolving
             ? "What fixed it, and what would stop it happening again."

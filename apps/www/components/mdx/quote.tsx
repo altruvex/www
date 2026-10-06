@@ -1,4 +1,4 @@
-import { Highlight, Strong } from "@/components/ui/emphasis";
+import { Highlight, Strong } from "@repo/ui/www";
 
 interface QuoteProps {
   author: string;

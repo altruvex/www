@@ -1,0 +1,41 @@
+/*
+ * Shared surfaces the @repo/ui components rely on (TableSkeleton, TilesSkeleton), so they
+ * render the same in every app that imports the styles, not only in the admin.
+ */
+
+:root {
+  /* One table row. The admin's density setting moves it; the other apps keep the default. */
+  --row-h: 40px;
+}
+:root[data-density="compact"] {
+  --row-h: 32px;
+}
+:root[data-density="relaxed"] {
+  --row-h: 48px;
+}
+
+@layer components {
+  /* The small uppercase label voice (menu labels, table heads, meta). Shared, so the
+     menuLabel in @repo/ui renders the same in every app. */
+  .telemetry {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    line-height: 1.4;
+    font-weight: 500;
+  }
+
+  /* A plane that holds a table or a set of tiles: a container (edge role A), panel-sm.
+     A standard solid surface. It sits in the flow, so it is not glass. */
+  .plane {
+    background: hsl(var(--card));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel-sm);
+  }
+
+  /* Rows inside a plane are split by hairlines (edge role C): no row has its own radius. */
+  .rows > * + * {
+    border-top: 1px solid var(--border-subtle);
+  }
+}

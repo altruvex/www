@@ -4,8 +4,8 @@ export function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-sm bg-surface-2",
-        "bg-[length:200%_100%] bg-[linear-gradient(90deg,transparent,hsl(var(--n-0)/0.4),transparent)] animate-shimmer",
+        "relative overflow-hidden rounded-ctl-xs bg-surface-2",
+        "bg-fixed bg-[length:300%_100%] bg-[linear-gradient(90deg,transparent_35%,hsl(var(--foreground)/0.07)_50%,transparent_65%)] animate-shimmer",
         className,
       )}
       {...props}
@@ -16,7 +16,7 @@ export function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
 export function TableSkeleton({ rows = 8, cols = 5 }: { rows?: number; cols?: number }) {
   return (
     <div className="plane overflow-hidden">
-      <div className="flex h-9 items-center gap-4 border-b border-border bg-surface px-3">
+      <div className="flex h-9 items-center gap-4 border-b border-border-subtle bg-surface px-3">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} className="h-2.5 flex-1" />
         ))}

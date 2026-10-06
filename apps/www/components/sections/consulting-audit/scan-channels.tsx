@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowIcon } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Num } from "@/components/ui/num";
+import { ArrowIcon } from "@repo/ui";
+import { Eyebrow } from "@repo/ui/www";
 import { useSectionCardGrid } from "@/lib/motion";
 import { useLocale, useTranslations } from "next-intl";
-import { AuditSection } from "./audit-section";
+import { ServiceSection } from "@/components/sections/services-index/service-section";
+import { localeMeta } from "@/i18n/locale-meta";
 
 const CHANNELS = [
   "architecture",
@@ -18,13 +18,13 @@ const CHANNELS = [
 
 export function ScanChannels() {
   const t = useTranslations("serviceDetails.consulting.audit.channels");
-  const separator = useLocale() === "ar" ? "، " : " · ";
+  const separator = localeMeta(useLocale()).listSeparator;
   const ledgerRef = useSectionCardGrid<HTMLOListElement>({
     selector: "[data-channel-row]",
   });
 
   return (
-    <AuditSection
+    <ServiceSection
       id="scan-plan"
       titleId="consulting-channels-heading"
       eyebrow={t("eyebrow")}
@@ -35,14 +35,14 @@ export function ScanChannels() {
     >
       <div
         aria-hidden
-        className="hidden gap-x-10 border-b border-border pb-4 lg:grid lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
+        className="hidden gap-x-10 border-b border-border-subtle pb-4 lg:grid lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]"
       >
-        <Eyebrow className="col-span-2 m-0">{t("questionLabel")}</Eyebrow>
+        <Eyebrow className="m-0">{t("questionLabel")}</Eyebrow>
         <Eyebrow className="m-0">{t("returnsLabel")}</Eyebrow>
       </div>
 
       <ol ref={ledgerRef} className="list-none">
-        {CHANNELS.map((id, index) => {
+        {CHANNELS.map((id) => {
           const examines = t.raw(`items.${id}.examines`) as string[];
           const returns = t.raw(`items.${id}.returns`) as string[];
 
@@ -50,21 +50,10 @@ export function ScanChannels() {
             <li
               key={id}
               data-channel-row
-              className="grid gap-x-10 gap-y-6 border-b border-border-subtle py-8 lg:py-10 lg:grid-cols-[3rem_minmax(0,7fr)_minmax(0,5fr)]"
+              className="grid gap-x-10 gap-y-6 border-b border-border-subtle py-8 lg:py-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]"
             >
-              <span
-                aria-hidden
-                className="hidden text-sm tabular-nums text-muted-foreground lg:block ltr:font-mono"
-              >
-                <Num value={index + 1} pad={2} />
-              </span>
-
               <div>
                 <Eyebrow tone="accent" className="m-0">
-                  <span className="text-muted-foreground lg:hidden">
-                    <Num value={index + 1} pad={2} />
-                    {" — "}
-                  </span>
                   {t(`items.${id}.name`)}
                 </Eyebrow>
                 <h3 className="mt-3 text-balance text-[clamp(1.625rem,3vw,2.625rem)] font-light leading-[1.1] tracking-[-0.025em] text-foreground rtl:leading-[1.4] rtl:tracking-normal">
@@ -84,7 +73,7 @@ export function ScanChannels() {
                   {returns.map((item) => (
                     <li
                       key={item}
-                      className="flex items-start gap-3 border-b border-border-subtle py-3 first:pt-0 last:border-b-0 last:pb-0 text-base leading-normal text-foreground"
+                      className="flex items-start gap-3 py-2 first:pt-0 last:pb-0 text-base leading-normal text-foreground"
                     >
                       <ArrowIcon
                         motion="none"
@@ -99,6 +88,6 @@ export function ScanChannels() {
           );
         })}
       </ol>
-    </AuditSection>
+    </ServiceSection>
   );
 }

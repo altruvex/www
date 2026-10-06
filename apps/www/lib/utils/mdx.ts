@@ -3,10 +3,11 @@ import path from "path";
 import matter from "gray-matter";
 import { cache } from "react";
 import type { Article, ArticleFrontmatter, ArticleListItem } from "@/types/mdx";
+import type { Locale } from "@/i18n/locale-meta";
 
 const articlesDirectory = path.join(process.cwd(), "contents/articles");
 
-function getArticleSlugs(locale: "en" | "ar"): string[] {
+function getArticleSlugs(locale: Locale): string[] {
   const localeDir = path.join(articlesDirectory, locale);
 
   if (!fs.existsSync(localeDir)) {
@@ -20,7 +21,7 @@ function getArticleSlugs(locale: "en" | "ar"): string[] {
 }
 
 export const getArticle = cache(
-  async (slug: string, locale: "en" | "ar"): Promise<Article | null> => {
+  async (slug: string, locale: Locale): Promise<Article | null> => {
     try {
       const filePath = path.join(articlesDirectory, locale, `${slug}.mdx`);
       const fileContents = fs.readFileSync(filePath, "utf8");
@@ -29,7 +30,10 @@ export const getArticle = cache(
       const wordsPerMinute = 200;
       const wordCount = content.split(/\s+/).length;
       const readTime = Math.ceil(wordCount / wordsPerMinute);
-      const headings = Array.from(content.matchAll(/^## (.+)$/gm), (m) =>
+      // Fenced code is stripped first: a "## " line inside a code sample is
+      // not a rendered h2, and the reader pairs headings with h2s by index.
+      const prose = content.replace(/^```[\s\S]*?^```/gm, "");
+      const headings = Array.from(prose.matchAll(/^## (.+)$/gm), (m) =>
         m[1].replace(/`/g, "").trim(),
       );
 
@@ -52,7 +56,7 @@ export const getArticle = cache(
 );
 
 export const getAllArticles = cache(
-  async (locale: "en" | "ar"): Promise<ArticleListItem[]> => {
+  async (locale: Locale): Promise<ArticleListItem[]> => {
     const slugs = getArticleSlugs(locale);
 
     const articles = await Promise.all(
@@ -81,7 +85,7 @@ export const getAllArticles = cache(
 export async function getRelatedArticles(
   currentSlug: string,
   tags: string[],
-  locale: "en" | "ar",
+  locale: Locale,
   limit = 3,
 ): Promise<ArticleListItem[]> {
   const allArticles = await getAllArticles(locale);

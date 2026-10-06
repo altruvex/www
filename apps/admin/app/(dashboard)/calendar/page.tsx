@@ -297,7 +297,7 @@ export default async function CalendarPage({
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <Panel flush className="hidden sm:block">
-          <div className="grid grid-cols-7 border-b border-border bg-surface">
+          <div className="grid grid-cols-7 border-b border-border-subtle bg-surface">
             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
               <div
                 key={day}
@@ -318,7 +318,7 @@ export default async function CalendarPage({
                 <div
                   key={i}
                   className={cn(
-                    "min-h-[86px] border-b border-e border-border p-1.5 last:border-e-0",
+                    "min-h-[86px] border-b border-e border-border-subtle p-1.5 last:border-e-0",
                     !day && "bg-surface/40",
                     isToday && "bg-brand-soft",
                   )}

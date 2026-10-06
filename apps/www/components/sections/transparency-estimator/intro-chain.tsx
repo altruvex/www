@@ -1,7 +1,7 @@
 "use client";
 
 import { DirectionalLink } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { cn } from "@/lib/utils/utils";
 import type { Translator } from "./types";
 
@@ -29,7 +29,7 @@ export function IntroChain({ t }: { t: Translator }) {
               >
                 {t(`intro.${stage}.name`)}
               </Eyebrow>
-              <span className="text-[0.9375rem] font-medium leading-snug text-foreground">
+              <span className="text-base font-medium leading-snug text-foreground">
                 {t(`intro.${stage}.answer`)}
               </span>
               <span className="mt-1 inline-flex w-fit rounded-full border border-border-subtle px-3 py-1 text-xs text-muted-foreground">

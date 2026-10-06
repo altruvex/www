@@ -3,11 +3,33 @@
 import { MagneticButton } from "@/components/magnetic-button";
 import { ArrowLabel } from "@/components/shared/directional-link";
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
+import { Highlight } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
 import { monoCaps } from "@/lib/utils/mono-caps";
 import { cn } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+
+type ErrorKind = "timeout" | "notFound" | "unauthorized" | "forbidden" | "generic";
+
+const KIND_CODE: Record<ErrorKind, string> = {
+  timeout: "504",
+  notFound: "404",
+  unauthorized: "401",
+  forbidden: "403",
+  generic: "500",
+};
+
+// The thrown message is developer text and never shown; it only picks which
+// localized explanation fits.
+function kindOf(error: Error): ErrorKind {
+  const message = error.message?.toLowerCase() || "";
+  if (message.includes("timeout") || message.includes("timed out")) return "timeout";
+  if (message.includes("not found") || message.includes("404")) return "notFound";
+  if (message.includes("unauthorized") || message.includes("401")) return "unauthorized";
+  if (message.includes("forbidden") || message.includes("403")) return "forbidden";
+  return "generic";
+}
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -22,54 +44,14 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     setMounted(true);
   }, []);
 
-  const getErrorInfo = () => {
-    const errorMessage = error.message?.toLowerCase() || "";
-
-    if (
-      errorMessage.includes("timeout") ||
-      errorMessage.includes("timed out")
-    ) {
-      return {
-        code: "504",
-        title1: "Request",
-        title2: "Timeout",
-        message: "The request took too long to complete. Please try again.",
-      };
-    }
-    if (errorMessage.includes("not found") || errorMessage.includes("404")) {
-      return {
-        code: "404",
-        title1: "Page Not",
-        title2: "Found",
-        message: "The requested resource could not be found.",
-      };
-    }
-    if (errorMessage.includes("unauthorized") || errorMessage.includes("401")) {
-      return {
-        code: "401",
-        title1: "Access",
-        title2: "Unauthorized",
-        message: "You are not authorized to access this resource.",
-      };
-    }
-    if (errorMessage.includes("forbidden") || errorMessage.includes("403")) {
-      return {
-        code: "403",
-        title1: "Access",
-        title2: "Forbidden",
-        message: "You do not have permission to access this resource.",
-      };
-    }
-
-    return {
-      code: "500",
-      title1: "System",
-      title2: "Error",
-      message: "An unexpected error occurred. Please try again later.",
-    };
+  const t = useTranslations("validations.errorPage");
+  const kind = kindOf(error);
+  const errorInfo = {
+    code: KIND_CODE[kind],
+    title1: t(`kinds.${kind}.title1`),
+    title2: t(`kinds.${kind}.title2`),
+    message: t(`kinds.${kind}.message`),
   };
-
-  const errorInfo = getErrorInfo();
 
   return (
     <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
@@ -85,7 +67,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         <main
           className="relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center justify-center text-center"
           role="main"
-          aria-label="Error page"
+          aria-label={t("ariaLabel")}
         >
           <div
             className={`flex flex-col items-center transition-[transform,opacity] duration-(--motion-base) ease-default ${
@@ -95,7 +77,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
             <div className="mb-8 flex items-center gap-2">
               <div className="h-1.5 w-1.5 rounded-full bg-destructive/80 animate-pulse" />
               <span className={cn(monoCaps, "text-foreground/20")}>
-                Error Code {errorInfo.code}
+                {t("code", { code: errorInfo.code })}
               </span>
             </div>
             <h1
@@ -123,9 +105,9 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                       "cursor-pointer text-muted-foreground group-hover:text-primary/70 transition-all select-none",
                     )}
                   >
-                    Error Digest
+                    {t("digest")}
                   </summary>
-                  <pre className="mt-4 overflow-auto rounded-panel-inset bg-foreground/5 p-3 text-[13px] text-primary/70 leading-relaxed">
+                  <pre className="mt-4 overflow-auto rounded-panel-inset bg-foreground/5 p-3 text-md text-primary/70 leading-relaxed">
                     <code>{error.digest}</code>
                   </pre>
                 </details>
@@ -139,7 +121,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 className="group min-w-[160px] justify-center"
               >
                 <span className="flex items-center gap-2">
-                  Try Again
+                  {t("tryAgain")}
                   <svg
                     className="h-4 w-4 transition-all duration-(--motion-drawer) group-hover:rotate-180"
                     fill="none"
@@ -162,12 +144,12 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
                 className="min-w-[160px] justify-center group"
               >
                 <Link href="/">
-                  <ArrowLabel>Go Home</ArrowLabel>
+                  <ArrowLabel>{t("goHome")}</ArrowLabel>
                 </Link>
               </MagneticButton>
             </div>
             <span className={cn(monoCaps, "mt-10 text-primary/20")}>
-              System Diagnostics
+              {t("diagnostics")}
             </span>
           </div>
         </main>

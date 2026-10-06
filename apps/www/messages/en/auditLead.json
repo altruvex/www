@@ -1,18 +1,18 @@
 {
   "eyebrow": "Technical Audit",
   "title": "A fixed-scope technical audit of your current site.",
-  "description": "Send your number and we will call to confirm scope. We review your architecture, performance and security surface and hand you a remediation roadmap. The fee is {auditPrice}, and if you go on to build with Altruvex the {auditCredit} comes off the project price.",
+  "description": "Send your number and we will call to confirm scope. We review your architecture, performance and security surface and hand you written findings and a remediation roadmap within five business days. The fee is {auditPrice}, fixed before we start. The full audit fee is credited toward a subsequent build.",
   "phoneLabel": "Phone (WhatsApp)",
   "phonePlaceholder": "+201... or +971...",
   "phoneHint": "Used only to confirm the audit and follow up.",
   "phoneError": "Please enter a valid phone number",
-  "buttonText": "Request My Audit",
+  "buttonText": "Request the audit",
   "submitting": "Sending...",
   "successTitle": "Audit requested.",
-  "successDescription": "We will call you within 2 business hours to confirm the scope and book the audit.",
+  "successDescription": "We will call to confirm the scope and book the audit.",
   "stats": {
-    "noPitch": "No Pitch",
-    "noCommitment": "No Commitment",
-    "founderAccess": "Founder Reviewed"
+    "noPitch": "No pitch",
+    "noCommitment": "No build commitment",
+    "founderAccess": "Engineer-reviewed"
   }
 }

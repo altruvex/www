@@ -1,17 +1,19 @@
 "use client";
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
+import { getCommercialCta } from "@/lib/config/commercial";
 import type { ConsultingView } from "@repo/pricing-schema";
 import { useTranslations } from "next-intl";
-import { AuditSection } from "./audit-section";
+import { ServiceSection } from "@/components/sections/services-index/service-section";
 
 export function AuditOffer({ audit }: { audit: ConsultingView }) {
   const t = useTranslations("serviceDetails.consulting.audit.offer");
+  const tCTAs = useTranslations("commercial.ctas");
 
   return (
-    <AuditSection
+    <ServiceSection
       id="audit-offer"
       titleId="consulting-offer-heading"
       eyebrow={t("forkEyebrow")}
@@ -51,13 +53,13 @@ export function AuditOffer({ audit }: { audit: ConsultingView }) {
           <CtaButtonGroup
             primaryVariant="accent"
             primary={{
-              href: "/contact?service=consulting&package=audit",
-              label: audit.ctaLabel,
+              href: getCommercialCta("technicalAudit").href,
+              label: tCTAs("technicalAudit"),
             }}
           />
         </div>
       </div>
-    </AuditSection>
+    </ServiceSection>
   );
 }
 

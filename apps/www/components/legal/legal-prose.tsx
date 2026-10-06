@@ -1,8 +1,8 @@
-import { Strong } from "@/components/ui/emphasis";
+import { Strong } from "@repo/ui/www";
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 
-const BODY = "text-[1.0625rem] leading-[1.75] text-muted-foreground";
+const BODY = "text-body leading-[1.75] text-muted-foreground";
 
 function parseInline(text: string): ReactNode[] {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -50,10 +50,10 @@ export function LegalDetails({
           key={label}
           className="grid gap-1 border-b border-border-subtle py-4 sm:grid-cols-[minmax(9rem,12rem)_minmax(0,1fr)] sm:gap-6"
         >
-          <dt className="text-[0.9375rem] font-medium leading-relaxed text-foreground">
+          <dt className="text-base font-medium leading-relaxed text-foreground">
             {label.replace(/[:：]\s*$/, "")}
           </dt>
-          <dd className="text-[0.9375rem] leading-relaxed text-muted-foreground">
+          <dd className="text-base leading-relaxed text-muted-foreground">
             {value}
           </dd>
         </div>

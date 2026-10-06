@@ -2,6 +2,7 @@ import { Building2, CalendarPlus, FilePlus2 } from "lucide-react";
 
 import { prisma } from "@repo/database";
 import { MetaList } from "@/components/os/detail-layout";
+import { AttachPicker } from "@/components/os/attach-picker";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { NextSteps, type NextStep } from "@/components/os/next-steps";
@@ -67,6 +68,16 @@ export async function MeetingDetail({
       ? meeting.contactSubmission.client
       : null;
 
+  const CLIENTS_SHOWN = 50;
+  const clientOptions =
+    canEdit && !meeting.client && !linkable
+      ? await prisma.client.findMany({
+          select: { id: true, name: true, company: true, email: true },
+          orderBy: { updatedAt: "desc" },
+          take: CLIENTS_SHOWN,
+        })
+      : [];
+
   const nextSteps: NextStep[] = [];
   const agreed =
     meeting.status === "APPROVED" || meeting.status === "RESCHEDULED";
@@ -96,7 +107,7 @@ export async function MeetingDetail({
         key: "client",
         label: "Open client",
         icon: Building2,
-        href: `/clients/${clientId}`,
+        href: `/clients/${clientId}#meetings`,
       });
     }
   }
@@ -120,6 +131,25 @@ export async function MeetingDetail({
         <EntityLink type="client" id={meeting.client.id}>
           {clientLabel(meeting.client)}
         </EntityLink>
+      ) : clientOptions.length > 0 ? (
+        <AttachPicker
+          label="Link a client"
+          options={clientOptions.map((c) => ({
+            value: c.id,
+            label: clientLabel(c),
+            hint: c.email ?? undefined,
+          }))}
+          request={{
+            url: "/api/admin/meetings",
+            method: "PATCH",
+            body: { id: meeting.id },
+            field: "clientId",
+          }}
+          successMessage="Client linked."
+          searchPlaceholder="Search clients"
+          variant="ghost"
+          footer={{ label: "All clients", href: "/clients" }}
+        />
       ) : (
         "—"
       ),

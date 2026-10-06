@@ -44,6 +44,7 @@ export default async function SubmissionsPage({
       id: true,
       name: true,
       phone: true,
+      email: true,
       message: true,
       serviceInterest: true,
       projectTimeline: true,
@@ -66,6 +67,7 @@ export default async function SubmissionsPage({
     id: s.id,
     name: s.name,
     phone: s.phone,
+    email: s.email,
     message: s.message,
     serviceInterest: s.serviceInterest,
     projectTimeline: s.projectTimeline,
@@ -211,7 +213,7 @@ function SubmissionInspector({
       </section>
 
       <MetaList
-        className="rounded-md border border-border"
+        className="rounded-panel-sm border border-border-subtle"
         items={[
           {
             label: "Interest",

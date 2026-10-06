@@ -156,7 +156,7 @@ export function TransparencyTable({
             {row.scopeNotes.map((name) => (
               <span
                 key={name}
-                className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                className="rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
               >
                 {name}
               </span>

@@ -245,7 +245,7 @@ export function ProposalContentEditor({
           </div>
         </div>
 
-        <dl className="grid gap-2 border-t border-border pt-3 sm:grid-cols-2">
+        <dl className="grid gap-2 border-t border-border-subtle pt-3 sm:grid-cols-2">
           <div className="flex items-baseline justify-between gap-3">
             <dt className="text-meta text-muted-foreground">
               Valid until
@@ -435,7 +435,7 @@ export function ProposalContentEditor({
           {SECTION_KEYS.map(({ key, label }) => {
             const section = content.sections[key];
             return (
-              <div key={key} className="space-y-2 rounded-md border border-border bg-surface/50 p-2.5">
+              <div key={key} className="space-y-2 rounded-ctl-xl border border-border-subtle bg-surface/50 p-2.5">
                 <div className="telemetry text-subtle-foreground">{label}</div>
                 <TextInput
                   value={section.eyebrow}
@@ -803,12 +803,12 @@ export function ProposalContentEditor({
           />
 
           {!percentOk && (
-            <p className="rounded-md border border-danger/25 bg-danger/[0.06] px-2.5 py-2 text-base text-danger">
+            <p className="rounded-ctl-lg border border-danger/25 bg-danger/[0.06] px-2.5 py-2 text-base text-danger">
               Percentages must total exactly 100% before the proposal can be generated.
             </p>
           )}
 
-          <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border pt-3">
+          <dl className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-t border-border-subtle pt-3">
             <dt className="text-meta text-muted-foreground">
               VAT at {Math.round(COMMERCIAL_TERMS.vatRate * 100)}%
               <span className="ms-1.5 text-subtle-foreground">
@@ -944,7 +944,7 @@ export function ProposalContentEditor({
         />
 
         {content.services.length < MAX_PROPOSAL_SERVICES && (
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-border pt-3">
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border-subtle pt-3">
             <span className="me-1 text-meta text-subtle-foreground">Quick add</span>
             {(["DOMAIN", "HOSTING", "BUSINESS_EMAIL", "SSL_CERTIFICATE"] as const).map((kind) => (
               <Button
@@ -960,7 +960,7 @@ export function ProposalContentEditor({
           </div>
         )}
         {sectionError("services") && (
-          <p className="rounded-md border border-danger/25 bg-danger/[0.06] px-2.5 py-2 text-base text-danger">
+          <p className="rounded-ctl-lg border border-danger/25 bg-danger/[0.06] px-2.5 py-2 text-base text-danger">
             {sectionError("services")}
           </p>
         )}

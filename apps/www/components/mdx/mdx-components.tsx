@@ -3,12 +3,14 @@ import {
   Highlight,
   Strong,
   type AccentGradient,
-} from "@/components/ui/emphasis";
+} from "@repo/ui/www";
 import { MDXComponents } from "mdx/types";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { getCommercialCta, type CommercialCtaKey } from "@/lib/config/commercial";
 import { Callout } from "./callout";
 import { CodeBlock } from "./code-block";
+import { Compare, Row } from "./compare";
 import { Quote } from "./quote";
 
 function fallbackAltText(src: string) {
@@ -36,6 +38,25 @@ function Mark({
     >
       {children}
     </Accent>
+  );
+}
+
+const LINK_CLASS =
+  "text-primary underline decoration-foreground/30 underline-offset-4 transition-[text-decoration-color] duration-(--motion-hover) hover:decoration-current";
+
+// A conversion link inside an article: the href comes from the commercial CTA
+// registry, never typed into the MDX, so a moved destination moves here too.
+function CtaLink({
+  cta,
+  children,
+}: {
+  cta: CommercialCtaKey;
+  children?: React.ReactNode;
+}) {
+  return (
+    <Link href={getCommercialCta(cta).href} className={LINK_CLASS}>
+      {children}
+    </Link>
   );
 }
 
@@ -74,22 +95,44 @@ export const mdxComponents: MDXComponents = {
   em: ({ children }) => <Highlight>{children}</Highlight>,
   Mark,
   ul: ({ children }) => (
-    <ul className="my-6 ml-6 list-disc space-y-2">{children}</ul>
+    <ul className="my-6 ms-6 list-disc space-y-2">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="my-6 ml-6 list-decimal space-y-2">{children}</ol>
+    <ol className="my-6 ms-6 list-decimal space-y-2">{children}</ol>
   ),
   li: ({ children }) => (
     <li className="text-base leading-relaxed text-primary/85">{children}</li>
   ),
-  a: ({ href, children }) => (
-    <Link
-      href={href as string}
-      className="transition-all text-primary underline underline-offset-4 decoration-foreground/30 hover:decoration-current"
-    >
-      {children}
-    </Link>
-  ),
+  // Internal paths go through the locale-aware Link so an Arabic article's
+  // "/pricing" resolves to "/ar/pricing"; anything else is an external source.
+  a: ({ href, children }) => {
+    const target = String(href ?? "");
+    const className = LINK_CLASS;
+    if (target.startsWith("/")) {
+      return (
+        <Link href={target} className={className}>
+          {children}
+        </Link>
+      );
+    }
+    if (target.startsWith("#")) {
+      return (
+        <a href={target} className={className}>
+          {children}
+        </a>
+      );
+    }
+    return (
+      <a
+        href={target}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+      >
+        {children}
+      </a>
+    );
+  },
   img: ({ src, alt, width, height }) => {
     const w = width != null ? Number(width) : 1200;
     const h = height != null ? Number(height) : 630;
@@ -134,5 +177,8 @@ export const mdxComponents: MDXComponents = {
   },
   pre: CodeBlock,
   Callout,
+  Compare,
+  CtaLink,
   Quote,
+  Row,
 };

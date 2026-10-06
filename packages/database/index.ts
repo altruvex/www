@@ -46,6 +46,7 @@ export function normalizePhone(phone: string): string {
 interface LinkClientToLeadInput {
   phone: string;
   name?: string | null;
+  email?: string | null;
   source: ClientSource;
   contactSubmissionId?: string;
   transparencyLeadId?: string;
@@ -68,6 +69,9 @@ export async function linkClientToLead(input: LinkClientToLeadInput) {
     if (!existing.name && input.name) {
       data.name = input.name;
     }
+    if (!existing.email && input.email) {
+      data.email = input.email;
+    }
     if (Object.keys(data).length === 0) return existing;
     return prisma.client.update({ where: { id: existing.id }, data });
   }
@@ -76,6 +80,7 @@ export async function linkClientToLead(input: LinkClientToLeadInput) {
     data: {
       phone,
       name: input.name ?? undefined,
+      email: input.email ?? undefined,
       source: input.source,
       contactSubmissionId: input.contactSubmissionId,
       transparencyLeadId: input.transparencyLeadId,

@@ -6,19 +6,16 @@ import { cn } from "../../lib/utils";
 const surfaceVariants = cva("min-w-0 border text-card-foreground", {
   variants: {
     variant: {
-      default: "border-border bg-card",
+      default: "border-border-subtle bg-card",
       subtle: "border-border-subtle bg-surface",
-      elevated: "border-border bg-card shadow-card",
-      glass: "liquid-glass-panel",
-      "glass-flat": "liquid-glass-flat",
-      toolbar: "liquid-glass-toolbar",
+      elevated: "border-border-subtle bg-card shadow-card",
     },
     radius: {
-      sm: "rounded-sm",
-      md: "rounded-md",
-      lg: "rounded-lg",
-      xl: "rounded-xl",
-      "2xl": "rounded-2xl",
+      sm: "rounded-ctl-sm",
+      md: "rounded-ctl",
+      lg: "rounded-panel-sm",
+      xl: "rounded-panel-md",
+      "2xl": "rounded-panel-lg",
     },
     padding: {
       none: "",

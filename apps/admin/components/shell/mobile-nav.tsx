@@ -113,7 +113,7 @@ export function MobileBottomBar({
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border-subtle bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label="Primary"
     >
       {tabs.map((tab) => {
@@ -196,7 +196,7 @@ export function MobileNavDrawer({
             if (items.length === 0) return null;
 
             return (
-              <div key={group.id} className="border-b border-border last:border-b-0">
+              <div key={group.id} className="border-b border-border-subtle last:border-b-0">
                 {group.label && (
                   <p className="telemetry px-4 pb-1 pt-3 text-subtle-foreground">
                     {group.label}

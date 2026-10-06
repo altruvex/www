@@ -29,7 +29,7 @@ export default async function NewClientPage() {
               "Sending that proposal moves the deal forward on its own — the stage is derived from the documents, not typed in.",
             ].map((step, i) => (
               <li key={step} className="flex gap-2.5 text-base">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-border font-mono text-micro text-subtle-foreground">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-border-subtle font-mono text-micro text-subtle-foreground">
                   {i + 1}
                 </span>
                 <span className="text-muted-foreground">{step}</span>

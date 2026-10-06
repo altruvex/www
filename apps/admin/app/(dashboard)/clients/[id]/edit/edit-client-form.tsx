@@ -123,12 +123,12 @@ export function EditClientForm({
       </Field>
       <Field
         label="Industry"
-        hint="Used to suggest the proposal's accent world."
+        hint="Pick what the client does. It only sets the starting colour of their proposals; you can change it per proposal."
       >
         <IndustrySelect name="industry" defaultValue={initial.industry} />
       </Field>
 
-      <p className="telemetry border-t border-border pt-3 text-subtle-foreground">
+      <p className="telemetry border-t border-border-subtle pt-3 text-subtle-foreground">
         Company identity
       </p>
       <Field label="Website" hint="Include https://">
@@ -195,7 +195,7 @@ export function EditClientForm({
         </p>
       )}
 
-      <div className="flex items-center gap-2 border-t border-border pt-3">
+      <div className="flex items-center gap-2 border-t border-border-subtle pt-3">
         <Button type="submit" variant="brand" disabled={busy}>
           {busy && <LoadingIcon size="sm" />}
           Save changes

@@ -17,6 +17,8 @@ import {
 } from "@/components/os/filter-bar";
 import { List, ListRow } from "@/components/os/list-row";
 import { PageHeader } from "@/components/os/page-header";
+import { AttachPicker } from "@/components/os/attach-picker";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { Pager } from "@/components/os/pager";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
@@ -133,7 +135,15 @@ export default async function IncidentsPage({
       ),
       prisma.incident.findMany({
         where: { status: { not: "RESOLVED" } },
-        select: { severity: true, ownerId: true },
+        orderBy: { detectedAt: "desc" },
+        select: {
+          id: true,
+          number: true,
+          title: true,
+          severity: true,
+          ownerId: true,
+          product: { select: { name: true } },
+        },
       }),
       incidentStats(),
       prisma.product.findMany({
@@ -278,8 +288,33 @@ export default async function IncidentsPage({
         ) : unownedOpen.length > 0 ? (
           <AlertBar
             tone="warning"
-            href="/incidents?owner=none"
-            cta="Assign an owner"
+            {...(canEdit
+              ? {
+                  action: (
+                    <PickToOpen
+                      label="Assign an owner"
+                      size="sm"
+                      searchPlaceholder="Find an incident"
+                      options={unownedOpen.slice(0, 50).map((i) => ({
+                        label: `#${i.number} ${i.title}`,
+                        hint: `${i.severity} · ${i.product.name}`,
+                        href: `/incidents/${i.id}#manage`,
+                      }))}
+                      footer={
+                        unownedOpen.length > 50
+                          ? {
+                              label: "All unowned incidents",
+                              href: "/incidents?owner=none",
+                            }
+                          : undefined
+                      }
+                    />
+                  ),
+                }
+              : {
+                  href: "/incidents?owner=none",
+                  cta: "See unowned incidents",
+                })}
           >
             {unownedOpen.length} open incident
             {unownedOpen.length === 1 ? " has" : "s have"} no owner. An unowned
@@ -299,9 +334,11 @@ export default async function IncidentsPage({
           title="No products to raise an incident against"
           body="An incident is always about a product Altruvex operates — that is what makes it actionable rather than a note. Add a product first; its pipeline can then report the deployments and logs an incident points at."
           action={
-            <Button asChild variant="outline">
-              <Link href="/products">Open products</Link>
-            </Button>
+            can(role, "create", "project") ? (
+              <Button asChild variant="outline">
+                <Link href="/products?new=product">Add a product</Link>
+              </Button>
+            ) : null
           }
         />
       </div>
@@ -478,14 +515,38 @@ export default async function IncidentsPage({
                     }
                     actions={
                       canEdit || canDelete ? (
-                        <IncidentRowActions
-                          id={incident.id}
-                          number={incident.number}
-                          title={incident.title}
-                          status={incident.status}
-                          canEdit={canEdit}
-                          canDelete={canDelete}
-                        />
+                        <>
+                          {canEdit &&
+                            !incident.owner &&
+                            incident.status !== "RESOLVED" &&
+                            owners.length > 0 && (
+                              <AttachPicker
+                                label="Assign"
+                                variant="ghost"
+                                options={owners.map((u) => ({
+                                  value: u.id,
+                                  label: u.name || u.email,
+                                  hint: u.name ? u.email : undefined,
+                                }))}
+                                request={{
+                                  url: "/api/admin/incidents",
+                                  method: "PATCH",
+                                  body: { id: incident.id },
+                                  field: "ownerId",
+                                }}
+                                successMessage={`Owner assigned to #${incident.number}.`}
+                                searchPlaceholder="Search the team"
+                              />
+                            )}
+                          <IncidentRowActions
+                            id={incident.id}
+                            number={incident.number}
+                            title={incident.title}
+                            status={incident.status}
+                            canEdit={canEdit}
+                            canDelete={canDelete}
+                          />
+                        </>
                       ) : undefined
                     }
                   />
@@ -494,7 +555,7 @@ export default async function IncidentsPage({
             </List>
           )}
           <Pager
-            className="border-t border-border px-3 py-2"
+            className="border-t border-border-subtle px-3 py-2"
             page={list.page}
             pageSize={list.pageSize}
             total={list.total}

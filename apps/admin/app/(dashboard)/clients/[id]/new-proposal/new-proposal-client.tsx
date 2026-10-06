@@ -846,7 +846,7 @@ export function NewProposalClient({
               />
             </ul>
 
-            <div className="border-y border-border bg-surface px-3 py-1.5">
+            <div className="border-y border-border-subtle bg-surface px-3 py-1.5">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="telemetry text-subtle-foreground">The deck</p>
                 <p className="font-mono text-micro tabular-nums text-subtle-foreground">
@@ -893,7 +893,7 @@ export function NewProposalClient({
               ))}
             </ul>
 
-            <p className="telemetry border-y border-border bg-surface px-3 py-1.5 text-subtle-foreground">
+            <p className="telemetry border-y border-border-subtle bg-surface px-3 py-1.5 text-subtle-foreground">
               Check
             </p>
 
@@ -1088,7 +1088,7 @@ export function NewProposalClient({
                         {estimate.minWeeks}–{estimate.maxWeeks} weeks
                       </span>
                     </div>
-                    <p className="mt-3 max-w-prose border-t border-border pt-3 text-base text-muted-foreground">
+                    <p className="mt-3 max-w-prose border-t border-border-subtle pt-3 text-base text-muted-foreground">
                       A proposal commits to{" "}
                       <span className="text-foreground">one</span> number, not a
                       range. The deck is seeded with the midpoint — every figure
@@ -1111,7 +1111,7 @@ export function NewProposalClient({
                         presets={pricePresets}
                       />
                       {outsideRange && (
-                        <p className="mt-3 flex items-start gap-1.5 border-t border-border pt-3 text-meta text-muted-foreground">
+                        <p className="mt-3 flex items-start gap-1.5 border-t border-border-subtle pt-3 text-meta text-muted-foreground">
                           <SlidersHorizontal
                             className="mt-0.5 size-3 shrink-0"
                             aria-hidden
@@ -1183,7 +1183,7 @@ export function NewProposalClient({
                         </span>
                       </label>
                     </div>
-                    <div className="mt-4 border-t border-border pt-3">
+                    <div className="mt-4 border-t border-border-subtle pt-3">
                       <Button
                         variant="brand"
                         size="sm"
@@ -1288,7 +1288,7 @@ export function NewProposalClient({
                 <div className="space-y-3">
                   {previewing && <RenderProgress startedAt={previewStartedAt} />}
                   {!previewing && previewStale && (
-                    <p className="rounded-md border border-border bg-surface px-2.5 py-2 text-base text-muted-foreground">
+                    <p className="rounded-panel-sm border border-border-subtle bg-surface px-2.5 py-2 text-base text-muted-foreground">
                       Rendered before your last edit. This is the deck as it
                       was — re-render to see the deck as it is.
                     </p>
@@ -1300,7 +1300,7 @@ export function NewProposalClient({
                       <img
                         src={src}
                         alt={`Slide ${i + 1}`}
-                        className="w-full rounded-md border border-border"
+                        className="w-full rounded-panel-sm border border-border-subtle"
                       />
                       <figcaption className="telemetry text-subtle-foreground">
                         Slide {String(i + 1).padStart(2, "0")}
@@ -1338,7 +1338,7 @@ export function NewProposalClient({
                   );
                   if (firstBroken) goTo(firstBroken.id);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-sm text-base text-danger hover:underline"
+                className="inline-flex items-center gap-1.5 rounded-ctl-xs text-base text-danger hover:underline"
               >
                 <AlertTriangle className="size-3.5" aria-hidden />
                 {validation.issues.length} issue
@@ -1430,7 +1430,7 @@ function RenderProgress({ startedAt }: { startedAt: number | null }) {
     <div
       role="status"
       aria-live="polite"
-      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-surface px-2.5 py-2"
+      className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-panel-sm border border-border-subtle bg-surface px-2.5 py-2"
     >
       <LoadingIcon size="sm" className="text-brand" />
       <span className="text-base">
@@ -1471,7 +1471,7 @@ function SlideEcho({
 
   return (
     <section className="plane overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border-subtle px-3 py-2">
         <div className="min-w-0">
           <h3 className="text-md font-semibold">Slide {slide}, as rendered</h3>
           <p className="mt-0.5 text-meta text-muted-foreground">
@@ -1509,7 +1509,7 @@ function SlideEcho({
                 src={src}
                 alt={`Slide ${slide} as last rendered`}
                 className={cn(
-                  "w-full rounded-md border border-border transition-opacity duration-[var(--dur-state)]",
+                  "w-full rounded-panel-sm border border-border-subtle transition-opacity duration-[var(--dur-state)]",
                   (stale || busy) && "opacity-50",
                 )}
               />

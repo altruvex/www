@@ -2,6 +2,7 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
 import PageClient from "./page-client";
+import { localeMeta } from "@/i18n/locale-meta";
 
 export async function generateMetadata({
   params,
@@ -19,8 +20,8 @@ export default async function TermsOfServicePage({
 }) {
   const { locale } = await params;
 
-  const dateLocale = locale === "ar" ? "ar-EG-u-nu-latn" : "en-US";
-  const lastModified = new Date("2026-07-05");
+  const dateLocale = localeMeta(locale).intl;
+  const lastModified = new Date("2026-10-05");
   const formattedDate = lastModified.toLocaleDateString(dateLocale, {
     month: "long",
     day: "numeric",

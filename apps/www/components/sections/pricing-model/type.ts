@@ -1,5 +1,5 @@
 export const DISPLAY =
-  "max-w-6xl text-balance text-[clamp(3.25rem,9vw,9rem)] font-light leading-[0.96] tracking-[-0.05em] rtl:leading-(--lh-heading-ar) rtl:tracking-normal";
+  "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[0.98] tracking-[-0.045em] rtl:leading-(--lh-heading-ar) rtl:tracking-normal";
 
 export const SECTION_TITLE =
   "text-balance text-[clamp(2.25rem,4.6vw,4.25rem)] font-normal leading-[1.04] tracking-[-0.035em] rtl:leading-(--lh-heading-ar) rtl:tracking-normal";
@@ -16,7 +16,7 @@ export const LEAD =
 export const BODY =
   "text-(length:--text-body-base) leading-(--leading-body) text-muted-foreground";
 
-export const LABEL = "text-[0.9375rem] font-medium leading-normal text-muted-foreground";
+export const LABEL = "text-base font-medium leading-normal text-muted-foreground";
 
 export const FIGURE_KEY =
   "text-balance text-[clamp(2.25rem,4.6vw,4.25rem)] font-light leading-[1.04] tabular-nums tracking-[-0.035em] text-brand-text rtl:font-normal rtl:tracking-normal";

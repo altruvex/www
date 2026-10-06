@@ -430,17 +430,189 @@ export interface CreateShortcut {
   label: string;
 }
 
-export function createShortcutsFor(role: Role | undefined): CreateShortcut[] {
-  const all: Array<CreateShortcut & { allowed: boolean }> = [
-    { key: "t", href: "/tasks?new=task", label: "New task", allowed: can(role, "create", "project") },
-    { key: "m", href: "/calendar?new=meeting", label: "New meeting", allowed: can(role, "create", "meeting") },
-    { key: "c", href: "/clients/new", label: "New client", allowed: can(role, "create", "client") },
+const CREATE_SHORTCUT_KEYS: Array<{ key: string; id: string; label: string }> = [
+  { key: "t", id: "task", label: "New task" },
+  { key: "m", id: "meeting", label: "New meeting" },
+  { key: "c", id: "client", label: "New client" },
+  { key: "p", id: "charge", label: "New payment charge" },
+];
+
+export function createShortcutsFor(
+  role: Role | undefined,
+  pathname?: string | null,
+): CreateShortcut[] {
+  const actions = quickCreateFor(role, pathname);
+  return CREATE_SHORTCUT_KEYS.flatMap(({ key, id, label }) => {
+    const href = actions.find((a) => a.id === id)?.href;
+    return href ? [{ key, href, label }] : [];
+  });
+}
+
+/**
+ * The record the operator is standing on, read from the path, so a create
+ * action can pre-fill its parent (client page → client, project page →
+ * project, product page → product).
+ */
+export interface CreateContext {
+  clientId?: string;
+  projectId?: string;
+  productId?: string;
+}
+
+export function createContextFor(pathname: string | null | undefined): CreateContext {
+  const match = /^\/(clients|projects|products)\/([^/?#]+)/.exec(pathname ?? "");
+  if (!match || match[2] === "new") return {};
+  const id = match[2]!;
+  if (match[1] === "clients") return { clientId: id };
+  if (match[1] === "projects") return { projectId: id };
+  return { productId: id };
+}
+
+function routeOpen(role: Role | undefined, href: string): boolean {
+  const path = href.split(/[?#]/)[0] ?? "/";
+  const gates = ROUTE_GATES as Record<string, RouteGate | undefined>;
+  const first = path.split("/").filter(Boolean)[0];
+  const gate = gates[path] ?? gates[first ? `/${first}` : "/"];
+  if (!gate) return true;
+  return pageDecision(role, gate.required, gate.roles);
+}
+
+function withParams(base: string, params: Record<string, string | undefined>): string {
+  const query = Object.entries(params)
+    .filter((entry): entry is [string, string] => Boolean(entry[1]))
+    .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+    .join("&");
+  if (!query) return base;
+  return `${base}${base.includes("?") ? "&" : "?"}${query}`;
+}
+
+export interface QuickCreate {
+  id: string;
+  /** The noun alone — "Client", "Task". */
+  label: string;
+  hint: string;
+  icon: LucideIcon;
+  /** Opens the create form directly. `null` = the palette's "choose the client" mode. */
+  href: string | null;
+  /** The href carries a parent taken from the current record page. */
+  scoped: boolean;
+}
+
+/**
+ * Every "New X" the shell offers (top-bar "+" menu, command palette). Each
+ * href opens X's create form, never a bare list, and carries the parent from
+ * the current record page when there is one.
+ */
+export function quickCreateFor(
+  role: Role | undefined,
+  pathname?: string | null,
+): QuickCreate[] {
+  const ctx = createContextFor(pathname);
+  const forClient = ctx.clientId ? "for this client" : "";
+  const forProject = ctx.projectId ? "for this project" : "";
+  const forProduct = ctx.productId ? "for this product" : "";
+  const all: Array<Omit<QuickCreate, "scoped"> & { allowed: boolean }> = [
     {
-      key: "p",
-      href: "/payments?new=charge",
-      label: "New payment charge",
+      id: "client",
+      label: "Client",
+      hint: "",
+      icon: Building2,
+      href: "/clients/new",
+      allowed: can(role, "create", "client"),
+    },
+    {
+      id: "proposal",
+      label: "Proposal",
+      hint: ctx.clientId ? forClient : "choose the client",
+      icon: FileText,
+      href: ctx.clientId ? `/clients/${encodeURIComponent(ctx.clientId)}/new-proposal` : null,
+      allowed: can(role, "create", "proposal"),
+    },
+    {
+      id: "meeting",
+      label: "Meeting",
+      hint: forClient || "on the calendar",
+      icon: CalendarDays,
+      href: withParams("/calendar?new=meeting", { client: ctx.clientId }),
+      allowed: can(role, "create", "meeting"),
+    },
+    {
+      id: "task",
+      label: "Task",
+      hint: forProject,
+      icon: ListChecks,
+      href: withParams("/tasks?new=task", { project: ctx.projectId }),
+      allowed: can(role, "create", "project"),
+    },
+    {
+      id: "project",
+      label: "Recorded project",
+      hint: forClient || "work already under way",
+      icon: Shapes,
+      href: withParams("/projects?new=recorded", { client: ctx.clientId }),
+      allowed: can(role, "create", "project"),
+    },
+    {
+      id: "product",
+      label: "Product",
+      hint: forClient || forProject,
+      icon: Boxes,
+      href: withParams("/products?new=product", {
+        client: ctx.clientId,
+        project: ctx.projectId,
+      }),
+      allowed: can(role, "create", "project"),
+    },
+    {
+      id: "service",
+      label: "Service",
+      hint: forClient || forProject || forProduct || "domain, hosting, licence",
+      icon: Globe,
+      href: withParams("/services?new=service", {
+        client: ctx.clientId,
+        project: ctx.projectId,
+        product: ctx.productId,
+      }),
+      allowed: can(role, "create", "project"),
+    },
+    {
+      id: "charge",
+      label: "Charge",
+      hint: forClient || forProject,
+      icon: Wallet,
+      href: withParams("/payments?new=charge", {
+        client: ctx.clientId,
+        project: ctx.projectId,
+      }),
       allowed: can(role, "create", "payment") && canSeeFinance(role),
     },
+    {
+      id: "retainer",
+      label: "Retainer",
+      hint: forClient,
+      icon: Wrench,
+      href: withParams("/maintenance?new=retainer", { client: ctx.clientId }),
+      allowed: can(role, "create", "payment"),
+    },
+    {
+      id: "incident",
+      label: "Incident",
+      hint: forProduct,
+      icon: ShieldAlert,
+      href: withParams("/incidents?new=incident", { product: ctx.productId }),
+      allowed: can(role, "create", "incident"),
+    },
   ];
-  return all.filter((s) => s.allowed).map(({ key, href, label }) => ({ key, href, label }));
+  return all
+    .filter((item) => item.allowed && (item.href == null || routeOpen(role, item.href)))
+    .map((item) => ({
+      id: item.id,
+      label: item.label,
+      hint: item.hint,
+      icon: item.icon,
+      href: item.href,
+      scoped:
+        item.href != null &&
+        /[?&](client|project|product)=|^\/clients\/[^/]+\/new-proposal/.test(item.href),
+    }));
 }

@@ -238,7 +238,7 @@ export function ServiceInspectorActions({
           </Button>
         )}
         <Button size="sm" variant="ghost" asChild>
-          <Link href={`/clients/${service.clientId}?tab=services`}>Open client</Link>
+          <Link href={`/clients/${service.clientId}#sites`}>Open client</Link>
         </Button>
         {showMoney && termPaymentId && (
           <Button size="sm" variant="ghost" asChild>
@@ -329,7 +329,7 @@ export function ServicesList({
           "Nothing recorded. Add the domain, hosting and mailboxes this client holds through us — each one counts down to its expiry and raises an alert before it lapses."}
       </EmptyInline>
     ) : (
-      <ul className="divide-y divide-border">
+      <ul className="divide-y divide-border-subtle">
         {services.map((service) => {
           const Icon = KIND_ICON[service.kind];
           const state = statusOf("clientServiceState", service.state);
@@ -475,7 +475,8 @@ export function ServicesList({
                   </Button>
                 )}
 
-                <DropdownMenu>
+                {/* Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none. */}
+                <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon-sm" aria-label={`More actions for ${service.name}`}>
                       <MoreHorizontal className="size-3.5" />
@@ -506,7 +507,7 @@ export function ServicesList({
                     )}
                     {showClient && (
                       <DropdownMenuItem asChild>
-                        <Link href={`/clients/${service.clientId}?tab=services`}>Open client</Link>
+                        <Link href={`/clients/${service.clientId}#sites`}>Open client</Link>
                       </DropdownMenuItem>
                     )}
                     {service.projectId && !showProject && (
@@ -556,7 +557,7 @@ export function ServicesList({
       {embedded ? (
         <div>
           {createScope && services.length > 0 && (
-            <div className="flex justify-end border-b border-border px-3 py-2">{addButton("Add service")}</div>
+            <div className="flex justify-end border-b border-border-subtle px-3 py-2">{addButton("Add service")}</div>
           )}
           {body}
         </div>

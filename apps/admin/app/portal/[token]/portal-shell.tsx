@@ -1,7 +1,7 @@
 import { Link2Off, Mail, MessageCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { Button, Skeleton } from "@repo/ui";
+import { AltruvexLogo, Button, Skeleton } from "@repo/ui";
 
 import type { PortalContact } from "@/lib/client-portal";
 import { phone as formatPhone } from "@/lib/format";
@@ -20,13 +20,7 @@ export function whatsappLink(phoneNumber: string, text: string): string {
 function PortalBrand({ kind }: { kind: PortalKind }) {
   return (
     <div className="flex items-center gap-2">
-      <span
-        className="grid size-6 shrink-0 place-items-center rounded-md bg-foreground font-sans text-meta font-semibold text-background"
-        aria-hidden
-      >
-        A
-      </span>
-      <span className="font-sans text-md font-semibold tracking-tight">Altruvex</span>
+      <AltruvexLogo size="xs" variant="lockup" />
       <span className="telemetry ms-auto text-subtle-foreground">{KIND_LABEL[kind]}</span>
     </div>
   );
@@ -75,7 +69,7 @@ export function PortalShell({
 
 export function PortalFooter({ contact, subject }: { contact: PortalContact; subject: string }) {
   return (
-    <footer className="mt-8 border-t border-border pt-5">
+    <footer className="mt-8 border-t border-border-subtle pt-5">
       <p className="text-base text-muted-foreground">
         Questions about this page? Message the team — a reply comes from a person, not a bot.
       </p>
@@ -104,9 +98,10 @@ export function PortalInvalid({ kind, contact }: { kind: PortalKind; contact: Po
   return (
     <PortalFrame kind={kind}>
       <div className="plane mt-6 flex flex-col items-center px-6 py-10 text-center">
-        <div className="mb-3 flex size-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle-foreground">
+        <div className="mb-3 flex size-9 items-center justify-center rounded-ctl-lg border border-border-subtle bg-surface text-subtle-foreground">
           <Link2Off className="size-4" aria-hidden />
         </div>
+        {/* brand-allow: hierarchy-multiple-h1 — separate render branch */}
         <h1 className="text-md font-semibold text-foreground">This link is not valid</h1>
         <p className="mt-1.5 max-w-md text-base text-muted-foreground">
           It may have been copied incompletely, or it is no longer active. Open the link exactly as

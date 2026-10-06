@@ -5,7 +5,7 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import { jumpToSection } from "@/components/shared/contents-rail";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { bodyMarks, renderBodyText } from "@/components/ui/rich-text";
 import { STRIKE_LINE } from "@/components/ui/strike";
@@ -68,11 +68,12 @@ function OpeningSection() {
           secondTitle={second}
           description={t("description")}
           classes={{
+            container: "lg:flex-col lg:items-start lg:gap-8",
             titleWrapper: "space-y-6",
             title:
-              "max-w-6xl text-balance text-[clamp(2.5rem,5.2vw,4.75rem)] font-light leading-[1.04] tracking-[-0.03em]",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[1.04] tracking-[-0.03em]",
             description:
-              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+              "max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] lg:max-w-[46ch]",
           }}
         />
 
@@ -186,7 +187,7 @@ function OrderSection() {
                 </li>
               ))}
             </ol>
-            <p className="mt-5 hidden max-w-[24ch] text-[0.8125rem] leading-relaxed text-muted-foreground lg:block">
+            <p className="mt-5 hidden max-w-[24ch] text-md leading-relaxed text-muted-foreground lg:block">
               {t("rail.note")}
             </p>
           </nav>
@@ -194,26 +195,29 @@ function OrderSection() {
           <div>
             <Chapter layer="data" index={0}>
               <Lead>{t("decisions.data.description")}</Lead>
-              <Contrast contrast="1" />
+              <Handover layer="data" />
             </Chapter>
 
             <Chapter layer="architecture" index={1}>
-              <Lead>{t("constraints.title")}</Lead>
-              <Prose paragraphs={t.raw("constraints.paragraphs")} />
-              <Principles keys={["scale"]} />
+              <Lead>{t("decisions.title")}</Lead>
+              <Principles keys={["scale", "handoff", "maintenance"]} />
               <Contrast contrast="2" />
+              <Contrast contrast="3" />
+              <Handover layer="architecture" />
             </Chapter>
 
             <Chapter layer="features" index={2}>
-              <Lead>{t("decisions.title")}</Lead>
-              <Principles keys={["handoff", "maintenance"]} />
-              <Contrast contrast="3" />
+              <Lead>{t("constraints.title")}</Lead>
+              <Prose paragraphs={t.raw("constraints.paragraphs")} />
+              <Contrast contrast="1" />
+              <Handover layer="features" />
             </Chapter>
 
             <Chapter layer="page" index={3}>
               <Lead>{t("hero.order.note")}</Lead>
               <Prose paragraphs={t.raw("multilingual.paragraphs")} />
               <Specimen />
+              <Handover layer="page" />
             </Chapter>
           </div>
         </div>
@@ -232,6 +236,7 @@ function Chapter({
   children: ReactNode;
 }) {
   const t = useTranslations("approach.hero.order.items");
+  const tChapter = useTranslations("approach.chapters");
   const titleRef = useSectionElement<HTMLHeadingElement>();
 
   return (
@@ -241,7 +246,7 @@ function Chapter({
       aria-labelledby={`${chapterId(layer)}-title`}
       className="border-t border-border-subtle py-[clamp(3.5rem,9vh,6.25rem)] outline-none first:border-t-0 lg:first:pt-(--section-y-top)"
     >
-      <p className="text-[0.8125rem] text-local-accent-text tabular-nums">
+      <p className="text-md text-local-accent-text tabular-nums">
         <Num value={index + 1} pad={2} /> / <Num value={LAYERS.length} pad={2} />
       </p>
       <h2
@@ -250,6 +255,10 @@ function Chapter({
         className="mt-2.5 text-[clamp(2.5rem,5.4vw,5.25rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground"
       >
         {t(layer)}
+        <span className="sr-only">: </span>
+        <span className="mt-3 block text-2xl leading-snug font-normal tracking-normal text-muted-foreground">
+          {tChapter(layer)}
+        </span>
       </h2>
       {children}
     </article>
@@ -293,7 +302,7 @@ function Principles({ keys }: { keys: Principle[] }) {
     <div ref={gridRef} className="mt-12 grid gap-x-12 gap-y-8 md:grid-cols-2">
       {keys.map((key) => (
         <div key={key} data-principle>
-          <h3 className="text-[1.375rem] leading-tight font-medium tracking-[-0.02em] text-foreground">
+          <h3 className="text-2xl leading-tight font-medium tracking-[-0.02em] text-foreground">
             {t(`${key}.title`)}
           </h3>
           <p className={cn(BODY, "mt-2 max-w-[42ch] text-muted-foreground")}>
@@ -314,13 +323,13 @@ function Contrast({ contrast }: { contrast: "1" | "2" | "3" }) {
       ref={ref}
       className="mt-12 grid max-w-180 grid-cols-[auto_minmax(0,1fr)] gap-x-6 gap-y-2.5 border-t-2 border-foreground pt-5 text-lg"
     >
-      <dt className="pt-1 text-[0.8125rem] text-muted-foreground">
+      <dt className="pt-1 text-md text-muted-foreground">
         {t("label.common")}
       </dt>
       <dd className="text-muted-foreground">
         <span className={STRIKE_LINE}>{t(`${contrast}.common`)}</span>
       </dd>
-      <dt className="pt-1 text-[0.8125rem] text-local-accent-text">
+      <dt className="pt-1 text-md text-local-accent-text">
         {t("label.altruvex")}
       </dt>
       <dd className="text-foreground">{t(`${contrast}.altruvex`)}</dd>
@@ -328,7 +337,25 @@ function Contrast({ contrast }: { contrast: "1" | "2" | "3" }) {
   );
 }
 
-const TYPE_NOTES = ["face", "leading", "tracking", "direction"] as const;
+function Handover({ layer }: { layer: Layer }) {
+  const t = useTranslations("approach.handover");
+  const ref = useSectionElement<HTMLDivElement>();
+
+  return (
+    <div ref={ref} className="mt-10">
+      <Eyebrow className="m-0">{t("label")}</Eyebrow>
+      <ul className="mt-3 space-y-1.5 text-base leading-relaxed text-foreground">
+        {t(`items.${layer}`)
+          .split(" | ")
+          .map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+      </ul>
+    </div>
+  );
+}
+
+const TYPE_NOTES = ["leading", "tracking", "direction"] as const;
 
 function Specimen() {
   const t = useTranslations("approach.multilingual.specimen");
@@ -348,7 +375,7 @@ function Specimen() {
 
       <div className="mt-5 grid gap-8 md:grid-cols-2">
         <div>
-          <p className="text-[0.8125rem] text-muted-foreground">{t("en.label")}</p>
+          <p className="text-md text-muted-foreground">{t("en.label")}</p>
           <p
             lang="en"
             dir="ltr"
@@ -358,7 +385,7 @@ function Specimen() {
           </p>
         </div>
         <div>
-          <p className="text-[0.8125rem] text-local-accent-text">{t("ar.label")}</p>
+          <p className="text-md text-local-accent-text">{t("ar.label")}</p>
           <p
             lang="ar"
             dir="rtl"
@@ -375,7 +402,7 @@ function Specimen() {
             <dt className="eyebrow text-muted-foreground">
               {t(`notes.${key}.term`)}
             </dt>
-            <dd className="mt-2 max-w-[36ch] text-[0.9375rem] leading-relaxed text-foreground">
+            <dd className="mt-2 max-w-[36ch] text-base leading-relaxed text-foreground">
               {t(`notes.${key}.value`)}
             </dd>
           </div>
@@ -422,7 +449,7 @@ function RefusalsSection() {
               data-refusal
               className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-t border-border-subtle py-5 md:grid-cols-[4rem_minmax(0,1fr)]"
             >
-              <span className="pt-2 text-[0.8125rem] text-muted-foreground tabular-nums">
+              <span className="pt-2 text-md text-muted-foreground tabular-nums">
                 <Num value={index + 1} pad={2} />
               </span>
               <p className="max-w-[48ch] text-[clamp(1.1875rem,1.8vw,1.625rem)] leading-snug tracking-[-0.015em] text-foreground">
@@ -444,8 +471,9 @@ function ClosingSection() {
       title={t("title")}
       titleAccent={t("titleItalic")}
       body={t.rich("description", bodyMarks)}
-      primary="technicalCall"
+      primary="describeTheBuild"
       secondary="projectRange"
+      world="blue"
     />
   );
 }

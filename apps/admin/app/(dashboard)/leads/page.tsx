@@ -21,6 +21,7 @@ import { IntakeTabs, LEAD_STAGES, LEAD_STATUS_PREFILTER } from "./intake-tabs";
 import { LeadInspectorActions } from "./lead-inspector-actions";
 import { LeadsTable, type LeadRow } from "./leads-table";
 import { Button } from "@repo/ui";
+import { PickToOpen } from "@/components/os/pick-to-open";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,27 @@ export default async function LeadsPage({
   const hot = rows.filter((r) => r.score >= 65).length;
   const shown = uncontactedOnly ? rows.filter((r) => isUncontacted(r.stage)) : rows;
 
+  // An empty list offers the submissions waiting to become clients, each
+  // opened on its own page where Convert lives.
+  const pickSubmissions =
+    rows.length === 0 &&
+    can(role, "view", "lead") &&
+    can(role, "create", "client") &&
+    roleCanOpen(role, "/submissions")
+      ? (
+          await prisma.contactSubmission.findMany({
+            where: { client: null, status: { not: "SPAM" } },
+            orderBy: { submittedAt: "desc" },
+            take: 50,
+            select: { id: true, name: true, phone: true, submittedAt: true },
+          })
+        ).map((s) => ({
+          label: s.name || s.phone,
+          href: `/submissions/${s.id}`,
+          hint: `Submitted ${when(s.submittedAt)}`,
+        }))
+      : [];
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -246,9 +268,18 @@ export default async function LeadsPage({
             </>
           }
           action={
-            <Button asChild variant="outline">
-              <Link href="/submissions">Review website submissions</Link>
-            </Button>
+            pickSubmissions.length > 0 ? (
+              <PickToOpen
+                label="Convert a submission"
+                options={pickSubmissions}
+                footer={{ href: "/submissions", label: "All submissions" }}
+                searchPlaceholder="Search submissions"
+              />
+            ) : can(role, "create", "client") ? (
+              <Button asChild variant="outline">
+                <Link href="/clients/new">Add a client</Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -353,7 +384,7 @@ function LeadInspector({
       </section>
 
       <MetaList
-        className="rounded-md border border-border"
+        className="rounded-panel-sm border border-border-subtle"
         items={[
           {
             label: "Phone",

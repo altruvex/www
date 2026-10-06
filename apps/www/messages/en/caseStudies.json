@@ -1,99 +1,132 @@
 {
   "altruvex-site": {
-    "client": "Internal / Altruvex",
-    "industry": "Custom Web Development",
-    "metrics": [
+    "client": "Altruvex (our own site)",
+    "industry": "Custom web development",
+    "name": "Altruvex.com — a bilingual Next.js studio website",
+    "summary": "A bilingual English and Arabic website on Next.js, with native right-to-left layout and a public project cost estimator.",
+    "scope": "Studio website · Arabic and English · Next.js",
+    "glance": {
+      "build": "Studio website",
+      "languages": "Arabic, English",
+      "platform": "Next.js",
+      "status": "altruvex.com"
+    },
+    "context": "Altruvex’s own website: the first place a prospective client checks how we build, in Arabic and in English.",
+    "problem": "In a market where studios compete on price, the site had to show technical quality through what a visitor can open and test, without borrowing credibility it had not yet earned.",
+    "solution": "We built a bilingual site on a custom Next.js stack, with right-to-left layout designed in from the start and a public estimator that shows scope and a cost range before the first conversation.",
+    "decisions": [
       {
-        "label": "Mobile TTI",
-        "value": "< 1s"
+        "title": "Arabic designed in, not translated on top",
+        "why": "Every page exists in both languages, and the layout is written in logical directions, so the Arabic version mirrors as a whole instead of only swapping its words."
       },
       {
-        "label": "RTL Switch",
-        "value": "< 16ms"
+        "title": "Every price read from one schema",
+        "why": "The pricing page, the estimator and our internal system read the same pricing schema, so a figure cannot say one thing on one page and another elsewhere."
       },
       {
-        "label": "Pre-qualified leads",
-        "value": "Transparency-first"
+        "title": "The estimate is public",
+        "why": "A visitor sees scope and a cost range before getting in touch, so the first conversation starts from numbers both sides have already seen."
       }
     ],
-    "name": "Altruvex.com - The Site Itself Had to Be the Proof",
-    "outcome": "Sub-1s mobile TTI, RTL switching in under 16ms with zero layout shift, and <strong>leads that arrive pre-qualified</strong> - with scope and investment already mapped before the first call begins.",
-    "problem": "In a market where agencies compete on price, Altruvex needed its own site to prove technical quality without borrowing enterprise credibility it had not yet earned.",
-    "solution": "We built a multilingual site on a custom Next.js stack with native RTL architecture, performance-first frontend engineering, and a transparency flow that qualifies leads before the first conversation.",
-    "summary": "A multilingual proof build designed to demonstrate technical quality, native RTL design, and lead qualification before the first call.",
+    "delivered": [
+      "The site in Arabic and English",
+      "A public project cost estimator",
+      "Pricing pages read from the shared schema",
+      "A writing section of technical articles",
+      "Installable as a web app"
+    ],
+    "outcome": "The site you are reading: both languages live, and <strong>a public estimator</strong>, so scope and cost are visible before anyone gets in touch.",
     "techStack": [
-      "Next.js\u00a016",
-      "TypeScript\u00a06",
-      "Tailwind CSS\u00a0v4",
+      "Next.js 16",
+      "TypeScript 6",
+      "Tailwind CSS v4",
       "GSAP",
       "Lenis",
       "next-intl",
       "Prisma",
       "PostgreSQL",
       "Vercel"
-    ],
-    "year": "2025"
+    ]
   },
   "art-lighting-store": {
     "client": "Art Lighting Store",
     "industry": "Premium home lighting",
-    "metrics": [
+    "name": "Art Lighting Store — a custom storefront for premium lighting",
+    "summary": "A custom Next.js online store for a premium lighting retailer, in Arabic and English: a catalog by category and high-resolution product images.",
+    "scope": "Online store · Arabic and English · Next.js",
+    "glance": {
+      "build": "Online store",
+      "languages": "Arabic, English",
+      "platform": "Next.js",
+      "status": "artlighting-eg.com"
+    },
+    "context": "Art Lighting sells premium home lighting — spotlights, light poles and LED fixtures — to customers who judge a product by its finish and its scale.",
+    "problem": "The store had to show finish and scale closely enough to sell premium fixtures online, in Arabic and English.",
+    "solution": "We designed and built a custom Next.js storefront in Arabic and English, with product images served at high resolution and sized for each screen.",
+    "decisions": [
       {
-        "label": "Performance",
-        "value": "95+ Lighthouse"
+        "title": "Images prepared for close inspection",
+        "why": "Finish is what the customer is buying, so product images are served at a resolution that survives zooming, and sized per screen so pages stay quick."
       },
       {
-        "label": "Catalog",
-        "value": "High-res zoom"
-      },
-      {
-        "label": "Inventory",
-        "value": "Synced live"
+        "title": "Two full languages, two addresses",
+        "why": "Arabic and English each have their own address and direction, so an Arabic visitor reads right to left from the first screen and search engines index each version on its own."
       }
     ],
-    "name": "Art Lighting Store",
-    "outcome": "A production storefront with high-resolution product imagery, synchronized inventory, and a handoff the client team can operate <strong>without engineering support.</strong>",
-    "problem": "The client sold high-end fixtures where material and finish detail matter, but their existing platform compressed images aggressively and loaded slowly. Customers could not properly inspect finishes or scale, and inventory was fragmented across multiple systems - creating overselling risk.",
-    "solution": "We designed a custom Next.js storefront with an image pipeline tuned for high-resolution zoom without sacrificing load time. Inventory is synchronized via webhooks into a single source of truth, and pages are statically generated with targeted revalidation for fast, consistent delivery.",
-    "summary": "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
+    "delivered": [
+      "Storefront in Arabic and English",
+      "Catalog by category: spotlights, poles, LED lighting",
+      "High-resolution product imagery",
+      "Cart and customer accounts"
+    ],
+    "outcome": "A live storefront in Arabic and English, with <strong>high-resolution product images</strong> and a catalog organised by category.",
     "techStack": [
       "Next.js App Router",
       "TypeScript",
       "Tailwind CSS",
       "PostgreSQL + Prisma",
       "Image optimization pipeline"
-    ],
-    "year": "2024"
+    ]
   },
   "newlight-lighting-store": {
     "client": "NewLight",
-    "industry": "Lighting & E-Commerce",
-    "metrics": [
+    "industry": "Lighting & e-commerce",
+    "name": "NewLight — a first online store for a lighting brand",
+    "summary": "NewLight's first online store: a custom bilingual storefront with a structured checkout, built for every device and installable on a phone.",
+    "scope": "First online store · Arabic and English · Next.js",
+    "glance": {
+      "build": "Online store",
+      "languages": "Arabic, English",
+      "platform": "Next.js",
+      "status": "newlight-eg.com"
+    },
+    "context": "NewLight is a lighting brand that had no online store before this build.",
+    "problem": "NewLight needed a store where customers could browse and buy easily online, without the brand losing its premium feel.",
+    "solution": "We designed and built a custom online store around how the products look, with a structured checkout and Arabic and English across every device.",
+    "decisions": [
       {
-        "label": "Launch",
-        "value": "Production live"
+        "title": "Two full languages, two addresses",
+        "why": "Arabic and English each have their own address and direction, so an Arabic visitor reads right to left from the first screen and search engines index each version on its own."
       },
       {
-        "label": "Languages",
-        "value": "Multilingual"
-      },
-      {
-        "label": "Commerce",
-        "value": "Full checkout"
+        "title": "Installable on a phone",
+        "why": "The store ships with a web app manifest, so a customer can add it to the home screen and open it like an app."
       }
     ],
-    "name": "NewLight Lighting Store - Venturing into E-Commerce",
-    "outcome": "NewLight's first online store launched on custom architecture with multilingual journeys, payments, and <strong>a catalog the team can manage day to day.</strong>",
-    "problem": "As a leading lighting company, NewLight needed to transition their traditional showroom into a digital experience that allows customers to browse and buy easily while maintaining the brand's premium feel.",
-    "solution": "We designed a custom e-commerce store focused on visual aesthetics. We built a flexible product management system and a structured checkout flow, with full multilingual support across all devices.",
-    "summary": "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports multilingual buying on every device.",
+    "delivered": [
+      "Storefront in Arabic and English",
+      "Product catalog with categories",
+      "Cart, checkout and customer accounts",
+      "Wishlist and product compare",
+      "Installable as a web app"
+    ],
+    "outcome": "NewLight’s first online store, live on custom architecture with <strong>bilingual journeys and a structured checkout.</strong>",
     "techStack": [
       "Next.js App Router",
       "next-intl (EN/AR)",
       "Tailwind CSS",
       "PWA",
       "PostgreSQL + Prisma"
-    ],
-    "year": "2024"
+    ]
   }
 }

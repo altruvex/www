@@ -11,6 +11,7 @@ import { currentRole } from "@/lib/authorize";
 import { can } from "@/lib/rbac";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { statusOf } from "@/lib/status";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { ContractsTable, type ContractRow } from "./contracts-table";
 import { ContractInspector } from "./contract-inspector";
 import { contractStepPermissions } from "./contract-permissions";
@@ -52,7 +53,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
   const inspectId = params.inspect?.trim() || null;
   const role = await currentRole();
 
-  const [scopeClient, contracts] = await Promise.all([
+  const [scopeClient, contracts, readyProposals] = await Promise.all([
     clientId
       ? prisma.client.findUnique({
           where: { id: clientId },
@@ -70,7 +71,24 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
       },
       orderBy: { createdAt: "desc" },
     }),
+    can(role, "create", "contract")
+      ? prisma.proposal.findMany({
+          where: { status: "ACCEPTED", contract: { is: null }, ...(clientId ? { clientId } : {}) },
+          select: {
+            id: true,
+            projectType: true,
+            client: { select: { name: true, company: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 50,
+        })
+      : [],
   ]);
+  const generateOptions = readyProposals.map((p) => ({
+    label: p.projectType,
+    hint: p.client.company || p.client.name || "Unnamed client",
+    href: `/proposals/${p.id}`,
+  }));
   const scopeName = scopeClient
     ? scopeClient.company || scopeClient.name || "Unnamed client"
     : "Unknown client";
@@ -191,15 +209,29 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
           title={scopeClient ? `No contracts for ${scopeName} yet` : "This client no longer exists"}
           body={
             scopeClient
-              ? "A contract is generated from an accepted proposal. Open this client's proposals to find the one they accepted, or quote them first."
+              ? generateOptions.length > 0
+                ? "A contract is generated from an accepted proposal. Pick the one they accepted to generate it."
+                : "A contract is generated from an accepted proposal, and this client has not accepted one yet. Quote them first."
               : "The link points at a client record that was deleted or never existed. Clear the filter to see every contract."
           }
           action={
-            <Button asChild variant="outline">
-              <Link href={scopeClient ? `/proposals?client=${scopeClient.id}` : "/contracts"}>
-                {scopeClient ? "Their proposals" : "All contracts"}
-              </Link>
-            </Button>
+            scopeClient && generateOptions.length > 0 ? (
+              <PickToOpen
+                label="Generate a contract"
+                options={generateOptions}
+                footer={{ label: "Their proposals", href: `/proposals?client=${scopeClient.id}` }}
+              />
+            ) : scopeClient && can(role, "create", "proposal") ? (
+              <Button asChild variant="outline">
+                <Link href={`/clients/${scopeClient.id}/new-proposal`}>New proposal</Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href={scopeClient ? `/proposals?client=${scopeClient.id}` : "/contracts"}>
+                  {scopeClient ? "Their proposals" : "All contracts"}
+                </Link>
+              </Button>
+            )
           }
         />
       ) : rows.length === 0 ? (
@@ -208,9 +240,17 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
           title="No contracts yet"
           body="Contracts are generated from accepted proposals. Once a client accepts, Generate contract on the proposal turns the offer into a commitment with the same numbers."
           action={
-            <Button asChild variant="outline">
-              <Link href="/proposals">Open proposals</Link>
-            </Button>
+            generateOptions.length > 0 ? (
+              <PickToOpen
+                label="Generate a contract"
+                options={generateOptions}
+                footer={{ label: "All accepted proposals", href: "/proposals?status=ACCEPTED" }}
+              />
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/proposals?status=ACCEPTED">Open accepted proposals</Link>
+              </Button>
+            )
           }
         />
       ) : (
@@ -219,6 +259,7 @@ export default async function ContractsPage({ searchParams }: { searchParams: Pr
           canDelete={canDelete}
           filtered={filterLabel || null}
           allowed={contractStepPermissions(role)}
+          generateOptions={generateOptions}
         />
       )}
 

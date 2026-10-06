@@ -11,6 +11,9 @@ import {
   PopoverTrigger,
   cn,
   controlSurface,
+  menuEmpty,
+  menuItem,
+  menuSearch,
 } from "@repo/ui";
 import {
   DIAL_CODES,
@@ -85,14 +88,14 @@ export function PhoneInput({
               <ChevronsUpDown className="ms-1 h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-72 p-0">
+          <PopoverContent align="start" surface="menu" className="w-72">
             <Command loop>
               <Command.Input
                 placeholder="Search country or code"
-                className="h-10 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+                className={menuSearch}
               />
-              <Command.List data-lenis-prevent className="max-h-64 overflow-y-auto p-1">
-                <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
+              <Command.List data-lenis-prevent className="max-h-64 overflow-y-auto">
+                <Command.Empty className={menuEmpty}>
                   No country found.
                 </Command.Empty>
                 {options.map((o) => (
@@ -104,12 +107,12 @@ export function PhoneInput({
                       setOpen(false);
                       inputRef.current?.focus();
                     }}
-                    className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm data-[selected=true]:bg-muted"
+                    className={cn(menuItem, "cursor-pointer justify-between")}
                   >
                     <span className="truncate">{o.name}</span>
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <span dir="ltr">+{DIAL_CODES[o.iso]}</span>
-                      {o.iso === iso && <Check className="h-4 w-4" />}
+                      {o.iso === iso && <Check />}
                     </span>
                   </Command.Item>
                 ))}

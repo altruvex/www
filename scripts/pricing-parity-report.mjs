@@ -5,7 +5,7 @@ import {
   FACTOR_GROUPS, formatFrom, formatRange, formatWeeks, investmentMatrixView,
   MAINTENANCE_PLANS, maintenanceViews, MAX_DELIVERY_WEEKS, minimumEngagement,
   minimumEngagementFrom, paymentScheduleView, PRICING_VERSION, publicAddonViews,
-  SERVICE_IDS, serviceInvestmentViews, SERVICES, termsView, USD_EXCHANGE_RATE,
+  SERVICE_IDS, serviceInvestmentViews, SERVICES, termsView,
   workedExampleView,
 } from "@repo/pricing-schema";
 
@@ -141,8 +141,7 @@ for (const l of LOCALES) {
   const t = termsView(l);
   check(t.vatNote.includes("14"), `${l}: VAT rate published`);
   check(digits(t.revisionNote).includes("800"), `${l}: revision rate published`);
-  check(digits(t.usdNote).includes("50"), `${l}: USD rate published`);
-  check(t.usdNote.includes(USD_EXCHANGE_RATE.reviewedOn), `${l}: USD review date published`);
+  check(!("usdNote" in t), `${l}: no USD exchange rate or review cadence published`);
 }
 
 console.log("\n[7] Add-ons are discrete line items, never bundled");

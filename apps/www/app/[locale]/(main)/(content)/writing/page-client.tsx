@@ -3,15 +3,15 @@ import { Container } from "@/components/shared/container";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { Highlight } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import type { ArticleListItem } from "@/types/mdx";
 import { useTranslations } from "next-intl";
 import { WritingIndex } from "./writing-index";
+import type { Locale } from "@/i18n/locale-meta";
 
 type WritingPageClientProps = {
   articles: ArticleListItem[];
-  locale: "en" | "ar";
+  locale: Locale;
 };
 
 export default function WritingPage({
@@ -53,7 +53,7 @@ function OpeningSection() {
 
         <HeroHeadline
           as="h1"
-          className="max-w-[14ch] text-balance font-sans text-[clamp(2.75rem,7vw,7rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground select-none rtl:max-w-[16ch] rtl:leading-[1.2] rtl:tracking-normal"
+          className="max-w-[22ch] text-balance font-sans text-[clamp(2.75rem,7vw,7rem)] leading-[1.02] font-light tracking-[-0.03em] text-foreground select-none rtl:max-w-[22ch] rtl:leading-[1.2] rtl:tracking-normal"
         >
           <span className="block">{t("hero.title")}</span>
           <Highlight tone="soft" className="block tracking-[-0.02em] rtl:tracking-normal">

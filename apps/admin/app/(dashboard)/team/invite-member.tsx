@@ -44,7 +44,7 @@ export function InviteMember({
           <UserPlus className="size-3.5" />
           Invite
         </Button>
-        <Link href="/integrations" className="text-meta text-muted-foreground underline underline-offset-2">
+        <Link href="/integrations#email" className="text-meta text-muted-foreground underline underline-offset-2">
           Integration required — no mail transport
         </Link>
       </div>

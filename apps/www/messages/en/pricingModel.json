@@ -1,6 +1,5 @@
 {
   "home": {
-    "eyebrow": "Transparent by design",
     "title": "You see the price before you talk to us.",
     "lead": "Our prices are published. Answer a few questions and you get your range; the proposal then fixes it as one written figure.",
     "exampleEyebrow": "{service}, for example",
@@ -23,27 +22,31 @@
     }
   },
   "hero": {
-    "eyebrow": "Pricing",
-    "titleLead": "Priced from requirements,",
-    "titleAccent": "not packages.",
-    "lead": "There are no packages to pick from. A build starts from a published floor, narrows as we understand the scope, and ends in one written figure."
+    "eyebrow": "Published prices",
+    "titleLead": "Website and web app pricing,",
+    "titleAccent": "published before any call.",
+    "lead": "Every range is on this page, by project type and complexity, with what a build includes, what is billed separately and how you pay. Your own estimate takes a few minutes; the written proposal fixes one figure."
   },
   "sections": {
+    "invest": {
+      "title": "What it costs",
+      "lead": "A published figure for every service. Build prices are ranges until the proposal fixes one figure."
+    },
+    "includes": {
+      "title": "What the price includes",
+      "lead": "What the proposal figure pays for, and what appears on its own line so nothing is folded into it."
+    },
+    "terms": {
+      "title": "Payment and terms",
+      "lead": "How you pay, what the warranty covers and when the code becomes yours. The same terms apply to every project."
+    },
     "how": {
       "title": "How pricing works",
       "lead": "One project, from the first conversation to the binding figure. Each stage publishes a narrower range; only the proposal fixes one number."
     },
     "cost": {
-      "title": "What determines cost",
-      "lead": "The estimator prices four things. Two more are settled with you in scope review, and one is billed monthly or yearly."
-    },
-    "invest": {
-      "title": "Service investment",
-      "lead": "Published figures for every service. Build ranges stay indicative until the proposal fixes one number."
-    },
-    "terms": {
-      "title": "Commercial terms",
-      "lead": "What applies to every engagement, before any proposal is written."
+      "title": "What changes the price",
+      "lead": "Four answers move your estimate. Integrations and performance targets are checked with you and priced in the proposal. Maintenance is billed monthly or yearly, outside the build."
     }
   },
   "stages": {
@@ -56,7 +59,7 @@
     "scope": {
       "name": "Scope",
       "does": "What gets designed, engineered and integrated sets the project type.",
-      "cap": "Every build starts here"
+      "cap": "Published floor"
     },
     "complexity": {
       "name": "Complexity",
@@ -86,19 +89,18 @@
       "title": "Moves your estimate",
       "lead": "The estimator prices these four. Its range opens wide and narrows with every answer.",
       "opening": "Opening range",
-      "floorNote": "Every build starts here",
+      "floorNote": "Any website or web app",
       "byBand": "{name}, by complexity"
     },
     "review": {
       "title": "Settled in scope review",
-      "lead": "Checked with you before the proposal is written. A form can't know them, so the estimator never prices them."
+      "lead": "A form cannot judge these, so the estimator leaves them out. We check them with you, and the proposal prices them."
     },
     "monthly": {
       "title": "Billed monthly or yearly",
       "lead": "After launch, only if you want it. Never part of the build figure."
     },
-    "questionLabel": "Estimator · Question {n}",
-    "plansLink": "Plans in Service investment"
+    "plansLink": "Maintenance plan prices"
   },
   "factors": {
     "brand": "Brand identity",
@@ -108,40 +110,33 @@
   "drivers": {
     "scope": {
       "name": "Scope",
-      "line": "What gets designed, engineered and integrated.",
-      "question": "What are you building?"
+      "line": "What gets designed, engineered and integrated."
     },
     "complexity": {
       "name": "Complexity",
-      "line": "How much logic, how many templates, states and roles.",
-      "question": "How much scope?"
+      "line": "How much logic, how many templates, states and roles."
     },
     "content": {
       "name": "Content",
-      "line": "Whether copy, imagery and brand identity are ready.",
-      "question": "Project conditions — Brand identity, Content readiness"
+      "line": "Whether copy, imagery and brand identity are ready."
     },
     "timeline": {
       "name": "Timeline",
-      "line": "Urgent, standard or flexible delivery.",
-      "question": "Project conditions — Timeline"
+      "line": "Urgent, standard or flexible delivery."
     },
     "integrations": {
       "name": "Integrations",
       "line": "Payments, sign-in, CRM, APIs, analytics.",
-      "checked": "Which gateway, CRM or APIs — and who owns each account. What data moves between systems, and what happens when one fails.",
-      "question": "What does it need? — Payments & third-party integrations"
+      "checked": "Which gateway, CRM or APIs — and who owns each account. What data moves between systems, and what happens when one fails."
     },
     "performance": {
       "name": "Performance",
       "line": "Performance, accessibility, SEO and infrastructure targets.",
-      "checked": "Speed and Core Web Vitals targets. Accessibility level and SEO baseline. Hosting and infrastructure.",
-      "question": "What does it need? — Performance & SEO targets"
+      "checked": "Speed and Core Web Vitals targets. Accessibility level and SEO baseline. Hosting and infrastructure."
     },
     "operation": {
       "name": "Ongoing operation",
-      "line": "Maintenance, monitoring, security and updates.",
-      "question": "What does it need? — Ongoing maintenance"
+      "line": "Maintenance, monitoring, security and updates."
     }
   },
   "register": {
@@ -152,17 +147,17 @@
       "figure": "Figure"
     },
     "interface": {
-      "name": "Interface design",
+      "name": "Website design",
       "covers": "Interface and experience design, delivered as screens and a working design system.",
       "how": "Per project, from the screens and flows involved",
       "figure": "Scoped per project"
     },
     "development": {
-      "name": "Custom development",
-      "covers": "Websites and systems engineered from your requirements.",
+      "name": "Website and web app development",
+      "covers": "Websites and web apps built from your requirements.",
       "how": "Published range by project type and complexity; fixed in the proposal",
       "figure": "From {floor}",
-      "more": "See all {count} published ranges",
+      "allPrices": "All {count} prices, by project type and complexity",
       "matrixHead": "Project type"
     },
     "audit": {
@@ -171,9 +166,9 @@
       "how": "Fixed fee, credited to the build"
     },
     "maintenance": {
-      "name": "Maintenance",
+      "name": "Website maintenance",
       "covers": "Updates, monitoring, backups and edit requests after launch.",
-      "how": "Monthly plan"
+      "how": "Monthly or yearly plan"
     }
   },
   "terms": {
@@ -181,23 +176,49 @@
     "warranty": "Warranty",
     "warrantyNote": "{days} days after launch — defects in delivered work are fixed at no charge.",
     "validity": "Proposal validity",
-    "ownership": "Ownership"
+    "ownership": "Ownership",
+    "currency": "Currency",
+    "currencyNote": "Invoiced in EGP for clients in Egypt and in USD for international clients.",
+    "included": {
+      "title": "Included in every build",
+      "lead": "What the proposal figure pays for, phase by phase.",
+      "items": [
+        "Discovery: a requirements summary and a project roadmap",
+        "Sitemap, page structure and key flows, approved before visual work",
+        "Interface design: visual mockups and responsive layouts",
+        "Development on a live preview link",
+        "Testing, hosting setup and deployment to production",
+        "Source code and documentation, handed over to you"
+      ]
+    },
+    "separate": {
+      "title": "Billed separately",
+      "lead": "Each appears as its own line, so nothing is folded into the build figure.",
+      "items": [
+        "VAT, added at contract stage",
+        "Domain, hosting and business email, each on its own line",
+        "Paid third-party services your build uses, such as payment gateways or SMS, billed when used",
+        "Revision work beyond the included rounds, at the published hourly rate",
+        "Scope added after the proposal, documented and agreed in writing first",
+        "A maintenance plan, only if you choose one"
+      ]
+    }
   },
   "close": {
-    "title": "Start from your requirements.",
-    "lead": "The estimator gives an indicative range in a few minutes. The proposal — the only binding figure — follows a scope review."
+    "title": "Get your range, or talk it through.",
+    "lead": "The estimator gives an indicative range in a few minutes, with no contact details. A call is for when you'd rather describe the project out loud. Either way, the proposal is the only binding figure."
   },
   "scopeNotes": {
     "title": "What does it need?",
     "lead": "Tick what applies. Each one is checked with you in scope review.",
-    "badge": "Reviewed in scope — doesn't move this range"
+    "badge": "Confirmed in scope review — doesn't change this range"
   },
   "result": {
     "driversTitle": "Scope drivers",
     "projectType": "Project type",
     "complexity": "Complexity",
     "setsRange": "sets the range",
-    "cellOf": "published cell",
+    "cellOf": "published range",
     "pending": "Not answered — every option still counted",
     "notesTitle": "Scope notes",
     "noNotes": "None ticked yet.",

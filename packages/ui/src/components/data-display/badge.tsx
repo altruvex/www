@@ -24,13 +24,12 @@ export const toneDot: Record<Tone, string> = {
 };
 
 const badgeVariants = cva(
-  "inline-flex items-center whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-meta font-medium",
+  "inline-flex items-center whitespace-nowrap rounded-ctl-xs border px-1.5 py-0.5 text-meta font-medium",
   {
     variants: {
       tone: toneClasses,
       variant: {
         soft: "",
-        glass: "liquid-glass-flat",
         outline: "bg-transparent",
       },
     },

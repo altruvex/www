@@ -9,10 +9,15 @@ import {
   ServiceType,
   type Prisma,
 } from "@repo/database";
-import { getTranslations } from "next-intl/server";
 import { NextResponse, type NextRequest } from "next/server";
-import { ZodError } from "zod";
-import { tooManyRequests } from "@/lib/server/too-many-requests";
+import {
+  apiError,
+  codeTranslator,
+  readJsonBody,
+  tooManyRequests,
+  unexpectedError,
+} from "@/lib/server/api-error";
+import { toLocale } from "@/i18n/locale-meta";
 
 const SERVICE_TYPE_MAP: Record<
   NonNullable<Prisma.ContactSubmissionCreateInput["serviceInterest"]>,
@@ -54,10 +59,7 @@ function boundedAttribution(value: unknown): string | undefined {
 export async function handleContactSubmission(request: NextRequest) {
   try {
     if (!isTrustedOrigin(request)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid request origin" },
-        { status: 403 },
-      );
+      return apiError("forbidden");
     }
 
     const rl = await enforceRateLimit(request, {
@@ -67,17 +69,15 @@ export async function handleContactSubmission(request: NextRequest) {
       windowSeconds: 10 * 60,
     });
     if (!rl.ok) {
-      return tooManyRequests(request, rl.retryAfterSeconds);
+      return tooManyRequests(rl.retryAfterSeconds);
     }
 
-    const body = await request.json();
-    const locale =
-      typeof body.locale === "string" &&
-        (body.locale === "ar" || body.locale === "en")
-        ? body.locale
-        : "en";
-    const t = await getTranslations({ locale, namespace: "validations" });
-    const contactFormSchema = createContactFormSchema(t);
+    const body = await readJsonBody(request);
+    if (!body) return apiError("bad_request");
+
+    const locale = toLocale(body.locale);
+    // Issue messages are validation keys; the form localizes them.
+    const contactFormSchema = createContactFormSchema(codeTranslator);
     const validatedData = contactFormSchema.parse(body);
 
     if (validatedData.website && validatedData.website.length > 0) {
@@ -89,10 +89,8 @@ export async function handleContactSubmission(request: NextRequest) {
           userAgent: request.headers.get("user-agent") ?? undefined,
         });
       }
-      return NextResponse.json(
-        { success: true, message: "Thank you for your submission" },
-        { status: 200 },
-      );
+      // Same shape as a real success, so a bot learns nothing.
+      return NextResponse.json({ ok: true, code: "received" }, { status: 200 });
     }
 
     const userAgent = request.headers.get("user-agent") || undefined;
@@ -115,6 +113,7 @@ export async function handleContactSubmission(request: NextRequest) {
     const submissionData: Prisma.ContactSubmissionCreateInput = {
       name: validatedData.name,
       phone: validatedData.phone,
+      email: validatedData.email,
       message: validatedData.message,
       serviceInterest: serviceInterestKey
         ? SERVICE_TYPE_MAP[serviceInterestKey]
@@ -145,6 +144,7 @@ export async function handleContactSubmission(request: NextRequest) {
     await linkClientToLead({
       phone: validatedData.phone,
       name: validatedData.name,
+      email: validatedData.email,
       source: "WEBSITE_CONTACT_FORM",
       contactSubmissionId: submission.id,
     });
@@ -172,7 +172,7 @@ export async function handleContactSubmission(request: NextRequest) {
               data: {
                 type: "NEW_CONTACT",
                 title: "New Contact Submission",
-                message: `${validatedData.name} submitted a contact form`,
+                message: `${validatedData.name} submitted a contact form (${validatedData.email})`,
                 userId: admin.id,
                 entityType: "contact",
                 entityId: submission.id,
@@ -239,42 +239,11 @@ export async function handleContactSubmission(request: NextRequest) {
     }
 
     return NextResponse.json(
-      {
-        success: true,
-        submissionId: submission.id,
-        message:
-          "Thank you for your submission. We'll get back to you within 24 hours.",
-      },
+      // The visitor-facing confirmation is the localized receipt on the form.
+      { ok: true, code: "received", submissionId: submission.id },
       { status: 201 },
     );
   } catch (error: unknown) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Contact submission error:", error);
-    }
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors: error.issues.reduce((acc: Record<string, string>, issue) => {
-            const [firstPath] = issue.path;
-            if (typeof firstPath === "string") {
-              acc[firstPath] = issue.message;
-            }
-            return acc;
-          }, {}),
-        },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "An unexpected error occurred. Please try again later.",
-      },
-      { status: 500 },
-    );
+    return unexpectedError(error, "Contact submission error");
   }
 }

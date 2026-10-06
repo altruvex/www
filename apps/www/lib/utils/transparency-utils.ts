@@ -7,13 +7,14 @@ import {
   type ResolvedPricing,
 } from "@repo/pricing-schema";
 import { normalizeNumeralsToEnglish } from "./number";
+import { toLocale } from "@/i18n/locale-meta";
 
 export function fillScopeTokens(
   text: string,
   locale: string,
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): string {
-  const l: Locale = locale.startsWith("ar") ? "ar" : "en";
+  const l: Locale = toLocale(locale);
   const bands = pricingCopy(l).bands;
   return fillTemplate(text, {
     warrantyDays: formatNumber(pricing.terms.postLaunchWarrantyDays, l),

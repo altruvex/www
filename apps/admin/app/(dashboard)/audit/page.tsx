@@ -219,7 +219,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           </div>
         </form>
         {active.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5 border-t border-border px-3 py-2">
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border-subtle px-3 py-2">
             {active.map((key) => (
               <FilterChip
                 key={key}
@@ -278,7 +278,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
           prevHref={newerHref}
           nextHref={olderHref}
           summary={`${events.length} event${events.length === 1 ? "" : "s"}, newest first`}
-          className="border-t border-border px-3 py-2"
+          className="border-t border-border-subtle px-3 py-2"
         />
       </Panel>
     </div>

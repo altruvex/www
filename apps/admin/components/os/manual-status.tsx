@@ -156,7 +156,8 @@ export function ManualStatusMenu({
 
   return (
     <>
-      <DropdownMenu>
+      {/* Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size={size}>
             <PenLine className="size-3.5 text-subtle-foreground" />
@@ -326,7 +327,7 @@ function ManualDialog({
             maxLength={500}
             placeholder="Kept in the audit trail"
             className={cn(
-              "w-full rounded-ctl border border-border bg-background px-3 py-2 text-base",
+              "w-full rounded-ctl border border-border-subtle bg-background px-3 py-2 text-base",
               "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
             )}
           />

@@ -27,7 +27,7 @@ export function MetaList({
   className?: string;
 }) {
   return (
-    <dl className={cn("divide-y divide-border", className)}>
+    <dl className={cn("divide-y divide-border-subtle", className)}>
       {items.map((item) => (
         <div key={item.label} className="flex items-start justify-between gap-3 px-3 py-2">
           <Hint label={item.hint}>

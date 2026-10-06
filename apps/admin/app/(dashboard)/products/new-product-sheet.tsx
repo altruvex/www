@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,6 +10,7 @@ import { SearchSelect } from "@/components/os/combobox-select";
 
 import {
   Button,
+  Checkbox,
   Field,
   Input,
   Select,
@@ -54,12 +55,31 @@ function slugify(value: string): string {
 export function NewProductSheet({
   clients,
   projects,
+  preset,
+  defaultClientId,
 }: {
   clients: { id: string; label: string }[];
   projects: { id: string; name: string; clientId: string }[];
+  /** From `?new=product&project=&client=`: opens the sheet with these chosen. */
+  preset?: { clientId: string | null; projectId: string | null } | null;
+  /** The client the page is already scoped to, chosen when the sheet opens by hand. */
+  defaultClientId?: string | null;
 }) {
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [open, setOpen] = React.useState(preset != null);
+
+  function close() {
+    setOpen(false);
+    if (searchParams.has("new")) {
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("new");
+      next.delete("project");
+      const query = next.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    }
+  }
 
   return (
     <>
@@ -72,7 +92,8 @@ export function NewProductSheet({
           key="new-product"
           clients={clients}
           projects={projects}
-          onClose={() => setOpen(false)}
+          preset={preset ?? { clientId: defaultClientId ?? null, projectId: null }}
+          onClose={close}
           onCreated={(id) => {
             setOpen(false);
             router.push(`/products/${id}`);
@@ -86,18 +107,26 @@ export function NewProductSheet({
 function Form({
   clients,
   projects,
+  preset,
   onClose,
   onCreated,
 }: {
   clients: { id: string; label: string }[];
   projects: { id: string; name: string; clientId: string }[];
+  preset: { clientId: string | null; projectId: string | null };
   onClose: () => void;
   onCreated: (id: string) => void;
 }) {
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
-  const [clientId, setClientId] = React.useState(clients[0]?.id ?? "");
-  const [projectId, setProjectId] = React.useState<string>(NO_PROJECT);
+  const presetProject = projects.find((p) => p.id === preset.projectId);
+  const presetClientId =
+    presetProject?.clientId ??
+    clients.find((c) => c.id === preset.clientId)?.id ??
+    clients[0]?.id ??
+    "";
+  const [clientId, setClientId] = React.useState(presetClientId);
+  const [projectId, setProjectId] = React.useState<string>(presetProject?.id ?? NO_PROJECT);
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [slugTouched, setSlugTouched] = React.useState(false);
@@ -106,6 +135,7 @@ function Form({
   const [productionUrl, setProductionUrl] = React.useState("");
   const [repositoryUrl, setRepositoryUrl] = React.useState("");
   const [framework, setFramework] = React.useState("");
+  const [existingSite, setExistingSite] = React.useState(false);
   const [detectingFramework, setDetectingFramework] = React.useState(false);
   const [frameworkEvidence, setFrameworkEvidence] = React.useState<string | null>(null);
 
@@ -156,6 +186,7 @@ function Form({
           productionUrl: productionUrl.trim() || null,
           repositoryUrl: repositoryUrl.trim() || null,
           framework: framework.trim() || null,
+          existingSite,
         }),
       });
       if (res.status === 401) {
@@ -172,7 +203,11 @@ function Form({
         toast.error(data.message ?? "The product could not be created.");
         return;
       }
-      toast.success(`${name.trim()} added. Issue an ingest token to connect its pipeline.`);
+      toast.success(
+        existingSite
+          ? `${name.trim()} added as an existing site.`
+          : `${name.trim()} added. Issue an ingest token to connect its pipeline.`,
+      );
       onCreated(data.product.id);
     } catch {
       toast.error("The request could not be sent. Check your connection.");
@@ -312,6 +347,21 @@ function Form({
               disabled={detectingFramework}
             />
           </Field>
+
+          <label className="flex min-h-11 items-start gap-2.5 sm:min-h-0">
+            <Checkbox
+              checked={existingSite}
+              onCheckedChange={(value) => setExistingSite(value === true)}
+              className="mt-0.5 border-foreground/45 hover:border-foreground/70"
+            />
+            <span className="space-y-0.5">
+              <span className="block text-base">Existing site</span>
+              <span className="block text-meta text-subtle-foreground">
+                Already running before it came here. No CI pipeline is expected,
+                so an empty deployment history is not flagged.
+              </span>
+            </span>
+          </label>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>

@@ -48,3 +48,6 @@ export const COMPLEXITY_TIER = COMPLEXITY_TO_LEGACY_BAND as Readonly<
   Record<ComplexityId, DeliverableBand>
 >;
 export const STICKY_OFFSET = 72;
+
+/** Anchor of the "How an estimate is calculated" section on /transparency. */
+export const ESTIMATE_METHOD_ID = "how-estimates-are-calculated";

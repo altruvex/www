@@ -1,18 +1,22 @@
 "use client";
 
 import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon, Dialog, DialogContent, DialogTitle } from "@repo/ui";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { MOTION, useThemeSwitch } from "@/lib/motion";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { gsap } from "@/lib/utils/gsap";
 import { cn } from "@/lib/utils/utils";
 import {
+  Calculator,
   Calendar,
   Check,
+  ClipboardCheck,
   Copy,
   Languages,
+  MessageSquareText,
   MoonStar,
   Search,
   SunMedium,
@@ -29,6 +33,7 @@ import {
   useTransition,
   type ComponentType,
 } from "react";
+import { LOCALE_META, localeMeta, nextLocale } from "@/i18n/locale-meta";
 
 type PaletteGroup = "actions" | "pages" | "services";
 
@@ -78,6 +83,7 @@ export function CommandPalette({
   const t = useTranslations("commandPalette");
   const tNav = useTranslations("nav");
   const tFooter = useTranslations("footer");
+  const tCTAs = useTranslations("commercial.ctas");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -86,21 +92,20 @@ export function CommandPalette({
   const switchTheme = useThemeSwitch();
   const [, startTransition] = useTransition();
 
-  const isRTL = locale === "ar";
-  const dir = isRTL ? "rtl" : "ltr";
+  const dir = localeMeta(locale).dir;
 
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const restoreFocusRef = useRef<HTMLElement | null>(null);
   const closingRef = useRef(false);
 
+  // Radix locks the page scroll once its portal mounts, a commit after this hook has
+  // already locked it, so the scrollbar gutter is compensated once. The hook is what stops Lenis.
   useLockBodyScroll(open);
 
   const items = useMemo<PaletteItem[]>(() => {
@@ -117,18 +122,42 @@ export function CommandPalette({
       {
         id: "action-language",
         group: "actions",
-        label: locale === "ar" ? "English" : "العربية",
+        label: LOCALE_META[nextLocale(locale)].nativeName,
         keywords: "language english arabic عربي انجليزي اللغة locale",
         icon: Languages,
         action: "language",
       },
       {
+        id: "action-start",
+        group: "actions",
+        label: tCTAs("describeTheBuild"),
+        keywords: "start project brief inquiry contact hire ابدأ مشروع تواصل استفسار",
+        icon: MessageSquareText,
+        href: getCommercialCta("describeTheBuild").href,
+      },
+      {
+        id: "action-audit",
+        group: "actions",
+        label: tCTAs("technicalAudit"),
+        keywords: "technical audit review code audit rebuild repair مراجعة تقنية تدقيق فحص",
+        icon: ClipboardCheck,
+        href: getCommercialCta("technicalAudit").href,
+      },
+      {
         id: "action-schedule",
         group: "actions",
         label: t("actions.schedule"),
-        keywords: "schedule call meeting book موعد مكالمة حجز",
+        keywords: "schedule consultation call meeting book موعد مكالمة حجز استشارة",
         icon: Calendar,
-        href: "/schedule",
+        href: getCommercialCta("technicalCall").href,
+      },
+      {
+        id: "action-estimate",
+        group: "actions",
+        label: t("actions.estimate"),
+        keywords: "estimate estimator calculator cost price budget quote range تقدير حاسبة تكلفة ميزانية سعر",
+        icon: Calculator,
+        href: getCommercialCta("projectRange").href,
       },
       {
         id: "action-email",
@@ -142,7 +171,7 @@ export function CommandPalette({
       { id: "page-work", group: "pages", label: tNav("work"), keywords: "work case studies portfolio اعمال مشاريع", href: "/work" },
       { id: "page-services", group: "pages", label: tNav("services"), keywords: "services خدمات", href: "/services" },
       { id: "page-pricing", group: "pages", label: tNav("pricing"), keywords: "pricing cost اسعار تكلفة", href: "/pricing" },
-      { id: "page-transparency", group: "pages", label: tNav("transparency"), keywords: "transparency estimate estimator شفافية تقدير", href: "/transparency" },
+      { id: "page-transparency", group: "pages", label: `${tNav("transparency")} · ${tNav("transparencyHint")}`, keywords: "transparency cost estimator calculator price estimate شفافية حاسبة التكلفة تقدير سعر", href: "/transparency" },
       { id: "page-contact", group: "pages", label: tNav("contact"), keywords: "contact reach تواصل اتصل", href: "/contact" },
       { id: "page-about", group: "pages", label: tNav("about"), keywords: "about company founder من نحن عن", href: "/about" },
       { id: "page-approach", group: "pages", label: tNav("approach"), keywords: "approach philosophy منهج فلسفة", href: "/approach" },
@@ -151,12 +180,14 @@ export function CommandPalette({
       { id: "page-standards", group: "pages", label: tFooter("standards"), keywords: "standards quality معايير جودة", href: "/standards" },
       { id: "page-writing", group: "pages", label: tFooter("writing"), keywords: "writing blog articles مقالات كتابة", href: "/writing" },
       { id: "page-faq", group: "pages", label: tFooter("faq"), keywords: "faq questions اسئلة", href: "/faq" },
-      { id: "svc-interface", group: "services", label: tFooter("webDesign"), keywords: "interface design ui ux تصميم واجهات", href: "/services/interface-design" },
-      { id: "svc-development", group: "services", label: tFooter("development"), keywords: "development engineering تطوير برمجة", href: "/services/development" },
-      { id: "svc-consulting", group: "services", label: tFooter("consulting"), keywords: "consulting audit استشارات", href: "/services/consulting" },
-      { id: "svc-maintenance", group: "services", label: tFooter("maintenance"), keywords: "maintenance support صيانة دعم", href: "/services/maintenance" },
+      { id: "page-privacy", group: "pages", label: tFooter("privacy"), keywords: "privacy data personal خصوصية بيانات", href: "/privacy" },
+      { id: "page-terms", group: "pages", label: tFooter("terms"), keywords: "terms conditions contract legal شروط عقد", href: "/terms" },
+      { id: "svc-interface", group: "services", label: tFooter("webDesign"), keywords: "website design interface ui ux تصميم المواقع واجهات", href: "/services/interface-design" },
+      { id: "svc-development", group: "services", label: tFooter("development"), keywords: "website web app development engineering تطوير برمجة مواقع تطبيقات ويب", href: "/services/development" },
+      { id: "svc-consulting", group: "services", label: tFooter("consulting"), keywords: "technical audit consulting review مراجعة تقنية استشارات", href: "/services/consulting" },
+      { id: "svc-maintenance", group: "services", label: tFooter("maintenance"), keywords: "website maintenance support صيانة المواقع دعم", href: "/services/maintenance" },
     ];
-  }, [t, tNav, tFooter, locale, resolvedTheme, copied]);
+  }, [t, tNav, tFooter, tCTAs, locale, resolvedTheme, copied]);
 
   const results = useMemo(() => {
     if (!query.trim()) return items;
@@ -185,12 +216,12 @@ export function CommandPalette({
   const clampedActive = Math.min(activeIndex, Math.max(0, flat.length - 1));
   const activeItem = flat[clampedActive];
 
-  useEffect(() => {
-    if (!open) return;
+  // Runs once the portal content exists (Radix mounts it a commit after `open` flips), so the
+  // refs are set; it replaces Radix's own first-tabbable focus with the search field.
+  const onOpened = useCallback((event: Event) => {
+    event.preventDefault();
     closingRef.current = false;
-    restoreFocusRef.current = document.activeElement as HTMLElement | null;
-
-    const raf = requestAnimationFrame(() => inputRef.current?.focus());
+    inputRef.current?.focus();
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const backdrop = backdropRef.current;
@@ -212,8 +243,7 @@ export function CommandPalette({
       }
     }
     trackEvent("command_palette_opened");
-    return () => cancelAnimationFrame(raf);
-  }, [open]);
+  }, []);
 
   const animateClose = useCallback(() => {
     if (closingRef.current) return;
@@ -225,7 +255,6 @@ export function CommandPalette({
       setQuery("");
       setActiveIndex(0);
       setCopied(false);
-      restoreFocusRef.current?.focus?.();
       onClose();
     };
     if (!backdrop || !panel || reduce) {
@@ -251,7 +280,7 @@ export function CommandPalette({
         return;
       }
       if (item.action === "language") {
-        const next = locale === "ar" ? "en" : "ar";
+        const next = nextLocale(locale);
         startTransition(() => {
           router.replace(
             // @ts-expect-error -- pathname is dynamic at runtime, not a typed route literal
@@ -279,11 +308,6 @@ export function CommandPalette({
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        animateClose();
-        return;
-      }
       if (flat.length === 0) return;
       const move = (delta: number) => {
         e.preventDefault();
@@ -305,7 +329,7 @@ export function CommandPalette({
         if (activeItem) runItem(activeItem);
       }
     },
-    [flat.length, activeItem, runItem, animateClose],
+    [flat.length, activeItem, runItem],
   );
 
   useEffect(() => {
@@ -314,28 +338,19 @@ export function CommandPalette({
     el?.scrollIntoView({ block: "nearest" });
   }, [open, activeItem, clampedActive]);
 
-  if (!open) return null;
-
   return (
-    <div
-      ref={rootRef}
-      dir={dir}
-      className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-[14vh] sm:pt-[18vh]"
-      role="presentation"
-    >
-      <div
-        ref={backdropRef}
-        className="absolute inset-0 bg-background/70 backdrop-blur-sm"
-        onClick={animateClose}
-        aria-hidden
-      />
-      <div
+    <Dialog open={open} onOpenChange={(next) => !next && animateClose()}>
+      <DialogContent
         ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t("title")}
-        className="relative w-full max-w-xl overflow-hidden rounded-panel-md liquid-glass shadow-2xl shadow-foreground/10 will-change-transform"
+        overlayRef={backdropRef}
+        surface="glass"
+        placement="top"
+        dir={dir}
+        aria-describedby={undefined}
+        onOpenAutoFocus={onOpened}
+        className="mt-[14vh] max-w-xl sm:mt-[18vh]"
       >
+        <DialogTitle className="sr-only">{t("title")}</DialogTitle>
         <div className="flex items-center gap-3 border-b border-border-subtle px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
           <input
@@ -358,7 +373,7 @@ export function CommandPalette({
             spellCheck={false}
             className="h-14 w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/70 outline-none"
           />
-          <kbd className="hidden sm:flex shrink-0 items-center rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <kbd className="hidden sm:flex shrink-0 items-center rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-micro text-muted-foreground">
             esc
           </kbd>
         </div>
@@ -377,7 +392,7 @@ export function CommandPalette({
           ) : (
             grouped.map(({ group, items: groupItems }) => (
               <div key={group} role="group" aria-label={t(`groups.${group}`)}>
-                <p className="px-3 pb-1.5 pt-3 text-[10px] text-muted-foreground/80">
+                <p className="px-3 pb-1.5 pt-3 text-micro text-muted-foreground/80">
                   {t(`groups.${group}`)}
                 </p>
                 {groupItems.map((item) => {
@@ -415,7 +430,7 @@ export function CommandPalette({
                       )}
                       <span className="flex-1 truncate">{item.label}</span>
                       {isActive && (
-                        <kbd className="shrink-0 text-[10px] text-muted-foreground/70">
+                        <kbd className="shrink-0 text-micro text-muted-foreground/70">
                           ↵
                         </kbd>
                       )}
@@ -427,16 +442,16 @@ export function CommandPalette({
           )}
         </div>
         <div className="flex items-center justify-between border-t border-border-subtle px-4 py-2.5">
-          <span className="text-[10px] text-muted-foreground/70">
+          <span className="text-micro text-muted-foreground/70">
             {t("hint")}
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground/70">
-            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↑</kbd>
-            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↓</kbd>
-            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-[10px]">↵</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-micro">↑</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-micro">↓</kbd>
+            <kbd className="rounded-ctl-xs border border-border-subtle bg-surface px-1 py-0.5 text-micro">↵</kbd>
           </span>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

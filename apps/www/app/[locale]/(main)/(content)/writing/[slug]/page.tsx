@@ -1,14 +1,14 @@
 import { localizeNumbers } from "@/lib/utils/number";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { Container } from "@/components/shared/container";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { AuditLeadCapture } from "@/components/sections/audit-lead-capture";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { Link } from "@/i18n/navigation";
-import { generateRouteMetadata } from "@/lib/metadata";
+import { SITE_CONFIG, generateRouteMetadata } from "@/lib/metadata";
 import { buildArticlePageSchemas, getArticleBreadcrumbTrail } from "@/lib/schema";
 import { getAllArticles, getArticle, getRelatedArticles } from "@/lib/utils/mdx";
 import { MDXRemote } from "next-mdx-remote/rsc";
@@ -16,28 +16,31 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArticleReader } from "./article-reader";
+import { localeMeta, type Locale } from "@/i18n/locale-meta";
+import { routing } from "@/i18n/routing";
 
-const ARTICLE_CTA_MAP: Record<string, { href: string }> = {
-  "why-not-wordpress": { href: "/pricing" },
-  "technical-debt": { href: "/services/maintenance" },
-  "evaluating-developers": { href: "/services/consulting" },
-  "multilingual-architecture": { href: "/services/development" },
-};
+// The audit form belongs only where the article is about the state of an
+// existing site; elsewhere it is an off-topic ask (content audit 2026-10, §10.4).
+const AUDIT_FORM_ARTICLES = new Set([
+  "technical-audit-before-rebuild",
+  "technical-debt",
+  "why-not-wordpress",
+]);
 
 interface ArticlePageProps {
-  params: Promise<{ slug: string; locale: "en" | "ar" }>;
+  params: Promise<{ slug: string; locale: Locale }>;
 }
 
+// Unknown slugs 404 at routing, before the segment's loading boundary streams a 200.
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
-  const en = (await getAllArticles("en")).map((a) => ({
-    locale: "en" as const,
-    slug: a.slug,
-  }));
-  const ar = (await getAllArticles("ar")).map((a) => ({
-    locale: "ar" as const,
-    slug: a.slug,
-  }));
-  return [...en, ...ar];
+  const perLocale = await Promise.all(
+    routing.locales.map(async (locale) =>
+      (await getAllArticles(locale)).map((a) => ({ locale, slug: a.slug })),
+    ),
+  );
+  return perLocale.flat();
 }
 
 export async function generateMetadata({
@@ -57,6 +60,7 @@ export async function generateMetadata({
     keywords: article.frontmatter.tags,
     openGraphType: "article",
     publishedTime: article.frontmatter.date,
+    modifiedTime: article.frontmatter.updated ?? article.frontmatter.date,
     title: article.frontmatter.title,
     description: article.frontmatter.excerpt,
   });
@@ -78,7 +82,6 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     article.frontmatter.tags,
     locale,
   );
-  const ctaConfig = ARTICLE_CTA_MAP[slug] ?? null;
 
   const index = all.findIndex((a) => a.slug === slug);
   const next = all.length > 1 ? all[(index + 1) % all.length] : null;
@@ -90,6 +93,19 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   ]
     .filter((a) => !taken.has(a.slug) && (taken.add(a.slug), true))
     .slice(0, 2);
+
+  const updated =
+    article.frontmatter.updated &&
+    article.frontmatter.updated !== article.frontmatter.date
+      ? article.frontmatter.updated
+      : null;
+  const formatDate = (iso: string) => ({
+    date: new Date(iso).toLocaleDateString(
+      localeMeta(locale).intl,
+      { year: "numeric", month: "long", day: "numeric" },
+    ),
+    d: (chunks: React.ReactNode) => <time dateTime={iso}>{chunks}</time>,
+  });
 
   const readTime = (minutes: number) =>
     t("readTime", {
@@ -109,16 +125,20 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <article>
             <header className="max-w-245">
               <p className="flex flex-wrap items-center gap-2.5 text-sm text-muted-foreground">
-                <time dateTime={article.frontmatter.date}>
-                  {new Date(article.frontmatter.date).toLocaleDateString(
-                    locale === "ar" ? "ar-EG-u-nu-latn" : "en-US",
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    },
+                <span>
+                  {t.rich(
+                    "article.published",
+                    formatDate(article.frontmatter.date),
                   )}
-                </time>
+                </span>
+                {updated && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span>
+                      {t.rich("article.updated", formatDate(updated))}
+                    </span>
+                  </>
+                )}
                 <span aria-hidden>·</span>
                 <span>{readTime(article.frontmatter.readTimeMinutes)}</span>
               </p>
@@ -129,16 +149,16 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <p className="mt-6.5 max-w-[56ch] text-[clamp(18px,1.5vw,21px)] leading-normal text-muted-foreground">
                 {article.frontmatter.excerpt}
               </p>
-              <div className="mt-6.5 flex flex-wrap gap-1.5">
-                {article.frontmatter.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-border-subtle px-3 py-1 text-xs text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
+              <p className="mt-6.5 text-sm text-muted-foreground">
+                {t("article.by")}{" "}
+                <Link
+                  href="/about"
+                  className="text-foreground underline decoration-foreground/30 underline-offset-4 transition-[text-decoration-color] duration-(--motion-hover) hover:decoration-current"
+                >
+                  {t("article.authorName")}
+                </Link>
+                , {SITE_CONFIG.founder.jobTitle[locale]}
+              </p>
             </header>
 
             <ArticleReader
@@ -155,24 +175,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
               <MDXRemote source={article.content} components={mdxComponents} />
             </ArticleReader>
 
-            <AuditLeadCapture
-              source={`article_audit_cta:${slug}`}
-              className="mt-(--section-block) max-w-3xl"
-            />
+            {AUDIT_FORM_ARTICLES.has(slug) && (
+              <AuditLeadCapture
+                source={`article_audit_cta:${slug}`}
+                className="mt-(--section-block) max-w-3xl"
+              />
+            )}
           </article>
-
-          {ctaConfig && (
-            <section className="mt-(--section-block) border-t border-border-subtle pt-10">
-              <Eyebrow className="mb-4 block">{t("nextStep")}</Eyebrow>
-              <Link
-                href={ctaConfig.href}
-                className="group inline-flex items-center gap-2 text-muted-foreground transition-all duration-(--motion-drawer) hover:text-foreground eyebrow"
-              >
-                {t(`ctas.${slug}`)}
-                <ArrowIcon className="h-3.5 w-3.5" />
-              </Link>
-            </section>
-          )}
 
           {next && (
             <Link
@@ -183,9 +192,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                 {t("article.nextArticle")} ·{" "}
                 {readTime(next.frontmatter.readTimeMinutes)}
               </Eyebrow>
-              <h2 className="max-w-[20ch] font-sans font-normal text-[clamp(30px,4.4vw,64px)] leading-[1.05] tracking-[-0.02em] text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-brand-text rtl:leading-[1.35] rtl:tracking-normal">
+              <p className="max-w-[20ch] font-sans font-normal text-[clamp(30px,4.4vw,64px)] leading-[1.05] tracking-[-0.02em] text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-brand-text rtl:leading-[1.35] rtl:tracking-normal">
                 {next.frontmatter.title}
-              </h2>
+              </p>
               <ArrowIcon
                 strokeWidth={1.5}
                 className="size-[clamp(30px,4vw,56px)] ltr:group-hover:translate-x-2 rtl:group-hover:-translate-x-2"
@@ -195,7 +204,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
           {keepReading.length > 0 && (
             <section className="mt-14">
-              <Eyebrow>{t("keepReading")}</Eyebrow>
+              <Eyebrow role="heading" aria-level={2}>{t("keepReading")}</Eyebrow>
               <ul className="mt-2 grid md:grid-cols-2 md:gap-x-12">
                 {keepReading.map((rel) => (
                   <li key={rel.slug}>
@@ -206,7 +215,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
                       <span className="text-foreground transition-colors duration-(--motion-drawer) ease-smooth group-hover:text-brand-text">
                         {rel.frontmatter.title}
                       </span>
-                      <span className="shrink-0 text-[0.8125rem] whitespace-nowrap text-muted-foreground">
+                      <span className="shrink-0 text-md whitespace-nowrap text-muted-foreground">
                         {readTime(rel.frontmatter.readTimeMinutes)}
                       </span>
                     </Link>

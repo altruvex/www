@@ -30,7 +30,7 @@ export function ServiceTermsPanel({
         ) : undefined
       }
     >
-      <ul className="divide-y divide-border">
+      <ul className="divide-y divide-border-subtle">
         {services.map((service, i) => (
           <li key={`${service.name}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2.5">
             <span className="min-w-0 flex-1">

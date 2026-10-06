@@ -31,7 +31,13 @@ const STATUSES = [
   "SUNSET",
 ] as const;
 
-type Params = { client?: string; status?: string; ci?: string };
+type Params = {
+  client?: string;
+  status?: string;
+  ci?: string;
+  new?: string;
+  project?: string;
+};
 
 export default async function ProductsPage({
   searchParams,
@@ -56,6 +62,10 @@ export default async function ProductsPage({
   const clientId = sp.client || undefined;
   const status = STATUSES.find((s) => s === sp.status);
   const unmonitoredOnly = sp.ci === "none";
+  const newProductPreset =
+    sp.new === "product" && canCreate
+      ? { clientId: sp.client || null, projectId: sp.project || null }
+      : null;
 
   const [products, clients, projects] = await Promise.all([
     listProducts({ clientId }),
@@ -104,15 +114,18 @@ export default async function ProductsPage({
       deploymentCount: p._count.deployments,
       reporting:
         p.ingestTokenHash != null || p._count.deployments + p._count.builds > 0,
+      existingSite: p.existingSite,
     };
   });
 
   const isBlind = (r: ProductRow) => !r.reporting;
   const live = all.filter((r) => r.status === "LIVE").length;
   const withIncidents = all.filter((r) => r.openIncidents > 0).length;
-  const unmonitored = all.filter(
-    (r) => r.status === "LIVE" && isBlind(r),
-  ).length;
+  // Existing sites expect no pipeline, so they are not a gap to chase.
+  const unmonitoredRows = all.filter(
+    (r) => r.status === "LIVE" && isBlind(r) && !r.existingSite,
+  );
+  const unmonitored = unmonitoredRows.length;
 
   const rows = all.filter(
     (r) => (!status || r.status === status) && (!unmonitoredOnly || isBlind(r)),
@@ -133,7 +146,12 @@ export default async function ProductsPage({
               <Link href="/deployments">Deployment history</Link>
             </Button>
             {canCreate && clientOptions.length > 0 && (
-              <NewProductSheet clients={clientOptions} projects={projects} />
+              <NewProductSheet
+                clients={clientOptions}
+                projects={projects}
+                preset={newProductPreset}
+                defaultClientId={filterClient?.id}
+              />
             )}
           </>
         }
@@ -161,10 +179,14 @@ export default async function ProductsPage({
         <StatTile
           label="Unmonitored"
           value={unmonitored}
-          sub="Live, but nothing has ever reported"
+          sub="Live, nothing reported, pipeline expected"
           tone={unmonitored > 0 ? "warning" : "neutral"}
           href={
-            unmonitored > 0 ? scoped({ status: "LIVE", ci: "none" }) : undefined
+            unmonitoredRows.length === 1
+              ? `/products/${unmonitoredRows[0]!.id}#connect`
+              : unmonitoredRows.length > 0
+                ? scoped({ status: "LIVE", ci: "none" })
+                : undefined
           }
         />
         <StatTile
@@ -224,9 +246,17 @@ export default async function ProductsPage({
               : "The client in this link no longer exists. Clear the filter to see every product."
           }
           action={
-            <Button asChild variant="outline">
-              <Link href="/products">Show all products</Link>
-            </Button>
+            filterClient && canCreate ? (
+              <Button asChild variant="outline">
+                <Link href={`/products?new=product&client=${filterClient.id}`}>
+                  Add a product for {filterClient.label}
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/products">Show all products</Link>
+              </Button>
+            )
           }
         />
       ) : all.length === 0 ? (
@@ -245,7 +275,7 @@ export default async function ProductsPage({
           action={
             clientOptions.length === 0 ? (
               <Button asChild variant="outline">
-                <Link href="/clients">Open clients</Link>
+                <Link href="/clients/new">Add a client</Link>
               </Button>
             ) : canCreate ? (
               <NewProductSheet clients={clientOptions} projects={projects} />

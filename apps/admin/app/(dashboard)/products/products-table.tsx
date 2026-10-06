@@ -35,6 +35,7 @@ export interface ProductRow {
   openIncidents: number;
   deploymentCount: number;
   reporting: boolean;
+  existingSite: boolean;
 }
 
 export interface ProductRowLinks {
@@ -160,9 +161,18 @@ export function ProductsTable({
                 : ""}
             </span>
           </Link>
+        ) : !row.reporting && !row.existingSite ? (
+          <Link
+            href={`/products/${row.id}#connect`}
+            className="text-meta text-subtle-foreground hover:text-foreground hover:underline"
+          >
+            No pipeline connected
+          </Link>
         ) : (
           <span className="text-meta text-subtle-foreground">
-            {row.reporting ? "Never to production" : "No pipeline connected"}
+            {row.existingSite && row.deploymentCount === 0
+              ? "Existing site · not monitored"
+              : "Never to production"}
           </span>
         ),
       sortValue: (row) =>

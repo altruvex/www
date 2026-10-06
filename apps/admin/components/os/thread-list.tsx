@@ -91,12 +91,12 @@ export function ThreadList({
                   {thread.total} {thread.total === 1 ? "message" : "messages"}
                 </span>
                 {thread.unanswered && (
-                  <span className="rounded-sm border border-warning/25 bg-warning/10 px-1.5 py-px text-micro font-medium text-warning">
+                  <span className="rounded-ctl-xs border border-warning/25 bg-warning/10 px-1.5 py-px text-micro font-medium text-warning">
                     Needs a reply
                   </span>
                 )}
                 {thread.failed > 0 && (
-                  <span className="inline-flex items-center gap-1 rounded-sm border border-danger/25 bg-danger/10 px-1.5 py-px text-micro font-medium text-danger">
+                  <span className="inline-flex items-center gap-1 rounded-ctl-xs border border-danger/25 bg-danger/10 px-1.5 py-px text-micro font-medium text-danger">
                     <AlertTriangle className="size-2.5" aria-hidden />
                     {thread.failed} failed
                   </span>

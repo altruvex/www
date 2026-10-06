@@ -775,7 +775,7 @@ export function MaintenanceClient({
                     >
                       {canOpenClient && (
                         <DropdownMenuItem asChild>
-                          <Link href={`/clients/${sub.clientId}`}>
+                          <Link href={`/clients/${sub.clientId}${showMoney ? "#money" : ""}`}>
                             <Building2 className="size-3.5" />
                             Open client
                           </Link>
@@ -908,7 +908,7 @@ export function MaintenanceClient({
                   {sub.requests.map((r: AdminRequest) => (
                     <li
                       key={r.id}
-                      className="grid gap-2 border-b border-border pb-3 last:border-0 last:pb-0 md:grid-cols-[1fr_auto] md:items-start"
+                      className="grid gap-2 border-b border-border-subtle pb-3 last:border-0 last:pb-0 md:grid-cols-[1fr_auto] md:items-start"
                     >
                       <div className="min-w-0">
                         <p className="text-base text-foreground">{r.title}</p>

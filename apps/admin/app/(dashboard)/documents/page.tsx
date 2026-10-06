@@ -5,6 +5,7 @@ import { Button } from "@repo/ui";
 import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
+import { NewProposalButton } from "@/components/os/new-proposal-button";
 import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
 import { InspectSheet } from "@/components/os/inspect-sheet";
 import { MetaList } from "@/components/os/detail-layout";
@@ -268,9 +269,13 @@ export default async function DocumentsPage({
           title="No documents generated yet"
           body="Documents appear here the moment a proposal or contract is built. Each one stays bound to the record that created it, carries that record's status, and is reachable from the client it belongs to."
           action={
-            <Button asChild variant="outline">
-              <Link href="/proposals">Open proposals</Link>
-            </Button>
+            can(role, "create", "proposal") ? (
+              <NewProposalButton variant="outline">Pick a client to quote</NewProposalButton>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/proposals">Open proposals</Link>
+              </Button>
+            )
           }
         />
       ) : (
@@ -279,6 +284,7 @@ export default async function DocumentsPage({
           filtered={typeFilter?.label ?? null}
           canDeleteProposals={can(role, "delete", "proposal")}
           canDeleteContracts={can(role, "delete", "contract")}
+          canCreateProposal={can(role, "create", "proposal")}
         />
       )}
 

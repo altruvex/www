@@ -1,345 +1,150 @@
 ---
-title: "Multi-language Web Architecture"
-excerpt: "Most 'bilingual' websites are English sites with Arabic text. Real multi-language support means rethinking structure from the ground up."
-date: "2024-08-15"
-author: "Altruvex  Team"
-tags: ["i18n", "rtl", "localization", "architecture", "arabic"]
-featured: true
-coverImage: "/images/articles/multilingual-architecture.jpg"
+title: "Bilingual Arabic-English Website Architecture"
+excerpt: "How to structure a bilingual Arabic and English website: URLs, hreflang, right-to-left layout, typography, forms and content, with a checklist you can hold a developer to."
+date: "2026-03-25"
+updated: "2026-10-05"
+author: "Ali Abdelhadi"
+tags: ["multilingual website", "bilingual", "rtl", "hreflang", "i18n", "arabic"]
+featured: false
 topic: "build"
 ---
 
-In the Middle East, we see this pattern constantly: Global companies launch an "Arabic version." They translate text, add `dir="rtl"`, and ship.
-
-This is <Mark gradient="aurora">Translation Theater</Mark>, not localization.
-
-Arabic isn't English in a mirror. It has different visual weight, cognitive patterns, and technical requirements. Here's what actually matters.
-
-## The Cognitive Difference: It's Not Just Mirroring
-
-RTL users don't scan pages the same way. The difference is structural.
-
-### The Pattern Problem
-
-- **English (LTR)**: F-shaped scanning pattern
-- **Arabic (RTL)**: Inverted pattern with different focal points
-
-**The critical mistake:** Assuming symmetry. The patterns aren't mirror images-they're fundamentally different.
-
-### Iconography: What Flips, What Doesn't
-
-**Directional icons (flip):**
-- Navigation arrows (back/forward)
-- Chevrons indicating movement
-- Progress indicators
-
-**Universal icons (never flip):**
-- Play/pause buttons (time flows forward universally)
-- Brand logos
-- Mathematical symbols
-- Question marks in some contexts
-
-<Callout type="warning">
-Automated flipping tools fail catastrophically here. They flip logos and media controls, creating jarring broken experiences. This requires human judgment, not CSS transforms.
+<Callout type="info">
+**Short answer.** Give each language its own URL (subdirectories such as `/ar` are the simplest default), link the versions with `hreflang` in both directions, set the text direction on the page itself, and build layouts with logical properties so right-to-left is the same structure rather than a patch. Then write the Arabic content natively, with its own keyword research. Translation alone does not make a site bilingual.
 </Callout>
 
-**Our approach:** Semantic icon classes instead of blind transforms.
+Many "bilingual" sites are English sites with Arabic text poured in. The menu flips, a few margins break, the font falls back to whatever the browser has, and search engines see one version or neither. Getting it right is not harder than getting it wrong, but **it has to be decided at the start**.
+
+Developer detail is marked "For your developer"; the checklist is the part to hand over to whoever builds your site.
+
+## Translated versus bilingual by design
+
+A translated site is designed and built in one language, and the second is added later. A bilingual site treats both languages as first-class from the first wireframe:
+
+- Layouts are designed for both directions, not mirrored afterwards.
+- Content is written for each audience, not converted word for word.
+- Both languages are held to the same performance and accessibility standards.
+
+This is how we build ours. This site runs in English and Arabic on Next.js with native right-to-left layout, and our [FAQ](/faq) describes the approach as bilingual by design, not mirrored.
+
+## URL structure
+
+Each language version should have its own URL. Google [recommends](https://developers.google.com/search/docs/specialty/international/localized-versions) separate URLs for each language version rather than switching content by cookie or browser setting on one URL. The common structures:
+
+<Compare head="Structure|Example|Notes" caption="Ways to give each language its own URL">
+<Row cells="Subdirectory|example.com/ar/|One domain and one deployment; the simplest default for most businesses" />
+<Row cells="Subdomain|ar.example.com|Workable; can be useful if the language versions are run separately" />
+<Row cells="Country domain|example.sa, example.ae|Targets a country, not only a language; more domains to run" />
+<Row cells="URL parameter|example.com/?lang=ar|Google advises against it" />
+</Compare>
+
+Google's [guide to multi-regional sites](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites) lays out the trade-offs. For a company serving Arabic and English speakers from one brand, a subdirectory per language is usually the simplest to run.
+
+## hreflang, done correctly
+
+`hreflang` tells search engines which URL is the equivalent page in another language. Google's [rules](https://developers.google.com/search/docs/specialty/international/localized-versions) are strict:
+
+1. **List every version.** Each version lists every version, including itself: the English page points to the Arabic one and to itself, and the Arabic page does the same. Links that are not returned are ignored.
+2. **Use valid codes.** Language in ISO 639-1 format (`en`, `ar`), optionally with a region in ISO 3166-1 format (`ar-SA`, `ar-EG`).
+3. **Add an `x-default`.** It names the page for users whose language you do not serve.
+4. **Pick one method.** HTML `link` elements, HTTP headers or the XML sitemap all work; the sitemap is easiest to keep consistent on large sites.
+
+Google also states that it does not use `hreflang` or the `lang` attribute to detect a page's language; it reads the content. So the Arabic page has to actually be in Arabic, including its title and description.
+
+## Do not redirect by browser language
+
+It is tempting to send visitors to a language automatically.
+
+Google [advises against](https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites) redirecting on perceived language, because it can stop both users and crawlers from reaching the other versions. Offer a clear language switcher instead, and let it take people to the equivalent page, not the home page.
+
+## Right-to-left is a layout, not a flip
+
+**For your developer.** Set the direction in the markup. The W3C [recommends](https://www.w3.org/International/questions/qa-html-dir) putting `dir="rtl"` on the `html` element, not applying direction through CSS, so the page works even if styles fail to load.
+
+Then build every layout with logical properties, which follow the reading direction instead of the screen:
 
 ```css
-/* ❌ Wrong: Flips everything */
-[dir="rtl"] .icon { transform: scaleX(-1); }
+/* Physical: breaks in Arabic */
+.card { margin-left: 1rem; text-align: left; }
 
-/* ✅ Right: Explicit directional control */
-.icon-directional { 
-  transform: scaleX(var(--direction-flip)); 
-}
-/* --direction-flip: -1 for RTL, 1 for LTR */
-
-.icon-universal { 
-  transform: none; 
-}
+/* Logical: correct in both directions */
+.card { margin-inline-start: 1rem; text-align: start; }
 ```
 
-## Typography: Vertical Rhythm Breaks
-
-Arabic script is structurally denser and taller than Latin.
-
-### The Line Height Problem
-
-**English:** 16px font, 1.5 line-height = readable  
-**Arabic:** Same settings = glyphs clash, diacritics overlap
-
-**Solution:** Dynamic leading based on script type.
-
-```css
-/* Responsive to language, not just viewport */
-:root {
-  --line-height-multiplier: 1.5;
-}
-
-:root[lang="ar"] {
-  --line-height-multiplier: 1.75;
-}
-
-body {
-  line-height: calc(1em * var(--line-height-multiplier));
-}
-```
-
-### Font Loading Strategy
-
-Arabic font files are 2-3x larger than Latin due to glyph complexity.
-
-**The problem:** Loading full Arabic fonts causes FOIT (Flash of Invisible Text) for 2-3 seconds.
-
-**Our solution:**
-
-1. **Subset fonts** to essential glyphs only
-2. **Preload critical fonts** in `<head>`
-3. **Progressive enhancement** with `font-display: swap`
-
-```html
-<!-- Preload Arabic font for instant render -->
-<link rel="preload" 
-      href="/fonts/arabic-subset.woff2" 
-      as="font" 
-      type="font/woff2" 
-      crossorigin>
-```
-
-Result: Arabic loads as fast as English, **< 100ms** difference.
-
-## Database Schema: The Hidden Architecture
-
-How do you store a product with English name and Arabic description?
-
-### ❌ The Amateur Approach: JSON Columns
-
-```sql
-CREATE TABLE products (
-  id INT,
-  name JSON, -- {"en": "Name", "ar": "الاسم"}
-  description JSON
-);
-```
-
-**Problems:**
-- Can't index efficiently (search performance tanks)
-- Can't enforce content presence per language
-- Breaks relational integrity
-- Query complexity explodes
-
-### ✅ The Altruvex  Approach: Translation Tables
-
-```sql
-CREATE TABLE products (
-  id INT PRIMARY KEY,
-  sku VARCHAR(50) UNIQUE,
-  price DECIMAL(10,2)
-);
-
-CREATE TABLE product_translations (
-  product_id INT REFERENCES products(id),
-  language_code CHAR(2),
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  PRIMARY KEY (product_id, language_code)
-);
-
-CREATE INDEX idx_translations_lang ON product_translations(language_code);
-CREATE INDEX idx_translations_name ON product_translations(name);
-```
-
-**Benefits:**
-1. Add 3rd language without schema changes
-2. Database-level content enforcement
-3. Native indexing = fast search in both languages
-4. Clean JOIN queries
-5. Proper foreign key constraints
-
-**Query example:**
-```sql
--- Get product in user's language with fallback
-SELECT 
-  p.id, p.price,
-  COALESCE(t_ar.name, t_en.name) as name,
-  COALESCE(t_ar.description, t_en.description) as description
-FROM products p
-LEFT JOIN product_translations t_ar 
-  ON p.id = t_ar.product_id AND t_ar.language_code = 'ar'
-LEFT JOIN product_translations t_en 
-  ON p.id = t_en.product_id AND t_en.language_code = 'en'
-WHERE p.id = ?
-```
-
-This handles missing translations gracefully with English fallback.
-
-## URL Strategy: SEO Consequences
-
-Three common patterns, only one correct:
-
-### Option 1: Subdomain (`ar.example.com`)
-**❌ Problems:**
-- Splits domain authority (SEO penalty)
-- Requires separate SSL certificates
-- Cookie sharing complexity
-- Treated as separate site by Google
-
-### Option 2: Query Parameter (`example.com?lang=ar`)
-**❌ Problems:**
-- Weak SEO signals
-- Poor caching behavior
-- Often blocked by CDNs
-- Users can't bookmark properly
-
-### Option 3: Subdirectory (`example.com/ar`)
-**✅ Our recommendation:**
-- Consolidates domain authority
-- Clean URL structure
-- Proper caching and indexing
-- Easy hreflang implementation
-
-```html
-<!-- SEO: Tell Google about language variants -->
-<link rel="alternate" hreflang="en" href="https://example.com/products/item" />
-<link rel="alternate" hreflang="ar" href="https://example.com/ar/products/item" />
-<link rel="alternate" hreflang="x-default" href="https://example.com/products/item" />
-```
-
-## Content Direction: Beyond `dir="rtl"`
-
-Setting `dir="rtl"` on `<html>` isn't enough. You need granular control.
-
-### The Mixing Problem
-
-What if content contains both Arabic and English?
-
-```html
-<!-- ❌ Wrong: Everything flips -->
-<div dir="rtl">
-  <p>هذا نص عربي مع email@example.com</p>
-</div>
-<!-- Email gets reversed: moc.elpmaxe@liame -->
-
-<!-- ✅ Right: Bidirectional isolation -->
-<div dir="rtl">
-  <p>هذا نص عربي مع <bdi>email@example.com</bdi></p>
-</div>
-```
+In Tailwind CSS the same idea is `ms-4`, `pe-6` and `text-start` instead of `ml-4`, `pr-6` and `text-left`. A codebase written this way needs almost no direction-specific overrides.
 
-The `<bdi>` (Bidirectional Isolation) element prevents directional contamination.
+### What to mirror, and what not to
 
-## Number Formatting: Cultural Nuances
-
-Numbers aren't universal:
+- **Mirror** anything that shows reading order or direction: back and forward arrows, progress, breadcrumbs, sliders, the position of navigation.
+- **Do not mirror** logos, photographs, media playback controls, charts with a time axis that your audience reads left to right, or anything that represents a physical object.
 
-**English:** 1,234,567.89  
-**Arabic (Eastern):** ١٬٢٣٤٬٥٦٧٫٨٩  
-**Arabic (Western digits):** 1,234,567.89
+### Mixed-direction text
 
-**Our approach:** Use `Intl.NumberFormat` for automatic localization.
+Arabic pages are full of English: product names, code, email addresses, phone numbers. Wrap content of unknown direction, such as user names or search terms, with `dir="auto"` or the `bdi` element, as the [W3C guidance](https://www.w3.org/International/questions/qa-html-dir) describes, so punctuation and numbers land in the right place.
 
-```javascript
-const price = 1234.56;
+## Typography for two scripts
 
-// English
-new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD'
-}).format(price);
-// "$1,234.56"
+- **A font per script.** Choose an Arabic typeface designed alongside your Latin one, or a pair that matches in weight and size. Do not rely on the browser's fallback.
+- **Taller line height.** Arabic letterforms have taller ascenders and descenders; text set at Latin line heights looks cramped.
+- **No letter-spacing on Arabic.** Arabic is a connected script, and tracking breaks the joins.
+- **No italics for emphasis.** Most Arabic typefaces have no true italic; use weight or colour instead.
+- **Decide on digits.** Arabic text can use Latin digits (0 1 2 3) or Arabic-Indic digits (٠ ١ ٢ ٣). Either is valid; choose one and apply it everywhere, including dates and prices. This site uses Latin digits in Arabic.
 
-// Arabic
-new Intl.NumberFormat('ar-EG', {
-  style: 'currency',
-  currency: 'EGP'
-}).format(price);
-// "١٬٢٣٤٫٥٦ ج.م."
-```
+## Forms, data and search
 
-## Date & Time: More Than Translation
+**For your developer.** These details decide whether forms, data and search work in Arabic:
 
-**English:** "March 15, 2024"  
-**Arabic:** "١٥ مارس ٢٠٢٤"
+- **Direction per field.** Email, URL and phone fields should stay left-to-right inside an Arabic form.
+- **Formatting by locale.** Dates, numbers and currency should be formatted with the browser's `Intl` APIs for the visitor's language, not hand-built strings.
+- **Bilingual validation messages.** An English error on an Arabic form is a broken form.
+- **Search that understands Arabic.** Arabic spelling varies (different forms of alef, taa marbuta and haa). Normalise text before matching, or users will miss results they typed correctly.
+- **Content stored per language.** Each field that a visitor reads should have an Arabic and an English value, not a translated copy generated on the fly.
 
-But also consider:
-- **Hijri calendar** for Saudi Arabia
-- **Right-to-left date ordering** in some regions
-- **Different weekend** (Friday-Saturday vs Saturday-Sunday)
+## Content: write it, do not convert it
 
-```javascript
-// Automatic calendar-aware formatting
-const date = new Date('2024-03-15');
+Search behaviour differs between languages.
 
-new Intl.DateTimeFormat('ar-SA-u-ca-islamic').format(date);
-// "٨ رمضان ١٤٤٥ هـ"
-```
+Arabic searchers often use different terms from a literal translation of the English keyword, and the same idea may be searched in Modern Standard Arabic or in a regional dialect. Research keywords in each language separately, write each version for its reader in Modern Standard Arabic, and give each page its own title and meta description. Machine translation can be a draft; it should not be what you publish.
 
-## Form Validation: Language-Aware
+## Bilingual website checklist
 
-Validation rules change by language:
+- Each language has its own URL, and the switcher goes to the equivalent page.
+- `hreflang` is reciprocal, self-referencing and includes `x-default`.
+- `lang` and `dir` are set on the `html` element for each locale.
+- Layouts use logical properties; no physical left and right in components.
+- Direction-bearing icons mirror; logos and media do not.
+- Each script has its own font, line height and no tracking on Arabic.
+- Forms keep email, URL and phone fields left-to-right, with messages in both languages.
+- Dates, numbers and currency use locale formatting.
+- Keywords, titles and descriptions are researched and written per language.
+- Both versions are tested by a native reader before launch.
 
-**English name:** Letters only, 2-50 chars  
-**Arabic name:** Arabic letters + spaces, different length requirements
+Planning a bilingual site? <CtaLink cta="describeTheBuild">Describe your bilingual project</CtaLink>.
 
-```typescript
-const nameValidation = {
-  en: /^[A-Za-z\s]{2,50}$/,
-  ar: /^[\u0600-\u06FF\s]{2,100}$/, // Arabic Unicode range
-};
+## Doing this in Next.js
 
-function validateName(name: string, lang: 'en' | 'ar'): boolean {
-  return nameValidation[lang].test(name);
-}
-```
+**For your developer.** In the Next.js App Router, locale routing is usually handled with a `[locale]` route segment and a library such as next-intl, which provides locale-aware links and message files per language.
 
-## Performance: The Hidden Cost
+The pieces above still apply: `lang` and `dir` on the `html` element per locale, `hreflang` alternates in metadata or the sitemap, logical properties in every component, and separate message files written per language.
 
-Multi-language sites are heavier. Optimize aggressively:
+## Bilingual website: common questions
 
-**Our checklist:**
-```
-✅ Font subsetting (reduces Arabic fonts 60-80%)
-✅ Language-specific code splitting
-✅ CDN edge caching per locale
-✅ Lazy-load non-critical translations
-✅ Separate CSS bundles per direction (LTR/RTL)
-```
+### Subdirectory or subdomain for an Arabic version?
 
-**Result:** Arabic site loads within 5% speed of English site, not 200% slower.
+Both work. A subdirectory such as `/ar` is usually simpler to run because it keeps one domain and one deployment. Pick a subdomain or a country domain only if you have a reason, such as a separate team or a country-specific business.
 
-## The Framework Choice Matters
+### Do I need hreflang with only two languages?
 
-Not all frameworks handle RTL equally:
+Yes. It helps search engines show the right version to the right searcher. With two languages the setup is small: each page lists both versions and an `x-default`.
 
-**Next.js:** Excellent i18n routing, automatic language detection  
-**React:** Requires manual setup but highly flexible  
-**WordPress:** RTL support exists but fights the system constantly
+### Can I use machine translation for the Arabic site?
 
-**Our stack for bilingual sites:**
-- Next.js 14+ (native i18n routing)
-- TypeScript (type-safe translations)
-- Tailwind CSS (RTL variants built-in: `rtl:mr-4` instead of `ml-4`)
-- `next-intl` library (robust translation management)
+As a first draft, perhaps. Published Arabic should be written or edited by a native writer, with its own keyword research, or it will read as a translation and miss what Arabic searchers type.
 
-## The Bottom Line
+### Should the Arabic site use Arabic-Indic or Latin digits?
 
-Building a truly bilingual platform requires architectural commitment at every layer:
+Either is correct. Choose one, apply it consistently across text, dates, prices and forms, and test it with your audience.
 
-**Frontend:** Directional CSS, font loading, icon logic  
-**Backend:** Normalized database schema, translation fallbacks  
-**SEO:** Proper hreflang, URL structure, sitemap per language  
-**Content:** Cultural adaptation, not just translation  
-**Performance:** Language-specific optimization
+## Planning or fixing a bilingual site
 
-**At Altruvex, we don't build "English sites with Arabic bolted on."**
-
-We architect systems that are natively fluent in both languages from the database to the UI. Because in the Middle East market, RTL support isn't a feature-it's table stakes.
-
-The companies that win are those that treat Arabic as a first-class citizen, not an afterthought.
-
----
-
-**Building a multi-language platform?** We've architected bilingual systems for e-commerce, SaaS, and government projects across MENA.
-
-**[Schedule technical consultation](/contact)** or **[Download our i18n architecture guide](/resources/i18n-checklist)**
+If you are planning a bilingual site or fixing one that was translated after the fact, <CtaLink cta="describeTheBuild">describe your bilingual project</CtaLink>, or look at [our work](/work) to see two bilingual builds. For a site that already exists, a [technical audit](/services/consulting) will tell you what can be fixed in place and what needs restructuring.

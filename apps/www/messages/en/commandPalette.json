@@ -1,7 +1,7 @@
 {
   "title": "Command palette",
-  "placeholder": "Search pages, services, actions…",
-  "empty": "No results. Try a different term.",
+  "placeholder": "Search pages, services and actions…",
+  "empty": "Nothing matches that. Try a page name, such as pricing or services.",
   "hint": "Navigate the whole site from here",
   "groups": {
     "actions": "Quick actions",
@@ -11,9 +11,10 @@
   "actions": {
     "themeDark": "Switch to dark mode",
     "themeLight": "Switch to light mode",
-    "schedule": "Schedule a technical call",
+    "schedule": "Schedule a consultation",
     "copyEmail": "Copy email address",
-    "copied": "Copied to clipboard"
+    "copied": "Copied to clipboard",
+    "estimate": "Estimate your project"
   },
   "pages": {
     "home": "Home"

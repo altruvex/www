@@ -36,8 +36,8 @@ export function PlanSummary({
   size?: "lg" | "md";
 }) {
   const pillClasses = useWorldAccent
-    ? "rounded-full bg-local-accent px-2.5 py-0.5 text-[10px] font-medium text-local-accent-fg md:text-xs"
-    : "rounded-full bg-brand px-2.5 py-0.5 text-[10px] font-medium text-brand-foreground md:text-xs";
+    ? "rounded-full bg-local-accent px-2.5 py-0.5 text-micro font-medium text-local-accent-fg md:text-xs"
+    : "rounded-full bg-brand px-2.5 py-0.5 text-micro font-medium text-brand-foreground md:text-xs";
 
   const pill = (
     <span className={pillClasses}>

@@ -51,7 +51,7 @@ export function ListRow({
       {icon && (
         <span
           className={cn(
-            "flex size-7 shrink-0 items-center justify-center rounded-md border [&_svg]:size-3.5",
+            "flex size-7 shrink-0 items-center justify-center rounded-ctl-sm border [&_svg]:size-3.5",
             toneClasses[tone],
           )}
           aria-hidden
@@ -156,7 +156,7 @@ export function ListRow({
           id={panelId}
           hidden={!expanded}
           className={cn(
-            "border-t border-border bg-surface/40 py-2.5 pe-3 text-base",
+            "border-t border-border-subtle bg-surface/40 py-2.5 pe-3 text-base",
             icon ? "ps-[calc(0.75rem+1.75rem+0.75rem)]" : "ps-3",
           )}
         >
@@ -177,7 +177,7 @@ export function List({
   className?: string;
 }) {
   return (
-    <ul aria-label={label} className={cn("min-w-0 divide-y divide-border", className)}>
+    <ul aria-label={label} className={cn("min-w-0 divide-y divide-border-subtle", className)}>
       {children}
     </ul>
   );

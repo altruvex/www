@@ -29,6 +29,7 @@ import { ManualOnboardingButton, ManualStatusMenu } from "@/components/os/manual
 import { SendDocument } from "@/components/os/send-document";
 import { ContractSignerForm } from "@/components/os/contract-signer";
 import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
+import { NewServiceButton } from "@/components/os/services/new-service-button";
 import { StatusPill } from "@/components/ui/badge";
 import { CopyValueButton } from "@/components/os/copy-button";
 import { CopyLinkButton } from "@/components/proposal/copy-link";
@@ -44,6 +45,8 @@ import { date, dateTime, money } from "@/lib/format";
 import { effectiveSigner, maskEmail, maskPhone } from "@/lib/sign-verification";
 import { entityHref } from "@/lib/entity-links";
 import { isPaymentOverdue } from "@/lib/payment-overdue";
+import { roleCanOpen } from "@/lib/action-center";
+import { canSeeFinance } from "@/lib/nav";
 import { findDeletedContractProject } from "@/lib/contract-signing";
 import { contractStepPermissions } from "../contract-permissions";
 import { contractNextSteps } from "../contract-steps";
@@ -154,6 +157,24 @@ export default async function ContractDetailPage({
   const projectStep = steps.find((step) => step.key === "project");
   const quoteStep = steps.find((step) => step.key === "quote");
   const deliverySteps = steps.filter((step) => step.key === "task" || step.key === "charge");
+  const canCharge = can(role, "create", "payment") && roleCanOpen(role, "/payments");
+  const canAddService = can(role, "create", "project") && roleCanOpen(role, "/services");
+  const createProject =
+    canCreateProject && contract.status === "SIGNED" && !contract.project ? (
+      <CreateProjectButton
+        contractId={contract.id}
+        total={money(contract.proposal.totalPrice, contract.proposal.currency)}
+        split={`${split.first ?? 50}/${split.second ?? 30}/${split.final ?? 20}`}
+        priorProject={
+          priorProject
+            ? {
+                label: priorProject.label,
+                deletedAt: priorProject.deletedAt ? date(priorProject.deletedAt) : null,
+              }
+            : null
+        }
+      />
+    ) : null;
   const onboardingInHeader =
     contract.status === "SIGNED" && !contract.onboardingMessageSentAt && !contract.project && canEdit;
 
@@ -246,23 +267,7 @@ export default async function ContractDetailPage({
           ) : contract.status === "SIGNED" && !contract.project ? (
             <AlertBar
               tone="danger"
-              action={
-                canCreateProject ? (
-                  <CreateProjectButton
-                    contractId={contract.id}
-                    total={money(contract.proposal.totalPrice, contract.proposal.currency)}
-                    split={`${split.first ?? 50}/${split.second ?? 30}/${split.final ?? 20}`}
-                    priorProject={
-                      priorProject
-                        ? {
-                            label: priorProject.label,
-                            deletedAt: priorProject.deletedAt ? date(priorProject.deletedAt) : null,
-                          }
-                        : null
-                    }
-                  />
-                ) : null
-              }
+              action={createProject}
             >
               This contract is signed but no project exists. Delivery has not formally started and
               no payment schedule is being tracked.
@@ -401,7 +406,7 @@ export default async function ContractDetailPage({
                     className={
                       done
                         ? "flex size-5 items-center justify-center rounded-full bg-success/15 font-mono text-micro text-success"
-                        : "flex size-5 items-center justify-center rounded-full border border-border font-mono text-micro text-subtle-foreground"
+                        : "flex size-5 items-center justify-center rounded-full border border-border-subtle font-mono text-micro text-subtle-foreground"
                     }
                     aria-hidden
                   >
@@ -433,7 +438,7 @@ export default async function ContractDetailPage({
                 </div>
                 {canSeePayments ? (
                   payments.length > 0 ? (
-                    <ul className="rows mt-3 border-t border-border">
+                    <ul className="rows mt-3 border-t border-border-subtle">
                       {payments.map((payment) => (
                         <li key={payment.id}>
                           <Link
@@ -456,19 +461,32 @@ export default async function ContractDetailPage({
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-3 border-t border-border pt-3 text-meta text-muted-foreground">
-                      No payment rows on this project.
-                    </p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle pt-3">
+                      <p className="text-meta text-muted-foreground">
+                        No payment rows on this project.
+                      </p>
+                      {canCharge &&
+                        (contract.project.status === "ACTIVE" ||
+                          contract.project.status === "ON_HOLD") && (
+                        <Button asChild variant="outline" size="sm">
+                          <Link
+                            href={`/payments?new=charge&client=${contract.clientId}&project=${contract.project.id}`}
+                          >
+                            New charge
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   )
                 ) : (
-                  <p className="mt-3 border-t border-border pt-3 text-meta text-muted-foreground">
+                  <p className="mt-3 border-t border-border-subtle pt-3 text-meta text-muted-foreground">
                     Payment records are visible to finance roles only.
                   </p>
                 )}
               </div>
             </Panel>
           ) : (
-            <EmptyInline>
+            <EmptyInline action={createProject ?? undefined}>
               {contract.status === "SIGNED"
                 ? "No project was opened from this contract. A project is how the commitment becomes tracked delivery — phases, launch date and the payment schedule all live on it."
                 : "A project and its payment schedule open automatically when this contract is signed."}
@@ -537,7 +555,7 @@ export default async function ContractDetailPage({
                 ))}
               </div>
               {reduction > 0 && (
-                <p className="mt-3 border-t border-border pt-3 text-meta text-subtle-foreground">
+                <p className="mt-3 border-t border-border-subtle pt-3 text-meta text-subtle-foreground">
                   Percentages are of the discounted total, not of the{" "}
                   {money(subtotal, contract.proposal.currency)} list price.
                 </p>
@@ -552,7 +570,23 @@ export default async function ContractDetailPage({
           description="Opened as tracked services when the contract is signed"
         >
           {services.length === 0 ? (
-            <EmptyInline>
+            <EmptyInline
+              action={
+                contract.project && canAddService ? (
+                  <NewServiceButton
+                    scope={{
+                      clientId: contract.clientId,
+                      projectId: contract.project.id,
+                      projects: [{ id: contract.project.id, name: contract.project.name }],
+                      products: [],
+                      currency: contract.proposal.currency,
+                    }}
+                    showMoney={canSeeFinance(role)}
+                    canCreate
+                  />
+                ) : undefined
+              }
+            >
               {proposalContent.success
                 ? "The proposal behind this contract carries no services."
                 : "The proposal behind this contract predates the services list, so it carries none."}
@@ -561,7 +595,7 @@ export default async function ContractDetailPage({
             <ServiceTermsPanel
               services={services}
               currency={contract.proposal.currency}
-              liveHref={`/clients/${contract.clientId}?tab=services`}
+              liveHref={`/clients/${contract.clientId}#sites`}
             />
           )}
         </DossierSection>
@@ -574,7 +608,7 @@ export default async function ContractDetailPage({
           <div className="space-y-4">
             {contract.signedAt ? (
               <div className="space-y-3">
-                <div className="flex items-start gap-3 rounded-md border border-success/30 bg-success/[0.06] p-3">
+                <div className="flex items-start gap-3 rounded-panel-sm border border-success/30 bg-success/[0.06] p-3">
                   <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
                   <div className="min-w-0">
                     <p className="text-base font-medium">
@@ -613,7 +647,25 @@ export default async function ContractDetailPage({
                 )}
               </div>
             ) : (
-              <EmptyInline>
+              <EmptyInline
+                action={
+                  signable && (sendable || canEdit) ? (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {sendable && (
+                        <SendDocument
+                          {...send}
+                          label="Send for signature"
+                          resend={contract.status === "SENT"}
+                          variant="outline"
+                        />
+                      )}
+                      {canEdit && (
+                        <ManualStatusMenu entity="contract" id={contract.id} status={contract.status} />
+                      )}
+                    </div>
+                  ) : undefined
+                }
+              >
                 Not signed. Once the client signs — or you record a signature by hand — the name,
                 time and IP are captured here permanently.
               </EmptyInline>
@@ -643,6 +695,11 @@ export default async function ContractDetailPage({
                   },
                 ]}
               />
+              {contract.status === "SIGNED" && !contract.onboardingMessageSentAt && canEdit && !onboardingInHeader && (
+                <div className="flex justify-end border-t border-border-subtle px-3 py-2">
+                  <ManualOnboardingButton contractId={contract.id} size="sm" />
+                </div>
+              )}
             </Panel>
           </div>
         </DossierSection>

@@ -1,137 +1,104 @@
 ---
-title: "Why a Technical Audit Should Come Before a Rebuild"
-excerpt: "Most rebuilds start too late and with the wrong assumptions. A technical audit reduces risk by revealing what is broken, what is salvageable, and what should never be rebuilt the same way twice."
+title: "Website Audit Before a Redesign: What to Check"
+excerpt: "Why a technical audit should come before a website rebuild or redesign, what it should check, what you should receive, and how to use the findings to decide between fixing and rebuilding."
 date: "2026-04-06"
-author: "Altruvex Team"
-tags: ["audit", "consulting", "rebuild", "architecture", "strategy"]
-featured: false
+updated: "2026-10-05"
+author: "Ali Abdelhadi"
+tags: ["website audit", "technical audit", "redesign", "rebuild", "consulting"]
+featured: true
 topic: "build"
 ---
 
-Teams usually decide to rebuild after the pain becomes obvious.
+<Callout type="info">
+**Short answer.** Audit before you rebuild, because a rebuild built on guesses tends to repeat the old problems and lose what already worked. A useful audit checks architecture, performance, security, search and analytics, how changes are delivered, and who owns what. It ends with written findings ranked by risk and a roadmap that says what to fix in place, what to rebuild, and in what order.
+</Callout>
 
-The site is slow. Content is hard to manage. Integrations are messy. Arabic is inconsistent. Sales no longer trusts the system.
+Most rebuilds start from a feeling: the site is slow, hard to change, or looks dated. Those feelings are usually right, but they do not say which parts are broken, which parts are fine, and which problems a new build would quietly carry over. An audit replaces the feeling with evidence before you commit a budget.
 
-At that point, the temptation is to skip directly to design and development.
+## Why audit before a rebuild
 
-That is exactly when a technical audit becomes most valuable.
+- **You find out whether you need a rebuild at all.** Some problems, such as slow images, a misconfigured cache or a broken analytics tag, are fixed in days without touching the rest.
+- **You protect what already works.** Pages that rank, URLs that other sites link to, and data you have collected for years are easy to lose in a rebuild if no one listed them first.
+- **You scope the new build properly.** A rebuild quote based on audit findings describes the real system, not an assumption about it.
+- **You avoid rebuilding the same mistake.** If the old site became hard to change because of how content or data was modelled, a new design on the same model will age the same way. Our article on [technical debt](/writing/technical-debt) explains how that happens.
 
-## Why rebuilds go wrong
+## What a technical audit should check
 
-A rebuild can fail even when the new interface looks better.
+<Compare head="Area|What is examined|What it tells you" caption="The areas a pre-rebuild audit should cover">
+<Row cells="Architecture|How the code, data and integrations are structured|Whether the system can be extended or has to be replaced" />
+<Row cells="Performance|Core Web Vitals on real devices, server response, page weight, third-party scripts|Which bottlenecks matter and which are worth fixing" />
+<Row cells="Security|Authentication, exposed surface, secrets, dependency vulnerabilities, permissions|Where someone could get in today, by severity" />
+<Row cells="Search and data|Indexability, rendering path, metadata, structured data, analytics integrity|What search cannot see, and whether your numbers can be trusted" />
+<Row cells="Delivery|How changes are made, tested and released|Why changes are slow or risky" />
+<Row cells="Ownership|Who holds the code, domain, hosting and accounts|What you control, and what you would lose if a vendor left" />
+</Compare>
 
-That happens when the team rebuilds symptoms instead of causes.
+## A pre-redesign checklist you can start today
 
-Common examples:
+Some of this you can check yourself before talking to anyone:
 
-- rebuilding the frontend while the real problem is content structure
-- changing design without fixing conversion logic
-- migrating platforms without clarifying ownership and workflows
-- launching a faster site that still cannot support future integrations
+1. **List your accounts.** Domain registrar, hosting, repository, analytics, Search Console, email, payment and any other service. Note whose name each is in.
+2. **Export your URLs.** Every page that exists today, from your sitemap or a crawl. This becomes the redirect map, so no indexed page is lost. Google's [site move guide](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes) explains why 301 redirects matter and how long to keep them.
+3. **Note the pages that matter.** Which pages bring visitors, leads or sales, according to your analytics.
+4. **Check analytics health.** Is the tracking tag on every page? Do form submissions and purchases register as events? Numbers you cannot trust will mislead the new build.
+5. **Measure real performance.** Look at Core Web Vitals for your key pages. Google's thresholds are [published on web.dev](https://web.dev/articles/vitals).
+6. **Check search coverage.** In Search Console, look for pages that are not indexed and why.
+7. **Look at security basics.** Is everything served over HTTPS? Are plugins and dependencies up to date? The OWASP [Secure Headers Project](https://owasp.org/www-project-secure-headers/) lists the response headers worth checking.
+8. **Test the main tasks yourself.** On your phone, in every language you serve: find a product, fill the contact form, complete a purchase.
+9. **Write down what is hard to change.** Ask the people who edit the site what takes too long. That list is often the real brief.
 
-Without an audit, the new system often inherits the old logic in cleaner packaging.
+Checked the list and found gaps? A fixed-scope audit does the rest in five business days: <CtaLink cta="technicalAudit">start with a technical audit</CtaLink>.
 
-## What a good audit should uncover
+## What you should receive
 
-Before a rebuild, the audit should answer four questions clearly.
+A useful audit is a document you can act on without the person who wrote it:
 
-### 1. What is actually broken?
+- Findings ranked by risk, with the evidence beside each one.
+- A roadmap ordered by what to fix first.
+- A clear recommendation: fix in place, rebuild in parts, or rebuild.
+- A walkthrough with the people who will act on it.
 
-Not everything painful is equally important.
+## Fix or rebuild: how to decide
 
-A useful audit separates:
+<Compare head="Signal|Usually fix in place|Usually rebuild" caption="Reading the findings">
+<Row cells="Performance|Bottlenecks are in images, caching or scripts|Slowness comes from the platform or architecture itself" />
+<Row cells="Changes|Hard changes are confined to a few areas|Every change touches everything" />
+<Row cells="Security|Issues are configuration or updates|The platform or core dependencies are no longer maintained" />
+<Row cells="Content and data|The model fits the business|The model fights how the business works now" />
+<Row cells="Languages|Both languages already work, with small gaps|A second language was bolted on and breaks layouts" />
+</Compare>
 
-- trust problems
-- SEO problems
-- performance problems
-- workflow problems
-- architecture problems
+Most results are mixed. A partial rebuild, such as keeping the data and replacing the front end, is often the right answer.
 
-That prevents the project from treating every issue as priority one.
+## How our technical audit works
 
-### 2. What is salvageable?
+Our [technical audit](/services/consulting) is a **fixed-price, fixed-scope** engagement:
 
-Some parts of the current system may still be useful:
+- **Scope.** The six areas above.
+- **Time.** About five business days, counted from the day you grant read access and tell us what prompted it.
+- **You receive.** Written findings ranked by risk, a roadmap you can run with us, with your own team or with another developer, and a one-hour debrief.
+- **Credit.** If you then build with us, the audit fee comes off the build price. The price is on the [pricing page](/pricing).
 
-- content models
-- page hierarchy
-- specific integrations
-- analytics events
-- pieces of the codebase
+If you are not sure an audit is what you need, <CtaLink cta="technicalCall">schedule a consultation</CtaLink> to settle what the next step should be.
 
-A rebuild should not destroy value just because the current system feels frustrating.
+## Website audit: common questions
 
-### 3. What constraints will shape the next build ?
+### What is the difference between a website audit and an SEO audit?
 
-Every rebuild carries non-obvious constraints:
+An SEO audit looks at how search engines find and rank your pages. A technical audit includes that, and also looks at architecture, performance, security, delivery and ownership, which decide what a rebuild should and should not keep.
 
-- internal team bandwidth
-- required launch window
-- SEO migration risk
-- multilingual requirements
-- third-party dependencies
-- long-term maintenance ownership
+### How long does a website audit take?
 
-If these are not made explicit before scoping, they return later as delays and cost overruns.
+It depends on the size of the system. Ours takes about five business days for a focused system, counted from when access arrives; several codebases or integrations need longer.
 
-### 4. What should the next system optimize for?
+### Do I need to give code access?
 
-Not every company needs the same answer.
+It gives the most complete answer. Without it, performance and search can still be measured from outside, but architecture, security and delivery can only be partly assessed.
 
-The new build may need to optimize for:
+### Will a redesign hurt my search rankings?
 
-- faster publishing
-- cleaner lead qualification
-- bilingual trust
-- more maintainable code ownership
-- new portal or dashboard logic
+It can, if indexed URLs disappear or content is removed. A redirect map from old to new URLs and keeping the content that ranks are the main protections.
 
-This is strategic, not cosmetic. The answer determines architecture.
+## Starting with an audit
 
-## Signs you should start with an audit
-
-Start with a technical audit if any of these are true:
-
-- your team cannot agree on what the real problem is
-- the current site feels slow, but you do not know why
-- the Arabic and English versions are structurally inconsistent
-- the rebuild budget is meaningful and mistakes will be expensive
-- you are deciding between refactor, rebuild, or phased migration
-
-The more expensive the wrong decision would be, the more valuable the audit becomes.
-
-## What you should receive at the end
-
-A serious audit should leave you with outputs that help the next decision.
-
-That usually includes:
-
-- a current-state diagnosis
-- a risk map
-- a priority matrix
-- build recommendations
-- guidance on sequencing
-- a commercial next-step recommendation
-
-The goal is not only analysis. The goal is <Mark gradient="forest">decision readiness</Mark>.
-
-## Audit first, then scope
-
-The right order is:
-
-1. understand the current system
-2. identify the actual blockers
-3. define what the next system must do
-4. scope the rebuild against that reality
-
-When teams reverse this order, they pay to discover their own ambiguity during development.
-
-## Final thought
-
-A rebuild is not a reward for frustration. It is a high-risk capital decision.
-
-Treat it that way.
-
-If the system matters to revenue, trust, or operations, start by reducing uncertainty. That is what a technical audit is for.
-
-If you need that first layer of clarity, review the [Technical Consulting service](/services/consulting) or start with a [technical discovery call](/schedule).
+<CtaLink cta="technicalAudit">Start with a technical audit</CtaLink>, read what the [technical audit](/services/consulting) covers, or see the [process](/process) a rebuild follows.

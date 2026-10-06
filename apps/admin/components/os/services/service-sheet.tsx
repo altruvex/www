@@ -172,11 +172,14 @@ export function ServiceSheet({
   scope,
   service,
   showMoney = false,
+  preset,
   onClose,
 }: {
   scope: ServiceScope;
   service?: ServiceScreenRow;
   showMoney?: boolean;
+  /** Pre-fills a new service (from a link such as /services?new=service&product=…). */
+  preset?: { clientId?: string | null; productId?: string | null; projectId?: string | null };
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -196,15 +199,20 @@ export function ServiceSheet({
   const oneTime = termMonths === null;
   const [firstTermIncluded, setFirstTermIncluded] = React.useState(service?.firstTermIncluded ?? false);
   const [autoRenew, setAutoRenew] = React.useState(service?.autoRenew ?? false);
-  const [projectId, setProjectId] = React.useState(service?.projectId ?? scope.projectId ?? NONE);
-  const [productId, setProductId] = React.useState(service?.productId ?? NONE);
+  const [projectId, setProjectId] = React.useState(service?.projectId ?? scope.projectId ?? preset?.projectId ?? NONE);
+  const [productId, setProductId] = React.useState(service?.productId ?? preset?.productId ?? NONE);
   const [notes, setNotes] = React.useState(service?.notes ?? "");
 
   const [registered, setRegistered] = React.useState(false);
   const [startedAt, setStartedAt] = React.useState(dayValue(new Date()));
   const [expiresAt, setExpiresAt] = React.useState(service?.expiresAt ? dayValue(service.expiresAt) : "");
 
-  const [pickedClientId, setPickedClientId] = React.useState(scope.clientId || scope.clients?.[0]?.id || "");
+  const [pickedClientId, setPickedClientId] = React.useState(
+    scope.clientId ||
+      (preset?.clientId && scope.clients?.some((c) => c.id === preset.clientId) ? preset.clientId : "") ||
+      scope.clients?.[0]?.id ||
+      "",
+  );
   const picked = scope.clientId ? null : scope.clients?.find((c) => c.id === pickedClientId) ?? null;
   const clientId = scope.clientId || pickedClientId;
   const projects = picked ? picked.projects : scope.projects;
@@ -474,7 +482,7 @@ export function ServiceSheet({
           )}
 
           {!editing && (
-            <div className="space-y-3 rounded-md border border-border p-3">
+            <div className="space-y-3 rounded-ctl-xl border border-border-subtle p-3">
               <SwitchRow
                 label={oneTime ? "Already bought" : "Already registered at the provider"}
                 hint={

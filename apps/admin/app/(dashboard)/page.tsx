@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getDashboardData, getNowEngineering } from "@/lib/dashboard-data";
 import { getActionCentre, roleCanOpen } from "@/lib/action-center";
+import { prisma } from "@repo/database";
 import { getOperator } from "@/lib/authorize";
+import { can } from "@/lib/rbac";
 import { gateRoute } from "@/lib/page-gate";
 import { getShellBadges } from "@/lib/shell-data";
 import { listRenewals } from "@/lib/renewals";
@@ -19,6 +21,7 @@ import { CountStrip, type CountStripCell } from "@/components/today/count-strip"
 import { NowAside } from "@/components/today/now-aside";
 import { RevenuePanel } from "@/components/today/revenue-panel";
 import { ActivityFeed } from "@/components/today/activity-feed";
+import type { PickOption } from "@/components/os/pick-to-open";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +52,50 @@ export default async function DashboardPage() {
     data.paymentsOverdue.map((p) => ({ amount: p.amount, currency: paymentCurrency(p) })),
   );
   const urgent = actions.filter((a) => a.tone === "danger").length;
+  const canCreateWork = can(role, "create", "project");
+  // With nothing in delivery, "start a project" means one signed contract that has none yet:
+  // pick it and land on its Delivery section, where the project is started.
+  const noActiveWork = data.activeProjectsByPhase.every((row) => row.count === 0);
+  const startable: PickOption[] =
+    seesWork && canCreateWork && noActiveWork && sees("/contracts")
+      ? (
+          await prisma.contract.findMany({
+            where: { status: "SIGNED", project: null },
+            orderBy: { updatedAt: "desc" },
+            take: 50,
+            select: { id: true, client: { select: { name: true, company: true } } },
+          })
+        ).map((c) => ({
+          href: `/contracts/${c.id}#delivery`,
+          label: c.client.company || c.client.name || "Signed contract",
+          hint: c.client.company && c.client.name ? c.client.name : undefined,
+        }))
+      : [];
   const renewalRows = renewals?.filter((row) => row.needsAttention) ?? null;
+  // "Running now" is empty while no product can report: offer the products with no
+  // pipeline at all, landing on the one chosen's Connect section.
+  const connectable: PickOption[] =
+    engineering && engineering.running.buildCount + engineering.running.deployCount === 0 &&
+    sees("/products") && can(role, "edit", "project")
+      ? (
+          await prisma.product.findMany({
+            where: {
+              ingestTokenHash: null,
+              repositoryUrl: null,
+              // An existing site runs without a pipeline on purpose.
+              existingSite: false,
+              status: { not: "SUNSET" },
+            },
+            orderBy: { updatedAt: "desc" },
+            take: 50,
+            select: { id: true, name: true, client: { select: { name: true, company: true } } },
+          })
+        ).map((p) => ({
+          href: `/products/${p.id}#connect`,
+          label: p.name,
+          hint: p.client.company || p.client.name || undefined,
+        }))
+      : [];
 
   const allCells: CountStripCell[] = [
     { label: "New leads", value: badges.leads ?? 0, href: "/leads?stage=new", tone: "info" },
@@ -128,6 +174,8 @@ export default async function DashboardPage() {
         <NowAside
           className={finance ? "xl:row-span-3" : "xl:row-span-2"}
           engineering={engineering}
+          canCreateProduct={canCreateWork}
+          connectable={connectable}
           renewals={
             renewalRows ? { rows: renewalRows.slice(0, 5), total: renewalRows.length } : null
           }
@@ -139,6 +187,8 @@ export default async function DashboardPage() {
                   launchCount: data.upcomingLaunchCount,
                   tasks: data.tasksDue,
                   taskCount: data.tasksDueCount,
+                  startable,
+                  canRecord: canCreateWork,
                 }
               : null
           }

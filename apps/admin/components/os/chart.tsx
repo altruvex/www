@@ -85,7 +85,7 @@ export function ColumnChart({
           >
             <span
               className={cn(
-                "w-full rounded-t-[4px] transition-opacity duration-[var(--dur-state)] group-hover:opacity-80",
+                "w-full rounded-t-ctl-xs transition-opacity duration-[var(--dur-state)] group-hover:opacity-80",
                 SERIES[seriesIndex % SERIES.length],
               )}
               style={{
@@ -97,7 +97,7 @@ export function ColumnChart({
           </div>
         ))}
       </div>
-      <div className="mt-1.5 flex gap-[2px] border-t border-border pt-1.5">
+      <div className="mt-1.5 flex gap-[2px] border-t border-border-subtle pt-1.5">
         {data.map((datum) => (
           <span
             key={datum.id}

@@ -5,10 +5,10 @@ import {
   getLocalizedSeoEntry,
   getLocalizedUrl,
   normalizeLocale,
+  SUPPORTED_LOCALES,
 } from "@/lib/metadata";
 import type { RouteMetaKey, SupportedLocale } from "@/lib/metadata";
 import type { Article } from "@/types/mdx";
-import type { Testimonial } from "@/lib/data/testimonials";
 import {
   fillPricingTokens,
   type Locale as PricingLocale,
@@ -45,22 +45,13 @@ const LOCAL_BUSINESS_ID = `${SITE_CONFIG.url}#local-business`;
 const WEBSITE_ID = `${SITE_CONFIG.url}#website`;
 const FOUNDER_ID = `${SITE_CONFIG.url}#founder`;
 
-const AREA_SERVED = [
-  "Egypt",
-  "Cairo",
-  "Saudi Arabia",
-  "United Arab Emirates",
-  "Middle East",
-  "Worldwide",
-];
+const AREA_SERVED = ["Worldwide"];
 
 const KNOWS_ABOUT = [
   "Altruvex",
   "Custom web development",
   "Technical web engineering",
   "Next.js delivery",
-  "Bilingual web systems",
-  "Arabic and English websites",
   "RTL web architecture",
   "Website performance engineering",
   "Technical SEO implementation",
@@ -80,8 +71,8 @@ const SERVICE_DEFINITIONS: Record<
       en: "For teams that need technical consulting before a rebuild or scale move - an audit of the system and a decision-ready roadmap.",
     },
     name: {
-      ar: "الاستشارات التقنية",
-      en: "Technical Consulting",
+      ar: "المراجعة التقنية",
+      en: "Technical Audit",
     },
     serviceType: {
       ar: "استشارات تطوير مواقع ويب مخصصة",
@@ -90,12 +81,12 @@ const SERVICE_DEFINITIONS: Record<
   },
   serviceDevelopment: {
     audience: {
-      ar: "للفرق التي تحتاج تطويراً مخصصاً لبوابة أو لوحة تحكم أو منتج - هندسة Next.js ثنائية اللغة وقابلة للتوسع.",
-      en: "For teams that need custom development of a portal, dashboard, or product - scalable, bilingual Next.js engineering.",
+      ar: "للفرق التي تحتاج تطويراً مخصصاً لبوابة أو لوحة تحكم أو منتج - هندسة Next.js قابلة للتوسع.",
+      en: "For teams that need custom development of a portal, dashboard, or product - scalable Next.js engineering.",
     },
     name: {
-      ar: "التطوير المخصص",
-      en: "Custom Development",
+      ar: "تطوير المواقع وتطبيقات الويب",
+      en: "Website & Web App Development",
     },
     serviceType: {
       ar: "تطوير Next.js مخصص للبوابات والمنتجات",
@@ -104,12 +95,12 @@ const SERVICE_DEFINITIONS: Record<
   },
   serviceInterfaceDesign: {
     audience: {
-      ar: "للفرق التي تحتاج تصميم واجهات يحوّل الزوار - شاشات مبنية للتحويل ونظام مكونات جاهز للتنفيذ بالعربية والإنجليزية.",
-      en: "For teams that need interface design that converts - conversion-focused screens and an implementation-ready component system in Arabic and English.",
+      ar: "للفرق التي تحتاج تصميم واجهات يحوّل الزوار - شاشات مبنية للتحويل ونظام مكونات جاهز للتنفيذ.",
+      en: "For teams that need interface design that converts - conversion-focused screens and an implementation-ready component system.",
     },
     name: {
-      ar: "تصميم الواجهات",
-      en: "Interface Design",
+      ar: "تصميم المواقع",
+      en: "Website Design",
     },
     serviceType: {
       ar: "تصميم وهندسة واجهات المواقع",
@@ -122,8 +113,8 @@ const SERVICE_DEFINITIONS: Record<
       en: "For teams that need maintenance and support for a live website - structured releases, monitoring, and reliable post-launch care.",
     },
     name: {
-      ar: "الصيانة والدعم",
-      en: "Maintenance & Support",
+      ar: "صيانة المواقع",
+      en: "Website Maintenance",
     },
     serviceType: {
       ar: "صيانة الأنظمة المخصصة",
@@ -175,7 +166,7 @@ function buildOrganizationSchema(): JsonLdSchema {
     contactPoint: {
       "@type": "ContactPoint",
       areaServed: AREA_SERVED,
-      availableLanguage: ["en", "ar"],
+      availableLanguage: [...SUPPORTED_LOCALES],
       contactType: "sales",
       email: SITE_CONFIG.email,
       telephone: SITE_CONFIG.phone,
@@ -244,31 +235,15 @@ function buildLocalBusinessSchema(locale: SupportedLocale): JsonLdSchema {
     image: getLocalizedUrl(locale, "/opengraph-image"),
     knowsAbout: KNOWS_ABOUT,
     makesOffer: [
-      "Interface Design",
-      "Custom Development",
-      "Technical Consulting",
-      "Maintenance & Support",
-      "Custom ecommerce development",
+      "Website Design",
+      "Website & Web App Development",
+      "Technical Audit",
+      "Website Maintenance",
     ],
     name: SITE_CONFIG.name,
-    openingHoursSpecification: [
-      {
-        "@type": "OpeningHoursSpecification",
-        closes: "18:00",
-        dayOfWeek: [
-          "Sunday",
-          "Monday",
-          "Tuesday",
-          "Wednesday",
-          "Thursday",
-        ],
-        opens: "09:00",
-      },
-    ],
     parentOrganization: {
       "@id": ORGANIZATION_ID,
     },
-    priceRange: "$$",
     sameAs: Object.values(SITE_CONFIG.social),
     telephone: SITE_CONFIG.phone,
     url: getLocalizedUrl(locale, "/"),
@@ -292,17 +267,20 @@ function buildWebsiteSchema(locale: SupportedLocale): JsonLdSchema {
     publisher: {
       "@id": ORGANIZATION_ID,
     },
-    potentialAction: {
-      "@type": "SearchAction",
-      "query-input": "required name=search_term_string",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${getLocalizedUrl(locale, "/writing")}?q={search_term_string}`,
-      },
-    },
     url: getLocalizedUrl(locale, "/"),
   };
 }
+
+// The page type follows what the page is. AboutPage carries the founder as its
+// main entity below, so the about route needs no second, separate page node.
+const WEB_PAGE_TYPES: Partial<Record<RouteMetaKey, string>> = {
+  about: "AboutPage",
+  contact: "ContactPage",
+  schedule: "ContactPage",
+  services: "CollectionPage",
+  work: "CollectionPage",
+  writing: "CollectionPage",
+};
 
 function buildWebPageSchema(
   locale: SupportedLocale,
@@ -314,10 +292,7 @@ function buildWebPageSchema(
   return {
     "@context": "https://schema.org",
     "@id": `${url}#webpage`,
-    "@type":
-      pageKey === "services" || pageKey === "work" || pageKey === "writing"
-        ? "CollectionPage"
-        : "WebPage",
+    "@type": WEB_PAGE_TYPES[pageKey] ?? "WebPage",
     about: {
       "@id": ORGANIZATION_ID,
     },
@@ -340,25 +315,6 @@ function buildWebPageSchema(
       "@id": ORGANIZATION_ID,
     },
     url,
-  };
-}
-
-function buildAboutPageSchema(locale: SupportedLocale): JsonLdSchema {
-  const entry = PAGE_METADATA.about[locale];
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "AboutPage",
-    about: {
-      "@id": ORGANIZATION_ID,
-    },
-    description: entry.description,
-    inLanguage: locale,
-    mainEntity: {
-      "@id": FOUNDER_ID,
-    },
-    name: entry.title,
-    url: getLocalizedUrl(locale, PAGE_METADATA.about.path),
   };
 }
 
@@ -543,7 +499,6 @@ function buildCaseStudySchema(
     creator: {
       "@id": ORGANIZATION_ID,
     },
-    datePublished: `${caseStudy.year}-01-01`,
     description: caseStudy.summary[locale],
     headline: caseStudy.name[locale],
     inLanguage: locale,
@@ -611,7 +566,7 @@ function buildArticleSchema(
       name: SITE_CONFIG.founder.name,
       sameAs: SITE_CONFIG.founder.linkedin,
     },
-    dateModified: article.frontmatter.date,
+    dateModified: article.frontmatter.updated ?? article.frontmatter.date,
     datePublished: article.frontmatter.date,
     description: article.frontmatter.excerpt,
     headline: article.frontmatter.title,
@@ -625,33 +580,6 @@ function buildArticleSchema(
     url,
     ...(wordCount !== undefined ? { wordCount } : {}),
   };
-}
-
-function buildReviewSchema(
-  locale: SupportedLocale,
-  testimonial: Testimonial,
-): JsonLdSchema {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Review",
-    author: {
-      "@type": "Organization",
-      name: testimonial.author,
-    },
-    itemReviewed: {
-      "@id": ORGANIZATION_ID,
-    },
-    reviewBody: testimonial.quote[locale],
-  };
-}
-
-export function buildTestimonialReviewSchemas(
-  locale: string,
-  testimonials: Testimonial[],
-): JsonLdSchema[] {
-  const loc = normalizeLocale(locale);
-
-  return testimonials.map((testimonial) => buildReviewSchema(loc, testimonial));
 }
 
 function buildStaticBreadcrumbs(
@@ -734,7 +662,6 @@ export function getArticleBreadcrumbTrail(
 }
 
 const SCHEMAS = {
-  aboutPage: buildAboutPageSchema,
   article: buildArticleSchema,
   breadcrumb: buildBreadcrumbSchema,
   caseStudy: buildCaseStudySchema,
@@ -779,7 +706,7 @@ export function buildPageSchemas(
   ];
 
   if (pageKey === "about") {
-    schemas.push(SCHEMAS.aboutPage(loc), SCHEMAS.founder(loc));
+    schemas.push(SCHEMAS.founder(loc));
   }
 
   if (pageKey === "services") {
@@ -840,7 +767,7 @@ export function buildFaqPageSchemas(
   locale: string = "en",
   pricing?: ResolvedPricing,
 ): JsonLdSchema[] {
-  const loc: PricingLocale = locale === "ar" ? "ar" : "en";
+  const loc: PricingLocale = normalizeLocale(locale);
   const plainEntries = entries.map((entry) => ({
     ...entry,
     answer: stripFaqMarkup(fillPricingTokens(entry.answer, loc, pricing)),

@@ -107,9 +107,12 @@ function toCurrency(code: string | null | undefined): Currency {
 export function RecordProjectButton({
   clients,
   preset,
+  scopeClientId = null,
 }: {
   clients: RecordClientOption[];
   preset?: { clientId: string | null } | null;
+  /** The client the list is filtered to — the sheet starts on them. */
+  scopeClientId?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -137,7 +140,7 @@ export function RecordProjectButton({
       {open && (
         <RecordProjectSheet
           clients={clients}
-          initialClientId={preset?.clientId ?? null}
+          initialClientId={preset?.clientId ?? scopeClientId}
           onClose={close}
           onRecorded={() => setOpen(false)}
         />

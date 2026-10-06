@@ -1,8 +1,8 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { ArrowIcon } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { ArrowIcon } from "@repo/ui";
+import { Eyebrow } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
 
 import { useTranslations } from "next-intl";

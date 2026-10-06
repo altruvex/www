@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { Siren } from "lucide-react";
-
 import { DropdownMenuItem } from "@repo/ui";
-
 import { DataTable, type Column } from "@/components/os/data-table";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import {
   useSectionDescription,
@@ -54,6 +54,8 @@ export function OwnershipStackSection() {
               className={cn(
                 "relative rounded-panel-lg border border-border-subtle text-foreground",
                 !inverted && "bg-background",
+                // The inverted scene keeps the section's on-light accent text; use the on-dark one on dark sheets (AA).
+                inverted && "[--local-accent-text:hsl(var(--brand-text-on-dark))]",
                 "lg:motion-safe:sticky lg:motion-safe:bottom-[calc(100vh-var(--sheet-top)-var(--sheet-h))] lg:motion-safe:h-(--sheet-h)",
                 z,
               )}
@@ -86,7 +88,7 @@ export function OwnershipStackSection() {
                   </p>
                   <div className="mt-5 border-t border-foreground/45 pt-3.5">
                     <Eyebrow tone="accent">{t("ownershipLabel")}</Eyebrow>
-                    <p className="mt-1.5 max-w-[40ch] text-[1.0625rem] leading-relaxed">
+                    <p className="mt-1.5 max-w-[40ch] text-body leading-relaxed">
                       {t(`layers.${id}.ownership`)}
                     </p>
                   </div>

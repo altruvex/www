@@ -3,6 +3,13 @@
 import { motion, useMagnetic, usePress } from "@/lib/motion";
 import { Slot } from "@radix-ui/react-slot";
 import { LoadingIcon } from "@repo/ui";
+import {
+  magneticButtonRadii as radii,
+  magneticButtonSizes as sizes,
+  magneticButtonVariants as variants,
+  type MagneticButtonSize,
+  type MagneticButtonVariant,
+} from "@repo/ui/www";
 import React, {
   forwardRef,
   useCallback,
@@ -10,13 +17,8 @@ import React, {
   useSyncExternalStore,
 } from "react";
 
-type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "ghost"
-  | "filled"
-  | "accent";
-type ButtonSize = "sm" | "default" | "lg";
+type ButtonVariant = MagneticButtonVariant;
+type ButtonSize = MagneticButtonSize;
 
 interface Ripple {
   x: number;
@@ -31,6 +33,7 @@ interface MagneticButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
   size?: ButtonSize;
   asChild?: boolean;
   isLoading?: boolean;
+  hapticEnabled?: boolean;
 }
 
 function useMergedRef<T>(...refs: (React.Ref<T> | null | undefined)[]) {
@@ -56,6 +59,40 @@ function subscribeToReducedMotion(onStoreChange: () => void) {
 function getReducedMotionPreference() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+const HAPTIC_TAP_MS = 10;
+
+// iOS Safari has no navigator.vibrate. Since 17.4 it fires a system haptic when
+// a `switch` checkbox is toggled, so a hidden one is clicked inside the tap.
+let iosHapticLabel: HTMLLabelElement | null = null;
+
+function iosHaptic() {
+  if (!iosHapticLabel) {
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = "ios-haptic-switch";
+    input.setAttribute("switch", "");
+    input.tabIndex = -1;
+    const label = document.createElement("label");
+    label.htmlFor = input.id;
+    label.setAttribute("aria-hidden", "true");
+    label.style.display = "none";
+    label.append(input);
+    document.body.append(label);
+    iosHapticLabel = label;
+  }
+  iosHapticLabel.click();
+}
+
+function tapHaptic() {
+  if (typeof navigator === "undefined") return;
+  try {
+    if ("vibrate" in navigator) navigator.vibrate(HAPTIC_TAP_MS);
+    else iosHaptic();
+  } catch {
+    // haptics can be blocked by policy; a tap must never fail on it
+  }
 }
 
 const RIPPLE_STYLE_ID = "magnetic-button-ripple-keyframes";
@@ -88,6 +125,7 @@ export const MagneticButton = forwardRef<
       size = "default",
       asChild = false,
       isLoading = false,
+      hapticEnabled = true,
       onClick,
       disabled,
       ...props
@@ -107,6 +145,7 @@ export const MagneticButton = forwardRef<
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (hapticEnabled && !prefersReducedMotion) tapHaptic();
       if (!prefersReducedMotion) {
         ensureRippleKeyframes();
         const rect = e.currentTarget.getBoundingClientRect();
@@ -121,32 +160,6 @@ export const MagneticButton = forwardRef<
         );
       }
       onClick?.(e);
-    };
-
-    const variants: Record<ButtonVariant, string> = {
-      primary:
-        "bg-brand text-brand-foreground border border-transparent hover:bg-brand-hover",
-      secondary:
-        "bg-transparent text-primary/85 border border-foreground/40 hover:bg-foreground/5 hover:border-foreground/60",
-      ghost:
-        "bg-transparent text-primary/75 hover:bg-foreground/5 border border-transparent",
-      filled:
-        "bg-transparent text-foreground border border-foreground/40 hover:bg-foreground hover:text-background hover:border-foreground",
-      accent:
-        "bg-local-accent text-local-accent-fg border border-transparent hover:opacity-90",
-    };
-
-    const sizes: Record<ButtonSize, string> = {
-      sm: "min-h-10 px-5 text-sm pointer-coarse:min-h-11",
-      default:
-        "min-h-11 min-w-11 px-5 py-2 text-sm sm:min-h-12 sm:min-w-12 sm:px-6 sm:py-2.5",
-      lg: "min-h-12 min-w-12 px-6 py-3 text-[15px] sm:px-7 lg:min-h-14 lg:px-8 lg:py-3.5 lg:text-base",
-    };
-
-    const radii: Record<ButtonSize, string> = {
-      sm: "rounded-full",
-      default: "rounded-full",
-      lg: "rounded-full",
     };
 
     const sharedClassName = [
@@ -187,8 +200,6 @@ export const MagneticButton = forwardRef<
             }
             aria-busy={isLoading || undefined}
             className={sharedClassName}
-            data-cursor-pointer
-            data-magnetic
             {...props}
           >
             {children}
@@ -212,8 +223,6 @@ export const MagneticButton = forwardRef<
         disabled={disabled || isLoading}
         aria-busy={isLoading}
         className={sharedClassName}
-        data-cursor-pointer
-        data-magnetic
         {...props}
       >
         <span className="relative z-10 flex items-center justify-center gap-2">

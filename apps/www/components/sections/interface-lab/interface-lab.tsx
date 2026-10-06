@@ -2,9 +2,9 @@
 
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
+import { bodyMarks } from "@/components/ui/rich-text";
 import { getCommercialCta } from "@/lib/config/commercial";
 import { useMediaSettle, useSectionTitle } from "@/lib/motion";
 import { useTranslations } from "next-intl";
@@ -23,40 +23,38 @@ function LabHero() {
 
   return (
     <section aria-labelledby="ifd-hero-heading" className="bg-background pt-(--section-y-top) pb-(--section-y-bottom)">
-      <Container className="grid gap-y-8 lg:grid-cols-12 lg:items-end lg:gap-x-10">
-        <div className="lg:col-span-7">
-          <HeroReveal delay={0.1} className="flex items-center gap-3">
-            <Tick />
-            <Eyebrow tone="accent">{s("eyebrow")}</Eyebrow>
-          </HeroReveal>
-          <HeroHeadline
-            as="h1"
-            id="ifd-hero-heading"
-            className="mt-6 text-[clamp(3.25rem,7.4vw,8.25rem)] leading-[0.98] font-light tracking-[-0.04em] text-foreground rtl:leading-[1.25] rtl:tracking-normal"
-          >
-            <span className="block">{s("title")}</span>
-            <Highlight tone="world" className="block tracking-[-0.03em] rtl:tracking-normal">
-              {s("titleAccent")}
-            </Highlight>
-          </HeroHeadline>
-        </div>
-        <div className="lg:col-span-5 lg:pb-4">
+      <Container>
+        <HeroReveal delay={0.1} className="flex items-center gap-3">
+          <Tick />
+          <Eyebrow tone="accent">{s("eyebrow")}</Eyebrow>
+        </HeroReveal>
+        <HeroHeadline
+          as="h1"
+          id="ifd-hero-heading"
+          className="mt-7 max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] leading-[0.98] font-light tracking-[-0.045em] text-foreground rtl:leading-[1.25] rtl:tracking-normal"
+        >
+          {s("title")}{" "}
+          <Highlight tone="world">
+            {s("titleAccent")}
+          </Highlight>
+        </HeroHeadline>
+        <div className="mt-11 grid gap-8 lg:grid-cols-2 lg:items-end lg:gap-10">
           <HeroReveal delay={0.45}>
-            <p className="max-w-[46ch] text-[clamp(1.0625rem,1.1vw,1.1875rem)] leading-relaxed text-muted-foreground">
-              {s("description")}
+            <p className="max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground">
+              {s.rich("description", bodyMarks)}
             </p>
           </HeroReveal>
-          <HeroReveal delay={0.6} className="mt-8">
+          <HeroReveal delay={0.6} className="lg:justify-self-end">
             <CtaButtonGroup
               primaryVariant="accent"
-              primary={{ href: getCommercialCta("projectRange").href, label: tCTAs("projectRange") }}
+              primary={{ href: getCommercialCta("describeTheBuild").href, label: tCTAs("describeTheBuild") }}
               secondary={{ href: getCommercialCta("realBuild").href, label: tCTAs("realBuild") }}
               secondaryArrow
             />
           </HeroReveal>
         </div>
       </Container>
-      <Container className="mt-14 lg:mt-20">
+      <Container className="mt-(--heading-gap)">
         <div ref={mediaRef} className="relative overflow-hidden rounded-panel-lg sm:aspect-video">
           <div data-settle-img className="relative aspect-video overflow-hidden rounded-panel-lg will-change-transform sm:absolute sm:inset-0 sm:aspect-auto sm:rounded-none">
             <Image
@@ -84,8 +82,6 @@ function LabHero() {
 }
 const ROW_IMAGES = [
   { src: "/images/interface-design/rows-01.webp", ratio: 1800 / 1200 },
-  { src: "/images/interface-design/rows-02.webp", ratio: 1800 / 1201 },
-  { src: "/images/interface-design/rows-03.webp", ratio: 1400 / 2100 },
   { src: "/images/interface-design/rows-04.webp", ratio: 1400 / 1866 },
   { src: "/images/interface-design/rows-05.webp", ratio: 1800 / 1200 },
   { src: "/images/interface-design/rows-06.webp", ratio: 1800 / 1200 },
@@ -97,7 +93,7 @@ function RowMedia({ src, ratio }: { src: string; ratio: number }) {
     <div
       ref={mediaRef}
       className="relative ms-auto w-full overflow-hidden rounded-panel-sm"
-      style={{ aspectRatio: ratio, maxWidth: ratio < 1 ? `calc(56vh * ${ratio})` : undefined }}
+      style={{ aspectRatio: ratio, maxWidth: ratio < 1 ? `calc(48vh * ${ratio})` : undefined }}
     >
       <div data-settle-img className="absolute inset-0 will-change-transform">
         <Image src={src} alt="" fill sizes="(min-width: 1024px) 44vw, 100vw" className="object-contain" />
@@ -128,7 +124,7 @@ function StackedRows() {
           {items.map((item, i) => (
             <li
               key={item.title}
-              className="border-t border-border-subtle bg-background lg:sticky lg:min-h-[78vh]"
+              className="border-t border-border-subtle bg-background lg:sticky lg:min-h-[64vh]"
               style={{ top: `calc(3.5rem + ${i} * 4.5rem)` }}
             >
               <div className="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-x-4 py-4 lg:h-18 lg:grid-cols-[6rem_minmax(0,1fr)] lg:py-0">

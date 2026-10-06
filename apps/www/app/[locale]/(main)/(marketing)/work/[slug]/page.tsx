@@ -1,7 +1,7 @@
 import { Container } from "@/components/shared/container";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getCaseStudyBySlug } from "@/lib/data/case-studies";
+import { getAllCaseStudies, getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { generateRouteMetadata } from "@/lib/metadata";
 import {
   buildCaseStudyPageSchemas,
@@ -11,6 +11,14 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import WorkCaseStudyPageClient from "./page-client";
+import { toLocale } from "@/i18n/locale-meta";
+
+// Unknown slugs 404 at routing, before the segment's loading boundary streams a 200.
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return getAllCaseStudies().map((cs) => ({ slug: cs.slug }));
+}
 
 export async function generateMetadata({
   params,
@@ -18,7 +26,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const loc = locale === "ar" ? "ar" : "en";
+  const loc = toLocale(locale);
   const cs = getCaseStudyBySlug(slug);
   const t = await getTranslations({ locale, namespace: "work.labels" });
   const pathSuffix = `/work/${slug}`;
@@ -45,7 +53,7 @@ export async function generateMetadata({
       cs.industry[loc],
       t("caseStudy"),
     ],
-    title: cs.name[loc],
+    title: cs.seoTitle?.[loc] ?? cs.name[loc],
   });
 }
 

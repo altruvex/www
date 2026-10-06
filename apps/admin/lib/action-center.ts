@@ -279,7 +279,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
         age === 0
           ? "Arrived today, nobody has replied yet"
           : `Uncontacted for ${age} day${age === 1 ? "" : "s"}`,
-      href: `/clients/${lead.id}`,
+      href: `/clients/${lead.id}#conversations`,
       cta: "Open lead",
       score: 60 + Math.min(age, 14) * 4,
       ageDays: age,
@@ -298,7 +298,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       detail: p.readAt
         ? `Read ${ageInDays(p.readAt)}d ago, no answer`
         : `Sent ${age}d ago, not opened`,
-      href: `/proposals/${p.id}`,
+      href: `/proposals/${p.id}#engagement`,
       cta: "Open proposal",
       score: 55 + Math.min(age, 21) * 3 + (p.readAt ? 10 : 0),
       ageDays: age,
@@ -330,7 +330,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       tone: age >= 5 ? "danger" : "warning",
       title: `Contract awaiting signature · ${label(c.client)}`,
       detail: `Sent ${age}d ago, not signed`,
-      href: `/contracts/${c.id}`,
+      href: `/contracts/${c.id}#signature`,
       cta: "Open contract",
       score: 75 + Math.min(age, 14) * 3,
       ageDays: age,
@@ -411,7 +411,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       tone: "danger",
       title: `${pr.name} is past its launch date`,
       detail: `${age}d late, still in ${pr.phase.toLowerCase().replace(/_/g, " ")}`,
-      href: `/projects/${pr.id}`,
+      href: `/projects/${pr.id}#phases`,
       cta: "Open project",
       score: 80 + Math.min(age, 30) * 2,
       ageDays: age,

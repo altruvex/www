@@ -163,7 +163,7 @@ export default async function ActionsPage({
                     href={hrefWith({ kind: k === kind ? null : k })}
                     aria-current={k === kind ? "true" : undefined}
                     className={cn(
-                      "flex min-h-8 items-center gap-2 rounded-md px-1 no-underline transition-colors duration-[var(--dur-state)] hover:bg-surface",
+                      "flex min-h-8 items-center gap-2 rounded-ctl px-1 no-underline transition-colors duration-[var(--dur-state)] hover:bg-surface",
                       "outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand pointer-coarse:min-h-11",
                       k === kind ? "text-foreground" : "text-muted-foreground",
                     )}

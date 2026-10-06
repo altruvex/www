@@ -86,7 +86,7 @@ export function NewClientForm() {
       </Field>
       <Field
         label="Industry"
-        hint="Used to suggest the proposal's accent world. Editable later."
+        hint="Pick what the client does. It only sets the starting colour of their proposals; you can change it per proposal."
       >
         <IndustrySelect name="industry" />
       </Field>
@@ -112,7 +112,7 @@ export function NewClientForm() {
         </p>
       )}
 
-      <div className="flex items-center gap-2 border-t border-border pt-3">
+      <div className="flex items-center gap-2 border-t border-border-subtle pt-3">
         <Button type="submit" variant="brand" disabled={busy}>
           {busy && <LoadingIcon size="sm" />}
           Create client

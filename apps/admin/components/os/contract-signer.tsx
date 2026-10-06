@@ -113,7 +113,7 @@ export function ContractSignerForm({
           {error}
         </p>
       )}
-      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+      <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
         <Button type="submit" variant="outline" disabled={busy || !dirty} aria-busy={busy}>
           {busy && <LoadingIcon size="sm" />}
           Save signer

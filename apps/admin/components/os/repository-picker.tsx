@@ -146,7 +146,7 @@ export function RepositoryPicker({
             />
           </div>
 
-          <ul className="max-h-64 overflow-y-auto rounded-md border border-border">
+          <ul className="max-h-64 overflow-y-auto rounded-ctl-xl border border-border-subtle">
             {filtered.length === 0 && !loading && (
               <li className="px-3 py-2.5 text-meta text-subtle-foreground">
                 Nothing matches that.
@@ -156,7 +156,7 @@ export function RepositoryPicker({
               const isSelected = repo.htmlUrl.toLowerCase() === selected;
               const taken = repo.takenBy && repo.takenBy.id !== excludeProductId;
               return (
-                <li key={repo.fullName} className="border-b border-border last:border-b-0">
+                <li key={repo.fullName} className="border-b border-border-subtle last:border-b-0">
                   <button
                     type="button"
                     aria-pressed={isSelected}

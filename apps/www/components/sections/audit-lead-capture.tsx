@@ -2,8 +2,9 @@
 
 import { MagneticButton } from "@/components/magnetic-button";
 import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { trackEvent } from "@/lib/analytics";
+import { FORM_ERROR_KEY, readApiResult } from "@/lib/api-errors";
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -18,6 +19,7 @@ export function AuditLeadCapture({
   className,
 }: AuditLeadCaptureProps) {
   const t = useTranslations("auditLead");
+  const tValidations = useTranslations("validations");
   const fillTokens = useFillPricingTokens();
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,14 +49,18 @@ export function AuditLeadCapture({
         body: JSON.stringify({ phone, source }),
       });
 
-      if (response.ok) {
+      const result = await readApiResult(response);
+      if (result.ok) {
         setIsSuccess(true);
         trackEvent("audit_lead_captured", { source });
-      } else {
+      } else if (result.code === "validation") {
         setError(t("phoneError"));
+      } else {
+        // Codes, never server copy: the line is in the visitor's locale.
+        setError(tValidations(FORM_ERROR_KEY[result.code]));
       }
     } catch {
-      setError(t("phoneError"));
+      setError(tValidations(FORM_ERROR_KEY.network));
     } finally {
       setIsSubmitting(false);
     }

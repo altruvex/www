@@ -1,5 +1,6 @@
 import { prisma } from "@repo/database";
 import Link from "next/link";
+import { ArrowIcon } from "@repo/ui";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { EventList, type EventRowData } from "@/components/os/event-row";
 import { roleCanOpen } from "@/lib/action-center";
@@ -72,9 +73,9 @@ export async function EntityAudit({
         <>
           <EventList events={rows} />
           {more && auditHref && (
-            <p className="border-t border-border px-3 py-2 text-meta">
+            <p className="border-t border-border-subtle px-3 py-2 text-meta">
               <Link className="text-muted-foreground hover:text-foreground" href={auditHref}>
-                Older events in the audit log →
+                Older events in the audit log <ArrowIcon motion="none" className="ms-1 inline size-3.5 align-[-0.15em]" />
               </Link>
             </p>
           )}

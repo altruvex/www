@@ -365,7 +365,7 @@ export function DataTable<T>({
           <div className="plane hidden overflow-x-auto md:block">
             <table className="w-full table-fixed border-collapse text-base">
               <thead>
-                <tr className="border-b border-border bg-surface">
+                <tr className="border-b border-border-subtle bg-surface">
                   {selectable && (
                     <th className="w-8 ps-3" scope="col">
                       <Checkbox
@@ -460,7 +460,7 @@ export function DataTable<T>({
                           }
                         : {})}
                       className={cn(
-                        "border-b border-border last:border-b-0",
+                        "border-b border-border-subtle last:border-b-0",
                         "transition-colors duration-[var(--dur-state)]",
                         "hover:bg-surface/70 data-[selected]:bg-brand-soft",
                         onRowClick &&
@@ -587,7 +587,7 @@ export function DataTable<T>({
                     </span>
                   </div>
                   {metaCols.length > 0 && (
-                    <dl className="relative z-10 mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border pt-2.5">
+                    <dl className="relative z-10 mt-2.5 grid grid-cols-2 gap-x-3 gap-y-1.5 border-t border-border-subtle pt-2.5">
                       {metaCols.map((c) => (
                         <div key={c.id} className="min-w-0">
                           <dt className="telemetry text-subtle-foreground">
@@ -653,7 +653,7 @@ export function FilterChip({
   return (
     <span
       className={cn(
-        "inline-flex h-[var(--control-h-sm)] max-w-full items-center gap-1.5 rounded-sm border border-border bg-surface ps-2 pe-1 text-meta",
+        "inline-flex h-[var(--control-h-sm)] max-w-full items-center gap-1.5 rounded-ctl-sm border border-border-subtle bg-surface ps-2 pe-1 text-meta",
         className,
       )}
     >

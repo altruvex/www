@@ -1,5 +1,11 @@
-import { Accent, Highlight, type AccentAnimation, type GradientDirection, type HeadingAccent } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import {
+  Accent,
+  type AccentAnimation,
+  Eyebrow,
+  type GradientDirection,
+  type HeadingAccent,
+  Highlight,
+} from "@repo/ui/www";
 import { cn } from "@/lib/utils/utils";
 import { ReactNode, RefObject } from "react";
 
@@ -103,8 +109,15 @@ export function SectionHeading({
           {firstTitle}
           {secondTitle ? (
             <>
+              {/* With a break, the second title stays a block at every width so
+                  text-wrap: balance runs on each part separately; inline after
+                  the <br>, Chrome balanced both parts as one and left a single
+                  word on the last line. */}
               {secondTitleBreak ? (
-                <br className={isSurface ? "" : "hidden md:block"} />
+                <>
+                  {" "}
+                  <br className={isSurface ? "" : "hidden md:block"} />
+                </>
               ) : (
                 " "
               )}
@@ -117,7 +130,7 @@ export function SectionHeading({
                     secondTitleBreak &&
                     (isSurface
                       ? ""
-                      : "mt-[calc(0.5rem-0.36em)] block md:mt-0 md:inline"),
+                      : "mt-[calc(0.5rem-0.36em)] block md:mt-[-0.36em]"),
                     classes?.secondTitle,
                   )}
                 >
@@ -134,7 +147,7 @@ export function SectionHeading({
                   }
                   className={cn(
                     secondTitleBreak &&
-                    "mt-2 block md:mt-0 md:inline",
+                    "mt-2 block md:mt-0",
                     classes?.secondTitle,
                   )}
                 >

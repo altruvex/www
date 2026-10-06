@@ -54,11 +54,11 @@ function PresetChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border px-2 text-base",
+        "flex h-8 flex-1 items-center justify-center gap-1.5 rounded-ctl border px-2 text-base",
         "transition-colors duration-(--dur-state)",
         active
           ? "border-brand bg-brand-soft font-medium text-foreground"
-          : "border-border bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
+          : "border-border-subtle bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
       )}
     >
       {active && <Check className="size-3 shrink-0 text-brand" aria-hidden />}
@@ -178,7 +178,7 @@ export function PriceControl({
           </div>
         )}
       </div>
-      <div className="space-y-2 border-t border-border pt-3">
+      <div className="space-y-2 border-t border-border-subtle pt-3">
         <fieldset>
           <legend className="mb-1.5 text-meta font-medium text-muted-foreground">
             Discount
@@ -193,11 +193,11 @@ export function PriceControl({
                   aria-pressed={selected}
                   onClick={() => setDiscount({ mode: mode.value })}
                   className={cn(
-                    "flex h-8 items-center justify-center gap-1.5 rounded-md border px-2 text-base",
+                    "flex h-8 items-center justify-center gap-1.5 rounded-ctl border px-2 text-base",
                     "transition-colors duration-(--dur-state)",
                     selected
                       ? "border-brand bg-brand-soft font-medium text-foreground"
-                      : "border-border bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
+                      : "border-border-subtle bg-card text-muted-foreground hover:border-border-mid hover:text-foreground",
                   )}
                 >
                   {selected && <Check className="size-3 text-brand" aria-hidden />}
@@ -214,12 +214,12 @@ export function PriceControl({
             disabled={auditCredit === null}
             onClick={isAuditCredit ? clearAuditCredit : applyAuditCredit}
             className={cn(
-              "flex h-8 w-full items-center justify-center gap-1.5 rounded-md border px-2 text-base",
+              "flex h-8 w-full items-center justify-center gap-1.5 rounded-ctl border px-2 text-base",
               "transition-colors duration-(--dur-state)",
               "disabled:cursor-not-allowed disabled:opacity-60",
               isAuditCredit
                 ? "border-brand bg-brand-soft font-medium text-foreground"
-                : "border-border bg-card text-muted-foreground enabled:hover:border-border-mid enabled:hover:text-foreground",
+                : "border-border-subtle bg-card text-muted-foreground enabled:hover:border-border-mid enabled:hover:text-foreground",
             )}
           >
             {isAuditCredit && (
@@ -288,7 +288,7 @@ export function PriceControl({
           </div>
         )}
       </div>
-      <div className="space-y-2 border-t border-border pt-3">
+      <div className="space-y-2 border-t border-border-subtle pt-3">
         <Field label="VAT / Tax Rate (%)" hint="Optional official tax applied to net total.">
           <NumberInput
             value={vatPercent}
@@ -299,7 +299,7 @@ export function PriceControl({
           />
         </Field>
       </div>
-      <dl className="space-y-1.5 border-t border-border pt-3">
+      <dl className="space-y-1.5 border-t border-border-subtle pt-3">
         <div className="flex items-baseline justify-between gap-3">
           <dt className="text-base text-muted-foreground">Subtotal</dt>
           <dd className="font-mono text-meta tabular-nums text-foreground">
@@ -330,7 +330,7 @@ export function PriceControl({
             </dd>
           </div>
         )}
-        <div className="flex items-baseline justify-between gap-3 border-t border-border pt-1.5">
+        <div className="flex items-baseline justify-between gap-3 border-t border-border-subtle pt-1.5">
           <dt className="text-base font-medium text-foreground">
             {vatPercent > 0 ? "Grand Total (incl. VAT)" : reduction > 0 ? "Client pays" : "Total"}
           </dt>

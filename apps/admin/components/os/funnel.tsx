@@ -39,7 +39,7 @@ export function FunnelBars({
           <Link
             key={stage.id}
             href={`${hrefBase}${stage.id}`}
-            className="-mx-1 flex items-center gap-2 rounded-sm px-1 py-0.5 transition-colors duration-[var(--dur-state)] hover:bg-surface"
+            className="-mx-1 flex items-center gap-2 rounded-ctl-xs px-1 py-0.5 transition-colors duration-[var(--dur-state)] hover:bg-surface"
           >
             {row}
           </Link>

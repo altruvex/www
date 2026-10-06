@@ -10,7 +10,7 @@ import {
   type Role,
 } from "@/lib/nav";
 import { cn } from "@/lib/utils";
-import { Hint } from "@repo/ui";
+import { AltruvexLogo, Hint } from "@repo/ui";
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -72,7 +72,7 @@ export function Sidebar({
 
   return (
     <div
-      className="liquid-glass-toolbar flex h-full flex-col bg-sidebar transition-[width] duration-[var(--dur-state)] ease-in-out"
+      className="flex h-full flex-col bg-sidebar transition-[width] duration-[var(--dur-state)] ease-default"
       style={{ width: collapsed ? "var(--sidebar-w-collapsed)" : "var(--sidebar-w)" }}
     >
       <div
@@ -83,17 +83,10 @@ export function Sidebar({
           href="/"
           onClick={onNavigate}
           onMouseEnter={() => router.prefetch("/")}
-          className="flex min-w-0 items-center gap-2 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-foreground"
+          className="flex min-w-0 items-center gap-2 rounded-ctl-xs outline-none focus-visible:ring-2 focus-visible:ring-foreground"
           aria-label="Altruvex Admin, go to dashboard"
         >
-          <span className="grid size-5 shrink-0 place-items-center rounded-sm bg-foreground font-sans text-micro font-semibold text-background">
-            A
-          </span>
-          {!collapsed && (
-            <span className="truncate font-sans text-md font-semibold tracking-tight">
-              Altruvex
-            </span>
-          )}
+          <AltruvexLogo size="xs" variant={collapsed ? "icon" : "lockup"} />
         </Link>
         {!collapsed && (
           <span className="telemetry ms-auto text-subtle-foreground">OS</span>
@@ -145,7 +138,7 @@ export function Sidebar({
                   aria-expanded={isOpen}
                   aria-controls={`group-${group.id}`}
                   className={cn(
-                    "telemetry flex w-full items-center gap-1 rounded-sm px-2 py-1 text-subtle-foreground outline-none",
+                    "telemetry flex w-full items-center gap-1 rounded-ctl-xs px-2 py-1 text-subtle-foreground outline-none",
                     "transition-colors duration-(--dur-state) hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-border"
                   )}
                 >
@@ -160,7 +153,7 @@ export function Sidebar({
                 </button>
                 <div
                   className={cn(
-                    "grid transition-all duration-(--dur-state) ease-in-out",
+                    "grid transition-all duration-(--dur-state) ease-default",
                     isOpen ? "mt-0.5 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-0"
                   )}
                 >
@@ -187,7 +180,7 @@ export function Sidebar({
           type="button"
           onClick={onToggleCollapse}
           className={cn(
-            "flex h-(--control-h-sm) w-full items-center gap-2 rounded-md px-2 text-meta text-muted-foreground outline-none",
+            "flex h-(--control-h-sm) w-full items-center gap-2 rounded-ctl-sm px-2 text-meta text-muted-foreground outline-none",
             "transition-colors duration-(--dur-state) hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-sidebar-border"
           )}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -224,7 +217,7 @@ function SidebarLink({
   const planned = item.state === "planned";
 
   const contentClasses = cn(
-    "group relative flex h-7 items-center gap-2 rounded-md px-2 text-base outline-none",
+    "group relative flex h-7 items-center gap-2 rounded-ctl-sm px-2 text-base outline-none",
     "transition-colors duration-[var(--dur-state)]",
     active
       ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"

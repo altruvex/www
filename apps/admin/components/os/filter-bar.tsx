@@ -143,7 +143,7 @@ function SearchField({ param, placeholder = "Search…" }: { param: string; plac
             type="button"
             onClick={() => setQuery("")}
             aria-label="Clear search"
-            className="flex size-6 items-center justify-center rounded-sm text-subtle-foreground transition-colors duration-[var(--dur-state)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand"
+            className="flex size-6 items-center justify-center rounded-ctl-xs text-subtle-foreground transition-colors duration-[var(--dur-state)] hover:text-foreground focus-visible:outline-2 focus-visible:outline-brand"
           >
             <X className="size-3.5" aria-hidden />
           </button>
@@ -225,7 +225,7 @@ export function ActiveFilters({
       {active.map((filter) => (
         <span
           key={filter.param}
-          className="inline-flex h-6 max-w-full items-center gap-1 rounded-sm border border-border bg-surface ps-2 pe-0.5 text-meta"
+          className="inline-flex h-6 max-w-full items-center gap-1 rounded-ctl-xs border border-border-subtle bg-surface ps-2 pe-0.5 text-meta"
         >
           <span className="text-subtle-foreground">{filter.label}:</span>
           <span className="min-w-0 truncate font-medium text-foreground">{filter.value}</span>

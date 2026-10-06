@@ -11,9 +11,7 @@ export {
 } from "@/lib/motion/hooks/use-section-motion";
 export {
   splitWords,
-  useKineticTrack,
   useMediaSettle,
-  useTileAssemble,
   useWordRead,
 } from "@/lib/motion/hooks/use-scroll-scene";
 export { useThemeSwitch } from "@/lib/motion/hooks/use-theme-switch";

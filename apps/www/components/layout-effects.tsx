@@ -6,14 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { useFirstInteraction } from "@/hooks/use-first-interaction";
 import { useIdleMount } from "@/hooks/use-idle-mount";
 import dynamic from "next/dynamic";
-import { Suspense, type ReactNode } from "react";
-
-const CustomCursorLazy = dynamic(
-  () => import("@/components/interactive/custom-cursor"),
-  {
-    ssr: false,
-  },
-);
+import type { ReactNode } from "react";
 
 const ExitIntentLazy = dynamic(
   () =>
@@ -47,9 +40,6 @@ export function LayoutEffects({ children }: { children: ReactNode }) {
         enableSystem
       >
         <div vaul-drawer-wrapper="">
-          <Suspense fallback={null}>
-            {shouldMountNonCritical ? <CustomCursorLazy /> : null}
-          </Suspense>
           {children}
           <CommandPaletteHost />
           {shouldMountNonCritical ? <ExitIntentLazy /> : null}

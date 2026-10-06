@@ -28,11 +28,11 @@ export function NextSteps({
   return (
     <Panel title={title} flush className={className}>
       {children && (
-        <div className="flex flex-col gap-1.5 border-b border-border p-3 [&>*]:w-full [&>*]:justify-start">
+        <div className="flex flex-col gap-1.5 border-b border-border-subtle p-3 [&>*]:w-full [&>*]:justify-start">
           {children}
         </div>
       )}
-      <ul className="divide-y divide-border">
+      <ul className="divide-y divide-border-subtle">
         {steps.map((step) => {
           const Icon = step.icon;
           return (

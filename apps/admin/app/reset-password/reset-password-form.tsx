@@ -84,7 +84,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           <button
             type="button"
             onClick={() => setShow((value) => !value)}
-            className="absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-e-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 pointer-coarse:w-11"
+            className="absolute inset-y-0 end-0 flex w-9 items-center justify-center rounded-e-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 pointer-coarse:w-11"
             aria-label={show ? "Hide password" : "Show password"}
             aria-pressed={show}
           >

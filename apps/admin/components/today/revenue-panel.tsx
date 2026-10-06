@@ -60,11 +60,11 @@ export async function RevenuePanel(): Promise<React.ReactNode> {
               : "Nothing coming due"
           }
           tone={m.renewalsNeedingAttention ? "warning" : "neutral"}
-          href="/renewals"
+          href={m.renewalsNeedingAttention ? "/renewals?attention=1" : "/renewals"}
         />
       </div>
 
-      <dl className="mt-4 space-y-3 border-t border-border pt-4">
+      <dl className="mt-4 space-y-3 border-t border-border-subtle pt-4">
         <MoneyRow
           label="Collected this month"
           value={moneyByCurrency(m.collectedThisMonth) || "0"}
@@ -85,7 +85,7 @@ export async function RevenuePanel(): Promise<React.ReactNode> {
         />
       </dl>
       {hasOverdue && (
-        <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
+        <ul className="mt-3 space-y-1.5 border-t border-border-subtle pt-3">
           {m.topOverdue.map((payment) => (
             <li key={payment.id} className="flex items-center gap-2 text-base">
               <Wallet

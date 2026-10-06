@@ -3,25 +3,33 @@ import { z } from "zod";
 import { linkClientToLead, prisma } from "@repo/database";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
-import { tooManyRequests } from "@/lib/server/too-many-requests";
+import {
+  apiError,
+  readJsonBody,
+  tooManyRequests,
+  unexpectedError,
+} from "@/lib/server/api-error";
 
 const exitIntentSchema = z.object({
   phone: z
     .string()
     .trim()
-    .min(7)
-    .max(20)
-    .regex(/^[+\d][\d\s()-]*$/, "phone must be a phone number"),
-  source: z.enum(["exit_intent_modal", "audit_lead_capture"]).default("exit_intent_modal"),
+    .min(7, "contact.phone-min")
+    .max(20, "contact.phone-max")
+    .regex(/^[+\d][\d\s()-]*$/, "contact.phone-regex"),
+  // Article audit forms send `article_audit_cta:<slug>`; the old enum refused
+  // those, so every article audit request failed.
+  source: z
+    .string()
+    .max(160)
+    .regex(/^(exit_intent_modal|audit_lead_capture|article_audit_cta(:[a-z0-9-]+)?)$/)
+    .default("exit_intent_modal"),
 });
 
 export async function POST(request: NextRequest) {
   try {
     if (!isTrustedOrigin(request)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid request origin" },
-        { status: 403 },
-      );
+      return apiError("forbidden");
     }
 
     const rl = await enforceRateLimit(request, {
@@ -31,10 +39,11 @@ export async function POST(request: NextRequest) {
       windowSeconds: 60 * 60,
     });
     if (!rl.ok) {
-      return tooManyRequests(request, rl.retryAfterSeconds);
+      return tooManyRequests(rl.retryAfterSeconds);
     }
 
-    const body = await request.json();
+    const body = await readJsonBody(request);
+    if (!body) return apiError("bad_request");
     const { phone, source } = exitIntentSchema.parse(body);
 
     const submission = await prisma.contactSubmission.create({
@@ -55,16 +64,12 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { success: true, message: "Contact captured" },
+      { ok: true, code: "captured" },
       { status: 201 },
     );
   } catch (error: unknown) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Exit intent error:", error);
-    }
-    return NextResponse.json(
-      { success: false, message: "Failed to capture email" },
-      { status: 500 },
-    );
+    // A bad number is a 400 with a field code; only a real failure is a 500,
+    // and neither carries text — the modal localizes the code.
+    return unexpectedError(error, "Exit intent error");
   }
 }

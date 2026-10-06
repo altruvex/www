@@ -180,7 +180,7 @@ export function Section({
 }) {
   return (
     <section className="plane overflow-hidden">
-      <div className="flex items-start justify-between gap-4 border-b border-border px-3 py-2">
+      <div className="flex items-start justify-between gap-4 border-b border-border-subtle px-3 py-2">
         <div className="min-w-0">
           <h3 className="text-md font-semibold">{title}</h3>
           {description && (
@@ -241,10 +241,10 @@ function SortableItem<T>({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group/row flex items-start gap-2 rounded-md border p-2",
+        "group/row flex items-start gap-2 rounded-ctl-xl border p-2",
         isDragging
           ? "relative border-primary bg-surface shadow-md"
-          : "border-border bg-surface/50",
+          : "border-border-subtle bg-surface/50",
       )}
     >
       <div className="flex w-6 shrink-0 flex-col items-center gap-0.5 pt-1">
@@ -283,7 +283,7 @@ function SortableItem<T>({
               ? `Remove item ${index + 1}`
               : `Item ${index + 1} cannot be removed — at least ${minItems} required`
           }
-          className="shrink-0 rounded-sm p-1.5 text-subtle-foreground transition-colors duration-(--dur-state) hover:bg-danger/10 hover:text-danger disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-subtle-foreground"
+          className="shrink-0 rounded-ctl-sm p-1.5 text-subtle-foreground transition-colors duration-(--dur-state) hover:bg-danger/10 hover:text-danger disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-subtle-foreground"
         >
           <Trash2 className="size-3.5" />
         </button>
@@ -383,19 +383,19 @@ export function ListEditor<T>({
     return (
       <div
         className={cn(
-          "flex flex-col items-start gap-3 rounded-md border border-dashed px-4 py-5",
+          "flex flex-col items-start gap-3 rounded-panel-sm border border-dashed px-4 py-5",
           invalid
             ? "border-danger/35 bg-danger/4"
-            : "border-border bg-surface/40",
+            : "border-border-subtle bg-surface/40",
         )}
       >
         <div className="flex items-start gap-2.5">
           <span
             className={cn(
-              "mt-px flex size-6 shrink-0 items-center justify-center rounded-md border",
+              "mt-px flex size-6 shrink-0 items-center justify-center rounded-ctl-xs border",
               invalid
                 ? "border-danger/25 text-danger"
-                : "border-border bg-surface text-subtle-foreground",
+                : "border-border-subtle bg-surface text-subtle-foreground",
             )}
           >
             <ListPlus className="size-3.5" aria-hidden />
@@ -497,7 +497,7 @@ export function SplitMeter({
   return (
     <div className={cn("space-y-1.5", className)}>
       <div
-        className="relative flex h-2 w-full gap-px overflow-hidden rounded-full border border-border bg-surface"
+        className="relative flex h-2 w-full gap-px overflow-hidden rounded-full border border-border-subtle bg-surface"
         role="img"
         aria-label={`Payment split: ${segments
           .map((s) => `${s.label || "unnamed"} ${s.value}%`)

@@ -1,17 +1,23 @@
 "use client";
 
 import { Num } from "@/components/ui/num";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { Container } from "@/components/shared/container";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Accent } from "@/components/ui/emphasis";
+import { SectionHeading } from "@/components/sections/section-heading";
+import { Accent, Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import { HOMEPAGE_SUPPORTING_CASE_STUDIES } from "@/lib/config/commercial";
 import { getCaseStudyBySlug, type CaseStudyRecord } from "@/lib/data/case-studies";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
-import { useMediaSettle } from "@/lib/motion";
+import {
+  useMediaSettle,
+  useSectionCardGrid,
+  useSectionDescription,
+  useSectionEyebrow,
+  useSectionTitle,
+} from "@/lib/motion";
 import { getDomainName } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -45,12 +51,12 @@ export default memo(function WorkIndexPage() {
             </HeroReveal>
             <HeroHeadline
               as="h1"
-              className="mb-7 max-w-6xl text-balance font-sans text-[clamp(3rem,4.5vw,4.5rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
+              className="mb-7 max-w-6xl text-balance font-sans text-[clamp(2.75rem,6vw,6.25rem)] leading-[1.05] font-light tracking-[-0.03em] text-foreground select-none md:mb-8 lg:leading-[1.02] rtl:tracking-normal"
             >
               <span className="block">{t("title")}</span>
               <Accent gradient="world">{t("titleItalic")}</Accent>
             </HeroHeadline>
-            <HeroReveal delay={0.5} className="max-w-2xl">
+            <HeroReveal delay={0.5} className="max-w-[46ch]">
               <p className="text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
                 {t.rich("description", bodyMarks)}
               </p>
@@ -63,6 +69,7 @@ export default memo(function WorkIndexPage() {
           </ol>
         </Container>
       </section>
+      <CheckSection />
       <WorkEndCta nextIndex={STAGES.length + 1} />
     </>
   );
@@ -95,7 +102,7 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
         <div aria-hidden className="photo-title-scrim" />
         <div className="absolute inset-x-5 bottom-5 sm:inset-x-8 sm:bottom-8">
           <p className="eyebrow text-white/80">
-            {tCase(`${slug}.client`)} · {tCase(`${slug}.year`)}
+            {tCase(`${slug}.client`)} · {tCase(`${slug}.industry`)}
           </p>
           <h2 className="mt-3 max-w-[20ch] text-[clamp(1.75rem,4vw,3.5rem)] leading-[1.08] font-light tracking-[-0.03em] text-white rtl:leading-[1.4] rtl:tracking-normal">
             {t(`stages.${slug}.title`)}
@@ -103,9 +110,12 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
         </div>
       </div>
       <div className="mt-6 flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-12">
-        <p className="max-w-[58ch] text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
-          {tCase(`${slug}.summary`)}
-        </p>
+        <div className="max-w-[58ch]">
+          <p className="text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
+            {tCase(`${slug}.summary`)}
+          </p>
+          <p className="mt-3 text-sm text-foreground">{tCase(`${slug}.scope`)}</p>
+        </div>
         <div className="flex shrink-0 flex-wrap items-center gap-x-8 gap-y-3">
           <Link
             href={`/work/${slug}`}
@@ -135,6 +145,52 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
         </div>
       </div>
     </li>
+  );
+}
+
+/** Portfolio claims are only as good as what a visitor can verify: the checks anyone can run on the live builds. */
+function CheckSection() {
+  const t = useTranslations("work.check");
+  const eyebrowRef = useSectionEyebrow();
+  const titleRef = useSectionTitle<HTMLHeadingElement>();
+  const descriptionRef = useSectionDescription();
+  const listRef = useSectionCardGrid<HTMLOListElement>();
+  const items = t.raw("items") as string[];
+
+  return (
+    <section
+      aria-labelledby="work-check-heading"
+      className="accent-world-green border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
+    >
+      <Container>
+        <SectionHeading
+          titleId="work-check-heading"
+          eyebrowRef={eyebrowRef}
+          titleRef={titleRef}
+          descriptionRef={descriptionRef}
+          eyebrow={t("eyebrow")}
+          firstTitle={t("title")}
+          secondTitle={t("titleAccent")}
+          description={t("description")}
+          className="mb-(--heading-gap)"
+        />
+        <ol ref={listRef}>
+          {items.map((item, index) => (
+            <li
+              key={item}
+              className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-t border-border-subtle py-5 md:grid-cols-[4rem_minmax(0,1fr)]"
+            >
+              <span className="pt-2 text-md text-muted-foreground tabular-nums">
+                <Num value={index + 1} pad={2} />
+              </span>
+              <p className="max-w-[48ch] text-[clamp(1.1875rem,1.8vw,1.625rem)] leading-snug tracking-[-0.015em] text-foreground rtl:tracking-normal">
+                {item}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </Container>
+    </section>
   );
 }
 

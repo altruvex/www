@@ -23,7 +23,7 @@ export function Panel({
   return (
     <section className={cn("plane flex min-w-0 flex-col overflow-hidden", className)}>
       {(title || action) && (
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-3 py-2">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border-subtle px-3 py-2">
           <div className="min-w-0">
             {title && <h2 className="truncate text-md font-semibold">{title}</h2>}
             {description && (

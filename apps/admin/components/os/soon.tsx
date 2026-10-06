@@ -7,7 +7,7 @@ function SoonMark({ className }: { className?: string }) {
     <span
       aria-hidden
       className={cn(
-        "telemetry inline-flex h-4 shrink-0 items-center rounded-xs border border-border bg-surface px-1 leading-none text-subtle-foreground",
+        "telemetry inline-flex h-4 shrink-0 items-center rounded-xs border border-border-subtle bg-surface px-1 leading-none text-subtle-foreground",
         className,
       )}
     >

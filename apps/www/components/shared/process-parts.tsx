@@ -29,7 +29,7 @@ export function ScopeBars({
         const total = phases.reduce((sum, phase) => sum + phase[scope], 0);
         return (
           <figure key={scope} data-scope-bar className="m-0">
-            <figcaption className="mb-3 flex justify-between gap-4 text-[0.9375rem]">
+            <figcaption className="mb-3 flex justify-between gap-4 text-base">
               <span className="text-muted-foreground">{t(`page.scope.${scope}`)}</span>
               <span className="font-medium text-foreground tabular-nums">
                 {t.rich("page.scope.total", {
@@ -98,7 +98,7 @@ export function PhaseGate({
       <span className="eyebrow text-local-accent-text">
         {t("phases.yourRole")} · {t(`phases.${phase.key}.yourRole`)}
       </span>
-      <span className="text-[0.9375rem] text-foreground">
+      <span className="text-base text-foreground">
         {next
           ? t("page.register.gate.next", { next: phaseName(t(`phases.${next.key}.title`)) })
           : t("page.register.gate.last")}

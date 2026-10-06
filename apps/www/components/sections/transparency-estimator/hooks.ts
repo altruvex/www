@@ -7,6 +7,7 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
+import { localeMeta } from "@/i18n/locale-meta";
 
 export function useStuck(offset: number) {
   const sentinel = useRef<HTMLDivElement | null>(null);
@@ -60,7 +61,7 @@ export function useRadioKeys(
   onSelect: (val: string) => void,
 ) {
   const locale = useLocale();
-  const rtl = locale.startsWith("ar");
+  const rtl = localeMeta(locale).dir === "rtl";
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, from: number) => {

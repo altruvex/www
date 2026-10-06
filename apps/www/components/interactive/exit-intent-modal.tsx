@@ -1,25 +1,35 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Num } from "@/components/ui/num";
-import { Highlight } from "@/components/ui/emphasis";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@repo/ui";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent";
+import { usePathname } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
+import { FORM_ERROR_KEY, readApiResult } from "@/lib/api-errors";
 import { cn } from "@/lib/utils/utils";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+
+// Visitors on these routes are already converting; a modal there only interrupts.
+const SUPPRESSED_ROUTES = ["/contact", "/schedule"];
 
 export const ExitIntentModal = () => {
   const t = useTranslations("exitIntent");
+  const tValidations = useTranslations("validations");
+  const pathname = usePathname();
+  const suppressed = SUPPRESSED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
   const [isVisible, setIsVisible] = useState(false);
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const handleExit = () => {
+    if (suppressed) return;
     setIsVisible(true);
     trackEvent("exit_intent_shown");
   };
@@ -53,16 +63,20 @@ export const ExitIntentModal = () => {
         body: JSON.stringify({ phone, source: "exit_intent_modal" }),
       });
 
-      if (response.ok) {
+      const result = await readApiResult(response);
+      if (result.ok) {
         setIsSuccess(true);
         markAsConverted();
         trackEvent("exit_intent_captured");
         setTimeout(() => setIsVisible(false), 3000);
-      } else {
+      } else if (result.code === "validation") {
         setError(t("phoneError"));
+      } else {
+        // Codes, never server copy: the line is in the visitor's locale.
+        setError(tValidations(FORM_ERROR_KEY[result.code]));
       }
     } catch {
-      setError(t("phoneError"));
+      setError(tValidations(FORM_ERROR_KEY.network));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,47 +89,30 @@ export const ExitIntentModal = () => {
 
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!isVisible) return;
-    panelRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") handleClose();
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [isVisible, handleClose]);
-
-  if (!isVisible) return null;
-
   const terms = [
     { value: t("stats.noPitchValue"), label: t("stats.noPitch") },
     { value: t("stats.noCommitmentValue"), label: t("stats.noCommitment") },
-    { value: t("stats.founderAccessValue"), label: t("stats.founderAccess") },
+    { value: t("stats.confirmValue"), label: t("stats.confirm") },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
-      <div
-        className="absolute inset-0 bg-background/70 backdrop-blur-sm animate-in fade-in duration-(--motion-drawer)"
-        onClick={handleClose}
-        aria-hidden
-      />
-      <div
+    <Dialog
+      open={isVisible && !suppressed}
+      onOpenChange={(next) => !next && handleClose()}
+    >
+      <DialogContent
         ref={panelRef}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={
-          isSuccess ? "exit-intent-success-title" : "exit-intent-heading"
-        }
+        surface="glass"
+        placement="sheet"
+        aria-describedby={undefined}
+        // Focus the card itself, as before, not its first control (the close button).
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          panelRef.current?.focus();
+        }}
         data-lenis-prevent
         className={cn(
-          "accent-world-orange relative grid w-full max-w-[30rem] grid-rows-[88px_1fr] overflow-hidden rounded-panel-md liquid-glass shadow-2xl shadow-foreground/10 outline-none",
+          "accent-world-orange grid max-w-[30rem] grid-rows-[88px_1fr] outline-none",
           "max-h-[88vh] overflow-y-auto lg:max-h-none lg:max-w-[44rem] lg:grid-cols-[38%_1fr] lg:grid-rows-none lg:overflow-visible",
           "animate-in fade-in slide-in-from-bottom-3 zoom-in-98 duration-(--motion-fast) ease-strong motion-reduce:animate-none",
         )}
@@ -145,25 +142,20 @@ export const ExitIntentModal = () => {
               />
               {isSuccess ? t("successTitle") : t("subtitle")}
             </Eyebrow>
-            <button
-              type="button"
-              onClick={handleClose}
-              className="-me-2 grid size-10 place-items-center rounded-ctl-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            <DialogClose
+              className="-me-2 grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               aria-label={t("closeLabel")}
             >
               <X className="size-4" />
-            </button>
+            </DialogClose>
           </div>
 
           {isSuccess ? (
             <div className="px-6 pb-8 pt-6 sm:px-8">
-              <h2
-                id="exit-intent-success-title"
-                className="text-[2rem] font-semibold leading-[1.08] tracking-[-0.02em] text-foreground"
-              >
+              <DialogTitle className="text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground">
                 {t("successTitle")}
-              </h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+              </DialogTitle>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 {t("successDescription")}
               </p>
               <div className="mt-8 flex items-baseline justify-between gap-4 border-y border-border-subtle py-4">
@@ -175,13 +167,10 @@ export const ExitIntentModal = () => {
             </div>
           ) : (
             <div className="px-6 pb-6 pt-6 sm:px-8 sm:pb-8">
-              <h2
-                id="exit-intent-heading"
-                className="text-[2rem] font-semibold leading-[1.08] tracking-[-0.02em] text-foreground sm:text-[2.25rem]"
-              >
+              <DialogTitle className="text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground sm:text-4xl">
                 {t.rich("title", { h: (chunks) => <Highlight className="whitespace-nowrap">{chunks}</Highlight> })}
-              </h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
+              </DialogTitle>
+              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                 {t("description")}
               </p>
 
@@ -190,11 +179,8 @@ export const ExitIntentModal = () => {
                   <div
                     key={label}
                     style={{ animationDelay: `${120 + i * 70}ms` }}
-                    className="grid grid-cols-[2rem_1fr_auto] items-baseline gap-x-2 border-t border-border-subtle py-3 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-(--motion-fast) ease-strong motion-reduce:animate-none"
+                    className="grid grid-cols-[1fr_auto] items-baseline gap-x-2 border-t border-border-subtle py-3 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-(--motion-fast) ease-strong motion-reduce:animate-none"
                   >
-                    <span className="font-mono text-xs text-muted-foreground tabular-nums">
-                      <Num value={i + 1} pad={2} />
-                    </span>
                     <dt className="text-sm text-muted-foreground">{label}</dt>
                     <dd className="text-sm font-medium text-foreground">{value}</dd>
                   </div>
@@ -247,18 +233,14 @@ export const ExitIntentModal = () => {
                 >
                   {isSubmitting ? t("submitting") : t("buttonText")}
                 </MagneticButton>
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="mx-auto mt-2 flex h-10 items-center px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                >
+                <DialogClose className="mx-auto mt-2 flex h-10 items-center px-3 text-xs text-muted-foreground transition-colors hover:text-foreground">
                   {t("secondaryButtonText")}
-                </button>
+                </DialogClose>
               </form>
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

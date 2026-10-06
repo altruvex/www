@@ -7,6 +7,7 @@ export interface CrossfadeTiming {
 
 export const THEME_CROSSFADE: CrossfadeTiming = {
   duration: 0.4,
+  // brand-allow: motion-ease-literal — this is the theme-crossfade token itself (www lib/motion re-exports it as MOTION.theme); WAAPI easing cannot read a CSS var.
   easing: "cubic-bezier(0.42, 0, 0.58, 1)",
 };
 

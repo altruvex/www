@@ -73,7 +73,7 @@ export function SessionList({
   }
 
   return (
-    <ul className="divide-y divide-border">
+    <ul className="divide-y divide-border-subtle">
       {sessions.map((session) => (
         <li key={session.id} className="flex items-start gap-3 px-3 py-2.5">
           <MonitorSmartphone className="mt-0.5 size-4 shrink-0 text-subtle-foreground" aria-hidden />

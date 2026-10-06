@@ -1,9 +1,5 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// The one cn (and its tailwind-merge registry) lives in @repo/ui; www reads it from there.
+export { cn } from "@repo/ui";
 
 export function splitHeadline(value: string): {
   first: string;

@@ -167,7 +167,7 @@ export const GET = withAdmin(async (request, { role }) => {
       orderBy: { updatedAt: "desc" },
     }),
     prisma.contactSubmission.findMany({
-      where: { OR: [{ name: like }, ...phoneMatch, { message: like }] },
+      where: { OR: [{ name: like }, { email: like }, ...phoneMatch, { message: like }] },
       select: { id: true, name: true, status: true, phone: true },
       take: 4,
       orderBy: { submittedAt: "desc" },

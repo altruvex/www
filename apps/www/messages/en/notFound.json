@@ -1,8 +1,10 @@
 {
-  "body": "The URL may have changed or the page was removed. Head back to explore what we're building.",
-  "contactUs": "Contact Us",
-  "eyebrow": "404 - Page not found",
-  "goHome": "Go home",
+  "body": "The link may be out of date, or the page may have moved. Try one of these pages, or search the whole site.",
+  "eyebrow": "404 · Page not found",
+  "goHome": "Back to the home page",
   "titleLine1": "This page",
-  "titleLine2": "doesn't exist."
+  "titleLine2": "doesn't exist.",
+  "popularLabel": "Pages to try",
+  "search": "Search the site",
+  "searchHint": "or press Ctrl K / ⌘ K"
 }

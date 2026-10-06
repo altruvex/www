@@ -1,4 +1,5 @@
 import { THEME_CROSSFADE } from "@repo/ui/theme-switch";
+import { ACCENT_SHIMMER } from "@repo/ui/www";
 
 export interface SpringConfig {
   stiffness: number;
@@ -122,7 +123,7 @@ export const MOTION = {
   },
 
   accent: {
-    shimmer: { slow: 9, base: 6, fast: 3.5 },
+    shimmer: ACCENT_SHIMMER,
     sweepRatio: 1.25,
     sweepDelay: 0.12,
   },

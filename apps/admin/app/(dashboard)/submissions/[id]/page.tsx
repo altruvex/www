@@ -85,6 +85,18 @@ export default async function SubmissionDetailPage({
             </MetaItem>
             <MetaItem label="Locale">{submission.locale}</MetaItem>
             <MetaItem label="Phone">{fmtPhone(submission.phone)}</MetaItem>
+            <MetaItem label="Email">
+              {submission.email ? (
+                <a
+                  href={`mailto:${submission.email}`}
+                  className="text-brand hover:underline"
+                >
+                  {submission.email}
+                </a>
+              ) : (
+                "—"
+              )}
+            </MetaItem>
             {submission.client && (
               <MetaItem label="Client">
                 <EntityLink type="client" id={submission.client.id}>
@@ -266,7 +278,7 @@ export default async function SubmissionDetailPage({
           <p className="max-w-prose whitespace-pre-wrap text-md">
             {submission.message}
           </p>
-          <dl className="mt-4 grid gap-3 border-t border-border pt-3 sm:grid-cols-3">
+          <dl className="mt-4 grid gap-3 border-t border-border-subtle pt-3 sm:grid-cols-3">
             <Fact label="Service">
               {submission.serviceInterest
                 ? statusOf("serviceType", submission.serviceInterest).label
@@ -284,11 +296,11 @@ export default async function SubmissionDetailPage({
             </Fact>
           </dl>
           {submission.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border-subtle pt-3">
               {submission.tags.map((tag) => (
                 <span
                   key={tag.id}
-                  className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                  className="rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
                 >
                   {tag.name}
                 </span>

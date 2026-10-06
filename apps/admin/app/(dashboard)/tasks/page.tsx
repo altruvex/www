@@ -267,11 +267,18 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <EmptyState
           icon={ListChecks}
           title="No project to put work against"
-          body="A task belongs to a delivery project, and a project is created from a signed contract. Sign a contract and the project — and somewhere to track its work — appears."
+          body="A task belongs to a delivery project. A project opens when a contract is signed, or you can record work that was built before this system."
           action={
-            <Button asChild variant="outline">
-              <Link href="/contracts">Open contracts</Link>
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {canCreate && (
+                <Button asChild variant="outline">
+                  <Link href="/projects?new=recorded">Record a project</Link>
+                </Button>
+              )}
+              <Button asChild variant="outline">
+                <Link href="/contracts">Open contracts</Link>
+              </Button>
+            </div>
           }
         />
       ) : (

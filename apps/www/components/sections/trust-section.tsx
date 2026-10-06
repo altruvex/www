@@ -5,64 +5,54 @@ import {
   DirectionalLink,
   ExternalDirectionalLink,
 } from "@/components/shared/directional-link";
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { Eyebrow } from "@repo/ui/www";
+import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { FOUNDER_LINK } from "@/lib/config/commercial";
-import { getAllTestimonials } from "@/lib/data/testimonials";
+import {
+  FOUNDER_LINK,
+  getCommercialCta,
+  type CommercialCtaKey,
+} from "@/lib/config/commercial";
 import {
   MOTION,
-  splitWords,
   useSectionCardGrid,
   useSectionDescription,
   useSectionEyebrow,
   useSectionTitle,
-  useWordRead,
 } from "@/lib/motion";
 import { ScrollTrigger, gsap } from "@/lib/utils/gsap";
-import { cn } from "@/lib/utils/utils";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { memo, useEffect, useRef } from "react";
 import { SectionHeading } from "./section-heading";
 
-const QUOTE_ROW =
-  "grid gap-x-12 gap-y-8 py-12 md:py-16 lg:grid-cols-[minmax(0,3fr)_minmax(0,9fr)]";
+const CHECKS: ReadonlyArray<{ id: string; cta: CommercialCtaKey }> = [
+  { id: "price", cta: "projectRange" },
+  { id: "standard", cta: "viewStandards" },
+  { id: "terms", cta: "paymentTerms" },
+  { id: "work", cta: "realBuild" },
+];
 
 const closingMarks = {
+  dim: (chunks: ReactNode) => <span className="text-white/65">{chunks}</span>,
   strong: (chunks: ReactNode) => (
     <strong className="font-semibold text-white">{chunks}</strong>
   ),
-  dim: (chunks: ReactNode) => <span className="text-white/55">{chunks}</span>,
 } as const;
-
-function ClientQuote({ text }: { text: string }) {
-  const readRef = useWordRead<HTMLQuoteElement>();
-  return (
-    <blockquote
-      ref={readRef}
-      className="max-w-[26ch] text-[clamp(1.5rem,3vw,2.875rem)] leading-[1.16] font-light tracking-[-0.028em] text-foreground rtl:leading-[1.45] rtl:tracking-normal"
-    >
-      {splitWords(text).map(({ key, word }) => (
-        <span key={key} data-word>
-          {word}
-        </span>
-      ))}
-    </blockquote>
-  );
-}
 
 export const TrustSection = memo(function TrustSection() {
   const t = useTranslations("commercial.trust");
-  const tW = useTranslations("work");
-  const locale = useLocale() as "en" | "ar";
-  const testimonials = getAllTestimonials();
+  const tCTAs = useTranslations("commercial.ctas");
+  const fillTokens = useFillPricingTokens();
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const bodyRef = useSectionDescription();
 
-  const registerRef = useSectionCardGrid<HTMLDivElement>({
-    selector: "[data-ledger-row]",
+  const checksRef = useSectionCardGrid<HTMLDivElement>({
+    selector: "[data-check-row]",
   });
 
 
@@ -138,38 +128,39 @@ export const TrustSection = memo(function TrustSection() {
           description={t.rich("body", bodyMarks)}
           className="mb-(--heading-gap)"
         />
-        <div ref={registerRef} className="border-t-2 border-foreground">
-          <h3 className="sr-only">{t("testimonials.eyebrow")}</h3>
-          {testimonials.map((item) => (
-            <figure
-              key={item.id}
-              data-ledger-row
-              className={cn(QUOTE_ROW, "border-b border-border-subtle")}
-            >
-              <figcaption className="order-2 flex flex-col items-start gap-1 text-sm lg:order-1">
-                <span className="text-[1.375rem] leading-snug text-foreground">
-                  {item.author}
-                </span>
-                <span className="text-muted-foreground">
-                  {item.role[locale]}
-                </span>
-                {item.caseStudySlug ? (
+        <div ref={checksRef}>
+          <div className="flex items-baseline gap-4">
+            <Eyebrow role="heading" aria-level={3} className="m-0">
+              {t("checks.label")}
+            </Eyebrow>
+            <span className="text-sm tabular-nums text-muted-foreground ltr:font-mono">
+              <Num value={CHECKS.length} pad={2} />
+            </span>
+            <div aria-hidden className="h-px flex-1 bg-border-subtle/60" />
+          </div>
+          <ol className="mt-10 grid list-none gap-x-10 gap-y-10 sm:grid-cols-2 md:mt-12 lg:grid-cols-4 lg:gap-x-12">
+            {CHECKS.map(({ id, cta }) => (
+              <li
+                key={id}
+                data-check-row
+              >
+                <div>
+                  <h4 className="text-body font-normal leading-snug text-foreground">
+                    {t(`checks.items.${id}.title`)}
+                  </h4>
+                  <p className="mt-2 text-[clamp(0.9375rem,1vw,1.0625rem)] leading-relaxed text-muted-foreground">
+                    {fillTokens(t.raw(`checks.items.${id}.body`) as string)}
+                  </p>
                   <DirectionalLink
-                    href={`/work/${item.caseStudySlug}`}
-                    ariaLabel={tW("labels.readCaseStudyWith", {
-                      name: item.author,
-                    })}
+                    href={getCommercialCta(cta).href}
                     className="mt-3 inline-flex min-h-6 items-center text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-local-accent-text hover:decoration-local-accent-text pointer-coarse:min-h-11"
                   >
-                    {tW("labels.viewCaseStudy")}
+                    {tCTAs(cta)}
                   </DirectionalLink>
-                ) : null}
-              </figcaption>
-              <div className="order-1 lg:order-2">
-                <ClientQuote text={item.quote[locale]} />
-              </div>
-            </figure>
-          ))}
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </Container>
       <div
@@ -197,7 +188,7 @@ export const TrustSection = memo(function TrustSection() {
           />
           <figure className="absolute inset-x-0 bottom-0 p-8 sm:p-12 md:p-16 lg:p-20">
             <p className="eyebrow mb-5 text-white/80">
-              {tW("labels.integrity")}
+              {t("founder.label")}
             </p>
             <blockquote className="max-w-[46ch] text-[clamp(1.375rem,3.2vw,2.25rem)] font-medium leading-tight tracking-tight text-balance text-white">
               {t.rich("founder.body", closingMarks)}

@@ -236,7 +236,7 @@ export function NewMeetingForm({
 
       {lockedClient ? (
         <Field label="Client">
-          <p className="flex h-[var(--control-h)] items-center rounded-md border border-border bg-surface px-3 text-sm">
+          <p className="flex h-[var(--control-h)] items-center rounded-ctl border border-border-subtle bg-surface px-3 text-sm">
             {lockedClient.label}
           </p>
         </Field>

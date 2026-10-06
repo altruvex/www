@@ -192,6 +192,23 @@ export default async function ProjectsPage({
     })),
   );
 
+  const recordClientOptions = recordClients.map((c) => ({
+    id: c.id,
+    label: c.company || c.name || "Unnamed client",
+    known: {
+      website: c.website,
+      proposalCurrency: c.proposals[0]?.currency ?? null,
+      products: c.products,
+      services: c.services.map((x) => ({
+        id: x.id,
+        name: x.name,
+        kindLabel: KIND_LABEL[x.kind],
+        isDomain: x.kind === "DOMAIN",
+        currency: x.currency,
+      })),
+    },
+  }));
+
   return (
     <div className="space-y-4">
       <PageHeader
@@ -200,23 +217,9 @@ export default async function ProjectsPage({
         actions={
           canRecord ? (
             <RecordProjectButton
-              clients={recordClients.map((c) => ({
-                id: c.id,
-                label: c.company || c.name || "Unnamed client",
-                known: {
-                  website: c.website,
-                  proposalCurrency: c.proposals[0]?.currency ?? null,
-                  products: c.products,
-                  services: c.services.map((x) => ({
-                    id: x.id,
-                    name: x.name,
-                    kindLabel: KIND_LABEL[x.kind],
-                    isDomain: x.kind === "DOMAIN",
-                    currency: x.currency,
-                  })),
-                },
-              }))}
+              clients={recordClientOptions}
               preset={newParam === "recorded" ? { clientId } : null}
+              scopeClientId={scopeClient ? clientId : null}
             />
           ) : undefined
         }
@@ -313,9 +316,15 @@ export default async function ProjectsPage({
           }
           action={
             <>
+              {canRecord && scopeClient && (
+                <RecordProjectButton
+                  clients={recordClientOptions}
+                  scopeClientId={clientId}
+                />
+              )}
               {scopeClient && (
                 <Button asChild variant="outline">
-                  <Link href={`/clients/${clientId}`}>Open the client</Link>
+                  <Link href={`/clients/${clientId}#deals`}>Open their deals</Link>
                 </Button>
               )}
               <Button asChild variant="ghost">
@@ -334,9 +343,14 @@ export default async function ProjectsPage({
               : "A project is created from a signed contract — that is the only route in, so every project has a commitment and a payment schedule behind it. Sign a contract and the project appears here."
           }
           action={
-            <Button asChild variant="outline">
-              <Link href="/contracts">Open contracts</Link>
-            </Button>
+            <>
+              {canRecord && (
+                <RecordProjectButton clients={recordClientOptions} />
+              )}
+              <Button asChild variant="outline">
+                <Link href="/contracts">Open contracts</Link>
+              </Button>
+            </>
           }
         />
       ) : (

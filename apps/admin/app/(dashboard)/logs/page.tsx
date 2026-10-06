@@ -15,6 +15,7 @@ import {
 } from "@/components/os/filter-bar";
 import { InspectSheet, inspectHref } from "@/components/os/inspect-sheet";
 import { List, ListRow } from "@/components/os/list-row";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { PageHeader } from "@/components/os/page-header";
 import { Pager } from "@/components/os/pager";
 import { Panel } from "@/components/os/panel";
@@ -253,11 +254,13 @@ export default async function LogsPage({
         <EmptyState
           icon={ScrollText}
           title="No pipeline connected yet"
-          body="Logs belong to a product. Add the sites and apps Altruvex operates, then on each product's page connect its pipeline — issue an ingest token and post log lines in batches to /api/ingest/logs. Lines are never generated here."
+          body="Logs belong to a product. Add the sites and apps Altruvex operates, then connect each one's pipeline — issue an ingest token and post log lines in batches to /api/ingest/logs. Lines are never generated here."
           action={
-            <Button asChild variant="outline">
-              <Link href="/products">Open products</Link>
-            </Button>
+            can(role, "create", "project") ? (
+              <Button asChild variant="outline">
+                <Link href="/products?new=product">Add a product</Link>
+              </Button>
+            ) : null
           }
         />
       </div>
@@ -360,14 +363,32 @@ export default async function LogsPage({
           body={
             hasFilters
               ? "No log line matches every filter. Remove one to widen the view — the newest lines are always at the top."
-              : "No product has posted a log line yet. Connect a pipeline on a product's page (an ingest token), then post lines in batches to /api/ingest/logs."
+              : "No product has posted a log line yet. Connect a pipeline (an ingest token), then post lines in batches to /api/ingest/logs."
           }
           action={
-            <Button asChild variant="outline">
-              <Link href={hasFilters ? "/logs" : "/products"}>
-                {hasFilters ? "Clear filters" : "Open products"}
-              </Link>
-            </Button>
+            hasFilters ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button asChild variant="outline">
+                  <Link href="/logs">Clear filters</Link>
+                </Button>
+                {productName && (
+                  <Button asChild variant="ghost">
+                    <Link href={`/products/${sp.product}#connect`}>
+                      Check {productName}&apos;s pipeline
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            ) : can(role, "edit", "project") ? (
+              <PickToOpen
+                label="Connect a pipeline"
+                searchPlaceholder="Find a product"
+                options={products.map((p) => ({
+                  label: p.name,
+                  href: `/products/${p.id}#connect`,
+                }))}
+              />
+            ) : null
           }
         />
       ) : (
@@ -417,7 +438,7 @@ export default async function LogsPage({
             ))}
           </List>
           <Pager
-            className="border-t border-border px-3 py-2"
+            className="border-t border-border-subtle px-3 py-2"
             page={result.page}
             pageSize={result.pageSize}
             total={result.total}
@@ -464,7 +485,7 @@ export default async function LogsPage({
             <p className="text-meta text-subtle-foreground">
               Written by CI — read-only.
             </p>
-            <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+            <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-panel-sm border border-border-subtle bg-surface p-2 font-mono text-meta">
               {inspected.message}
             </pre>
 
@@ -528,7 +549,7 @@ export default async function LogsPage({
             {inspected.metadata != null && (
               <div>
                 <p className="telemetry text-subtle-foreground">Metadata</p>
-                <pre className="mt-1 max-h-64 overflow-auto rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+                <pre className="mt-1 max-h-64 overflow-auto rounded-panel-sm border border-border-subtle bg-surface p-2 font-mono text-meta">
                   {JSON.stringify(inspected.metadata, null, 2)}
                 </pre>
               </div>

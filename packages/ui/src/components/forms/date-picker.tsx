@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../overlays/popover";
-import { controlSurface } from "./input";
+import { controlClasses, type ControlVariant } from "./input";
 import { cn } from "../../lib/utils";
 import { arEG, enUS } from "react-day-picker/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -21,6 +21,8 @@ interface DatePickerProps {
   className?: string;
   minDate?: Date;
   maxDate?: Date;
+  /** `box` in the tool, `line` on the site (the `@repo/ui/www` default). */
+  variant?: ControlVariant;
 }
 
 export function DatePicker({
@@ -32,8 +34,11 @@ export function DatePicker({
   className,
   minDate,
   maxDate,
+  variant = "box",
 }: DatePickerProps) {
   const arabic = locale.startsWith("ar");
+  // The popover is portalled out of the page's own `dir`, so it is set here from the locale.
+  const dir = arabic ? "rtl" : "ltr";
   const weekday = new Intl.DateTimeFormat(arabic ? "ar-EG-u-nu-latn" : "en-US", {
     weekday: arabic ? "narrow" : "short",
   });
@@ -51,10 +56,12 @@ export function DatePicker({
       <PopoverTrigger asChild>
         <button
           type="button"
+          data-variant={variant}
           disabled={disabled}
           className={cn(
-            controlSurface,
-            "inline-flex items-center justify-start text-start font-normal h-[var(--control-h)] cursor-pointer",
+            controlClasses(variant),
+            "inline-flex cursor-pointer items-center justify-start text-start font-normal",
+            variant === "box" && "h-[var(--control-h)]",
             !date && "text-muted-foreground",
             className,
           )}
@@ -63,8 +70,9 @@ export function DatePicker({
           {label ?? <span>{placeholder}</span>}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent dir={dir} className="w-auto p-0" align="start">
         <Calendar
+          dir={dir}
           mode="single"
           captionLayout="dropdown"
           startMonth={startMonth}

@@ -30,6 +30,8 @@ import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { Button } from "@repo/ui";
+import { PickToOpen } from "@/components/os/pick-to-open";
+import { clientPickOptions } from "@/lib/client-picks";
 import { ChannelTabs } from "./channel-tabs";
 import { EmailReplyNote } from "./email-reply-note";
 
@@ -51,7 +53,9 @@ interface InboxParams {
 export default async function InboxPage({ searchParams }: { searchParams: Promise<InboxParams> }) {
   const denied = await gateRoute("/inbox", "the inbox");
   if (denied) return denied;
-  const canSeeIntegrations = can(await currentRole(), "view", "integration");
+  const role = await currentRole();
+  const canSeeIntegrations = can(role, "view", "integration");
+  const canPropose = can(role, "create", "proposal");
 
   const params = await searchParams;
   const filter: Filter | null =
@@ -66,6 +70,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
     clientId ? getClientConversation(clientId) : Promise.resolve(null),
   ]);
   if (clientId && !conversation) notFound();
+  const pickClients = allThreads.length === 0 ? await clientPickOptions("conversations") : [];
 
   const unanswered = allThreads.filter((t) => t.unanswered);
   const failed = allThreads.filter((t) => t.failed > 0);
@@ -103,12 +108,21 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           <>
             {canSeeIntegrations && (
               <Button asChild variant="outline">
-                <Link href="/integrations">Check the connections</Link>
+                <Link href="/integrations#whatsapp">Check the connections</Link>
               </Button>
             )}
-            <Button asChild variant="outline">
-              <Link href="/clients">Open a client</Link>
-            </Button>
+            {pickClients.length > 0 ? (
+              <PickToOpen
+                label="Open a client"
+                options={pickClients}
+                footer={{ href: "/clients", label: "All clients" }}
+                searchPlaceholder="Search clients"
+              />
+            ) : can(role, "create", "client") ? (
+              <Button asChild variant="outline">
+                <Link href="/clients/new">Add a client</Link>
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -181,7 +195,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         actions={
           conversation ? (
             <Button asChild variant="outline">
-              <Link href={`/clients/${conversation.client.id}`}>Open client</Link>
+              <Link href={`/clients/${conversation.client.id}#conversations`}>Open client</Link>
             </Button>
           ) : undefined
         }
@@ -214,6 +228,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             <ClientConversation
               conversation={conversation}
               backHref={listHref}
+              canPropose={canPropose}
             />
           </div>
         </div>
@@ -227,9 +242,11 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 function ClientConversation({
   conversation,
   backHref,
+  canPropose,
 }: {
   conversation: NonNullable<Awaited<ReturnType<typeof getClientConversation>>>;
   backHref: string;
+  canPropose: boolean;
 }) {
   const { client, items, whatsappCount, emailCount } = conversation;
 
@@ -273,9 +290,11 @@ function ClientConversation({
         {items.length === 0 ? (
           <EmptyInline
             action={
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/clients/${client.id}`}>Send a proposal from the client</Link>
-              </Button>
+              canPropose ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/clients/${client.id}/new-proposal`}>Write a proposal</Link>
+                </Button>
+              ) : null
             }
           >
             Nothing has been sent or received with{" "}
@@ -321,9 +340,9 @@ function Message({ item }: { item: ConversationItem }) {
     <li className={cn("flex", inbound ? "justify-start" : "justify-end")}>
       <div
         className={cn(
-          "max-w-[min(560px,92%)] rounded-lg border px-2.5 py-2",
+          "max-w-[min(560px,92%)] rounded-panel-sm border px-2.5 py-2",
           inbound
-            ? "border-border bg-surface"
+            ? "border-border-subtle bg-surface"
             : item.failed
               ? "border-danger/30 bg-danger/[0.06]"
               : "border-brand/25 bg-brand-soft",
@@ -348,7 +367,7 @@ function Message({ item }: { item: ConversationItem }) {
             {proposalHref && (
               <Link
                 href={proposalHref}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-1.5 py-0.5 text-meta hover:text-brand"
+                className="inline-flex items-center gap-1.5 rounded-ctl-xs border border-border-subtle bg-card px-1.5 py-0.5 text-meta hover:text-brand"
               >
                 <FileText className="size-3" aria-hidden />
                 Proposal
@@ -357,7 +376,7 @@ function Message({ item }: { item: ConversationItem }) {
             {contractHref && (
               <Link
                 href={contractHref}
-                className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-1.5 py-0.5 text-meta hover:text-brand"
+                className="inline-flex items-center gap-1.5 rounded-ctl-xs border border-border-subtle bg-card px-1.5 py-0.5 text-meta hover:text-brand"
               >
                 <FileSignature className="size-3" aria-hidden />
                 Contract

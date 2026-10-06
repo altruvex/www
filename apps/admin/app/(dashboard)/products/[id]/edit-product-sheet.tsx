@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import {
   Button,
+  Checkbox,
   Input,
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ export interface EditableProduct {
   repositoryUrl: string | null;
   framework: string | null;
   hostingProvider: string | null;
+  existingSite: boolean;
 }
 
 type Draft = Omit<EditableProduct, "id">;
@@ -100,6 +102,7 @@ function Form({
     repositoryUrl: product.repositoryUrl,
     framework: product.framework,
     hostingProvider: product.hostingProvider,
+    existingSite: product.existingSite,
   });
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
@@ -169,7 +172,7 @@ function Form({
           </Field>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Type">
+            <Field label="Type" group>
               <Select
                 value={draft.kind}
                 onValueChange={(value) => set("kind", value)}
@@ -187,7 +190,7 @@ function Form({
               </Select>
             </Field>
 
-            <Field label="Status">
+            <Field label="Status" group>
               <Select
                 value={draft.status}
                 onValueChange={(value) => set("status", value)}
@@ -208,7 +211,12 @@ function Form({
 
           <Field
             label="Project"
-            hint="Only this client's projects. A product can outlive the project that built it."
+            group
+            hint={
+              projects.length === 0
+                ? "This client has no projects yet. Record or create one under Projects, then link it here."
+                : "Only this client's projects. A product can outlive the project that built it."
+            }
           >
             <Select
               value={draft.projectId ?? NO_PROJECT}
@@ -278,6 +286,21 @@ function Form({
             </Field>
           </div>
 
+          <label className="flex min-h-11 items-start gap-2.5 sm:min-h-0">
+            <Checkbox
+              checked={draft.existingSite}
+              onCheckedChange={(value) => set("existingSite", value === true)}
+              className="mt-0.5 border-foreground/45 hover:border-foreground/70"
+            />
+            <span className="space-y-0.5">
+              <span className="block text-base">Existing site</span>
+              <span className="block text-meta text-subtle-foreground">
+                Already running before it came here. No CI pipeline is expected,
+                so an empty deployment history is not flagged.
+              </span>
+            </span>
+          </label>
+
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
@@ -296,22 +319,29 @@ function Form({
   );
 }
 
+// A Select is never wrapped in a <label>: the label forwards clicks to its
+// control, and Radix Select's hidden native <select> can pick up a value that
+// way, so a save once changed a product's status nobody touched. Select fields
+// pass `group` and carry their name on the trigger's aria-label instead.
 function Field({
   label,
   hint,
+  group = false,
   children,
 }: {
   label: string;
   hint?: string;
+  group?: boolean;
   children: React.ReactNode;
 }) {
+  const Wrapper = group ? "div" : "label";
   return (
-    <label className="block space-y-1">
+    <Wrapper className="block space-y-1">
       <span className="telemetry block text-subtle-foreground">{label}</span>
       {children}
       {hint && (
         <span className="block text-meta text-subtle-foreground">{hint}</span>
       )}
-    </label>
+    </Wrapper>
   );
 }

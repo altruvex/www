@@ -2,6 +2,8 @@
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check } from "lucide-react";
+import type * as React from "react";
+import { useDirection } from "../../lib/direction";
 import { cn } from "../../lib/utils";
 import {
   menuIndicator,
@@ -13,7 +15,9 @@ import {
   menuSurface,
 } from "./menu";
 
-export const DropdownMenu = DropdownMenuPrimitive.Root;
+export function DropdownMenu({ dir, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  return <DropdownMenuPrimitive.Root dir={useDirection(dir)} {...props} />;
+}
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 export const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 

@@ -5,7 +5,6 @@ import {
   DISPLAY,
   FIGURE,
   LABEL,
-  LEAD,
 } from "@/components/sections/pricing-model/type";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
@@ -44,10 +43,11 @@ export default function PricingHero({ floorLabel }: { floorLabel: string }) {
   const footRef = useSectionElement<HTMLDivElement>();
 
   const index = [
+    { id: "investment", label: t("sections.invest.title") },
+    { id: "includes", label: t("sections.includes.title") },
+    { id: "terms", label: t("sections.terms.title") },
     { id: "how", label: t("sections.how.title") },
     { id: "cost", label: t("sections.cost.title") },
-    { id: "investment", label: t("sections.invest.title") },
-    { id: "terms", label: t("sections.terms.title") },
     { id: "faq", label: tFaq("title") },
   ];
 
@@ -66,24 +66,32 @@ export default function PricingHero({ floorLabel }: { floorLabel: string }) {
           eyebrow={t("hero.eyebrow")}
           firstTitle={t("hero.titleLead")}
           secondTitle={t("hero.titleAccent")}
-          italicWorld
-          description={t("hero.lead")}
+          accent="world"
           className="gap-6 md:gap-6 lg:flex-col lg:items-start"
           classes={{
             titleWrapper: "space-y-7",
             title: DISPLAY,
-            description: `${LEAD} max-w-[34ch] md:max-w-[34ch] lg:max-w-[34ch]`,
           }}
         />
-        <CtaButtonGroup
-          ref={ctaRef}
-          className="mt-6 mb-5"
-          primaryVariant="accent"
-          primary={{
-            href: getCommercialCta("projectRange").href,
-            label: tCta("projectRange"),
-          }}
-        />
+        <div className="mt-11 mb-5 grid gap-8 lg:grid-cols-2 lg:items-end lg:gap-10">
+          <p ref={descRef} className="max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] font-normal text-muted-foreground">
+            {t("hero.lead")}
+          </p>
+          <div className="lg:justify-self-end">
+          <CtaButtonGroup
+            ref={ctaRef}
+            primaryVariant="accent"
+            primary={{
+              href: getCommercialCta("projectRange").href,
+              label: tCta("projectRange"),
+            }}
+            secondary={{
+              href: getCommercialCta("technicalCall").href,
+              label: tCta("technicalCall"),
+            }}
+          />
+          </div>
+        </div>
         <div
           ref={footRef}
           className="mt-auto grid gap-10 border-t pt-6 border-border-subtle md:grid-cols-[minmax(0,1fr)_auto] md:items-end"

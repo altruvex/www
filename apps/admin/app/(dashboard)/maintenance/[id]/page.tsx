@@ -304,7 +304,7 @@ export default async function RetainerPage({
               No period has been invoiced on this retainer yet.
             </p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border-subtle">
               {sub.payments.map((payment) => (
                 <li
                   key={payment.id}

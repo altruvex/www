@@ -1,7 +1,10 @@
 {
   "contact": {
     "budget-invalid": "Please select a valid budget range.",
-    "honeypot-invalid": "Invalid form submission.",
+    "email-invalid": "Enter a valid email address.",
+    "email-max": "Email address must not exceed 160 characters.",
+    "email-required": "Enter your email address.",
+    "honeypot-invalid": "Something went wrong with this form. Please reload the page and try again.",
     "message-max": "Message must not exceed 1000 characters.",
     "message-min": "Message must be at least 10 characters.",
     "name-max": "Name must not exceed 100 characters.",
@@ -18,6 +21,7 @@
     "request-meeting-required": "Date and time are required when requesting a meeting.",
     "scheduled-datetime-invalid": "Invalid scheduled date and time.",
     "scheduled-time-format": "Time must be in HH:MM format.",
+    "scheduled-time-outside-hours": "Pick a time within business hours.",
     "service-interest-invalid": "Please select a valid service.",
     "submission-id-invalid": "Invalid submission reference."
   },
@@ -31,5 +35,48 @@
     "scopeNotes": "Choose scope notes from the list.",
     "timeline": "Timeline is required."
   },
-  "too-many-requests": "Too many requests. Please try again in a few minutes."
+  "errors": {
+    "validation": "Some details need checking. Correct the marked fields, then send again.",
+    "badRequest": "We could not read this request. Reload the page and try again.",
+    "forbidden": "We could not verify this request. Reload the page and try again.",
+    "notFound": "We could not find this request. Reload the page and start again.",
+    "rateLimited": "Too many attempts. Wait a few minutes, then try again.",
+    "server": "Something went wrong on our side. Try again in a moment, or message us on WhatsApp.",
+    "network": "We could not connect. Check your internet connection and try again."
+  },
+  "errorPage": {
+    "ariaLabel": "Error page",
+    "code": "Error code {code}",
+    "digest": "Error reference",
+    "diagnostics": "System diagnostics",
+    "tryAgain": "Try again",
+    "goHome": "Back to the home page",
+    "kinds": {
+      "timeout": {
+        "title1": "Request",
+        "title2": "timed out",
+        "message": "The page took too long to respond. Try again."
+      },
+      "notFound": {
+        "title1": "Page not",
+        "title2": "found",
+        "message": "We could not find what you were looking for."
+      },
+      "unauthorized": {
+        "title1": "Sign-in",
+        "title2": "required",
+        "message": "You need to be signed in to view this."
+      },
+      "forbidden": {
+        "title1": "Access",
+        "title2": "denied",
+        "message": "You do not have permission to view this."
+      },
+      "generic": {
+        "title1": "Something",
+        "title2": "went wrong",
+        "message": "An unexpected error occurred on our side. Try again, or go back to the home page."
+      }
+    }
+  }
 }

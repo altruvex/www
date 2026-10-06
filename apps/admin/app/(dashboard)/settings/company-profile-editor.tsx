@@ -129,11 +129,11 @@ export function CompanyProfileEditor({ initialData }: { initialData: CompanyProf
               </div>
             </Field>
 
-            <div className="grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+            <div className="grid gap-3 border-t border-border-subtle pt-4 sm:grid-cols-2">
               <Field label="Light brand accent">
                 <div className="flex items-center gap-2">
                   <span
-                    className="size-[var(--control-h)] shrink-0 rounded-md border border-border"
+                    className="size-[var(--control-h)] shrink-0 rounded-ctl border border-border-subtle"
                     style={{ backgroundColor: `#${draft.brandColor}` }}
                     aria-hidden
                   />
@@ -150,7 +150,7 @@ export function CompanyProfileEditor({ initialData }: { initialData: CompanyProf
               <Field label="Dark brand accent">
                 <div className="flex items-center gap-2">
                   <span
-                    className="size-[var(--control-h)] shrink-0 rounded-md border border-border"
+                    className="size-[var(--control-h)] shrink-0 rounded-ctl border border-border-subtle"
                     style={{ backgroundColor: `#${draft.brandColorDark}` }}
                     aria-hidden
                   />

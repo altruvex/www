@@ -12,6 +12,11 @@ import { dateTime } from "@/lib/format";
 import { gateRoute } from "@/lib/page-gate";
 import { Button, Hint } from "@repo/ui";
 import { SlackButton } from "@/components/os/slack-button";
+import { PickToOpen, type PickOption } from "@/components/os/pick-to-open";
+import { prisma } from "@repo/database";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
+import { can } from "@/lib/rbac";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +30,30 @@ export default async function IntegrationsPage() {
   const denied = await gateRoute("/integrations", "integrations");
   if (denied) return denied;
 
-  const checks = await getHealthChecks();
+  const [checks, role] = await Promise.all([getHealthChecks(), currentRole()]);
+  // "Set up on a product" lands on the chosen product's own field (#github / #ingest-token), not the list.
+  const canOpenProducts = roleCanOpen(role, "/products");
+  const canEditProduct = can(role, "edit", "project");
+  const canAddProduct = can(role, "create", "project");
+  const products = canOpenProducts
+    ? await prisma.product.findMany({
+        orderBy: { name: "asc" },
+        take: 51,
+        select: { id: true, name: true },
+      })
+    : [];
+  const productPicks: PickOption[] = products.slice(0, 50).map((p) => ({
+    label: p.name,
+    href: `/products/${p.id}`,
+  }));
+  const productFooter =
+    products.length > 50 ? { label: "All products", href: "/products" } : undefined;
+  const anchorFor = (list: HealthCheck[]) =>
+    list.length === 1
+      ? `#${list[0]!.id}`
+      : list.some((c) => c.category === "infrastructure")
+        ? "#infrastructure"
+        : "#integrations";
   const integrations = checks.filter((c) => c.category === "integration");
   const infrastructure = checks.filter((c) => c.category === "infrastructure");
   const down = checks.filter((c) => c.state === "down");
@@ -40,12 +68,12 @@ export default async function IntegrationsPage() {
         description="Connection state, configuration and health for every dependency this application has. Checks run when the page loads and are made against the live environment — nothing reports healthy because a flag says so. The ones with a screen link to it; the rest are configured by environment variable and need a redeploy."
         alert={
           down.length > 0 ? (
-            <AlertBar tone="danger" href="#infrastructure" cta="Read the impact and recovery">
+            <AlertBar tone="danger" href={anchorFor(down)} cta="Read the impact and recovery">
               {down.length} dependenc{down.length === 1 ? "y is" : "ies are"} down. The impact is
               described on each card below.
             </AlertBar>
           ) : degraded.length > 0 ? (
-            <AlertBar tone="warning" href="#integrations" cta="Read the impact and recovery">
+            <AlertBar tone="warning" href={anchorFor(degraded)} cta="Read the impact and recovery">
               {degraded.length} dependenc{degraded.length === 1 ? "y is" : "ies are"} degraded —
               working, but losing some requests.
             </AlertBar>
@@ -64,7 +92,15 @@ export default async function IntegrationsPage() {
         <h2 className="telemetry text-subtle-foreground">External services</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           {integrations.map((check) => (
-            <CheckCard key={check.id} check={check} />
+            <CheckCard
+              key={check.id}
+              check={check}
+              productPicks={productPicks}
+              productFooter={productFooter}
+              canOpenProducts={canOpenProducts}
+              canEditProduct={canEditProduct}
+              canAddProduct={canAddProduct}
+            />
           ))}
         </div>
       </section>
@@ -73,7 +109,15 @@ export default async function IntegrationsPage() {
         <h2 className="telemetry text-subtle-foreground">This application</h2>
         <div className="grid gap-4 lg:grid-cols-2">
           {infrastructure.map((check) => (
-            <CheckCard key={check.id} check={check} />
+            <CheckCard
+              key={check.id}
+              check={check}
+              productPicks={productPicks}
+              productFooter={productFooter}
+              canOpenProducts={canOpenProducts}
+              canEditProduct={canEditProduct}
+              canAddProduct={canAddProduct}
+            />
           ))}
         </div>
       </section>
@@ -99,14 +143,45 @@ export default async function IntegrationsPage() {
   );
 }
 
-function CheckCard({ check }: { check: HealthCheck }) {
+function CheckCard({
+  check,
+  productPicks,
+  productFooter,
+  canOpenProducts,
+  canEditProduct,
+  canAddProduct,
+}: {
+  check: HealthCheck;
+  productPicks: PickOption[];
+  productFooter?: PickOption;
+  canOpenProducts: boolean;
+  canEditProduct: boolean;
+  canAddProduct: boolean;
+}) {
   return (
+    <div id={check.id} className="scroll-mt-20 flex flex-col [&>section]:flex-1">
     <Panel
       title={check.name}
       description={check.summary}
       action={
         <div className="flex items-center gap-2">
-          {check.setup && (
+          {check.setup?.href === "/products" && productPicks.length > 0 && canEditProduct ? (
+            <PickToOpen
+              label={check.setup.label}
+              size="sm"
+              searchPlaceholder="Find a product"
+              options={productPicks.map((pick) => ({
+                ...pick,
+                href: `${pick.href}#${check.id === "github" ? "github" : check.id === "ingest" ? "ingest-token" : "connect"}`,
+              }))}
+              footer={productFooter}
+            />
+          ) : check.setup?.href === "/products" && productPicks.length === 0 && canOpenProducts && canAddProduct ? (
+            // No product yet: the token or repository lives on one, so start it.
+            <Button asChild variant="outline" size="sm">
+              <Link href="/products?new=product">Add a product</Link>
+            </Button>
+          ) : check.setup && check.setup.href !== "/products" && (
             <Button asChild variant="outline" size="sm">
               <Link href={check.setup.href}>{check.setup.label}</Link>
             </Button>
@@ -132,7 +207,7 @@ function CheckCard({ check }: { check: HealthCheck }) {
           <p className="mt-0.5 text-base text-muted-foreground">{check.impact}</p>
         </div>
         {check.remedy && (
-          <div className="rounded-md border border-warning/25 bg-warning/[0.06] p-2.5">
+          <div className="rounded-panel-sm border border-warning/25 bg-warning/[0.06] p-2.5">
             <p className="telemetry text-warning">Fix</p>
             <p className="mt-0.5 text-base">{check.remedy}</p>
           </div>
@@ -142,7 +217,7 @@ function CheckCard({ check }: { check: HealthCheck }) {
             <summary className="telemetry cursor-pointer text-subtle-foreground hover:text-foreground">
               Technical detail
             </summary>
-            <pre className="mt-1.5 overflow-x-auto rounded-md border border-border bg-surface p-2 font-mono text-micro text-muted-foreground">
+            <pre className="mt-1.5 overflow-x-auto rounded-panel-sm border border-border-subtle bg-surface p-2 font-mono text-micro text-muted-foreground">
               {check.detail}
             </pre>
           </details>
@@ -150,13 +225,14 @@ function CheckCard({ check }: { check: HealthCheck }) {
       </div>
       {check.metrics && (
         <MetaList
-          className="border-t border-border"
+          className="border-t border-border-subtle"
           items={check.metrics.map((m) => ({ label: m.label, value: m.value }))}
         />
       )}
-      <p className="border-t border-border px-3 py-1.5 font-mono text-micro text-subtle-foreground">
+      <p className="border-t border-border-subtle px-3 py-1.5 font-mono text-micro text-subtle-foreground">
         Checked {dateTime(check.lastChecked)}
       </p>
     </Panel>
+    </div>
   );
 }

@@ -54,7 +54,7 @@ export function Pager({
                 href={pageSizeHref(size)}
                 aria-current={size === pageSize ? "true" : undefined}
                 className={cn(
-                  "inline-flex h-[var(--control-h-sm)] min-w-8 items-center justify-center rounded-md px-1.5 font-mono text-micro tabular-nums",
+                  "inline-flex h-[var(--control-h-sm)] min-w-8 items-center justify-center rounded-ctl-sm px-1.5 font-mono text-micro tabular-nums",
                   "transition-colors duration-[var(--dur-state)] outline-none focus-visible:outline-2 focus-visible:outline-brand",
                   size === pageSize
                     ? "bg-surface-2 text-foreground"

@@ -1,9 +1,8 @@
 "use client";
 
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { Container } from "@/components/shared/container";
-import { Highlight } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
 import { HOMEPAGE_SUPPORTING_CASE_STUDIES } from "@/lib/config/commercial";
 import { useSectionElement, useSectionEyebrow, useWordRead } from "@/lib/motion";
@@ -34,6 +33,7 @@ function readWords(node: ReactNode): ReactNode {
 
 export const WorkSection = memo(function WorkSection() {
   const t = useTranslations("work");
+  const tCTAs = useTranslations("commercial.ctas");
 
   const eyebrowRef = useSectionEyebrow();
   const sentenceRef = useWordRead<HTMLHeadingElement>();
@@ -82,7 +82,7 @@ export const WorkSection = memo(function WorkSection() {
             href="/work"
             className={`group inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base text-foreground transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text pointer-coarse:min-h-11 ${FOCUS_RING}`}
           >
-            {t("seeWork")}
+            {tCTAs("realBuild")}
             <ArrowIcon className="h-3.5 w-3.5" />
           </Link>
         </div>

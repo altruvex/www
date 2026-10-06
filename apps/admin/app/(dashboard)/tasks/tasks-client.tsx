@@ -195,7 +195,7 @@ export function TasksClient({
         onDelete={canDelete ? () => del.request({ id: task.id, label: task.title }) : undefined}
       >
         <DropdownMenuItem asChild>
-          <Link href={`/projects/${task.projectId}`}>
+          <Link href={`/projects/${task.projectId}#tasks`}>
             <FolderKanban className="size-3.5" />
             Open the project
           </Link>
@@ -341,7 +341,7 @@ export function TasksClient({
 
                   <ul className="space-y-1.5">
                     {columnTasks.length === 0 && (
-                      <li className="rounded-sm border border-dashed border-border px-2 py-4 text-center text-meta text-subtle-foreground">
+                      <li className="rounded-panel-sm border border-dashed border-border-subtle px-2 py-4 text-center text-meta text-subtle-foreground">
                         Empty
                       </li>
                     )}
@@ -429,7 +429,7 @@ export function TasksClient({
                 </Button>
               )}
               <Button asChild variant="outline" className="ms-auto">
-                <Link href={`/projects/${inspected.projectId}`}>
+                <Link href={`/projects/${inspected.projectId}#tasks`}>
                   <FolderKanban className="size-3.5" aria-hidden />
                   Open the project
                 </Link>
@@ -1005,5 +1005,73 @@ function EditTaskSheet({
         )}
       </SheetContent>
     </Sheet>
+  );
+}
+
+/**
+ * "Add a task" where the project is shown: opens the same create sheet as the
+ * board, pre-set to this project, and posts to the same endpoint.
+ */
+export function AddTaskButton({
+  project,
+  users,
+  label = "Add a task",
+  variant = "outline",
+  size = "sm",
+}: {
+  project: ProjectOption;
+  users: UserOption[];
+  label?: string;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+  size?: React.ComponentProps<typeof Button>["size"];
+}) {
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+
+  async function create(body: Record<string, unknown>) {
+    let data: { success?: boolean; message?: string } = {};
+    let status = 0;
+    try {
+      const res = await fetch("/api/admin/tasks", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      status = res.status;
+      data = (await res.json().catch(() => ({}))) as typeof data;
+    } catch {
+      toast.error("The server could not be reached. Nothing was saved.");
+      return;
+    }
+    if (status === 401) {
+      toast.error("Your session expired. Sign in again.");
+      router.push("/login");
+      return;
+    }
+    if (!data.success) {
+      toast.error(data.message ?? "That task could not be created.");
+      return;
+    }
+    toast.success(data.message ?? "Task created.");
+    setOpen(false);
+    router.refresh();
+  }
+
+  return (
+    <>
+      <Button variant={variant} size={size} className="pointer-coarse:h-11" onClick={() => setOpen(true)}>
+        <Plus className="size-3.5" />
+        {label}
+      </Button>
+      <CreateTaskSheet
+        key={open ? "open" : "closed"}
+        open={open}
+        onOpenChange={setOpen}
+        projects={[project]}
+        users={users}
+        defaultProjectId={project.id}
+        onSubmit={create}
+      />
+    </>
   );
 }

@@ -1,8 +1,6 @@
 import { JsonLd } from "@/components/seo/json-ld";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
-import { buildHowToPageSchemas, buildPageSchemas } from "@/lib/schema";
-import { getTranslations } from "next-intl/server";
-import { PHASE_KEYS } from "@/lib/process-phases";
+import { buildPageSchemas } from "@/lib/schema";
 import PageClient from "./page-client";
 
 const metaKey = "howWeWork" satisfies RouteMetaKey;
@@ -23,21 +21,9 @@ export default async function HowWeWorkPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "process.phases" });
-  const howToSteps = PHASE_KEYS.map((key) => ({
-    deliverables: t(`${key}.deliverables`),
-    name: t(`${key}.title`),
-    text: t(`${key}.description`),
-  }));
-
   return (
     <>
-      <JsonLd
-        schemas={[
-          ...buildPageSchemas(locale, metaKey),
-          ...buildHowToPageSchemas(locale, metaKey, howToSteps),
-        ]}
-      />
+      <JsonLd schemas={buildPageSchemas(locale, metaKey)} />
       <PageClient />
     </>
   );

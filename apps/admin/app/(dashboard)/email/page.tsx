@@ -1,22 +1,25 @@
-import Link from "next/link";
-import { Mail } from "lucide-react";
-
-import { prisma } from "@repo/database";
-import { Button } from "@repo/ui";
-
-import { EmptyState } from "@/components/os/empty-state";
-import { PageHeader } from "@/components/os/page-header";
-import { Panel } from "@/components/os/panel";
 import { MetaList } from "@/components/os/detail-layout";
+import { EmptyState } from "@/components/os/empty-state";
+import { EntityLink } from "@/components/os/entity-link";
 import { AlertBar } from "@/components/os/error-state";
 import { ActiveFilters, FilterBar, FilterChip } from "@/components/os/filter-bar";
-import { EntityLink } from "@/components/os/entity-link";
 import { List, ListRow } from "@/components/os/list-row";
+import { NewProposalButton } from "@/components/os/new-proposal-button";
+import { PageHeader } from "@/components/os/page-header";
 import { Pager } from "@/components/os/pager";
+import { Panel } from "@/components/os/panel";
+import { PickToOpen, type PickOption } from "@/components/os/pick-to-open";
 import { ToneBadge } from "@/components/ui/badge";
-import { dateTime } from "@/lib/format";
+import { roleCanOpen } from "@/lib/action-center";
+import { currentRole } from "@/lib/authorize";
 import { emailTransport, fromAddress } from "@/lib/email";
+import { dateTime } from "@/lib/format";
 import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
+import { prisma } from "@repo/database";
+import { Button } from "@repo/ui";
+import { Mail } from "lucide-react";
+import Link from "next/link";
 import { ChannelTabs } from "../inbox/channel-tabs";
 import { EmailReplyNote } from "../inbox/email-reply-note";
 
@@ -56,6 +59,9 @@ export default async function EmailPage({
   if (denied) return denied;
 
   const params = await searchParams;
+  const role = await currentRole();
+  const canViewProposals = roleCanOpen(role, "/proposals");
+  const canPropose = can(role, "create", "proposal");
   const transport = emailTransport();
   const status = (Object.keys(STATUS_TONE) as EmailStatus[]).find(
     (key) => key.toLowerCase() === params.status?.toLowerCase(),
@@ -95,6 +101,25 @@ export default async function EmailPage({
     prisma.emailMessage.count(),
     prisma.emailMessage.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
+  const proposalPicks: PickOption[] =
+    messages.length === 0 && !scoped && transport !== "none" && canViewProposals
+      ? (
+          await prisma.proposal.findMany({
+            orderBy: { updatedAt: "desc" },
+            take: 30,
+            select: {
+              id: true,
+              projectType: true,
+              status: true,
+              client: { select: { name: true, company: true } },
+            },
+          })
+        ).map((p) => ({
+          href: `/proposals/${p.id}`,
+          label: p.client.company || p.client.name || "Unnamed client",
+          hint: `${p.projectType} · ${p.status.toLowerCase()}`,
+        }))
+      : [];
   const countOf = new Map(byStatus.map((row) => [row.status, row._count._all]));
   const failed = countOf.get("FAILED") ?? 0;
   const scopedName = scopedClient
@@ -121,7 +146,7 @@ export default async function EmailPage({
         description="Every proposal and contract sent by mail, with what the transport answered. Written only when something is actually sent — this screen cannot compose."
         alert={
           transport === "none" ? (
-            <AlertBar tone="warning" href="/integrations" cta="Integrations">
+            <AlertBar tone="warning" href="/integrations#email" cta="Integrations">
               No mail transport is configured, so nothing is sent — a Send action on a proposal or
               contract records nothing and says so. Set RESEND_API_KEY, or SMTP_HOST, SMTP_USER and
               SMTP_PASSWORD, then redeploy.
@@ -134,7 +159,7 @@ export default async function EmailPage({
         }
         actions={
           <Button asChild variant="outline">
-            <Link href="/integrations">Transport settings</Link>
+            <Link href="/integrations#email">Transport settings</Link>
           </Button>
         }
       />
@@ -163,13 +188,13 @@ export default async function EmailPage({
             { label: "Refused", value: String(failed) },
           ]}
         />
-        <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
+        <p className="border-t border-border-subtle px-3 py-2 text-meta text-subtle-foreground">
           Delivery, bounce and complaint states exist in the schema and nothing here can set
           them — they need a provider webhook, which is not wired up. A message shown as{" "}
           <span className="font-mono">sent</span> means the transport accepted it, not that it
           arrived.
         </p>
-        <div className="border-t border-border px-3 py-2">
+        <div className="border-t border-border-subtle px-3 py-2">
           <EmailReplyNote />
         </div>
       </Panel>
@@ -236,12 +261,19 @@ export default async function EmailPage({
                 </Button>
               ) : transport === "none" ? (
                 <Button asChild variant="outline">
-                  <Link href="/integrations">Set up a transport</Link>
+                  <Link href="/integrations#email">Set up a transport</Link>
                 </Button>
               ) : (
-                <Button asChild variant="outline">
-                  <Link href="/proposals">Open a proposal</Link>
-                </Button>
+                proposalPicks.length > 0 ? (
+                  <PickToOpen
+                    label="Open a proposal"
+                    options={proposalPicks}
+                    footer={{ href: "/proposals", label: "All proposals" }}
+                    searchPlaceholder="Search proposals"
+                  />
+                ) : canPropose ? (
+                  <NewProposalButton variant="outline">Pick a client to quote</NewProposalButton>
+                ) : undefined
               )
             }
           />
@@ -297,7 +329,7 @@ export default async function EmailPage({
                             : []),
                         ]}
                       />
-                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-md border border-border bg-surface p-3 font-sans text-base text-muted-foreground">
+                      <pre className="max-h-80 overflow-auto whitespace-pre-wrap rounded-panel-sm border border-border-subtle bg-surface p-3 font-sans text-base text-muted-foreground">
                         {message.body}
                       </pre>
                       <div className="flex flex-wrap gap-2">
@@ -329,7 +361,7 @@ export default async function EmailPage({
             total={matching}
             hrefFor={hrefFor}
             noun="messages"
-            className="border-t border-border px-3 py-2"
+            className="border-t border-border-subtle px-3 py-2"
           />
         )}
       </Panel>

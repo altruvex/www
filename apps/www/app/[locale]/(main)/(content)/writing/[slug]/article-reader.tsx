@@ -1,8 +1,10 @@
 "use client";
 
+import { Eyebrow } from "@repo/ui/www";
 import { scrollToY } from "@/lib/motion";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
+import { ChevronDown } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 
@@ -96,8 +98,36 @@ export function ArticleReader({
         style={{ transform: "scaleX(0)" }}
       />
       <div className="mt-14 grid grid-cols-[minmax(0,1fr)] gap-10 border-t border-border-subtle pt-10 md:mt-20 md:pt-16 min-[1100px]:grid-cols-[minmax(0,48rem)_minmax(0,1fr)] min-[1100px]:gap-[clamp(40px,7vw,120px)]">
-        <div ref={proseRef} className={proseClassName}>
-          {children}
+        <div className="min-w-0">
+          {headings.length > 0 && (
+            <details className="group/contents mb-10 border-y border-border-subtle min-[1100px]:hidden">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-4 py-3 [&::-webkit-details-marker]:hidden">
+                <Eyebrow className="m-0">{t("contents")}</Eyebrow>
+                <ChevronDown
+                  aria-hidden
+                  className="size-4 text-muted-foreground transition-transform duration-(--motion-drawer) group-open/contents:rotate-180 motion-reduce:transition-none"
+                />
+              </summary>
+              <nav aria-label={t("contents")} className="pb-4">
+                <ol className="border-s border-border-subtle">
+                  {headings.map((heading, i) => (
+                    <li key={`${i}-${heading}`}>
+                      <a
+                        href={`#section-${i + 1}`}
+                        onClick={(event) => goTo(event, i + 1)}
+                        className="-ms-px block border-s border-transparent py-2 ps-4 text-sm leading-snug text-muted-foreground transition-colors duration-(--motion-drawer) ease-smooth hover:text-foreground"
+                      >
+                        {heading}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            </details>
+          )}
+          <div ref={proseRef} className={proseClassName}>
+            {children}
+          </div>
         </div>
         {headings.length > 0 && (
           <aside className="sticky top-28 hidden w-full max-w-75 self-start justify-self-end min-[1100px]:block">
@@ -123,7 +153,7 @@ export function ArticleReader({
                 ))}
               </ol>
               {minutesLeft > 0 && (
-                <p className="mt-4.5 text-[0.8125rem] text-muted-foreground">
+                <p className="mt-4.5 text-md text-muted-foreground">
                   {localizeNumbers(t("minutesLeft", { count: minutesLeft }), locale)}
                 </p>
               )}

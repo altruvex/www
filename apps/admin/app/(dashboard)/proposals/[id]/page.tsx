@@ -27,6 +27,7 @@ import { AlertBar } from "@/components/os/error-state";
 import { ManualStatusMenu } from "@/components/os/manual-status";
 import { SendDocument } from "@/components/os/send-document";
 import { ServiceTermsPanel } from "@/components/os/services/service-terms-panel";
+import { NewServiceButton } from "@/components/os/services/new-service-button";
 import { StatusPill } from "@/components/ui/badge";
 import { GenerateContractButton } from "@/components/proposal/generate-contract";
 import { proposalSendProps } from "@/components/proposal/send-props";
@@ -35,6 +36,7 @@ import { currentRole } from "@/lib/authorize";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { roleCanOpen } from "@/lib/action-center";
+import { canSeeFinance } from "@/lib/nav";
 import { canExtendValidity, needsNewVersion } from "../reissue";
 import { ExtendValidityButton } from "@/components/proposal/extend-validity";
 import {
@@ -68,7 +70,14 @@ export default async function ProposalDetailPage({
     where: { id },
     include: {
       client: { select: { id: true, name: true, company: true, phone: true, email: true } },
-      contract: { select: { id: true, status: true, signedAt: true } },
+      contract: {
+        select: {
+          id: true,
+          status: true,
+          signedAt: true,
+          project: { select: { id: true, name: true } },
+        },
+      },
     },
   });
   if (!proposal) notFound();
@@ -137,6 +146,8 @@ export default async function ProposalDetailPage({
   const reissueHref = `/clients/${proposal.clientId}/new-proposal?from=${proposal.id}`;
   const reissue =
     canCreate && roleCanOpen(role, "/clients") && needsNewVersion(proposal.status, proposal.validUntil);
+  const liveProject = proposal.contract?.project ?? null;
+  const canAddService = can(role, "create", "project") && roleCanOpen(role, "/services");
   const extendable =
     canEdit && canExtendValidity(proposal.status, proposal.validUntil, proposal.contract != null);
 
@@ -428,7 +439,7 @@ export default async function ProposalDetailPage({
               ) : (
                 <table className="w-full text-base">
                   <thead>
-                    <tr className="border-b border-border bg-surface">
+                    <tr className="border-b border-border-subtle bg-surface">
                       <th className="telemetry h-8 px-3 text-start font-normal text-subtle-foreground">
                         Item
                       </th>
@@ -439,7 +450,7 @@ export default async function ProposalDetailPage({
                   </thead>
                   <tbody>
                     {lineItems.map((item, i) => (
-                      <tr key={`${item.item ?? item.label ?? i}`} className="border-b border-border">
+                      <tr key={`${item.item ?? item.label ?? i}`} className="border-b border-border-subtle">
                         <td className="px-3 py-2">{item.item ?? item.label ?? "—"}</td>
                         <td className="px-3 py-2 text-end font-mono text-meta tabular-nums whitespace-nowrap">
                           {money(item.amount ?? 0, proposal.currency)}
@@ -448,13 +459,13 @@ export default async function ProposalDetailPage({
                     ))}
                     {reduction > 0 && (
                       <>
-                        <tr className="border-b border-border">
+                        <tr className="border-b border-border-subtle">
                           <td className="px-3 py-2 text-muted-foreground">Subtotal</td>
                           <td className="px-3 py-2 text-end font-mono text-meta tabular-nums whitespace-nowrap text-muted-foreground">
                             {money(subtotal, proposal.currency)}
                           </td>
                         </tr>
-                        <tr className="border-b border-border">
+                        <tr className="border-b border-border-subtle">
                           <td className="px-3 py-2 text-danger">
                             {discountLabel}
                             <span className="ms-2 font-mono text-micro tabular-nums text-subtle-foreground">
@@ -508,7 +519,7 @@ export default async function ProposalDetailPage({
                 ))}
               </div>
               {reduction > 0 && (
-                <p className="mt-3 border-t border-border pt-3 text-meta text-subtle-foreground">
+                <p className="mt-3 border-t border-border-subtle pt-3 text-meta text-subtle-foreground">
                   Percentages are of the discounted total, not of the{" "}
                   {money(subtotal, proposal.currency)} subtotal.
                 </p>
@@ -523,8 +534,30 @@ export default async function ProposalDetailPage({
           description="Domains, hosting and the like — billed per term, never part of the total"
         >
           {services.length === 0 ? (
-            <EmptyInline>
-              {content
+            <EmptyInline
+              action={
+                liveProject && canAddService ? (
+                  <NewServiceButton
+                    scope={{
+                      clientId: proposal.clientId,
+                      projectId: liveProject.id,
+                      projects: [liveProject],
+                      products: [],
+                      currency: proposal.currency,
+                    }}
+                    showMoney={canSeeFinance(role)}
+                    canCreate
+                  />
+                ) : !proposal.contract && canCreate && roleCanOpen(role, "/clients") ? (
+                  <Button asChild variant="outline">
+                    <Link href={reissueHref}>Add services in a new version</Link>
+                  </Button>
+                ) : undefined
+              }
+            >
+              {liveProject
+                ? "This proposal carried no services. Add what the client holds through you to its project here."
+                : content
                 ? "This proposal carries no services. Anything a client holds through you can still be added on their record after signing."
                 : "This proposal predates the services list, so it carries none."}
             </EmptyInline>
@@ -532,7 +565,7 @@ export default async function ProposalDetailPage({
             <ServiceTermsPanel
               services={services}
               currency={proposal.currency}
-              liveHref={`/clients/${proposal.clientId}?tab=services`}
+              liveHref={`/clients/${proposal.clientId}#sites`}
             />
           )}
         </DossierSection>

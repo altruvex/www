@@ -113,14 +113,14 @@ export async function ContractInspector({ id, role }: { id: string | null; role:
     >
       <div className="space-y-5">
         {signable && !send && (
-          <p className="rounded-sm border border-border bg-surface px-3 py-2 text-meta text-muted-foreground">
+          <p className="rounded-panel-sm border border-border-subtle bg-surface px-3 py-2 text-meta text-muted-foreground">
             {contract.signToken
               ? "This contract has no generated document, so it cannot be sent for signature. Open the full page for details."
               : "This contract has no signing link, so it cannot be sent from here. Record it by hand if it was signed another way."}
           </p>
         )}
         {contract.status === "SIGNED" && !contract.project && (
-          <p className="rounded-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger">
+          <p className="rounded-panel-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger">
             Signed, but no project exists — delivery has not formally started and no payment
             schedule is being tracked.
           </p>

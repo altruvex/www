@@ -87,9 +87,9 @@ export default async function AnalyticsPage() {
             title="By plan"
             description="Active retainers per plan, priced the way their renewal invoices are."
           >
-            <table className="w-full border-collapse text-left">
+            <table className="w-full border-collapse text-start">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border-subtle">
                   {["Plan", "Active", "Contracted / mo", "Billed / mo"].map(
                     (h) => (
                       <th
@@ -106,7 +106,7 @@ export default async function AnalyticsPage() {
                 {revenue.byPlan.map((plan) => (
                   <tr
                     key={plan.planId}
-                    className="border-b border-border last:border-0"
+                    className="border-b border-border-subtle last:border-0"
                   >
                     <td className="py-2 pe-3 text-base text-foreground">
                       {plan.planName}
@@ -254,7 +254,7 @@ export default async function AnalyticsPage() {
                     seriesIndex: i,
                   }))}
                 />
-                <div className="border-t border-border pt-3">
+                <div className="border-t border-border-subtle pt-3">
                   <p className="telemetry mb-1.5 text-subtle-foreground">
                     Closed from that source
                   </p>

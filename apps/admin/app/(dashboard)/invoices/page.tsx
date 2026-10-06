@@ -19,7 +19,8 @@ import { statusOf } from "@/lib/status";
 import { BillingTabs } from "../payments/billing-tabs";
 import { PaymentReminderButton } from "../payments/payment-reminder";
 import { loadInspectorReminder } from "@/lib/payment-reminder";
-import { loadBillingRows } from "../payments/billing-rows";
+import { loadBillingRows, loadChargeTargets } from "../payments/billing-rows";
+import { canSeeFinance } from "@/lib/nav";
 import { InvoiceInspectorActions, InvoicesClient, type InvoiceIssuer, type InvoiceRecord } from "./invoices-client";
 
 export const dynamic = "force-dynamic";
@@ -81,6 +82,10 @@ export default async function InvoicesPage({
     }))
     .sort((a, b) => (b.invoiceNumber ?? "").localeCompare(a.invoiceNumber ?? "") || b.createdAt.localeCompare(a.createdAt));
 
+  // An empty list offers the charge dialog in place, for a role that may create one.
+  const canCharge = can(role, "create", "payment") && canSeeFinance(role);
+  const chargeTargets = canCharge && invoices.length === 0 ? await loadChargeTargets() : null;
+
   const issued = invoices.filter((i) => i.invoiceNumber);
   const unissued = invoices.filter((i) => !i.invoiceNumber && i.status !== "WAIVED");
   const paid = issued.filter((i) => i.status === "PAID");
@@ -123,7 +128,7 @@ export default async function InvoicesPage({
         <StatTile label="Settled" value={moneyByCurrency(sumByCurrency(paid), true) || "0"} tone="success" sub={`${paid.length} paid`} />
       </div>
 
-      <InvoicesClient invoices={invoices} canEdit={can(role, "edit", "payment")} />
+      <InvoicesClient invoices={invoices} canEdit={can(role, "edit", "payment")} chargeTargets={chargeTargets} canRecordProject={can(role, "create", "project")} />
 
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-meta text-subtle-foreground">
         <span>
@@ -161,7 +166,8 @@ function InvoiceInspector({
   canMessage: boolean;
   reminder: Awaited<ReturnType<typeof loadInspectorReminder>>;
 }) {
-  const sourceHref = entityHref(invoice.sourceType, invoice.sourceId);
+  const sourceLink = entityHref(invoice.sourceType, invoice.sourceId);
+  const sourceHref = sourceLink && invoice.sourceType === "project" ? `${sourceLink}#money` : sourceLink;
   const sourceNoun =
     invoice.sourceType === "project" ? "project" : invoice.sourceType === "subscription" ? "retainer" : "service";
   return (
@@ -224,7 +230,7 @@ function InvoiceInspector({
         )}
         {invoice.clientId && (
           <Link
-            href={`/clients/${invoice.clientId}`}
+            href={`/clients/${invoice.clientId}#money`}
             className="inline-flex items-center gap-1 rounded-xs underline-offset-2 hover:underline"
           >
             <Building2 className="size-3.5" aria-hidden />

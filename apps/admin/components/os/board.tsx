@@ -122,7 +122,7 @@ export function Board({
           setOver(null);
         }}
         className={cn(
-          "group min-w-0 rounded-md border border-border bg-card p-2 pointer-coarse:p-2.5",
+          "group min-w-0 rounded-ctl-xl border border-border-subtle bg-card p-2 pointer-coarse:p-2.5",
           draggable && "cursor-grab active:cursor-grabbing",
           "transition-[opacity,border-color] duration-[var(--dur-state)]",
           "hover:border-border-mid",
@@ -168,8 +168,8 @@ export function Board({
                 "min-h-7 px-1 py-0.5 pointer-coarse:min-h-11 pointer-coarse:px-2 pointer-coarse:py-2",
                 "font-mono text-micro uppercase tracking-[0.06em] text-subtle-foreground",
                 "transition-colors duration-[var(--dur-state)]",
-                "pointer-coarse:border-border pointer-coarse:bg-surface pointer-coarse:text-foreground",
-                "hover:border-border hover:bg-surface hover:text-foreground",
+                "pointer-coarse:border-border-subtle pointer-coarse:bg-surface pointer-coarse:text-foreground",
+                "hover:border-border-subtle hover:bg-surface hover:text-foreground",
                 "focus-visible:border-ring",
                 "disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:border-transparent disabled:hover:bg-transparent",
               )}
@@ -202,8 +202,8 @@ export function Board({
             <section
               key={column.id}
               className={cn(
-                "overflow-hidden rounded-lg border bg-surface/50",
-                column.id === focusId ? "border-foreground/45" : "border-border",
+                "overflow-hidden rounded-panel-sm border bg-surface/50",
+                column.id === focusId ? "border-foreground/45" : "border-border-subtle",
               )}
             >
               <h3>
@@ -245,7 +245,7 @@ export function Board({
                   </span>
                 </button>
               </h3>
-              <div id={panelId} hidden={!open} className="border-t border-border p-2">
+              <div id={panelId} hidden={!open} className="border-t border-border-subtle p-2">
                 {column.lockedReason && (
                   <p className="mb-2 px-1 text-micro text-subtle-foreground">
                     {column.lockedReason}
@@ -264,8 +264,8 @@ export function Board({
 
       <div
         className={cn(
-          "hidden md:block",
-          "-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2",
+          "hidden md:flex md:flex-col",
+          "-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 md:min-h-96 md:flex-1",
           "snap-x snap-proximity scroll-px-4",
           "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
         )}
@@ -273,7 +273,7 @@ export function Board({
         role="region"
         aria-label={label}
       >
-        <div className="flex min-w-max items-stretch gap-3">
+        <div className="flex min-w-max flex-1 items-stretch gap-3">
           {columns.map((column) => {
             const columnCards = cardsIn(column.id);
             const refusing = over === column.id && column.locked;
@@ -302,16 +302,16 @@ export function Board({
                   setDragging(null);
                 }}
                 className={cn(
-                  "flex w-[248px] shrink-0 snap-start flex-col rounded-lg border bg-surface/50",
+                  "flex w-[248px] shrink-0 snap-start flex-col rounded-panel-sm border bg-surface/50",
                   column.id === focusId
                     ? "border-foreground/45 ring-1 ring-foreground/20"
-                    : "border-border",
+                    : "border-border-subtle",
                   "transition-colors duration-[var(--dur-state)]",
                   over === column.id && !column.locked && "border-brand bg-brand-soft",
                   refusing && "border-danger/40 bg-danger/[0.05]",
                 )}
               >
-                <div className="flex items-center gap-2 border-b border-border px-2.5 py-2">
+                <div className="flex items-center gap-2 border-b border-border-subtle px-2.5 py-2">
                   <span
                     className={cn("size-1.5 shrink-0 rounded-full", toneDot[column.tone])}
                     aria-hidden
@@ -325,7 +325,7 @@ export function Board({
                   </span>
                 </div>
                 {(column.summary || column.lockedReason) && (
-                  <div className="border-b border-border px-2.5 py-1.5">
+                  <div className="border-b border-border-subtle px-2.5 py-1.5">
                     {column.summary && (
                       <p className="font-mono text-micro tabular-nums text-muted-foreground">
                         {column.summary}
@@ -348,7 +348,7 @@ export function Board({
                   {columnCards.length === 0 ? (
                     <p
                       className={cn(
-                        "flex flex-1 items-center justify-center rounded-md border border-dashed border-border",
+                        "flex flex-1 items-center justify-center rounded-ctl-xl border border-dashed border-border-subtle",
                         "px-1.5 py-6 text-center text-meta text-subtle-foreground",
                       )}
                     >

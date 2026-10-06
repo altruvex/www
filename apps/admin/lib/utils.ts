@@ -1,6 +1,2 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// The one cn (and its tailwind-merge registry) lives in @repo/ui; admin reads it from there.
+export { cn } from "@repo/ui";

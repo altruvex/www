@@ -1,42 +1,36 @@
 {
-  "eyebrow": "Full-Stack Ownership",
-  "title": "Anyone can skin the surface.",
-  "titleAccent": "We engineer every layer beneath it.",
-  "subtitle": "Interface to infrastructure. One accountable engineer. Full source ownership.",
+  "eyebrow": "What you get",
+  "title": "What a custom website includes:",
+  "titleAccent": "five layers, yours at final payment.",
+  "subtitle": "A template changes the top layer. We design and build all five, and at final payment the code, the database and the accounts are in your name.",
   "templateStops": "A template stops here",
   "allLayers": "Altruvex — all five layers",
   "ownershipLabel": "What you own",
-  "closing": "You own the domain — and everything under it.",
   "layers": {
     "interface": {
       "name": "Interface",
-      "spec": "What your customer sees",
-      "detail": "Designed from the buyer's actual flow — first scroll to final action — not from a theme's demo content. Pixel-precise, WCAG AA, RTL-native, sub-second on mobile.",
-      "ownership": "A real interface built for your business — not a shell with your logo dropped in."
+      "detail": "Designed around how your customers actually buy, from the first screen to the final action. Every language and right-to-left from the start, WCAG 2.1 AA, built for phones first.",
+      "ownership": "An interface made for your business, not a theme with your logo dropped in."
     },
     "components": {
       "name": "Components",
-      "spec": "The system behind the screens",
-      "detail": "A composable, state-driven UI system on design tokens. Every element is reused, not rebuilt — so the site holds its standard as it grows.",
-      "ownership": "A design system your team can extend — not a one-off Figma file that drifts on the first edit."
+      "detail": "Every button, form and section is built once as a reusable part, so new pages keep the same standard as the first ones.",
+      "ownership": "A component system your team or another developer can extend, not a design file that drifts after the first edit."
     },
     "application": {
       "name": "Application",
-      "spec": "The logic that runs the business",
-      "detail": "Server components, business rules, authentication, and APIs — type-safe end to end. Your workflows, engineered to your logic.",
-      "ownership": "Custom logic shaped to how you operate — not a plugin's assumptions bent to fit."
+      "detail": "Your business rules, sign-in, payments and integrations, written as your own code, not plugins.",
+      "ownership": "Logic shaped to how you operate, not a plugin's assumptions bent to fit."
     },
     "data": {
       "name": "Data",
-      "spec": "The single source of truth",
-      "detail": "A modeled PostgreSQL schema built for integrity and growth. Structured, queryable, and documented — the foundation the rest of the system stands on.",
-      "ownership": "A database you fully own and can migrate — not a black-box CMS table you rent."
+      "detail": "A PostgreSQL database designed for your records, documented so another developer can work on it.",
+      "ownership": "A database you own and can move, not tables locked inside a platform you rent."
     },
     "infrastructure": {
       "name": "Infrastructure",
-      "spec": "Where it runs, always",
-      "detail": "Edge deployment, monitoring, and automated backups on infrastructure you control. Fast everywhere, observable, and recoverable.",
-      "ownership": "Deployment you hold the keys to — no vendor lock-in, no subscription holding your site hostage."
+      "detail": "Hosting, deployment and environments set up in accounts you control. Monitoring and backups run on a maintenance plan.",
+      "ownership": "Deployment you hold the keys to: no lock-in, no subscription holding your site."
     }
   }
 }

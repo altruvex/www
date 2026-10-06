@@ -1,6 +1,6 @@
 "use client";
 
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { getLenis } from "@/lib/motion/lenis-instance";
 import { formatIndex, localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";

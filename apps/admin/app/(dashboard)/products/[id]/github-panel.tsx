@@ -116,7 +116,7 @@ export function GithubPanel({
       />
 
       {!canEdit ? null : editing ? (
-        <div className="space-y-2 border-t border-border p-3">
+        <div className="space-y-2 border-t border-border-subtle p-3">
           <RepositoryPicker
             value={draft}
             onChange={setDraft}
@@ -171,7 +171,7 @@ export function GithubPanel({
           </div>
         </div>
       ) : (
-        <div className="border-t border-border p-3">
+        <div className="border-t border-border-subtle p-3">
           <Button
             variant="outline"
             size="sm"
@@ -184,7 +184,7 @@ export function GithubPanel({
         </div>
       )}
 
-      <div className="space-y-2 border-t border-border p-3">
+      <div className="space-y-2 border-t border-border-subtle p-3">
         <p className="text-meta text-subtle-foreground">
           {!repositoryUrl
             ? "Link this product's repository above — every GitHub event is matched to a product by the repository it names."
@@ -196,14 +196,14 @@ export function GithubPanel({
         </p>
       </div>
 
-      <details className="border-t border-border p-3">
+      <details className="border-t border-border-subtle p-3">
         <summary className="cursor-pointer text-meta text-subtle-foreground">
           Without the App: a webhook on this repository
         </summary>
         <div className="mt-2 space-y-2">
           <div>
             <p className="telemetry text-subtle-foreground">Payload URL</p>
-            <p className="mt-1 break-all rounded-sm border border-border bg-surface p-2 font-mono text-meta">
+            <p className="mt-1 break-all rounded-ctl border border-border-subtle bg-surface p-2 font-mono text-meta">
               {webhookUrl}
             </p>
           </div>

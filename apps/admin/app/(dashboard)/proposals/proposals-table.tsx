@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/os/empty-state";
 import { EntityLink } from "@/components/os/entity-link";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { inspectHref } from "@/components/os/inspect-sheet";
+import { NewProposalButton } from "@/components/os/new-proposal-button";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date, daysFromNow } from "@/lib/format";
 import { statusOf } from "@/lib/status";
@@ -294,13 +295,15 @@ export function ProposalsTable({
             body={
               filtered
                 ? "Nothing matches this status. Pick another chip above, or All."
-                : "Nothing here matches the search. Clear it, or quote a client from their record."
+                : "Nothing here matches the search. Clear it, or quote a client."
             }
             action={
               filtered ? (
                 <Button asChild variant="outline">
                   <Link href="/proposals">All proposals</Link>
                 </Button>
+              ) : canPropose ? (
+                <NewProposalButton variant="outline">Pick a client to quote</NewProposalButton>
               ) : undefined
             }
           />

@@ -213,7 +213,7 @@ export default async function TeamPage() {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-base">
             <thead>
-              <tr className="border-b border-border bg-surface">
+              <tr className="border-b border-border-subtle bg-surface">
                 <th className="telemetry sticky start-0 h-8 bg-surface px-3 text-start font-normal text-subtle-foreground">
                   Role
                 </th>
@@ -229,7 +229,7 @@ export default async function TeamPage() {
             </thead>
             <tbody>
               {ROLES.map((role) => (
-                <tr key={role} className="border-b border-border last:border-b-0">
+                <tr key={role} className="border-b border-border-subtle last:border-b-0">
                   <th
                     scope="row"
                     className="sticky start-0 bg-card px-3 py-2 text-start align-top font-normal"
@@ -254,7 +254,7 @@ export default async function TeamPage() {
                                   "rounded-xs border px-1 font-mono text-micro",
                                   action === "delete"
                                     ? "border-danger/25 bg-danger/10 text-danger"
-                                    : "border-border bg-surface text-muted-foreground",
+                                    : "border-border-subtle bg-surface text-muted-foreground",
                                 )}
                               >
                                 {action.slice(0, 3)}
@@ -270,7 +270,7 @@ export default async function TeamPage() {
             </tbody>
           </table>
         </div>
-        <p className="flex items-center gap-1.5 border-t border-border px-3 py-2 text-meta text-muted-foreground">
+        <p className="flex items-center gap-1.5 border-t border-border-subtle px-3 py-2 text-meta text-muted-foreground">
           <Check className="size-3" aria-hidden />
           Abbreviations: vie=view, cre=create, edi=edit, del=delete, app=approve, sen=send, exp=export.
         </p>

@@ -10,7 +10,11 @@ import { ThreadList } from "@/components/os/thread-list";
 import { getThreads } from "@/lib/threads";
 import { percent } from "@/lib/format";
 import { gateRoute } from "@/lib/page-gate";
+import { currentRole } from "@/lib/authorize";
+import { can } from "@/lib/rbac";
 import { Button } from "@repo/ui";
+import { PickToOpen } from "@/components/os/pick-to-open";
+import { clientPickOptions } from "@/lib/client-picks";
 import { ChannelTabs } from "../inbox/channel-tabs";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +22,7 @@ export const dynamic = "force-dynamic";
 export default async function WhatsAppPage() {
   const denied = await gateRoute("/whatsapp", "WhatsApp");
   if (denied) return denied;
+  const role = await currentRole();
 
   const [threads, byStatus, templates] = await Promise.all([
     getThreads(),
@@ -29,6 +34,7 @@ export default async function WhatsAppPage() {
     }),
   ]);
 
+  const pickClients = threads.length === 0 ? await clientPickOptions("conversations") : [];
   const count = (status: string) =>
     byStatus.find((row) => row.status === status)?._count._all ?? 0;
   const sent = byStatus.reduce((s, row) => s + row._count._all, 0);
@@ -45,7 +51,7 @@ export default async function WhatsAppPage() {
         description="The channel Altruvex actually closes business on. Every message is bound to a client, and proposal and contract sends are recorded against those records."
         actions={
           <Button asChild variant="outline">
-            <Link href="/integrations">
+            <Link href="/integrations#whatsapp">
               Connection settings
             </Link>
           </Button>
@@ -58,7 +64,7 @@ export default async function WhatsAppPage() {
           href={
             failingThreads.length === 1
               ? `/whatsapp/${failingThreads[0]!.clientId}`
-              : "/integrations"
+              : "/integrations#whatsapp"
           }
           cta={failingThreads.length === 1 ? "Open the thread" : "Check the connection"}
         >
@@ -87,9 +93,18 @@ export default async function WhatsAppPage() {
             title="No conversations"
             body="Nothing has been sent or received through the Cloud API yet. Sending a proposal from a client record is the usual first message, and it creates the thread automatically."
             action={
-              <Button asChild variant="outline">
-                <Link href="/clients">Open a client</Link>
-              </Button>
+              pickClients.length > 0 ? (
+                <PickToOpen
+                  label="Open a client"
+                  options={pickClients}
+                  footer={{ href: "/clients", label: "All clients" }}
+                  searchPlaceholder="Search clients"
+                />
+              ) : can(role, "create", "client") ? (
+                <Button asChild variant="outline">
+                  <Link href="/clients/new">Add a client</Link>
+                </Button>
+              ) : undefined
             }
           />
         ) : (

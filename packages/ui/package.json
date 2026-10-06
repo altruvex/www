@@ -10,6 +10,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./www": "./src/www/index.ts",
     "./styles": "./src/styles/globals.css",
     "./styles/tokens": "./src/styles/tokens.css",
     "./styles/liquid-glass": "./src/styles/liquid-glass.css",

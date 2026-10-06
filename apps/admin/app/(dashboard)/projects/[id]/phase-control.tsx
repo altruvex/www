@@ -114,7 +114,8 @@ export function ProjectMoreMenu({
 
   return (
     <>
-      <DropdownMenu>
+      {/* Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="pointer-coarse:h-11" disabled={busy} aria-label="More project actions">
             {busy ? <LoadingIcon size="sm" /> : <MoreHorizontal className="size-3.5" />}

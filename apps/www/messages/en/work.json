@@ -1,32 +1,35 @@
 {
-  "allLive": "All three are live",
-  "description": "<strong>Production builds you can inspect today</strong> - <dim>plus how we engineered this site as a live reference</dim>.",
-  "eyebrow": "Selected Work",
+  "allLive": "Live work you can inspect",
+  "description": "Two online stores for lighting retailers, and the site you are reading. <strong>Each one is public, so you can open it and test it</strong> instead of trusting screenshots. <dim>Each case study sets out the problem, what we built and the stack.</dim>",
   "labels": {
-    "approach": "Our approach",
+    "approach": "What we built",
     "backLink": "Back to all work",
     "caseStudy": "Case study",
-    "challenge": "The challenge",
-    "clientPersp": "Client perspective",
-    "integrity": "Integrity above all",
-    "live": "Live",
+    "challenge": "The problem",
     "liveSite": "Live site",
     "notFoundBody": "The case study you are looking for does not exist or is not yet published.",
     "notFoundTitle": "Case study not found",
-    "readCaseStudyWith": "Read the case study: {name}",
-    "results": "Results",
+    "readCaseStudyWith": "View case study: {name}",
+    "results": "Outcome",
     "techStack": "Tech stack",
-    "thisSite": "This site",
-    "viewCaseStudy": "Read the Case Study",
-    "visitProj": "Visit project",
-    "visitSite": "Visit <domain></domain>"
+    "viewCaseStudy": "View case study",
+    "visitProj": "Visit the live site",
+    "visitSite": "Visit <domain></domain>",
+    "glance": "At a glance",
+    "context": "The client",
+    "decisions": "Decisions and why",
+    "delivered": "What is live today",
+    "services": "Services involved",
+    "glanceBuild": "Build",
+    "glanceLanguages": "Languages",
+    "glancePlatform": "Platform",
+    "glanceStatus": "Live at"
   },
-  "seeWork": "See the work",
-  "selectedWork": "Selected work",
+  "selectedWork": "Our work",
   "sentence": "We built <newlight>NewLight's first online store</newlight>, a storefront for <art>Art Lighting Store</art> where fixtures can be seen <em>up close</em>, and <site>the site you are reading</site>.",
   "stages": {
     "altruvex-site": {
-      "title": "The site itself had to be the proof"
+      "title": "Our own site"
     },
     "art-lighting-store": {
       "title": "A storefront for fixtures you need to see up close"
@@ -35,7 +38,18 @@
       "title": "NewLight's first online store"
     }
   },
-  "subtitle": "Performance data, technical decisions, and what shifted after launch - not screenshots.",
-  "title": "Real builds.",
-  "titleItalic": "In production."
+  "title": "Websites and online stores we built,",
+  "titleItalic": "live for you to inspect.",
+  "check": {
+    "eyebrow": "Check it yourself",
+    "title": "Four checks you can run",
+    "titleAccent": "without asking us.",
+    "description": "Every build above is public. These checks take a few minutes and work on any studio’s portfolio, ours included.",
+    "items": [
+      "Open the live site on your phone, on mobile data rather than office Wi-Fi.",
+      "Switch the site to Arabic. The whole layout should mirror, not only the words.",
+      "Reach a product or service page from a search result, not from the home page.",
+      "Press Tab from the top of the page and follow the focus to the end."
+    ]
+  }
 }

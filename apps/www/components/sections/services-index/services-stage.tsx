@@ -3,9 +3,11 @@
 import { SectionHeading } from "@/components/sections/section-heading";
 import { usePricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Container } from "@/components/shared/container";
-import { ArrowIcon, ArrowLabel } from "@/components/shared/directional-link";
+import { ArrowLabel } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { Link } from "@/i18n/navigation";
 import { accentWorldClass } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { MOTION, useBatch } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { gsap } from "@/lib/utils/gsap";
@@ -34,10 +36,15 @@ function Discipline({ service }: { service: ServiceEntry }) {
       <p className="mt-3 mb-4.5 text-balance text-[clamp(1.3125rem,1.75vw,1.6875rem)] leading-[1.2] tracking-[-0.02em] text-foreground rtl:leading-normal rtl:tracking-normal">
         {t(`services.${service.id}.leaves`)}
       </p>
-      <p className="mb-3.5 text-[0.8125rem] leading-normal text-muted-foreground">
-        {t(`services.${service.id}.engagement`, pricingTokens)}
+      <p className="mb-3.5 text-base leading-normal text-muted-foreground">
+        {t(`services.${service.id}.outcome`)}
       </p>
-      <p className="text-[0.9375rem]">
+      <p className="mb-3.5 text-md leading-normal text-muted-foreground">
+        {service.id === "maintenance" && !pricingTokens.maintenanceEssential
+          ? t("services.maintenance.engagementQuoted")
+          : t(`services.${service.id}.engagement`, pricingTokens)}
+      </p>
+      <p className="text-base">
         <Link
           href={service.href}
           aria-label={t("chapters.explore", { name })}
@@ -55,7 +62,7 @@ const PHOTO_OPEN = 1.5;
 function PhotoLayer() {
   const t = useTranslations("servicesPage");
   const plateItems = t.raw("chapters.plate.items") as string[];
-  const trackRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const plateRef = useRef<HTMLDivElement>(null);
@@ -131,8 +138,9 @@ function PhotoLayer() {
   }, []);
 
   return (
-    <div
+    <section
       ref={trackRef}
+      aria-labelledby="services-plate-heading"
       className="relative"
       style={{ height: `${PHOTO_OPEN * 100 + 100}svh` }}
     >
@@ -141,7 +149,7 @@ function PhotoLayer() {
           ref={frameRef}
           data-scene="inverted"
           data-scene-lock="dark"
-          className="absolute inset-0 bg-black!"
+          className="absolute inset-0 bg-inverted-bg!"
         >
           <div className="absolute inset-0 rtl:-scale-x-100">
             <div ref={imageRef} className="absolute inset-0">
@@ -172,9 +180,17 @@ function PhotoLayer() {
           <div ref={plateRef} className="absolute inset-0 flex items-center">
             <Container>
               <div className="lg:ms-[12%]">
-                <p data-plate-eyebrow className="eyebrow text-xs text-white/70">
-                  {t("chapters.plate.eyebrow")}
-                </p>
+                <div data-plate-eyebrow>
+                  <p className="eyebrow text-xs text-white/70">
+                    {t("chapters.plate.eyebrow")}
+                  </p>
+                  <h2
+                    id="services-plate-heading"
+                    className="m-0 mt-4 max-w-[24ch] text-balance text-[clamp(1.0625rem,1.4vw,1.375rem)] font-normal leading-[1.3] text-white/85 rtl:leading-normal"
+                  >
+                    {t("chapters.plate.title")}
+                  </h2>
+                </div>
                 <ul className="mt-8 grid list-none gap-y-[clamp(1.75rem,5.5vh,3.5rem)] lg:mt-12">
                   {plateItems.map((item) => (
                     <li
@@ -195,7 +211,7 @@ function PhotoLayer() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -213,6 +229,7 @@ const STEP_CLASS =
 
 export function ServicesStage() {
   const t = useTranslations("servicesPage.stage");
+  const tCTAs = useTranslations("commercial.ctas");
   const fieldsRef = useBatch<HTMLDivElement>({
     selector: "[data-field]",
     trigger: MOTION.trigger.late,
@@ -287,7 +304,6 @@ export function ServicesStage() {
 
   return (
     <>
-      <PhotoLayer />
       <section
         aria-labelledby="services-stage-heading"
         className="overflow-x-clip pt-(--section-y-top) pb-(--section-y-bottom)"
@@ -328,7 +344,7 @@ export function ServicesStage() {
               title:
                 "max-w-[18ch] text-[clamp(2.125rem,4.4vw,4.25rem)] font-light leading-[1.04] tracking-[-0.035em] rtl:leading-[1.35] rtl:tracking-normal",
               description:
-                "text-[0.8125rem] text-muted-foreground lg:w-[22rem] lg:max-w-[22rem]",
+                "text-md text-muted-foreground lg:w-[22rem] lg:max-w-[22rem]",
             }}
           />
         </Container>
@@ -395,18 +411,24 @@ export function ServicesStage() {
         </div>
 
         <Container>
-          <p className="mt-5 text-[0.9375rem] text-muted-foreground">
-            {t("return")}
-          </p>
-
-          <div className="mt-(--section-block) flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-5 text-[0.9375rem] text-muted-foreground">
+          <div className="mt-(--section-block) flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-5 text-base text-muted-foreground">
             <span>{t("processLead")}</span>
             <Link href="/process" className={LINK_CLASS}>
               <ArrowLabel>{t("processLink")}</ArrowLabel>
             </Link>
           </div>
+          <div className="mt-5 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 border-t border-border-subtle pt-5 text-base text-muted-foreground">
+            <span>{t("costLead")}</span>
+            <Link
+              href={getCommercialCta("scopeProjects").href}
+              className={LINK_CLASS}
+            >
+              <ArrowLabel>{tCTAs("scopeProjects")}</ArrowLabel>
+            </Link>
+          </div>
         </Container>
       </section>
+      <PhotoLayer />
     </>
   );
 }

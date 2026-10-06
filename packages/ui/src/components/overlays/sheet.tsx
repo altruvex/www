@@ -22,7 +22,7 @@ export function SheetContent({
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay
         className={cn(
-          "fixed inset-0 z-50 bg-n-8/25 backdrop-blur-[1px]",
+          "fixed inset-0 z-50 bg-n-8/25",
           "data-[state=open]:animate-in data-[state=open]:fade-in-0",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
         )}
@@ -33,13 +33,15 @@ export function SheetContent({
           "focus:outline-none",
           side === "end"
             ? [
-                "inset-y-0 end-0 w-full border-s border-border",
+                "inset-y-0 end-0 w-full border-s border-border-subtle",
                 widths[width],
-                "data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
-                "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right",
+                // Physical sides with an rtl: override, not slide-*-from-end: the build lowers
+                // :dir() to a :lang() fallback, which reads the wrong way wherever dir and lang differ.
+                "data-[state=open]:animate-in data-[state=open]:slide-in-from-right rtl:data-[state=open]:slide-in-from-left",
+                "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right rtl:data-[state=closed]:slide-out-to-left",
               ]
             : [
-                "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-xl border-t border-border",
+                "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-panel-md border-t border-border-subtle",
                 "data-[state=open]:animate-in data-[state=open]:slide-in-from-bottom",
                 "data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom",
               ],
@@ -51,7 +53,7 @@ export function SheetContent({
         {children}
         <DialogPrimitive.Close
           className={cn(
-            "absolute end-3 top-3 rounded-sm p-1 text-subtle-foreground",
+            "absolute end-3 top-3 rounded-full p-1 text-subtle-foreground",
             "pointer-coarse:end-0.5 pointer-coarse:top-0.5 pointer-coarse:p-[15px]",
             "transition-colors duration-[var(--dur-state)] hover:bg-surface-2 hover:text-foreground",
           )}
@@ -67,7 +69,7 @@ export function SheetContent({
 export function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("shrink-0 border-b border-border px-4 py-3 pe-10", className)}
+      className={cn("shrink-0 border-b border-border-subtle px-4 py-3 pe-10", className)}
       {...props}
     />
   );
@@ -100,7 +102,7 @@ export function SheetFooter({ className, ...props }: React.ComponentProps<"div">
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-end gap-2 border-t border-border bg-surface px-4 py-3",
+        "flex shrink-0 items-center justify-end gap-2 border-t border-border-subtle bg-surface px-4 py-3",
         className,
       )}
       {...props}

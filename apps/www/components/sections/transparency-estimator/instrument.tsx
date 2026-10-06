@@ -1,6 +1,6 @@
 "use client";
 
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { MOTION, readMotionEnv, resolveEase } from "@/lib/motion";
 import { useIsomorphicLayoutEffect } from "@/lib/utils/dom-utils";
 import { gsap } from "@/lib/utils/gsap";
@@ -210,7 +210,7 @@ export function Instrument({
                 className={cn(
                   "font-medium leading-[1.1] tracking-[-0.035em] tabular-nums text-foreground transition-[font-size] duration-(--motion-drawer) ease-smooth motion-reduce:transition-none",
                   stuck
-                    ? "whitespace-nowrap text-[1.0625rem] sm:text-[1.25rem]"
+                    ? "whitespace-nowrap text-body sm:text-xl"
                     : "text-[clamp(1.5rem,3.6vw,2.75rem)]",
                 )}
               >

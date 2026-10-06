@@ -6,7 +6,7 @@ import { Monitor, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useSyncExternalStore } from "react";
-import { SegmentedControl } from "./segmented-control";
+import { SegmentedControl } from "@repo/ui/www";
 
 type ThemeChoice = "light" | "dark" | "system";
 

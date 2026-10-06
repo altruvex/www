@@ -50,7 +50,7 @@ export function ActivityFeed({
             <div
               role="group"
               aria-label="Filter by domain"
-              className="flex flex-wrap items-center gap-1 border-b border-border px-3 py-1.5"
+              className="flex flex-wrap items-center gap-1 border-b border-border-subtle px-3 py-1.5"
             >
               <DomainChip active={domain === "all"} onClick={() => setDomain("all")}>
                 All <Count n={events.length} />
@@ -92,7 +92,7 @@ function DomainChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-[var(--control-h-sm)] items-center gap-1 rounded-md border px-2 text-meta transition-colors duration-[var(--dur-state)]",
+        "inline-flex h-[var(--control-h-sm)] items-center gap-1 rounded-ctl-sm border px-2 text-meta transition-colors duration-[var(--dur-state)]",
         active
           ? "border-foreground/45 bg-surface text-foreground"
           : "border-transparent text-muted-foreground hover:bg-surface hover:text-foreground",

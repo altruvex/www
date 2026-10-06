@@ -5,6 +5,10 @@ import { getPublicPricing } from "@/lib/server/pricing";
 import { getTranslations } from "next-intl/server";
 import PageClient from "./page-client";
 
+// The client reads its prefill from the query string; rendering per request keeps the
+// full page in the HTML instead of bailing out to client-only rendering.
+export const dynamic = "force-dynamic";
+
 const metaKey: RouteMetaKey = "transparency";
 const pathSuffix = "/transparency";
 
@@ -27,7 +31,7 @@ export default async function TransparencyPage({
   const pricing = await getPublicPricing();
 
   const t = await getTranslations({ locale, namespace: "transparency.faq" });
-  const faqEntries = ["1", "2", "3", "4"].map((key) => ({
+  const faqEntries = ["1", "2", "3", "4", "5", "6"].map((key) => ({
     answer: t.raw(`a${key}`) as string,
     question: t(`q${key}`),
   }));

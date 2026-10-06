@@ -8,7 +8,7 @@ export default function AuditLoading() {
         <Skeleton className="h-3 w-96 max-w-full" />
       </div>
       <TilesSkeleton />
-      <Skeleton className="h-28 w-full rounded-md" />
+      <Skeleton className="h-28 w-full rounded-panel-sm" />
       <TableSkeleton rows={10} cols={3} />
     </div>
   );

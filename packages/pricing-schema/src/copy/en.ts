@@ -36,49 +36,37 @@ export const EN_COPY: PricingCopy = {
     essential: {
       name: "Essential",
       features: [
-        "Monthly security and dependency update cycle",
-        "Uptime monitoring and backup verification",
-        "Business-hours WhatsApp or email support",
-        "Quarterly health summary",
+        "Security and dependency updates",
+        "Uptime monitoring and backups",
       ],
       compare: {
         bestFor: "A site that mostly needs to stay safe and up to date",
-        cadence: "Monthly update cycle",
-        monitoring: "Uptime monitoring, backups verified",
-        reporting: "Quarterly health summary",
-        support: "Business hours, WhatsApp or email",
+        monitoring: "Uptime monitoring and backups",
       },
     },
     professional: {
       name: "Professional",
       features: [
-        "Weekly checks and priority incident handling",
-        "Daily monitoring with backup and uptime review",
-        "Monthly performance and security report",
+        "Security and dependency updates",
+        "Uptime monitoring and backups",
         "Support for small rollout or release updates",
       ],
       compare: {
         bestFor: "A site or store that changes every month",
-        cadence: "Weekly checks",
-        monitoring: "Daily monitoring, backup and uptime review",
-        reporting: "Monthly performance and security report",
-        support: "Priority incident handling",
+        monitoring: "Uptime monitoring and backups",
       },
     },
     enterprise: {
       name: "Enterprise",
       features: [
-        "Custom SLA and dedicated response protocol",
-        "Architecture, performance, and security review cadence",
-        "Multi-system monitoring and incident management",
+        "Scope and coverage agreed in your quote",
+        "Architecture, performance and security reviews",
+        "Monitoring across several systems",
         "Optional tooling and integration management",
       ],
       compare: {
         bestFor: "Several systems, or one that cannot go down",
-        cadence: "Agreed with you",
-        monitoring: "Multi-system monitoring and incident management",
-        reporting: "Architecture, performance and security reviews",
-        support: "Custom SLA and a dedicated response protocol",
+        monitoring: "Monitoring across several systems",
       },
     },
   },
@@ -86,7 +74,7 @@ export const EN_COPY: PricingCopy = {
     requestCap:
       "Up to {count} edit requests per month (content or image swaps, minor section edits)",
     requestCapPriority:
-      "Up to {count} edit requests per month, with priority turnaround",
+      "Up to {count} edit requests per month, handled with priority",
     portal: "Client Portal access — track every request and its status",
     overage: "Additional requests are billed at {rate} EGP/hr.",
     overageShort: "{rate} EGP / hour",
@@ -104,17 +92,19 @@ export const EN_COPY: PricingCopy = {
   },
   consulting: {
     "technical-audit": {
-      title: "Technical Audit -",
-      titleItalic: "Fixed Scope, Fixed Price.",
-      name: "Technical Audit - Fixed Scope, Fixed Price.",
+      title: "Technical audit:",
+      titleItalic: "fixed scope, fixed price.",
+      name: "Technical audit: fixed scope, fixed price.",
       description:
         "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>",
       deliverables: [
-        "Current stack and architecture review",
-        "Performance bottleneck identification",
-        "Security surface assessment",
-        "Actionable remediation roadmap",
-        "1-hour debrief call",
+        "Architecture: rebuild or repair",
+        "Performance, including Core Web Vitals",
+        "Security surface",
+        "Search and data: SEO, structured data, analytics",
+        "Releases: build pipeline, environments, backups",
+        "Ownership: repository, accounts, licences, documentation",
+        "A written roadmap and a 1-hour debrief call",
       ],
       durationLabel: "Duration",
       duration: "5 business days",
@@ -153,12 +143,9 @@ export const EN_COPY: PricingCopy = {
     vatLabel: "VAT",
     vatNote:
       "All project figures are quoted excluding VAT. VAT at {rate}% is added at contract stage.",
-    revisionLabel: "Revision rate",
+    revisionLabel: "Revisions",
     revisionNote:
       "{rounds} rounds of revisions are included. Further revision work is billed at {rate} EGP/hr.",
-    usdLabel: "USD rate",
-    usdNote:
-      "USD figures convert at a fixed {rate} EGP/USD, reviewed quarterly. Last reviewed {reviewedOn}.",
     addonLabel: "Pass-through items",
     addonNote:
       "Domain, hosting, and business email are billed at what we pay, plus a stated margin. Each appears as its own line — never folded into a project total.",

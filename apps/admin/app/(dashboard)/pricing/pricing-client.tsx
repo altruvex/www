@@ -343,7 +343,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-start">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-border-subtle">
                 {["Service", "Band", "Min (EGP)", "Max (EGP)", "Weeks min", "Weeks max", ""].map((h, i) => (
                   <th
                     key={h || "action"}
@@ -364,7 +364,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
                   setCells((prev) => prev.map((c, j) => (j === i ? { ...c, ...next } : c)));
                 const missing = blanks(cell, CELL_FIELDS);
                 return (
-                  <tr key={`${cell.serviceId}:${cell.complexityId}`} className="border-b border-border align-middle">
+                  <tr key={`${cell.serviceId}:${cell.complexityId}`} className="border-b border-border-subtle align-middle">
                     <td className="sticky start-0 z-10 bg-card py-2 pe-3 text-base text-foreground">{cell.serviceName}</td>
                     <td className="py-2 pe-3 text-base text-muted-foreground">{cell.bandName}</td>
                     {(["priceMin", "priceMax", "weeksMin", "weeksMax"] as const).map((field) => (
@@ -420,7 +420,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
                 setPlans((prev) => prev.map((p, j) => (j === i ? { ...p, ...next } : p)));
               const annual = maintenanceIntervalPrice({ price: plan.price }, "annual");
               return (
-                <div key={plan.id} className="space-y-2 border-b border-border pb-4 last:border-0">
+                <div key={plan.id} className="space-y-2 border-b border-border-subtle pb-4 last:border-0">
                   <div className="flex items-center justify-between">
                     <span className="text-base font-medium text-foreground">{plan.name}</span>
                     {plan.status !== "active" && <Soon reason={PLANNED_REASON} />}
@@ -544,7 +544,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
                   ? addon.costBasis + Math.round((addon.costBasis * addon.markupValue) / 100)
                   : addon.costBasis + addon.markupValue;
             return (
-              <div key={addon.id} className="space-y-2 border-b border-border pb-4 last:border-0">
+              <div key={addon.id} className="space-y-2 border-b border-border-subtle pb-4 last:border-0">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-base font-medium text-foreground">
                     {addon.name}
@@ -654,7 +654,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-start">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border-subtle">
                   {["When", "Entity", "Field", "From", "To", "By"].map((h, i) => (
                     <th
                       key={h}
@@ -670,7 +670,7 @@ export function PricingClient({ snapshot, canEdit = true }: { snapshot: PricingS
               </thead>
               <tbody>
                 {snapshot.history.map((h) => (
-                  <tr key={h.id} className="border-b border-border">
+                  <tr key={h.id} className="border-b border-border-subtle">
                     <td className="sticky start-0 z-10 whitespace-nowrap bg-card py-2 pe-3 font-mono text-meta text-muted-foreground">
                       {new Date(h.createdAt).toLocaleString("en-GB")}
                     </td>

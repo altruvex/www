@@ -6,7 +6,7 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner";
 
 import { LoadingIcon } from "./loading-icon";
 
@@ -25,15 +25,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
         unstyled: true,
         classNames: {
           toast:
-            "liquid-glass-panel glass-highlight rounded-lg flex w-full items-start gap-3 p-4 text-popover-foreground",
-          title: "text-[0.9rem] font-medium leading-snug",
+            "liquid-glass-panel glass-highlight rounded-panel-md flex w-full items-start gap-3 p-4 text-popover-foreground",
+          title: "text-md font-medium leading-snug",
           description: "text-sm leading-snug text-muted-foreground",
           icon: "mt-0.5 shrink-0",
           content: "flex flex-col gap-0.5",
           actionButton:
-            "ms-auto shrink-0 rounded-md bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground",
+            "ms-auto shrink-0 rounded-full bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground",
           cancelButton:
-            "ms-auto shrink-0 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground",
+            "ms-auto shrink-0 rounded-full bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground",
           closeButton:
             "!liquid-glass !border-border-strong !text-foreground !start-auto !end-0 !-translate-x-1/3",
           success: "[&_[data-icon]]:text-success",
@@ -47,4 +47,4 @@ const Toaster = ({ ...props }: ToasterProps) => {
   );
 };
 
-export { Toaster };
+export { Toaster, toast };

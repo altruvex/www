@@ -1,8 +1,9 @@
 {
-  "description": "It looks like you have lost your internet connection.",
-  "description2": "Check your network and try again.",
-  "goBack": "Go Back",
-  "status": "Network Status: Offline",
-  "title": "You're Offline",
-  "tryAgain": "Try Again"
+  "description": "This page needs a connection, and your device is offline right now.",
+  "description2": "Pages you opened in the last day may still load from this device. Reconnect, then try again.",
+  "goBack": "Go back",
+  "status": "Network status: offline",
+  "title": "You're offline",
+  "tryAgain": "Try again",
+  "stillOffline": "Still offline. Check your Wi-Fi or mobile data."
 }

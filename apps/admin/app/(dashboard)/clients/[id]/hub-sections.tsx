@@ -10,10 +10,12 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { Button } from "@repo/ui";
+import { AttachPicker } from "@/components/os/attach-picker";
 import { EmptyInline } from "@/components/os/empty-state";
 import { EntityLink } from "@/components/os/entity-link";
 import { ManualStatusMenu } from "@/components/os/manual-status";
 import { Panel, PanelLink } from "@/components/os/panel";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { SendDocument } from "@/components/os/send-document";
 import { StatTile } from "@/components/os/stat-tile";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
@@ -23,6 +25,7 @@ import {
   contractEmailTemplate,
   proposalEmailTemplate,
 } from "@/lib/document-templates";
+import { roleCanOpen } from "@/lib/action-center";
 import { entityHref } from "@/lib/entity-links";
 import {
   date,
@@ -197,11 +200,11 @@ export function OverviewTab({
             {client.contactSubmission.message}
           </p>
           {client.contactSubmission.tags.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border-subtle pt-3">
               {client.contactSubmission.tags.map((t) => (
                 <span
                   key={t.id}
-                  className="rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                  className="rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
                 >
                   {t.name}
                 </span>
@@ -233,6 +236,9 @@ export function DealsTab({
   const canContract = can(role, "create", "contract");
   const canSendContract = can(role, "send", "contract");
   const canEditContract = can(role, "edit", "contract");
+  const acceptedWithoutContract = client.proposals.find(
+    (p) => p.status === "ACCEPTED" && !p.contract,
+  );
   return (
     <>
       <Panel
@@ -369,7 +375,19 @@ export function DealsTab({
         flush
       >
         {client.contracts.length === 0 ? (
-          <EmptyInline>
+          <EmptyInline
+            action={
+              acceptedWithoutContract && canContract ? (
+                <LifecycleButton
+                  label="Generate contract"
+                  busyLabel="Generating…"
+                  endpoint="/api/admin/contracts"
+                  body={{ proposalId: acceptedWithoutContract.id }}
+                  successMessage="Contract generated."
+                />
+              ) : undefined
+            }
+          >
             No contract yet. A contract is generated from an accepted proposal,
             so the commitment always references an offer the client actually
             saw.
@@ -507,11 +525,18 @@ export function DealsTab({
 export function DeliveryTab({
   hub,
   showMoney,
+  role,
 }: {
   hub: ClientHub;
   showMoney: boolean;
+  role: Role | undefined;
 }) {
   const { client, publicBase } = hub;
+  const canRecord =
+    can(role, "create", "project") && roleCanOpen(role, "/projects");
+  const unopened = client.contracts.find(
+    (c) => c.status === "SIGNED" && !c.project,
+  );
   return (
     <Panel
       title="Projects"
@@ -526,7 +551,31 @@ export function DeliveryTab({
       flush
     >
       {client.projects.length === 0 ? (
-        <EmptyInline>
+        <EmptyInline
+          action={
+            canRecord || (unopened && can(role, "create", "project")) ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {unopened && can(role, "create", "project") && (
+                  <Button asChild variant="outline">
+                    <Link href={`/contracts/${unopened.id}#delivery`}>
+                      Open the project from its contract
+                    </Link>
+                  </Button>
+                )}
+                {canRecord && (
+                  <Button asChild variant="outline">
+                    <Link href={`/projects?new=recorded&client=${client.id}`}>
+                      Record a past project
+                    </Link>
+                  </Button>
+                )}
+              </div>
+            ) : undefined
+          }
+        >
+          {unopened
+            ? "A contract is signed but no project was opened from it. "
+            : ""}
           Delivery has not started. A project opens when a contract is signed,
           so it always has a commitment behind it — or record a past project
           that was built before this system existed.
@@ -573,7 +622,7 @@ export function DeliveryTab({
                     {project._count.tasks === 1 ? "task" : "tasks"}
                   </Link>
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/projects/${project.id}#changes`}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     {changes.length} open change{" "}
@@ -591,7 +640,7 @@ export function DeliveryTab({
                 </div>
 
                 {changes.length > 0 && (
-                  <ul className="space-y-1 border-s border-border ps-3">
+                  <ul className="space-y-1 border-s border-border-subtle ps-3">
                     {changes.map((cr) => (
                       <li
                         key={cr.id}
@@ -637,8 +686,22 @@ export function DeliveryTab({
   );
 }
 
-export function SitesTab({ hub }: { hub: ClientHub }) {
+export function SitesTab({
+  hub,
+  role,
+}: {
+  hub: ClientHub;
+  role: Role | undefined;
+}) {
   const { client } = hub;
+  const canRegister =
+    can(role, "create", "project") && roleCanOpen(role, "/products");
+  const canLink = can(role, "edit", "project");
+  const projectOptions = client.projects.map((p) => ({
+    value: p.id,
+    label: p.name,
+    hint: statusOf("projectStatus", p.status).label,
+  }));
   return (
     <Panel
       title="Products"
@@ -654,7 +717,17 @@ export function SitesTab({ hub }: { hub: ClientHub }) {
       flush
     >
       {client.products.length === 0 ? (
-        <EmptyInline>
+        <EmptyInline
+          action={
+            canRegister ? (
+              <Button asChild variant="outline">
+                <Link href={`/products?new=product&client=${client.id}`}>
+                  Register a product
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        >
           No product is registered. A product is what CI reports builds and
           deployments against, so register one when the first site goes to
           staging.
@@ -696,6 +769,24 @@ export function SitesTab({ hub }: { hub: ClientHub }) {
                   </div>
                   <StatusPill registry="productStatus" value={product.status} />
                 </div>
+                {!product.projectId && (
+                  <div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
+                    <span>Not on a project.</span>
+                    {canLink && projectOptions.length > 0 && (
+                      <AttachPicker
+                        label="Link to a project"
+                        options={projectOptions}
+                        request={{
+                          url: "/api/admin/products",
+                          method: "PATCH",
+                          body: { action: "update", id: product.id, patch: {} },
+                          field: "patch.projectId",
+                        }}
+                        successMessage={`${product.name} linked to the project.`}
+                      />
+                    )}
+                  </div>
+                )}
                 <p className="text-meta text-muted-foreground">
                   {lastDeploy ? (
                     <>
@@ -714,7 +805,7 @@ export function SitesTab({ hub }: { hub: ClientHub }) {
                   )}
                 </p>
                 {product.incidents.length > 0 && (
-                  <ul className="space-y-1 border-s border-border ps-3">
+                  <ul className="space-y-1 border-s border-border-subtle ps-3">
                     {product.incidents.map((incident) => (
                       <li
                         key={incident.id}
@@ -752,8 +843,22 @@ export function SitesTab({ hub }: { hub: ClientHub }) {
   );
 }
 
-export function MoneyTab({ hub }: { hub: ClientHub }) {
+export function MoneyTab({
+  hub,
+  role,
+}: {
+  hub: ClientHub;
+  role: Role | undefined;
+}) {
   const { client, payments, publicBase } = hub;
+  const canCharge =
+    can(role, "create", "payment") && roleCanOpen(role, "/payments");
+  const canRetain =
+    can(role, "create", "payment") && roleCanOpen(role, "/maintenance");
+  // A charge bills a running project only (loadChargeTargets: ACTIVE / ON_HOLD).
+  const chargeable = client.projects.filter(
+    (p) => p.status === "ACTIVE" || p.status === "ON_HOLD",
+  );
   const outstanding = sumByCurrency(
     payments.filter((p) => p.status === "PENDING" || p.status === "OVERDUE"),
   );
@@ -796,7 +901,20 @@ export function MoneyTab({ hub }: { hub: ClientHub }) {
         flush
       >
         {sorted.length === 0 ? (
-          <EmptyInline>
+          <EmptyInline
+            action={
+              canCharge && chargeable.length > 0 ? (
+                <PickToOpen
+                  label="New charge"
+                  options={chargeable.map((p) => ({
+                    label: p.name,
+                    href: `/payments?new=charge&client=${client.id}&project=${p.id}`,
+                    hint: statusOf("projectStatus", p.status).label,
+                  }))}
+                />
+              ) : undefined
+            }
+          >
             No payments yet. The schedule opens with the project when a contract
             is signed, and each retainer period adds its own.
           </EmptyInline>
@@ -851,9 +969,18 @@ export function MoneyTab({ hub }: { hub: ClientHub }) {
         flush
       >
         {client.subscriptions.length === 0 ? (
-          <EmptyInline>
-            No retainer. A retainer is set up from Retainers once the site has
-            launched.
+          <EmptyInline
+            action={
+              canRetain ? (
+                <Button asChild variant="outline">
+                  <Link href={`/maintenance?new=retainer&client=${client.id}`}>
+                    Start a retainer
+                  </Link>
+                </Button>
+              ) : undefined
+            }
+          >
+            No retainer. Start one once the site has launched.
           </EmptyInline>
         ) : (
           <ul className="rows">
@@ -908,7 +1035,13 @@ const EMAIL_TONE: Record<string, Tone> = {
 
 const CONVERSATIONS_SHOWN = 10;
 
-export function ConversationsTab({ hub }: { hub: ClientHub }) {
+export function ConversationsTab({
+  hub,
+  role,
+}: {
+  hub: ClientHub;
+  role: Role | undefined;
+}) {
   const { client } = hub;
   const entries = [
     ...client.messages.map((m) => ({
@@ -940,9 +1073,11 @@ export function ConversationsTab({ hub }: { hub: ClientHub }) {
       {entries.length === 0 ? (
         <EmptyInline
           action={
-            <Button asChild variant="outline">
-              <Link href={`/whatsapp/${client.id}`}>Start a conversation</Link>
-            </Button>
+            can(role, "send", "message") ? (
+              <Button asChild variant="outline">
+                <Link href={`/whatsapp/${client.id}`}>Start a conversation</Link>
+              </Button>
+            ) : undefined
           }
         >
           Nothing has been sent or received. Proposals and contracts sent from
@@ -1003,7 +1138,7 @@ export function ConversationsTab({ hub }: { hub: ClientHub }) {
         </ul>
       )}
       {entries.length > shown.length && (
-        <p className="border-t border-border px-3 py-2 text-meta text-muted-foreground">
+        <p className="border-t border-border-subtle px-3 py-2 text-meta text-muted-foreground">
           Showing the latest {shown.length}.{" "}
           <Link
             href={`/inbox?client=${client.id}`}

@@ -4,7 +4,7 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
 import { ArrowLabel } from "@/components/shared/directional-link";
 import { PhaseGate, phaseIndex, ScopeBars } from "@/components/shared/process-parts";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import {
@@ -120,7 +120,7 @@ function PhaseItem({
             <PhaseGate phase={phase} next={next} reached={open} />
             <Link
               href={`/process#phase-${phase.key}`}
-              className="group inline-flex min-h-6 items-center justify-self-start text-[0.9375rem] text-local-accent-text underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current pointer-coarse:min-h-11"
+              className="group inline-flex min-h-6 items-center justify-self-start text-base text-local-accent-text underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current pointer-coarse:min-h-11"
             >
               <ArrowLabel>{t("readPhase")}</ArrowLabel>
             </Link>

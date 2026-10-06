@@ -3,9 +3,10 @@
 import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
 import { ThemeChanger } from "@/components/shared/theme-changer";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { Link, usePathname } from "@/i18n/navigation";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { getAllCaseStudies } from "@/lib/data/case-studies";
 import { normalizeLocale, SITE_CONFIG } from "@/lib/metadata";
 import { getLenis } from "@/lib/motion/lenis-instance";
@@ -17,15 +18,10 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
+  AltruvexLogo,
+  ArrowIcon,
 } from "@repo/ui";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Calendar,
-  ChevronDown,
-  ChevronRight,
-  Mail,
-} from "lucide-react";
+import { Calendar, ChevronDown, Mail } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   type ReactNode,
@@ -36,7 +32,7 @@ import {
   useState,
 } from "react";
 import { LanguageSwitcherBase } from "../base/language-switcher-base";
-import { AltruvexLogo } from "../shared/altruvex-logo";
+import { localeMeta } from "@/i18n/locale-meta";
 
 const NAV_ITEMS = [
   { key: "work", href: "/work" },
@@ -55,6 +51,11 @@ const METHOD_ITEMS = [
   { key: "faq", href: "/faq" },
 ] as const;
 
+const PRICING_ITEMS = [
+  { key: "pricing", href: "/pricing" },
+  { key: "transparency", href: "/transparency" },
+] as const;
+
 const SERVICE_ITEMS = [
   { key: "webDesign", href: "/services/interface-design" },
   { key: "development", href: "/services/development" },
@@ -62,13 +63,14 @@ const SERVICE_ITEMS = [
   { key: "maintenance", href: "/services/maintenance" },
 ] as const;
 
-type SubItem = { href: string; label: string };
+type SubItem = { href: string; label: string; hint?: string };
 
 type NavKey = (typeof NAV_ITEMS)[number]["key"];
 
 const HAS_OVERVIEW: ReadonlySet<NavKey> = new Set(["work", "services"]);
 
-const CTA_HREF = "/transparency";
+const CTA_HREF = getCommercialCta("projectRange").href;
+const CALL_HREF = getCommercialCta("technicalCall").href;
 
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
@@ -81,9 +83,13 @@ function isItemCurrent(
   pathname: string,
   item: (typeof NAV_ITEMS)[number],
 ): boolean {
-  return item.key === "method"
-    ? METHOD_ITEMS.some((method) => isCurrent(pathname, method.href))
-    : isCurrent(pathname, item.href);
+  if (item.key === "method") {
+    return METHOD_ITEMS.some((method) => isCurrent(pathname, method.href));
+  }
+  if (item.key === "pricing") {
+    return PRICING_ITEMS.some((page) => isCurrent(pathname, page.href));
+  }
+  return isCurrent(pathname, item.href);
 }
 
 interface GroupToggleProps {
@@ -168,7 +174,7 @@ export function Nav() {
   const indexButtonRef = useRef<HTMLButtonElement>(null);
   const linkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
 
-  const dir = locale === "ar" ? "rtl" : "ltr";
+  const dir = localeMeta(locale).dir;
   const isOpen = isMobileMenuOpen || isIndexOpen;
   const currentKey =
     NAV_ITEMS.find((item) => isItemCurrent(pathname, item))?.key ?? null;
@@ -190,6 +196,11 @@ export function Nav() {
     method: METHOD_ITEMS.map((item) => ({
       href: item.href,
       label: t(item.key),
+    })),
+    pricing: PRICING_ITEMS.map((item) => ({
+      href: item.href,
+      label: t(item.key),
+      hint: item.key === "transparency" ? t("transparencyHint") : undefined,
     })),
   };
 
@@ -393,6 +404,11 @@ export function Nav() {
                                     )}
                                   >
                                     {sub.label}
+                                    {sub.hint && (
+                                      <span className="ms-2 text-foreground/60">
+                                        {sub.hint}
+                                      </span>
+                                    )}
                                   </Link>
                                 </li>
                               ))}
@@ -407,9 +423,9 @@ export function Nav() {
                                   )}
                                 >
                                   {t(`all.${item.key}`)}
-                                  <ArrowRight
-                                    aria-hidden
-                                    className="size-4 transition-transform duration-(--motion-instant) ease-smooth group-hover/all:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover/all:-translate-x-0.5"
+                                  <ArrowIcon
+                                    motion="none"
+                                    className="duration-(--motion-instant) ease-smooth group-hover/all:translate-x-0.5 rtl:group-hover/all:-translate-x-0.5"
                                   />
                                 </Link>
                               </div>
@@ -426,6 +442,7 @@ export function Nav() {
                     rule ? { transform: `translateX(${rule.x}px)` } : undefined
                   }
                   className={cn(
+                    // brand-allow: rtl-physical-property — rule.x is measured from the list's physical left edge, in both directions.
                     "pointer-events-none absolute bottom-0.5 left-0 -ml-2.25 h-0.5 w-4.5 rounded-full bg-brand group-data-[over-stage]/nav:bg-[hsl(var(--n-0))]",
                     rule?.placed &&
                       "transition-[transform,opacity] duration-(--motion-drawer) ease-smooth",
@@ -571,6 +588,11 @@ export function Nav() {
                                       )}
                                     >
                                       {sub.label}
+                                      {sub.hint && (
+                                        <span className="ms-2 text-foreground/60">
+                                          {sub.hint}
+                                        </span>
+                                      )}
                                     </Link>
                                   </li>
                                 ))}
@@ -602,7 +624,7 @@ export function Nav() {
                     </li>
                     <li>
                       <Link
-                        href="/schedule"
+                        href={CALL_HREF}
                         onClick={() => closeIndex()}
                         className={cn(
                           "group flex min-h-10 items-center gap-2.5 rounded-ctl-sm text-base text-foreground/75 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
@@ -614,10 +636,6 @@ export function Nav() {
                           className="size-4 shrink-0 text-foreground/55"
                         />
                         {t("schedule")}
-                        <ArrowUpRight
-                          aria-hidden
-                          className="size-4 shrink-0 text-foreground/40 transition-transform duration-(--motion-instant) ease-smooth group-hover:-translate-y-0.5 group-hover:translate-x-0.5 rtl:-scale-x-100 rtl:group-hover:-translate-x-0.5"
-                        />
                       </Link>
                     </li>
                   </ul>
@@ -754,9 +772,9 @@ export function Nav() {
                                     aria-hidden
                                     className="flex size-11 shrink-0 items-center justify-center"
                                   >
-                                    <ChevronRight
-                                      aria-hidden
-                                      className="size-5 shrink-0 text-foreground/35 transition-transform duration-(--motion-instant) ease-smooth group-hover:translate-x-0.5 rtl:rotate-180 rtl:group-hover:-translate-x-0.5"
+                                    <ArrowIcon
+                                      motion="none"
+                                      className="size-5 text-foreground/35 duration-(--motion-instant) ease-smooth group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5"
                                     />
                                   </span>
                                 )}
@@ -793,6 +811,11 @@ export function Nav() {
                                         )}
                                       >
                                         {sub.label}
+                                        {sub.hint && (
+                                          <span className="ms-2 text-foreground/60">
+                                            {sub.hint}
+                                          </span>
+                                        )}
                                       </Link>
                                     </li>
                                   ))}
@@ -821,7 +844,7 @@ export function Nav() {
                       size="lg"
                       className="h-12 w-full gap-2 leading-none"
                     >
-                      <Link href="/schedule" onClick={closeMobileMenu}>
+                      <Link href={CALL_HREF} onClick={closeMobileMenu}>
                         <Calendar className="size-4" aria-hidden />
                         {t("schedule")}
                       </Link>

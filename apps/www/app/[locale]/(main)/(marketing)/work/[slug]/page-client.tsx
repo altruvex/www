@@ -1,15 +1,39 @@
 "use client";
 
 import { SectionEndCta } from "@/components/sections/section-end-cta";
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { DirectionalLink } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
+import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
+import type { ServiceSlug } from "@/lib/config/accent-world";
 import { CASE_STUDIES, getCaseStudyBySlug } from "@/lib/data/case-studies";
-import { getTestimonialsForCaseStudy } from "@/lib/data/testimonials";
 import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
-import { useLocale, useTranslations } from "next-intl";
+import { getDomainName } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+
+/** Footer namespace already names every service; reuse it so labels stay single-sourced. */
+const SERVICE_LABEL_KEY: Record<ServiceSlug, string> = {
+  "interface-design": "webDesign",
+  development: "development",
+  consulting: "consulting",
+  maintenance: "maintenance",
+};
+
+const GLANCE_KEYS = ["build", "languages", "platform", "status"] as const;
+
+const GLANCE_LABEL: Record<(typeof GLANCE_KEYS)[number], string> = {
+  build: "glanceBuild",
+  languages: "glanceLanguages",
+  platform: "glancePlatform",
+  status: "glanceStatus",
+};
+
+const BODY = "max-w-[65ch] text-base text-s-mid leading-relaxed";
+const SECTION_H2 =
+  "font-sans font-normal text-primary leading-[1.05] tracking-[-0.015em] text-[clamp(20px,2.5vw,28px)] mb-4";
 
 type WorkCaseStudyPageClientProps = {
   locale: string;
@@ -19,15 +43,14 @@ type WorkCaseStudyPageClientProps = {
 export default function WorkCaseStudyPageClient({
   slug,
 }: WorkCaseStudyPageClientProps) {
-  const locale = useLocale();
   const tLabels = useTranslations("work.labels");
   const tCS = useTranslations("caseStudies");
-  const testimonials = slug ? getTestimonialsForCaseStudy(slug) : [];
+  const tFooter = useTranslations("footer");
 
   const eyebrowRef = useSectionEyebrow<HTMLParagraphElement>();
   const titleRef = useSectionTitle<HTMLHeadingElement>();
   const descRef = useSectionDescription<HTMLParagraphElement>();
-  const metricsRef = useSectionCardGrid<HTMLDivElement>();
+  const glanceRef = useSectionCardGrid<HTMLDListElement>();
 
   let exists = false;
   try {
@@ -65,14 +88,15 @@ export default function WorkCaseStudyPageClient({
     );
   }
 
-  const metrics = tCS.raw(slug + ".metrics") as Array<{
-    label: string;
-    value: string;
+  const decisions = tCS.raw(slug + ".decisions") as Array<{
+    title: string;
+    why: string;
   }>;
+  const delivered = tCS.raw(slug + ".delivered") as string[];
   const techStack = tCS.raw(slug + ".techStack") as string[];
-  const year = tCS(slug + ".year");
   const csData = getCaseStudyBySlug(slug);
   const externalUrl = csData?.externalUrl;
+  const services = csData?.services ?? [];
 
   return (
     <>
@@ -80,7 +104,7 @@ export default function WorkCaseStudyPageClient({
       <Container>
         <div>
           <div className="mb-(--heading-gap)">
-            <Eyebrow ref={eyebrowRef} className="mb-4 block">{tLabels("caseStudy")} · {year}</Eyebrow>
+            <Eyebrow ref={eyebrowRef} className="mb-4 block">{tLabels("caseStudy")}</Eyebrow>
             <h1
               ref={titleRef}
               className="mb-4 font-sans font-normal text-primary leading-[1.03] tracking-tight text-[clamp(36px,6vw,72px)]"
@@ -93,50 +117,116 @@ export default function WorkCaseStudyPageClient({
             <p ref={descRef} className="max-w-[65ch] text-base text-s-mid leading-relaxed">
               {tCS(slug + ".summary")}
             </p>
-          </div>
-          <div
-            ref={metricsRef}
-            className="accent-world-green grid gap-6 md:grid-cols-3 mb-(--section-block)"
-          >
-            {metrics.map((metric) => (
-              <div
-                key={metric.label}
-                className="border-t border-border-subtle pt-5"
+            {externalUrl && (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base text-foreground outline-none transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
               >
-                <p className="font-sans font-light text-local-accent-text leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3">
-                  <bdi>{metric.value}</bdi>
-                </p>
-                <Eyebrow tone="accent">{metric.label}</Eyebrow>
-              </div>
-            ))}
+                {tLabels.rich("visitSite", {
+                  domain: () => (
+                    <span dir="ltr" className="ltr:font-mono">
+                      {getDomainName(externalUrl)}
+                    </span>
+                  ),
+                })}
+                <span aria-hidden>↗</span>
+              </a>
+            )}
+          </div>
+          <div className="mb-(--section-block)">
+            <h2 className="sr-only">{tLabels("glance")}</h2>
+            <dl ref={glanceRef} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {GLANCE_KEYS.map((key) => (
+                <div
+                  key={key}
+                  className="flex flex-col-reverse justify-end border-t border-border-subtle pt-5"
+                >
+                  <dt>
+                    <Eyebrow tone="accent">{tLabels(GLANCE_LABEL[key])}</Eyebrow>
+                  </dt>
+                  <dd className="font-sans font-light text-local-accent-text leading-none tracking-[-0.03em] text-[clamp(28px,4vw,40px)] mb-3 rtl:leading-[1.3] rtl:tracking-normal">
+                    <bdi>{tCS(`${slug}.glance.${key}`)}</bdi>
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
           <div className="grid gap-12 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="space-y-12">
               {[
-                {
-                  heading: tLabels("challenge"),
-                  content: tCS(slug + ".problem"),
-                },
-                {
-                  heading: tLabels("approach"),
-                  content: tCS(slug + ".solution"),
-                },
-                {
-                  heading: tLabels("results"),
-                  content: tCS.rich(slug + ".outcome", bodyMarks),
-                },
+                { heading: tLabels("context"), content: tCS(slug + ".context") },
+                { heading: tLabels("challenge"), content: tCS(slug + ".problem") },
+                { heading: tLabels("approach"), content: tCS(slug + ".solution") },
               ].map(({ heading, content }) => (
                 <section key={heading}>
-                  <h2 className="font-sans font-normal text-primary leading-[1.05] tracking-[-0.015em] text-[clamp(20px,2.5vw,28px)] mb-4">
-                    {heading}
-                  </h2>
-                  <p className="max-w-[65ch] text-base text-s-mid leading-relaxed whitespace-pre-line">
-                    {content}
-                  </p>
+                  <h2 className={SECTION_H2}>{heading}</h2>
+                  <p className={BODY}>{content}</p>
                 </section>
               ))}
+              <section>
+                <h2 className={SECTION_H2}>{tLabels("decisions")}</h2>
+                <ol className="mt-6">
+                  {decisions.map((decision, index) => (
+                    <li
+                      key={decision.title}
+                      className="grid grid-cols-[3rem_minmax(0,1fr)] gap-4 border-t border-border-subtle py-5 md:grid-cols-[4rem_minmax(0,1fr)]"
+                    >
+                      <span className="pt-1 text-md text-muted-foreground tabular-nums">
+                        <Num value={index + 1} pad={2} />
+                      </span>
+                      <div>
+                        <h3 className="text-[clamp(1.125rem,1.6vw,1.375rem)] leading-snug tracking-[-0.015em] text-foreground rtl:tracking-normal">
+                          {decision.title}
+                        </h3>
+                        <p className={`mt-2 ${BODY}`}>{decision.why}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+              <section>
+                <h2 className={SECTION_H2}>{tLabels("results")}</h2>
+                <p className={BODY}>{tCS.rich(slug + ".outcome", bodyMarks)}</p>
+              </section>
             </div>
             <aside className="space-y-8">
+              <div className="border-t border-border-subtle pt-5">
+                <h3 className="eyebrow text-s-low mb-4">
+                  {tLabels("delivered")}
+                </h3>
+                <ul className="space-y-2.5">
+                  {delivered.map((item) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-3 text-sm text-s-mid"
+                    >
+                      <span aria-hidden className="h-1 w-1 rounded-full bg-local-accent shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              {services.length > 0 && (
+                <div className="border-t border-border-subtle pt-5">
+                  <h3 className="eyebrow text-s-low mb-4">
+                    {tLabels("services")}
+                  </h3>
+                  <ul className="space-y-2.5">
+                    {services.map((service) => (
+                      <li key={service}>
+                        <DirectionalLink
+                          href={`/services/${service}`}
+                          className="rounded-ctl-sm text-sm text-s-mid transition-colors duration-(--motion-drawer) ease-smooth hover:text-local-accent-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          {tFooter(SERVICE_LABEL_KEY[service])}
+                        </DirectionalLink>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="border-t border-border-subtle pt-5">
                 <h3 className="eyebrow text-s-low mb-4">
                   {tLabels("techStack")}
@@ -170,19 +260,6 @@ export default function WorkCaseStudyPageClient({
                     <ArrowIcon className="h-5 w-5 group-hover:text-local-accent-text ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
                   </a>
                 </div>
-              )}
-              {testimonials.length > 0 && (
-                <figure className="border-t border-border-subtle pt-5">
-                  <h3 className="eyebrow text-s-low mb-4">
-                    {tLabels("clientPersp")}
-                  </h3>
-                  <blockquote className="text-base text-s-high leading-relaxed mb-4">
-                    &ldquo;{testimonials[0].quote[locale as "en" | "ar"]}&rdquo;
-                  </blockquote>
-                  <figcaption className="text-sm leading-normal text-s-low">
-                    {testimonials[0].author} · {testimonials[0].company}
-                  </figcaption>
-                </figure>
               )}
               <div className="pt-2">
                 <Link
@@ -235,7 +312,7 @@ function CaseStudyEndCta({ slug }: { slug: string }) {
               <ArrowIcon className="size-5 shrink-0 ltr:group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
             </span>
             <span className="text-sm text-muted-foreground">
-              {tCS(`${next.slug}.client`)} · {tCS(`${next.slug}.year`)}
+              {tCS(`${next.slug}.client`)} · {tCS(`${next.slug}.industry`)}
             </span>
           </Link>
         )

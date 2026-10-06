@@ -1,6 +1,7 @@
 "use client";
 
 import { TransparencyChapter } from "@/components/sections/transparency-chapter";
+import { ESTIMATE_METHOD_ID } from "@/components/sections/transparency-estimator/constants";
 import { Container } from "@/components/shared/container";
 import { useSectionCardGrid } from "@/lib/motion";
 import { formatIndex } from "@/lib/utils/number";
@@ -23,6 +24,7 @@ export function TransparencyMeasuresDetailsSection() {
 
   return (
     <section
+      id={ESTIMATE_METHOD_ID}
       aria-labelledby="transparency-measures-heading"
       className="accent-world-blue border-t border-border-subtle pt-(--section-y-top) pb-(--section-y-bottom)"
     >
@@ -56,7 +58,7 @@ export function TransparencyMeasuresDetailsSection() {
                 </h3>
               </div>
               <div className="lg:col-span-8">
-                <p className="max-w-[56ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+                <p className="max-w-[56ch] text-base leading-relaxed text-muted-foreground">
                   {section.body}
                 </p>
                 <ul className="mt-5 grid list-none gap-x-8 gap-y-2 text-sm leading-relaxed text-foreground sm:grid-cols-2">

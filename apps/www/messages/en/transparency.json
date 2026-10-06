@@ -1,58 +1,82 @@
 {
-  "badge": "Estimator",
+  "badge": "Transparency",
   "seo": {
-    "body": "Transparency is designed to make early project planning less vague. The estimator gives a realistic starting range for custom web development by looking at the kind of system you need, the maturity of your brand and content, the complexity of the workflows, and the pressure around launch timing.",
-    "eyebrow": "How the estimate works",
+    "body": "The estimator reads the same published prices as the pricing page. Your project type and complexity select a published range; brand, content and delivery pace adjust it. What a form cannot judge is settled in scope review, and only the written proposal is binding.",
+    "eyebrow": "The method",
     "sections": [
       {
-        "body": "The estimate is not a fixed quote. It is a planning range that helps you understand whether the project is closer to a focused marketing site, a multilingual content system, a commerce platform, or a deeper operational product build.",
+        "title": "What moves the range",
+        "body": "These answers change the figure on screen, and the result shows what each one changed.",
         "points": [
-          "Project type and business model",
-          "Brand and content readiness",
-          "Workflow and integration complexity",
-          "Delivery timeline and urgency"
-        ],
-        "title": "What the estimator measures"
+          "Project type — selects a published price range",
+          "Complexity — places the build inside that range",
+          "Brand and content readiness — adjust the range",
+          "Delivery pace — adjusts the price and the weeks"
+        ]
       },
       {
-        "body": "Custom systems vary because the work is not only page count. Real effort comes from architecture, bilingual UX, payment flows, dashboards, data models, permissions, third-party integrations, QA, deployment, and handover documentation.",
+        "title": "What the estimate assumes",
+        "body": "The range describes the build as your answers describe it today. Scope review checks those answers before any figure is written.",
         "points": [
-          "Bilingual Arabic and English experience",
-          "CMS, CRM, booking, or payment integrations",
-          "Role-based dashboards or portals",
-          "Performance, SEO, and launch assurance"
-        ],
-        "title": "Why the range can change"
+          "Figures in Egyptian pounds, before VAT",
+          "Your answers, taken as given until scope review",
+          "The delivery pace you chose, reflected in the weeks",
+          "Larger systems can be phased to match your stage"
+        ]
       },
       {
-        "body": "Use the result to decide whether to continue with a discovery call, request a technical audit, or refine the scope before committing budget. The goal is a clearer decision before anyone writes a proposal.",
+        "title": "What scope review settles",
+        "body": "Some costs depend on details a form cannot judge. You can tick them in the estimator; they are confirmed with you before the proposal is written and do not move the range on screen.",
         "points": [
-          "Budget planning before discovery",
-          "Scope alignment with decision makers",
-          "Early identification of unknowns",
-          "A practical next step for the project"
-        ],
-        "title": "How to use the result"
+          "Content management (CMS) and sign-in",
+          "Payments and third-party integrations",
+          "Every language, with proper right-to-left",
+          "Performance and SEO targets"
+        ]
+      },
+      {
+        "title": "What the estimate does not include",
+        "body": "The range covers the build itself. Other costs appear as separate lines, so nothing is folded into the total.",
+        "points": [
+          "VAT, added at contract stage",
+          "Domain, hosting and business email — each on its own line",
+          "Paid third-party tools and channels, such as SMS, if your build uses them",
+          "A maintenance plan, billed monthly or yearly"
+        ]
+      },
+      {
+        "title": "From estimate to proposal",
+        "body": "After scope review you receive one written proposal with the agreed scope and one binding figure. Any later change to scope is documented and agreed in writing before the work starts.",
+        "points": [
+          "One written figure, valid for a fixed period",
+          "Three payments: to start, at a development milestone, before launch",
+          "Code, designs and accounts pass to you at final payment",
+          "Additions priced from the same published ranges"
+        ]
       }
     ],
-    "title": "A clearer way to plan a custom web build"
+    "title": "How the website cost estimate is calculated"
   },
   "faq": {
-    "a1": "Custom development gives you complete technical ownership, no platform constraints, and fundamentally better performance. <strong>A system built for your business logic loads faster, ranks higher, and converts more visitors</strong> <dim>than any plugin-dependent platform</dim>.",
-    "a2": "<dim>It is indicative, not a quotation.</dim> The range is read from the same published prices as the pricing page. <strong>The binding figure is set in a written proposal</strong> after we review scope with you.",
-    "a3": "<strong>Yes.</strong> All projects include a {warrantyDays}-day post-launch warranty for critical fixes. Structured maintenance retainers are available for teams that need ongoing coverage, monitoring, and <dim>a predictable technical partner</dim>.",
-    "a4": "<strong>We review your answers and scope notes with you</strong>, then send one written proposal. <dim>This estimate is yours to download as a PDF once the request is sent.</dim>",
-    "q1": "Why custom engineering instead of WordPress or Shopify?",
+    "a1": "<strong>No.</strong> The range appears on screen as you answer, and no contact details are needed to see it. <dim>Your details are only asked for when you request the written proposal with the binding figure.</dim>",
+    "a2": "<strong>It is indicative, not a quotation.</strong> The range is read from the same published prices as the pricing page. <dim>The binding figure is set in a written proposal after we review the scope with you.</dim>",
+    "a3": "<strong>Every build includes a {warrantyDays}-day warranty</strong>: defects in delivered work are fixed at no charge. <dim>Ongoing maintenance is a separate plan, billed monthly or yearly, only if you choose one.</dim>",
+    "a4": "<strong>We review your answers and scope notes with you</strong>, then send one written proposal. <dim>You can download this estimate as a PDF once the request is sent.</dim>",
+    "q1": "Do I need a call to see an estimate?",
     "q2": "How accurate is this estimate?",
-    "q3": "Do you offer ongoing support?",
-    "more": "Questions about ownership, pricing and delivery are answered on the FAQ page.",
+    "q3": "Is support included after launch?",
+    "more": "Payment terms, ownership and published prices are on the pricing page.",
     "q4": "What happens after I request a proposal?",
-    "subtitle": "Common questions about our process and project investment model.",
-    "title": "Frequently Asked Questions"
+    "subtitle": "Questions about the cost estimate",
+    "title": "Estimate questions",
+    "q5": "Why is it a range and not one price?",
+    "a5": "<strong>A form cannot judge everything that sets the cost.</strong> Your answers place the build inside a published range. <dim>Integrations, content, sign-in and performance targets are confirmed with you in scope review, and the proposal then fixes one figure.</dim>",
+    "q6": "Does the estimate include VAT, hosting or a domain?",
+    "a6": "<strong>No.</strong> The range covers the build itself and excludes VAT at {vatRate}%. <dim>Domain, hosting and business email appear as separate lines, and paid third-party services are billed only if your build uses them.</dim>"
   },
   "pdf": {
     "button": "Download PDF",
-    "generating": "Generating...",
+    "generating": "Generating…",
     "label": "Indicative estimate"
   },
   "pdfContent": {
@@ -99,7 +123,7 @@
           "Performance and security hardening for heavier usage",
           "Multi-environment rollout with CI/CD planning",
           "Technical roadmap for phase-two growth",
-          "Hypercare window after launch"
+          "Extended support window after launch"
         ],
         "medium": [
           "Everything at {bandBasic} complexity",
@@ -185,30 +209,30 @@
       }
     },
     "deliverablesCount": "{count} deliverables · {band}",
-    "deliveryMode": "Delivery Mode",
-    "engineeringBeyond": "Engineering Beyond Standards",
-    "estimatedDelivery": "Estimated Delivery",
-    "fullDeliverablesList": "Full Deliverables List",
-    "howWeWork": "How We Work",
-    "investmentEstimate": "Project Investment Estimate",
+    "deliveryMode": "Delivery mode",
+    "engineeringBeyond": "Your project",
+    "estimatedDelivery": "Estimated delivery",
+    "fullDeliverablesList": "Full deliverables list",
+    "howWeWork": "How we work",
+    "investmentEstimate": "Project cost estimate",
     "phase1Desc": "Requirements, architecture, wireframes",
-    "phase1Title": "Discovery & Scoping",
+    "phase1Title": "Discovery & scoping",
     "phase2Desc": "Components, tokens, prototypes",
-    "phase2Title": "Design System",
+    "phase2Title": "Design system",
     "phase3Desc": "Iterative builds, structured updates",
-    "phase3Title": "Development Sprints",
+    "phase3Title": "Development cycles",
     "phase4Desc": "Testing, performance, deployment",
-    "phase4Title": "QA & Launch",
+    "phase4Title": "QA & launch",
     "projectLabels": {
-      "corporate": "Corporate Website",
-      "custom": "Custom Web Application",
-      "ecommerce": "E-Commerce Platform",
-      "performance": "Performance Audit & Optimization"
+      "corporate": "Corporate website",
+      "custom": "Custom web application",
+      "ecommerce": "E-commerce platform",
+      "performance": "Performance audit & optimization"
     },
-    "projectType": "Project Type",
+    "projectType": "Project type",
     "prospectiveClient": "the prospective client",
     "readyToMoveForward": "Ready to move forward?",
-    "scopeOfDeliverables": "Scope of Deliverables",
+    "scopeOfDeliverables": "Scope of deliverables",
     "totalRange": "Indicative range",
     "weeksFromKickoff": "weeks from kick-off",
     "whatsIncluded": "What is included in your project",
@@ -218,12 +242,12 @@
     "nextStep": "Next: scope review with you, then one written proposal."
   },
   "results": {
-    "deliveryCeiling": "Price ranges run {windowMin}–{windowMax} weeks; the conditions you picked can stretch that to {weeks} weeks - never further. Anything larger ships in phases.",
+    "deliveryCeiling": "Published builds take {windowMin}–{windowMax} weeks. Your conditions can extend that to {weeks} weeks, never further; anything larger ships in phases.",
     "fallbackDeliverables": [
       "Custom design",
       "Responsive development",
       "Production deployment",
-      "Performance and launch QA"
+      "Performance and quality testing"
     ],
     "fullScopeLabel": "Full scope",
     "includesLabel": "What this includes",
@@ -236,15 +260,16 @@
     "eyebrow": "Your estimate",
     "title": "Your indicative range",
     "nextScopeReview": "We review your answers and scope notes, and confirm scope with you.",
-    "nextProposal": "You receive one written proposal with the binding figure, valid for {days} days."
+    "nextProposal": "You receive one written proposal with the binding figure, valid for {days} days.",
+    "howCalculated": "How is this estimate calculated?"
   },
-  "startOver": "Start Over",
+  "startOver": "Start over",
   "steps": {
     "brand": {
       "hint": "This helps us understand how much design groundwork is already in place.",
       "options": {
         "complete": {
-          "description": "Full identity system ready: logo, colors, typography, and usage rules. We integrate it - no additional design scope needed.",
+          "description": "Full identity system ready: logo, colors, typography and usage rules. We integrate it — no additional design scope needed.",
           "title": "Ready"
         },
         "partial": {
@@ -252,14 +277,14 @@
           "title": "Partial"
         },
         "scratch": {
-          "description": "No brand identity yet. We build the full system - logo, colors, typography - as part of the project scope.",
+          "description": "No brand identity yet. We build the full system — logo, colors, typography — as part of the project scope.",
           "title": "Starting fresh"
         }
       },
       "title": "What is your brand identity status?"
     },
     "complexity": {
-      "hint": "<strong>This helps us calibrate scope</strong>, <dim>not just price</dim>.",
+      "hint": "<strong>Complexity places the build inside its published range</strong>, <dim>from a focused first release to a full system</dim>.",
       "options": {
         "basic": {
           "description": "Core features only. Straightforward flows, minimal custom logic. The right choice for a disciplined first release."
@@ -271,7 +296,7 @@
           "description": "Additional workflows, integrations, and richer UI — more depth where the business needs it."
         }
       },
-      "title": "How ambitious should it be?"
+      "title": "How complex is the build?"
     },
     "content": {
       "hint": "Content readiness directly affects both timeline and cost.",
@@ -292,36 +317,36 @@
       "title": "How ready is your content?"
     },
     "projectType": {
-      "hint": "Each type has a different technical foundation - pick the closest match.",
+      "hint": "Each type has a different technical foundation — pick the closest match.",
       "options": {
         "ecommerce": {
-          "description": "An online store with products, checkout, payments, and the inventory infrastructure to sell reliably at scale.",
+          "description": "An online store with products, checkout, payments and the inventory behind them.",
           "title": "E-commerce"
         },
         "pwa": {
-          "description": "App-like mobile experience built on the web stack - offline support, installable, push notifications.",
+          "description": "An installable, app-like web experience — works offline and can send push notifications.",
           "title": "PWA"
         },
         "webapp": {
-          "description": "A product or internal tool with accounts, workflows, and custom business logic - SaaS, dashboards, portals.",
+          "description": "A product or internal tool with accounts, workflows and custom business logic — SaaS, dashboards, portals.",
           "title": "Web App"
         },
         "website": {
-          "description": "A high-performance marketing site built for clarity, trust, and lead generation - no application logic.",
+          "description": "A fast marketing site built for clarity, trust and lead generation — no application logic.",
           "title": "Website"
         }
       },
       "title": "What are you building?"
     },
     "timeline": {
-      "hint": "<strong>Faster delivery requires more resources</strong>; <dim>flexible timelines reduce cost</dim>.",
+      "hint": "<strong>Urgent delivery costs more</strong>; <dim>a flexible timeline costs less</dim>.",
       "options": {
         "flexible": {
           "description": "Extra time for iteration, testing, and refinement, inside the same delivery ceiling. Best where durability matters more than speed.",
           "title": "Flexible"
         },
         "standard": {
-          "description": "Structured cadence with enough time for discovery, design, build, and QA - no artificial pressure.",
+          "description": "A structured pace with enough time for discovery, design, build and QA — no artificial pressure.",
           "title": "Standard"
         },
         "urgent": {
@@ -332,12 +357,12 @@
       "title": "What delivery pace do you need?"
     }
   },
-  "subtitle": "An indicative range, read from the published prices. It is not a quotation — the binding figure comes in a written proposal after scope review.",
-  "title": "Estimate your project",
+  "subtitle": "A range from our published prices, on screen as you answer. No contact details needed. The binding figure comes later, in a written proposal.",
+  "title": "Estimate what your website or web app will cost",
   "live": {
-    "deliveryCeiling": "Up to {weeks} weeks with conditions",
+    "deliveryCeiling": "Never more than {weeks} weeks; larger builds ship in phases",
     "settled": "Settled on your answers.",
-    "updatesAsYouShape": "Updates live as you shape requirements.",
+    "updatesAsYouShape": "Updates as you answer.",
     "answeredCount": "{n} of {total} answered"
   },
   "instrument": {
@@ -347,10 +372,10 @@
   },
   "stages": {
     "build": "The build",
-    "buildNote": "These two answers resolve the price cell. Everything after them adjusts it.",
+    "buildNote": "These two answers set the price range. Everything after them adjusts it.",
     "conditions": "Project conditions",
-    "conditionsNote": "What you already have. These multiply the range - they never set it.",
-    "conditionsTitle": "What are you bringing to it?",
+    "conditionsNote": "What you already have. These adjust the range; they never set it.",
+    "conditionsTitle": "What do you already have?",
     "conditionsBody": "Brand, content and pace decide how much groundwork the build carries before engineering starts."
   },
   "intro": {
@@ -372,5 +397,10 @@
     },
     "pricingLink": "See how pricing works",
     "termsLink": "Payment and proposal terms"
+  },
+  "close": {
+    "title": "Have your range?",
+    "titleAccent": "Ask for the written proposal.",
+    "body": "Request it from the result above: your answers are attached to the request. Prefer to talk first? Schedule a consultation."
   }
 }

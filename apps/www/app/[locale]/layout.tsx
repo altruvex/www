@@ -10,7 +10,8 @@ import { ARRIVAL_CSS, ARRIVAL_HOLD_SCRIPT } from "@/lib/motion/utils/arrival";
 import { LOADER_CSS, LOADER_SCRIPT } from "@/lib/motion/utils/loader";
 import { buildGlobalSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
-import { pricingTokens, type Locale } from "@repo/pricing-schema";
+import { pricingTokens } from "@repo/pricing-schema";
+import { DirectionProvider } from "@repo/ui";
 import { cn } from "@/lib/utils/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -18,6 +19,7 @@ import localFont from "next/font/local";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import "../globals.css";
+import { LOCALE_META } from "@/i18n/locale-meta";
 
 const brandLatin = localFont({
   src: [
@@ -67,7 +69,7 @@ export default async function RootLayout({ children, params }: Props) {
 
   setRequestLocale(locale);
 
-  const priceTokens = pricingTokens(locale as Locale, await getPublicPricing());
+  const priceTokens = pricingTokens(locale, await getPublicPricing());
 
   const tA11y = await getTranslations({ locale, namespace: "a11y" });
 
@@ -76,7 +78,7 @@ export default async function RootLayout({ children, params }: Props) {
       lang={locale}
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      dir={locale === "ar" ? "rtl" : "ltr"}
+      dir={LOCALE_META[locale].dir}
       className={cn(brandLatin.variable, brandArabic.variable)}
     >
       <head>
@@ -93,7 +95,7 @@ export default async function RootLayout({ children, params }: Props) {
       >
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:inset-s-4 focus:z-100 focus:p-3 focus:px-5 focus:rounded-ctl-xl focus:shadow-lg focus:border focus:border-border-subtle focus:bg-background focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:inset-s-4 focus:z-100 focus:p-3 focus:px-5 focus:rounded-ctl-xl focus:shadow-card focus:border focus:border-border-subtle focus:bg-background focus:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {tA11y("skipToContent")}
         </a>
@@ -103,11 +105,14 @@ export default async function RootLayout({ children, params }: Props) {
         </Script>
         <JsonLd schemas={buildGlobalSchemas(locale)} />
         <NextIntlClientProvider>
-          <Providers>
-            <PricingTokensProvider tokens={priceTokens}>
-              <LayoutEffects>{children}</LayoutEffects>
-            </PricingTokensProvider>
-          </Providers>
+          {/* Portalled Radix menus read the page's direction from here, not from <html dir>. */}
+          <DirectionProvider dir={LOCALE_META[locale].dir}>
+            <Providers>
+              <PricingTokensProvider tokens={priceTokens}>
+                <LayoutEffects>{children}</LayoutEffects>
+              </PricingTokensProvider>
+            </Providers>
+          </DirectionProvider>
         </NextIntlClientProvider>
         <VercelAnalytics />
       </body>

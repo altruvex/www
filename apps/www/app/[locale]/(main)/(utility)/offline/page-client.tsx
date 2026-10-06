@@ -2,7 +2,7 @@
 
 import { Container } from "@/components/shared/container";
 import { MagneticButton } from "@/components/magnetic-button";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -39,7 +39,7 @@ export default function OfflinePage() {
             {t("description")} {t("description2")}
           </p>
           <p aria-live="polite" className="mb-6 min-h-5 text-sm text-destructive">
-            {stillOffline ? "Still offline - please check your connection" : null}
+            {stillOffline ? t("stillOffline") : null}
           </p>
           <MagneticButton
             size="lg"

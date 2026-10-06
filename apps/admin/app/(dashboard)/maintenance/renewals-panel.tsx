@@ -103,7 +103,7 @@ export function RenewalsPanel({
       description={`${due.length} retainer${due.length === 1 ? " needs" : "s need"} a decision`}
       flush
     >
-      <ul className="divide-y divide-border">
+      <ul className="divide-y divide-border-subtle">
         {due.map((sub) => {
           const urgency = statusOf("renewalUrgency", sub.renewalUrgency);
           const isBusy = busy === sub.id;
@@ -226,7 +226,7 @@ export function RenewalsPanel({
         />
       )}
 
-      <p className="border-t border-border px-3 py-2 text-meta text-subtle-foreground">
+      <p className="border-t border-border-subtle px-3 py-2 text-meta text-subtle-foreground">
         &ldquo;Mark renewed&rdquo; moves the retainer into its next period and
         opens that period&rsquo;s invoice as a pending payment at the
         plan&rsquo;s published price — a quote-only plan bills from its quoted

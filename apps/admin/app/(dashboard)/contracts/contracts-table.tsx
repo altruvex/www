@@ -13,6 +13,7 @@ import { Button, DropdownMenuItem } from "@repo/ui";
 import { StatusPill } from "@/components/ui/badge";
 import { money, when, date } from "@/lib/format";
 import { statusOf } from "@/lib/status";
+import { PickToOpen, type PickOption } from "@/components/os/pick-to-open";
 import { contractNextSteps, type ContractStepPermissions } from "./contract-steps";
 
 export interface ContractRow {
@@ -39,11 +40,13 @@ export function ContractsTable({
   canDelete,
   filtered,
   allowed,
+  generateOptions,
 }: {
   rows: ContractRow[];
   canDelete: boolean;
   filtered: string | null;
   allowed: ContractStepPermissions;
+  generateOptions: PickOption[];
 }) {
   const del = useRecordDelete({ entity: "contract" });
   const pathname = usePathname();
@@ -243,9 +246,18 @@ export function ContractsTable({
                   <Link href={clearedHref(pathname, searchParams)}>Clear filters</Link>
                 </Button>
               ) : (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href="/proposals">Open proposals</Link>
-                </Button>
+                generateOptions.length > 0 ? (
+                  <PickToOpen
+                    label="Generate a contract"
+                    size="sm"
+                    options={generateOptions}
+                    footer={{ label: "All accepted proposals", href: "/proposals?status=ACCEPTED" }}
+                  />
+                ) : (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href="/proposals?status=ACCEPTED">Open accepted proposals</Link>
+                  </Button>
+                )
               )
             }
           />

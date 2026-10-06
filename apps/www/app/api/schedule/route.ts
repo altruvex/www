@@ -4,19 +4,22 @@ import {
   createMeetingRequestSchema,
   createStandaloneMeetingSchema,
 } from "@/lib/validations/contact";
+import { isBusinessSlot } from "@/lib/config/business-hours";
 import { prisma } from "@repo/database";
-import { getTranslations } from "next-intl/server";
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
-import { tooManyRequests } from "@/lib/server/too-many-requests";
+import {
+  apiError,
+  codeTranslator,
+  readJsonBody,
+  tooManyRequests,
+  unexpectedError,
+} from "@/lib/server/api-error";
+import { toLocale } from "@/i18n/locale-meta";
 
 export async function POST(request: NextRequest) {
   try {
     if (!isTrustedOrigin(request)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid request origin" },
-        { status: 403 },
-      );
+      return apiError("forbidden");
     }
 
     const rl = await enforceRateLimit(request, {
@@ -26,42 +29,42 @@ export async function POST(request: NextRequest) {
       windowSeconds: 10 * 60,
     });
     if (!rl.ok) {
-      return tooManyRequests(request, rl.retryAfterSeconds);
+      return tooManyRequests(rl.retryAfterSeconds);
     }
 
-    const body = await request.json();
-    const locale =
-      typeof body.locale === "string" &&
-      (body.locale === "ar" || body.locale === "en")
-        ? body.locale
-        : "en";
-    const t = await getTranslations({ locale, namespace: "validations" });
-    const standaloneMeetingSchema = createStandaloneMeetingSchema(t);
-    const meetingRequestSchema = createMeetingRequestSchema(t);
+    const body = await readJsonBody(request);
+    if (!body) return apiError("bad_request");
+
+    const locale = toLocale(body.locale);
+    // Issue messages are validation keys; the form localizes them.
+    const standaloneMeetingSchema = createStandaloneMeetingSchema(codeTranslator);
+    const meetingRequestSchema = createMeetingRequestSchema(codeTranslator);
 
     if (body.name && body.phone && body.scheduledDate && body.scheduledTime) {
       const validatedData = standaloneMeetingSchema.parse(body);
 
       const scheduledDate = new Date(validatedData.scheduledDate);
 
+      // scheduledTime is Cairo wall-clock time (lib/config/business-hours.ts).
+      if (!isBusinessSlot(validatedData.scheduledTime)) {
+        return apiError("validation", {
+          fields: { scheduledTime: "contact.scheduled-time-outside-hours" },
+        });
+      }
+
       const now = new Date();
       if (scheduledDate < now) {
-        return NextResponse.json(
-          { success: false, message: t("contact.preferred-date-future") },
-          { status: 400 },
-        );
+        return apiError("validation", {
+          fields: { scheduledDate: "contact.preferred-date-future" },
+        });
       }
 
       const threeMonthsFromNow = new Date();
       threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
       if (scheduledDate > threeMonthsFromNow) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: t("contact.preferred-date-within-three-months"),
-          },
-          { status: 400 },
-        );
+        return apiError("validation", {
+          fields: { scheduledDate: "contact.preferred-date-within-three-months" },
+        });
       }
 
       const userAgent = request.headers.get("user-agent") || undefined;
@@ -130,12 +133,7 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        {
-          success: true,
-          meetingId: meeting.id,
-          message:
-            "Meeting scheduled successfully. We'll confirm the details shortly.",
-        },
+        { ok: true, code: "scheduled", meetingId: meeting.id },
         { status: 201 },
       );
     } else {
@@ -146,10 +144,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!submission) {
-        return NextResponse.json(
-          { success: false, message: "Contact submission not found" },
-          { status: 404 },
-        );
+        return apiError("not_found");
       }
 
       const dateParts = validatedData.preferredDate.split("-");
@@ -165,23 +160,18 @@ export async function POST(request: NextRequest) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       if (requestedDate < today) {
-        return NextResponse.json(
-          { success: false, message: t("contact.preferred-date-future") },
-          { status: 400 },
-        );
+        return apiError("validation", {
+          fields: { preferredDate: "contact.preferred-date-future" },
+        });
       }
 
       const threeMonthsFromNow = new Date();
       threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
       threeMonthsFromNow.setHours(23, 59, 59, 999);
       if (requestedDate > threeMonthsFromNow) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: t("contact.preferred-date-within-three-months"),
-          },
-          { status: 400 },
-        );
+        return apiError("validation", {
+          fields: { preferredDate: "contact.preferred-date-within-three-months" },
+        });
       }
 
       const meeting = await prisma.meeting.create({
@@ -230,41 +220,11 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        {
-          success: true,
-          meetingId: meeting.id,
-          message:
-            "Meeting request submitted successfully. We'll confirm the details shortly.",
-        },
+        { ok: true, code: "scheduled", meetingId: meeting.id },
         { status: 201 },
       );
     }
   } catch (error: unknown) {
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Meeting request error:", error);
-    }
-
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors: error.issues.reduce((acc: Record<string, string>, err) => {
-            const field = String(err.path[0] ?? "form");
-            acc[field] = err.message;
-            return acc;
-          }, {}),
-        },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "An unexpected error occurred. Please try again later.",
-      },
-      { status: 500 },
-    );
+    return unexpectedError(error, "Meeting request error");
   }
 }

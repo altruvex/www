@@ -14,7 +14,7 @@ type State =
   | { kind: "closed" };
 
 const fieldClass =
-  "w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-lg text-foreground sm:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
+  "w-full rounded-ctl-xl border border-border-subtle bg-muted/50 px-4 py-3 text-lg text-foreground sm:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
 
 export function QuoteAnswer({
   token,
@@ -209,7 +209,7 @@ export function QuoteAnswer({
 
 function Outcome({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-2 rounded-2xl bg-muted/50 p-5 text-center" role="status">
+    <div className="space-y-2 rounded-panel-sm bg-muted/50 p-5 text-center" role="status">
       <div className="flex justify-center">{icon}</div>
       <p className="text-lg font-medium">{title}</p>
       <p className="text-sm text-muted-foreground">{children}</p>

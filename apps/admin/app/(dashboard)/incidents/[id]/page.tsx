@@ -15,6 +15,7 @@ import {
 import { prisma } from "@repo/database";
 import { Button } from "@repo/ui";
 
+import { AttachPicker } from "@/components/os/attach-picker";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { MetaList, QuickActions } from "@/components/os/detail-layout";
 import { EmptyInline } from "@/components/os/empty-state";
@@ -308,9 +309,28 @@ export default async function IncidentPage({
                   },
                   {
                     label: "Owner",
-                    value: incident.owner
-                      ? incident.owner.name || incident.owner.email
-                      : "Unowned",
+                    value: incident.owner ? (
+                      incident.owner.name || incident.owner.email
+                    ) : canEdit && owners.length > 0 ? (
+                      <AttachPicker
+                        label="Assign an owner"
+                        options={owners.map((u) => ({
+                          value: u.id,
+                          label: u.name || u.email,
+                          hint: u.name ? u.email : undefined,
+                        }))}
+                        request={{
+                          url: "/api/admin/incidents",
+                          method: "PATCH",
+                          body: { id: incident.id },
+                          field: "ownerId",
+                        }}
+                        successMessage="Owner assigned."
+                        searchPlaceholder="Search the team"
+                      />
+                    ) : (
+                      "Unowned"
+                    ),
                   },
                   { label: "Detected", value: dateTime(incident.detectedAt) },
                   {
@@ -333,6 +353,23 @@ export default async function IncidentPage({
                         #{incident.deployment.number} ·{" "}
                         {incident.deployment.environment.toLowerCase()}
                       </EntityLink>
+                    ) : canEdit && deployments.length > 0 ? (
+                      <AttachPicker
+                        label="Link a deployment"
+                        options={deployments.map((d) => ({
+                          value: d.id,
+                          label: `#${d.number} · ${d.environment.toLowerCase()}`,
+                          hint: `${statusOf("deploymentStatus", d.status).label} · ${when(d.createdAt)}`,
+                        }))}
+                        request={{
+                          url: "/api/admin/incidents",
+                          method: "PATCH",
+                          body: { id: incident.id },
+                          field: "deploymentId",
+                        }}
+                        successMessage="Deployment linked."
+                        searchPlaceholder="Search deployments"
+                      />
                     ) : (
                       "None suspected"
                     ),
@@ -342,23 +379,25 @@ export default async function IncidentPage({
             </Panel>
 
             {canEdit && (
-              <Panel title="Manage" flush>
-                <ManageIncident
-                  key={`${incident.severity}:${incident.ownerId}:${incident.deploymentId}`}
-                  id={incident.id}
-                  severity={incident.severity}
-                  ownerId={incident.ownerId}
-                  deploymentId={incident.deploymentId}
-                  users={owners}
-                  deployments={deployments.map((d) => ({
-                    id: d.id,
-                    number: d.number,
-                    environment: d.environment,
-                    status: d.status,
-                    createdAt: d.createdAt.toISOString(),
-                  }))}
-                />
-              </Panel>
+              <div id="manage" className="scroll-mt-20">
+                <Panel title="Manage" flush>
+                  <ManageIncident
+                    key={`${incident.severity}:${incident.ownerId}:${incident.deploymentId}`}
+                    id={incident.id}
+                    severity={incident.severity}
+                    ownerId={incident.ownerId}
+                    deploymentId={incident.deploymentId}
+                    users={owners}
+                    deployments={deployments.map((d) => ({
+                      id: d.id,
+                      number: d.number,
+                      environment: d.environment,
+                      status: d.status,
+                      createdAt: d.createdAt.toISOString(),
+                    }))}
+                  />
+                </Panel>
+              </div>
             )}
 
             <Panel title="Go to" flush>
@@ -392,7 +431,7 @@ export default async function IncidentPage({
             canEdit={canEdit}
           />
           {incident.resolution && (
-            <div className="mt-3 border-t border-border pt-3">
+            <div className="mt-3 border-t border-border-subtle pt-3">
               <p className="telemetry text-subtle-foreground">Resolution</p>
               <p className="mt-1 whitespace-pre-wrap text-base">
                 {incident.resolution}

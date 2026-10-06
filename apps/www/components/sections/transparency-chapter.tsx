@@ -1,7 +1,6 @@
 "use client";
 
-import { Highlight } from "@/components/ui/emphasis";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow, Highlight } from "@repo/ui/www";
 import {
   useSectionDescription,
   useSectionEyebrow,

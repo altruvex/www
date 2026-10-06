@@ -7,44 +7,55 @@
   :root {
     --glass-background: linear-gradient(
       135deg,
-      hsl(var(--card) / 0.72),
-      hsl(var(--surface) / 0.46)
+      hsl(var(--card) / 0.58),
+      hsl(var(--surface) / 0.34)
     );
+
     --glass-background-strong: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.9),
-      hsl(var(--surface) / 0.78)
+      hsl(var(--card) / 0.78),
+      hsl(var(--surface) / 0.6)
     );
+
     --glass-background-flat: linear-gradient(
       135deg,
-      hsl(var(--card) / 0.62),
-      hsl(var(--surface) / 0.42)
+      hsl(var(--card) / 0.48),
+      hsl(var(--surface) / 0.28)
     );
+
     --glass-border: hsl(var(--border));
-    --glass-highlight: hsl(var(--n-0) / 0.7);
+
+    --glass-highlight: hsl(var(--n-0) / 0.36);
+
     --glass-shadow:
       inset 0 1px 0 var(--glass-highlight),
-      0 10px 28px -24px hsl(var(--foreground) / 0.32);
-    --glass-shadow-flat: inset 0 1px 0 hsl(var(--n-0) / 0.62);
+      0 12px 30px -28px hsl(var(--foreground) / 0.18);
 
-    --glass-blur: blur(20px) saturate(160%);
-    --glass-blur-soft: blur(12px) saturate(120%);
+    --glass-shadow-flat: inset 0 1px 0 hsl(var(--n-0) / 0.3);
+
+    --glass-blur: blur(16px) saturate(110%);
+    --glass-blur-soft: blur(10px) saturate(105%);
 
     --glass-clear-background: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.62),
-      hsl(var(--surface) / 0.5)
+      hsl(var(--card) / 0.72),
+      hsl(var(--surface) / 0.56)
     );
+
     --glass-clear-sheen: linear-gradient(
       180deg,
-      hsl(var(--n-0) / 0.5),
-      transparent 40%
+      hsl(var(--n-0) / 0.24),
+      transparent 42%
     );
-    --glass-clear-border: hsl(var(--n-0) / 0.7);
+
+    --glass-clear-border: hsl(var(--n-0) / 0.4);
+
     --glass-clear-shadow:
-      inset 0 1px 0 hsl(var(--n-0) / 0.9), 0 0 0 1px hsl(var(--n-8) / 0.06),
-      0 24px 48px -28px hsl(var(--n-8) / 0.35);
-    --glass-clear-filter: blur(28px) saturate(180%) brightness(1.06);
+      inset 0 1px 0 hsl(var(--n-0) / 0.72), 0 0 0 1px hsl(var(--n-8) / 0.04),
+      0 22px 44px -30px hsl(var(--n-8) / 0.2);
+
+    --glass-clear-filter: blur(20px) saturate(115%);
+
     --glass-clear-background-dense: linear-gradient(
       180deg,
       hsl(var(--card) / 0.94),
@@ -55,43 +66,60 @@
   .dark {
     --glass-background: linear-gradient(
       135deg,
-      hsl(var(--card) / 0.12),
-      hsl(var(--surface) / 0.035)
+      hsl(var(--card) / 0.1),
+      hsl(var(--surface) / 0.025)
     );
+
     --glass-background-strong: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.84),
-      hsl(var(--surface) / 0.64)
+      hsl(var(--card) / 0.68),
+      hsl(var(--surface) / 0.48)
     );
+
     --glass-background-flat: linear-gradient(
       135deg,
-      hsl(var(--card) / 0.1),
-      hsl(var(--surface) / 0.03)
+      hsl(var(--card) / 0.6),
+      hsl(var(--surface) / 0.5)
     );
-    --glass-highlight: hsl(var(--n-0) / 0.12);
+
+    --glass-border: hsl(var(--n-0) / 0.08);
+
+    --glass-highlight: hsl(var(--n-0) / 0.08);
+
     --glass-shadow:
-      inset 0 1px 0 var(--glass-highlight), 0 16px 34px -24px hsl(0 0% 0% / 0.8);
-    --glass-shadow-flat: inset 0 1px 0 hsl(var(--n-0) / 0.1);
+      inset 0 1px 0 var(--glass-highlight),
+      0 16px 34px -28px hsl(var(--shadow-ink) / 0.5);
+
+    --glass-shadow-flat: inset 0 1px 0 hsl(var(--n-0) / 0.06);
+
+    --glass-blur: blur(16px) saturate(110%);
+    --glass-blur-soft: blur(10px) saturate(105%);
 
     --glass-clear-background: linear-gradient(
       180deg,
-      hsl(var(--card) / 0.46),
-      hsl(var(--surface) / 0.34)
+      hsl(var(--card) / 0.4),
+      hsl(var(--surface) / 0.28)
     );
+
     --glass-clear-sheen: linear-gradient(
       180deg,
-      hsl(var(--n-0) / 0.09),
-      transparent 38%
+      hsl(var(--n-0) / 0.075),
+      transparent 40%
     );
-    --glass-clear-border: hsl(var(--n-0) / 0.14);
+
+    --glass-clear-border: hsl(var(--n-0) / 0.1);
+
     --glass-clear-shadow:
-      inset 0 1px 0 hsl(var(--n-0) / 0.22), inset 0 -1px 0 hsl(var(--n-0) / 0.04),
-      0 24px 48px -24px hsl(0 0% 0% / 0.7);
-    --glass-clear-filter: blur(28px) saturate(180%) brightness(0.8);
+      inset 0 1px 0 hsl(var(--n-0) / 0.17),
+      inset 0 -1px 0 hsl(var(--n-0) / 0.03),
+      0 24px 48px -28px hsl(var(--shadow-ink) / 0.5);
+
+    --glass-clear-filter: blur(20px) saturate(115%) brightness(0.88);
+
     --glass-clear-background-dense: linear-gradient(
       180deg,
       hsl(var(--card) / 0.92),
-      hsl(var(--card) / 0.9)
+      hsl(var(--card) / 0.89)
     );
   }
 }
@@ -102,9 +130,9 @@
   .liquid-glass-panel,
   .liquid-glass-nav,
   .liquid-glass-toolbar {
-    transform: translateZ(0);
     -webkit-backdrop-filter: var(--glass-blur);
     backdrop-filter: var(--glass-blur);
+
     transition:
       background 0.2s var(--ease-default),
       border-color 0.2s var(--ease-default),
@@ -132,13 +160,15 @@
   }
 
   .liquid-glass-clear {
-    transform: translateZ(0);
     -webkit-backdrop-filter: var(--glass-clear-filter);
     backdrop-filter: var(--glass-clear-filter);
+
     background: var(--glass-clear-sheen), var(--glass-clear-background);
+
     border: 1px solid var(--glass-clear-border);
     box-shadow: var(--glass-clear-shadow);
     border-radius: var(--radius-lg);
+
     transition:
       border-color 0.2s var(--ease-default),
       box-shadow 0.2s var(--ease-default);
@@ -154,10 +184,12 @@
     box-shadow: var(--glass-shadow-flat);
   }
 
+  /* A floating bar of controls (the admin selection dock). Text sits on it,
+     so the fill is the dense clear fill; the lift shadow marks it as floating. */
   .liquid-glass-toolbar {
-    background: var(--glass-background-flat);
+    background: var(--glass-clear-background-dense);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow-flat);
+    box-shadow: var(--glass-shadow);
   }
 
   .glass-highlight {
@@ -174,10 +206,16 @@
     -webkit-backdrop-filter: var(--glass-blur-soft);
     backdrop-filter: var(--glass-blur-soft);
   }
+
+  .liquid-glass-clear {
+    -webkit-backdrop-filter: blur(14px) saturate(110%);
+    backdrop-filter: blur(14px) saturate(110%);
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass-clear,
+  .liquid-glass-clear-dense,
   .liquid-glass,
   .liquid-glass-flat,
   .liquid-glass-panel,
@@ -185,7 +223,9 @@
   .liquid-glass-toolbar {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
+
     background: hsl(var(--card));
     border-color: hsl(var(--border-strong));
+    box-shadow: none;
   }
 }

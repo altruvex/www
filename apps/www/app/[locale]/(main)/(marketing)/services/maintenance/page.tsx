@@ -3,6 +3,7 @@ import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import { buildPageSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { maintenanceViews, type Locale } from "@repo/pricing-schema";
+import { serviceFaqSchemas } from "../_shared/service-faq-schema";
 import PageClient from "./page-client";
 
 const metaKey: RouteMetaKey = "serviceMaintenance";
@@ -23,11 +24,17 @@ export default async function MaintenanceServicePage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const plans = maintenanceViews(locale as Locale, await getPublicPricing());
+  const pricing = await getPublicPricing();
+  const plans = maintenanceViews(locale as Locale, pricing);
+  const faqSchemas = await serviceFaqSchemas(
+    locale,
+    "serviceDetails.maintenance.faq",
+    pricing,
+  );
 
   return (
     <>
-      <JsonLd schemas={buildPageSchemas(locale, metaKey)} />
+      <JsonLd schemas={[...buildPageSchemas(locale, metaKey), ...faqSchemas]} />
       <PageClient plans={plans} />
     </>
   );

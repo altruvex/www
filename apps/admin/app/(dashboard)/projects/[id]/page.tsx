@@ -8,7 +8,6 @@ import {
   Globe,
   History,
   ListChecks,
-  ListPlus,
   MessageCircle,
   Milestone as MilestoneIcon,
   Receipt,
@@ -46,8 +45,11 @@ import { getPricing } from "@/lib/pricing-store";
 import { publicBaseUrlFromHeaders } from "@/lib/public-url";
 import { emailTransport } from "@/lib/email";
 import { ServicesList } from "@/components/os/services/services-list";
+import { AttachPicker } from "@/components/os/attach-picker";
+import { AddTaskButton } from "@/app/(dashboard)/tasks/tasks-client";
+import { NewChargeButton } from "@/app/(dashboard)/payments/new-charge-dialog";
 import { listServices, redactMoney } from "@/lib/client-services";
-import { needsAttention } from "@/lib/service-lifecycle";
+import { KIND_LABEL, needsAttention } from "@/lib/service-lifecycle";
 import {
   coveredByWarranty,
   isOpen,
@@ -104,6 +106,8 @@ export default async function ProjectDetailPage({
     clientProducts,
     engineering,
     openTasks,
+    team,
+    looseServices,
   ] = await Promise.all([
     getPricing(),
     canMessage
@@ -121,7 +125,7 @@ export default async function ProjectDetailPage({
     }),
     prisma.product.findMany({
       where: { clientId: project.clientId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, projectId: true },
       orderBy: { createdAt: "desc" },
     }),
     getProjectEngineering(project.id),
@@ -143,7 +147,34 @@ export default async function ProjectDetailPage({
         assignee: { select: { name: true, email: true } },
       },
     }),
+    canEdit || can(role, "create", "project")
+      ? prisma.user.findMany({
+          where: { role: { in: ["ADMIN", "SUPERADMIN"] } },
+          select: { id: true, name: true, email: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
+    canEdit
+      ? prisma.clientService.findMany({
+          where: {
+            clientId: project.clientId,
+            projectId: null,
+            status: { not: "CANCELLED" },
+          },
+          select: { id: true, name: true, kind: true, currency: true },
+          orderBy: { name: "asc" },
+        })
+      : Promise.resolve([]),
   ]);
+  const looseProducts = canEdit
+    ? clientProducts.filter((p) => p.projectId === null)
+    : [];
+  const taskProject = {
+    id: project.id,
+    name: project.name,
+    phase: project.phase,
+    clientName: project.client.company || project.client.name || "Unnamed client",
+  };
   const servicesDue = services.filter((s) => needsAttention(s.state));
 
   const clientName =
@@ -332,12 +363,12 @@ export default async function ProjectDetailPage({
         actions={
           <>
             {canAddTask && (
-              <Button asChild variant="brand">
-                <Link href={`${tasksHref}&new=task`}>
-                  <ListPlus className="size-3.5" aria-hidden />
-                  Add a task
-                </Link>
-              </Button>
+              <AddTaskButton
+                project={taskProject}
+                users={team}
+                variant="brand"
+                size="default"
+              />
             )}
             {canEdit && project.status === "ACTIVE" && (
               <Button asChild variant="outline">
@@ -696,10 +727,8 @@ export default async function ProjectDetailPage({
           {openTasks.length === 0 ? (
             <EmptyInline
               action={
-                can(role, "create", "project") ? (
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`${tasksHref}&new=task`}>Add a task on the board</Link>
-                  </Button>
+                canAddTask ? (
+                  <AddTaskButton project={taskProject} users={team} />
                 ) : undefined
               }
             >
@@ -737,6 +766,27 @@ export default async function ProjectDetailPage({
                         )}
                       </p>
                     </div>
+                    {!task.assignee && canEdit && team.length > 0 && (
+                      <span className="relative z-10">
+                        <AttachPicker
+                          label="Assign"
+                          options={team.map((u) => ({
+                            value: u.id,
+                            label: u.name || u.email,
+                            hint: u.name ? u.email : undefined,
+                          }))}
+                          request={{
+                            url: "/api/admin/tasks",
+                            method: "PATCH",
+                            body: { id: task.id },
+                            field: "assigneeId",
+                          }}
+                          successMessage={`Assigned “${task.title}”.`}
+                          searchPlaceholder="Search the team"
+                          variant="ghost"
+                        />
+                      </span>
+                    )}
                     <StatusPill registry="taskStatus" value={task.status} />
                   </li>
                 );
@@ -761,17 +811,60 @@ export default async function ProjectDetailPage({
           id="engineering"
           title="Engineering"
           description="Products this project shipped, the latest deployment CI reported for each, and open incidents. Written by CI, read-only here."
+          action={
+            looseProducts.length > 0 && engineering.products.length > 0 ? (
+              <AttachPicker
+                  label="Attach an existing product"
+                  options={looseProducts.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
+                  request={{
+                    url: "/api/admin/products",
+                    method: "PATCH",
+                    body: { action: "update", patch: { projectId: project.id } },
+                    field: "id",
+                  }}
+                  successMessage={`Attached to ${project.name}.`}
+                  searchPlaceholder="Search this client’s products"
+                />
+            ) : undefined
+          }
         >
           {engineering.products.length === 0 ? (
             <EmptyInline
               action={
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/products">Open products</Link>
-                </Button>
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  {looseProducts.length > 0 && (
+                    <AttachPicker
+                  label="Attach an existing product"
+                  options={looseProducts.map((p) => ({
+                    value: p.id,
+                    label: p.name,
+                  }))}
+                  request={{
+                    url: "/api/admin/products",
+                    method: "PATCH",
+                    body: { action: "update", patch: { projectId: project.id } },
+                    field: "id",
+                  }}
+                  successMessage={`Attached to ${project.name}.`}
+                  searchPlaceholder="Search this client’s products"
+                />
+                  )}
+                  <Button asChild variant="outline" size="sm">
+                    <Link
+                      href={`/products?new=product&project=${project.id}&client=${project.clientId}`}
+                    >
+                      Add a product
+                    </Link>
+                  </Button>
+                </span>
               }
             >
-              No product is attached to this project. Attach the site or app it
-              builds to a product and its deployments and incidents appear here.
+              {looseProducts.length > 0
+                ? `No product is attached to this project. ${clientName} has ${looseProducts.length} product${looseProducts.length === 1 ? "" : "s"} on no project — attach the one this project builds, or add a new one. Its deployments and incidents then appear here.`
+                : "No product is attached to this project. Add the site or app it builds as a product and its deployments and incidents appear here."}
             </EmptyInline>
           ) : (
             <div className="space-y-3">
@@ -897,7 +990,32 @@ export default async function ProjectDetailPage({
           />
         </DossierSection>
 
-        <DossierSection id="services" title="Services">
+        <DossierSection
+          id="services"
+          title="Services"
+          action={
+            looseServices.some((s) => s.currency === currency) ? (
+              <AttachPicker
+                label="Attach an existing service"
+                options={looseServices
+                  .filter((s) => s.currency === currency)
+                  .map((s) => ({
+                  value: s.id,
+                  label: s.name,
+                  hint: KIND_LABEL[s.kind],
+                }))}
+                request={{
+                  url: "/api/admin/services",
+                  method: "PATCH",
+                  body: { action: "update", fields: { projectId: project.id } },
+                  field: "id",
+                }}
+                successMessage={`Attached to ${project.name}.`}
+                searchPlaceholder="Search this client’s services"
+              />
+            ) : undefined
+          }
+        >
           <ServicesList
             title="Domains, hosting and renewals"
             description="Everything this project runs on that has to be renewed"
@@ -958,7 +1076,26 @@ export default async function ProjectDetailPage({
               </Row>
             </dl>
             {project.payments.length === 0 ? (
-              <EmptyInline>
+              <EmptyInline
+                action={
+                  canCharge ? (
+                    <NewChargeButton
+                      targets={[
+                        {
+                          value: `project:${project.id}`,
+                          label: `${project.name} · ${clientName}`,
+                          currency,
+                          clientId: project.clientId,
+                        },
+                      ]}
+                      scope={{
+                        clientId: project.clientId,
+                        projectId: project.id,
+                      }}
+                    />
+                  ) : undefined
+                }
+              >
                 {recorded
                   ? "No payments are recorded for this project. Payments made before it was recorded were not carried over."
                   : "No payment schedule was created for this project. The contract’s 50/30/20 split is the intended default — until rows exist here, nothing is being chased automatically."}

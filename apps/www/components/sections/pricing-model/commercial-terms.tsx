@@ -27,16 +27,19 @@ export async function CommercialTerms({
     "--pay-cols": schedule.milestones.map((m) => `${m.percent}fr`).join(" "),
   } as CSSProperties;
 
+  // Commitments first: what the client owns and is protected by, then the
+  // fine print.
   const rows: { id: string; label: string; value: string }[] = [
-    { id: "vat", label: terms.vatLabel, value: terms.vatNote },
-    { id: "revision", label: terms.revisionLabel, value: terms.revisionNote },
+    { id: "ownership", label: t("ownership"), value: schedule.ownership },
     {
       id: "warranty",
       label: t("warranty"),
       value: t("warrantyNote", { days: warrantyDays }),
     },
     { id: "validity", label: t("validity"), value: schedule.validity },
-    { id: "ownership", label: t("ownership"), value: schedule.ownership },
+    { id: "vat", label: terms.vatLabel, value: terms.vatNote },
+    { id: "revision", label: terms.revisionLabel, value: terms.revisionNote },
+    { id: "currency", label: t("currency"), value: t("currencyNote") },
   ];
 
   return (
@@ -75,6 +78,28 @@ export async function CommercialTerms({
           </div>
         ))}
       </dl>
+    </div>
+  );
+}
+
+/** What a build includes and what is billed on its own line — its own
+ *  section on /pricing, read before the payment terms. */
+export async function BuildInclusions({ locale }: { locale: string }) {
+  const t = await getTranslations({ locale, namespace: "pricingModel.terms" });
+
+  return (
+    <div className="grid gap-16 min-[900px]:grid-cols-2 min-[900px]:gap-x-24">
+      {(["included", "separate"] as const).map((group) => (
+        <div key={group} className="min-w-0">
+          <h3 className={MINOR}>{t(`${group}.title`)}</h3>
+          <p className={cn(BODY, "mt-4 max-w-[40ch]")}>{t(`${group}.lead`)}</p>
+          <ul className={cn(BODY, "mt-8 max-w-[40ch] list-disc space-y-3 ps-5")}>
+            {(t.raw(`${group}.items`) as string[]).map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
   );
 }

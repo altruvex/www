@@ -28,7 +28,7 @@ export function TabNav({
     return query ? `${basePath}?${query}` : basePath;
   };
   return (
-    <nav className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border-subtle [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map((tab) => {
         const isActive = tab.id === active;
         return (

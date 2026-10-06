@@ -19,7 +19,7 @@ function HeaderSkeleton({ actions = 2, crumbs = true }: { actions?: number; crum
         <div className="min-w-0 space-y-2">
           <div className="flex items-center gap-2">
             <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-5 w-16 rounded-sm" />
+            <Skeleton className="h-5 w-16 rounded-ctl-xs" />
           </div>
           <Skeleton className="h-2.5 w-64 max-w-full" />
         </div>
@@ -38,10 +38,10 @@ function HeaderSkeleton({ actions = 2, crumbs = true }: { actions?: number; crum
 function FiltersSkeleton({ chips = 4 }: { chips?: number }) {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-hidden>
-      <Skeleton className="h-[var(--control-h-sm)] w-full rounded-md sm:w-64" />
+      <Skeleton className="h-[var(--control-h-sm)] w-full rounded-ctl-sm sm:w-64" />
       <div className="flex items-center gap-1.5">
         {Array.from({ length: chips }).map((_, i) => (
-          <Skeleton key={i} className="h-[var(--control-h-sm)] w-16 rounded-md" />
+          <Skeleton key={i} className="h-[var(--control-h-sm)] w-16 rounded-ctl-sm" />
         ))}
       </div>
     </div>
@@ -50,14 +50,14 @@ function FiltersSkeleton({ chips = 4 }: { chips?: number }) {
 
 function RowsSkeleton({ rows = 5, className }: { rows?: number; className?: string }) {
   return (
-    <div className={cn("plane divide-y divide-border overflow-hidden", className)} aria-hidden>
+    <div className={cn("plane divide-y divide-border-subtle overflow-hidden", className)} aria-hidden>
       {Array.from({ length: rows }).map((_, i) => (
         <div
           key={i}
           className="flex items-center gap-3 px-3 py-2"
           style={{ minHeight: "var(--row-h)", opacity: 1 - i * 0.08 }}
         >
-          <Skeleton className="size-7 shrink-0 rounded-md" />
+          <Skeleton className="size-7 shrink-0 rounded-ctl-sm" />
           <div className="min-w-0 flex-1 space-y-1.5">
             <Skeleton className="h-3 w-2/5" />
             <Skeleton className="h-2.5 w-3/5" />
@@ -117,20 +117,20 @@ export function DetailPageSkeleton({
       >
         <div
           className={cn(
-            "flex gap-1.5 overflow-hidden border-b border-border py-2 lg:col-start-1 lg:row-start-1 lg:flex-col lg:gap-1 lg:border-0 lg:py-0",
+            "flex gap-1.5 overflow-hidden border-b border-border-subtle py-2 lg:col-start-1 lg:row-start-1 lg:flex-col lg:gap-1 lg:border-0 lg:py-0",
             aside && "lg:row-span-2 xl:row-span-1",
           )}
         >
           {Array.from({ length: sections }).map((_, i) => (
             <Skeleton
               key={i}
-              className="h-[var(--control-h-sm)] w-20 shrink-0 rounded-md lg:w-full"
+              className="h-[var(--control-h-sm)] w-20 shrink-0 rounded-ctl-sm lg:w-full"
             />
           ))}
         </div>
 
         {aside && (
-          <div className="plane min-w-0 divide-y divide-border lg:col-start-2 lg:row-start-1 xl:col-start-3">
+          <div className="plane min-w-0 divide-y divide-border-subtle lg:col-start-2 lg:row-start-1 xl:col-start-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between gap-3 px-3 py-2.5">
                 <Skeleton className="h-2.5 w-16" />
@@ -149,7 +149,7 @@ export function DetailPageSkeleton({
           {Array.from({ length: sections }).map((_, i) => (
             <div
               key={i}
-              className="space-y-3 border-t border-border py-6 first:border-t-0 first:pt-0"
+              className="space-y-3 border-t border-border-subtle py-6 first:border-t-0 first:pt-0"
             >
               <Skeleton className="h-3.5 w-32" />
               <RowsSkeleton rows={i === 0 ? 4 : 3} />
@@ -178,7 +178,7 @@ export function OverviewSkeleton() {
             <div className="flex items-center gap-1.5">
               <Skeleton className="me-2 h-3.5 w-20" />
               {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-[var(--control-h-sm)] w-16 rounded-md" />
+                <Skeleton key={i} className="h-[var(--control-h-sm)] w-16 rounded-ctl-sm" />
               ))}
             </div>
             <RowsSkeleton rows={8} />

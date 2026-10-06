@@ -97,7 +97,7 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
   if (stage === "done") {
     return (
       <div className="space-y-4">
-        <div className="flex items-start gap-2 rounded-md border border-success/25 bg-success/[0.07] px-3 py-2.5">
+        <div className="flex items-start gap-2 rounded-ctl-xl border border-success/25 bg-success/[0.07] px-3 py-2.5">
           <ShieldCheck className="mt-0.5 size-4 shrink-0 text-success" />
           <div className="text-base">
             <p className="font-medium text-foreground">Two-factor is on for this account.</p>
@@ -109,7 +109,7 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
         {backupCodes.length > 0 && <BackupCodes codes={backupCodes} copied={copied} setCopied={setCopied} />}
 
         {mode ? (
-          <form onSubmit={manage} className="space-y-3 rounded-md border border-border-strong p-3">
+          <form onSubmit={manage} className="space-y-3 rounded-ctl-xl border border-border-strong p-3">
             <p className="text-base text-muted-foreground">
               {mode === "disable"
                 ? required
@@ -177,7 +177,7 @@ export function TwoFactorSetup({ enabled, required }: { enabled: boolean; requir
             Add this key to your authenticator app — 1Password, Authy, Google Authenticator — then
             type the code it shows.
           </p>
-          <div className="mt-2 flex items-center justify-between gap-3 rounded-md border border-border-strong bg-muted/50 px-3 py-2.5">
+          <div className="mt-2 flex items-center justify-between gap-3 rounded-ctl-xl border border-border-strong bg-muted/50 px-3 py-2.5">
             <code className="telemetry break-all text-foreground">{readable(secret)}</code>
             <Button
               type="button"
@@ -255,7 +255,7 @@ function Problem({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="flex items-center gap-2 rounded-md border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
+      className="flex items-center gap-2 rounded-ctl-lg border border-danger/25 bg-danger/[0.07] px-2.5 py-2 text-base text-danger"
     >
       <AlertCircle className="size-4 shrink-0" />
       <span>{message}</span>
@@ -274,7 +274,7 @@ function BackupCodes({
 }) {
   if (codes.length === 0) return null;
   return (
-    <div className="rounded-md border border-border-strong p-3">
+    <div className="rounded-ctl-xl border border-border-strong p-3">
       <p className="text-base font-medium text-foreground">Backup codes</p>
       <p className="mt-0.5 text-meta text-muted-foreground">
         Shown once. Each works one time, and they are the only way back in if the phone is lost.

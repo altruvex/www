@@ -217,25 +217,12 @@ export async function ServiceInvestmentRegister({
             </div>
 
             {row.matrix ? (
-              <details className="group/details pb-[clamp(3rem,7vh,5rem)]">
-                <summary
-                  className={cn(
-                    "inline-flex cursor-pointer list-none items-center gap-3 font-medium text-brand-text [&::-webkit-details-marker]:hidden",
-                    FOCUS,
-                  )}
-                >
-                  <span id={summaryId}>
-                    {t("development.more", {
-                      count: localizeNumbers(String(row.matrix.cellCount), locale),
-                    })}
-                  </span>
-                  <span
-                    aria-hidden
-                    className="text-[1.375rem] leading-none transition-transform duration-(--motion-hover) group-open/details:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
+              <div className="pb-[clamp(3rem,7vh,5rem)]">
+                <p id={summaryId} className={LABEL}>
+                  {t("development.allPrices", {
+                    count: localizeNumbers(String(row.matrix.cellCount), locale),
+                  })}
+                </p>
                 <div className="pt-10">
                   <Matrix
                     matrix={row.matrix}
@@ -243,7 +230,7 @@ export async function ServiceInvestmentRegister({
                     labelledBy={summaryId}
                   />
                 </div>
-              </details>
+              </div>
             ) : null}
           </li>
         );

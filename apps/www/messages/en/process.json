@@ -5,7 +5,7 @@
   },
   "page": {
     "photo": {
-      "caption": "Five phases · one owner · no skipped sign-off"
+      "caption": "Five phases · your sign-off between each"
     },
     "register": {
       "eyebrow": "Phase by phase",
@@ -22,66 +22,76 @@
       "min": "Smallest scope",
       "max": "Largest scope",
       "total": "<n></n> {count, plural, one {working day} other {working days}}",
-      "note": "Scope stretches every phase after discovery - development most. It never adds a phase, reorders one, or skips a sign-off. Both ends come from our published price ranges; a flexible deadline or content written from scratch can stretch a quote to {ceiling} weeks, never further. Discovery counts as one day."
+      "note": "A larger scope lengthens every phase after discovery, development most. It never adds, reorders or skips a phase or a sign-off. The bars above show our smallest and largest published scopes; discovery counts as one day. A flexible deadline, or content written from scratch, can stretch a quote to {ceiling} weeks, never further."
+    },
+    "payments": {
+      "text": "Payment follows the same order: one part to start, one at a development milestone named in your proposal, and the last before production launch. Code, designs and accounts pass to you at final payment.",
+      "terms": "Payment terms"
     }
   },
   "closing": {
     "startsHere": "Your project starts here"
   },
-  "eyebrow": "Delivery Model",
+  "eyebrow": "How a project runs",
   "flexibility": {
-    "description": "These phases are a framework, not a rigid contract. Some projects need deeper discovery. Others need to ship fast. We adjust the intensity - <strong>never the discipline.</strong>",
-    "title": "The process serves",
-    "titleItalic": "the project."
+    "description": "Describe the project in a few lines and we arrange the initial project consultation call. <strong>The proposal that follows fixes scope, price and timeline before you sign.</strong>",
+    "title": "Start with phase one.",
+    "titleItalic": "Tell us what you are building."
   },
-  "footer": "A clear system before implementation. A working product after delivery.",
+  "footer": "Payment follows the phases: one part to start, one at a development milestone, the last before launch.",
   "hero": {
-    "description": "A framework, not a formula. Every engagement follows the same backbone - calibrated to what the scope actually demands.",
-    "eyebrow": "10 - Our Process",
-    "title": "How we work.",
-    "titleItalic": "Every time."
+    "description": "How an Altruvex project runs from discovery to launch: what each phase produces, what we need from you, who signs off, and which payment falls where.",
+    "eyebrow": "Process",
+    "title": "Web design process:",
+    "titleItalic": "five phases, in a fixed order."
   },
   "phases": {
     "deliverables": "Deliverables",
+    "inputs": "What you bring",
     "design": {
       "headline": "Agree on the whole design before a line of code.",
       "deliverables": "Visual mockups | Responsive layouts | Brand alignment",
-      "description": "You review the full design system before a single line of code is written. Revisions are within scope.",
+      "inputs": "Brand assets: logo, colours, type | Feedback within the agreed revision rounds",
+      "description": "We design the full interface on that structure. You review it and request revisions within scope; development starts after your approval.",
       "title": "03 - Design",
-      "yourRole": "Review"
+      "yourRole": "Approve the design"
     },
     "development": {
-      "headline": "Build the system behind the idea.",
-      "deliverables": "Working system | Live preview link | Weekly updates",
-      "description": "We build. You track live progress via a staging link. No black boxes.",
+      "headline": "Build it on a live link you can open any day.",
+      "deliverables": "Working system | Live preview link",
+      "inputs": "Feedback on the live preview | Access to the services the build connects to",
+      "description": "We build on a live preview link you can open at any time. The development-milestone payment falls at the point named in your proposal.",
       "title": "04 - Development",
-      "yourRole": "Review"
+      "yourRole": "Review the preview"
     },
     "discovery": {
       "headline": "Understand the problem before proposing a solution.",
-      "deliverables": "Requirements summary | Technical audit | Project roadmap",
-      "description": "We listen before we build. 60 minutes. No sales pitch - only the questions that surface the real constraints.",
+      "deliverables": "Requirements summary | Review of what exists today | Proposal: scope, price, timeline",
+      "inputs": "The goal | What exists today | The constraints",
+      "description": "It starts with the initial project consultation call: 30 minutes, at no charge. You share the goal, the constraints and what exists today; we ask the questions that surface the real requirements. The proposal that follows sets scope, price and timeline.",
       "title": "01 - Discovery",
-      "yourRole": "Share"
+      "yourRole": "Share the context"
     },
     "launch": {
-      "headline": "Turn the system into something ready to operate.",
+      "headline": "Review it on staging, then it goes live on your domain.",
       "deliverables": "Source code | Hosting setup | Documentation",
-      "description": "You receive everything: source code, hosting setup, full documentation. Zero lock-in.",
+      "inputs": "Your review on staging | Access to your domain | The final payment",
+      "description": "We set up hosting and deliver the finished build to staging for your review. Deployment to your domain follows once the final payment clears; source code, documentation and accounts pass to you at that payment. No lock-in.",
       "title": "05 - Launch",
-      "yourRole": "Launch"
+      "yourRole": "Approve the launch"
     },
     "wireframe": {
-      "headline": "Define the system before the interface.",
+      "headline": "Agree the pages and flows before any visual design.",
       "deliverables": "Sitemap | Page structure | Key flows",
-      "description": "You approve the architecture before any visual work begins. No downstream surprises.",
+      "inputs": "Copy and assets, or the key messages | Feedback on the sitemap and flows",
+      "description": "We map the sitemap, page structure and key flows. You approve the structure before any visual work begins.",
       "title": "02 - Wireframe",
-      "yourRole": "Approve"
+      "yourRole": "Approve the structure"
     },
-    "yourRole": "Your Role"
+    "yourRole": "Your part"
   },
-  "subtitle": "Every project moves through discovery, wireframe, design, development and launch - <strong>with one owner responsible from start to delivery.</strong>",
-  "title": "Clear phases. Accountable outcomes.",
+  "subtitle": "Every project moves through discovery, wireframe, design, development and launch - <strong>in that order, with your sign-off before the next phase starts.</strong>",
+  "title": "Five phases. Your sign-off between each.",
   "range": {
     "days": "{min} – {max} {count, plural, one {day} other {days}}"
   },

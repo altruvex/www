@@ -4,7 +4,16 @@ import * as React from "react";
 import { Command } from "cmdk";
 import { Check, ChevronsUpDown } from "lucide-react";
 
-import { Popover, PopoverContent, PopoverTrigger, cn, controlSurface } from "@repo/ui";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  cn,
+  controlSurface,
+  menuEmpty,
+  menuItem,
+  menuSearch,
+} from "@repo/ui";
 
 export function ComboboxSelect({
   name,
@@ -70,28 +79,29 @@ export function ComboboxSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] p-0"
+        surface="menu"
+        className="w-[var(--radix-popover-trigger-width)]"
       >
         <Command loop>
           <Command.Input
             value={query}
             onValueChange={setQuery}
             placeholder={searchPlaceholder}
-            className="h-10 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+            className={menuSearch}
           />
           <Command.List
             id={listId}
             data-lenis-prevent
-            className="max-h-64 overflow-y-auto p-1"
+            className="max-h-64 overflow-y-auto"
           >
-            <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
+            <Command.Empty className={menuEmpty}>
               {emptyLabel}
             </Command.Empty>
             {canUseTyped && (
               <Command.Item
                 value={`use ${typed}`}
                 onSelect={() => choose(typed)}
-                className="cursor-pointer rounded-md px-2 py-1.5 text-sm data-[selected=true]:bg-muted"
+                className={cn(menuItem, "cursor-pointer")}
               >
                 Use &ldquo;{typed}&rdquo;
               </Command.Item>
@@ -100,7 +110,7 @@ export function ComboboxSelect({
               <Command.Item
                 value="— clear"
                 onSelect={() => choose("")}
-                className="cursor-pointer rounded-md px-2 py-1.5 text-sm text-muted-foreground data-[selected=true]:bg-muted"
+                className={cn(menuItem, "cursor-pointer text-muted-foreground")}
               >
                 Clear
               </Command.Item>
@@ -110,10 +120,10 @@ export function ComboboxSelect({
                 key={option}
                 value={option}
                 onSelect={() => choose(option)}
-                className="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-sm data-[selected=true]:bg-muted"
+                className={cn(menuItem, "cursor-pointer justify-between")}
               >
                 {option}
-                {option === value && <Check className="h-4 w-4" />}
+                {option === value && <Check />}
               </Command.Item>
             ))}
           </Command.List>
@@ -187,19 +197,20 @@ export function SearchSelect({
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-[var(--radix-popover-trigger-width)] min-w-56 p-0"
+        surface="menu"
+        className="w-[var(--radix-popover-trigger-width)] min-w-56"
       >
         <Command loop filter={filterByLabel}>
           <Command.Input
             placeholder={searchPlaceholder}
-            className="h-10 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+            className={menuSearch}
           />
           <Command.List
             id={listId}
             data-lenis-prevent
-            className="max-h-64 overflow-y-auto p-1"
+            className="max-h-64 overflow-y-auto"
           >
-            <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">
+            <Command.Empty className={menuEmpty}>
               {emptyLabel}
             </Command.Empty>
             {options.map((option) => (
@@ -208,10 +219,10 @@ export function SearchSelect({
                 value={option.value}
                 keywords={[option.label]}
                 onSelect={() => choose(option.value)}
-                className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm data-[selected=true]:bg-muted"
+                className={cn(menuItem, "cursor-pointer justify-between")}
               >
                 <span className="truncate">{option.label}</span>
-                {option.value === value && <Check className="h-4 w-4 shrink-0" />}
+                {option.value === value && <Check className="shrink-0" />}
               </Command.Item>
             ))}
           </Command.List>

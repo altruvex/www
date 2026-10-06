@@ -24,10 +24,7 @@ export interface MaintenanceCopy {
 
 export interface MaintenanceCompare {
   readonly bestFor: string;
-  readonly cadence: string;
   readonly monitoring: string;
-  readonly reporting: string;
-  readonly support: string;
 }
 
 export interface MaintenanceTemplates {
@@ -69,8 +66,6 @@ export interface TermsCopy {
   readonly vatExcluded: string;
   readonly revisionLabel: string;
   readonly revisionNote: string;
-  readonly usdLabel: string;
-  readonly usdNote: string;
   readonly addonLabel: string;
   readonly addonNote: string;
   readonly costBasisLabel: string;

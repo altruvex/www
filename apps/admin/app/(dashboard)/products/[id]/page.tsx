@@ -32,6 +32,7 @@ import { Dossier, DossierSection } from "@/components/os/section-index";
 import { StatTile } from "@/components/os/stat-tile";
 import { StatusPill } from "@/components/ui/badge";
 import { AlertBar } from "@/components/os/error-state";
+import { AttachPicker } from "@/components/os/attach-picker";
 import { roleCanOpen } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
 import { entityHref } from "@/lib/entity-links";
@@ -130,10 +131,31 @@ export default async function ProductPage({
       .map((row) => row.createdAt)
       .sort((a, b) => b.getTime() - a.getTime())[0] ?? null;
 
+  // An existing site expects no pipeline: silence stays honest ("not monitored")
+  // instead of reading as a setup gap ("not connected"). An issued token does not
+  // change that for builds and deploys — nothing has arrived until a row exists.
+  const ciSilent = product.deployments.length + product.builds.length === 0;
+  const unmonitored = product.existingSite && ciSilent;
+
   const errorsHref = `/logs?product=${product.id}&level=ERROR`;
+  // One open incident is the record itself; several are listed below.
+  const openIncidentsHref =
+    openIncidents.length === 1
+      ? `/incidents/${openIncidents[0]!.id}`
+      : "#incidents";
+  // An existing site expects no pipeline, but connecting one later is still the
+  // action that fills these sections — so it is offered in both cases.
   const notConnected = (
     <PanelLink href="#connect">Connect a pipeline</PanelLink>
   );
+  // A token is issued but nothing has arrived: the setup is what to check next.
+  const pipelineAction = reporting ? (
+    ciSilent ? <PanelLink href="#connect">Check the pipeline setup</PanelLink> : undefined
+  ) : (
+    notConnected
+  );
+  const canRecordProject = canCreate && roleCanOpen(role, "/projects");
+  const canAddService = canCreate && roleCanOpen(role, "/services");
 
   return (
     <div className="space-y-4">
@@ -175,14 +197,18 @@ export default async function ProductPage({
           openIncidents.length > 0 ? (
             <AlertBar
               tone="danger"
-              href={`/incidents?product=${product.id}`}
-              cta="Open incidents"
+              href={openIncidentsHref}
+              cta={
+                openIncidents.length === 1
+                  ? "Open the incident"
+                  : "Review open incidents"
+              }
             >
               {openIncidents.length} open incident
               {openIncidents.length === 1 ? "" : "s"} on this product — the most
               severe is {openIncidents[0]?.severity}.
             </AlertBar>
-          ) : !reporting && product.status === "LIVE" ? (
+          ) : !reporting && !product.existingSite && product.status === "LIVE" ? (
             <AlertBar tone="warning" href="#connect" cta="Connect a pipeline">
               This product is live but nothing reports to it, so its deployment
               history and logs stay empty. Connect GitHub or issue an ingest
@@ -245,6 +271,7 @@ export default async function ProductPage({
                   repositoryUrl: product.repositoryUrl,
                   framework: product.framework,
                   hostingProvider: product.hostingProvider,
+                  existingSite: product.existingSite,
                 }}
                 projects={clientProjects}
               />
@@ -325,10 +352,51 @@ export default async function ProductPage({
                       <EntityLink type="project" id={product.project.id}>
                         {product.project.name}
                       </EntityLink>
+                    ) : canEdit && clientProjects.length > 0 ? (
+                      <AttachPicker
+                        label="Link a project"
+                        options={clientProjects.map((p) => ({
+                          value: p.id,
+                          label: p.name,
+                        }))}
+                        request={{
+                          url: "/api/admin/products",
+                          method: "PATCH",
+                          body: { action: "update", id: product.id, patch: {} },
+                          field: "patch.projectId",
+                        }}
+                        successMessage="Project linked."
+                        searchPlaceholder="Search projects"
+                      />
+                    ) : canRecordProject ? (
+                      <PanelLink
+                        href={`/projects?new=recorded&client=${product.client.id}`}
+                      >
+                        Record a project
+                      </PanelLink>
                     ) : (
                       "Not linked"
                     ),
-                    hint: "A product can outlive the project that built it",
+                    hint: product.project
+                      ? "A product can outlive the project that built it"
+                      : canEdit
+                        ? clientProjects.length > 0
+                          ? "Not linked — pick one of this client's projects"
+                          : "This client has no projects yet"
+                        : undefined,
+                  },
+                  {
+                    label: "Pipeline",
+                    value: !ciSilent
+                      ? "Reporting"
+                      : product.existingSite
+                        ? "Not monitored"
+                        : product.ingestTokenHash != null
+                          ? "Token issued, nothing received"
+                          : "Not connected",
+                    hint: product.existingSite
+                      ? "Existing site — no CI pipeline expected"
+                      : undefined,
                   },
                   {
                     label: "Type",
@@ -384,14 +452,18 @@ export default async function ProductPage({
               value={
                 lastProduction
                   ? when(lastProduction.finishedAt ?? lastProduction.createdAt)
-                  : "Never"
+                  : unmonitored
+                    ? "Not monitored"
+                    : "Never"
               }
               sub={
                 lastProduction
                   ? `#${lastProduction.number}${lastProduction.version ? ` · ${lastProduction.version}` : ""}`
-                  : reporting
-                    ? "No successful production deploy reported"
-                    : "No pipeline connected"
+                  : unmonitored
+                    ? "Existing site — not monitored"
+                    : reporting
+                      ? "No successful production deploy reported"
+                      : "No pipeline connected"
               }
               tone={lastProduction ? "success" : "neutral"}
               href={
@@ -403,11 +475,7 @@ export default async function ProductPage({
               value={openIncidents.length}
               sub={openIncidents.length ? "Needs attention" : "Nothing open"}
               tone={openIncidents.length ? "danger" : "success"}
-              href={
-                openIncidents.length
-                  ? `/incidents?product=${product.id}`
-                  : undefined
-              }
+              href={openIncidents.length ? openIncidentsHref : undefined}
             />
             <StatTile
               label="Failed builds"
@@ -434,7 +502,7 @@ export default async function ProductPage({
           </div>
 
           {lastFailedDeployment && (
-            <div className="mt-4 space-y-2 rounded-md border border-danger/30 bg-danger/5 p-3">
+            <div className="mt-4 space-y-2 rounded-panel-sm border border-danger/30 bg-danger/5 p-3">
               <p className="text-base">
                 Most recent failure: deployment #{lastFailedDeployment.number}{" "}
                 to{" "}
@@ -479,9 +547,10 @@ export default async function ProductPage({
           }
         >
           {product.deployments.length === 0 ? (
-            <EmptyInline action={reporting ? undefined : notConnected}>
-              Nothing has deployed this product yet. Deployments are reported by
-              its pipeline, never entered by hand.
+            <EmptyInline action={pipelineAction}>
+              {unmonitored
+                ? "This is an existing site with no pipeline, so no deployment is recorded. If CI is connected later, its deployments appear here."
+                : "Nothing has deployed this product yet. Deployments are reported by its pipeline, never entered by hand."}
             </EmptyInline>
           ) : (
             <List label="Deployments">
@@ -527,8 +596,10 @@ export default async function ProductPage({
           }
         >
           {product.builds.length === 0 ? (
-            <EmptyInline action={reporting ? undefined : notConnected}>
-              No build has been reported. A pipeline posts these as it runs.
+            <EmptyInline action={pipelineAction}>
+              {unmonitored
+                ? "This is an existing site with no pipeline, so no build is recorded."
+                : "No build has been reported. A pipeline posts these as it runs."}
             </EmptyInline>
           ) : (
             <List label="Builds">
@@ -573,7 +644,17 @@ export default async function ProductPage({
           }
         >
           {product.incidents.length === 0 ? (
-            <EmptyInline>
+            <EmptyInline
+              action={
+                canOpenIncident ? (
+                  <PanelLink
+                    href={`/incidents?new=incident&product=${product.id}`}
+                  >
+                    Raise an incident
+                  </PanelLink>
+                ) : undefined
+              }
+            >
               Nothing has been raised against this product.
             </EmptyInline>
           ) : (
@@ -632,7 +713,9 @@ export default async function ProductPage({
             >
               {reporting
                 ? "No error has been logged for this product."
-                : "No logs arrive for this product until its pipeline or app posts to the ingest endpoint with a token."}
+                : product.existingSite
+                  ? "This is an existing site with no pipeline, so no logs are collected."
+                  : "No logs arrive for this product until its pipeline or app posts to the ingest endpoint with a token."}
             </EmptyInline>
           ) : (
             <List label="Recent errors">
@@ -677,10 +760,18 @@ export default async function ProductPage({
         >
           {product.services.length === 0 ? (
             <EmptyInline
-              action={<PanelLink href="/services">Open services</PanelLink>}
+              action={
+                canAddService ? (
+                  <PanelLink
+                    href={`/services?new=service&product=${product.id}&client=${product.client.id}`}
+                  >
+                    Add a service
+                  </PanelLink>
+                ) : undefined
+              }
             >
               No domain, hosting or other renewal is linked to this product.
-              Link one from the services register so its expiry shows up here.
+              Add one so its expiry shows up here.
             </EmptyInline>
           ) : (
             <List label="Services">

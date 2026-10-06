@@ -1,0 +1,89 @@
+# Quality gate. What each step enforces, and what it does not: docs/quality-gate.md
+name: quality
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NEXT_TELEMETRY_DISABLED: "1"
+  TURBO_TELEMETRY_DISABLED: "1"
+  # Placeholder, not a secret: nothing listens on it. Prisma's config and the
+  # www env schema require a URL to exist; the www build catches the failed
+  # connection and renders the shipped pricing defaults from @repo/pricing-schema.
+  # sslmode=verify-full satisfies the production TLS assertion in @repo/database.
+  DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?sslmode=verify-full
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+      - name: Type check (www, admin, brand, ui, pricing-schema)
+        run: bun run check-types
+      - name: Pricing guard, parity report, billing cycles
+        run: bun run validate
+      - name: Unit tests with coverage threshold (bunfig.toml)
+        run: bun run test:coverage
+      - name: Admin + palette verify scripts that need no database
+        run: bun run verify:offline
+      - name: www font licences and line-height
+        run: bun run check:www
+
+      - name: Unused code (advisory)
+        continue-on-error: true
+        run: bun run --cwd apps/www knip
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: ignore
+
+  build-and-lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+
+      - name: Build www (no secrets)
+        run: bunx turbo run build --filter=www
+
+      # Accessibility and SEO assertions are "error" (block); performance,
+      # LCP, CLS, TBT and best-practices are "warn" (reported only). lighthouserc.json.
+      - name: Lighthouse CI
+        run: npx -y @lhci/cli@0.15.1 autorun
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci
+          if-no-files-found: ignore

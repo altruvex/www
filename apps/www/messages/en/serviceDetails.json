@@ -4,51 +4,62 @@
       "faq": {
         "items": [
           {
-            "a": "Start with consulting when the problem is unclear, the system already exists, or multiple build paths are possible. Start with development when the scope, architecture, and success criteria are already defined.",
-            "q": "When should we start with consulting instead of development?"
+            "a": "Start with the technical audit when the problem is unclear, the system already exists, or more than one build path is possible. Start with development when the scope, architecture and success criteria are already defined.",
+            "q": "When should we start with a technical audit instead of development?"
           },
           {
-            "a": "A technical audit can cover architecture, performance, SEO implementation, Core Web Vitals, security surface, deployment flow, dependencies, CMS setup, integrations, and code maintainability.",
-            "q": "What can a technical audit include?"
+            "q": "How much does a technical audit cost?",
+            "a": "{auditPrice}, fixed before we start. If you go on to build with us, {auditCredit} comes off the project price."
+          },
+          {
+            "a": "No. The consultation call settles whether there is a fit and what the next step is. The technical audit is a paid, fixed-scope service: we examine your system and return written findings and a roadmap.",
+            "q": "Is the technical audit the same as the consultation call?"
+          },
+          {
+            "a": "The audit covers six areas: architecture, performance (including Core Web Vitals), security, search and data (SEO implementation, structured data and analytics), releases (build pipeline, environments and backups) and ownership (repository, accounts, licences and documentation).",
+            "q": "What does a technical audit include?"
           },
           {
             "a": "Yes. The audit is designed to produce a roadmap that can be implemented by Altruvex, your internal team, or another developer — you keep the findings and recommendations either way. If you do go on to build with us, we credit {auditCredit} against the project price; if you don't, the fee stands and the roadmap is still yours.",
             "q": "Can we use the audit without hiring Altruvex for the build?"
           },
           {
-            "a": "Most focused audits take five business days after access and context are provided. Larger systems may need a longer discovery window if there are multiple codebases, integrations, or stakeholders.",
-            "q": "How long does consulting take?"
+            "a": "Five business days, counted from the day access and context arrive. A system with several codebases or integrations is scoped separately before we start.",
+            "q": "How long does the audit take?"
+          },
+          {
+            "q": "What do you need from us to start the audit?",
+            "a": "Read access to the repository, hosting and analytics, and a short note on what prompted the audit. The five business days start once both arrive. Without code access, performance and search can still be measured from the live site, but architecture, security and delivery findings need the code."
           }
         ],
-        "title": "Technical consulting questions"
+        "title": "Website technical audit questions"
       }
     },
     "audit": {
       "hero": {
-        "eyebrow": "Technical consulting & web audits",
-        "title": "Your system is already telling you",
-        "titleAccent": "what is wrong.",
-        "subtitle": "Evidence-based technical direction for engineering teams.",
-        "description": "A <strong>fixed-scope, evidence-based decision layer</strong> for teams facing a rebuild, a slow platform, or an unclear technical direction."
+        "eyebrow": "Technical audit",
+        "title": "Website technical audit:",
+        "titleAccent": "written findings in five business days.",
+        "description": "<strong>One fixed fee, taken off the build price if you build with us.</strong> We examine your existing website or web app (architecture, speed, search, security, releases and ownership) and hand you ranked findings and a roadmap any developer can follow."
       },
       "curve": {
-        "eyebrow": "01 — The case for deciding early",
-        "title": "The same decision,",
-        "titleAccent": "priced four times.",
-        "description": "A wrong architecture costs almost nothing to change while it is still a sentence, and almost everything once it is live. The audit is a flat line drawn across that curve at the only point where it is still cheap.",
+        "eyebrow": "02 — Why audit first",
+        "title": "Check the decision",
+        "titleAccent": "before you pay to build it.",
+        "description": "Changing a decision is cheap while it is on paper and expensive once the site is live. The audit is one fixed fee, paid once, before you commit to a build.",
         "claim": "{price}, before you commit to any of {range} — and it comes back off the build if you go ahead.",
-        "figureAlt": "The cost of changing the same decision rises across four moments — definition, architecture, build and live. The audit's fixed price is drawn as a flat line crossing it early, and a dashed line shows the same fee credited back to nothing if the build goes ahead.",
+        "figureAlt": "The cost of changing the same decision rises across four moments: definition, architecture, build and live. The audit's fixed fee is drawn as a flat line crossing it early, and a dashed line shows the fee credited against the build if it goes ahead.",
         "yLabel": "Cost of changing the same decision",
         "bandLabel": "Published build range · {range}",
         "auditLabel": "Technical audit · {price} · {duration} · once",
-        "creditLabel": "Credited to the build · nothing if you build it with us",
+        "creditLabel": "Credited to the build if you build with us",
         "moments": {
           "definition": "Definition",
           "architecture": "Architecture",
           "build": "Build",
           "live": "Live"
         },
-        "honesty": "Only the drawn figures are claims: {price} and the five-day window come from the pricing schema, {range} is the published matrix. The curve carries no numbers on its vertical axis, because we have not measured your system yet — and a chart that pretends otherwise is the thing this page exists to argue against.",
+        "honesty": "Only the fee, the five-day window and the build range are real figures; they come from our published prices. The curve has no numbers on its vertical axis because we have not measured your system yet.",
         "figures": {
           "price": "Fixed. The audit is quoted, never estimated.",
           "duration": "From the day access and context arrive.",
@@ -58,10 +69,10 @@
         }
       },
       "channels": {
-        "eyebrow": "02 — What the audit answers",
+        "eyebrow": "03 — What the audit answers",
         "title": "Six questions.",
         "titleAccent": "Six written answers.",
-        "description": "Every channel the audit opens ends in a question you can already ask today — and an answer, written down, that stays with you whether you build with us or not.",
+        "description": "Six areas, each with the question it answers, what we examine and what you receive in writing. The report is yours whether you build with us or not.",
         "questionLabel": "The question",
         "examinesLabel": "What we look at",
         "returnsLabel": "What comes back",
@@ -74,7 +85,7 @@
               "Current stack, hosting and deployment flow",
               "Service and data ownership boundaries",
               "Framework and platform lock-in",
-              "Integration topology"
+              "How it connects to other systems"
             ],
             "returns": [
               "A map of the system as it behaves, not as it was designed",
@@ -87,7 +98,7 @@
             "examines": [
               "Core Web Vitals measured on real devices",
               "Server response time and cache strategy",
-              "Payload weight and third-party scripts",
+              "Page weight and third-party scripts",
               "Image and font delivery"
             ],
             "returns": [
@@ -124,11 +135,11 @@
             ]
           },
           "delivery": {
-            "name": "Delivery",
-            "question": "Can the team ship without holding its breath?",
+            "name": "Releases",
+            "question": "Can your team release updates safely?",
             "examines": [
               "Build pipeline and rollback path",
-              "Environment parity",
+              "Whether test and live environments match",
               "Backup and restore, actually tested",
               "Release cadence, and who is blocked by whom"
             ],
@@ -144,7 +155,7 @@
               "Repository, domain and account control",
               "Licences and third-party terms",
               "Documentation and handover state",
-              "Key-person dependency"
+              "Whether one person holds the only knowledge"
             ],
             "returns": [
               "A written answer to who owns what",
@@ -154,106 +165,387 @@
         }
       },
       "offer": {
-        "forkEyebrow": "04 — What the fee does",
+        "forkEyebrow": "01 — Price and what you receive",
         "ifBuild": "You build it with us",
         "ifNot": "You build it elsewhere, or not at all",
-        "description": "A defined first engagement before any rebuild or scale-up. We examine the current system, isolate technical risk, and convert findings into <strong>an execution-ready roadmap.</strong>"
+        "description": "Scope and fee are fixed before we start. You receive ranked findings, the evidence for each, and <strong>a roadmap ordered by what to fix first.</strong>"
       }
+    },
+    "brief": {
+      "fit": {
+        "eyebrow": "04 — Who it is for",
+        "title": "A system that exists,",
+        "titleAccent": "and a decision that does not.",
+        "description": "The audit is for a website or application that is already built, or half-built, and a question about what to do with it next.",
+        "for": {
+          "label": "A fit when",
+          "heading": "You need an outside read before you spend.",
+          "items": [
+            "You are weighing a rebuild against repairing what you have.",
+            "The site is slow, or search does not see what you publish.",
+            "You inherited a codebase and need to know what you actually own.",
+            "You want written findings before you commit to any build range."
+          ]
+        },
+        "notFor": {
+          "label": "Not a fit when",
+          "heading": "Another route answers it faster.",
+          "items": [
+            "Nothing is built yet. Start with the initial project consultation call and a proposal.",
+            "A live site needs one urgent fix. That is change work, quoted before it starts.",
+            "You need a formal penetration test or a compliance certificate. The security channel reviews the surface; it does not certify it."
+          ]
+        }
+      },
+      "steps": {
+        "eyebrow": "05 — How the audit runs",
+        "title": "Access in,",
+        "titleAccent": "written answers out.",
+        "description": "The window is five business days, counted from the day access and context arrive.",
+        "yourPartLabel": "Your part",
+        "items": [
+          {
+            "name": "Access",
+            "what": "You grant read access and tell us what prompted the audit. The five days start when both have arrived.",
+            "yours": "Repository, hosting and analytics access, and the question you most need answered."
+          },
+          {
+            "name": "Examination",
+            "what": "We work through the six channels above against your actual system: measured, not assumed.",
+            "yours": "Answer questions as they come up. Nothing else."
+          },
+          {
+            "name": "Findings",
+            "what": "Findings ranked by risk, the evidence beside each one, and a roadmap ordered by what to fix first.",
+            "yours": "Read them before the debrief, and note what is unclear."
+          },
+          {
+            "name": "Debrief",
+            "what": "A call to walk through the findings and the roadmap, and to answer what the document cannot.",
+            "yours": "Bring the people who will act on it."
+          },
+          {
+            "name": "Decision",
+            "what": "The roadmap is yours to run with us, with your team or with another developer. If you build with us, {auditCredit} comes off the build.",
+            "yours": "Decide what happens next."
+          }
+        ]
+      },
+      "terms": {
+        "eyebrow": "06 — Terms",
+        "title": "The terms,",
+        "titleAccent": "fixed before we start.",
+        "description": "Scope, fee and window are agreed in writing before access is granted. Nothing here is estimated.",
+        "items": [
+          {
+            "label": "Fee",
+            "title": "One fixed fee, paid once.",
+            "points": [
+              "{auditPrice}, fixed before we start",
+              "Quoted, never estimated or billed by the hour",
+              "The findings and the roadmap are yours once delivered"
+            ]
+          },
+          {
+            "label": "Window",
+            "title": "Five business days.",
+            "points": [
+              "Counted from the day access and context arrive",
+              "A system with several codebases or integrations is scoped separately before we start"
+            ]
+          },
+          {
+            "label": "Credit",
+            "title": "The full audit fee is credited toward a subsequent build.",
+            "points": [
+              "{auditCredit} comes off the project price when you build with us",
+              "If you build elsewhere, or not at all, the findings and roadmap stay yours"
+            ]
+          },
+          {
+            "label": "Not the consultation call",
+            "title": "A paid service, not the free call.",
+            "points": [
+              "The 30-minute initial project consultation call is free and separate",
+              "Book the call when nothing is built yet; start with the audit when a system exists"
+            ]
+          }
+        ]
+      }
+    },
+    "close": {
+      "title": "Send the site.",
+      "titleAccent": "Get written answers in five business days.",
+      "body": "Send the site or system and what prompted the question. If the audit is the wrong tool, the consultation call will say so."
     }
   },
   "development": {
-    "description": "We build custom dashboards, portals, and operational flows that <strong>remove human friction from delivery</strong> so your team can focus on growth, not administrative overhead.",
+    "description": "Custom website and web application development on Next.js: <strong>dashboards, client portals and operational workflows</strong> built around how your team works, in a typed codebase you own.",
     "studio": {
-      "title": "Engineered to outlast",
-      "titleAccent": "the brief.",
+      "title": "Custom website and",
+      "titleAccent": "web app development.",
       "hero": {
-        "cardLabel": "Custom development",
-        "cardText": "Dashboards, portals and operational flows — built for clarity, scale and a clean handover."
+        "cardLabel": "Next.js · Right-to-left included",
+        "cardText": "Websites, client portals, dashboards and integrations, handed over with the code, schema and documentation."
       },
       "statement": {
-        "eyebrow": "About the work",
-        "text": "We design the system before we write it — so the code that ships is the code the next engineer can read, change and own."
-      },
-      "words": {
-        "caption": "Focused scope. Measured execution.",
-        "items": [
-          "Architect",
-          "Build",
-          "Hand over",
-          "Own"
-        ]
-      },
-      "tiles": {
-        "eyebrow": "What we build",
-        "title": "Systems, not pages."
+        "eyebrow": "How we build",
+        "text": "We plan the data, roles and screens before writing code, so the next developer, yours or ours, can read it, change it and own it."
       },
       "facts": {
-        "title": "Key facts",
-        "description": "What a build with us leaves behind.",
+        "title": "What every build is built to",
+        "description": "Published targets you can check yourself after launch.",
         "speed": {
-          "label": "Measured on altruvex.com",
-          "text": "Mobile time to interactive — the build standard we ship to you."
+          "label": "Mobile speed target",
+          "value": "< 2.5s",
+          "text": "Largest Contentful Paint on mobile — the target we build every page to, as published on our standards page."
         },
         "ownership": {
           "label": "Ownership",
           "value": "100%",
-          "text": "Of the custom source code, schema and documentation — in your repository."
+          "text": "Of the custom source code, schema and documentation, in your repository and yours at the final payment."
         },
         "languages": {
           "label": "Languages",
           "value": "2",
-          "text": "Arabic and English in one codebase and one release — never a translated afterthought."
+          "text": "Every language in one codebase and one release — never a translated afterthought."
         }
       }
+    },
+    "brief": {
+      "builds": {
+        "eyebrow": "What each one includes",
+        "title": "Four kinds of system,",
+        "titleAccent": "built the same way.",
+        "description": "Each one is scoped from your requirements and built on Next.js, in a typed codebase that ends up in your repository.",
+        "items": [
+          {
+            "label": "Websites",
+            "title": "Sites that explain what you sell.",
+            "points": [
+              "Every language in one codebase, with right-to-left done properly",
+              "Pages and posts you edit yourself, when the scope includes a CMS",
+              "Speed, accessibility and search targets written into the scope"
+            ]
+          },
+          {
+            "label": "Client portals",
+            "title": "A signed-in place for your customers.",
+            "points": [
+              "Customer accounts with roles and permissions",
+              "Records, documents and requests in one place instead of email threads",
+              "Built around the steps your customers already take with you"
+            ]
+          },
+          {
+            "label": "Dashboards and internal tools",
+            "title": "Your operation, without the spreadsheet.",
+            "points": [
+              "Workflows modelled on how your team actually operates",
+              "Staff accounts with roles, so each person sees what their work needs",
+              "Your data in a schema you own, not locked inside a platform"
+            ]
+          },
+          {
+            "label": "Integrations",
+            "title": "Connected to what you already use.",
+            "points": [
+              "Payment gateways, CRMs, analytics and third-party APIs",
+              "Local payment and logistics providers, scoped in discovery",
+              "Each integration reviewed during scoping before it is priced"
+            ]
+          }
+        ]
+      },
+      "fit": {
+        "eyebrow": "Who it is for",
+        "title": "For work a template",
+        "titleAccent": "cannot hold.",
+        "description": "Custom development makes sense when your workflows, roles or data are the product. When they are not, a template is the cheaper path.",
+        "for": {
+          "label": "A fit when",
+          "heading": "Your rules are what the system has to carry.",
+          "items": [
+            "Your operation runs on spreadsheets, email and manual steps a system could carry.",
+            "You need customer or staff accounts, roles and workflows of your own.",
+            "You want to own the code, the schema and the accounts instead of renting a platform.",
+            "Every language, right-to-left included, has to work properly in one release."
+          ]
+        },
+        "notFor": {
+          "label": "Not a fit when",
+          "heading": "A simpler path already fits.",
+          "items": [
+            "A straightforward store or blog that Shopify or WordPress already handles well.",
+            "A system that already exists and the right path is unclear. Start with the technical audit.",
+            "Open-ended hourly work with no written scope. Every build starts with a proposal."
+          ]
+        }
+      },
+      "steps": {
+        "eyebrow": "How it runs",
+        "title": "Five phases,",
+        "titleAccent": "each one signed off.",
+        "description": "Delivery runs {deliveryWeeksMin}–{deliveryWeeksMax} weeks depending on scope. The phase lengths below come from that window; your proposal fixes the dates.",
+        "yourPartLabel": "Your part",
+        "items": [
+          {
+            "phase": "discovery",
+            "name": "Discovery",
+            "what": "The initial project consultation call covers the goal, the constraints and what exists today. The proposal that follows sets scope, price and timeline.",
+            "yours": "Share the context, and who will use the system."
+          },
+          {
+            "phase": "wireframe",
+            "name": "Wireframe",
+            "what": "The sitemap, page structure and key flows. For an application, the roles and what each one can do.",
+            "yours": "Approve the structure."
+          },
+          {
+            "phase": "design",
+            "name": "Design",
+            "what": "The interface on that structure, with {revisionRounds} included revision rounds.",
+            "yours": "Approve the design. Development starts after your approval."
+          },
+          {
+            "phase": "development",
+            "name": "Development",
+            "what": "Built on a live preview link you can open at any time. The milestone payment falls at the point named in your proposal.",
+            "yours": "Review the preview and send feedback as you go."
+          },
+          {
+            "phase": "launch",
+            "name": "Launch",
+            "what": "Hosting set up, a production deploy, and the source code and documentation handed over.",
+            "yours": "Approve the launch. The final payment is due before production launch, and ownership passes to you at that payment."
+          }
+        ]
+      },
+      "terms": {
+        "eyebrow": "What you receive",
+        "title": "What you get,",
+        "titleAccent": "and what moves the price.",
+        "items": [
+          {
+            "label": "Handover",
+            "title": "Everything needed to run it without us.",
+            "points": [
+              "The source code, in your repository",
+              "The database schema and its migrations",
+              "An environment and secrets guide",
+              "Deployment documentation"
+            ]
+          },
+          {
+            "label": "Price and time",
+            "title": "Set by scope, complexity and readiness.",
+            "points": [
+              "The pages, screens and features in scope",
+              "Complexity: roles, workflows, data and integrations",
+              "Whether content and brand assets are ready",
+              "The timeline you need: an urgent date moves the price"
+            ]
+          },
+          {
+            "label": "What you provide",
+            "title": "Access, content and one decision-maker.",
+            "points": [
+              "Access to the systems the build has to connect to",
+              "Content and brand assets, or a decision on who will produce them",
+              "Someone who can answer questions and approve each phase",
+              "Domain and hosting accounts in your name, or set up by us and passed to you"
+            ]
+          },
+          {
+            "label": "After launch",
+            "title": "Covered, then yours to decide.",
+            "points": [
+              "A {warrantyDays}-day warranty covering critical fixes",
+              "Then a maintenance plan, changes quoted as needed, or your own team",
+              "Another developer can take over; the handover is written for that"
+            ]
+          }
+        ]
+      }
+    },
+    "faq": {
+      "title": "Custom web development questions",
+      "items": [
+        {
+          "q": "Why custom development instead of a template?",
+          "a": "Templates suit specific cases, such as Shopify for a straightforward store or WordPress for a blog. When a business has its own workflows, local payment methods or roles that do not fit a plugin, the template becomes the limit. A custom build is designed around those rules and stays yours."
+        },
+        {
+          "q": "How long does a custom build take?",
+          "a": "Delivery runs {deliveryWeeksMin}–{deliveryWeeksMax} weeks depending on scope and complexity. The estimator gives an indicative range, and your proposal sets the delivery window once the scope is agreed."
+        },
+        {
+          "q": "What do you build on?",
+          "a": "Next.js, in a typed codebase, deployed on Vercel or on your own infrastructure. Every language lives in one codebase with right-to-left layout built in."
+        },
+        {
+          "q": "Do we own the code?",
+          "a": "Yes. The source code, database schema and documentation are handed over in your repository, and code, designs and accounts pass to you at the final payment. There is no licence fee and no lock-in."
+        },
+        {
+          "q": "How is the price set and paid?",
+          "a": "The published range depends on project type and complexity, and the price is fixed in the proposal. Payment is split {paymentStart} to start, {paymentMilestone} at {milestoneTrigger}, and {paymentFinal} before production launch."
+        },
+        {
+          "q": "What happens after launch?",
+          "a": "A {warrantyDays}-day warranty covers critical fixes. After that, you choose a maintenance plan, pay for changes as needed, or hand the system to your own team with the documentation it needs."
+        }
+      ]
+    },
+    "close": {
+      "title": "Describe the system",
+      "titleAccent": "you need built.",
+      "body": "Tell us what it has to do, who uses it and what it replaces. We reply with the next step."
     }
   },
   "maintenance": {
-    "description": "<strong>Dependable, proactive support</strong> for live systems that need regular updates, monitoring, and a technical partner who understands the codebase.",
+    "description": "<strong>Maintenance plans for live websites, whether we built them or not</strong>: monitoring, backups, security updates and a set number of edit requests each month, billed monthly or annually.",
     "pricing": {
-      "eyebrow": "Maintenance Plans",
+      "eyebrow": "Maintenance plans",
       "notes": {
         "addons": {
-          "label": "Third-Party Tools",
-          "value": "Optional Altruvex tools or subscriptions can be added when useful but are not bundled into every maintenance plan by default."
+          "label": "Extra tools",
+          "value": "Third-party tools or subscriptions can be added when a site needs them. They are not part of any plan and are billed separately."
         },
         "infra": {
-          "label": "Not Covered",
-          "value": "Domain renewals, hosting renewals, SMS, email credits, paid SaaS, and third-party subscriptions are billed separately from the monthly retainer."
+          "label": "Not covered",
+          "value": "Domain and hosting renewals, SMS and email credits, paid software and third-party subscriptions are billed separately from the plan."
         },
         "scope": {
-          "label": "Scope Limit",
+          "label": "Scope limit",
           "value": "Maintenance plans cover system stability and small updates. Major features, rebuilds, or new page systems are scoped and priced separately."
         }
       }
     },
-    "title": "Maintenance & Support",
-    "titleItalic": "built for reliability.",
+    "title": "Website maintenance & support",
+    "titleItalic": "that keeps your site secure and current.",
     "hero": {
-      "eyebrow": "Maintenance retainer",
+      "eyebrow": "Monthly maintenance",
       "month": {
         "eyebrow": "What a month looks like",
         "title": "Most of it happens",
         "titleAccent": "without you asking.",
-        "description": "One ordinary month on the {plan} plan: what we do on a schedule, what we do if something breaks, and the one thing you do — only when you want to.",
+        "description": "One ordinary month on the {plan} plan: what we look after, and the one thing you do — only when you want to.",
         "ours": {
           "label": "Our part",
           "heading": "Everything that keeps the site up.",
           "items": {
-            "daily": {
-              "when": "Every day",
-              "what": "We watch your site and check last night's backup."
+            "uptime": {
+              "label": "Uptime",
+              "what": "We watch that your site stays up."
             },
-            "weekly": {
-              "when": "Every week",
-              "what": "We give the whole site a check-up."
+            "backups": {
+              "label": "Backups",
+              "what": "We keep a recent backup of the site."
             },
-            "monthly": {
-              "when": "Every month",
-              "what": "We write down how the site performed, and how safe it is."
-            },
-            "incident": {
-              "when": "If something breaks",
-              "what": "It goes to the front of our queue."
+            "updates": {
+              "label": "Updates",
+              "what": "We apply security and dependency updates."
             }
           }
         },
@@ -261,16 +553,16 @@
           "label": "Your part",
           "heading": "One thing, and only when you want.",
           "request": "Send us a change when you need one.",
-          "requestNote": "Up to {n} a month — new text, a new image, a small edit. Each goes ahead of other work.",
-          "quiet": "The rest of the month, there is nothing for you to remember. If you spot something wrong before we do, tell us — that is the only other thing we will ever ask."
+          "requestNote": "Up to {n} a month: new text, a new image, a small edit. On this plan they are handled with priority.",
+          "quiet": "The rest of the month there is nothing for you to remember. If you spot something wrong before we do, tell us."
         },
         "honesty": "An example month drawn from the plan's terms — not a record of a real client's month."
       }
     },
     "plans": {
-      "title": "Scope is counted in requests —",
-      "titleAccent": "never in hours.",
-      "description": "One request is a content or image swap, or a minor section edit. Both sides can count it — nobody argues over a stopwatch.",
+      "title": "Three plans,",
+      "titleAccent": "counted in edit requests.",
+      "description": "One request is a content or image swap, or a small edit to one section, so both sides can count it. <strong>Requests beyond the allowance are billed by the hour at the rate shown.</strong>",
       "requests": "{count, plural, one {{n} edit request a month} other {{n} edit requests a month}}",
       "outside": "Outside every plan",
       "cta": "Start with {name}",
@@ -285,11 +577,8 @@
         "bestFor": "Best for",
         "rows": {
           "requests": "Edit requests a month",
-          "cadence": "How often we check",
           "monitoring": "Monitoring and backups",
-          "reporting": "Reports",
-          "support": "Support",
-          "turnaround": "Turnaround",
+          "turnaround": "Request priority",
           "portal": "Client portal",
           "overage": "Extra requests"
         },
@@ -300,34 +589,110 @@
           "quoted": "Quoted with you"
         }
       }
+    },
+    "brief": {
+      "fit": {
+        "eyebrow": "Who it is for",
+        "title": "For a site that is live,",
+        "titleAccent": "and has to stay that way.",
+        "description": "Plans cover sites we built and sites we did not. For a site we did not build, we check its stack and current state before recommending a plan.",
+        "for": {
+          "label": "A fit when",
+          "heading": "The site works, and has to keep working.",
+          "items": [
+            "A live site or application needs monitoring, backups and security updates.",
+            "You make small, steady changes: new text, a new image, a section edit.",
+            "There is no engineer on your team who knows the codebase.",
+            "We built your site and its warranty has ended."
+          ]
+        },
+        "notFor": {
+          "label": "Not a fit when",
+          "heading": "The work is a project, not upkeep.",
+          "items": [
+            "New features, rebuilds or new page systems. Those are scoped and priced separately.",
+            "Domain, hosting, email credits and paid subscriptions. Those are billed outside the plan.",
+            "A site that is not live yet. A plan starts once there is something to keep running."
+          ]
+        }
+      },
+      "steps": {
+        "eyebrow": "How a plan starts",
+        "title": "We look first,",
+        "titleAccent": "then recommend.",
+        "description": "No plan is sold before we have seen the site it covers.",
+        "yourPartLabel": "Your part",
+        "items": [
+          {
+            "name": "Send the site",
+            "what": "Tell us the address, what it runs on and who built it.",
+            "yours": "The site address and whatever you know about how it was built."
+          },
+          {
+            "name": "Check",
+            "what": "We check its stack and current state before anything is agreed.",
+            "yours": "Access to the code and hosting, if you have it."
+          },
+          {
+            "name": "Recommendation",
+            "what": "We recommend the plan that fits the site, not the largest one, and name anything that falls outside every plan.",
+            "yours": "Choose the plan and monthly or annual billing."
+          },
+          {
+            "name": "First month",
+            "what": "Monitoring, backups and updates begin, and your monthly allowance of edit requests starts.",
+            "yours": "Send a change when you need one."
+          }
+        ]
+      }
+    },
+    "faq": {
+      "title": "Website maintenance questions",
+      "items": [
+        {
+          "q": "How much does website maintenance cost?",
+          "a": "Essential is {maintenanceEssential} a month and Professional is {maintenanceProfessional} a month. Enterprise is priced with you, for several systems or one that cannot go down. Requests beyond a plan's allowance are billed at {revisionRate} an hour. Domain, hosting and third-party subscriptions are billed separately."
+        },
+        {
+          "q": "What counts as one edit request?",
+          "a": "A content or image swap, or a minor edit to one section. New features, rebuilds and new page systems are outside every plan and are scoped and priced separately."
+        },
+        {
+          "q": "Do unused edit requests carry over?",
+          "a": "No. Edit requests reset every month, on monthly and annual billing alike."
+        },
+        {
+          "q": "How does annual billing work?",
+          "a": "You pay for the year up front, for less than twelve monthly payments: Essential is {maintenanceEssential} a month or {maintenanceEssentialAnnual} a year, and Professional is {maintenanceProfessional} a month or {maintenanceProfessionalAnnual} a year. Edit requests still reset monthly."
+        },
+        {
+          "q": "Can you maintain a site you did not build?",
+          "a": "Yes. We check its stack and current state first, then recommend the plan that fits it. If the site needs a deeper look before anyone maintains it, the technical audit is the place to start."
+        },
+        {
+          "q": "What is not included in a plan?",
+          "a": "Domain and hosting renewals, SMS and email credits, paid software and third-party subscriptions are billed separately. Major features, rebuilds and new page systems are scoped as projects."
+        }
+      ]
     }
   },
   "webDesign": {
     "lab": {
       "hero": {
-        "eyebrow": "Interface design",
-        "title": "Design you",
-        "titleAccent": "can test.",
-        "description": "We translate your offer into sharper hierarchy, clearer messaging and one direct path — and every decision behind it is a rule you can check, not a taste you have to trust.",
-        "card": "Six disciplines, one system — every screen built by rule, not by taste.",
-        "cardLink": "See the six"
+        "eyebrow": "Website & interface design",
+        "title": "Website and interface design,",
+        "titleAccent": "built on rules you can check.",
+        "description": "Custom website design: the sitemap, page structure, responsive screens and a design system your team can extend. <strong>Every page is designed around one action</strong>, and you approve the structure before any visual work starts.",
+        "card": "Structure first, then screens, and you approve each before the next."
       },
       "rows": {
-        "eyebrow": "What the work covers",
-        "title": "Six disciplines,",
-        "titleAccent": "one system.",
+        "eyebrow": "How we design",
+        "title": "Four rules",
+        "titleAccent": "every page is designed by.",
         "items": [
           {
             "title": "One screen, one job.",
-            "body": "Every page is built around the one action it exists for. Everything else on it either supports that action or leaves."
-          },
-          {
-            "title": "The flow comes before the frame.",
-            "body": "We map how a buyer moves through the site — where they arrive, what they need, where they decide — before a single screen is drawn."
-          },
-          {
-            "title": "Hierarchy you can measure.",
-            "body": "Size, weight and contrast follow one scale, so the most important thing on a screen wins first — by rule, not by taste."
+            "body": "Every page is built around the one action it exists for, mapped from where a visitor arrives to where they decide. Everything else on it either supports that action or leaves."
           },
           {
             "title": "Your identity, as a system.",
@@ -339,10 +704,149 @@
           },
           {
             "title": "Readable by everyone.",
-            "body": "WCAG 2.1 AA contrast and structure, checked in Arabic and in English — a requirement of the design, not a fix after launch."
+            "body": "WCAG 2.1 AA contrast and structure, checked in every language — a requirement of the design, not a fix after launch."
           }
         ]
       }
+    },
+    "brief": {
+      "fit": {
+        "eyebrow": "Who it is for",
+        "title": "Built for a decision,",
+        "titleAccent": "not a mood board.",
+        "description": "Interface design starts from what a page or screen has to make someone do. If you know that, or want help deciding it, this is the service.",
+        "for": {
+          "label": "A fit when",
+          "heading": "The structure has to change, not only the look.",
+          "items": [
+            "You are launching a site, or replacing one that no longer explains what you sell.",
+            "A dashboard or portal works, but the people using it get lost.",
+            "Every language has to read as an equal, not one translated from another.",
+            "You want the design handed over as rules your team can extend, not a folder of pictures."
+          ]
+        },
+        "notFor": {
+          "label": "Not a fit when",
+          "heading": "The answer is a theme, or a promise.",
+          "items": [
+            "You need an existing theme restyled. We design from your requirements, never from a recycled template.",
+            "You want the visual style settled before the structure. Wireframes come first, on purpose.",
+            "The brief is a guarantee of traffic or sales. We design for clarity and measure speed; we do not promise outcomes."
+          ]
+        }
+      },
+      "steps": {
+        "eyebrow": "How it runs",
+        "title": "Structure first,",
+        "titleAccent": "then the screens.",
+        "description": "Design runs as the first three phases of the project process. Each one ends with something you approve before the next one starts.",
+        "yourPartLabel": "Your part",
+        "items": [
+          {
+            "phase": "discovery",
+            "name": "Discovery",
+            "what": "The initial project consultation call covers the goal, the audience and what exists today. The proposal that follows fixes scope, price and timeline.",
+            "yours": "The goal, your constraints and any brand assets you already use."
+          },
+          {
+            "phase": "wireframe",
+            "name": "Wireframe",
+            "what": "The sitemap, page structure and key flows: where a visitor arrives, what they need, and where they decide.",
+            "yours": "Approve the structure. No visual work starts before you do."
+          },
+          {
+            "phase": "design",
+            "name": "Design",
+            "what": "The full interface on that structure, with responsive layouts and {revisionRounds} included revision rounds.",
+            "yours": "Review the screens and approve the design. Development starts after your approval."
+          },
+          {
+            "name": "Handover",
+            "what": "The approved screens and the design system behind them go to the build as the reference it is checked against.",
+            "yours": "Nothing new. Questions about the design come back to the people who drew it."
+          }
+        ]
+      },
+      "terms": {
+        "eyebrow": "What you receive",
+        "title": "What you get,",
+        "titleAccent": "and what moves the price.",
+        "items": [
+          {
+            "label": "Deliverables",
+            "title": "Screens, and the system behind them.",
+            "points": [
+              "The approved sitemap, page structure and key flows",
+              "Responsive interface design for every screen in scope",
+              "A working design system: colour, type, spacing and components as rules",
+              "Designs that pass to you with the code at the final payment"
+            ]
+          },
+          {
+            "label": "Price and time",
+            "title": "Set by the screens and flows involved.",
+            "points": [
+              "How many distinct screens and flows the scope holds",
+              "Whether brand assets and content are ready, or still to be made",
+              "How quickly each phase is reviewed, since the next one waits for your approval",
+              "Revision work beyond the {revisionRounds} included revision rounds, billed at {revisionRate} an hour"
+            ]
+          },
+          {
+            "label": "What you provide",
+            "title": "Context, assets and decisions.",
+            "points": [
+              "The goal, and the one action each page exists for",
+              "Your logo, colours and any brand rules you already use",
+              "Your copy and images, or a decision on who will produce them",
+              "One person who can approve each phase"
+            ]
+          },
+          {
+            "label": "After launch",
+            "title": "The system stays usable.",
+            "points": [
+              "New pages are built from the same rules, not redrawn from scratch",
+              "When we build it, a {warrantyDays}-day warranty covers critical fixes after launch",
+              "After that, changes run on a maintenance plan, are quoted one by one, or go to your own team"
+            ]
+          }
+        ]
+      }
+    },
+    "faq": {
+      "title": "Website and interface design questions",
+      "items": [
+        {
+          "q": "What does website and interface design include?",
+          "a": "The sitemap and page structure, the key user flows, responsive designs for every screen in scope, and a working design system of colour, type, spacing and components. The designs pass to you with the code at the final payment."
+        },
+        {
+          "q": "How much does website design cost?",
+          "a": "Design is part of every website build, which starts from {minimumEngagement} and is fixed in your proposal. Design ordered on its own, without our build, is scoped per project."
+        },
+        {
+          "q": "How long does the design phase take?",
+          "a": "Wireframe and design are short, fixed phases of the project process, and their lengths are published on the Process page. Your proposal sets the dates. The largest variable is review time, because each phase waits for your approval."
+        },
+        {
+          "q": "How many revision rounds are included?",
+          "a": "{revisionRounds} included revision rounds, written into your proposal before work starts. Revision work beyond them is billed at {revisionRate} an hour, and you approve the figure before that work begins."
+        },
+        {
+          "q": "Do you design for right-to-left languages?",
+          "a": "Yes. Right-to-left languages are laid out as their own design, not mirrored after the fact, and every language is checked for contrast and structure against WCAG 2.1 AA."
+        },
+        {
+          "q": "Can you redesign an existing website?",
+          "a": "Yes. We start from what the current site has to do and where it falls short, rebuild the structure, then design the screens. If the problem may be technical rather than visual, the technical audit answers that first."
+        }
+      ]
+    },
+    "close": {
+      "title": "Start with the one action",
+      "titleAccent": "your site exists for.",
+      "body": "Describe what the site or product has to make people do, and what exists today. We reply with the next step."
     }
   }
 }

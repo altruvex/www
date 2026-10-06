@@ -4,6 +4,8 @@ export interface ArticleFrontmatter {
   title: string;
   excerpt: string;
   date: string;
+  /** Last substantive revision (YYYY-MM-DD); absent when never revised. */
+  updated?: string;
   readTimeMinutes: number;
   author: string;
   tags: string[];

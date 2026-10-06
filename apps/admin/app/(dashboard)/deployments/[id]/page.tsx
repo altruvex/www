@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, Siren } from "lucide-react";
-
 import { Button } from "@repo/ui";
 import { prisma } from "@repo/database";
-
 import { DetailLayout, MetaList } from "@/components/os/detail-layout";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { EmptyInline } from "@/components/os/empty-state";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { AlertBar } from "@/components/os/error-state";
+import { AttachPicker } from "@/components/os/attach-picker";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
@@ -43,6 +42,7 @@ export default async function DeploymentPage({
   if (denied) return denied;
   const role = await currentRole();
   const canDelete = can(role, "delete", "project");
+  const canEditProduct = can(role, "edit", "project");
   const canOpenIncident =
     can(role, "create", "incident") && roleCanOpen(role, "/incidents");
 
@@ -50,12 +50,19 @@ export default async function DeploymentPage({
   const deployment = await getDeployment(id);
   if (!deployment) notFound();
 
-  const [logs, repo] = await Promise.all([
+  const [logs, repo, clientProjects] = await Promise.all([
     listLogs({ deploymentId: deployment.id, pageSize: 20 }),
     prisma.product.findUnique({
       where: { id: deployment.productId },
       select: { repositoryUrl: true },
     }),
+    canEditProduct && !deployment.product.project
+      ? prisma.project.findMany({
+          where: { clientId: deployment.product.client.id },
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const { product } = deployment;
@@ -163,6 +170,19 @@ export default async function DeploymentPage({
                       <EntityLink type="project" id={product.project.id}>
                         {product.project.name}
                       </EntityLink>
+                    ) : clientProjects.length > 0 ? (
+                      <AttachPicker
+                        label="Link a project"
+                        options={clientProjects.map((p) => ({ value: p.id, label: p.name }))}
+                        request={{
+                          url: "/api/admin/products",
+                          method: "PATCH",
+                          body: { action: "update", id: product.id, patch: {} },
+                          field: "patch.projectId",
+                        }}
+                        successMessage={`${product.name} linked to the project.`}
+                        searchPlaceholder="Search projects"
+                      />
                     ) : (
                       <span className="text-muted-foreground">Not linked</span>
                     ),
@@ -320,11 +340,21 @@ export default async function DeploymentPage({
 
         <Panel title="Incidents" flush>
           {deployment.incidents.length === 0 ? (
-            <EmptyInline>
+            <EmptyInline
+              action={
+                canOpenIncident ? (
+                  <PanelLink
+                    href={`/incidents?new=incident&product=${product.id}&deployment=${deployment.id}`}
+                  >
+                    Raise an incident
+                  </PanelLink>
+                ) : undefined
+              }
+            >
               No incident names this deployment. When one is raised against it, it is listed here.
             </EmptyInline>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border-subtle">
               {deployment.incidents.map((incident) => (
                 <li key={incident.id}>
                   <Link

@@ -40,7 +40,7 @@ export function ErrorState({
               <summary className="telemetry cursor-pointer text-subtle-foreground hover:text-foreground">
                 Technical detail
               </summary>
-              <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-surface p-2 font-mono text-micro text-muted-foreground">
+              <pre className="mt-2 overflow-x-auto rounded-ctl border border-border-subtle bg-surface p-2 font-mono text-micro text-muted-foreground">
                 {detail}
               </pre>
             </details>
@@ -73,7 +73,7 @@ export function AlertBar({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-start gap-x-3 gap-y-2 rounded-md border px-3 py-2 text-base",
+        "flex flex-wrap items-start gap-x-3 gap-y-2 rounded-panel-sm border px-3 py-2 text-base",
         tones[tone],
       )}
       role="status"

@@ -1,5 +1,9 @@
+import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { FaqSection } from "@/components/sections/faq-section";
-import { CommercialTerms } from "@/components/sections/pricing-model/commercial-terms";
+import {
+  BuildInclusions,
+  CommercialTerms,
+} from "@/components/sections/pricing-model/commercial-terms";
 import {
   CostSplit,
   type CostSplitData,
@@ -14,6 +18,7 @@ import { SECTION_TITLE } from "@/components/sections/pricing-model/type";
 import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Container } from "@/components/shared/container";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { generateRouteMetadata, type RouteMetaKey } from "@/lib/metadata";
 import {
   buildFaqPageSchemas,
@@ -23,7 +28,6 @@ import {
 import { getPublicPricing } from "@/lib/server/pricing";
 import {
   estimateSpanLabels,
-  formatRange,
   paymentScheduleView,
   pricingDriverViews,
   pricingTokens,
@@ -32,11 +36,9 @@ import {
   termsView,
   workedExampleView,
   type Locale,
-  type ResolvedPricing,
   type ServiceInvestmentRowView,
 } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
-import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 import PricingHero from "./page-client";
 
@@ -49,21 +51,6 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   return generateRouteMetadata(locale, metaKey, pathSuffix);
-}
-
-function serviceRange(
-  pricing: ResolvedPricing,
-  serviceId: keyof ResolvedPricing["services"],
-  locale: Locale,
-) {
-  const cells = Object.values(pricing.services[serviceId].price);
-  return formatRange(
-    {
-      min: Math.min(...cells.map((cell) => cell.min)),
-      max: Math.max(...cells.map((cell) => cell.max)),
-    },
-    locale,
-  );
 }
 
 function offerEntries(
@@ -86,7 +73,6 @@ function ModelSection({
   index,
   title,
   lead,
-  ground = "plain",
   opening = "none",
   children,
 }: {
@@ -94,7 +80,6 @@ function ModelSection({
   index: number;
   title: string;
   lead: string;
-  ground?: "plain" | "band";
   opening?: "none" | "rule";
   children: ReactNode;
 }) {
@@ -103,10 +88,7 @@ function ModelSection({
     <section
       id={id}
       aria-labelledby={headingId}
-      className={cn(
-        "scroll-mt-24 pt-(--section-y-top) pb-(--section-y-bottom)",
-        ground === "band" && "bg-surface",
-      )}
+      className="scroll-mt-24 pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         {opening === "rule" ? (
@@ -118,6 +100,8 @@ function ModelSection({
     </section>
   );
 }
+
+const PRICING_FAQ_KEYS = ["01", "02", "03", "04", "05", "06", "07", "08"];
 
 const PRICING_RHYTHM =
   "[--section-y-top:clamp(9rem,min(20vh,14vw),15rem)] [--section-y-bottom:clamp(9rem,min(20vh,14vw),15rem)] [--heading-gap:clamp(5.5rem,min(12vh,8.4vw),9.5rem)] [--section-block:clamp(7.5rem,min(16vh,11.2vw),11.5rem)] max-[759px]:[--section-y-top:6.5rem] max-[759px]:[--section-y-bottom:6.5rem] max-[759px]:[--heading-gap:3.5rem] max-[759px]:[--section-block:5rem]";
@@ -131,6 +115,7 @@ export default async function PricingPage({
   const lc = locale as Locale;
   const t = await getTranslations({ locale, namespace: "pricing" });
   const tm = await getTranslations({ locale, namespace: "pricingModel" });
+  const tCta = await getTranslations({ locale, namespace: "commercial.ctas" });
   const faqEntries = Object.values(
     t.raw("faq.questions") as Record<string, { a: string; q: string }>,
   ).map((entry) => ({
@@ -141,7 +126,6 @@ export default async function PricingPage({
   const pricing = await getPublicPricing();
   const rows = serviceInvestmentViews(lc, pricing);
   const matrix = rows.find((row) => row.id === "development")?.matrix ?? null;
-  const plans = rows.find((row) => row.id === "maintenance")?.plans ?? [];
   const example = workedExampleView(lc, pricing);
   const span = estimateSpanLabels(lc, pricing);
   const tokens = pricingTokens(lc, pricing);
@@ -200,13 +184,6 @@ export default async function PricingPage({
   const split: CostSplitData = {
     drivers: pricingDriverViews(lc),
     openingRange: span.priceLabel,
-    floorLabel: example.floorLabel,
-    serviceRanges:
-      matrix?.rows.map((row) => ({
-        serviceId: row.serviceId,
-        name: row.name,
-        range: serviceRange(pricing, row.serviceId, lc),
-      })) ?? [],
     exampleService: {
       name: exampleRow?.name ?? example.serviceLabel,
       cells:
@@ -215,7 +192,6 @@ export default async function PricingPage({
           price: cell.priceLabel,
         })) ?? [],
     },
-    plans,
   };
 
   return (
@@ -233,9 +209,49 @@ export default async function PricingPage({
       <div className={PRICING_RHYTHM}>
       <PricingHero floorLabel={example.floorLabel} />
       <ModelSection
-        id="how"
+        id="investment"
         index={1}
-        ground="band"
+        opening="rule"
+        title={tm("sections.invest.title")}
+        lead={tm("sections.invest.lead")}
+      >
+        <ServiceInvestmentRegister rows={rows} />
+        <CtaButtonGroup
+          className="mt-(--heading-gap)"
+          primary={{
+            href: getCommercialCta("projectRange").href,
+            label: tCta("projectRange"),
+          }}
+          secondary={{
+            href: getCommercialCta("technicalCall").href,
+            label: tCta("technicalCall"),
+          }}
+        />
+      </ModelSection>
+      <ModelSection
+        id="includes"
+        index={2}
+        title={tm("sections.includes.title")}
+        lead={tm("sections.includes.lead")}
+      >
+        <BuildInclusions locale={locale} />
+      </ModelSection>
+      <ModelSection
+        id="terms"
+        index={3}
+        title={tm("sections.terms.title")}
+        lead={tm("sections.terms.lead")}
+      >
+        <CommercialTerms
+          locale={locale}
+          schedule={paymentScheduleView(lc, pricing)}
+          terms={termsView(lc, pricing)}
+          warrantyDays={tokens.warrantyDays ?? ""}
+        />
+      </ModelSection>
+      <ModelSection
+        id="how"
+        index={4}
         title={tm("sections.how.title")}
         lead={tm("sections.how.lead")}
       >
@@ -253,37 +269,18 @@ export default async function PricingPage({
       </ModelSection>
       <ModelSection
         id="cost"
-        index={2}
+        index={5}
         title={tm("sections.cost.title")}
         lead={tm("sections.cost.lead")}
       >
         <CostSplit locale={locale} data={split} />
       </ModelSection>
-      <ModelSection
-        id="investment"
-        index={3}
-        opening="rule"
-        title={tm("sections.invest.title")}
-        lead={tm("sections.invest.lead")}
-      >
-        <ServiceInvestmentRegister rows={rows} />
-      </ModelSection>
-      <ModelSection
-        id="terms"
-        index={4}
-        ground="band"
-        title={tm("sections.terms.title")}
-        lead={tm("sections.terms.lead")}
-      >
-        <CommercialTerms
-          locale={locale}
-          schedule={paymentScheduleView(lc, pricing)}
-          terms={termsView(lc, pricing)}
-          warrantyDays={tokens.warrantyDays ?? ""}
-        />
-      </ModelSection>
       <div id="faq" className="scroll-mt-24">
-        <FaqSection namespace="pricing.faq" titleClassName={SECTION_TITLE} />
+        <FaqSection
+          namespace="pricing.faq"
+          questionKeys={PRICING_FAQ_KEYS}
+          titleClassName={SECTION_TITLE}
+        />
       </div>
       <SectionEndCta
         title={tm("close.title")}

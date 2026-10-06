@@ -10,6 +10,8 @@ import { AlertBar } from "@/components/os/error-state";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar } from "@repo/ui";
 import { gateRoute } from "@/lib/page-gate";
+import { currentRole } from "@/lib/authorize";
+import { roleCanOpen } from "@/lib/action-center";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
 import { dateTime, money, phone as fmtPhone, when } from "@/lib/format";
@@ -28,6 +30,7 @@ export default async function ThreadPage({
   if (denied) return denied;
 
   const { clientId } = await params;
+  const role = await currentRole();
 
   const client = await prisma.client.findUnique({
     where: { id: clientId },
@@ -47,6 +50,18 @@ export default async function ThreadPage({
     lastInbound && (!lastOutbound || lastOutbound.createdAt < lastInbound.createdAt),
   );
   const failed = client.messages.filter((m) => m.status === "FAILED");
+  // Failed sends are resent from the record they belong to; when they all belong to one, go there.
+  const failedHomes = new Set(
+    failed.map((m) =>
+      m.relatedProposalId && roleCanOpen(role, "/proposals")
+        ? `/proposals/${m.relatedProposalId}`
+        : m.relatedContractId && roleCanOpen(role, "/contracts")
+          ? `/contracts/${m.relatedContractId}`
+          : `/clients/${client.id}#conversations`,
+    ),
+  );
+  const resendHref =
+    failedHomes.size === 1 ? [...failedHomes][0]! : `/clients/${client.id}#conversations`;
 
   const hoursSinceInbound = lastInbound
     ? (now.getTime() - lastInbound.createdAt.getTime()) / 3_600_000
@@ -100,7 +115,7 @@ export default async function ThreadPage({
               <Link href={`/inbox?client=${client.id}`}>All channels</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link href={`/clients/${client.id}`}>Open client</Link>
+              <Link href={`/clients/${client.id}#conversations`}>Open client</Link>
             </Button>
           </>
         }
@@ -108,8 +123,14 @@ export default async function ThreadPage({
           failed.length > 0 ? (
             <AlertBar
               tone="danger"
-              href={`/clients/${client.id}`}
-              cta="Open the client record"
+              href={resendHref}
+              cta={
+                resendHref.startsWith("/proposals/")
+                  ? "Open the proposal"
+                  : resendHref.startsWith("/contracts/")
+                    ? "Open the contract"
+                    : "Open the client record"
+              }
             >
               {failed.length} message{failed.length === 1 ? "" : "s"} in this thread never
               reached the client. Resend from the record it belongs to, or check the
@@ -189,9 +210,9 @@ export default async function ThreadPage({
                   >
                     <div
                       className={cn(
-                        "max-w-[min(560px,85%)] rounded-lg border px-2.5 py-2",
+                        "max-w-[min(560px,85%)] rounded-panel-sm border px-2.5 py-2",
                         inbound
-                          ? "border-border bg-surface"
+                          ? "border-border-subtle bg-surface"
                           : message.status === "FAILED"
                             ? "border-danger/30 bg-danger/[0.06]"
                             : "border-brand/25 bg-brand-soft",
@@ -201,7 +222,7 @@ export default async function ThreadPage({
                       {related && (
                         <Link
                           href={related.href}
-                          className="mt-1.5 inline-flex items-center gap-1.5 rounded-sm border border-border bg-card px-1.5 py-0.5 text-meta hover:text-brand"
+                          className="mt-1.5 inline-flex items-center gap-1.5 rounded-ctl-xs border border-border-subtle bg-card px-1.5 py-0.5 text-meta hover:text-brand"
                         >
                           {related.kind === "proposal" ? (
                             <FileText className="size-3" aria-hidden />

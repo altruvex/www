@@ -6,7 +6,15 @@ import { Command } from "cmdk";
 import { Check, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
-import { Popover, PopoverContent, PopoverTrigger, cn } from "@repo/ui";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  cn,
+  menuEmpty,
+  menuItem,
+  menuSearch,
+} from "@repo/ui";
 
 export type InlineSelectOption = { value: string; label: string };
 
@@ -104,26 +112,26 @@ export function InlineSelect({
             />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-56 p-0">
+        <PopoverContent align="start" surface="menu" className="w-56">
           <Command loop filter={filterByLabel}>
             {options.length >= SEARCH_FROM && (
               <Command.Input
                 placeholder={searchPlaceholder}
-                className="h-10 w-full border-b border-border bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
+                className={menuSearch}
               />
             )}
-            <Command.List id={listId} data-lenis-prevent className="max-h-64 overflow-y-auto p-1">
-              <Command.Empty className="px-3 py-6 text-center text-sm text-muted-foreground">No match.</Command.Empty>
+            <Command.List id={listId} data-lenis-prevent className="max-h-64 overflow-y-auto">
+              <Command.Empty className={menuEmpty}>No match.</Command.Empty>
               {options.map((option) => (
                 <Command.Item
                   key={option.value}
                   value={option.value}
                   keywords={[option.label]}
                   onSelect={() => choose(option.value)}
-                  className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm data-[selected=true]:bg-muted"
+                  className={cn(menuItem, "cursor-pointer justify-between")}
                 >
                   <span className="truncate">{option.label}</span>
-                  {option.value === shown && <Check className="size-4 shrink-0" aria-hidden />}
+                  {option.value === shown && <Check className="shrink-0" aria-hidden />}
                 </Command.Item>
               ))}
             </Command.List>

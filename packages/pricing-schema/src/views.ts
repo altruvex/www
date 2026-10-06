@@ -44,7 +44,6 @@ import {
   FACTOR_GROUPS,
   NEUTRAL_FACTOR,
   PRICING_DRIVERS,
-  USD_EXCHANGE_RATE,
   type FactorGroupId,
   type PricingDriverEffect,
   type PricingDriverId,
@@ -605,8 +604,6 @@ export interface TermsView {
   readonly vatNote: string;
   readonly revisionLabel: string;
   readonly revisionNote: string;
-  readonly usdLabel: string;
-  readonly usdNote: string;
   readonly addonLabel: string;
   readonly addonNote: string;
   readonly costBasisLabel: string;
@@ -619,7 +616,7 @@ export function termsView(
   pricing: ResolvedPricing = DEFAULT_PRICING,
 ): TermsView {
   const t = pricingCopy(locale).terms;
-  const { terms: COMMERCIAL_TERMS, exchangeRate: USD_EXCHANGE_RATE } = pricing;
+  const { terms: COMMERCIAL_TERMS } = pricing;
 
   return {
     vatLabel: t.vatLabel,
@@ -630,11 +627,6 @@ export function termsView(
     revisionNote: fillTemplate(t.revisionNote, {
       rounds: formatNumber(COMMERCIAL_TERMS.includedRevisionRounds, locale),
       rate: formatNumber(COMMERCIAL_TERMS.revisionHourlyRate, locale),
-    }),
-    usdLabel: t.usdLabel,
-    usdNote: fillTemplate(t.usdNote, {
-      rate: formatNumber(USD_EXCHANGE_RATE.egpPerUsd, locale),
-      reviewedOn: USD_EXCHANGE_RATE.reviewedOn,
     }),
     addonLabel: t.addonLabel,
     addonNote: t.addonNote,
@@ -720,6 +712,8 @@ export function pricingTokens(
       annualView(professional, locale)?.priceLabel ?? "",
     minimumEngagement: formatMoney(lowestCell(pricing), locale),
     revisionRate: formatMoney(COMMERCIAL_TERMS.revisionHourlyRate, locale),
+    revisionRounds: formatNumber(COMMERCIAL_TERMS.includedRevisionRounds, locale),
+    annualFreeMonths: formatNumber(MAINTENANCE_ANNUAL_FREE_MONTHS, locale),
     vatRate: formatPercent(COMMERCIAL_TERMS.vatRate, locale),
     warrantyDays: formatNumber(COMMERCIAL_TERMS.postLaunchWarrantyDays, locale),
     deliveryWeeksMin: formatNumber(deliveryWindowFrom(pricing).min, locale),

@@ -43,6 +43,7 @@ const createSchema = z.object({
   repositoryUrl: httpUrl.nullable().optional(),
   framework: z.string().max(100).nullable().optional(),
   hostingProvider: z.string().max(100).nullable().optional(),
+  existingSite: z.boolean().optional(),
 });
 
 const FIELD_LABEL: Record<string, string> = {
@@ -55,13 +56,19 @@ const FIELD_LABEL: Record<string, string> = {
   repositoryUrl: "repository",
   framework: "framework",
   hostingProvider: "hosting",
+  existingSite: "existing site",
 };
 
 const patchSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("update"),
     id: z.string().min(1),
-    patch: createSchema.partial().omit({ clientId: true, slug: true }),
+    // .partial() keeps .default(): a patch that omits kind/status would reset them
+    // (a LIVE product linked to a project went back to PLANNED). Unwrap the defaults.
+    patch: createSchema
+      .extend({ kind: createSchema.shape.kind.unwrap(), status: createSchema.shape.status.unwrap() })
+      .partial()
+      .omit({ clientId: true, slug: true }),
   }),
   z.object({
     action: z.literal("rotate-token"),
@@ -124,6 +131,7 @@ export const POST = withAdmin(async (request, { actor }) => {
       repositoryUrl: body.repositoryUrl ?? null,
       framework: body.framework ?? null,
       hostingProvider: body.hostingProvider ?? null,
+      existingSite: body.existingSite ?? false,
     },
   });
 

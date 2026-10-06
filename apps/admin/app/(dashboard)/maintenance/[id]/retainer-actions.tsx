@@ -335,7 +335,7 @@ export function RetainerActions({
         />
       )}
 
-      <div className="flex flex-col gap-1.5 border-t border-border pt-3 [&>*]:w-full [&>*]:justify-start">
+      <div className="flex flex-col gap-1.5 border-t border-border-subtle pt-3 [&>*]:w-full [&>*]:justify-start">
         <RenewRetainer sub={sub} showMoney={showMoney} size="sm" />
         {!canInvoice && !cancelled && (
           <p className="text-meta text-subtle-foreground">
@@ -460,7 +460,7 @@ export function RetainerRequests({
   }
 
   return (
-    <ul className="divide-y divide-border">
+    <ul className="divide-y divide-border-subtle">
       {sub.requests.map((r: AdminRequest) => (
         <li
           key={r.id}

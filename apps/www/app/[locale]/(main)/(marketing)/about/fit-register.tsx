@@ -2,7 +2,7 @@
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { useSectionElement, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
@@ -18,7 +18,7 @@ export function FitRegisterSection() {
   return (
     <section
       aria-labelledby="about-fit-heading"
-      className="pt-(--section-y-top)"
+      className="pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
         <SectionHeading

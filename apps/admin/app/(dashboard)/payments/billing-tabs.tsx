@@ -17,7 +17,7 @@ export function BillingTabs({
   counts?: Partial<Record<BillingTab, number>>;
 }) {
   return (
-    <nav className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav className="flex h-9 items-center gap-4 overflow-x-auto border-b border-border-subtle [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {TABS.map((tab) => {
         const isActive = tab.id === active;
         const count = counts?.[tab.id];

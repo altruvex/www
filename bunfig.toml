@@ -1,0 +1,9 @@
+# Test runner config for `bun test` at the repo root (see docs/quality-gate.md).
+[test]
+# Coverage is measured only over the source files the suites import:
+# packages/pricing-schema/src/** and the www helpers the tests under tests/www load.
+# Measured 2026-10-05: 100.00% functions, 99.96% lines. Threshold = rounded down.
+coverageThreshold = { lines = 0.99, functions = 0.99 }
+coverageSkipTestFiles = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage"

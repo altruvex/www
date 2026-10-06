@@ -32,7 +32,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-meta font-medium",
+        "inline-flex items-center whitespace-nowrap rounded-ctl-xs border px-1.5 py-0.5 text-meta font-medium",
         toneClasses[def.tone],
         className,
       )}
@@ -55,7 +55,7 @@ export function ToneBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-meta font-medium",
+        "inline-flex items-center whitespace-nowrap rounded-ctl-xs border px-1.5 py-0.5 text-meta font-medium",
         toneClasses[tone],
         className,
       )}

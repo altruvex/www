@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui";
+import { AltruvexLogo, Button } from "@repo/ui";
 import { LoadingIcon } from "@/components/loading-icon";
 import { AlertCircle, CheckCircle2, Download, Mail, MessageCircle, ShieldCheck } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -231,13 +231,13 @@ export default function SignContractPage() {
     <main className="flex min-h-dvh items-start justify-center px-4 py-6 sm:items-center sm:py-12">
       <div className="w-full max-w-lg plane space-y-6 p-5 sm:p-8">
         <div>
-          <p className="text-sm text-muted-foreground mb-1">Altruvex</p>
+          <AltruvexLogo size="xs" variant="lockup" className="mb-3" />
           <h1 className="text-xl font-medium text-balance break-words text-foreground sm:text-2xl">
             Project agreement{clientName ? ` — ${clientName}` : ""}
           </h1>
         </div>
 
-        <div className="space-y-2 rounded-2xl bg-muted/50 p-4 text-sm sm:p-5">
+        <div className="space-y-2 rounded-panel-sm bg-muted/50 p-4 text-sm sm:p-5">
           {contract.proposal.discount && (
             <>
               <div className="flex justify-between">
@@ -294,7 +294,7 @@ export default function SignContractPage() {
           </a>
         )}
 
-        <div className="flex items-start gap-3 rounded-2xl border border-border p-4 text-sm">
+        <div className="flex items-start gap-3 rounded-panel-sm border border-border-subtle p-4 text-sm">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden />
           <p className="text-muted-foreground">
             This agreement can only be signed by{" "}
@@ -306,7 +306,7 @@ export default function SignContractPage() {
         </div>
 
         {contract.signer.channels.length === 0 ? (
-          <p className="rounded-2xl bg-muted/50 p-4 text-sm text-muted-foreground" role="alert">
+          <p className="rounded-panel-sm bg-muted/50 p-4 text-sm text-muted-foreground" role="alert">
             There is no WhatsApp number or email on file to send your code to, so this agreement
             cannot be signed online yet. Contact Altruvex and we will set it up.
           </p>
@@ -322,7 +322,7 @@ export default function SignContractPage() {
                     key={option.channel}
                     type="button"
                     variant="outline"
-                    className="h-auto justify-start rounded-xl px-4 py-3 text-start"
+                    className="h-auto justify-start rounded-ctl-xl px-4 py-3 text-start"
                     disabled={sending !== null || resendIn > 0}
                     aria-busy={sending === option.channel}
                     onClick={() => requestCode(option.channel)}
@@ -378,7 +378,7 @@ export default function SignContractPage() {
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="••••••"
-                    className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20"
+                    className="w-full rounded-ctl-xl border border-border-subtle bg-muted/50 px-4 py-3 text-center font-mono text-lg tracking-[0.5em] text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/20"
                     required
                   />
                 </div>
@@ -393,11 +393,11 @@ export default function SignContractPage() {
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Type your full name"
                     autoComplete="name"
-                    className="w-full rounded-xl border border-border bg-muted/50 px-4 py-3 text-lg text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 sm:text-sm focus-visible:ring-foreground/20"
+                    className="w-full rounded-ctl-xl border border-border-subtle bg-muted/50 px-4 py-3 text-lg text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 sm:text-sm focus-visible:ring-foreground/20"
                     required
                   />
                 </div>
-                <label className="-mx-2 flex min-h-11 cursor-pointer items-start gap-3 rounded-xl px-2 py-2 text-sm hover:bg-muted/50">
+                <label className="-mx-2 flex min-h-11 cursor-pointer items-start gap-3 rounded-ctl-lg px-2 py-2 text-sm hover:bg-muted/50">
                   <input
                     type="checkbox"
                     checked={agreed}
@@ -417,7 +417,7 @@ export default function SignContractPage() {
                 <Button
                   type="submit"
                   variant="brand"
-                  className="w-full h-11 rounded-xl"
+                  className="w-full h-11 rounded-full"
                   disabled={submitting}
                   aria-busy={submitting}
                 >
@@ -445,6 +445,7 @@ function Notice({
     <main className="flex min-h-dvh items-center justify-center px-4 py-6">
       <div className="plane w-full max-w-md p-5 text-center sm:p-8" role="status">
         {icon}
+        {/* brand-allow: hierarchy-multiple-h1 — separate render branch */}
         <h1 className="mb-2 text-xl font-medium text-balance text-foreground sm:text-2xl">{title}</h1>
         <div className="text-sm text-pretty text-muted-foreground">{children}</div>
       </div>

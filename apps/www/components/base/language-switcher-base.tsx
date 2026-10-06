@@ -7,14 +7,15 @@ import { Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useTransition } from "react";
-import { SegmentedControl } from "./segmented-control";
+import { SegmentedControl } from "@repo/ui/www";
+import { LOCALE_META, nextLocale, type Locale } from "@/i18n/locale-meta";
+import { routing } from "@/i18n/routing";
 
-type Locale = "en" | "ar";
-
-const LANGUAGES: readonly { code: Locale; nativeName: string }[] = [
-  { code: "en", nativeName: "English" },
-  { code: "ar", nativeName: "العربية" },
-];
+const LANGUAGES: readonly { code: Locale; nativeName: string }[] =
+  routing.locales.map((code) => ({
+    code,
+    nativeName: LOCALE_META[code].nativeName,
+  }));
 
 interface LanguageSwitcherBaseProps {
   variant?: "inline" | "segmented";
@@ -61,7 +62,8 @@ export function LanguageSwitcherBase({
     );
   }
 
-  const target = LANGUAGES.find((lang) => lang.code !== locale) ?? LANGUAGES[0];
+  const nextCode = nextLocale(locale);
+  const target = LANGUAGES.find((lang) => lang.code === nextCode) ?? LANGUAGES[0];
 
   return (
     <button

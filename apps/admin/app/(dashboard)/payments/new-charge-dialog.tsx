@@ -71,15 +71,20 @@ function presetTarget(
 export function NewChargeButton({
   targets,
   preset,
+  scope,
 }: {
   targets: ChargeTarget[];
+  /** From `?new=charge`: open on arrival with this target chosen. */
   preset?: { clientId: string | null; projectId: string | null } | null;
+  /** The client the list is filtered to: the default target when the button is pressed. */
+  scope?: { clientId: string | null; projectId: string | null } | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(preset != null && targets.length > 0);
-  const initialTarget = preset ? presetTarget(targets, preset) : undefined;
+  const initialPreset = preset ?? scope;
+  const initialTarget = initialPreset ? presetTarget(targets, initialPreset) : undefined;
 
   function close() {
     setOpen(false);

@@ -1,174 +1,127 @@
 ---
-title: Why We Don't Use WordPress
-excerpt: WordPress powers 43% of the web. We're not part of that 43%. Here's why technical debt compounds faster in WordPress than any other platform.
-date: "2024-11-15" 
-author: "Altruvex  Team"
-tags: ["wordpress", "architecture", "cms", "performance", "technical-debt"]
-featured: true
-coverImage: "/images/articles/wordpress-vs-modern.jpg"
+title: "WordPress vs a Custom Website: How to Decide"
+excerpt: "WordPress is the right tool for many sites and the wrong one for others. A plain comparison of cost, speed, security and ownership, and how to tell which side you are on."
+date: "2026-03-25"
+updated: "2026-10-05"
+author: "Ali Abdelhadi"
+tags: ["wordpress", "custom website", "cms", "architecture", "performance"]
+featured: false
 topic: "build"
 ---
 
-WordPress is the default answer for "we need a website." It powers 43% of the web. But popularity isn't a proxy for quality.
-
-For simple blogs, it's sufficient. For technical projects-systems that need to scale, perform under load, and evolve over years-WordPress isn't just a limitation. It's a liability.
-
-<Callout type="warning">
-This isn't about WordPress being "bad." It's about architectural fit. Using a blog engine to build complex software products is an engineering miscalculation that costs you velocity, performance, and maintainability.
+<Callout type="info">
+**Short answer.** Choose WordPress when the site is mainly published content (pages, a blog, news) and a standard theme with a few well-maintained plugins covers what you need. Choose a custom build when the site carries your own business logic: workflows, integrations, accounts, bilingual structure or performance targets that plugins can only approximate.
 </Callout>
 
-## The Plugin Architecture Fallacy
+A disclosure first: we build custom websites and applications, not WordPress sites. Weigh what follows with that in mind. The aim of this article is not to talk you out of WordPress. It is to help you see which kind of project you have, because the answer is different for each.
 
-WordPress sells the idea that "there's a plugin for everything." This is its fatal flaw.
+## What WordPress is good at
 
-In professional software engineering, dependencies are liabilities. In WordPress, they're the foundation. Each plugin is a black box of code written by different developers with varying standards, injecting arbitrary JavaScript and CSS into your site.
+WordPress is the most widely used content management system on the web. [W3Techs](https://w3techs.com/technologies/details/cm-wordpress) reports it on roughly two in five of all websites, and on more than half of the sites whose CMS it can identify. That reach has real benefits:
 
-<Quote author="Altruvex  Team" role="Technical Architects">
-A WordPress site with 30 plugins isn't a system. It's a Jenga tower. Remove one piece, update another, and structural integrity collapses.
-</Quote>
+- **A large talent pool.** Almost any web agency or freelancer can work on it.
+- **A familiar editor.** Many marketing teams have used it before.
+- **Ready-made plugins.** Contact forms, SEO fields, galleries and simple shops are available off the shelf.
+- **A fast start.** A content site that fits an existing theme can launch quickly.
 
-### The Compounding Dependency Problem
+If your site is a set of pages and articles that your team edits often, and nothing about it is unusual, WordPress is a reasonable choice. We say the same in our [FAQ](/faq): templates trade flexibility for speed, and for a blog that trade is often worth it.
 
-- **Conflicting dependencies**: Plugin A requires jQuery 3.5, Plugin B breaks on anything newer than 3.3
-- **Duplicate functionality**: Three plugins loading separate icon libraries, all doing the same job
-- **Update cascades**: One core update triggers a chain reaction requiring 15 plugin updates
-- **Abandoned plugins**: Critical functionality relying on code that hasn't been maintained since 2019
+## Where the trade-off turns
 
-This isn't theoretical. This is the operational reality of WordPress at scale.
+The trade-off turns when the site has to do things that are specific to your business. The usual signs:
 
-## Performance: Fighting the Architecture
+1. Your workflow is your own: quotes, bookings, approvals or client portals that follow your process rather than a plugin's.
+2. You depend on local integrations: regional payment providers, logistics services or SMS gateways that have no maintained plugin, or one that only approximates their API.
+3. Two languages carry equal weight: Arabic and English with different layouts, different content and correct right-to-left behaviour, not a translation plugin layered on top. See [how bilingual architecture works](/writing/multilingual-architecture).
+4. Performance is a requirement, not a hope: you need to hold [Core Web Vitals](https://web.dev/articles/vitals) thresholds on every page, every release.
+5. You expect to grow the system: dashboards, accounts or an API later, without starting over.
 
-WordPress was built in 2003 for blogging. Its architecture relies on server-side rendering for every single request, often querying the database dozens of times just to render a navigation menu.
+When two or more of these apply, each plugin you add to close a gap becomes a dependency you do not control. That is the point where a custom build can cost less over the life of the system than it appears to at the start.
 
-We use Next.js with Static Site Generation. We pre-build pages.
+## WordPress vs custom: cost, speed, security, ownership
 
-**WordPress workflow:**
-1. User visits page
-2. Server processes request
-3. Database executes 40+ queries
-4. PHP renders HTML
-5. User waits 2-3 seconds
+<Compare head="Factor|WordPress (theme and plugins)|Custom build" caption="How the two approaches compare on the questions buyers ask most">
+<Row cells="Time to first launch|Fast when a theme fits the design|Slower: discovery, design and development come first" />
+<Row cells="Upfront cost|Usually lower for a standard site|Higher, because the system is designed for you" />
+<Row cells="Running cost|Hosting plus plugin licences and updates|Hosting plus maintenance of code you own" />
+<Row cells="Flexibility|Bounded by what themes and plugins allow|Follows your business logic" />
+<Row cells="Performance|Depends on theme, plugins and hosting|Designed in, and measurable on real pages" />
+<Row cells="Security surface|Core plus every installed plugin and theme|Only the code and services the site uses" />
+<Row cells="Bilingual and RTL|Through translation plugins and theme support|Built into the structure from the start" />
+<Row cells="Ownership|You own the content; plugins stay with their vendors|You own the code, data and accounts" />
+</Compare>
 
-**Our stack:**
-1. Page builds once during deployment
-2. User visits
-3. Instant delivery from CDN edge nodes
-4. Load time: <Mark gradient="ocean">&lt; 100ms</Mark>
+Costs here are relative on purpose, because what a custom build costs depends on scope. Want to see the numbers for your kind of project? <CtaLink cta="scopeProjects">See what a custom build costs</CtaLink>.
 
-```typescript
-// Next.js: Generate once, serve forever
-export const revalidate = 3600; // Revalidate every hour
+## Security: where the risk actually sits
 
-export async function generateStaticParams() {
-  return posts.map((post) => ({ 
-    slug: post.slug 
-  }));
-}
+WordPress core is maintained carefully. The risk sits mostly in the ecosystem around it. Patchstack's [State of WordPress Security in 2025](https://patchstack.com/whitepaper/state-of-wordpress-security-in-2025/) reports two figures for 2024:
 
-// Result: Near-instant page loads, zero database overhead per request
-```
+- 7,966 new vulnerabilities in the WordPress ecosystem, **96% of them in plugins**, 4% in themes and 7 individual issues in core.
+- A third of the vulnerabilities it tracked had no fix available when they were publicly disclosed.
 
-A "fast" WordPress site requires aggressive caching layers (Redis, Varnish, CDN) just to mimic the baseline performance of modern static generation. You're fighting the architecture instead of leveraging it.
+What that means in practice:
 
-## Security & Maintenance: The Update Paradox
+- Every plugin is code written by someone else, updated on their schedule.
+- A well-run WordPress site needs someone to review and apply updates continuously.
+- A site with few, well-maintained plugins carries far less risk than one with many.
 
-WordPress updates are operationally hazardous. Here's the typical cycle:
+A custom build does not remove security work. It changes its shape: fewer third-party moving parts, and a smaller surface you can review in full.
 
-1. Core update releases
-2. Theme breaks due to deprecated functions
-3. Plugin A updates to fix compatibility
-4. Plugin B breaks because it depended on Plugin A's old behavior
-5. Site owner rolls back, leaving security vulnerabilities exposed
+## Performance: what drives it
 
-This creates the "Fear of Update" pattern. Site owners stop updating to preserve stability, which is precisely when they become vulnerable to widely-published exploits.
+A WordPress site can be fast. Whether it is depends on the theme, the number of plugins loading scripts on every page, and the hosting. A custom build gives you control over each of those choices, and lets you check speed against [published thresholds](/standards) before a release goes out. Either way, measure the result with [Core Web Vitals](https://web.dev/articles/vitals) on real pages, not on a demo.
 
-### The Numbers Don't Lie
+## Ownership and lock-in
 
-- **90% of WordPress sites** run at least one vulnerable plugin
-- **Average time to patch**: 30+ days after vulnerability disclosure
-- **Attack surface**: Every plugin, theme, and custom code creates entry points
+With WordPress, you own your content and can move hosts. You do not own the plugins your site depends on; if a vendor changes its licence or stops updating, you inherit the problem.
 
-In our architecture:
-- Dependencies are explicitly declared in `package.json`
-- Version-locked and tested in CI/CD pipelines
-- Automated security scanning before production deployment
-- Zero-downtime updates with instant rollback capability
+With a custom build, what you should own is everything: source code, database, configuration and accounts.
 
-## Database Structure: The EAV Performance Tax
+That is how we hand over. At final payment the repository moves to an account you control, with the database schema and migration history, an environment and secrets guide, and deployment documentation. The [FAQ](/faq) lists it in full. Whoever you hire, ask for the same.
 
-Technically, WordPress uses an EAV (Entity-Attribute-Value) model for metadata storage (`wp_postmeta`). This provides flexibility but destroys query performance at scale.
+## Moving from WordPress to a custom build
 
-**Real-world scenario**: You have 10,000 products and need to filter by "Color: Red" AND "Size: Large"
+If you decide to move, the risk is in the migration, not the new design. A safe sequence:
 
-**WordPress approach:**
-```sql
--- Requires multiple expensive JOINs on wp_postmeta
--- Query time: 800ms - 2 seconds at scale
-SELECT * FROM wp_posts
-INNER JOIN wp_postmeta pm1 ON wp_posts.ID = pm1.post_id AND pm1.meta_key = 'color'
-INNER JOIN wp_postmeta pm2 ON wp_posts.ID = pm2.post_id AND pm2.meta_key = 'size'
-WHERE pm1.meta_value = 'Red' AND pm2.meta_value = 'Large'
-```
+1. **Inventory what exists.** Pages, posts, media, forms, integrations and which URLs receive traffic.
+2. **Map every URL.** Decide where each old URL lives on the new site.
+3. **Redirect permanently.** Use server-side 301 redirects from each old URL to its new home, as [Google's site move guide](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes) recommends.
+4. **Migrate content with structure.** Move content into a model that matches how your team edits, not a copy of the old one.
+5. **Check after launch.** Watch Search Console for crawl errors and fix any missed redirects.
 
-**Our approach (PostgreSQL):**
-```sql
--- Normalized schema with proper indexing
--- Query time: 5-20ms
-SELECT * FROM products
-WHERE color = 'Red' AND size = 'Large'
-```
+If you are unsure whether the current site is worth keeping, start with a [technical audit](/writing/technical-audit-before-rebuild) rather than a rebuild.
 
-The difference isn't marginal. It's exponential. As data grows, WordPress query performance degrades while properly architected databases maintain consistent speed through indexing and normalization.
+## Self-check: which side is your project on?
 
-## The Hidden Cost: Developer Velocity
+Answer yes or no:
 
-The WordPress ecosystem forces developers into maintenance mode:
+- Does the site mainly publish pages and articles?
+- Does a standard theme cover the design you need?
+- Are your integrations common ones with maintained plugins?
+- Is one language enough, or is the second one a light translation?
+- Do you have someone to apply updates every week?
 
-- **Debugging mystery conflicts** between plugins
-- **Reverse-engineering undocumented** theme frameworks
-- **Fighting against** the architecture to implement features
-- **Constant firefighting** instead of building value
+Mostly yes: WordPress is likely the better fit. Mostly no: a custom build deserves a serious look.
 
-In modern frameworks like Next.js:
-- Type-safe development with TypeScript
-- Component-based architecture
-- Hot module replacement for instant feedback
-- Comprehensive testing frameworks
-- Clear separation of concerns
+## WordPress vs custom website: common questions
 
-**The result**: Features that take 2 weeks in WordPress take 2 days in Next.js. Not because developers are faster, but because they're not fighting the platform.
+### Is WordPress bad for SEO?
 
-## When WordPress Makes Sense
+No. Search engines do not rank a site lower for using WordPress. What matters is content, structure, speed and correct technical setup, and all of those can be good or bad on either approach.
 
-Let's be clear: WordPress has valid use cases.
+### Is a custom website more secure than WordPress?
 
-**Use WordPress for:**
-- Simple blogs with basic posting needs
-- Non-technical users who need a familiar dashboard
-- Projects with 1,000 pages and low traffic
-- Sites where performance isn't a competitive differentiator
+Not automatically. A custom site is only as secure as its code and its maintenance. Its advantage is a smaller, known surface without third-party plugins, which makes it easier to review and keep current.
 
-**Don't use WordPress for:**
-- E-commerce platforms handling thousands of SKUs
-- High-traffic applications (>100K monthly visitors)
-- Complex user interactions and real-time features
-- Systems requiring sub-200ms response times
-- Projects with long-term technical evolution plans
+### Can I still edit content myself on a custom website?
 
-## The Bottom Line
+Yes, if it is built with a content management layer. Ask whoever builds it which parts your team can edit without a developer, and see it working before you sign.
 
-WordPress is excellent for what it was designed for: blogging. But if you're building a digital product, corporate platform, or complex application, you don't need a plugin ecosystem.
+### Is a custom website always more expensive?
 
-**You need engineering.**
+At the start, usually yes. Over several years the comparison depends on how much plugin licensing, workaround development and rework the WordPress route would need. See [pricing](/pricing) for the published ranges of a custom build.
 
-You need an architecture designed for your specific requirements, not bent into shape from a 20-year-old blogging engine.
+## Pricing a custom build, or checking the site you have
 
-You need predictable performance, secure-by-default infrastructure, and developer velocity that compounds over time rather than degrades.
-
-**WordPress is the wrong foundation for serious technical projects.**
-
-At Altruvex, we build on foundations designed for the future: Next.js, TypeScript, PostgreSQL, and modern DevOps practices. Not because they're trendy, but because they're engineered for performance, security, and long-term maintainability.
-
----
-
-**Want to migrate from WordPress?** We've developed a proven migration framework that preserves SEO, maintains content integrity, and delivers 5-10x performance improvements. [Contact our team](/contact) to discuss your project.
+If your answers point to a custom build, <CtaLink cta="scopeProjects">see what a custom build costs</CtaLink> on the pricing page. If you already run a WordPress site and want to know what to keep, a [technical audit](/services/consulting) gives you a written answer before you commit to anything.

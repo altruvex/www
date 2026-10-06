@@ -8,64 +8,92 @@
     "pricing": "Pricing and scope"
   },
   "eyebrow": "FAQ",
-  "title": "Questions About Building Your Tech Stack",
-  "subtitle": "How we work, what we build, and how to get started.",
+  "title": "Website project FAQ: cost, timeline and who owns the code.",
+  "subtitle": "Direct answers on what a custom website costs, how long it takes, who owns it and how we work. The phases are on the Process page; payment terms are on the Pricing page.",
   "questions": {
-    "01": {
-      "question": "Why should I trust a new company with my entire tech stack?",
-      "answer": "<p>Because we do the opposite of what most agencies do. You receive your complete source code, full documentation, and zero vendor lock-in by default. If we disappeared tomorrow, your team could maintain it, or hire anyone else to. <strong>That's not a feature</strong> - <span class=\"text-foreground/60\">it's the only honest way to build</span>.</p><p>Technically: We use Next.js and Turborepo (both battle-tested at scale), deploy to Vercel or your own infrastructure, and structure every project so a competent developer can understand it in a week. We don't hide behind frameworks or proprietary tooling.</p>"
-    },
-    "02": {
-      "question": "What happens to my code and data if Altruvex shuts down?",
-      "answer": "<p><strong>You own everything.</strong> All source code, databases, configuration, and credentials are yours from day one. We deliver a handover package that includes:</p><ul><li>Complete source code (deployed exactly as it runs in production)</li><li>Database schema and migration history</li><li>Environment variables and secrets management guide</li><li>Deployment documentation (how to redeploy or migrate infrastructure)</li><li>Architecture decision log (why we chose each technology)</li><li>Runbook for common operations</li></ul><p>Your code lives in a Git repository you control. <span class=\"text-foreground/60\">We never hold it hostage.</span></p>"
-    },
-    "03": {
-      "question": "Why custom-built instead of WordPress, Shopify, or Odoo?",
-      "answer": "<p>Templates trade flexibility for speed. They're great for specific use cases (Shopify for pure e-commerce, WordPress for blogs). But if your business has custom workflows, local payment integrations, or growth that doesn't fit a plugin architecture, <strong>templates hit a ceiling you can't break through</strong>.</p><p>Custom engineering means:</p><ul><li><strong>Performance</strong>: A Next.js app loads in &lt;1s. WordPress with plugins typically loads in 3-5s.</li><li><strong>Integration</strong>: We connect directly to your bank's API, Egyptian payment processors, local suppliers - not through a plugin that approximates it.</li><li><strong>Ownership</strong>: You're not locked into monthly SaaS fees or plugin vendor updates.</li><li><strong>Growth</strong>: Architecture scales with your business logic, not around a plugin limitation.</li></ul>"
-    },
-    "04": {
-      "question": "What's the timeline from 'I want to start' to 'we're live'?",
-      "answer": "<p>Every project moves through the same five phases: discovery, wireframe, design, development and launch. Delivery runs {deliveryWeeksMin}–{deliveryWeeksMax} weeks depending on scope, and the Process page shows how long each phase takes.</p><p>Actual timeline depends on scope and complexity. The estimator gives an indicative range in weeks, and your proposal sets the delivery window once scope is reviewed.</p><p><strong>We don't pad timelines.</strong> <span class=\"text-foreground/60\">If we think something can be done in 6 weeks, we'll tell you 6 weeks - not 12.</span></p>"
-    },
-    "05": {
-      "question": "What if my needs change after we've started?",
-      "answer": "<p>Scope changes are built into our process. We structure projects in phases, so:</p><ul><li>Essential features ship first, then integrations, then dashboards.</li><li>If you realize you need something different mid-project, <strong>we rebuild that phase before moving forward</strong> - <span class=\"text-foreground/60\">not after</span>.</li><li>We estimate the cost impact upfront so there are no surprises.</li></ul><p>After launch, the {warrantyDays}-day warranty covers critical fixes. Structural changes move to a maintenance retainer or a new project quote, depending on complexity.</p>"
-    },
-    "06": {
-      "question": "How do you handle Egyptian and Arab market integrations?",
-      "answer": "<p>This is core to what we do. We've built integrations with:</p><ul><li>Fawry (bill payment and e-commerce)</li><li>Vodafone Cash (mobile payments)</li><li>Bank transfers (local and SWIFT)</li><li>Local delivery and logistics APIs</li><li>Arabic-language content and RTL workflows</li></ul><p>We understand the peculiarities: payment processors that need local IDs, SMS systems that charge per message, hosting that needs local data residency. <strong>These aren't afterthoughts</strong> - they're part of the architecture from discovery.</p>"
-    },
-    "07": {
-      "question": "Is the website actually multilingual (all supported languages), or just mirrored?",
-      "answer": "<p><strong>True multilingual, not mirrored.</strong></p><p>Most sites build in English, then translate. We design and engineer for both languages simultaneously:</p><ul><li>RTL (right-to-left) is native, not a CSS flip.</li><li>Arabic content isn't a translated afterthought - it's an equal-priority experience.</li><li>Forms, dashboards, and workflows handle both languages without breaking layouts.</li><li>Performance is identical in both languages (no slower Arabic load times).</li></ul><p>This matters if your customers or employees are primarily Arabic-speaking. <span class=\"text-foreground/60\">A bad Arabic UX loses credibility.</span></p>"
-    },
-    "08": {
-      "question": "What happens after the {warrantyDays}-day post-launch warranty ends?",
-      "answer": "<p>You have three options:</p><ol><li><strong>Maintenance retainer</strong>: the Essential plan is {maintenanceEssential}/month or {maintenanceEssentialAnnual}/year, the Professional plan is {maintenanceProfessional}/month or {maintenanceProfessionalAnnual}/year. Includes monitoring, security updates, performance optimization, and bug fixes. Typical turnaround for non-critical issues: 2-5 business days.</li><li><strong>As-Needed Support</strong>: No monthly commitment. We bill hourly for changes and fixes (charged at project rates). Typical for businesses that stabilize quickly.</li><li><strong>Bring Your Own Team</strong>: We hand off complete documentation so you or a developer you hire can maintain it independently. We're available for consultations if needed.</li></ol><p>Most clients choose the retainer because <span class=\"text-foreground/60\">it means someone's always watching for performance degradation or security issues</span>.</p>"
-    },
-    "09": {
-      "question": "Can we hire a different developer to maintain our system later?",
-      "answer": "<p><strong>Yes.</strong> That's why we build the way we do.</p><p>The handover package makes it possible for any competent full-stack developer to take over. They'll understand:</p><ul><li>The technology choices (Next.js, databases, deployment strategy)</li><li>The business logic (why workflows are structured the way they are)</li><li>The operational concerns (monitoring, error tracking, scaling)</li></ul><p>We typically do a 4-6 hour knowledge transfer call, then your developer is on their own. Some clients do this immediately after launch; others wait 2 years. <span class=\"text-foreground/60\">It's your call.</span></p>"
-    },
     "10": {
       "question": "What if I need something complex that goes beyond the published ranges?",
-      "answer": "<p><strong>Custom quotes exist for a reason.</strong> The published ranges are reference points, not ceilings.</p><p>Common custom scenarios:</p><ul><li>Multi-tenant SaaS platform (different from single-business dashboard)</li><li>Complex ERP integration (SAP, NetSuite, Odoo connectivity)</li><li>Real-time analytics or reporting engine</li><li>API-first architecture for third-party integrations</li><li>Hybrid mobile + web system</li></ul><p>We scope these in discovery, then quote based on engineering complexity, timeline, and infrastructure needs. If it's genuinely custom, <strong>you get a custom price</strong>.</p>"
+      "answer": "<p><strong>That is what a custom quote is for.</strong> The published ranges are reference points, not ceilings.</p><p>Common custom cases:</p><ul><li>A multi-tenant SaaS platform (different from a single-business dashboard)</li><li>Integration with an existing ERP or internal system</li><li>A real-time analytics or reporting engine</li><li>API-first architecture for third-party integrations</li><li>A combined mobile and web system</li></ul><p>These are scoped in discovery, then quoted on engineering complexity, timeline and infrastructure. If it is genuinely custom, <strong>the price is built for it</strong>.</p>"
     },
     "11": {
       "question": "How do you charge for projects? What's the payment schedule?",
-      "answer": "<p>Milestone-based, not time-and-materials:</p><ul><li><strong>Deposit</strong> ({paymentStart} of total): Secures your build window</li><li><strong>Development milestone</strong> ({paymentMilestone}): Due at {milestoneTrigger}, named in your proposal</li><li><strong>Final</strong> ({paymentFinal}): Before launch, prior to deployment to production</li></ul><p>The estimator gives an indicative range. Your proposal fixes the price for the scope it describes and stays valid for {proposalValidityDays} days. Figures exclude VAT at {vatRate}%. If you start with the technical audit, its {auditCredit} fee comes off the build price.</p><p>No hidden fees. Your quote includes:</p><ul><li>Domain and SSL setup</li><li>Base hosting (Vercel or your infrastructure)</li><li>Deployment and CI/CD</li><li>Post-launch monitoring for {warrantyDays} days</li></ul><p>Third-party tools (Stripe, Fawry, SMS services, analytics) are only billed if your project actually uses them - <span class=\"text-foreground/60\">at their standard rates, not marked up</span>.</p>"
+      "answer": "<p>In three milestone payments, not by the hour:</p><ul><li><strong>Deposit</strong> ({paymentStart} of the total): secures your build window</li><li><strong>Development milestone</strong> ({paymentMilestone}): due at {milestoneTrigger}, named in your proposal</li><li><strong>Final</strong> ({paymentFinal}): before production launch</li></ul><p>The estimator gives an indicative range. Your proposal fixes the price for the scope it describes and stays valid for {proposalValidityDays} days. Figures exclude VAT at {vatRate}%. If you start with the technical audit, the full audit fee ({auditCredit}) is credited toward the build.</p><p>No hidden fees: domain, hosting and business email are billed at what we pay plus a stated margin, each on its own line, and third-party services appear only if your project uses them. <a href=\"/pricing#terms\" class=\"text-foreground underline decoration-border underline-offset-4\">Read the full payment terms</a>.</p>"
     },
     "12": {
       "question": "Can we start small and expand later?",
-      "answer": "<p><strong>Yes.</strong> This is the entire point of modular architecture.</p><p>Example: Start with a contained website, then 6 months later add the next layer (CMS, integrations, dashboards). The codebase is designed so expansions don't require a rebuild.</p><p>We track this in a technical roadmap that's part of your handover. <span class=\"text-foreground/60\">Phase 2 work is typically quoted before Phase 1 ends</span>, so you know what the full vision costs and timelines.</p>"
+      "answer": "<p><strong>Yes.</strong> That is the point of a modular architecture.</p><p>For example: start with a contained website, then add the next layer later (a CMS, integrations, dashboards). The codebase is structured so an expansion does not require a rebuild.</p><p>Each expansion is scoped and quoted on its own, so you decide on the next step with a fixed figure in hand.</p>"
     },
     "13": {
-      "question": "How do you measure success? What are the guarantees?",
-      "answer": "<p>We measure against what actually matters to your business:</p><ul><li><strong>Performance</strong>: &lt;1s load time on mobile (Core Web Vitals targets)</li><li><strong>Uptime</strong>: 99.5%+ availability (monitored and reported monthly)</li><li><strong>Conversion</strong>: Forms work, integrations process correctly, customers can complete actions</li><li><strong>Maintainability</strong>: A developer unfamiliar with your codebase can fix bugs in a day</li></ul><p><strong>We don't guarantee traffic or sales</strong> - <span class=\"text-foreground/60\">that's marketing, not engineering</span>. We guarantee the system works, performs, and is maintainable.</p><p>Post-launch, these metrics are in your monthly maintenance report. If performance degrades, we fix it under the maintenance retainer.</p>"
+      "question": "How do you measure success? What do you commit to?",
+      "answer": "<p>We measure what the system can be held to:</p><ul><li><strong>Performance</strong>: Core Web Vitals and Lighthouse targets (listed on <a href=\"/standards\" class=\"text-foreground underline decoration-border underline-offset-4\">our quality standards page</a>)</li><li><strong>Availability</strong>: uptime monitoring under a maintenance plan</li><li><strong>Function</strong>: forms work, integrations process correctly, customers can complete what they came to do</li><li><strong>Maintainability</strong>: strict typing, documentation and a structure another developer can follow</li></ul><p><strong>We do not promise traffic or sales.</strong> We commit to a system that works, performs and can be maintained.</p>"
     },
     "14": {
       "question": "What's your actual experience? Can you show me projects?",
-      "answer": "<p>We've built:</p><ul><li><strong>Altruvex.com</strong> - Our own website (Web Engineering, 2025). Built with Next.js, Turborepo, deployed to Vercel.</li><li><strong>NewLight Lighting Store</strong> - E-commerce with Fawry integration, inventory management, multi-tier workflows (2024)</li><li><strong>Art Lighting Store</strong> - E-commerce platform with advanced filtering and performance optimization (2024)</li></ul><p>You can examine these live to understand our engineering standards. <strong>We don't use stock imagery or templates</strong> - <span class=\"text-foreground/60\">what you see is what we build</span>.</p><p>For more detailed case studies and technical breakdowns, check the Work section on our site.</p>"
+      "answer": "<p><strong>Live work you can inspect, each written up as a case study:</strong></p><ul><li><strong>Altruvex.com</strong> - this site: built on Next.js, with native right-to-left layout and a public cost estimator.</li><li><strong>NewLight Lighting Store</strong> - NewLight's first online store: a custom storefront with product management and a structured checkout.</li><li><strong>Art Lighting Store</strong> - a custom Next.js store for a lighting retailer: high-resolution product zoom, one inventory source and fast page loads.</li></ul><p>Read each case study on <a href=\"/work\" class=\"text-foreground underline decoration-border underline-offset-4\">our work page</a>.</p>"
+    },
+    "15": {
+      "question": "What do you need from me during the project?",
+      "answer": "<p>Three things, at known points:</p><ul><li><strong>Context</strong> in discovery: the goal, the constraints, and what exists today - systems, accounts and brand material.</li><li><strong>Content</strong>: the copy and assets for the pages. If they are not ready, we structure the key messages with you; that adds time to the early phases.</li><li><strong>Sign-off</strong> at the end of each phase: the structure, the design, the preview and the launch.</li></ul><p><span class=\"text-foreground/60\">Each phase starts only after the previous one is approved, so the speed of your sign-off is part of the timeline.</span></p>"
+    },
+    "16": {
+      "question": "How many design revisions are included?",
+      "answer": "<p><strong>{revisionRounds} revision rounds are included</strong>, written into your statement of work with the features, the timeline and the acceptance criteria, so they are settled before you sign.</p><p>Revisions happen at the review point of each phase: you approve the structure before design starts, and the design before development starts. Revision work beyond the agreed rounds is billed at {revisionRate} an hour, and you approve it first.</p>"
+    },
+    "17": {
+      "question": "Who owns the domain and hosting, and who pays for them?",
+      "answer": "<p><strong>You do.</strong> The domain and hosting accounts pass to you with the code at final payment, and the repository lives in an account you control.</p><p>Domain, hosting and business email are billed at what we pay plus a stated margin, each on its own line of the proposal - never folded into the project total. After handover you can keep them where they are or move them; the deployment documentation explains how.</p>"
+    },
+    "18": {
+      "question": "Do you work with clients remotely?",
+      "answer": "<p><strong>Yes.</strong> The work is remote, so the process is the same wherever you are: a 30-minute initial project consultation call, a live preview link during development, and your sign-off at the end of each phase.</p><p>Local clients are invoiced in Egyptian pounds and international clients in US dollars. Invoices are due within 7 days.</p>"
+    },
+    "19": {
+      "question": "What happens if I cancel the project?",
+      "answer": "<p>The terms are written down before you start:</p><ul><li><strong>Before work starts</strong>: the deposit is refunded, minus any costs already incurred.</li><li><strong>After work starts</strong>: the deposit is non-refundable, and the work completed to that point is due.</li><li><strong>If you cancel mid-project</strong>: you receive the code and documentation in their current state.</li></ul><p>The full wording is in the Terms of Service.</p>"
+    },
+    "20": {
+      "question": "Who will I talk to during the project?",
+      "answer": "<p><strong>One named contact, set in your proposal, from discovery to launch.</strong> You reach us by call or WhatsApp.</p><p>During development you also get a live preview link to review the work in progress. The full working terms are on <a href=\"/how-we-work\" class=\"text-foreground underline decoration-border underline-offset-4\">the how we work page</a>.</p>"
+    },
+    "21": {
+      "question": "Can I review the finished site before it goes live?",
+      "answer": "<p><strong>Yes.</strong> The completed build is delivered for your review on our staging environment, with the same functionality it will have in production.</p><p>Deployment to your own domain follows once the final payment clears - stated here so it is never a surprise at launch. The code and accounts pass to you at that payment.</p>"
+    },
+    "01": {
+      "question": "Why should I trust a new company with my entire tech stack?",
+      "answer": "<p><strong>Because you do not have to rely on us staying involved.</strong> We are a new studio, so the protection is in the terms: you receive the complete source code and documentation, and the accounts pass to you at final payment. If we stopped working together tomorrow, any competent developer could maintain the system.</p><p>Technically: we build on Next.js, deploy to Vercel or your own infrastructure, and structure every project so another developer can read it without us. No proprietary framework, no private tooling.</p>"
+    },
+    "02": {
+      "question": "What happens to my code and data if Altruvex shuts down?",
+      "answer": "<p><strong>Nothing you own depends on us.</strong> Source code, databases, configuration and accounts pass to you at final payment, and the repository lives in an account you control. The handover includes:</p><ul><li>Complete source code, as it runs in production</li><li>Database schema and migration history</li><li>A guide to environment variables and secrets</li><li>Deployment documentation: how to redeploy or move the infrastructure</li></ul><p><span class=\"text-foreground/60\">Nothing is held back to make leaving difficult.</span></p>"
+    },
+    "03": {
+      "question": "Why custom-built instead of WordPress, Shopify, or Odoo?",
+      "answer": "<p>Templates trade flexibility for speed. They suit specific cases - Shopify for a straightforward store, WordPress for a blog. When a business has its own workflows, local payment methods, or growth that does not fit a plugin, <strong>the template becomes the limit</strong>.</p><p>A custom build means:</p><ul><li><strong>Performance</strong>: speed is designed into the architecture and built to the published performance targets (see <a href=\"/standards\" class=\"text-foreground underline decoration-border underline-offset-4\">our quality standards</a>).</li><li><strong>Integration</strong>: payment providers and other services are connected through their own APIs, not through a plugin that approximates them.</li><li><strong>Ownership</strong>: no platform subscription or plugin vendor between you and your own code.</li><li><strong>Growth</strong>: the architecture follows your business logic, not a plugin's limits.</li></ul>"
+    },
+    "04": {
+      "question": "What's the timeline from 'I want to start' to 'we're live'?",
+      "answer": "<p><strong>{deliveryWeeksMin}–{deliveryWeeksMax} weeks</strong>, depending on scope. Every project moves through the same five phases - discovery, wireframe, design, development and launch - and <a href=\"/process\" class=\"text-foreground underline decoration-border underline-offset-4\">the project phases page</a> shows how long each takes.</p><p>The estimator gives an indicative range in weeks; your proposal sets the delivery window once scope is reviewed.</p><p>What moves the date: scope first, then how ready your content is and how quickly each phase is signed off. <span class=\"text-foreground/60\">Content written from scratch adds time to the early phases; a flexible deadline can stretch a quote to {deliveryCeilingWeeks} weeks, never further.</span></p>"
+    },
+    "05": {
+      "question": "What if my needs change after we've started?",
+      "answer": "<p>Changes are expected, so the process handles them in writing:</p><ul><li><strong>Minor changes</strong> - within 5% of the agreed effort - are included.</li><li><strong>Moderate changes</strong> (5-25%) get a written change order, with its price and the adjusted timeline, before work starts - a fixed price or an hourly rate you approve first.</li><li><strong>Major changes</strong> (over 25%) are quoted as new work or a second phase.</li></ul><p><strong>Nothing reaches the final invoice that you did not approve in writing</strong> - <span class=\"text-foreground/60\">a verbal request is not a change order</span>.</p><p>After launch, the {warrantyDays}-day warranty covers critical fixes. Larger changes move to a maintenance plan or a new quote, depending on size. The same rules are summarised in <a href=\"/how-we-work\" class=\"text-foreground underline decoration-border underline-offset-4\">how we work</a>.</p>"
+    },
+    "06": {
+      "question": "How do you handle local payment and messaging integrations?",
+      "answer": "<p>Local requirements are scoped in discovery, not found at launch. Typical examples:</p><ul><li>Local payment providers and bank transfer flows</li><li>Delivery and logistics services</li><li>Multilingual content and right-to-left workflows</li></ul><p>Each provider's own requirements - local ID checks, per-message SMS costs, data residency - are reviewed before the integration is quoted. <strong>They are part of the architecture from discovery</strong>, not an afterthought.</p>"
+    },
+    "07": {
+      "question": "Is multilingual and right-to-left support built properly, or just mirrored?",
+      "answer": "<p><strong>Multilingual by design, not mirrored.</strong></p><p>Most sites are built in one language, then translated. We design and engineer every language together:</p><ul><li>Right-to-left is part of the structure, not a CSS flip.</li><li>Every language is an equal experience, not a late translation.</li><li>Forms, dashboards and workflows handle every language without breaking layouts.</li><li>Every language is built to the same performance targets.</li></ul><p>This matters if your customers or staff read right-to-left. <span class=\"text-foreground/60\">A weak right-to-left experience costs credibility.</span></p>"
+    },
+    "08": {
+      "question": "What happens after the {warrantyDays}-day post-launch warranty ends?",
+      "answer": "<p>You have three options:</p><ol><li><strong>Maintenance plan</strong>: the Essential plan is {maintenanceEssential}/month or {maintenanceEssentialAnnual}/year, the Professional plan is {maintenanceProfessional}/month or {maintenanceProfessionalAnnual}/year. Each plan includes monitoring, security updates and a monthly allowance of edit requests; requests beyond it are billed at {revisionRate} an hour.</li><li><strong>As-needed support</strong>: no monthly commitment. Changes and fixes are quoted and billed hourly at the rate in your proposal.</li><li><strong>Your own team</strong>: the handover documentation lets you, or a developer you hire, maintain the system independently. A consultation is available if you need one.</li></ol><p>A plan suits a system where <span class=\"text-foreground/60\">someone should be watching for performance or security issues</span>.</p>"
+    },
+    "09": {
+      "question": "Can we hire a different developer to maintain our system later?",
+      "answer": "<p><strong>Yes.</strong> That is why we build the way we do.</p><p>The handover package lets any competent full-stack developer take over. It covers:</p><ul><li>The technology choices (Next.js, database, deployment)</li><li>The business logic (why workflows are structured as they are)</li><li>The operational side (monitoring, error tracking, scaling)</li></ul><p>When you switch, we can walk your developer through the system. <span class=\"text-foreground/60\">It is your decision.</span></p>"
     }
   }
 }

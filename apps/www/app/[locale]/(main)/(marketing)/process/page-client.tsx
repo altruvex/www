@@ -4,7 +4,7 @@ import { SectionEndCta } from "@/components/sections/section-end-cta";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import {
   useMediaSettle,
@@ -53,11 +53,12 @@ function OpeningSection() {
           secondTitle={t("titleItalic")}
           description={t("description")}
           classes={{
+            container: "lg:flex-col lg:items-start lg:gap-8",
             titleWrapper: "space-y-6",
             title:
-              "max-w-6xl text-balance text-[clamp(3rem,8.4vw,8rem)] font-light leading-[0.98] tracking-[-0.045em] rtl:leading-[1.3] rtl:tracking-normal",
+              "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[0.98] tracking-[-0.045em] rtl:leading-[1.3] rtl:tracking-normal",
             description:
-              "max-w-[40ch] text-[clamp(1rem,1.1vw,1.125rem)] md:max-w-[40ch] lg:max-w-[22rem]",
+              "max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] lg:max-w-[46ch]",
           }}
         />
       </Container>
@@ -131,7 +132,7 @@ function ClosingSection() {
       title={t("flexibility.title")}
       titleAccent={t("flexibility.titleItalic")}
       body={t.rich("flexibility.description", bodyMarks)}
-      primary="technicalCall"
+      primary="describeTheBuild"
       secondary="projectRange"
       aside={
         <div className="max-w-xl">
@@ -146,7 +147,7 @@ function ClosingSection() {
               {length(first)}
             </p>
           </div>
-          <p className="mt-3 max-w-[52ch] text-[0.9375rem] leading-relaxed text-muted-foreground">
+          <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
             {t(`phases.${first.key}.description`)}
           </p>
         </div>

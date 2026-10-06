@@ -57,7 +57,8 @@ export function StatusMenu({
 
   return (
     <>
-      <DropdownMenu>
+      {/* Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"

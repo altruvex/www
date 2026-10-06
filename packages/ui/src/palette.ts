@@ -36,7 +36,7 @@ export const PALETTE_HSL = {
 } as const;
 
 export const GRADIENT_VIA_HSL = {
-  iris: { light: "250 76% 58%", dark: "250 92% 70%" },
+  iris: { light: "250 76% 58%", dark: "250 92% 73%" },
   ocean: { light: "206 86% 46%", dark: "204 92% 62%" },
   brand: { light: "224 84% 50%", dark: "222 92% 66%" },
   sunset: { light: "10 86% 54%", dark: "12 92% 64%" },
@@ -68,3 +68,9 @@ export const PALETTE = {
 } as const;
 
 export const css = (hex: string) => `#${hex}`;
+
+/** A palette colour at an opacity, for renderers that cannot read CSS variables (OG images, PDFs). */
+export const cssAlpha = (hex: string, alpha: number) => {
+  const [r, g, b] = [0, 2, 4].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};

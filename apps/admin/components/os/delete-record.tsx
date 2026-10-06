@@ -166,7 +166,7 @@ function DeleteDialog({
       )}
 
       {impact.length > 0 && (
-        <div className="rounded-md border border-danger/25 bg-danger/5 px-2.5 py-2">
+        <div className="rounded-ctl-xl border border-danger/25 bg-danger/5 px-2.5 py-2">
           <p className="telemetry text-subtle-foreground">Also deleted</p>
           <ul className="mt-1.5 space-y-1">
             {impact.map((entry) => (
@@ -208,7 +208,7 @@ function DeleteDialog({
             </Banner>
           ))}
           {preview?.canOverride ? (
-            <label className="flex items-start gap-2 rounded-md border border-warning/25 bg-surface px-2.5 py-2 text-base">
+            <label className="flex items-start gap-2 rounded-ctl-lg border border-warning/25 bg-surface px-2.5 py-2 text-base">
               <Checkbox
                 className="mt-0.5"
                 checked={override}
@@ -245,10 +245,10 @@ function Banner({
     <p
       role={tone === "danger" ? "alert" : undefined}
       className={cn(
-        "flex items-start gap-2 rounded-md border px-2.5 py-2 text-base",
+        "flex items-start gap-2 rounded-ctl-lg border px-2.5 py-2 text-base",
         tone === "danger" && "border-danger/25 bg-danger/5 text-foreground",
         tone === "warning" && "border-warning/25 bg-warning/5 text-foreground",
-        tone === "muted" && "border-border bg-surface text-muted-foreground",
+        tone === "muted" && "border-border-subtle bg-surface text-muted-foreground",
       )}
     >
       {icon && (
@@ -307,7 +307,8 @@ export function RowActions({
   children?: React.ReactNode;
 }) {
   return (
-    <DropdownMenu>
+    // Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none.
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"

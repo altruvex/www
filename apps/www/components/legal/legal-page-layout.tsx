@@ -95,7 +95,7 @@ function LegalContactRow() {
           >
             {t("label")}
           </h2>
-          <p className="mt-2 text-[0.9375rem] leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             {t("body")}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -188,7 +188,7 @@ export function LegalSummary({
               key={item.text}
               className="flex flex-col gap-2 border-b border-border-subtle py-5"
             >
-              <p className="text-[1.0625rem] leading-snug text-foreground">
+              <p className="text-body leading-snug text-foreground">
                 {item.text}
               </p>
               <a

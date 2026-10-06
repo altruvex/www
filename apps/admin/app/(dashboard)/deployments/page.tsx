@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/os/empty-state";
 import { EntityLink } from "@/components/os/entity-link";
 import { InspectSheet, inspectHref } from "@/components/os/inspect-sheet";
 import { PageHeader } from "@/components/os/page-header";
+import { PickToOpen } from "@/components/os/pick-to-open";
 import { StatTile } from "@/components/os/stat-tile";
 import { TabNav } from "@/components/os/tab-nav";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
@@ -196,14 +197,25 @@ export default async function DeploymentsPage({
           body={
             noProducts
               ? "Deployments belong to a product. Add the sites and apps Altruvex operates, then point their pipelines at the ingest endpoint."
-              : "No build or deployment has reached the ingest endpoint, and this page is read-only: rows appear because CI reported them, never because someone filled in a form. To connect one, open a product, issue an ingest token under Pipeline (or link its GitHub repository), and have CI post to /api/ingest/builds and /api/ingest/deployments."
+              : "No build or deployment has reached the ingest endpoint, and this page is read-only: rows appear because CI reported them, never because someone filled in a form. Pick the product below to issue its ingest token (or link its GitHub repository), then have CI post to /api/ingest/builds and /api/ingest/deployments."
           }
           action={
-            <Button asChild variant="outline">
-              <Link href="/products">
-                {noProducts ? "Add a product" : "Connect a pipeline"}
-              </Link>
-            </Button>
+            noProducts ? (
+              can(role, "create", "project") ? (
+                <Button asChild variant="outline">
+                  <Link href="/products?new=product">Add a product</Link>
+                </Button>
+              ) : null
+            ) : can(role, "edit", "project") ? (
+              <PickToOpen
+                label="Connect a pipeline"
+                searchPlaceholder="Find a product"
+                options={products.map((p) => ({
+                  label: p.name,
+                  href: `/products/${p.id}#connect`,
+                }))}
+              />
+            ) : null
           }
         />
       </div>
@@ -369,6 +381,17 @@ export default async function DeploymentsPage({
       >
         Clear filters
       </Link>
+      {productId && products.some((p) => p.id === productId) && (
+        <>
+          {" · "}
+          <Link
+            href={`/products/${productId}#connect`}
+            className="text-brand hover:underline"
+          >
+            Check this product&apos;s pipeline
+          </Link>
+        </>
+      )}
     </span>
   ) : cursor ? (
     <span>
@@ -544,7 +567,7 @@ export default async function DeploymentsPage({
               Written by CI — read-only. Nothing here can be changed from the admin.
             </p>
             {inspectedDeployment.failureReason && (
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-panel-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
                 {inspectedDeployment.failureReason}
               </pre>
             )}
@@ -606,7 +629,7 @@ export default async function DeploymentsPage({
               Written by CI — read-only. Nothing here can be changed from the admin.
             </p>
             {inspectedBuild.failureReason && (
-              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-panel-sm border border-danger/40 bg-danger/5 p-2 font-mono text-meta">
                 {inspectedBuild.failureReason}
               </pre>
             )}

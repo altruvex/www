@@ -4,7 +4,7 @@ import { useFillPricingTokens } from "@/components/providers/pricing-tokens-prov
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { FaqList, type FaqListItem } from "@/components/shared/faq-list";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import {
   useSectionDescription,
   useSectionEyebrow,

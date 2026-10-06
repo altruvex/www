@@ -136,14 +136,18 @@ export default async function RenewalsPage({
         attentionOnly={attentionOnly}
         canRenew={canRenew}
         canRemind={can(role, "send", "message")}
+        canStart={{
+          retainer: can(role, "create", "payment"),
+          service: can(role, "create", "project"),
+        }}
       />
 
-      {inspected && <RenewalInspector row={inspected} canRenew={canRenew} />}
+      {inspected && <RenewalInspector row={inspected} canRenew={canRenew} canRemind={can(role, "send", "message")} />}
     </div>
   );
 }
 
-function RenewalInspector({ row, canRenew }: { row: RenewalRow; canRenew: CanRenew }) {
+function RenewalInspector({ row, canRenew, canRemind }: { row: RenewalRow; canRenew: CanRenew; canRemind: boolean }) {
   const href = entityHref(row.entityType, row.id);
   return (
     <InspectSheet
@@ -152,7 +156,7 @@ function RenewalInspector({ row, canRenew }: { row: RenewalRow; canRenew: CanRen
       subtitle={row.detail ?? (row.kind === "retainer" ? "Retainer period" : "Service term")}
       status={<StatusPill registry={row.urgency.registry} value={row.urgency.value} />}
       fullHref={href ?? undefined}
-      footer={<RenewalInspectorActions row={row} canRenew={canRenew} />}
+      footer={<RenewalInspectorActions row={row} canRenew={canRenew} canRemind={canRemind} />}
     >
       <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-base">
         <div>

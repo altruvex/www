@@ -213,12 +213,12 @@ export function SendDocument({
             )}
 
             {blocked && (
-              <p className="rounded-sm border border-border bg-surface px-3 py-2 text-meta text-warning" role="status">
+              <p className="rounded-ctl border border-border-subtle bg-surface px-3 py-2 text-meta text-warning" role="status">
                 {blocked}
               </p>
             )}
             {failure && (
-              <p className="rounded-sm border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger" role="alert">
+              <p className="rounded-ctl border border-danger/30 bg-danger/5 px-3 py-2 text-meta text-danger" role="alert">
                 {failure}
               </p>
             )}

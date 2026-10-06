@@ -54,8 +54,16 @@ export function Dossier({
 
   React.useEffect(() => {
     const hash = decodeURIComponent(window.location.hash.slice(1));
+    if (!hash || !ids.split("|").includes(hash)) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (hash && ids.split("|").includes(hash)) setActive(hash);
+    setActive(hash);
+    // A link from another page ("Connect a pipeline" → /products/<id>#connect)
+    // lands before this section has rendered, so the browser's own jump to the
+    // anchor never happens. Do it once the section exists.
+    const frame = window.requestAnimationFrame(() =>
+      document.getElementById(hash)?.scrollIntoView({ block: "start" }),
+    );
+    return () => window.cancelAnimationFrame(frame);
   }, [ids]);
 
   React.useEffect(() => {
@@ -153,8 +161,8 @@ export function Dossier({
         ref={navRef}
         aria-label={label}
         className={cn(
-          "sticky top-[var(--topbar-h)] z-20 -mx-3 min-w-0 border-b border-border bg-background/90 px-3 backdrop-blur-md sm:-mx-4 sm:px-4",
-          "lg:top-[calc(var(--topbar-h)+1rem)] lg:z-auto lg:col-start-1 lg:row-start-1 lg:mx-0 lg:self-start lg:border-0 lg:bg-transparent lg:px-0 lg:backdrop-blur-none",
+          "sticky top-[var(--topbar-h)] z-20 -mx-3 min-w-0 border-b border-border-subtle bg-background px-3 sm:-mx-4 sm:px-4",
+          "lg:top-[calc(var(--topbar-h)+1rem)] lg:z-auto lg:col-start-1 lg:row-start-1 lg:mx-0 lg:self-start lg:border-0 lg:bg-transparent lg:px-0",
           aside && "lg:row-span-2 xl:row-span-1",
         )}
       >
@@ -171,12 +179,12 @@ export function Dossier({
                   onClick={(event) => jump(event, section.id)}
                   aria-current={isActive ? "location" : undefined}
                   className={cn(
-                    "flex h-[var(--control-h-sm)] items-center gap-2 whitespace-nowrap rounded-md border px-2.5 text-base no-underline pointer-coarse:h-9",
+                    "flex h-[var(--control-h-sm)] items-center gap-2 whitespace-nowrap rounded-ctl-sm border px-2.5 text-base no-underline pointer-coarse:h-9",
                     "transition-colors duration-[var(--dur-state)] outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand",
                     "lg:w-full lg:border-transparent lg:px-2 [&_svg]:size-3.5 [&_svg]:shrink-0",
                     isActive
                       ? "border-border-mid bg-surface font-medium text-foreground"
-                      : "border-border text-muted-foreground hover:text-foreground lg:hover:bg-surface/60",
+                      : "border-border-subtle text-muted-foreground hover:text-foreground lg:hover:bg-surface/60",
                   )}
                 >
                   {section.icon && (
@@ -243,7 +251,7 @@ export function DossierSection({
       aria-labelledby={titleId}
       tabIndex={-1}
       className={cn(
-        "scroll-mt-[calc(var(--topbar-h)+3.75rem)] border-t border-border py-6 outline-none first:border-t-0 first:pt-0 lg:scroll-mt-[calc(var(--topbar-h)+1rem)]",
+        "scroll-mt-[calc(var(--topbar-h)+3.75rem)] border-t border-border-subtle py-6 outline-none first:border-t-0 first:pt-0 lg:scroll-mt-[calc(var(--topbar-h)+1rem)]",
         className,
       )}
     >

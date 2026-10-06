@@ -1,22 +1,19 @@
 {
   "back": "Back",
-  "eyebrow": "14 - Technical Call",
+  "eyebrow": "Initial project consultation call",
   "facts": {
-    "free": "Free",
-    "hours": "9:00 AM – 6:00 PM",
-    "noCommitment": "No commitment"
+    "duration": "30 minutes",
+    "noCharge": "No charge",
+    "noCommitment": "No commitment",
+    "hours": "{range} ({zone})"
   },
   "form": {
     "date": {
       "errorFuture": "Date must be within the next 3 months",
       "errorPast": "Date must be today or in the future",
       "errorRequired": "Please select a date",
-      "label": "Preferred Date",
+      "label": "Preferred date",
       "placeholder": "pick a day"
-    },
-    "message": {
-      "label": "Message (Optional)",
-      "placeholder": "Tell us about your project - what you are building, what is not working, or what decision you need clarity on."
     },
     "name": {
       "error": "Name must be at least 2 characters",
@@ -25,42 +22,54 @@
     },
     "phone": {
       "error": "Please enter a valid phone number",
-      "label": "Phone Number",
+      "label": "Phone number",
       "placeholder": "01X XXXX XXXX"
     },
     "time": {
       "error": "Please select a time",
       "errorPast": "That time has already passed today. Pick a later time.",
-      "label": "Preferred Time",
+      "label": "Preferred time",
       "placeholder": "pick a time"
     }
   },
+  "privacy": "We use your name and number only to confirm this call.",
+  "privacyLink": "Privacy policy",
   "sentence": "My name is <name></name>. Call me on <phone></phone> on <date></date> at <time></time>.",
   "seo": {
-    "body": "A discovery call is not a sales script. It is a focused technical conversation for founders, operators, and teams that need to understand whether a custom website, portal, ecommerce platform, or internal web system is the right next move.",
+    "body": "The initial project consultation call is a focused conversation for founders, operators and teams deciding whether a custom website, portal, online store or internal web system is the right next move.",
     "eyebrow": "Before you choose a time",
     "faq": {
       "items": [
         {
-          "a": "No. The first call is free and exists to understand the project, risks, and decision you need to make. If the scope is not a fit, we will say that clearly.",
-          "q": "Is the first technical call paid?"
+          "a": "No. This call is a conversation to understand your project and recommend a next step. The technical audit is a separate, paid service: a review of an existing build that ends with written findings. If the call shows you need one, we say so.",
+          "q": "Is this the same as a technical audit?"
         },
         {
           "a": "Bring the business goal, the current website or system if one exists, the main user journeys, and any deadlines or budget constraints. A rough brief is enough.",
           "q": "What should I prepare before the call?"
         },
         {
-          "a": "Most discovery calls take around 30 minutes. Complex rebuilds or systems with integrations may need a follow-up architecture session before a final proposal.",
+          "a": "Most consultation calls take around 30 minutes. Complex rebuilds or systems with integrations may need a follow-up architecture session before a final proposal.",
           "q": "How long does the call take?"
         },
         {
-          "a": "After the call, we outline the recommended next step: a technical audit, a scoped proposal, a transparency estimate, or a decision not to build yet.",
+          "a": "We confirm the time by call or WhatsApp on the number you give. After the consultation call, we recommend one next step: a technical audit, a written proposal, a project estimate, or a decision not to build yet.",
           "q": "What happens after I book?"
         }
       ],
-      "title": "Schedule call questions"
+      "title": "Questions about the consultation call"
     },
     "sections": [
+      {
+        "body": "The consultation call is a phone call on the number you give, at the time you pick. It is a working conversation about your project, not a sales pitch. Before the call, we confirm the time with you by call or WhatsApp.",
+        "points": [
+          "About 30 minutes",
+          "No commitment",
+          "Time confirmed by call or WhatsApp first",
+          "Ends with one recommended next step"
+        ],
+        "title": "How the call runs"
+      },
       {
         "body": "We use the call to separate assumptions from real requirements. That means understanding the users, workflows, integrations, content, performance expectations, and operational constraints before recommending a build path.",
         "points": [
@@ -72,11 +81,11 @@
         "title": "What we clarify on the call"
       },
       {
-        "body": "This call is useful when the project is serious enough that a generic quote would be misleading. It is especially valuable for bilingual websites, custom Next.js builds, ecommerce systems, dashboards, portals, and rebuild decisions.",
+        "body": "This call is useful when the project is serious enough that a generic quote would be misleading. It is especially valuable for multilingual websites, custom Next.js builds, ecommerce systems, dashboards, portals, and rebuild decisions.",
         "points": [
-          "Founder-led companies planning a rebuild",
+          "Companies planning a rebuild of an existing site",
           "Teams comparing custom development options",
-          "Businesses with Arabic and English requirements",
+          "Businesses that need more than one language, right-to-left included",
           "Operators who need ownership of the code"
         ],
         "title": "Who should schedule"
@@ -92,15 +101,14 @@
         "title": "What you get after the call"
       }
     ],
-    "title": "A technical call with a clear purpose"
+    "title": "What happens on the 30-minute consultation call"
   },
   "submit": {
-    "button": "Confirm the call",
-    "errorGeneric": "Something went wrong. Please try again.",
-    "errorNetwork": "Network error. Check your connection and try again.",
-    "submitting": "Scheduling...",
-    "success": "Booked. Check your inbox for the confirmation."
+    "button": "Schedule a consultation",
+    "submitting": "Scheduling…",
+    "success": "Request received. We will confirm the time by call or WhatsApp."
   },
-  "subtitle": "A technical conversation about your project, not a sales pitch. You leave with <strong>a clearer scope and an honest next step.</strong>",
-  "title": "Thirty minutes with the founder."
+  "subtitle": "The initial project consultation call has no charge, and it is separate from the paid technical audit. Use it to decide whether a custom build is the right move and what it would involve, before any proposal. You leave with <strong>a clearer scope and an honest next step.</strong>",
+  "title": "Schedule a 30-minute project consultation.",
+  "writeLead": "Prefer to write first?"
 }

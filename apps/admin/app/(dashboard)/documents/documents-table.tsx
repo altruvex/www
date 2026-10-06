@@ -6,6 +6,7 @@ import { Download, FolderOpen, Trash2 } from "lucide-react";
 import { Button } from "@repo/ui";
 import { DataTable, type BulkAction, type Column } from "@/components/os/data-table";
 import { EmptyState } from "@/components/os/empty-state";
+import { NewProposalButton } from "@/components/os/new-proposal-button";
 import { useRecordDelete, type DeleteTarget } from "@/components/os/delete-record";
 import { EntityLink } from "@/components/os/entity-link";
 import { inspectHref } from "@/components/os/inspect-sheet";
@@ -43,10 +44,12 @@ export function DocumentsTable({
   rows,
   filtered,
   canDeleteProposals,
+  canCreateProposal,
   canDeleteContracts,
 }: {
   rows: DocumentRow[];
   canDeleteProposals: boolean;
+  canCreateProposal: boolean;
   canDeleteContracts: boolean;
   filtered: string | null;
 }) {
@@ -180,7 +183,7 @@ export function DocumentsTable({
           href={row.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex h-6 items-center gap-1 rounded-sm border border-border px-1.5 text-meta hover:bg-surface"
+          className="inline-flex h-6 items-center gap-1 rounded-ctl-xs border border-border-subtle px-1.5 text-meta hover:bg-surface"
           onClick={(e) => e.stopPropagation()}
         >
           <Download className="size-3" aria-hidden />
@@ -218,6 +221,8 @@ export function DocumentsTable({
               <Button variant="outline" size="sm" asChild>
                 <Link href={clearedHref(pathname, searchParams)}>Clear filters</Link>
               </Button>
+            ) : canCreateProposal ? (
+              <NewProposalButton variant="outline">Pick a client to quote</NewProposalButton>
             ) : (
               <Button variant="outline" size="sm" asChild>
                 <Link href="/proposals">Open proposals</Link>

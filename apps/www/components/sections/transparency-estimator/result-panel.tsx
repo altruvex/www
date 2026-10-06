@@ -1,11 +1,11 @@
 "use client";
 
 import { MagneticButton } from "@/components/magnetic-button";
-import { ArrowIcon } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { ArrowIcon, Input, Label, Textarea } from "@repo/ui";
+import { Eyebrow } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
 import { getCommercialCta } from "@/lib/config/commercial";
-import { motion, useSectionCardGrid } from "@/lib/motion";
+import { motion, scrollToY, useSectionCardGrid } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import {
@@ -24,13 +24,19 @@ import {
   type ScopeNoteId,
   type ServiceId,
 } from "@repo/pricing-schema";
-import { Input, Label, Textarea } from "@repo/ui";
 import { Check, Download, RotateCcw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CONDITION_QUESTIONS } from "./constants";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
+import { CONDITION_QUESTIONS, ESTIMATE_METHOD_ID } from "./constants";
 import type { HeadingLevel } from "./questions";
 import type { AnswerMap, MoneyFormats, QuestionKey, Translator } from "./types";
+import { toLocale } from "@/i18n/locale-meta";
 
 const NOTE_MAX = 1000;
 
@@ -219,6 +225,14 @@ function StartOverButton({
   );
 }
 
+// Lenis overrides a native #anchor jump, so in-page links scroll explicitly.
+function goToSection(event: MouseEvent<HTMLAnchorElement>, id: string) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  event.preventDefault();
+  scrollToY(target.getBoundingClientRect().top + window.scrollY);
+}
+
 function SecondaryLink({
   href,
   label,
@@ -230,6 +244,19 @@ function SecondaryLink({
 }) {
   const className =
     "group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text";
+
+  if (href.startsWith("#")) {
+    return (
+      <a
+        href={href}
+        onClick={(event) => goToSection(event, href.slice(1))}
+        className={className}
+      >
+        <span>{label}</span>
+        <ArrowIcon />
+      </a>
+    );
+  }
 
   return external ? (
     <a href={href} target="_blank" rel="noreferrer" className={className}>
@@ -307,7 +334,7 @@ export function ResultPanel({
 }) {
   const tPM = useTranslations("pricingModel");
   const tCta = useTranslations("commercial.ctas");
-  const locale: Locale = useLocale().startsWith("ar") ? "ar" : "en";
+  const locale: Locale = toLocale(useLocale());
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const Subheading = headingLevel === 2 ? "h3" : "h4";
 
@@ -402,7 +429,7 @@ export function ResultPanel({
 
       <div className="mt-10 grid gap-px border-y border-border-subtle bg-border-subtle md:grid-cols-2">
         <div className="bg-background py-8 md:pe-10">
-          <Subheading className="text-[0.9375rem] font-medium text-foreground">
+          <Subheading className="text-base font-medium text-foreground">
             {tPM("result.driversTitle")}
           </Subheading>
           <ScopeDrivers
@@ -444,7 +471,7 @@ export function ResultPanel({
           )}
         </div>
         <div className="bg-background py-8 md:ps-10">
-          <Subheading className="text-[0.9375rem] font-medium text-foreground">
+          <Subheading className="text-base font-medium text-foreground">
             {submitted
               ? t("results.fullScopeLabel")
               : t("results.includesLabel")}
@@ -454,7 +481,7 @@ export function ResultPanel({
               <li
                 key={item}
                 data-scope-line
-                className="flex items-start gap-3.5 text-[0.9375rem] leading-relaxed text-foreground"
+                className="flex items-start gap-3.5 text-base leading-relaxed text-foreground"
               >
                 <Check
                   aria-hidden
@@ -485,7 +512,7 @@ export function ResultPanel({
           <div className="lg:col-span-5">
             <p
               role="status"
-              className="flex items-start gap-2.5 text-[0.9375rem] font-medium leading-relaxed text-foreground"
+              className="flex items-start gap-2.5 text-base font-medium leading-relaxed text-foreground"
             >
               <Check
                 aria-hidden
@@ -515,7 +542,7 @@ export function ResultPanel({
             </div>
           </div>
           <div className="lg:col-span-7 lg:border-s lg:border-border-subtle lg:ps-16">
-            <Subheading className="text-[0.9375rem] font-medium text-foreground">
+            <Subheading className="text-base font-medium text-foreground">
               {t("results.nextStepTitle")}
             </Subheading>
             <ol className="mt-5 divide-y divide-border-subtle border-y border-border-subtle">
@@ -567,6 +594,10 @@ export function ResultPanel({
               <SecondaryLink
                 href={technicalCallHref}
                 label={tCta("technicalCall")}
+              />
+              <SecondaryLink
+                href={`#${ESTIMATE_METHOD_ID}`}
+                label={t("results.howCalculated")}
               />
               <StartOverButton label={t("startOver")} onClick={onStartOver} />
             </div>

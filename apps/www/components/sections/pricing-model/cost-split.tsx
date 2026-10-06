@@ -1,9 +1,6 @@
-import { ArrowIcon } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
 import { cn } from "@/lib/utils/utils";
-import type {
-  MaintenanceView,
-  PricingDriverView,
-} from "@repo/pricing-schema";
+import type { PricingDriverView } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { BODY, FIGURE_INLINE, LABEL, MINOR, SUBHEAD } from "./type";
@@ -19,13 +16,10 @@ const sentences = (text: string) =>
 export type CostSplitData = {
   drivers: readonly PricingDriverView[];
   openingRange: string;
-  floorLabel: string;
-  serviceRanges: readonly { serviceId: string; name: string; range: string }[];
   exampleService: {
     name: string;
     cells: readonly { band: string; price: string }[];
   };
-  plans: readonly MaintenanceView[];
 };
 
 function Figures({ rows }: { rows: readonly { label: string; value: string }[] }) {
@@ -57,20 +51,8 @@ export async function CostSplit({
 }) {
   const t = await getTranslations({ locale, namespace: "pricingModel" });
 
-  const effectFigure = (driver: PricingDriverView): string | null =>
-    driver.id === "scope" ? data.floorLabel : driver.spanLabel;
-
   const effectDetail = (driver: PricingDriverView): ReactNode => {
     switch (driver.id) {
-      case "scope":
-        return (
-          <>
-            <p className={cn(LABEL, "mt-1")}>{t("columns.moves.floorNote")}</p>
-            <Figures
-              rows={data.serviceRanges.map((row) => ({ label: row.name, value: row.range }))}
-            />
-          </>
-        );
       case "complexity":
         return (
           <>
@@ -110,23 +92,6 @@ export async function CostSplit({
         </ul>
       );
     }
-    if (driver.id === "operation") {
-      return (
-        <ul className="mt-4 space-y-1.5">
-          {data.plans.map((plan) => (
-            <li key={plan.id} className="flex items-baseline justify-between gap-4">
-              <span className={cn(LABEL, "min-w-0")}>{plan.name}</span>
-              <span className={cn(LABEL, "whitespace-nowrap text-end tabular-nums text-foreground")}>
-                {plan.priceLabel}
-                {plan.cycleLabel ? (
-                  <span className="text-muted-foreground"> {plan.cycleLabel}</span>
-                ) : null}
-              </span>
-            </li>
-          ))}
-        </ul>
-      );
-    }
     return null;
   };
 
@@ -145,7 +110,9 @@ export async function CostSplit({
 
       <ul className="list-none border-b border-border-subtle">
         {driversFor("moves").map((driver) => {
-          const figure = effectFigure(driver);
+          // Per-type ranges, the floor and plan prices live in the price
+          // list above; this section only shows how each answer moves them.
+          const figure = driver.spanLabel;
           return (
             <li
               key={driver.id}

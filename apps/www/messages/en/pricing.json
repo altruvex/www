@@ -2,8 +2,8 @@
   "faq": {
     "questions": {
       "01": {
-        "q": "How is the price of a build set?",
-        "a": "<strong>Scope and complexity set the published range</strong>: what gets designed, engineered and integrated, and how much logic, how many templates, states and roles. <span class=\"text-foreground/60\">Content readiness, brand readiness and timeline adjust it; integrations and performance targets are confirmed with you in scope review before the proposal fixes one figure.</span>"
+        "q": "How much does a website or web app cost?",
+        "a": "<strong>A contained website costs {essentialRange}</strong>; larger websites, web apps and stores sit in higher published ranges. <span class=\"text-foreground/60\">Scope and complexity set the range; content, brand readiness and timeline adjust it. Integrations and performance targets are confirmed with you in scope review, and the proposal fixes one figure.</span>"
       },
       "02": {
         "q": "Are there hidden recurring costs?",
@@ -11,18 +11,30 @@
       },
       "03": {
         "q": "What does the payment schedule look like?",
-        "a": "<strong>Three payments</strong>: {paymentStart} to start, {paymentMilestone} at {milestoneTrigger}, and {paymentFinal} before production launch. <span class=\"text-foreground/60\">Code, designs and accounts pass to you at final payment.</span>"
+        "a": "<strong>Three payments</strong>: {paymentStart} to start, {paymentMilestone} at {milestoneTrigger}, and {paymentFinal} before production launch. <span class=\"text-foreground/60\">Invoices are in EGP for clients in Egypt and in USD for international clients. Code, designs and accounts pass to you at final payment.</span>"
       },
       "04": {
         "q": "Can I extend the build later?",
-        "a": "<strong>Yes.</strong> Every build is engineered to grow. <span class=\"text-foreground/60\">Authentication, payments or dashboards can be added later as their own scoped change, priced from the same published ranges.</span>"
+        "a": "<strong>Yes.</strong> Sign-in, payments or dashboards can be added later as their own scoped change. <span class=\"text-foreground/60\">Each addition is priced from the same published ranges and agreed in writing before work starts.</span>"
       },
       "05": {
         "q": "Do you work with early-stage companies?",
-        "a": "<strong>Yes.</strong> Builds start from {minimumEngagement}, for companies that need custom work without product-level investment. <span class=\"text-foreground/60\">For more complex systems, we phase the build so the investment matches the business stage.</span>"
+        "a": "<strong>Yes.</strong> Builds start from {minimumEngagement}, for companies that need custom work before they need a large system. <span class=\"text-foreground/60\">Larger systems can be built in phases, so the cost follows the stage of the business.</span>"
+      },
+      "06": {
+        "q": "Is the proposal price fixed? What if the scope changes?",
+        "a": "<strong>The proposal figure is binding for the agreed scope</strong> and stays valid for {proposalValidityDays} days. <span class=\"text-foreground/60\">A change to scope is documented and agreed in writing before work on it starts, and priced from the same published ranges. Revision work beyond the included rounds is billed at {revisionRate} per hour.</span>"
+      },
+      "07": {
+        "q": "Are hosting, a domain and business email included?",
+        "a": "<strong>Each is its own line, never folded into the build figure.</strong> <span class=\"text-foreground/60\">Hosting is set up and the build deployed to production at launch. Paid third-party services are billed only when your build uses them, and the accounts pass to you at final payment.</span>"
+      },
+      "08": {
+        "q": "Why not a template or a website builder?",
+        "a": "<strong>If a template fits your needs, it costs less and is the right choice.</strong> <span class=\"text-foreground/60\">A custom build is worth it when your requirements go beyond one: your own workflows, integrations, every language with proper right-to-left, or performance targets. You also own the source code, the documentation and the accounts.</span>"
       }
     },
-    "subtitle": "Common questions about how we price and scope projects.",
+    "subtitle": "Questions about website and web app cost",
     "title": "Pricing questions"
   }
 }

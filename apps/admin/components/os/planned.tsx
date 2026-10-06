@@ -26,7 +26,7 @@ export function PlannedModule({
         crumbs={crumbs}
         description={blurb}
         status={
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface px-1.5 py-0.5 text-meta text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground">
             <Construction className="size-3" />
             Planned
           </span>

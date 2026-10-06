@@ -113,7 +113,7 @@ export function Timeline({
     <div className="space-y-6">
       {groups.map((group) => (
         <section key={group.label} className="space-y-2">
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-md border border-border bg-card/90 px-2 py-1.5 backdrop-blur-md">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-ctl-sm border border-border-subtle bg-card px-2 py-1.5">
             <span className="telemetry text-muted-foreground">{group.label}</span>
             <span className="font-mono text-micro tabular-nums text-subtle-foreground">
               {group.events.length} event{group.events.length === 1 ? "" : "s"}
@@ -151,7 +151,7 @@ function TimelineItem({
   const content = (
     <div
       className={cn(
-        "group relative flex items-start gap-3 rounded-md px-2 transition-colors duration-[var(--dur-state)]",
+        "group relative flex items-start gap-3 rounded-ctl-lg px-2 transition-colors duration-[var(--dur-state)]",
         dense ? "py-1.5" : "py-2",
         interactive && "hover:bg-surface/70",
       )}
@@ -168,7 +168,7 @@ function TimelineItem({
         )}
         <div
           className={cn(
-            "relative z-10 flex size-7 items-center justify-center rounded-md border",
+            "relative z-10 flex size-7 items-center justify-center rounded-ctl-sm border",
             toneClasses[event.tone],
           )}
         >
@@ -206,7 +206,7 @@ function TimelineItem({
 
         {!dense && event.meta && (
           <p className="mt-1">
-            <span className="inline-flex items-center rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-micro text-muted-foreground">
+            <span className="inline-flex items-center rounded border border-border-subtle bg-surface px-1.5 py-0.5 font-mono text-micro text-muted-foreground">
               {event.meta}
             </span>
           </p>
@@ -220,7 +220,7 @@ function TimelineItem({
       {event.href ? (
         <Link
           href={event.href}
-          className="block rounded-md no-underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
+          className="block rounded-ctl-lg no-underline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand"
         >
           {content}
         </Link>

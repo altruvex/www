@@ -34,7 +34,10 @@ export const CLIENT_HUB_INCLUDE = {
   },
   contracts: {
     orderBy: { createdAt: "desc" },
-    include: { proposal: { select: { projectType: true } } },
+    include: {
+      proposal: { select: { projectType: true } },
+      project: { select: { id: true } },
+    },
   },
   projects: {
     orderBy: { createdAt: "desc" },

@@ -9,6 +9,8 @@
 @source "../../../packages/ui/src/**/*.{js,jsx,ts,tsx}";
 
 @theme inline {
+  /* text-body: the body's own size as a utility, for text set at body size outside a <p> flow. */
+  --text-body: var(--text-body-base);
   --color-inverted-bg: hsl(var(--inverted-bg));
   --color-local-accent: var(--local-accent);
   --color-local-accent-fg: var(--local-accent-fg);
@@ -19,11 +21,7 @@
   --font-body: var(--font-brand);
   --font-mono: var(--font-brand);
 
-  --radius-ctl-xs: calc(var(--radius) - 12px);
-
-  --radius-panel-sm: calc(var(--radius) + 6px);
-  --radius-panel-md: calc(var(--radius) + 12px);
-  --radius-panel-lg: calc(var(--radius) + 18px);
+  /* ctl-xs and panel-sm/md/lg live in packages/ui tokens.css; the inset is www's (1rem padding). */
   --radius-panel-inset: calc(var(--radius-panel-sm) - 1rem);
 
   --animate-text-gradient: text-gradient 6s linear infinite;
@@ -197,7 +195,7 @@ header[data-scene="inverted"] {
   --glass-clear-shadow:
     inset 0 1px 0 hsl(var(--n-0) / 0.22), inset 0 -1px 0 hsl(var(--n-0) / 0.04),
     0 24px 48px -24px hsl(0 0% 0% / 0.7);
-  --glass-clear-filter: blur(28px) saturate(180%) brightness(0.8);
+  --glass-clear-filter: blur(22px) saturate(120%) brightness(0.85);
   --glass-clear-background-dense: linear-gradient(
     180deg,
     hsl(var(--card) / 0.92),
@@ -267,7 +265,7 @@ header[data-scene="inverted"] {
   --glass-clear-shadow:
     inset 0 1px 0 hsl(var(--n-0) / 0.9), 0 0 0 1px hsl(var(--n-8) / 0.06),
     0 24px 48px -28px hsl(var(--n-8) / 0.35);
-  --glass-clear-filter: blur(28px) saturate(180%) brightness(1.06);
+  --glass-clear-filter: blur(22px) saturate(120%);
   --glass-clear-background-dense: linear-gradient(
     180deg,
     hsl(var(--card) / 0.94),
@@ -849,6 +847,11 @@ header[data-over-stage] [data-nav-cta] {
   [dir="rtl"] [data-wordmark] {
     font-family: var(--font-brand-latin), var(--font-brand-arabic);
     letter-spacing: -0.05em !important;
+  }
+
+  /* AltruvexLogo's wordmark is Latin, so it keeps the brand tracking in RTL like the footer one. */
+  [dir="rtl"] [data-logo-wordmark] {
+    letter-spacing: var(--track-24-600) !important;
   }
 }
 

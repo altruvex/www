@@ -71,7 +71,7 @@ export function ClientNotes({
     >
       {canWrite && (
         <form
-          className="space-y-2 border-b border-border p-3"
+          className="space-y-2 border-b border-border-subtle p-3"
           onSubmit={(event) => {
             event.preventDefault();
             run(

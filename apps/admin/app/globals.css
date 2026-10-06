@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@repo/ui/styles";
+@import "@repo/brand-font/tokens.css";
 @import "@repo/brand-font/fallback.css";
 @source "../app/**/*.{js,jsx,ts,tsx,mdx}";
 @source "../components/**/*.{js,jsx,ts,tsx,mdx}";
@@ -21,9 +22,7 @@
   --text-xl: 1.25rem;
   --text-metric: 1.75rem;
 
-  --animate-palette-in: palette-in 120ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --animate-dock-in: dock-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --animate-shimmer: shimmer 1.4s linear infinite;
 }
 
 :root {
@@ -33,6 +32,8 @@
     sans-serif;
   --dur-state: 120ms;
   --dur-panel: 180ms;
+  /* Mirrors motion.duration.sweep in apps/www/lib/motion/tokens.ts. */
+  --motion-sweep: 2600ms;
 
   --control-h-sm: 28px;
   --control-h: 32px;
@@ -43,7 +44,6 @@
   --control-h-icon: var(--control-h);
   --control-h-icon-lg: var(--control-h-lg);
 
-  --row-h: 40px;
   --sidebar-w: 232px;
   --sidebar-w-collapsed: 56px;
   --topbar-h: 48px;
@@ -57,20 +57,13 @@
   --glass-blur-soft: blur(6px) saturate(110%);
 }
 
-:root[data-density="compact"] {
-  --row-h: 32px;
-}
-:root[data-density="relaxed"] {
-  --row-h: 48px;
-}
-
 .dark {
   --sidebar: var(--card);
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border-subtle;
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border-mid)) transparent;
   }
@@ -145,76 +138,15 @@
 }
 
 @layer components {
-  .telemetry {
-    font-family: var(--font-mono);
-    font-size: var(--text-micro);
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    line-height: 1.4;
-    font-weight: 500;
-  }
-
   .sr-only {
     inset-block-start: 0;
     inset-inline-start: 0;
   }
 
-  .plane {
-    background: var(--glass-background-strong);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--glass-shadow-flat);
-    -webkit-backdrop-filter: var(--glass-blur-soft);
-    backdrop-filter: var(--glass-blur-soft);
-  }
-
-  .dock-glass {
-    background:
-      linear-gradient(180deg, hsl(var(--card) / 0.58), hsl(var(--background) / 0.38));
-    border: 1px solid var(--glass-border);
-    box-shadow:
-      inset 0 1px 0 var(--glass-highlight),
-      inset 0 -1px 1px hsl(var(--n-8) / 0.04),
-      0 18px 40px -18px hsl(var(--n-8) / 0.42),
-      0 2px 8px -5px hsl(var(--n-8) / 0.2);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
-    backdrop-filter: blur(22px) saturate(180%);
-  }
-
-  .dark .dock-glass {
-    background:
-      linear-gradient(180deg, hsl(0 0% 100% / 0.11), hsl(0 0% 100% / 0.045));
-    border-color: hsl(var(--border-mid));
-    box-shadow:
-      inset 0 1px 0 hsl(0 0% 100% / 0.16),
-      0 24px 48px -20px hsl(0 0% 0% / 0.82),
-      0 2px 10px -6px hsl(0 0% 0% / 0.6);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    backdrop-filter: blur(24px) saturate(150%);
-  }
-
-  @media (prefers-reduced-transparency: reduce) {
-    .dock-glass,
-    .dark .dock-glass {
-      background: hsl(var(--card));
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
-  }
-
-  .rows > * + * { border-top: 1px solid hsl(var(--border)); }
 }
 
-@keyframes palette-in {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
-}
 @keyframes dock-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes shimmer {
-  from { background-position: -200% 0; }
-  to { background-position: 200% 0; }
 }
 

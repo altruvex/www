@@ -1,5 +1,10 @@
 import { getAllCaseStudies } from "@/lib/data/case-studies";
-import { getLocalizedUrl, SUPPORTED_LOCALES } from "@/lib/metadata";
+import {
+  getLocalizedUrl,
+  SITE_CONFIG,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/lib/metadata";
 import { getAllArticles } from "@/lib/utils/mdx";
 import { MetadataRoute } from "next";
 
@@ -24,30 +29,30 @@ const STATIC_ROUTES = [
   "/terms",
   "/work",
   "/writing",
-  "/offline",
 ] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const currentDate = new Date();
   const caseStudies = getAllCaseStudies();
-  const [enArticles, arArticles] = await Promise.all([
-    getAllArticles("en"),
-    getAllArticles("ar"),
-  ]);
-
-  const articlesByLocale = {
-    ar: arArticles,
-    en: enArticles,
-  } as const;
+  const articlesByLocale = Object.fromEntries(
+    await Promise.all(
+      SUPPORTED_LOCALES.map(
+        async (locale) => [locale, await getAllArticles(locale)] as const,
+      ),
+    ),
+  ) as Record<SupportedLocale, Awaited<ReturnType<typeof getAllArticles>>>;
 
   const sitemapEntries: MetadataRoute.Sitemap = [];
   const buildAlternates = (path: string) => ({
-    languages: Object.fromEntries(
-      SUPPORTED_LOCALES.map((locale) => [
-        locale,
-        getLocalizedUrl(locale, path),
-      ]),
-    ),
+    languages: {
+      ...Object.fromEntries(
+        SUPPORTED_LOCALES.map((locale) => [
+          locale,
+          getLocalizedUrl(locale, path),
+        ]),
+      ),
+      "x-default": getLocalizedUrl(SITE_CONFIG.defaultLocale, path),
+    },
   });
 
   for (const locale of SUPPORTED_LOCALES) {
@@ -67,7 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       sitemapEntries.push({
         alternates: buildAlternates(caseStudyPath),
         changeFrequency: "monthly",
-        lastModified: new Date(`${caseStudy.year}-01-01`),
+        lastModified: currentDate,
         priority: 0.85,
         url: getLocalizedUrl(locale, caseStudyPath),
       });
@@ -78,7 +83,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       sitemapEntries.push({
         alternates: buildAlternates(articlePath),
         changeFrequency: "monthly",
-        lastModified: new Date(article.frontmatter.date),
+        lastModified: new Date(
+          article.frontmatter.updated ?? article.frontmatter.date,
+        ),
         priority: 0.75,
         url: getLocalizedUrl(locale, articlePath),
       });

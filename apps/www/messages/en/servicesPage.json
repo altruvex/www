@@ -1,80 +1,79 @@
 {
   "capabilities": {
-    "consulting": "Technical Consulting",
-    "development": "Custom Development",
-    "interfaceDesign": "Interface Design",
-    "maintenance": "Maintenance & Support"
+    "consulting": "Technical Audit",
+    "development": "Website & Web App Development",
+    "interfaceDesign": "Website Design",
+    "maintenance": "Website Maintenance"
   },
-  "description": "Each service is structured around <strong>a single business outcome</strong> - so scope, investment, and next steps all point in the same direction.",
+  "description": "Website design, custom website and web app development, a fixed-price technical audit and monthly maintenance. <strong>Each one is scoped and priced in writing before work starts.</strong>",
   "eyebrow": "Services",
   "services": {
     "audit": {
-      "outcome": "Prioritized findings and an execution-ready roadmap in 5 business days.",
-      "problem": "Need clarity before a costly decision?",
+      "outcome": "A fixed-price technical audit of an existing website or system: architecture, performance, security and SEO, returned as ranked findings and a roadmap.",
+      "problem": "Facing a rebuild, a slow site or an unclear technical choice?",
       "deliverables": [
         "Risk-ranked findings across architecture, performance and SEO",
         "A recommended rebuild-or-repair path, with its trade-offs",
         "A roadmap any team can execute — ours or yours"
       ],
-      "engagement": "{auditPrice} fixed, five business days",
-      "leaves": "A decision you can defend, in five days."
+      "engagement": "{auditPrice} fixed, five business days, credited against the build",
+      "leaves": "A written answer on rebuild or repair, in five business days."
     },
     "maintenance": {
-      "outcome": "Predictable coverage without firefighting — releases, monitoring, and one accountable partner.",
-      "problem": "Need reliable execution after launch?",
+      "outcome": "Website maintenance and support: monitoring, backups, security updates and a monthly allowance of edit requests, on a plan you choose.",
+      "problem": "Already live, and need it kept secure and current?",
       "deliverables": [
         "Monitoring, patching and backups on a defined cycle",
         "Content and small feature updates without a new project",
-        "A direct channel to engineers who know the codebase"
+        "Sites we did not build too, after a check of their current state"
       ],
-      "engagement": "Monthly retainer, three coverage plans",
-      "leaves": "A system that keeps working after we leave."
+      "engagement": "From {maintenanceEssential} a month, three plans",
+      "leaves": "Your live site kept secure, backed up and up to date.",
+      "engagementQuoted": "Billed monthly or annually, three plans"
     },
     "portal": {
-      "outcome": "A system that removes operational bottlenecks, supports scale, and fits how the business actually works.",
-      "problem": "Need custom workflows or product logic?",
+      "outcome": "Custom web application development: dashboards, client portals and internal workflows on Next.js, in a documented codebase you own.",
+      "problem": "Need a dashboard, portal or workflow built for your operation?",
       "deliverables": [
         "Dashboards and workflows modelled on how your team actually operates",
         "A typed, documented codebase on a stack you own",
         "An automated build-and-deploy pipeline from the first release"
       ],
-      "engagement": "Fixed-scope project, priced per scope",
-      "leaves": "Your operation, without the bottleneck."
+      "engagement": "Priced from the published range by complexity, fixed in the proposal · {deliveryWeeksMin}–{deliveryWeeksMax} weeks",
+      "leaves": "A dashboard, client portal or internal tool built around how your team works."
     },
     "website": {
-      "outcome": "A custom multilingual website with strong performance, clear messaging, and a conversion-ready structure.",
-      "problem": "Need a stronger market-facing presence?",
+      "outcome": "Custom website design and build: structure, messaging and interface aimed at one action, built to published speed targets.",
+      "problem": "Need a site that explains what you sell?",
       "deliverables": [
-        "A custom site with English and Arabic engineered as equals",
+        "A custom site with every language and right-to-left engineered as equals",
         "Page structures designed around one conversion path",
-        "Performance measured against Core Web Vitals before launch"
+        "Built to Core Web Vitals targets"
       ],
-      "engagement": "Fixed-scope project, priced per scope",
-      "leaves": "A site that is yours, not rented."
+      "engagement": "From {minimumEngagement}, fixed in the proposal · {deliveryWeeksMin}–{deliveryWeeksMax} weeks",
+      "leaves": "A custom website built around one main action."
     }
   },
-  "title": "Four focused disciplines.",
-  "titleItalic": "One uncompromising standard.",
+  "title": "Web design and development services,",
+  "titleItalic": "from first audit to after launch.",
   "chapters": {
-    "eyebrow": "What each one leaves behind",
-    "engagementLabel": "Engagement",
-    "explore": "What {name} includes",
+    "explore": "What it includes: {name}",
     "plate": {
-      "eyebrow": "Constant across all four",
+      "eyebrow": "In every service",
+      "title": "Four commitments that hold, whichever service you choose.",
       "items": [
         "Scope and price written down before work begins.",
         "Built from your requirements — never a recycled theme.",
-        "Arabic and English engineered as equals.",
-        "Code, accounts and findings stay in your name."
+        "Every language engineered as an equal, right-to-left included.",
+        "Code, designs and accounts pass to you at the final payment."
       ]
-    },
-    "leftWith": "Left with you"
+    }
   },
   "stage": {
-    "label": "Where each one sits",
-    "hint": "Start at any point — each stands alone",
-    "title": "A system has three moments.",
-    "titleItalic": "We work in all of them.",
+    "label": "How the services connect",
+    "hint": "Start at any point — each service stands on its own",
+    "title": "Four services,",
+    "titleItalic": "matched to where your project is.",
     "moments": {
       "before": {
         "title": "Before you build",
@@ -82,26 +81,54 @@
       },
       "build": {
         "title": "The build",
-        "note": "Design and engineering, one team"
+        "note": "Design and development, scoped together"
       },
       "live": {
         "title": "Once it is live",
         "note": "When it has to keep working"
       }
     },
-    "return": "What monitoring surfaces becomes the next audit's brief.",
     "processLead": "How a build runs, phase by phase",
-    "processLink": "See the process",
+    "processLink": "See the project process",
     "open": "What it includes",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "costLead": "What each service costs, and how the price is set"
   },
   "loop": {
     "close": {
-      "statement": "Every system you own asks the next question. Bring us the one you are holding now.",
-      "title": "Every system you own",
-      "titleAccent": "asks the next question.",
-      "body": "Bring us the one you are holding now."
+      "title": "Tell us what you are building,",
+      "titleAccent": "or what is already live.",
+      "body": "Describe the site, application or problem. We reply with the service that fits and the next step."
     }
+  },
+  "faq": {
+    "title": "Choosing a service",
+    "items": [
+      {
+        "q": "Which service should we start with?",
+        "a": "If a site or system already exists and the problem is unclear, start with the technical audit. If you know what you need built, start with design and development. If the site is live and working, a maintenance plan keeps it that way. If you are not sure, describe the situation and we reply with the service that fits."
+      },
+      {
+        "q": "Can we hire you for one service only?",
+        "a": "Yes. Each service stands on its own. You can take the audit and build elsewhere, or bring a site someone else built to a maintenance plan."
+      },
+      {
+        "q": "Do you work on websites you did not build?",
+        "a": "Yes. The technical audit examines existing systems, and maintenance plans cover sites we did not build after we check their stack and current state."
+      },
+      {
+        "q": "How is each service priced?",
+        "a": "Builds are priced from a published range by project type and complexity, and fixed in the proposal. The technical audit is a fixed {auditPrice}, credited against the build if you go ahead. Maintenance plans start at {maintenanceEssential} a month. Website design is part of every build; design on its own is scoped per project."
+      },
+      {
+        "q": "Who owns the work?",
+        "a": "You do. Code, designs and accounts pass to you at the final payment, and audit findings are yours whether or not you build with us."
+      },
+      {
+        "q": "What happens after launch?",
+        "a": "A {warrantyDays}-day warranty covers critical fixes. After that you can move to a maintenance plan, pay for changes as needed, or hand the system to your own team."
+      }
+    ]
   }
 }

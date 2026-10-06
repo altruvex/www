@@ -1,0 +1,6 @@
+/* The brand app renders the live identity: it imports the public site's stylesheet
+   (which imports @repo/ui tokens and the Altruvex Sans tokens) and adds nothing of its own
+   beyond layout. A value that changes there changes here. */
+@import "../../www/app/globals.css";
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";

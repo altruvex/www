@@ -100,7 +100,7 @@ export default async function ProjectPortalPage({
                     "z-10 flex size-6 shrink-0 items-center justify-center rounded-full border text-meta font-medium",
                     done && "border-success bg-success text-white",
                     active && "border-brand bg-brand text-brand-foreground",
-                    !done && !active && "border-border bg-background text-muted-foreground",
+                    !done && !active && "border-border-subtle bg-background text-muted-foreground",
                   )}
                   aria-hidden
                 >

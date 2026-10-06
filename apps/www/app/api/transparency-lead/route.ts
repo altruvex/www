@@ -5,10 +5,15 @@ import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { createTransparencyLeadSchema } from "@/lib/validations/transparency-lead";
 import { linkClientToLead, prisma } from "@repo/database";
 import { randomBytes } from "node:crypto";
-import { getTranslations } from "next-intl/server";
 import { NextResponse, type NextRequest } from "next/server";
-import { ZodError } from "zod";
-import { tooManyRequests } from "@/lib/server/too-many-requests";
+import {
+  apiError,
+  codeTranslator,
+  readJsonBody,
+  tooManyRequests,
+  unexpectedError,
+} from "@/lib/server/api-error";
+import { toLocale } from "@/i18n/locale-meta";
 
 const REFERENCE_ALPHABET = "ACDEFGHJKMNPQRTVWXY2346789";
 
@@ -41,20 +46,15 @@ function readAttribution(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     if (!isTrustedOrigin(request)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid request origin" },
-        { status: 403 },
-      );
+      return apiError("forbidden");
     }
 
-    const body = await request.json();
-    const locale =
-      typeof body.locale === "string" &&
-      (body.locale === "ar" || body.locale === "en")
-        ? body.locale
-        : "en";
-    const t = await getTranslations({ locale, namespace: "validations" });
-    const transparencyLeadSchema = createTransparencyLeadSchema(t);
+    const body = await readJsonBody(request);
+    if (!body) return apiError("bad_request");
+
+    const locale = toLocale(body.locale);
+    // Issue messages are validation keys; the form localizes them.
+    const transparencyLeadSchema = createTransparencyLeadSchema(codeTranslator);
 
     const rl = await enforceRateLimit(request, {
       scope: "public_api",
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       windowSeconds: 60 * 60,
     });
     if (!rl.ok) {
-      return tooManyRequests(request, rl.retryAfterSeconds, locale);
+      return tooManyRequests(rl.retryAfterSeconds);
     }
 
     const validatedData = transparencyLeadSchema.parse(body);
@@ -123,34 +123,10 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      {
-        success: true,
-        message: "Estimate generated",
-        reference: lead.reference,
-      },
+      { ok: true, code: "received", reference: lead.reference },
       { status: 201 },
     );
   } catch (error: unknown) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Validation failed",
-          errors: error.issues.reduce((acc: Record<string, string>, err) => {
-            const path = err.path[0] as string;
-            if (path) acc[path] = err.message;
-            return acc;
-          }, {}),
-        },
-        { status: 400 },
-      );
-    }
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Transparency lead error:", error);
-    }
-    return NextResponse.json(
-      { success: false, message: "An unexpected error occurred" },
-      { status: 500 },
-    );
+    return unexpectedError(error, "Transparency lead error");
   }
 }

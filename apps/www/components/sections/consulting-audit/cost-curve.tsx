@@ -6,7 +6,7 @@ import { gsap, ScrollTrigger } from "@/lib/utils/gsap";
 import type { ConsultingView } from "@repo/pricing-schema";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
-import { AuditSection } from "./audit-section";
+import { ServiceSection } from "@/components/sections/services-index/service-section";
 
 export function CostCurve({
   audit,
@@ -66,7 +66,7 @@ export function CostCurve({
   }, []);
 
   return (
-    <AuditSection
+    <ServiceSection
       id="cost-curve"
       titleId="consulting-curve-heading"
       eyebrow={t("eyebrow")}
@@ -147,19 +147,20 @@ export function CostCurve({
             <text x="600" y="352" className="eyebrow fill-muted-foreground">{t("moments.build")}</text>
             <text x="940" y="352" textAnchor="end" className="eyebrow fill-muted-foreground">{t("moments.live")}</text>
 
-            <text x="70" y="20" className="fill-foreground text-[15px] font-light">{t("yLabel")}</text>
+            <text x="70" y="20" className="fill-foreground text-base font-light">{t("yLabel")}</text>
           </svg>
 
           <dl className="mt-9 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <Figure value={audit.priceLabel} note={t("figures.price")} />
             <Figure value={audit.duration} note={t("figures.duration")} />
             <Figure value={buildRange} note={t("figures.range")} />
-            {audit.creditAmountLabel ? (
+            {/* "Nothing" is only true while the whole fee is credited. */}
+            {audit.creditAmountLabel && audit.creditAmountLabel === audit.priceLabel ? (
               <Figure value={t("figures.netValue")} note={t("figures.net")} />
             ) : null}
           </dl>
         </div>
-    </AuditSection>
+    </ServiceSection>
   );
 }
 

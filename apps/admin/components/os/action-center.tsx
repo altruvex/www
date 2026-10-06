@@ -55,7 +55,7 @@ export function ActionCenter({
         })}
       </List>
       {moreHref && items.length > limit && (
-        <div className="border-t border-border px-3 py-2">
+        <div className="border-t border-border-subtle px-3 py-2">
           <Link
             href={moreHref}
             className="rounded-xs text-meta text-muted-foreground transition-colors duration-[var(--dur-state)] hover:text-foreground"

@@ -123,7 +123,7 @@ export function ReminderSheet({
             </Button>
           </div>
 
-          <section className="space-y-2 border-t border-border pt-3">
+          <section className="space-y-2 border-t border-border-subtle pt-3">
             <p className="flex items-center gap-1.5 text-base font-medium">
               <Mail className="size-3.5 text-muted-foreground" aria-hidden />
               Email
@@ -141,7 +141,7 @@ export function ReminderSheet({
             </Button>
           </section>
 
-          <section className="space-y-2 border-t border-border pt-3">
+          <section className="space-y-2 border-t border-border-subtle pt-3">
             <p className="flex items-center gap-1.5 text-base font-medium">
               <MessageCircle className="size-3.5 text-muted-foreground" aria-hidden />
               WhatsApp, from your phone

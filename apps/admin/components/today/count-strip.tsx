@@ -18,7 +18,7 @@ export function CountStrip({ cells, label = "Queues" }: { cells: CountStripCell[
         {cells.map((cell) => {
           const tone = cell.value === 0 ? "neutral" : (cell.tone ?? "neutral");
           return (
-            <li key={cell.label} className="min-w-0 border-e border-b border-border">
+            <li key={cell.label} className="min-w-0 border-e border-b border-border-subtle">
               <Link
                 href={cell.href}
                 className={cn(

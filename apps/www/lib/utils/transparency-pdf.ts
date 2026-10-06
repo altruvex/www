@@ -8,6 +8,7 @@ import {
   type DeliverableProject,
   type TransparencyTranslator,
 } from "./transparency-utils";
+import { LOCALE_META, scriptHasCase, toLocale, type Locale } from "@/i18n/locale-meta";
 
 const PDF = {
   white: css(PALETTE.light.card),
@@ -86,8 +87,8 @@ export function collectPdfFonts(): PdfFonts {
   return { faces: faces.join("\n"), display, body, mono };
 }
 
-function pickLang(obj: { ar: string; en: string }, locale: string): string {
-  return locale.startsWith("ar") ? obj.ar : obj.en;
+function pickLang(obj: Record<Locale, string>, locale: string): string {
+  return obj[toLocale(locale)];
 }
 
 function escapeHtml(input: string): string {
@@ -135,8 +136,8 @@ const TIMELINE_COPY: Record<string, { ar: string; en: string }> = {
 
 const BRAND_COPY: Record<string, { ar: string; en: string }> = {
   complete: {
-    ar: "هويتك التجارية جاهزة - هذا يُسرّع مرحلة التصميم ويضمن اتساقاً بصرياً كاملاً من اليوم الأول.",
-    en: "Your brand identity is ready - this accelerates the design phase and guarantees full visual consistency from day one.",
+    ar: "هويتك التجارية جاهزة - هذا يُسرّع مرحلة التصميم ويساعد على اتساق التصميم مع هويتك.",
+    en: "Your brand identity is ready - this accelerates the design phase and keeps the design consistent with your identity.",
   },
   partial: {
     ar: "هويتك التجارية جزئية - سنعمل بما لديك وننسق معك لسد الفجوات خلال مرحلة التصميم دون تأخير.",
@@ -232,19 +233,23 @@ interface PDFParams {
 }
 
 export function buildPDFHtml(p: PDFParams): string {
-  const isRtl = p.locale === "ar";
-  const dir = isRtl ? "rtl" : "ltr";
+  const loc = toLocale(p.locale);
+  const meta = LOCALE_META[loc];
+  const isRtl = meta.dir === "rtl";
+  // Uppercase + tracked mono labels only where the script has case.
+  const cased = scriptHasCase(meta.script);
+  const dir = meta.dir;
   const alignLeft = isRtl ? "right" : "left";
   const alignRight = isRtl ? "left" : "right";
 
   const f = (n: number) =>
-    new Intl.NumberFormat(isRtl ? "ar-EG-u-nu-latn" : "en-EG", {
+    new Intl.NumberFormat(meta.intl, {
       style: "currency",
       currency: "EGP",
       maximumFractionDigits: 0,
     }).format(n);
 
-  const today = new Intl.DateTimeFormat(isRtl ? "ar-EG-u-nu-latn" : "en-US", {
+  const today = new Intl.DateTimeFormat(meta.intl, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -277,7 +282,7 @@ export function buildPDFHtml(p: PDFParams): string {
     brandIdentity: p.brandIdentity,
     contentReadiness: p.contentReadiness,
   });
-  const L = (obj: { ar: string; en: string }) => pickLang(obj, p.locale);
+  const L = (obj: Record<Locale, string>) => pickLang(obj, loc);
 
   const fontBody = escapeHtml(p.fonts.body);
   const scopeNoteRows =
@@ -292,10 +297,10 @@ export function buildPDFHtml(p: PDFParams): string {
   const fontDisplay = escapeHtml(p.fonts.display);
   const fontMono = escapeHtml(p.fonts.mono);
   const labelStyle = (tracking: string) =>
-    isRtl
-      ? `font-family:${fontBody};letter-spacing:0;text-transform:none;`
-      : `font-family:${fontMono};letter-spacing:${tracking};text-transform:uppercase;`;
-  const monoText = `font-family:${isRtl ? fontBody : fontMono};`;
+    cased
+      ? `font-family:${fontMono};letter-spacing:${tracking};text-transform:uppercase;`
+      : `font-family:${fontBody};letter-spacing:0;text-transform:none;`;
+  const monoText = `font-family:${cased ? fontMono : fontBody};`;
   const latinMono = `font-family:${fontMono};direction:ltr;unicode-bidi:isolate;`;
   const safeName = p.name ? escapeHtml(p.name) : "";
   const clientName =
@@ -356,7 +361,7 @@ export function buildPDFHtml(p: PDFParams): string {
     .join("");
 
   return `<!DOCTYPE html>
-<html ${isRtl ? 'lang="ar" dir="rtl"' : 'lang="en" dir="ltr"'}>
+<html lang="${loc}" dir="${dir}">
 <head>
 <meta charset="UTF-8"/>
 <title>${p.t("pdf.label")} · ALTRUVEX · ${today}</title>
@@ -374,7 +379,7 @@ export function buildPDFHtml(p: PDFParams): string {
   .page{
     width:210mm;
     min-height:297mm;
-    background:#FFF;
+    background:${PDF.white};
     margin:0 auto;
     padding:11mm 13mm 10mm;
     display:flex;
@@ -382,7 +387,7 @@ export function buildPDFHtml(p: PDFParams): string {
   }
   .page+.page{page-break-before:always;}
   @media print{
-    body{background:#fff;}
+    body{background:${PDF.white};}
     .page{margin:0;padding:9mm 12mm;}
     @page{size:A4 portrait;margin:0;}
   }

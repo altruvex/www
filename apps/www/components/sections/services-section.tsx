@@ -4,9 +4,13 @@ import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
 import { ArrowLabel } from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { Link } from "@/i18n/navigation";
+import {
+  getCommercialCta,
+  type CommercialCtaKey,
+} from "@/lib/config/commercial";
 import {
   useSectionCardGrid,
   useSectionDescription,
@@ -22,11 +26,11 @@ import { SectionHeading } from "./section-heading";
 
 type ServiceId = ServiceEntry["id"];
 
-const ACTION_HREF: Record<ServiceId, string> = {
-  website: "/contact?service=interface-design",
-  portal: "/contact?service=development",
-  audit: "/contact?service=consulting&package=audit",
-  maintenance: "/contact?service=maintenance",
+const ROW_ACTION: Record<ServiceId, CommercialCtaKey> = {
+  website: "startDesign",
+  portal: "startDevelopment",
+  audit: "technicalAudit",
+  maintenance: "maintenanceEnquiry",
 };
 
 const ROW_IMAGE: Record<ServiceId, string> = {
@@ -50,17 +54,17 @@ function RegisterDivider({ label, count }: { label: string; count: number }) {
 
 const DisciplineRow = memo(function DisciplineRow({
   service,
-  index,
   open,
   onToggle,
 }: {
   service: ServiceEntry;
-  index: number;
   open: boolean;
   onToggle: () => void;
 }) {
   const t = useTranslations("services.action");
+  const tCTAs = useTranslations("commercial.ctas");
   const tPage = useTranslations("servicesPage");
+  const action = ROW_ACTION[service.id];
   const panelId = useId();
   const deliverables: string[] = tPage.raw(`services.${service.id}.deliverables`);
 
@@ -72,14 +76,8 @@ const DisciplineRow = memo(function DisciplineRow({
           aria-expanded={open}
           aria-controls={panelId}
           onClick={onToggle}
-          className="group grid w-full cursor-pointer grid-cols-[3rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-[clamp(1.25rem,2.4vw,2rem)] text-start lg:grid-cols-[4.5rem_minmax(0,1fr)_minmax(0,20rem)]"
+          className="group grid w-full cursor-pointer grid-cols-[minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-[clamp(1.25rem,2.4vw,2rem)] text-start lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]"
         >
-          <span
-            aria-hidden
-            className="text-sm tabular-nums text-muted-foreground ltr:font-mono"
-          >
-            <Num value={index + 1} pad={2} />
-          </span>
           <span
             className={cn(
               "text-[clamp(2rem,5.4vw,4.75rem)] font-light leading-[1.02] tracking-[-0.035em] transition-colors duration-(--motion-drawer) ease-smooth rtl:leading-[1.3] rtl:tracking-normal",
@@ -90,7 +88,7 @@ const DisciplineRow = memo(function DisciplineRow({
           >
             {tPage(`capabilities.${service.name}`)}
           </span>
-          <span className="col-start-2 text-[0.9375rem] font-normal leading-normal text-muted-foreground lg:col-start-3 lg:text-end">
+          <span className="text-base font-normal leading-normal text-muted-foreground lg:text-end">
             {tPage(`services.${service.id}.problem`)}
           </span>
         </button>
@@ -105,8 +103,8 @@ const DisciplineRow = memo(function DisciplineRow({
         )}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className="grid gap-8 pb-[clamp(2rem,4vw,3.5rem)] lg:grid-cols-[4.5rem_minmax(0,5fr)_minmax(0,7fr)] lg:gap-x-12">
-            <div className="lg:col-start-2">
+          <div className="grid gap-8 pb-[clamp(2rem,4vw,3.5rem)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-x-12">
+            <div>
               <p className="text-balance text-[clamp(1.5rem,2.4vw,2.125rem)] font-light leading-[1.2] text-brand-text rtl:font-medium rtl:leading-[1.45]">
                 {tPage(`services.${service.id}.leaves`)}
               </p>
@@ -115,7 +113,7 @@ const DisciplineRow = memo(function DisciplineRow({
                 {deliverables.map((item) => (
                   <li
                     key={item}
-                    className="border-b border-border-subtle py-3 text-[0.9375rem] leading-relaxed text-muted-foreground"
+                    className="border-b border-border-subtle py-3 text-base leading-relaxed text-muted-foreground"
                   >
                     {item}
                   </li>
@@ -124,15 +122,20 @@ const DisciplineRow = memo(function DisciplineRow({
 
               <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
                 <MagneticButton asChild variant="primary" className="group">
-                  <Link href={ACTION_HREF[service.id]}>
+                  <Link href={getCommercialCta(action).href}>
                     <ArrowLabel className="whitespace-nowrap">
-                      {t(service.id)}
+                      {tCTAs(action)}
                     </ArrowLabel>
                   </Link>
                 </MagneticButton>
-                <span className="text-[0.8125rem] leading-normal text-muted-foreground">
-                  {t("hint")}
-                </span>
+                <Link
+                  href={service.href}
+                  className="min-h-6 rounded-ctl-sm text-base leading-normal text-muted-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+                >
+                  {t("details", {
+                    service: tPage(`capabilities.${service.name}`),
+                  })}
+                </Link>
               </div>
 
             </div>
@@ -168,10 +171,10 @@ const DisciplineRow = memo(function DisciplineRow({
 export const ServicesSection = memo(function ServicesSection() {
   const t = useTranslations("services");
   const tStandard = useTranslations("servicesPage.chapters.plate");
-  const tReceipt = useTranslations("contactPage.receipt");
+  const tCTAs = useTranslations("commercial.ctas");
   const standard: string[] = tStandard.raw("items");
-  const steps = (["read", "reply", "call"] as const).map((step) =>
-    tReceipt(`steps.${step}`),
+  const steps = (["brief", "reply", "call"] as const).map((step) =>
+    t(`next.steps.${step}`),
   );
 
   const [openId, setOpenId] = useState<ServiceId | null>(SERVICE_ORDER[0].id);
@@ -212,11 +215,10 @@ export const ServicesSection = memo(function ServicesSection() {
           />
 
           <ol className="mt-6 list-none border-b border-border-subtle">
-            {SERVICE_ORDER.map((service, index) => (
+            {SERVICE_ORDER.map((service) => (
               <DisciplineRow
                 key={service.id}
                 service={service}
-                index={index}
                 open={openId === service.id}
                 onToggle={() =>
                   setOpenId((current) =>
@@ -235,18 +237,11 @@ export const ServicesSection = memo(function ServicesSection() {
           </div>
 
           <ol className="mt-10 grid list-none gap-x-10 gap-y-8 sm:grid-cols-2 md:mt-12 lg:grid-cols-4 lg:gap-x-12">
-            {standard.map((item, index) => (
+            {standard.map((item) => (
               <li
                 key={item}
                 data-register-row
-                className="grid grid-cols-[2.75rem_minmax(0,1fr)] lg:grid-cols-1 lg:gap-y-3"
               >
-                <span
-                  aria-hidden
-                  className="pt-0.5 text-sm tabular-nums text-muted-foreground ltr:font-mono"
-                >
-                  <Num value={index + 1} pad={2} />
-                </span>
                 <p className="text-[clamp(0.9375rem,1vw,1.0625rem)] leading-relaxed text-foreground">
                   {item}
                 </p>
@@ -268,12 +263,12 @@ export const ServicesSection = memo(function ServicesSection() {
             </div>
 
             <div>
-              <Eyebrow className="mb-4">{tReceipt("nextLabel")}</Eyebrow>
+              <Eyebrow className="mb-4">{t("next.stepsLabel")}</Eyebrow>
               <ol className="list-none border-t border-border-subtle">
                 {steps.map((step, index) => (
                   <li
                     key={step}
-                    className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border-subtle py-4 text-[0.9375rem] leading-relaxed text-foreground"
+                    className="grid grid-cols-[2.75rem_minmax(0,1fr)] border-b border-border-subtle py-4 text-base leading-relaxed text-foreground"
                   >
                     <span
                       aria-hidden
@@ -287,8 +282,14 @@ export const ServicesSection = memo(function ServicesSection() {
               </ol>
               <CtaButtonGroup
                 className="mt-8"
-                primary={{ href: "/contact", label: t("next.primary") }}
-                secondary={{ href: "/schedule", label: t("next.secondary") }}
+                primary={{
+                  href: getCommercialCta("describeTheBuild").href,
+                  label: tCTAs("describeTheBuild"),
+                }}
+                secondary={{
+                  href: getCommercialCta("technicalCall").href,
+                  label: tCTAs("technicalCall"),
+                }}
               />
             </div>
           </div>

@@ -11,10 +11,10 @@ import { useTranslations } from "next-intl";
 type FaqQuestion = { question: string; answer: string };
 
 const FAQ_GROUPS = [
-  { id: "ownership", keys: ["01", "02", "09", "14"] },
-  { id: "pricing", keys: ["11", "10", "12", "08"] },
-  { id: "delivery", keys: ["04", "05", "13"] },
-  { id: "engineering", keys: ["03", "07", "06"] },
+  { id: "ownership", keys: ["01", "02", "17", "09", "14"] },
+  { id: "pricing", keys: ["11", "10", "12", "19", "08"] },
+  { id: "delivery", keys: ["04", "15", "20", "16", "05", "21", "13"] },
+  { id: "engineering", keys: ["03", "07", "06", "18"] },
 ] as const;
 
 export default function FAQPageClient() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { Link } from "@/i18n/navigation";
 import { MOTION, useSectionCardGrid } from "@/lib/motion";
@@ -12,6 +12,7 @@ import { localizeNumbers } from "@/lib/utils/number";
 import type { ArticleListItem, ArticleTopic } from "@/types/mdx";
 import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
+import { LOCALE_META, type Locale } from "@/i18n/locale-meta";
 
 type Filter = "all" | ArticleTopic;
 type Active = { slug: string; from: "pointer" | "focus" } | null;
@@ -25,7 +26,7 @@ const PEEK_MAX_ITEMS = 5;
 
 type WritingIndexProps = {
   articles: ArticleListItem[];
-  locale: "en" | "ar";
+  locale: Locale;
 };
 
 export function WritingIndex({ articles, locale }: WritingIndexProps) {
@@ -46,7 +47,7 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
     y: (v: number, start?: number) => void;
   } | null>(null);
 
-  const isAr = locale === "ar";
+  const rtl = LOCALE_META[locale].dir === "rtl";
   const shown = articles.filter(
     (a) => filter === "all" || a.frontmatter.topic === filter,
   );
@@ -103,13 +104,13 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
     let py: number;
     const row = focusRow.current?.getBoundingClientRect();
     if (from === "focus" && row) {
-      px = isAr ? row.left : row.right - w;
+      px = rtl ? row.left : row.right - w;
       py = row.bottom + PEEK_MARGIN;
       if (py + h > window.innerHeight - PEEK_MARGIN)
         py = row.top - h - PEEK_MARGIN;
     } else {
       const { x: cx, y: cy } = pointer.current;
-      px = isAr ? cx - w - PEEK_OFFSET : cx + PEEK_OFFSET;
+      px = rtl ? cx - w - PEEK_OFFSET : cx + PEEK_OFFSET;
       py = cy - h / 2;
     }
     px = Math.max(
@@ -180,7 +181,7 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
                   )}
                 >
                   {f === "all" ? t("index.all") : t(`index.topics.${f}`)}
-                  <sup className="ms-1 text-[11px]">
+                  <sup className="ms-1 text-micro">
                     <Num value={countFor(f)} />
                   </sup>
                 </button>
@@ -259,6 +260,11 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
                     {frontmatter.title}
                   </h2>
                   <span className="col-start-2 text-sm whitespace-nowrap text-muted-foreground md:col-start-3 md:row-start-1 md:text-end">
+                    {frontmatter.featured && (
+                      <small className="me-2 text-md text-brand-text md:me-0 md:block">
+                        {t("index.startHere")}
+                      </small>
+                    )}
                     {t("readTime", {
                       count: frontmatter.readTimeMinutes,
                       minutes: localizeNumbers(
@@ -266,14 +272,14 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
                         locale,
                       ),
                     })}
-                    <small className="ms-2 text-[13px] text-muted-foreground md:ms-0 md:block">
+                    <small className="ms-2 text-md text-muted-foreground md:ms-0 md:block">
                       {new Date(frontmatter.date).toLocaleDateString(
-                        isAr ? "ar-EG-u-nu-latn" : "en-US",
+                        LOCALE_META[locale].intl,
                         { year: "numeric", month: "long" },
                       )}
                     </small>
                   </span>
-                  <p className="col-start-2 hidden max-w-[60ch] text-[15px] text-muted-foreground pointer-coarse:block [@media(hover:none)]:block">
+                  <p className="col-start-2 hidden max-w-[60ch] text-base text-muted-foreground pointer-coarse:block [@media(hover:none)]:block">
                     {frontmatter.excerpt}
                   </p>
                 </Link>

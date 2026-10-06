@@ -3,11 +3,6 @@ import type { SupportedLocale } from "@/lib/metadata";
 
 type LocalizedValue = Record<SupportedLocale, string>;
 
-type CaseStudyMetric = {
-  label: LocalizedValue;
-  value: string;
-};
-
 type CaseStudySlug =
   | "altruvex-site"
   | "art-lighting-store"
@@ -17,11 +12,11 @@ export type CaseStudyRecord = {
   client: LocalizedValue;
   industry: LocalizedValue;
   keywords: Record<SupportedLocale, string[]>;
-  metrics: CaseStudyMetric[];
   name: LocalizedValue;
+  /** Shorter <title> when `name` + " | Altruvex" would exceed 60 characters. */
+  seoTitle?: LocalizedValue;
   slug: CaseStudySlug;
   summary: LocalizedValue;
-  year: string;
   services: readonly ServiceSlug[];
   externalUrl?: string;
 };
@@ -29,12 +24,12 @@ export type CaseStudyRecord = {
 export const CASE_STUDIES: CaseStudyRecord[] = [
   {
     client: {
-      ar: "داخلي / ألتروفيكس",
-      en: "Internal / Altruvex",
+      ar: "Altruvex (موقعنا)",
+      en: "Altruvex (our own site)",
     },
     industry: {
-      ar: "تطوير الويب / وكالة",
-      en: "Web Engineering / Agency",
+      ar: "تطوير مواقع ويب مخصصة",
+      en: "Custom web development",
     },
     keywords: {
       ar: [
@@ -50,40 +45,16 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
         "custom web development",
       ],
     },
-    metrics: [
-      {
-        label: {
-          ar: "وقت التفاعل على الجوال",
-          en: "Mobile TTI",
-        },
-        value: "< 1s",
-      },
-      {
-        label: {
-          ar: "سرعة تبديل العربي",
-          en: "RTL Switch",
-        },
-        value: "< 16ms",
-      },
-      {
-        label: {
-          ar: "تأهيل العملاء",
-          en: "Discovery-call time",
-        },
-        value: "-40%",
-      },
-    ],
     name: {
-      ar: "Altruvex.com - كان على الموقع نفسه أن يكون الدليل",
-      en: "Altruvex.com - The Site Itself Had to Be the Proof",
+      ar: "Altruvex.com — موقع شركة ثنائي اللغة على Next.js",
+      en: "Altruvex.com — a bilingual Next.js studio website",
     },
     slug: "altruvex-site",
     summary: {
-      ar: "مشروع موقع ويب متعدد اللغات صُمم لإظهار الجودة التقنية والتنفيذ الأصلي لـ RTL وتأهيل العميل المحتمل قبل أول مكالمة.",
-      en: "A bilingual multilingual proof build designed to demonstrate technical quality, native RTL execution, and lead qualification before the first call.",
+      ar: "موقع ثنائي اللغة بالعربية والإنجليزية على Next.js، باتجاه عربي أصيل من اليمين إلى اليسار وأداة عامة لتقدير تكلفة المشروع.",
+      en: "A bilingual English and Arabic website on Next.js, with native right-to-left layout and a public project cost estimator.",
     },
-    year: "2025",
-    services: ["interface-design"],
+    services: ["interface-design", "development"],
     externalUrl: "https://altruvex.com",
   },
   {
@@ -107,40 +78,20 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
         "high-performance retail website",
       ],
     },
-    metrics: [
-      {
-        label: {
-          ar: "الأداء",
-          en: "Performance",
-        },
-        value: "95+ Lighthouse",
-      },
-      {
-        label: {
-          ar: "الكتالوج",
-          en: "Catalog",
-        },
-        value: "High-res zoom",
-      },
-      {
-        label: {
-          ar: "المخزون",
-          en: "Inventory",
-        },
-        value: "Synced live",
-      },
-    ],
     name: {
-      ar: "متجر آرت لايتنج للإضاءة",
-      en: "Art Lighting Store",
+      ar: "متجر آرت لايتنج — متجر إلكتروني مخصص للإضاءة الفاخرة",
+      en: "Art Lighting Store — a custom storefront for premium lighting",
+    },
+    seoTitle: {
+      ar: "آرت لايتنج: دراسة حالة متجر إضاءة مخصص",
+      en: "Art Lighting: Custom Lighting Store Case Study",
     },
     slug: "art-lighting-store",
     summary: {
-      ar: "صور منتجات عالية الدقة على نطاق واسع مع مخزون في الوقت الفعلي وتحميل سريع للصفحات لبائع تجزئة للإضاءة الفاخرة.",
-      en: "High-resolution product imagery at scale with real-time inventory and fast page loads for a premium lighting retailer.",
+      ar: "متجر إلكتروني مخصص على Next.js لبائع إضاءة فاخرة، بالعربية والإنجليزية: كتالوج حسب الفئة وصور منتجات عالية الدقة.",
+      en: "A custom Next.js online store for a premium lighting retailer, in Arabic and English: a catalog by category and high-resolution product images.",
     },
-    year: "2024",
-    services: [],
+    services: ["interface-design", "development"],
     externalUrl: "https://www.artlighting-eg.com",
   },
   {
@@ -150,56 +101,34 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     },
     industry: {
       ar: "إضاءة وتجارة إلكترونية",
-      en: "Lighting & E-Commerce",
+      en: "Lighting & e-commerce",
     },
     keywords: {
       ar: [
         "بناء أول متجر إلكتروني",
         "تجارة إلكترونية للإضاءة",
         "متجر Next.js مخصص",
-        "التحول الرقمي",
       ],
       en: [
         "first e-commerce build",
         "lighting online store",
         "custom next.js shop",
-        "digital transformation",
       ],
     },
-    metrics: [
-      {
-        label: {
-          ar: "التسليم",
-          en: "Delivery",
-        },
-        value: "Live site",
-      },
-      {
-        label: {
-          ar: "اللغات",
-          en: "Languages",
-        },
-        value: "EN / AR",
-      },
-      {
-        label: {
-          ar: "النطاق",
-          en: "Scope",
-        },
-        value: "First store",
-      },
-    ],
     name: {
-      ar: "متجر نيو لايت للإضاءة - الانطلاق نحو التجارة الإلكترونية",
-      en: "NewLight Lighting Store - Venturing into E-Commerce",
+      ar: "نيو لايت — أول متجر إلكتروني لعلامة إضاءة",
+      en: "NewLight — a first online store for a lighting brand",
+    },
+    seoTitle: {
+      ar: "نيو لايت: أول متجر إلكتروني لعلامة إضاءة",
+      en: "NewLight: First Online Store for a Lighting Brand",
     },
     slug: "newlight-lighting-store",
     summary: {
-      ar: "عندما قررت نيو لايت دخول عالم التجارة الإلكترونية لأول مرة، قمنا ببناء متجر متكامل يجمع بين التصميم الفاخر وسهولة الشراء، محققين كافة تطلعاتهم التقنية والتجارية.",
-      en: "When NewLight decided to launch their first online store, we built a custom e-commerce platform that matches their brand and supports bilingual buying on every device.",
+      ar: "أول متجر إلكتروني لنيو لايت: متجر مخصص ثنائي اللغة بمسار شراء منظم، يعمل على كل جهاز ويمكن تثبيته على الهاتف.",
+      en: "NewLight's first online store: a custom bilingual storefront with a structured checkout, built for every device and installable on a phone.",
     },
-    year: "2024",
-    services: [],
+    services: ["interface-design", "development"],
     externalUrl: "https://www.newlight-eg.com/",
   },
 ];

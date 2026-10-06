@@ -1,23 +1,23 @@
 {
-  "buttonText": "Request a Call",
+  "buttonText": "Schedule a consultation",
   "closeLabel": "Close dialog",
-  "description": "Not sure if we are a fit? A 30-minute technical discovery call is enough to find out - no pitch, no pressure.",
-  "phoneError": "Please enter a valid phone number",
+  "description": "Leave your number and we will call to set a time. One 30-minute initial project consultation call, at no charge, is enough to see whether we fit.",
+  "phoneError": "Please enter a valid phone number, including the country code.",
   "phoneHint": "We will only call to coordinate the time.",
   "phoneLabel": "Phone (WhatsApp)",
   "phonePlaceholder": "+201... or +971...",
   "secondaryButtonText": "Maybe later",
   "stats": {
-    "founderAccess": "Founder Access",
-    "founderAccessValue": "Direct",
-    "noCommitment": "No Commitment",
-    "noCommitmentValue": "Free",
-    "noPitch": "No Sales Pitch",
-    "noPitchValue": "30 min"
+    "noPitch": "One consultation call",
+    "noPitchValue": "30 min",
+    "noCommitment": "Obligation to hire us",
+    "noCommitmentValue": "None",
+    "confirm": "We confirm the time by",
+    "confirmValue": "Call or WhatsApp"
   },
   "submitting": "Sending...",
-  "subtitle": "Wait - before you go",
-  "successDescription": "We have received your number. We will reach out within 2 business hours to coordinate.",
+  "subtitle": "Before you leave",
+  "successDescription": "We have your number. We will call or message you on WhatsApp to agree a time.",
   "successTitle": "Talk soon.",
-  "title": "Let's <h>pressure-test</h> your scope."
+  "title": "Not ready to write a brief? Book a <h>30-minute call</h>."
 }

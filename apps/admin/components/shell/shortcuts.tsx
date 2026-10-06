@@ -10,7 +10,7 @@ import {
   SheetTitle,
 } from "@repo/ui";
 import { createShortcutsFor, gotoShortcutsFor, type Role } from "@/lib/nav";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 type ShortcutRow = {
@@ -54,6 +54,7 @@ export function ShortcutsSheet({
   role?: Role;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMac, setIsMac] = React.useState(true);
 
   React.useEffect(() => {
@@ -74,7 +75,7 @@ export function ShortcutsSheet({
       },
       {
         title: "Create",
-        rows: createShortcutsFor(role).map((s) => ({
+        rows: createShortcutsFor(role, pathname).map((s) => ({
           keys: ["C", s.key.toUpperCase()],
           label: s.label,
           href: s.href,
@@ -82,7 +83,7 @@ export function ShortcutsSheet({
       },
       IN_A_TABLE,
     ],
-    [role],
+    [role, pathname],
   );
 
   const handleRowClick = (href?: string) => {
@@ -103,10 +104,10 @@ export function ShortcutsSheet({
         <SheetBody className="space-y-5 p-0">
           {sections.map((section) => (
             <div key={section.title}>
-              <p className="telemetry border-b border-border px-4 pb-1.5 pt-4 text-subtle-foreground font-medium">
+              <p className="telemetry border-b border-border-subtle px-4 pb-1.5 pt-4 text-subtle-foreground font-medium">
                 {section.title}
               </p>
-              <ul className="divide-y divide-border">
+              <ul className="divide-y divide-border-subtle">
                 {section.rows.map((row) => {
                   const keys = (
                     <span className="flex shrink-0 items-center gap-1">

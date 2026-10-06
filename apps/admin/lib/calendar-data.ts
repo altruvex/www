@@ -139,7 +139,7 @@ export async function getCalendarEntries(from: Date, to: Date): Promise<Calendar
       date: dayKey(pr.targetLaunchDate!),
       title: `Target launch · ${pr.name}`,
       detail: pr.actualLaunchDate ? "already launched" : `currently in ${pr.phase.toLowerCase().replace(/_/g, " ")}`,
-      href: `/projects/${pr.id}`,
+      href: `/projects/${pr.id}#phases`,
       tone: pr.actualLaunchDate ? ("success" as Tone) : ("progress" as Tone),
     })),
     ...payments.map((pay) => ({

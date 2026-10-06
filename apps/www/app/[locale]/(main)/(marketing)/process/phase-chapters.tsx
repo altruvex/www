@@ -1,7 +1,7 @@
 "use client";
 
 import { PhaseGate, phaseIndex } from "@/components/shared/process-parts";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { scrollToY, splitWords, useSectionCardGrid, useWordRead } from "@/lib/motion";
 import { phaseName, type PhaseLength } from "@/lib/process-phases";
 import { usePhaseLength, useProcessPhases } from "@/lib/use-process-phases";
@@ -154,15 +154,19 @@ function Chapter({
         <p className="max-w-[38rem] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.75] text-muted-foreground">
           {t(`phases.${phase.key}.description`)}
         </p>
-        <div>
-          <Eyebrow className="m-0">{t("phases.deliverables")}</Eyebrow>
-          <ul className="mt-3 space-y-1.5 text-[0.9375rem] leading-relaxed text-foreground">
-            {t(`phases.${phase.key}.deliverables`)
-              .split(" | ")
-              .map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-          </ul>
+        <div className="grid gap-6 sm:grid-cols-2">
+          {(["inputs", "deliverables"] as const).map((list) => (
+            <div key={list}>
+              <Eyebrow className="m-0">{t(`phases.${list}`)}</Eyebrow>
+              <ul className="mt-3 space-y-1.5 text-base leading-relaxed text-foreground">
+                {t(`phases.${phase.key}.${list}`)
+                  .split(" | ")
+                  .map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         <PhaseGate phase={phase} next={next} reached={reached} className="md:col-span-2" />

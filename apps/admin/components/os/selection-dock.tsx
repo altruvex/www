@@ -130,8 +130,8 @@ export function SelectionDock({ count, noun = "row", actions, onClear }: Selecti
             role="region"
             aria-label="Selection actions"
             className={cn(
-              "dock-glass pointer-events-auto flex w-full max-w-xl items-center gap-2",
-              "rounded-2xl p-1.5 ps-3 motion-safe:animate-dock-in",
+              "liquid-glass-toolbar pointer-events-auto flex w-full max-w-xl items-center gap-2",
+              "rounded-panel-md p-1.5 ps-3 motion-safe:animate-dock-in",
             )}
           >
             <p
@@ -148,7 +148,8 @@ export function SelectionDock({ count, noun = "row", actions, onClear }: Selecti
             <span className="ms-auto h-5 w-px shrink-0 bg-border" aria-hidden />
 
             <div className="sm:hidden">
-              <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              {/* Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none. */}
+              <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" loading={busy}>
                     Actions

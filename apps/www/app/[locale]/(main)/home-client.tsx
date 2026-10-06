@@ -29,6 +29,13 @@ const CtaSection = dynamic(
     import("@/components/sections/cta-section").then((mod) => mod.CtaSection),
   { loading: () => <SectionSkeleton /> },
 );
+const HomeFaqSection = dynamic(
+  () =>
+    import("@/components/sections/home-faq-section").then(
+      (mod) => mod.HomeFaqSection,
+    ),
+  { loading: () => null },
+);
 const TrustSection = dynamic(
   () =>
     import("@/components/sections/trust-section").then(
@@ -50,6 +57,9 @@ export function HomeClient({ transparency }: { transparency: ReactNode }) {
       <ErrorBoundary>
         <OwnershipStackSection />
       </ErrorBoundary>
+      {/* The price comes before services: the estimator is the first thing a
+          visitor can do without contacting anyone. */}
+      <ErrorBoundary>{transparency}</ErrorBoundary>
       <SceneInversionWrapper />
       <ErrorBoundary>
         <WorkSection />
@@ -57,7 +67,9 @@ export function HomeClient({ transparency }: { transparency: ReactNode }) {
       <ErrorBoundary>
         <TrustSection />
       </ErrorBoundary>
-      <ErrorBoundary>{transparency}</ErrorBoundary>
+      <ErrorBoundary>
+        <HomeFaqSection />
+      </ErrorBoundary>
       <ErrorBoundary>
         <CtaSection />
       </ErrorBoundary>

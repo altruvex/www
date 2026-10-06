@@ -70,13 +70,14 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
         <p className="mb-1 text-sm text-muted-foreground">
           Altruvex · {row.project.client.company || row.project.client.name || row.project.name}
         </p>
+        {/* brand-allow: hierarchy-multiple-h1 — separate render branch */}
         <h1 className="text-xl font-medium text-balance break-words sm:text-2xl">{row.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Change to {row.project.name}</p>
       </div>
 
       {row.detail && <p className="whitespace-pre-line break-words text-sm text-muted-foreground">{row.detail}</p>}
 
-      <dl className="space-y-2 rounded-2xl bg-muted/50 p-4 text-sm sm:p-5">
+      <dl className="space-y-2 rounded-panel-sm bg-muted/50 p-4 text-sm sm:p-5">
         <div className="flex items-baseline justify-between gap-4">
           <dt className="text-muted-foreground">Price</dt>
           <dd className="font-mono text-lg font-medium tabular-nums">{money(row.quotedAmount, currency)}</dd>

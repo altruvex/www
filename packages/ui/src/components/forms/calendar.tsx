@@ -39,8 +39,13 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       formatters={{
-        formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+        // The calendar's own locale, not the browser's (an Arabic picker in an English browser),
+        // through Intl: date-fns abbreviates Arabic months with a tatweel ("أكتـ").
+        formatMonthDropdown: (date, dateLib) =>
+          date.toLocaleString(
+            dateLib?.options.locale?.code ? `${dateLib.options.locale.code}-u-nu-latn` : "default",
+            { month: "short" },
+          ),
         ...formatters,
       }}
       classNames={{
@@ -73,7 +78,7 @@ function Calendar({
           defaultClassNames.dropdowns,
         ),
         dropdown_root: cn(
-          "relative h-8 rounded-ctl-sm border border-border bg-background transition-colors duration-[var(--duration-state)] ease-[var(--ease-standard)] hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring/25",
+          "relative h-8 rounded-ctl-sm border border-border-subtle bg-background transition-colors duration-[var(--duration-state)] ease-(--ease-standard) hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring/25",
           defaultClassNames.dropdown_root,
         ),
         dropdown: cn(
@@ -86,7 +91,7 @@ function Calendar({
         ),
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
-          "text-muted-foreground size-(--cell-size) font-medium text-[0.75rem] select-none flex items-center justify-center",
+          "text-muted-foreground size-(--cell-size) font-medium text-meta select-none flex items-center justify-center",
           defaultClassNames.weekday,
         ),
         week: cn("flex w-full mt-2", defaultClassNames.week),
@@ -95,7 +100,7 @@ function Calendar({
           defaultClassNames.day,
         ),
         day_button: cn(
-          "size-(--cell-size) p-0 font-normal tabular-nums aria-selected:opacity-100 rounded-ctl-sm transition-colors duration-[var(--duration-state)] ease-[var(--ease-standard)] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25",
+          "size-(--cell-size) p-0 font-normal tabular-nums aria-selected:opacity-100 rounded-ctl-sm transition-colors duration-[var(--duration-state)] ease-(--ease-standard) hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25",
           defaultClassNames.day_button,
         ),
         range_start: cn(
@@ -104,7 +109,7 @@ function Calendar({
         ),
         range_end: cn("day-range-end rounded-e-ctl-sm", defaultClassNames.range_end),
         selected: cn(
-          "bg-foreground text-background hover:bg-foreground hover:text-background focus:bg-foreground focus:text-background",
+          "[&>button]:bg-foreground [&>button]:text-background [&>button:hover]:bg-foreground [&>button:hover]:text-background [&>button:focus]:bg-foreground [&>button:focus]:text-background",
           defaultClassNames.selected,
         ),
         today: cn(
@@ -162,6 +167,7 @@ function Calendar({
 function CalendarDayButton({
   day,
   modifiers,
+  className,
   ...props
 }: React.ComponentProps<typeof DayButton>) {
   return (
@@ -169,6 +175,7 @@ function CalendarDayButton({
       day={day}
       modifiers={modifiers}
       className={cn(
+        className,
         modifiers.selected &&
           "bg-foreground text-background hover:bg-foreground hover:text-background focus:bg-foreground focus:text-background",
         modifiers.today && !modifiers.selected && "bg-muted text-foreground font-semibold",

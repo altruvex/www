@@ -112,7 +112,7 @@ export function IncidentText({
           onChange={(event) => setDraftDetail(event.target.value)}
           rows={5}
           maxLength={5000}
-          className="w-full rounded-sm border border-border bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
+          className="w-full rounded-ctl-xl border border-border-subtle bg-background px-2 py-1.5 text-base outline-none focus-visible:border-brand"
         />
         <p className="text-meta text-subtle-foreground">
           The change is recorded in the incident&apos;s history with the old

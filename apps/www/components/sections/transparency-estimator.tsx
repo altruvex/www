@@ -20,12 +20,19 @@ import {
   type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
 import {
+  formatMoney,
+  formatNumber,
   paymentScheduleView,
   pricingCopy,
   scopeNoteViews,
   type ComplexityId,
   type Locale,
 } from "@repo/pricing-schema";
+import {
+  FORM_ERROR_KEY,
+  fieldErrorMessage,
+  readApiResult,
+} from "@/lib/api-errors";
 import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -55,6 +62,7 @@ import type {
   MoneyFormats,
   QuestionKey,
 } from "./transparency-estimator/types";
+import { toLocale } from "@/i18n/locale-meta";
 
 const ResultPanelLazy = dynamic(
   () =>
@@ -77,9 +85,9 @@ export function TransparencyEstimator({
 }: TransparencyEstimatorProps = {}) {
   const t = useTranslations("transparency");
   const tPM = useTranslations("pricingModel");
+  const tValidations = useTranslations("validations");
   const locale = useLocale();
-  const isAr = locale.startsWith("ar");
-  const schemaLocale: Locale = isAr ? "ar" : "en";
+  const schemaLocale: Locale = toLocale(locale);
   const pricing = useMemo(
     () => resolveEstimatorPricing(pricingSlice),
     [pricingSlice],
@@ -138,33 +146,19 @@ export function TransparencyEstimator({
   const estimate = getEstimate();
   const shown = useMemo(() => spanFor(answers, pricing), [answers, pricing]);
 
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat(isAr ? "ar-EG-u-nu-latn" : "en-EG", {
-        style: "currency",
-        currency: "EGP",
-        maximumFractionDigits: 0,
-      }),
-    [isAr],
+  // One currency format with /pricing (#33): the schema's formatter, so a
+  // range reads "min – max EGP" / "min – max جنيه" on both pages.
+  const money = useCallback(
+    (n: number) => formatMoney(n, schemaLocale),
+    [schemaLocale],
   );
-
-  const decimal = useMemo(
-    () =>
-      new Intl.NumberFormat(isAr ? "ar-EG-u-nu-latn" : "en-EG", {
-        maximumFractionDigits: 0,
-      }),
-    [isAr],
+  const plain = useCallback(
+    (n: number) => formatNumber(n, schemaLocale),
+    [schemaLocale],
   );
-
-  const money = useCallback((n: number) => currency.format(n), [currency]);
-  const plain = useCallback((n: number) => decimal.format(n), [decimal]);
   const fmt: MoneyFormats = useMemo(
-    () => ({
-      money,
-      lead: isAr ? plain : money,
-      trail: isAr ? money : plain,
-    }),
-    [isAr, money, plain],
+    () => ({ money, lead: plain, trail: money }),
+    [money, plain],
   );
   const num = useCallback(
     (n: string | number, pad?: number) =>
@@ -255,7 +249,7 @@ export function TransparencyEstimator({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          locale: isAr ? "ar" : "en",
+          locale: schemaLocale,
           phone,
           name: name || undefined,
           email: email || undefined,
@@ -273,20 +267,31 @@ export function TransparencyEstimator({
           weeksMax: estimate.maxWeeks,
         }),
       });
-      const data = await res.json().catch(() => null);
+      const result = await readApiResult<{ reference?: unknown }>(res);
 
-      if (!res.ok) {
-        if (data?.errors?.email) setEmailError(data.errors.email);
-        if (data?.errors?.phone || !data?.errors?.email) {
-          setPhoneError(data?.errors?.phone ?? tPM("form.errors.phoneInvalid"));
+      if (!result.ok) {
+        // Codes, never server copy. The form has one message slot (under the
+        // phone field) for anything that is not a field error.
+        const fields = result.code === "validation" ? (result.fields ?? {}) : {};
+        if (fields.email) {
+          setEmailError(
+            fieldErrorMessage(tValidations, fields.email, tValidations("transparency-lead.email")),
+          );
+        }
+        if (fields.phone) {
+          setPhoneError(
+            fieldErrorMessage(tValidations, fields.phone, tPM("form.errors.phoneInvalid")),
+          );
+        } else if (!fields.email) {
+          setPhoneError(tValidations(FORM_ERROR_KEY[result.code]));
         }
         return;
       }
 
-      setReference(typeof data?.reference === "string" ? data.reference : null);
+      setReference(typeof result.reference === "string" ? result.reference : null);
       setSubmitted(true);
     } catch {
-      setPhoneError(tPM("form.errors.phoneInvalid"));
+      setPhoneError(tValidations(FORM_ERROR_KEY.network));
     } finally {
       setSubmitting(false);
     }
@@ -297,14 +302,15 @@ export function TransparencyEstimator({
     contentReadiness,
     email,
     estimate,
-    isAr,
     name,
     note,
     phone,
     projectType,
+    schemaLocale,
     scopeNotes,
     timeline,
     tPM,
+    tValidations,
   ]);
 
   const downloadPdf = useCallback(async () => {
@@ -403,7 +409,7 @@ export function TransparencyEstimator({
           t={t}
         />
 
-        <div ref={questionsRef} className="mt-14 lg:mt-20">
+        <div ref={questionsRef} className="mt-(--section-block)">
           <div className="space-y-16 lg:space-y-24">
             {BUILD_QUESTIONS.map((question, i) => (
               <BuildQuestion

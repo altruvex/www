@@ -1,21 +1,23 @@
 "use client";
 
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
-import { Link } from "@/i18n/navigation";
+import { AltruvexWordmark } from "@repo/ui";
+import { Eyebrow } from "@repo/ui/www";
+import { Link, usePathname } from "@/i18n/navigation";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { SITE_CONFIG } from "@/lib/metadata";
 import { readMotionEnv, scrollToY } from "@/lib/motion";
-import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 import { useLocale, useTranslations } from "next-intl";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { LOCALE_META, nextLocale } from "@/i18n/locale-meta";
 
 const WORDMARK_EM = 3.547;
 const WORDMARK_FONT_SIZE = `${Math.floor((100 / WORDMARK_EM) * 10) / 10}cqi`;
 
 const linkClass =
-  "relative inline-flex min-h-8 items-center text-[0.9375rem] text-muted-foreground transition-colors duration-(--motion-instant) hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-xs pointer-coarse:min-h-11 after:absolute after:inset-x-0 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-brand after:transition-transform after:duration-(--motion-drawer) after:ease-(--ease-strong) hover:after:scale-x-100 focus-visible:after:scale-x-100 rtl:after:origin-right";
+  "relative inline-flex min-h-8 items-center text-base text-muted-foreground transition-colors duration-(--motion-instant) hover:text-foreground focus-visible:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-ctl-xs pointer-coarse:min-h-11 after:absolute after:inset-x-0 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-brand after:transition-transform after:duration-(--motion-drawer) after:ease-(--ease-strong) hover:after:scale-x-100 focus-visible:after:scale-x-100 rtl:after:origin-right";
 
 type MarkState = "rest" | "armed" | "in";
 
@@ -23,6 +25,7 @@ export const Footer = memo(function Footer() {
   const t = useTranslations("footer");
   const navT = useTranslations("nav");
   const locale = useLocale();
+  const pathname = usePathname();
 
   const footerRef = useRef<HTMLElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
@@ -64,52 +67,55 @@ export const Footer = memo(function Footer() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const localizedYear = useMemo(() => {
-    const year = new Date().getFullYear().toString();
-    return locale === "ar" ? localizeNumbers(year, locale) : year;
-  }, [locale]);
+  // Figures are Latin digits in every locale (2026-10-04), so the year needs no localizing.
+  const localizedYear = new Date().getFullYear().toString();
 
   const linkColumns = useMemo(
     () => [
       {
         title: t("servicesTitle"),
         links: [
+          { href: "/services", label: navT("all.services") },
           { href: "/services/interface-design", label: t("webDesign") },
           { href: "/services/development", label: t("development") },
           { href: "/services/consulting", label: t("consulting") },
           { href: "/services/maintenance", label: t("maintenance") },
+          { href: "/pricing", label: t("pricing") },
+          {
+            href: getCommercialCta("projectRange").href,
+            label: t("transparency"),
+            hint: t("transparencyHint"),
+          },
+        ],
+      },
+      {
+        title: navT("method"),
+        links: [
+          { href: "/process", label: t("process") },
+          { href: "/how-we-work", label: t("how-we-work") },
+          { href: "/approach", label: t("approach") },
+          { href: "/standards", label: t("standards") },
+          { href: "/faq", label: t("faq") },
         ],
       },
       {
         title: t("companyTitle"),
         links: [
           { href: "/work", label: t("work") },
-          { href: "/approach", label: t("approach") },
-          { href: "/how-we-work", label: t("how-we-work") },
-          { href: "/process", label: t("process") },
-          { href: "/standards", label: t("standards") },
-        ],
-      },
-      {
-        title: t("resourcesTitle"),
-        links: [
-          { href: "/pricing", label: t("pricing") },
-          { href: "/transparency", label: t("transparency") },
-          { href: "/faq", label: t("faq") },
+          { href: "/about", label: navT("about") },
           { href: "/writing", label: t("writing") },
-          { href: "/schedule", label: t("schedule") },
-          { href: "/contact", label: t("contact") },
+          { href: getCommercialCta("describeTheBuild").href, label: t("contact") },
         ],
       },
     ],
-    [t],
+    [t, navT],
   );
 
   const legalLinks = [
     { href: "/privacy", label: t("privacy") },
     { href: "/terms", label: t("terms") },
-    { href: "/about", label: navT("about") },
   ];
+  const otherLocale = nextLocale(locale);
 
   return (
     <footer
@@ -143,10 +149,11 @@ export const Footer = memo(function Footer() {
             <div key={title}>
               <h3 className="eyebrow mb-3.5 text-muted-foreground">{title}</h3>
               <ul>
-                {links.map(({ href, label }) => (
+                {links.map(({ href, label, hint }: { href: string; label: string; hint?: string }) => (
                   <li key={href}>
                     <Link href={href} className={linkClass}>
                       {label}
+                      {hint && <span className="ms-1.5 text-sm">· {hint}</span>}
                     </Link>
                   </li>
                 ))}
@@ -173,27 +180,44 @@ export const Footer = memo(function Footer() {
                   <bdi className="text-foreground">{SITE_CONFIG.phone}</bdi>
                 </a>
               </dd>
+              <dt className="mt-3 text-xs text-muted-foreground">{t("callLabel")}</dt>
+              <dd>
+                <Link href={getCommercialCta("technicalCall").href} className={linkClass}>
+                  {t("schedule")}
+                </Link>
+              </dd>
             </dl>
           </div>
         </nav>
 
-        <div className="mt-[clamp(2.25rem,4vw,3.5rem)] flex flex-wrap items-center justify-between gap-x-7 gap-y-3 border-t border-border-subtle py-5 text-[0.8125rem] text-muted-foreground">
+        <div className="mt-[clamp(2.25rem,4vw,3.5rem)] flex flex-wrap items-center justify-between gap-x-7 gap-y-3 border-t border-border-subtle py-5 text-md text-muted-foreground">
           <span>{t("copyright", { year: localizedYear })}</span>
           <nav aria-label={t("legalLabel")}>
             <ul className="flex flex-wrap gap-x-5">
               {legalLinks.map(({ href, label }) => (
                 <li key={href}>
-                  <Link href={href} className={cn(linkClass, "text-[0.8125rem]")}>
+                  <Link href={href} className={cn(linkClass, "text-md")}>
                     {label}
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href={pathname}
+                  locale={otherLocale}
+                  hrefLang={otherLocale}
+                  lang={otherLocale}
+                  className={cn(linkClass, "text-md")}
+                >
+                  {LOCALE_META[otherLocale].nativeName}
+                </Link>
+              </li>
             </ul>
           </nav>
           <button
             type="button"
             onClick={() => scrollToY(0)}
-            className={cn(linkClass, "cursor-pointer text-[0.8125rem]")}
+            className={cn(linkClass, "cursor-pointer text-md")}
           >
             {t("toTop")}
           </button>
@@ -205,14 +229,11 @@ export const Footer = memo(function Footer() {
           className="overflow-clip pt-[0.08em] pb-[0.012em] text-center leading-[0.74] select-none"
           style={{ fontSize: WORDMARK_FONT_SIZE }}
         >
-          <span
-            dir="ltr"
+          <AltruvexWordmark
             data-wordmark
             data-state={markState}
-            className="inline-block font-bold tracking-[-0.05em] whitespace-nowrap text-foreground data-[state=armed]:translate-y-[105%] data-[state=in]:translate-y-0 data-[state=in]:transition-transform data-[state=in]:duration-(--motion-display) data-[state=in]:ease-(--ease-strong)"
-          >
-            Altruvex
-          </span>
+            className="inline-block text-foreground data-[state=armed]:translate-y-[105%] data-[state=in]:translate-y-0 data-[state=in]:transition-transform data-[state=in]:duration-(--motion-display) data-[state=in]:ease-(--ease-strong)"
+          />
         </div>
       </Container>
     </footer>

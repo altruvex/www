@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ChevronRight } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
-import { Hint } from "@repo/ui";
+import { ArrowIcon, Hint } from "@repo/ui";
 
 import { EntityLink } from "@/components/os/entity-link";
 import { iconForEvent, labelForAction, toneForEvent } from "@/lib/activity-icons";
@@ -37,6 +37,34 @@ export function show(value: unknown, max = 120): string {
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   const json = JSON.stringify(value);
   return json.length > max ? `${json.slice(0, max)}…` : json;
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
+/** liveUrl → "Live URL", actualLaunchDate → "Actual launch date". */
+function humanField(key: string): string {
+  const words = key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(/\s+/)
+    .map((w) => (/^(url|id|api|sla|vat|ip)$/i.test(w) ? w.toUpperCase() : w.toLowerCase()));
+  const text = words.join(" ");
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function isEmpty(value: unknown): boolean {
+  return value === null || value === undefined || value === "";
+}
+
+/** A value as the operator reads it: dates as dates, empty lists as "None". */
+function readable(value: unknown, max = 120): string {
+  if (typeof value === "string" && ISO_DATE.test(value)) {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return format(d, "d MMM yyyy");
+  }
+  if ((Array.isArray(value) && value.length === 0) || value === "[]") return "None";
+  return show(value, max);
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -77,7 +105,7 @@ export function EventRow({
         <span
           aria-hidden
           className={cn(
-            "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md border",
+            "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-ctl-sm border",
             toneClasses[tone],
           )}
         >
@@ -140,9 +168,9 @@ export function EventRow({
               {fields.length > 0 ? (
                 <>
                   {fields.length} field{fields.length === 1 ? "" : "s"} changed
-                  <span className="font-mono">
+                  <span>
                     {" · "}
-                    {fields.slice(0, 4).join(", ")}
+                    {fields.slice(0, 4).map(humanField).join(", ")}
                     {fields.length > 4 ? "…" : ""}
                   </span>
                 </>
@@ -151,33 +179,44 @@ export function EventRow({
               )}
             </summary>
 
-            {fields.length > 0 && (
-              <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-sm border border-border bg-surface/50 p-2 text-meta">
-                {fields.map((field) => (
-                  <div key={field} className="contents">
-                    <dt className="font-mono text-subtle-foreground">{field}</dt>
+            <div className="mt-2 divide-y divide-border-subtle overflow-hidden rounded-ctl-xl border border-border-subtle text-meta">
+              {fields.map((field) => {
+                const was = before[field];
+                const now = after[field];
+                return (
+                  <div
+                    key={field}
+                    className="grid gap-x-4 gap-y-0.5 px-3 py-2 sm:grid-cols-[minmax(7rem,11rem)_1fr]"
+                  >
+                    <dt className="text-subtle-foreground">{humanField(field)}</dt>
                     <dd className="min-w-0 break-words">
-                      <span className="text-muted-foreground line-through decoration-border-mid">
-                        {show(before[field])}
+                      {!isEmpty(was) && (
+                        <>
+                          <span className="text-muted-foreground line-through decoration-foreground/30">
+                            {readable(was)}
+                          </span>
+                          <ArrowIcon motion="none" className="mx-2 inline size-3.5 align-[-0.15em] text-subtle-foreground" />
+                        </>
+                      )}
+                      <span className={cn(isEmpty(now) ? "text-subtle-foreground" : "text-foreground")}>
+                        {readable(now)}
                       </span>
-                      {" → "}
-                      <span>{show(after[field])}</span>
                     </dd>
                   </div>
-                ))}
-              </dl>
-            )}
-
-            {metaKeys.length > 0 && (
-              <dl className="mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-sm border border-border bg-surface/50 p-2 text-meta">
-                {metaKeys.map((key) => (
-                  <div key={key} className="contents">
-                    <dt className="font-mono text-subtle-foreground">{key}</dt>
-                    <dd className="min-w-0 break-words font-mono">{show(metadata[key], 240)}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+                );
+              })}
+              {metaKeys.map((key) => (
+                <div
+                  key={key}
+                  className="grid gap-x-4 gap-y-0.5 bg-surface/40 px-3 py-2 sm:grid-cols-[minmax(7rem,11rem)_1fr]"
+                >
+                  <dt className="text-subtle-foreground">{humanField(key)}</dt>
+                  <dd className="min-w-0 break-words text-muted-foreground">
+                    {readable(metadata[key], 240)}
+                  </dd>
+                </div>
+              ))}
+            </div>
           </details>
         )}
       </div>
@@ -208,7 +247,7 @@ export function EventList({
 }) {
   if (!groupByDate) {
     return (
-      <ol className={cn("divide-y divide-border", className)}>
+      <ol className={cn("divide-y divide-border-subtle", className)}>
         {events.map((event) => (
           <EventRow key={event.id} event={event} dense={dense} aside={renderAside?.(event)} />
         ))}
@@ -228,13 +267,13 @@ export function EventList({
     <div className={className}>
       {groups.map((group) => (
         <section key={group.label}>
-          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y border-border bg-card/90 px-3 py-1 backdrop-blur-md first:border-t-0">
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y border-border-subtle bg-card px-3 py-1 first:border-t-0">
             <span className="telemetry text-muted-foreground">{group.label}</span>
             <span className="font-mono text-micro tabular-nums text-subtle-foreground">
               {group.events.length} event{group.events.length === 1 ? "" : "s"}
             </span>
           </div>
-          <ol className="divide-y divide-border">
+          <ol className="divide-y divide-border-subtle">
             {group.events.map((event) => (
               <EventRow key={event.id} event={event} dense={dense} aside={renderAside?.(event)} />
             ))}

@@ -1,25 +1,24 @@
 {
-  "eyebrow": "What We Build",
-  "title": "Four disciplines. One delivery standard.",
-  "subtitle": "Every layer engineered precisely - from the interface to the data model.",
+  "eyebrow": "What we build",
+  "title": "Four services. Choose by the problem you have.",
+  "subtitle": "Website design, website and web app development, technical audits and website maintenance, for new builds and for sites already live. Each is delivered to the same standard.",
   "disciplines": {
-    "label": "The disciplines"
+    "label": "The services"
   },
   "standard": {
     "label": "The standard"
   },
   "action": {
-    "website": "Scope your site",
-    "portal": "Scope your project",
-    "audit": "Start with the audit",
-    "maintenance": "Put your site on a plan",
-    "hint": "A reply within 24 hours on business days.",
-    "delivered": "How it's delivered"
+    "details": "{service} in detail"
   },
   "next": {
     "title": "Not sure which one you need?",
-    "description": "Describe the problem in your own words. We'll name the discipline that fits - or tell you it isn't us, and why.",
-    "primary": "Describe your problem",
-    "secondary": "Book a 30-minute call"
+    "description": "Describe the problem in your own words. We'll name the service that fits.",
+    "stepsLabel": "What happens next",
+    "steps": {
+      "brief": "You send a short brief: what it must do, who uses it and when it needs to be live.",
+      "reply": "We read it and reply with questions or a proposed next step.",
+      "call": "If it fits what we build, we schedule the initial project consultation call to scope it. If it does not, we say so, and why."
+    }
   }
 }

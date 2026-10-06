@@ -77,7 +77,7 @@ export function NotesPanel({
           system.
         </EmptyInline>
       ) : (
-        <ul className="rows divide-y divide-border">
+        <ul className="rows divide-y divide-border-subtle">
           {notes.map((note) => (
             <li key={note.id} className="px-3.5 py-3 space-y-1">
               <div className="flex items-center justify-between gap-2">
@@ -115,7 +115,7 @@ export function NotesPanel({
       {canWrite && (
         <form
           onSubmit={handleAddNote}
-          className="border-t border-border p-3 bg-surface/30 space-y-2"
+          className="border-t border-border-subtle p-3 bg-surface/30 space-y-2"
         >
           <Textarea
             rows={2}

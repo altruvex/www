@@ -25,15 +25,6 @@ type Standard = { id: string; lead: string; checks: readonly Check[] };
 
 export const STANDARDS: readonly Standard[] = [
   {
-    id: "code",
-    lead: "lint",
-    checks: [
-      { id: "lint", kind: "zero" },
-      { id: "coverage", kind: "scale", min: 0, max: 100, threshold: 80, pass: "over", unit: "percent" },
-      { id: "apiDocs", kind: "rule" },
-    ],
-  },
-  {
     id: "performance",
     lead: "lcp",
     checks: [
@@ -57,7 +48,16 @@ export const STANDARDS: readonly Standard[] = [
     checks: [
       { id: "headers", kind: "grade", grades: ["F", "E", "D", "C", "B", "A", "A+"], passFrom: "A" },
       { id: "cves", kind: "zero" },
-      { id: "patches", kind: "rule" },
+      { id: "depAudit", kind: "rule" },
+    ],
+  },
+  {
+    id: "code",
+    lead: "lint",
+    checks: [
+      { id: "lint", kind: "zero" },
+      { id: "typeErrors", kind: "zero" },
+      { id: "apiDocs", kind: "rule" },
     ],
   },
 ];

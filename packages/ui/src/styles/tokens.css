@@ -81,8 +81,29 @@
   --radius-ctl-xl: calc(var(--radius) + 4px);
   --radius-overlay: calc(var(--radius) + 12px);
 
+  /* Edge system, shared by both apps (one system, two dialects — 2026-10-03). ctl-xs is fixed
+     (E4: elements 24px tall or less); panel-* derive from each app's --radius, so www (16px)
+     reads 22/28/34 and the denser admin (10px) reads 16/22/28. */
+  --radius-ctl-xs: 0.25rem;
+  --radius-panel-sm: calc(var(--radius) + 6px);
+  --radius-panel-md: calc(var(--radius) + 12px);
+  --radius-panel-lg: calc(var(--radius) + 18px);
+  /* A list of rows on a padded surface (menu, select): the surface radius is the row radius plus
+     the p-1 padding, so the two corners stay concentric (E7). www reads 16, admin 10. */
+  --radius-menu: calc(var(--radius-ctl-sm) + 0.25rem);
+
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* --motion-sweep comes from each app (www: lib/motion tokens; admin mirrors it). */
+  --animate-shimmer: shimmer var(--motion-sweep) var(--ease-smooth) infinite;
+}
+
+/* Skeleton sweep. Skeleton gradients are viewport-anchored (background-attachment:
+   fixed), so every bar on screen shows the same single sweep, left to right. */
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
 }
 
 :root {
@@ -114,6 +135,8 @@
   --n-6: 0 0% 32%;
   --n-7: 0 0% 18%;
   --n-8: 0 0% 6%;
+  /* Shadow colour on dark surfaces. The darkest neutral (n-8, 6%) would vanish on the 7% dark background. */
+  --shadow-ink: 0 0% 0%;
 
   --brand: 214 89% 48%;
   --brand-hover: 214 89% 41%;
@@ -227,10 +250,10 @@
   --chart-5: 76.7 64.2% 37.3%;
   --chart-6: 256.2 61.2% 66.7%;
 
-  --elevation-card: 0 1px 2px hsl(0 0% 0% / 0.4), 0 12px 32px -16px hsl(0 0% 0% / 0.6);
-  --elevation-card-lg: 0 2px 6px hsl(0 0% 0% / 0.35), 0 28px 56px -24px hsl(0 0% 0% / 0.7);
-  --elev-1: 0 1px 2px hsl(0 0% 0% / 0.4);
-  --elev-2: 0 8px 24px -4px hsl(0 0% 0% / 0.5), 0 2px 6px -2px hsl(0 0% 0% / 0.35);
+  --elevation-card: 0 1px 2px hsl(var(--shadow-ink) / 0.4), 0 12px 32px -16px hsl(var(--shadow-ink) / 0.6);
+  --elevation-card-lg: 0 2px 6px hsl(var(--shadow-ink) / 0.35), 0 28px 56px -24px hsl(var(--shadow-ink) / 0.7);
+  --elev-1: 0 1px 2px hsl(var(--shadow-ink) / 0.4);
+  --elev-2: 0 8px 24px -4px hsl(var(--shadow-ink) / 0.5), 0 2px 6px -2px hsl(var(--shadow-ink) / 0.35);
 }
 
 @layer base {

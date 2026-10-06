@@ -1,6 +1,6 @@
 {
   "multilingual": {
-    "paragraphs": "Most sites treat RTL as an afterthought - flip the layout and hope it holds. <strong>We design systems where direction is a first-class architectural decision from day one.</strong>\n\n<dim>This is not about translation.</dim> <strong>It is cultural adaptation.</strong> Right-aligned navigation is not mirrored - it is reconsidered.\n\nEvery component, every layout, every interaction - <strong>built to perform in both directions without compromise.</strong>",
+    "paragraphs": "Right-to-left is decided in the architecture at the start, instead of being added at the end by flipping the layout. <strong>Every component, layout and interaction is built and checked in both directions.</strong>\n\nArabic is adapted, not translated: navigation, alignment and reading order are reconsidered for an Arabic reader.",
     "specimen": {
       "label": "One heading, two directions",
       "en": {
@@ -12,10 +12,6 @@
         "text": "تصميم يحترم اتجاه اللغة."
       },
       "notes": {
-        "face": {
-          "term": "Typeface",
-          "value": "Altruvex Sans, drawn for Latin and for Arabic as one family."
-        },
         "leading": {
           "term": "Line height",
           "value": "Arabic headings get more room than Latin ones, so dots and tall letters never collide."
@@ -32,24 +28,23 @@
     }
   },
   "boundaries": {
-    "intro": "Applied to ourselves first. We do not:",
+    "intro": "Five things we turn down, so you know before you ask:",
     "items": {
-      "1": "Accept projects with fixed deadlines imposed before the scope is understood",
-      "2": "Build systems we cannot stand behind technically",
-      "3": "Work through agencies that sit between us and the end client",
-      "4": "Compete on price",
-      "5": "Start execution before the problem is fully mapped"
+      "1": "Fixed deadlines set before the scope is known",
+      "2": "Systems we could not stand behind technically",
+      "3": "White-label work through another agency",
+      "4": "Competing on price alone",
+      "5": "Building before the problem is mapped"
     },
     "title": "What we will not do."
   },
   "closing": {
-    "cta": "Start the conversation: hello@altruvex.com",
-    "description": "Not every project needs this level of thinking. Some need speed. Some need iteration. But if you are building something that needs to last - <strong>if the system is the product, not just the storefront - we should talk</strong>. <dim>No pitch. No pressure.</dim> A direct technical discussion about what you are building and whether we are the right fit.",
-    "title": "If this matches how you think,",
-    "titleItalic": "let's talk."
+    "description": "Describe what you are building in a few lines. <strong>You get a direct technical answer on scope, cost and fit.</strong>",
+    "title": "If this is how you want it built,",
+    "titleItalic": "start with the problem."
   },
   "constraints": {
-    "paragraphs": "<strong>Unlimited options create paralysis</strong>, <dim>not products</dim>. We begin every project by defining what we will not build - which features are out of scope, which use cases are excluded, which decisions are off the table.\n\n<dim>This is not limitation.</dim> <strong>It is focus.</strong> A system designed for everyone serves no one well.\n\nConstraints force decisions. Decisions create character. <strong>Character builds a product with a point of view.</strong>",
+    "paragraphs": "Every project starts by deciding what will not be built: the features out of scope and the use cases excluded. <strong>Your proposal states that scope</strong>, so you can check the build against it.\n\nA system designed for everyone serves no one well. Fewer, deliberate features are faster to build, test and change.",
     "title": "Constraints are a design tool."
   },
   "contrasts": {
@@ -76,22 +71,22 @@
     },
     "handoff": {
       "description": "Code written for one person is fragile. Every commit assumes someone else will read and extend it six months from now.",
-      "title": "Write for the Next Engineer"
+      "title": "Write for the next engineer"
     },
     "maintenance": {
-      "description": "A system that requires constant attention is not finished. We optimize for long stretches of stability where nothing breaks, nothing drifts.",
-      "title": "Minimize Intervention Cost"
+      "description": "A system that needs constant attention is not finished. We build for long stretches of stability where nothing breaks and nothing drifts.",
+      "title": "Keep intervention cheap"
     },
     "scale": {
-      "description": "Not because every project will reach it - but because growth assumptions change every architectural decision made today.",
-      "title": "Design for 10x"
+      "description": "Few projects will reach it, but growth assumptions change every architectural decision made today.",
+      "title": "Design for ten times the load"
     },
     "title": "Architecture precedes implementation."
   },
   "hero": {
-    "description": "Interface, architecture, copy, and CTA structure all emerge from one question: what must the buyer understand, and what should they do next?",
-    "eyebrow": "09 - Approach",
-    "title": "We do not design pages first.",
+    "description": "The order Altruvex makes technical decisions in: data first, then architecture, then features, then the page. Each layer is settled before the next is built on it.",
+    "eyebrow": "Approach",
+    "title": "Our web development approach: data first, page last.",
     "order": {
       "label": "The order decisions are made in",
       "usual": "Usually",
@@ -108,5 +103,20 @@
   "rail": {
     "label": "Laid so far",
     "note": "Each chapter lays one layer. The page goes on last."
+  },
+  "handover": {
+    "label": "What you receive at handover",
+    "items": {
+      "data": "Database schema | Migration history",
+      "architecture": "Architecture decision log | Deployment documentation",
+      "features": "Git repository in an account you control | Guide to environment variables and secrets",
+      "page": "Both languages in one codebase | Source code as it runs in production"
+    }
+  },
+  "chapters": {
+    "data": "What the system must know",
+    "architecture": "How it holds up",
+    "features": "What gets built, and what does not",
+    "page": "Decided last"
   }
 }

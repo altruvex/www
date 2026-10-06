@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -17,7 +18,9 @@ import { cn } from "@/lib/utils";
 import { Panel, PanelLink } from "@/components/os/panel";
 import { List, ListRow } from "@/components/os/list-row";
 import { EmptyInline } from "@/components/os/empty-state";
+import { PickToOpen, type PickOption } from "@/components/os/pick-to-open";
 import { ActiveWork, type ActiveWorkProps } from "@/components/today/active-work";
+import { Button } from "@repo/ui";
 
 type NowEngineering = Awaited<ReturnType<typeof getNowEngineering>>;
 
@@ -33,9 +36,14 @@ export function NowAside({
   engineering,
   renewals,
   work,
+  canCreateProduct = false,
+  connectable = [],
   className,
 }: {
   engineering: NowEngineering | null;
+  canCreateProduct?: boolean;
+  /** Products with no pipeline, for a role that may connect one. */
+  connectable?: PickOption[];
   renewals: { rows: RenewalRow[]; total: number } | null;
   work: ActiveWorkProps | null;
   className?: string;
@@ -49,15 +57,23 @@ export function NowAside({
         className,
       )}
     >
-      {engineering && <RunningNow eng={engineering} />}
-      {engineering && <ProductionHealthPanel eng={engineering} />}
+      {engineering && <RunningNow eng={engineering} connectable={connectable} canCreate={canCreateProduct} />}
+      {engineering && <ProductionHealthPanel eng={engineering} canCreate={canCreateProduct} />}
       {renewals && <RenewalsDue {...renewals} />}
       {work && <ActiveWork {...work} />}
     </aside>
   );
 }
 
-function RunningNow({ eng }: { eng: NowEngineering }) {
+function RunningNow({
+  eng,
+  connectable,
+  canCreate,
+}: {
+  eng: NowEngineering;
+  connectable: PickOption[];
+  canCreate: boolean;
+}) {
   const { builds, buildCount, deploys, deployCount } = eng.running;
   const rows = [
     ...builds.map((b) => ({
@@ -91,10 +107,30 @@ function RunningNow({ eng }: { eng: NowEngineering }) {
       flush
     >
       {rows.length === 0 ? (
-        <EmptyInline>
+        <EmptyInline
+          action={
+            eng.isEmpty ? (
+              canCreate ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/products?new=product">Add a product</Link>
+                </Button>
+              ) : null
+            ) : connectable.length > 0 ? (
+              <PickToOpen
+                label="Connect a pipeline"
+                size="sm"
+                searchPlaceholder="Find a product"
+                options={connectable}
+                footer={connectable.length >= 50 ? { label: "All products", href: "/products" } : undefined}
+              />
+            ) : null
+          }
+        >
           {eng.isEmpty
             ? "No product is connected yet. Builds and deploys appear here the moment a product's CI reports them."
-            : "Nothing is building or deploying. Runs appear here while CI reports them as queued or running."}
+            : connectable.length > 0
+              ? `Nothing is building or deploying. ${connectable.length === 1 ? "One product has" : `${connectable.length >= 50 ? "50+" : connectable.length} products have`} no pipeline connected yet.`
+              : "Nothing is building or deploying. Runs appear here while CI reports them as queued or running."}
         </EmptyInline>
       ) : (
         <List label="Builds and deploys in flight">
@@ -120,7 +156,16 @@ function RunningNow({ eng }: { eng: NowEngineering }) {
   );
 }
 
-function ProductionHealthPanel({ eng }: { eng: NowEngineering }) {
+/** The section of a product's page that holds what made it unhealthy. */
+function healthSection(p: NowEngineering["health"][number]): string {
+  if (p.openIncidents > 0) return "#incidents";
+  if (p.lastDeploy && (p.lastDeploy.status === "FAILED" || p.lastDeploy.status === "ROLLED_BACK")) return "#deployments";
+  if (p.failedBuild24h) return "#builds";
+  if (p.state === "unknown") return "#connect";
+  return "";
+}
+
+function ProductionHealthPanel({ eng, canCreate }: { eng: NowEngineering; canCreate: boolean }) {
   const down = eng.health.filter((p) => p.state === "down").length;
   const degraded = eng.health.filter((p) => p.state === "degraded").length;
   return (
@@ -137,9 +182,17 @@ function ProductionHealthPanel({ eng }: { eng: NowEngineering }) {
       flush
     >
       {eng.health.length === 0 ? (
-        <EmptyInline>
+        <EmptyInline
+          action={
+            eng.isEmpty && canCreate ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/products?new=product">Add a product</Link>
+              </Button>
+            ) : null
+          }
+        >
           {eng.isEmpty
-            ? "No products yet. Add one on the products screen and connect its CI; its production state shows here."
+            ? "No products yet. Add one and connect its CI; its production state shows here."
             : "No product is marked Live or Maintenance yet. A product's health shows here once it is live."}
         </EmptyInline>
       ) : (
@@ -157,7 +210,7 @@ function ProductionHealthPanel({ eng }: { eng: NowEngineering }) {
               <ListRow
                 key={p.id}
                 dense
-                href={`/products/${p.id}`}
+                href={`/products/${p.id}${healthSection(p)}`}
                 icon={h.icon}
                 tone={h.tone}
                 title={p.name}
@@ -168,7 +221,7 @@ function ProductionHealthPanel({ eng }: { eng: NowEngineering }) {
         </List>
       )}
       {eng.runningProductCount > eng.health.length && (
-        <div className="border-t border-border px-3 py-2">
+        <div className="border-t border-border-subtle px-3 py-2">
           <PanelLink href="/products">All {eng.runningProductCount} live products</PanelLink>
         </div>
       )}
@@ -214,7 +267,7 @@ function RenewalsDue({ rows, total }: { rows: RenewalRow[]; total: number }) {
         </List>
       )}
       {total > rows.length && (
-        <div className="border-t border-border px-3 py-2">
+        <div className="border-t border-border-subtle px-3 py-2">
           <PanelLink href="/renewals">All {total} due</PanelLink>
         </div>
       )}

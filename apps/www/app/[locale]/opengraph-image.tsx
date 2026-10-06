@@ -1,4 +1,5 @@
-import { SITE_CONFIG, normalizeLocale } from "@/lib/metadata";
+import { LOCALE_META, scriptHasCase, toLocale, type Locale } from "@/i18n/locale-meta";
+import { SITE_CONFIG } from "@/lib/metadata";
 import { ImageResponse } from "next/og";
 import { css, PALETTE } from "@repo/ui/palette";
 import { readFile } from "node:fs/promises";
@@ -18,6 +19,23 @@ const BRAND_OG = join(process.cwd(), "node_modules/@repo/brand-font/dist/og");
 function loadBrandFont(face: "Latin" | "Arabic", weight: 400 | 700) {
   return readFile(join(BRAND_OG, `AltruvexSans${face}-${weight}.ttf`));
 }
+
+/** The card's copy, per locale. A new locale must add its row. */
+const OG_COPY: Record<
+  Locale,
+  { eyebrow: string; heading: string; sub: string }
+> = {
+  en: {
+    eyebrow: "WEB ENGINEERING STUDIO",
+    heading: "Custom websites and web apps.",
+    sub: "Architecture-first builds. Performance by default. Direct engineering access.",
+  },
+  ar: {
+    eyebrow: "استوديو تطوير ويب",
+    heading: "مواقع وتطبيقات ويب مخصصة.",
+    sub: "المعمارية أولاً. الأداء من البداية. تواصل مباشر مع الهندسة.",
+  },
+};
 
 type Run = { kind: "A" | "L" | "P"; text: string };
 
@@ -185,9 +203,13 @@ export default async function OpenGraphImage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const loc = normalizeLocale(locale);
-
-  const isArabic = loc === "ar";
+  const loc = toLocale(locale);
+  const meta = LOCALE_META[loc];
+  const copy = OG_COPY[loc];
+  // Direction decides layout and the bidi-run renderer; the script decides
+  // the face and whether case and tracking apply.
+  const rtl = meta.dir === "rtl";
+  const cased = scriptHasCase(meta.script);
 
   const [latinRegular, latinBold, arabicRegular, arabicBold] =
     await Promise.all([
@@ -197,41 +219,24 @@ export default async function OpenGraphImage({
       loadBrandFont("Arabic", 700),
     ]);
 
-  const fontFamily = isArabic ? "brand-arabic" : "brand-latin";
+  const fontFamily = `brand-${meta.script}`;
 
   const eyebrow = {
     color: css(PALETTE.light["n-5"]),
     display: "flex",
     fontSize: 24,
-    ...(isArabic
-      ? {}
-      : { letterSpacing: "0.22em", textTransform: "uppercase" as const }),
-  };
-  const pill = {
-    alignItems: "center",
-    background: "rgba(15,15,15,0.06)",
-    border: "1px solid rgba(15,15,15,0.1)",
-    borderRadius: 999,
-    color: css(PALETTE.light["n-6"]),
-    display: "flex",
-    fontSize: 22,
-    height: 48,
-    padding: "0 18px",
-    ...(isArabic
-      ? {}
-      : { letterSpacing: "0.08em", textTransform: "uppercase" as const }),
+    ...(cased
+      ? { letterSpacing: "0.22em", textTransform: "uppercase" as const }
+      : {}),
   };
   const headingStyle = {
     display: "flex",
     fontSize: 58,
     fontWeight: 700,
-    ...(isArabic
-      ? { lineHeight: 1.3 }
-      : {
-          letterSpacing: "-0.04em",
-          lineHeight: 1.04,
-          textAlign: "left" as const,
-        }),
+    ...(cased
+      ? { letterSpacing: "-0.04em", lineHeight: 1.04 }
+      : { lineHeight: 1.3 }),
+    ...(rtl ? {} : { textAlign: "left" as const }),
   };
   const subStyle = {
     color: css(PALETTE.light["n-6"]),
@@ -239,9 +244,9 @@ export default async function OpenGraphImage({
     fontSize: 28,
     lineHeight: 1.4,
     maxWidth: 920,
-    ...(isArabic ? {} : { textAlign: "left" as const }),
+    ...(rtl ? {} : { textAlign: "left" as const }),
   };
-  const rowDirection = isArabic ? ("row-reverse" as const) : ("row" as const);
+  const rowDirection = rtl ? ("row-reverse" as const) : ("row" as const);
 
   return new ImageResponse(
     <div
@@ -273,12 +278,11 @@ export default async function OpenGraphImage({
             width: "100%",
           }}
         >
-          {isArabic ? (
-            <RtlText gap={6} style={eyebrow} text="استوديو تطوير ويب" />
+          {rtl ? (
+            <RtlText gap={6} style={eyebrow} text={copy.eyebrow} />
           ) : (
-            <div style={eyebrow}>WEB ENGINEERING STUDIO</div>
+            <div style={eyebrow}>{copy.eyebrow}</div>
           )}
-          <div style={pill}>{isArabic ? "القاهرة" : "CAIRO"}</div>
         </div>
 
         <div
@@ -287,30 +291,18 @@ export default async function OpenGraphImage({
             flexDirection: "column",
             gap: "22px",
             maxWidth: 920,
-            ...(isArabic ? { alignSelf: "flex-end", width: 920 } : {}),
+            ...(rtl ? { alignSelf: "flex-end", width: 920 } : {}),
           }}
         >
-          {isArabic ? (
-            <RtlText
-              gap={9}
-              style={headingStyle}
-              text="تطوير مواقع ويب مخصصة للأنظمة متعددة اللغات الموجّهة للأعمال."
-            />
+          {rtl ? (
+            <RtlText gap={9} style={headingStyle} text={copy.heading} />
           ) : (
-            <div style={headingStyle}>
-              Custom web development for multilingual B2B systems.
-            </div>
+            <div style={headingStyle}>{copy.heading}</div>
           )}
-          {isArabic ? (
-            <RtlText
-              gap={4}
-              style={subStyle}
-              text="تطوير ويب مخصص وNext.js واستشارات تقنية للفرق التي تحتاج أداءً ومصداقيةً وجودة تنفيذ من اليوم الأول."
-            />
+          {rtl ? (
+            <RtlText gap={4} style={subStyle} text={copy.sub} />
           ) : (
-            <div style={subStyle}>
-              Architecture-first builds. Performance by default. Founder-direct.
-            </div>
+            <div style={subStyle}>{copy.sub}</div>
           )}
         </div>
 
@@ -346,17 +338,6 @@ export default async function OpenGraphImage({
             <span>
               {(SITE_CONFIG.url ?? "altruvex.com").replace(/^https?:\/\//, "")}
             </span>
-            {isArabic ? (
-              <RtlText
-                gap={4}
-                style={{ color: css(PALETTE.light.brand) }}
-                text="العربية + English"
-              />
-            ) : (
-              <span style={{ color: css(PALETTE.light.brand) }}>
-                English + العربية
-              </span>
-            )}
           </div>
         </div>
       </div>

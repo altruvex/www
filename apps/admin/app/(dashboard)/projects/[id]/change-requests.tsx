@@ -142,7 +142,7 @@ export function ChangeRequestsPanel({
   return (
     <>
       <div className="plane overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle px-3 py-2">
           <p className="min-w-0 flex-1 text-meta text-muted-foreground">
             {closed
               ? "The project is closed. Changes can still be logged, quoted and billed here."
@@ -380,7 +380,7 @@ function RequestRow({
           </p>
         )}
         {row.clientResponseNote && (
-          <p className="mt-1 border-s-2 border-border ps-2 text-meta text-muted-foreground">
+          <p className="mt-1 border-s-2 border-border-subtle ps-2 text-meta text-muted-foreground">
             “{row.clientResponseNote}”
           </p>
         )}
@@ -407,7 +407,8 @@ function RequestRow({
         )}
         {primary}
         {menu.length > 0 && (
-          <DropdownMenu>
+          // Not modal: a modal menu that opens a modal dialog leaves body pointer-events stuck at none.
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button size="icon-sm" variant="ghost" aria-label={`More actions for ${row.title}`} disabled={busy}>
                 <MoreHorizontal className="size-3.5" />

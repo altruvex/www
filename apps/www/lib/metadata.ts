@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
+import { LOCALE_META, toLocale, type Locale } from "@/i18n/locale-meta";
+import { routing } from "@/i18n/routing";
 
-export const SUPPORTED_LOCALES = ["en", "ar"] as const;
+/** The routing config is the one locale list; these names stay for existing callers. */
+export const SUPPORTED_LOCALES = routing.locales;
 
-export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+export type SupportedLocale = Locale;
 
 const DEFAULT_SITE_URL = "https://www.altruvex.com";
 
@@ -32,25 +35,23 @@ type LocalizedSeoEntry = {
   title: string;
 };
 
-type PageMetadataEntry = {
-  ar: LocalizedSeoEntry;
-  en: LocalizedSeoEntry;
+type PageMetadataEntry = Record<SupportedLocale, LocalizedSeoEntry> & {
   path: string;
   robots?: Metadata["robots"];
 };
 
 export const SITE_CONFIG = {
-  alternateNames: ["Altruvex Web Engineering", "Altruvex Cairo"],
-  defaultLocale: "en" as SupportedLocale,
+  alternateNames: ["Altruvex Web Engineering"],
+  defaultLocale: routing.defaultLocale as SupportedLocale,
   description: {
-    ar: "Altruvex هي شركة هندسة ويب مخصصة تبني أنظمة Next.js ثنائية اللغة للفرق التي تحتاج أداءً حقيقياً ووضوحاً تقنياً وتجربة عربية/إنجليزية متكافئة.",
-    en: "Altruvex is a custom web engineering company building bilingual Next.js systems for teams that need technical clarity, production performance, and Multi-Lingual execution.",
+    ar: "Altruvex استوديو هندسة ويب يصمم ويبني مواقع وتطبيقات ويب مخصصة باستخدام Next.js، وتنتقل ملكية الكود المصدري كاملًا إلى العميل عند الدفعة الأخيرة.",
+    en: "Altruvex is a web engineering studio that designs and builds custom websites and web apps with Next.js. The client owns the full source code once the final payment is made.",
   },
   email: "hello@altruvex.com",
   founder: {
     description: {
-      ar: "المؤسس والمهندس الرئيسي في Altruvex، ويقود بناء أنظمة الويب المخصصة وواجهات العربية والإنجليزية.",
-      en: "Founder and lead engineer at Altruvex, focused on custom web systems and Multi-Lingual product delivery.",
+      ar: "المؤسس والمهندس الرئيسي في Altruvex، ويقود بناء أنظمة الويب المخصصة وواجهات المواقع.",
+      en: "Founder and lead engineer at Altruvex, focused on custom web systems and product delivery.",
     },
     jobTitle: {
       ar: "المؤسس والمهندس الرئيسي",
@@ -71,7 +72,7 @@ export const SITE_CONFIG = {
   locales: SUPPORTED_LOCALES,
   name: "Altruvex",
   phone: "+20 102 312 5493",
-  slogan: "Precision web engineering in Cairo",
+  slogan: "Precision web engineering",
   social: {
     facebook: "https://www.facebook.com/profile.php?id=61580710300593",
     github: "https://github.com/altruvex/www",
@@ -92,35 +93,22 @@ const METADATA_DEFAULTS = {
       "Altruvex",
       "ألتروفيكس",
       "altruvex.com",
-      "علي عبد الهادي",
-      "القاهرة",
-      "مصر",
-      "شركة هندسة ويب في القاهرة",
     ],
     en: [
       "Altruvex",
-      "Altruvex Cairo",
       "altruvex.com",
-      "Ali Abdelhadi",
-      "Cairo",
-      "Egypt",
-      "Cairo web engineering company",
     ],
   },
   keywords: {
     ar: [
-      "تطوير ويب مخصص",
-      "تصميم مواقع ويب مخصصة",
-      "وكالة Next.js",
-      "أنظمة ويب دقيقة",
-      "مواقع ثنائية اللغة",
+      "تصميم مواقع",
+      "تطوير مواقع",
+      "برمجة مواقع",
     ],
     en: [
       "custom web development",
-      "custom web design",
-      "Next.js development agency",
-      "custom web development",
-      "bilingual web systems",  
+      "custom website design",
+      "Next.js development",
     ],
   },
   robots: {
@@ -140,28 +128,25 @@ const METADATA_DEFAULTS = {
 export const PAGE_METADATA = {
   approach: {
     ar: {
-      breadcrumb: "النهج",
+      breadcrumb: "منهجيتنا",
       description:
-        "تعرّف على نهج Altruvex في تطوير مواقع ويب مخصصة وتطوير دقيق والمعمارية ثنائية اللغة والأنظمة التي تبقى قابلة للصيانة مع النمو.",
+        "ترتيب القرارات التقنية: البيانات ثم البنية ثم الميزات ثم الصفحة، وما تستلمه عند التسليم في كل طبقة.",
       keywords: [
-        "نهج تطوير مواقع ويب مخصصة",
+        "منهجية تطوير المواقع",
         "معمارية المواقع متعددة اللغات",
-        "أنظمة مواقع ويب مخصصة دقيقة",
-        "بناء مواقع قابلة للتوسع",
+        "تخطيط موقع قبل التصميم",
       ],
-      title: "نهج أنظمة مواقع ويب مخصصة دقيقة",
+      title: "منهجيتنا: البيانات أولًا والصفحة أخيرًا",
     },
     en: {
       breadcrumb: "Approach",
       description:
-        "Understand Altruvex's approach to technical web engineering, bilingual architecture, and systems that stay maintainable under growth.",
+        "The order technical decisions are made in (data, architecture, features, then the page) and what you receive at handover for each.",
       keywords: [
-        "precision web systems",
-        "technical web engineering approach",
-        "bilingual web architecture",
-        "scalable web systems",
+        "requirements-first web development",
+        "website architecture before design",
       ],
-      title: "Precision Web Systems Approach",
+      title: "Our Approach: Data First, Page Last",
     },
     path: "/approach",
   },
@@ -169,26 +154,23 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "من نحن",
       description:
-        "تعرّف على Altruvex والمؤسس الذي يقود تطوير مواقع ويب مخصصة وبناء أنظمة Next.js ثنائية اللغة من القاهرة إلى مصر والمنطقة.",
+        "تصمم Altruvex وتبني مواقع وتطبيقات ويب مخصصة، بأسعار منشورة ودفعات على مراحل، وملكية الكود لك عند الدفعة الأخيرة.",
       keywords: [
         "من هي ألتروفيكس",
         "علي عبد الهادي",
-        "تطوير مواقع ويب مخصصة من القاهرة",
-        "وكالة Next.js يقودها المؤسس",
+        "من نحن",
       ],
-      title: "من نحن | شركة تطوير مواقع ويب مخصصة للانظمة المعقده ومتعدده اللغات",
+      title: "من نحن | Altruvex لتصميم وبرمجة المواقع",
     },
     en: {
       breadcrumb: "About",
       description:
-        "Meet Altruvex and the founder leading precision web engineering, bilingual Next.js systems, and founder-led delivery from Cairo.",
+        "Altruvex designs and builds custom websites and web apps: published price ranges, milestone payments, code you own at final payment.",
       keywords: [
         "about altruvex",
         "ali abdelhadi",
-        "founder-led web engineering",
-        "next.js agency cairo",
       ],
-      title: "About Altruvex | Founder-Led Web Engineering",
+      title: "About Altruvex | Custom Web Design & Development",
     },
     path: "/about",
   },
@@ -196,26 +178,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "تواصل معنا",
       description:
-        "ابدأ محادثة مباشرة مع Altruvex حول تطوير ويب مخصص أو تدقيق تقني أو تسليم Next.js من القاهرة إلى مصر والمنطقة.",
+        "صف مشروعك في بضع جمل: ما تحتاج إلى بنائه أو إصلاحه أو إعادة بنائه. نردّ عليك باتصال أو عبر واتساب، ولا تحتاج إلى وثيقة متطلبات جاهزة.",
       keywords: [
-        "تواصل مع وكالة تطوير ويب",
-        "استشارة Next.js",
-        "فريق تطوير مواقع ويب مخصصة القاهرة",
-        "مكالمة تقنية",
+        "طلب تصميم موقع",
+        "ابدأ مشروع موقع",
+        "تواصل مع شركة تطوير مواقع",
+        "تواصل مع شركة تصميم مواقع",
       ],
-      title: "تحدث مع فريق تطوير مواقع ويب مخصصة في القاهرة",
+      title: "تواصل مع شركة تصميم مواقع | Altruvex",
     },
     en: {
       breadcrumb: "Contact",
       description:
-        "Talk to Altruvex about custom web development, technical audits, or Next.js delivery. Start with a founder-led conversation from Cairo.",
+        "Describe the website or web app you need built, fixed or rebuilt. We reply by call or WhatsApp. You do not need a finished brief.",
       keywords: [
-        "contact next.js agency",
-        "custom web development cairo",
-        "technical web engineering team",
-        "book a technical call",
+        "start a website project",
+        "hire a web development studio",
+        "contact web design agency",
+        "website project inquiry",
       ],
-      title: "Talk to a Cairo Web Engineering Team",
+      title: "Contact a Web Design Agency | Altruvex",
     },
     path: "/contact",
   },
@@ -223,26 +205,25 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "تقدير المشروع",
       description:
-        "أجب عن بضعة أسئلة عن مشروعك لتحصل على مدى تقريبي للسعر والمدة. التقدير استرشادي، ويثبّت عرض السعر الرقم بعد مراجعة النطاق.",
+        "أجب عن خمسة أسئلة لترى نطاقاً سعرياً ومدة تسليم لموقعك أو تطبيق الويب، من أسعارنا المنشورة. دون مكالمة ودون بيانات تواصل.",
       keywords: [
-        "تقدير تكلفة تطوير موقع",
-        "حاسبة تكلفة موقع مخصص",
-        "تقدير مشروع Next.js",
-        "مدة تطوير موقع",
+        "حاسبة تكلفة موقع",
+        "تقدير تكلفة موقع",
+        "مدة تصميم موقع",
       ],
-      title: "قدّر مشروعك: مدى السعر والمدة",
+      title: "حاسبة تكلفة موقع: احسب السعر والمدة",
     },
     en: {
       breadcrumb: "Project Estimator",
       description:
-        "Answer a few questions about your project to see an indicative price range and timeline. The estimate is not a quotation; a proposal sets the figure after scope review.",
+        "Answer five questions to see a price range and delivery weeks for your website or web app, from our published prices. No call or contact details needed.",
       keywords: [
-        "web project estimator",
-        "custom web project estimate",
-        "website cost estimate",
-        "portal build estimate",
+        "website cost calculator",
+        "website cost estimator",
+        "web app cost estimate",
+        "website timeline estimate",
       ],
-      title: "Project Estimator: Custom Web Price Range",
+      title: "Website Cost Calculator: Price Range & Timeline",
     },
     path: "/transparency",
   },
@@ -250,56 +231,49 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "الرئيسية",
       description:
-        "تطوير ويب مخصص وتطوير دقيق Next.js لفرق مصر والمنطقة. نبني أنظمة ثنائية اللغة عالية الأداء يقودها المؤسس من القاهرة.",
+        "تصميم وبرمجة مواقع وتطبيقات ويب مخصصة. اعرف النطاق السعري أولًا، والكود ملكك عند الدفعة الأخيرة.",
       keywords: [
-        "تطوير ويب مخصص القاهرة",
-        "تطوير مواقع ويب مخصصة وتطوير دقيق",
-        "وكالة Next.js مصر",
-        "أنظمة مواقع ويب مخصصة متعددة اللغات",
+        "شركة تصميم وبرمجة مواقع",
+        "تصميم مواقع مخصصة",
+        "تكلفة تصميم موقع",
       ],
-      title: "تطوير مواقع ويب مخصصة وتطوير دقيق",
+      title: "تصميم وبرمجة مواقع مخصصة",
     },
     en: {
       breadcrumb: "Home",
       description:
-        "Altruvex is a Cairo web engineering company for custom web development and Next.js systems. Build bilingual, high-performance websites with a founder-led team.",
+        "Website design and development. See your price range before any call; the code is yours at final payment.",
       keywords: [
         "altruvex",
-        "altruvex cairo",
-        "altruvex web engineering",
-        "precision web development cairo",
-        "custom web development cairo",
-        "next.js development agency",
-        "technical web engineering",
+        "custom website development",
+        "website cost",
       ],
-      title: "Altruvex: Precision Web Engineering in Cairo",
+      title: "Custom Websites & Web Apps",
     },
     path: "/",
   },
   howWeWork: {
     ar: {
-      breadcrumb: "كيف نعمل",
+      breadcrumb: "قواعد العمل",
       description:
-        "تعرّف كيف تتعامل Altruvex مع التعاون والنطاق والتواصل والملكية في مشاريع تطوير مواقع ويب مخصصة وتطوير دقيق الجادة من أول خطوة حتى التسليم.",
+        "مع من تتحدث، وما نحتاجه منك، وتعديلات تُتفق كتابيًا، ومراجعة على بيئة الاختبار قبل الإطلاق، وملكية الكود والحسابات عند الدفعة الأخيرة.",
       keywords: [
-        "كيف تعمل وكالة ويب",
-        "ملكية التنفيذ التقني",
-        "عملية تطوير مواقع مخصصة",
-        "تعاون تطوير مواقع ويب مخصصة",
+        "طريقة العمل مع شركة تطوير مواقع",
+        "التواصل أثناء المشروع",
+        "شروط مشروع موقع",
       ],
-      title: "كيف تسلّم Altruvex الأعمال التقنية",
+      title: "كيف نعمل: التواصل والتعديلات والملكية",
     },
     en: {
       breadcrumb: "How We Work",
       description:
-        "Learn how Altruvex handles collaboration, scope, communication, and ownership on serious web engineering engagements.",
+        "Who you talk to, what we need from you, changes agreed in writing, staging review before launch, and ownership of the code and accounts at final payment.",
       keywords: [
-        "how a next.js agency works",
-        "technical delivery model",
-        "web engineering collaboration",
-        "founder-led execution",
+        "working with a web development studio",
+        "web project communication",
+        "written project scope",
       ],
-      title: "How Altruvex Delivers Technical Work",
+      title: "How We Work: Communication, Changes, Ownership",
     },
     path: "/how-we-work",
   },
@@ -307,16 +281,16 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "دون اتصال",
       description:
-        "هذه الصفحة مخصصة لحالة انقطاع الاتصال ولا تستهدف الظهور في نتائج البحث.",
+        "لا يوجد اتصال الآن. قد تُفتح الصفحات التي زرتها خلال اليوم الأخير من هذا الجهاز.",
       keywords: ["صفحة دون اتصال"],
-      title: "دون اتصال",
+      title: "أنت غير متصل",
     },
     en: {
       breadcrumb: "Offline",
       description:
-        "This offline state page exists for connection loss and is not intended to rank in search results.",
+        "No connection right now. Pages you opened in the last day may still load from this device.",
       keywords: ["offline page"],
-      title: "Offline",
+      title: "You are offline",
     },
     path: "/offline",
     robots: {
@@ -332,26 +306,25 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "التسعير",
       description:
-        "كيف تسعّر Altruvex تطوير الويب المخصص: من المتطلبات لا من الباقات. ما الذي يحدد التكلفة، وكيف تُدفع، وما الذي تعنيه الأرقام المنشورة.",
+        "كم تكلفة تصميم موقع أو تطبيق ويب مخصص: نطاقات أسعار منشورة، وما يحرّك السعر، وما يشمله المشروع وما يُحاسَب عليه منفصلاً، وجدول الدفعات الثلاث.",
       keywords: [
-        "تسعير تطوير ويب مخصص",
-        "تكلفة تطوير موقع مخصص",
-        "كيف تُسعَّر مشاريع الويب",
-        "جدول دفع مشروع ويب",
+        "تكلفة تصميم موقع",
+        "أسعار تصميم المواقع",
+        "تكلفة برمجة موقع",
+        "جدول دفعات مشروع موقع",
       ],
-      title: "كيف نسعّر تطوير الويب المخصص",
+      title: "تكلفة تصميم موقع وأسعار تطوير المواقع",
     },
     en: {
       breadcrumb: "Pricing",
       description:
-        "How Altruvex prices custom web development: from requirements, not packages. What moves the cost, how payment is scheduled, and what the published figures mean.",
+        "What a custom website or web app costs: published ranges, what moves the price, what is included, what is billed separately, and the payment schedule.",
       keywords: [
-        "custom web development pricing",
-        "custom website cost",
-        "how web projects are priced",
-        "web project payment schedule",
+        "website development cost",
+        "custom website pricing",
+        "website payment schedule",
       ],
-      title: "How We Price Custom Web Development",
+      title: "Website Design Cost & Custom Web Pricing",
     },
     path: "/pricing",
   },
@@ -359,14 +332,14 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "سياسة الخصوصية",
       description:
-        "اطّلع على كيفية جمع Altruvex للبيانات الشخصية واستخدامها وحمايتها عند استخدام الموقع أو نماذج التواصل الخاصة بنا.",
+        "ما يجمعه موقع Altruvex ولماذا، ومن يتلقاه، ومدة الاحتفاظ به، وحقوقك وفق قانون حماية البيانات المصري واللائحة الأوروبية.",
       keywords: ["سياسة الخصوصية ألتروفيكس", "بيانات العملاء"],
       title: "سياسة الخصوصية",
     },
     en: {
       breadcrumb: "Privacy Policy",
       description:
-        "Review how Altruvex collects, uses, and protects personal data when you use the site or contact forms.",
+        "What the Altruvex site collects, why, who receives it, how long it is kept, and your rights under Egypt's PDPL and the GDPR.",
       keywords: ["altruvex privacy policy", "website privacy policy"],
       title: "Privacy Policy",
     },
@@ -374,163 +347,157 @@ export const PAGE_METADATA = {
   },
   process: {
     ar: {
-      breadcrumb: "العملية",
+      breadcrumb: "مراحل المشروع",
       description:
-        "شاهد كيف تنتقل Altruvex من الاكتشاف إلى الإطلاق عبر قرارات تقنية واضحة وضبط جودة ثنائي اللغة وتسليم مواقع ويب مخصصة جاهز للإنتاج.",
+        "الاستكشاف، والتصميم الأولي، والتصميم، والتطوير، والإطلاق: ما تنتجه كل مرحلة، وما تقدّمه، واعتمادك قبل بدء التالية.",
       keywords: [
-        "عملية تطوير ويب",
-        "تسليم مشاريع Next.js",
-        "ضبط جودة ثنائي اللغة",
-        "إطلاق مواقع مخصصة",
+        "مراحل تطوير الموقع",
+        "خطوات تصميم موقع",
+        "مراحل مشروع موقع",
       ],
-      title: "عملية تطوير مواقع ويب مخصصة",
+      title: "مراحل تصميم وتطوير المواقع: خمس مراحل",
     },
     en: {
       breadcrumb: "Process",
       description:
-        "See how Altruvex moves from discovery to launch with clear technical decisions, bilingual QA, and production-ready delivery.",
+        "Discovery, wireframe, design, development and launch: what each phase produces, what you bring, and your sign-off before the next starts.",
       keywords: [
-        "web delivery process",
-        "next.js project delivery",
-        "bilingual qa process",
-        "custom website launch process",
+        "website development process",
+        "web design process phases",
+        "website project phases",
       ],
-      title: "Web Delivery Process",
+      title: "Website Development Process: 5 Phases",
     },
     path: "/process",
   },
   schedule: {
     ar: {
-      breadcrumb: "احجز موعداً",
+      breadcrumb: "احجز استشارة",
       description:
-        "احجز مكالمة اكتشاف تقنية مع Altruvex لاختبار النطاق وتوضيح المخاطر وتحديد مسار البناء الصحيح قبل الالتزام بالميزانية.",
+        "احجز مكالمة الاستشارة الأولية لمشروعك: 30 دقيقة دون مقابل، منفصلة عن المراجعة التقنية المدفوعة. نؤكد الموعد باتصال أو عبر واتساب، ثم نقترح خطوة تالية واحدة.",
       keywords: [
-        "حجز مكالمة تقنية",
-        "اكتشاف مشروع مواقع ويب مخصصة",
-        "استشارة مواقع ويب مخصصة",
-        "مكالمة مع وكالة تطوير مواقع ويب مخصصة",
+        "حجز استشارة تقنية",
+        "استشارة تطوير موقع",
+        "استشارة تصميم موقع",
+        "مكالمة تقنية",
       ],
-      title: "احجز مكالمة اكتشاف تقنية",
+      title: "احجز استشارة لمشروعك مدتها 30 دقيقة",
     },
     en: {
       breadcrumb: "Schedule",
       description:
-        "Book a technical discovery call with Altruvex and pressure-test your scope before you commit budget, team time, or architecture.",
+        "Book the initial project consultation call: 30 minutes, no charge, separate from the paid technical audit. We confirm the time by call or WhatsApp, then recommend one next step.",
       keywords: [
-        "schedule technical discovery call",
-        "web engineering consultation",
-        "next.js discovery call",
-        "technical project scoping",
+        "book a technical consultation",
+        "website project consultation",
+        "book a website consultation",
+        "technical scoping call",
       ],
-      title: "Schedule a Technical Discovery Call",
+      title: "Schedule a 30-Minute Project Consultation",
     },
     path: "/schedule",
   },
   serviceConsulting: {
     ar: {
-      breadcrumb: "الاستشارات التقنية",
+      breadcrumb: "المراجعة التقنية",
       description:
-        "احصل على تدقيق تقني ومراجعة معمارية وخارطة طريق واضحة قبل إعادة البناء أو النقل أو توسيع نظام ويب شديد الحساسية.",
+        "مراجعة تقنية بمبلغ ثابت لموقعك أو تطبيقك: الأداء والبحث والأمان والمعمار، مع نتائج مرتبة وخارطة طريق. يُخصم المبلغ من سعر البناء.",
       keywords: [
-        "استشارات تطوير مواقع ويب",
-        "تدقيق تقني Next.js",
-        "مراجعة معمارية مواقع",
-        "خارطة طريق تقنية",
+        "مراجعة تقنية للموقع",
+        "استشارات تطوير المواقع",
+        "مراجعة معمارية موقع",
+        "فحص أداء موقع",
       ],
-      title: "الاستشارات التقنية ومراجعات المواقع",
+      title: "مراجعة تقنية للموقع خلال 5 أيام عمل",
     },
     en: {
-      breadcrumb: "Technical Consulting",
+      breadcrumb: "Technical Audit",
       description:
-        "Get a technical audit, architecture review, and clear build roadmap before you rebuild, migrate, or scale a revenue-critical web system.",
+        "A fixed-fee technical audit of your site or app: performance, search, security and architecture, with ranked findings and a roadmap. Credited to a build.",
       keywords: [
-        "technical web engineering consulting",
+        "technical website audit",
         "next.js architecture review",
         "web platform audit",
-        "technical audit cairo",
       ],
-      title: "Technical Consulting & Web Audits",
+      title: "Website Technical Audit in 5 Business Days",
     },
     path: "/services/consulting",
   },
   serviceDevelopment: {
     ar: {
-      breadcrumb: "التطوير المخصص",
+      breadcrumb: "تطوير المواقع وتطبيقات الويب",
       description:
-        "مواقع وبوابات ولوحات تحكم ومنتجات ويب تُبنى من متطلباتك بـ Next.js، ثنائية اللغة، وتُسلَّم بالكود الكامل. النطاق المنشور يبدأ من رقم معلن ويُثبَّت في عرض السعر.",
+        "مواقع وبوابات عملاء ولوحات تحكم وتكاملات تُبنى بـ Next.js. الكود والمخطط والتوثيق ملكك عند الدفعة الأخيرة.",
       keywords: [
-        "وكالة تطوير Next.js",
-        "بناء بوابات أعمال",
-        "تطوير منتجات ويب مخصصة",
-        "أنظمة مواقع ويب مخصصة ثنائية اللغة",
+        "برمجة مواقع",
+        "تطوير مواقع مخصصة",
+        "تطوير تطبيقات ويب",
+        "شركة برمجة Next.js",
       ],
-      title: "التطوير المخصص للمواقع والمنتجات",
+      title: "برمجة وتطوير مواقع وتطبيقات ويب مخصصة",
     },
     en: {
-      breadcrumb: "Custom Development",
+      breadcrumb: "Website & Web App Development",
       description:
-        "Websites, portals, dashboards, and product builds made from your requirements in Next.js, bilingual, handed over with full source code. Ranges start from a stated floor.",
+        "Websites, client portals, dashboards and integrations built in Next.js. Source, schema and docs are yours at the final payment.",
       keywords: [
-        "next.js development agency",
-        "custom portal development",
-        "technical web engineering agency",
-        "bilingual product development",
+        "custom website development",
+        "web application development",
+        "next.js development company",
       ],
-      title: "Custom Development for Websites & Products",
+      title: "Custom Website & Web App Development (Next.js)",
     },
     path: "/services/development",
   },
   serviceInterfaceDesign: {
     ar: {
-      breadcrumb: "تصميم الواجهات",
+      breadcrumb: "تصميم المواقع",
       description:
-        "تصميم واجهات وأنظمة مكونات وتجارب عربية وإنجليزية، يُسلَّم شاشات ونظام تصميم جاهزاً للتنفيذ. يُسعَّر لكل مشروع حسب الشاشات ومسارات الاستخدام.",
+        "تصميم المواقع وتطبيقات الويب: البنية أولاً، ثم شاشات متجاوبة ونظام تصميم يبني عليه فريقك. يُسعَّر لكل مشروع.",
       keywords: [
-        "تصميم واجهات مخصصة",
-        "تصميم أنظمة مكونات",
-        "واجهة استخدام ثنائية اللغة",
-        "تصميم UI قابل للتنفيذ",
+        "تصميم واجهات المواقع",
+        "تصميم UI/UX",
+        "نظام تصميم",
       ],
-      title: "تصميم الواجهات وأنظمة المكونات",
+      title: "تصميم المواقع وتطبيقات الويب",
     },
     en: {
-      breadcrumb: "Interface Design",
+      breadcrumb: "Website Design",
       description:
-        "Interface design, component systems, and bilingual experiences, delivered as screens and a design system ready to build. Scoped per project.",
+        "Website and web app design: structure first, then responsive screens and a design system your team can extend.",
       keywords: [
-        "custom ui engineering",
-        "interface design cairo",
-        "design systems agency",
-        "bilingual interface design",
+        "website ui design",
+        "design system",
+        "rtl interface design",
       ],
-      title: "Interface Design & Component Systems",
+      title: "Website and Web App Design",
     },
     path: "/services/interface-design",
   },
   serviceMaintenance: {
     ar: {
-      breadcrumb: "الصيانة والدعم",
+      breadcrumb: "صيانة المواقع",
       description:
-        "حافظ على أنظمة الويب المخصصة سريعة وآمنة وجاهزة للإصدارات عبر صيانة مستمرة ومراقبة ودعم منتج تكراري من Altruvex.",
+        "باقات صيانة للمواقع المنشورة، سواء بنيناها أم لا: مراقبة ونسخ احتياطي وتحديثات أمنية وطلبات تعديل شهرية، بفوترة شهرية أو سنوية.",
       keywords: [
-        "صيانة مواقع مخصصة",
-        "دعم Next.js مستمر",
-        "مراقبة أداء الأنظمة",
-        "صيانة بوابات الأعمال",
+        "صيانة المواقع",
+        "دعم فني للمواقع",
+        "باقة صيانة موقع",
+        "صيانة موقع Next.js",
       ],
-      title: "الصيانة والدعم للمواقع المخصصة",
+      title: "باقات صيانة المواقع والدعم الفني",
     },
     en: {
-      breadcrumb: "Maintenance & Support",
+      breadcrumb: "Website Maintenance",
       description:
-        "Keep custom web systems fast, secure, and release-ready with ongoing maintenance, monitoring, and iterative product support from Altruvex.",
+        "Maintenance plans for live websites, built by us or not: monitoring, backups, security updates and monthly edit requests, billed monthly or annually.",
       keywords: [
-        "website maintenance for custom systems",
-        "next.js maintenance retainer",
-        "ongoing web engineering support",
-        "product maintenance partner",
+        "website maintenance plans",
+        "website support retainer",
+        "next.js maintenance",
+        "custom website maintenance",
       ],
-      title: "Maintenance & Support for Custom Websites",
+      title: "Website Maintenance & Support Plans",
     },
     path: "/services/maintenance",
   },
@@ -538,26 +505,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "الخدمات",
       description:
-        "استكشف تطوير مواقع ويب مخصصة والاستشارات التقنية وأنظمة الواجهات والصيانة المستمرة للمنتجات ثنائية اللغة والأنظمة الموجهة للأعمال.",
+        "تصميم المواقع، وتطوير المواقع وتطبيقات الويب بـ Next.js، والمراجعة التقنية، وباقات الصيانة للمواقع. قارن نطاق العمل والخطوة التالية.",
       keywords: [
-        "خدمات تطوير مواقع ويب مخصصة",
-        "خدمات Next.js",
-        "استشارات تقنية لمواقع ويب مخصصة",
-        "صيانة أنظمة ويب",
+        "خدمات تصميم المواقع",
+        "خدمات تطوير المواقع",
+        "خدمات برمجة مواقع",
+        "صيانة المواقع",
       ],
-      title: "خدمات تطوير مواقع ويب مخصصة",
+      title: "خدمات تصميم وتطوير وصيانة المواقع",
     },
     en: {
       breadcrumb: "Services",
       description:
-        "Explore custom web development, technical consulting, interface systems, and ongoing maintenance for bilingual B2B products and websites.",
+        "Website design, Next.js website and web app development, technical audits and maintenance plans for websites. Compare scope and next steps.",
       keywords: [
-        "custom web development services",
-        "technical web engineering services",
-        "next.js services",
-        "precision web systems",
+        "web design services",
+        "web development services",
+        "website maintenance services",
+        "technical audit services",
       ],
-      title: "Custom Web Development Services",
+      title: "Web Design, Development & Maintenance Services",
     },
     path: "/services",
   },
@@ -565,26 +532,26 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "المعايير",
       description:
-        "راجع معايير الأداء وإمكانية الوصول والأمان والتصميم التي تطبقها Altruvex على كل نظام ويب مخصص.",
+        "الأهداف التي تبني Altruvex وفقها: Lighthouse وLCP وCLS والتباين وترويسات الأمان والثغرات.",
       keywords: [
-        "معايير تطوير مواقع ويب مخصصة",
-        "أداء المواقع",
+        "معايير جودة المواقع",
+        "سرعة الموقع",
         "إمكانية الوصول",
-        "أمان التطبيقات",
+        "أمان المواقع",
       ],
-      title: "معايير تطوير مواقع ويب مخصصة",
+      title: "معايير الجودة: السرعة والإتاحة والأمان",
     },
     en: {
       breadcrumb: "Standards",
       description:
-        "Review the performance, accessibility, security, and engineering standards Altruvex applies to every custom web system.",
+        "The targets Altruvex builds to: Lighthouse, LCP, CLS, contrast, ARIA, security headers, CVEs and lint.",
       keywords: [
-        "web engineering standards",
+        "website quality standards",
         "website performance standards",
-        "accessibility standards",
+        "web accessibility standards",
         "secure web development",
       ],
-      title: "Web Engineering Standards",
+      title: "Quality Standards: Speed, Accessibility, Security",
     },
     path: "/standards",
   },
@@ -592,14 +559,14 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "شروط الخدمة",
       description:
-        "راجع الشروط التي تحكم استخدامك لموقع Altruvex وخدماته ونماذج التواصل والمحتوى المنشور عليه.",
+        "شروط البناء المخصص مع Altruvex: نطاق وتغييرات مكتوبة، وثلاث دفعات، وملكية عند الدفعة النهائية، والضمان، وإنهاء المشروع.",
       keywords: ["شروط خدمة ألتروفيكس", "الشروط القانونية للموقع"],
       title: "شروط الخدمة",
     },
     en: {
       breadcrumb: "Terms of Service",
       description:
-        "Review the terms that govern your use of the Altruvex website, services, contact forms, and published content.",
+        "Terms for a custom build with Altruvex: written scope and changes, three payments, ownership at final payment, warranty and ending a project.",
       keywords: ["altruvex terms of service", "website terms and conditions"],
       title: "Terms of Service",
     },
@@ -609,26 +576,22 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "دراسات الحالة",
       description:
-        "راجع دراسات حالة Altruvex في التجارة الإلكترونية والمكوّنات التفاعلية والمنصات الثنائية اللغة مع الأرقام والقرارات التقنية والنتائج.",
+        "مواقع ومتاجر إلكترونية تعمل الآن: المشكلة والقرارات وما بنيناه والتقنيات. افتح كل مشروع وافحصه بنفسك.",
       keywords: [
-        "دراسات حالة تطوير مواقع ويب",
-        "مشاريع Next.js",
-        "دراسات حالة مواقع ثنائية اللغة",
-        "أعمال Altruvex",
+        "أعمال تصميم مواقع",
+        "دراسات حالة تطوير مواقع",
       ],
-      title: "دراسات حالة تطوير مواقع ويب مخصصة",
+      title: "أعمالنا: نماذج تصميم مواقع ومتاجر إلكترونية",
     },
     en: {
       breadcrumb: "Case Studies",
       description:
-        "Review Altruvex case studies across ecommerce, configurators, and bilingual B2B platforms. See metrics, architecture, and outcomes.",
+        "Live websites and online stores: the problem, the decisions, what was built and the stack. Open each one and check it yourself.",
       keywords: [
-        "web engineering case studies",
-        "next.js case studies",
-        "bilingual website case studies",
-        "custom web development portfolio",
+        "web development portfolio",
+        "website case studies",
       ],
-      title: "Web Engineering Case Studies",
+      title: "Web Design Portfolio: Websites & Online Stores",
     },
     path: "/work",
   },
@@ -636,14 +599,14 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "دراسة حالة",
       description:
-        "اقرأ دراسة حالة مفصلة من Altruvex تشمل السياق والقرارات التقنية والبنية والنتائج التجارية.",
-      keywords: ["دراسة حالة ويب", "نتائج مشاريع Next.js", "تصميم مواقع ويب مخصصة"],
+        "اقرأ دراسة حالة من Altruvex: العميل، والمشكلة، والقرارات وأسبابها، وما بنيناه، والموقع المباشر.",
+      keywords: ["دراسة حالة ويب", "متجر إلكتروني Next.js", "تصميم مواقع ويب مخصصة"],
       title: "دراسة حالة",
     },
     en: {
       breadcrumb: "Case Study",
       description:
-        "Read a detailed Altruvex case study covering the context, architecture, delivery choices, and commercial outcomes.",
+        "Read an Altruvex case study: the client, the problem, the decisions and why, what was built and the live site.",
       keywords: [
         "web engineering case study",
         "next.js delivery case study",
@@ -657,26 +620,24 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "الكتابة",
       description:
-        "اقرأ مقالات Altruvex حول تطوير مواقع ويب مخصصة والمعمارية متعددة اللغات والأداء وتسليم المنتجات المخصصة.",
+        "أدلة عملية لأصحاب الشركات وفرقها: كيف تختار شريك تطوير المواقع، وكيف تبني موقعاً سريعاً يصمد مع الوقت. مصادر موثقة ودون أسعار.",
       keywords: [
-        "مقالات تطوير مواقع ويب مخصصة",
+        "مقالات تطوير المواقع",
         "معمارية متعددة اللغات",
-        "أداء الويب",
-        "محتوى Next.js",
+        "الدين التقني",
       ],
-      title: "رؤى تطوير مواقع ويب مخصصة",
+      title: "مقالات: أدلة لاختيار شريك التطوير وبناء موقعك",
     },
     en: {
       breadcrumb: "Writing",
       description:
-        "Read Altruvex articles on technical web engineering, multilingual architecture, performance, and custom product delivery.",
+        "Practical guides for founders and teams on choosing a web partner and building fast websites that hold up. Sources cited, no prices quoted.",
       keywords: [
-        "web engineering insights",
-        "technical web engineering articles",
-        "multilingual architecture",
-        "next.js performance writing",
+        "web development articles",
+        "technical debt",
+        "evaluating web developers",
       ],
-      title: "Web Engineering Insights",
+      title: "Writing: Guides to Building & Choosing a Website",
     },
     path: "/writing",
   },
@@ -684,27 +645,25 @@ export const PAGE_METADATA = {
     ar: {
       breadcrumb: "الأسئلة الشائعة",
       description:
-        "أجوبة على الأسئلة الشائعة حول بناء أنظمة مخصصة ودفع المشاريع وكيفية عمل Altruvex. تعرف على كيفية ملكيتك الكاملة للكود وعدم قفل البائع.",
+        "إجابات مباشرة عن السعر وجدول الدفع والمدة والتعديلات وملكية الدومين والاستضافة والإلغاء.",
       keywords: [
-        "الأسئلة الشائعة عن تطوير الويب",
-        "أسئلة شائعة عن Next.js",
-        "أسعار تطوير مواقع مخصصة",
-        "دعم ما بعد الإطلاق",
+        "أسئلة شائعة تطوير مواقع",
+        "ملكية الكود",
+        "مدة تطوير موقع",
       ],
-      title: "الأسئلة الشائعة | Altruvex",
+      title: "أسئلة شائعة: التكلفة والمدة والملكية",
     },
     en: {
       breadcrumb: "FAQ",
       description:
-        "Answers to common questions about building custom tech stacks, project pricing, timelines, and how Altruvex works. Learn about code ownership, maintenance plans, and Egyptian payment integrations.",
+        "Straight answers on price, payment schedule, timeline, revisions, domain and hosting ownership, cancellation.",
       keywords: [
-        "faq web development",
-        "custom build timeline",
-        "web development pricing",
-        "maintenance retainer",
+        "custom website faq",
+        "website development timeline",
         "code ownership",
+        "website maintenance plans",
       ],
-      title: "FAQ | Altruvex - Custom Web Systems",
+      title: "Web Design FAQ: Cost, Timeline, Ownership",
     },
     path: "/faq",
   },
@@ -724,7 +683,7 @@ type MetadataOverrides = {
 };
 
 export function normalizeLocale(locale: string): SupportedLocale {
-  return locale === "ar" ? "ar" : "en";
+  return toLocale(locale);
 }
 
 function normalizePath(pathSuffix: string): string {
@@ -815,7 +774,7 @@ export function generateRouteMetadata(
         width: 1200,
       },
     ],
-    locale: loc === "ar" ? "ar_EG" : "en_US",
+    locale: LOCALE_META[loc].og,
     siteName: SITE_CONFIG.name,
     ...(openGraphType === "article"
       ? {
@@ -847,13 +806,18 @@ export function generateRouteMetadata(
         ],
       },
     },
-    authors: [{ name: SITE_CONFIG.founder.name }],
+    authors: [
+      {
+        name:
+          openGraphType === "article" ? SITE_CONFIG.founder.name : SITE_CONFIG.name,
+      },
+    ],
     category: "technology",
-    classification: "Custom web development, Next.js engineering, bilingual web systems",
+    classification: "Custom web development, Next.js engineering",
     creator: SITE_CONFIG.name,
     description,
     keywords,
-    metadataBase: new URL(SITE_CONFIG.url ?? "https://altruvex.com"),
+    metadataBase: new URL(SITE_CONFIG.url),
     verification: {
       google: process.env.GOOGLE_SITE_VERIFICATION,
       other: process.env.BING_SITE_VERIFICATION
@@ -866,8 +830,6 @@ export function generateRouteMetadata(
       "business:contact_data:locality": SITE_CONFIG.location.city,
       "business:contact_data:region": SITE_CONFIG.location.region,
       "og:email": SITE_CONFIG.email,
-      "profile:first_name": SITE_CONFIG.founder.name.split(" ")[0] ?? "",
-      "profile:last_name": SITE_CONFIG.founder.name.split(" ").slice(1).join(" "),
     },
     publisher: SITE_CONFIG.name,
     referrer: "strict-origin-when-cross-origin",

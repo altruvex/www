@@ -44,12 +44,25 @@ const preferredDateCore = (t: ValidationTranslator) =>
       { message: t("contact.preferred-date-within-three-months") },
     );
 
+// Required: a reply channel that survives a wrong digit in the phone number.
+const contactEmailField = (t: ValidationTranslator) =>
+  z.preprocess(
+    (val) => (typeof val === "string" ? val.trim() : val),
+    z
+      .string({ error: t("contact.email-required") })
+      .min(1, t("contact.email-required"))
+      .max(160, t("contact.email-max"))
+      .pipe(z.email(t("contact.email-invalid"))),
+  );
+
 export const createContactFormSchema = (t: ValidationTranslator) =>
   z
     .object({
       name: nameField(t),
 
       phone: contactPhoneField(t),
+
+      email: contactEmailField(t),
 
       message: z
         .string()

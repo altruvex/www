@@ -1,40 +1,43 @@
-import {
-   fillPricingTokens,
-   type Locale,
-   type ResolvedPricing,
-} from "@repo/pricing-schema";
-import { useLocale, useTranslations } from "next-intl";
-import { accentWorldClass, serviceWorld } from "@/lib/config/accent-world";
-import { cn } from "@/lib/utils/utils";
-import { FaqSectionView } from "./faq-section";
-import { plainFaqItems } from "@/lib/faq";
+"use client";
 
-type TechnicalFaq = {
-   a: string;
-   q: string;
+import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
+import { accentWorldClass, type AccentPalette } from "@/lib/config/accent-world";
+import { plainFaqItems } from "@/lib/faq";
+import { cn } from "@/lib/utils/utils";
+import { useTranslations } from "next-intl";
+import { FaqSectionView } from "./faq-section";
+
+type ServiceFaq = {
+  a: string;
+  q: string;
 };
 
-export function ConsultingFaqSection({
-   pricing,
+/*
+ * The questions block on the services pages. `namespace` points at an object
+ * with `title` and `items: { q, a }[]`; the page's FAQPage JSON-LD reads the
+ * same key (services/_shared/service-faq-schema.ts), so the two never drift.
+ */
+export function ServiceFaqSection({
+  namespace,
+  world,
 }: {
-   pricing?: ResolvedPricing;
+  namespace: string;
+  world?: AccentPalette;
 }) {
-   const t = useTranslations("serviceDetails.consulting.seo");
-   const tFaq = useTranslations("faq");
-   const locale = useLocale() as Locale;
-   const faqItems = (t.raw("faq.items") as TechnicalFaq[]).map((item) => ({
-      q: fillPricingTokens(item.q, locale, pricing),
-      a: fillPricingTokens(item.a, locale, pricing),
-   }));
-   return (
-      <FaqSectionView
-         eyebrow={tFaq("eyebrow")}
-         title={t("faq.title")}
-         items={plainFaqItems(faqItems)}
-         className={cn(
-            "bg-background",
-            accentWorldClass(serviceWorld("consulting")),
-         )}
-      />
-   );
+  const t = useTranslations(namespace);
+  const tFaq = useTranslations("faq");
+  const fill = useFillPricingTokens();
+  const faqItems = (t.raw("items") as ServiceFaq[]).map((item) => ({
+    q: fill(item.q),
+    a: fill(item.a),
+  }));
+
+  return (
+    <FaqSectionView
+      eyebrow={tFaq("eyebrow")}
+      title={t("title")}
+      items={plainFaqItems(faqItems)}
+      className={cn("bg-background", world ? accentWorldClass(world) : undefined)}
+    />
+  );
 }

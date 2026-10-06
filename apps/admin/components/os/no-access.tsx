@@ -24,7 +24,7 @@ export function NoAccess({
   return (
     <div className="plane mx-auto my-8 max-w-md space-y-4 p-6">
       <div className="flex items-center gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-muted-foreground">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-ctl border border-border-subtle bg-surface text-muted-foreground">
           <LockKeyhole className="size-4" aria-hidden />
         </span>
         <div>
@@ -44,7 +44,7 @@ export function NoAccess({
             {grantedTo.map((r) => (
               <span
                 key={r}
-                className="inline-flex items-center rounded-sm border border-border bg-surface px-1.5 py-0.5 text-foreground"
+                className="inline-flex items-center rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-foreground"
                 title={ROLE_DESCRIPTIONS[r]}
               >
                 {ROLE_LABELS[r]}

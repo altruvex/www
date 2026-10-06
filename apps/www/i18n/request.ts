@@ -27,7 +27,6 @@ const NAMESPACES = [
   "privacy",
   "problem",
   "process",
-  "quoteArtifact",
   "schedule",
   "serviceDetails",
   "services",

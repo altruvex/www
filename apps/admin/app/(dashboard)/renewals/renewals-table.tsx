@@ -157,18 +157,51 @@ function RenewButton({
   );
 }
 
-export function RenewalInspectorActions({ row, canRenew }: { row: RenewalRow; canRenew: CanRenew }) {
+function RemindDialog({ row }: { row: RenewalRow }) {
+  const router = useRouter();
+  return (
+    <ConfirmDialog
+      trigger={
+        <Button size="sm" variant="outline">
+          <Mail className="size-3.5" />
+          Send reminder
+        </Button>
+      }
+      title={`Email ${row.clientLabel}`}
+      body={<span>{row.what}{row.dueAt && ` · expires ${date(row.dueAt)}`}</span>}
+      consequence="One real email, using the standard renewal wording, recorded on the client. A reminder cannot be unsent."
+      confirmLabel="Send email"
+      tone="default"
+      onConfirm={async () => {
+        const result = await remindByEmail(row);
+        if (result.ok) router.refresh();
+        return result.ok ? { ok: true, message: "Reminder emailed." } : result;
+      }}
+    />
+  );
+}
+
+export function RenewalInspectorActions({
+  row,
+  canRenew,
+  canRemind = false,
+}: {
+  row: RenewalRow;
+  canRenew: CanRenew;
+  canRemind?: boolean;
+}) {
   const href = entityHref(row.entityType, row.id);
   return (
     <div className="flex flex-wrap gap-2">
       <RenewButton row={row} canRenew={canRenew} variant="brand" />
+      {canRemind && row.kind === "service" && <RemindDialog row={row} />}
       {href && (
         <Button size="sm" variant="outline" asChild>
           <Link href={href}>Open {row.kind === "retainer" ? "retainer" : "service"}</Link>
         </Button>
       )}
       <Button size="sm" variant="ghost" asChild>
-        <Link href={`/clients/${row.clientId}`}>Open client</Link>
+        <Link href={`/clients/${row.clientId}#${row.kind === "retainer" ? "money" : "sites"}`}>Open client</Link>
       </Button>
     </div>
   );
@@ -180,12 +213,15 @@ export function RenewalsTable({
   attentionOnly = false,
   canRenew,
   canRemind,
+  canStart = { retainer: false, service: false },
 }: {
   rows: RenewalRow[];
   clientScoped: boolean;
   attentionOnly?: boolean;
   canRenew: CanRenew;
   canRemind: boolean;
+  /** Whether this role can start a retainer / register a service — the empty state opens that form directly. */
+  canStart?: CanRenew;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -285,6 +321,8 @@ export function RenewalsTable({
   withoutAttention.delete("attention");
   const hrefWithoutAttention = withoutAttention.toString() ? `${pathname}?${withoutAttention.toString()}` : pathname;
   const scoped = clientId ? `?client=${encodeURIComponent(clientId)}` : "";
+  const scopedNew = (kind: string) =>
+    `?new=${kind}${clientId ? `&client=${encodeURIComponent(clientId)}` : ""}`;
 
   const columns: Column<RenewalRow>[] = [
     {
@@ -434,10 +472,18 @@ export function RenewalsTable({
             ) : (
               <>
                 <Button variant="outline" asChild>
-                  <Link href={`/maintenance${scoped}`}>Open maintenance</Link>
+                  {canStart.retainer ? (
+                    <Link href={`/maintenance${scopedNew("retainer")}`}>Start a retainer</Link>
+                  ) : (
+                    <Link href={`/maintenance${scoped}`}>Open maintenance</Link>
+                  )}
                 </Button>
                 <Button variant="ghost" asChild>
-                  <Link href={`/services${scoped}`}>Open services</Link>
+                  {canStart.service ? (
+                    <Link href={`/services${scopedNew("service")}`}>Register a service</Link>
+                  ) : (
+                    <Link href={`/services${scoped}`}>Open services</Link>
+                  )}
                 </Button>
               </>
             )

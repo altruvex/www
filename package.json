@@ -12,7 +12,13 @@
     "report:pricing": "bun scripts/pricing-parity-report.mjs",
     "validate": "node scripts/validate-pricing-literals.mjs && bun scripts/pricing-parity-report.mjs && bun scripts/verify-billing-cycles.ts",
     "verify:rendered": "node scripts/verify-rendered-pricing.mjs",
-    "verify:cycles": "bun scripts/verify-billing-cycles.ts"
+    "verify:cycles": "bun scripts/verify-billing-cycles.ts",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "verify:offline": "cd apps/admin && bun --no-env-file scripts/verify-security.ts && bun --no-env-file scripts/verify-lifecycle.ts && bun --no-env-file scripts/verify-services.ts && bun --no-env-file scripts/verify-change-requests.ts && bun --no-env-file scripts/verify-github-mapping.ts && bun --no-env-file scripts/verify-slack-messages.ts && bun --no-env-file scripts/verify-whatsapp-signature.ts && bun --no-env-file scripts/verify-email.ts && bun --no-env-file scripts/verify-phone.ts && cd ../../packages/ui && bun --no-env-file scripts/verify-palette.ts",
+    "check:www": "cd apps/www && node scripts/font-licenses.mjs --check && node scripts/check-line-height.mjs",
+    "quality": "bun run lint && bun run check-types && bun run validate && bun run test:coverage && bun run verify:offline && bun run check:www",
+    "quality:lighthouse": "npx -y @lhci/cli@0.15.1 autorun"
   },
   "devDependencies": {
     "@repo/pricing-schema": "workspace:*",

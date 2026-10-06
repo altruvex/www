@@ -11,6 +11,7 @@ import { EmptyInline } from "@/components/os/empty-state";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { AlertBar } from "@/components/os/error-state";
+import { AttachPicker } from "@/components/os/attach-picker";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { StatusPill, ToneBadge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
   if (denied) return denied;
   const role = await currentRole();
   const canDelete = can(role, "delete", "project");
+  const canEditProduct = can(role, "edit", "project");
   const canOpenIncident =
     can(role, "create", "incident") && roleCanOpen(role, "/incidents");
 
@@ -37,12 +39,19 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
   const build = await getBuild(id);
   if (!build) notFound();
 
-  const [logs, repo] = await Promise.all([
+  const [logs, repo, clientProjects] = await Promise.all([
     listLogs({ buildId: build.id, pageSize: 20 }),
     prisma.product.findUnique({
       where: { id: build.productId },
       select: { repositoryUrl: true },
     }),
+    canEditProduct && !build.product.project
+      ? prisma.project.findMany({
+          where: { clientId: build.product.client.id },
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, name: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const { product } = build;
@@ -137,6 +146,19 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
                       <EntityLink type="project" id={product.project.id}>
                         {product.project.name}
                       </EntityLink>
+                    ) : clientProjects.length > 0 ? (
+                      <AttachPicker
+                        label="Link a project"
+                        options={clientProjects.map((p) => ({ value: p.id, label: p.name }))}
+                        request={{
+                          url: "/api/admin/products",
+                          method: "PATCH",
+                          body: { action: "update", id: product.id, patch: {} },
+                          field: "patch.projectId",
+                        }}
+                        successMessage={`${product.name} linked to the project.`}
+                        searchPlaceholder="Search projects"
+                      />
                     ) : (
                       <span className="text-muted-foreground">Not linked</span>
                     ),
@@ -223,7 +245,7 @@ export default async function BuildPage({ params }: { params: Promise<{ id: stri
               successful one appears here once CI reports a deployment that names it.
             </EmptyInline>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border-subtle">
               {build.deployments.map((d) => (
                 <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
                   <StatusPill registry="deploymentStatus" value={d.status} variant="dot" />

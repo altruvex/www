@@ -2,13 +2,30 @@
 
 import { MagneticButton } from "@/components/magnetic-button";
 import { Container } from "@/components/shared/container";
+import { DirectionalLink } from "@/components/shared/directional-link";
+import { ArrowIcon } from "@repo/ui";
+import { Link } from "@/i18n/navigation";
 import {
-  ArrowIcon,
-  DirectionalLink,
-  ExternalDirectionalLink,
-} from "@/components/shared/directional-link";
-import { Eyebrow } from "@/components/ui/eyebrow";
+  Eyebrow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
+} from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
+import { InquiryGuide } from "./inquiry-guide";
+import {
+  FORM_ERROR_KEY,
+  fieldErrorMessage,
+  readApiResult,
+} from "@/lib/api-errors";
+import {
+  businessZoneOffsetLabel,
+  formatBusinessTime,
+} from "@/lib/config/business-hours";
+import { getCommercialCta } from "@/lib/config/commercial";
 import {
   MOTION,
   useSectionElement,
@@ -25,18 +42,8 @@ import {
   type Locale,
 } from "@repo/pricing-schema";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
-} from "@repo/ui/www";
-import {
   AlertCircle,
-  ArrowUpRight,
   CheckCircle2,
-  Clock3,
   Mail,
   MessageCircle,
   Phone,
@@ -55,7 +62,6 @@ import {
 } from "react";
 
 const MESSAGE_MAX = 1000;
-const CAIRO = "Africa/Cairo";
 
 const SERVICES = [
   "interface-design",
@@ -66,13 +72,14 @@ const SERVICES = [
 
 type Service = (typeof SERVICES)[number];
 
-type Field = "name" | "phone" | "message";
+type Field = "name" | "phone" | "email" | "message";
 
 type FieldErrors = Partial<Record<Field, string>>;
 
 type Values = {
   name: string;
   phone: string;
+  email: string;
   service: Service | "";
   message: string;
 };
@@ -80,11 +87,12 @@ type Values = {
 const EMPTY: Values = {
   name: "",
   phone: "",
+  email: "",
   service: "",
   message: "",
 };
 
-const FIELDS: readonly Field[] = ["name", "phone", "message"];
+const FIELDS: readonly Field[] = ["name", "phone", "email", "message"];
 
 const SERVICE_LABEL_KEYS = {
   "interface-design": "letter.serviceWebDesign",
@@ -110,35 +118,26 @@ function isField(key: string): key is Field {
   return FIELDS.some((field) => field === key);
 }
 
-function formatCairoTime(locale: string, date: Date): string {
-  return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-    timeZone: CAIRO,
-  }).format(date);
-}
-
 function subscribeToMinute(onChange: () => void) {
   const id = window.setInterval(onChange, 15_000);
   return () => window.clearInterval(id);
 }
 
-function useCairoTime(): string | null {
+function useStudioTime(): string | null {
   const locale = useLocale();
 
   return useSyncExternalStore(
     subscribeToMinute,
-    () => formatCairoTime(locale, new Date()),
+    () => formatBusinessTime(locale, new Date()),
     () => null,
   );
 }
 
 export default function ContactPage() {
   return (
-    <main className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
+    <div className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
       <ContactExperience />
-    </main>
+    </div>
   );
 }
 
@@ -163,17 +162,18 @@ function ContactExperience() {
             <h1
               ref={titleRef}
               id="contact-heading"
-              className="max-w-6xl text-balance text-[clamp(3rem,7vw,7.25rem)] font-light leading-[0.94] tracking-[-0.055em] text-foreground rtl:text-[clamp(2.75rem,5.4vw,5.75rem)] rtl:leading-[1.2] rtl:tracking-normal"
+              className="max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[0.94] tracking-[-0.055em] text-foreground rtl:leading-[1.2] rtl:tracking-normal"
             >
               {t("heroTitle")}{" "}
               <span className="text-muted-foreground">
                 {t("heroTitleItalic")}
               </span>
             </h1>
-            <p className="mt-8 max-w-176 text-[clamp(1.05rem,1.4vw,1.3rem)] leading-[1.7] text-muted-foreground">
-              {t("letter.heading")}
+            <p className="mt-8 max-w-176 text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-[1.7] text-muted-foreground">
+              {t("intro")}
             </p>
           </div>
+          <InquiryGuide />
           <div className="mt-16 border-t-2 border-foreground pt-8 md:mt-24 md:pt-10">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-20 xl:gap-28">
               <div className="min-w-0">
@@ -193,7 +193,6 @@ function ContactExperience() {
 function ConversationForm() {
   const t = useTranslations("contactPage");
   const tValidations = useTranslations("validations");
-  const tFounder = useTranslations("about.founder");
 
   const locale = useLocale();
   const searchParams = useSearchParams();
@@ -263,6 +262,7 @@ function ConversationForm() {
   const payloadOf = (next: Values) => ({
     name: next.name,
     phone: next.phone,
+    email: next.email,
     message: next.message,
     serviceInterest: toServiceInterest(next.service),
     website,
@@ -334,7 +334,7 @@ function ConversationForm() {
 
     if (firstInvalid) {
       setErrors(found);
-      setFormError(t("errorFix"));
+      setFormError(t("letter.errorFix"));
       document
         .getElementById(`contact-${firstInvalid}`)
         ?.focus();
@@ -356,18 +356,9 @@ function ConversationForm() {
         }),
       });
 
-      const result: unknown = await response.json();
+      const result = await readApiResult(response);
 
-      const body =
-        result && typeof result === "object"
-          ? (result as {
-            success?: boolean;
-            message?: string;
-            errors?: Record<string, string>;
-          })
-          : {};
-
-      if (response.ok && body.success) {
+      if (result.ok) {
         setValues(EMPTY);
         setTouched({});
         setErrors({});
@@ -375,23 +366,32 @@ function ConversationForm() {
         return;
       }
 
-      if (body.errors && typeof body.errors === "object") {
+      // The server sends codes, never copy: each maps to a localized line.
+      if (result.code === "validation") {
         const serverErrors: FieldErrors = {};
 
-        for (const [key, message] of Object.entries(body.errors)) {
+        for (const [key, code] of Object.entries(result.fields ?? {})) {
           if (isField(key)) {
-            serverErrors[key] = message;
+            serverErrors[key] = fieldErrorMessage(
+              tValidations,
+              code,
+              t("letter.errorField"),
+            );
           }
         }
 
         setErrors(serverErrors);
-        setFormError(t("errorFix"));
+        setFormError(
+          Object.keys(serverErrors).length > 0
+            ? t("letter.errorFix")
+            : tValidations(FORM_ERROR_KEY.validation),
+        );
         return;
       }
 
-      setFormError(body.message || t("errorGeneric"));
+      setFormError(tValidations(FORM_ERROR_KEY[result.code]));
     } catch {
-      setFormError(t("errorNetwork"));
+      setFormError(tValidations(FORM_ERROR_KEY.network));
     } finally {
       setIsSubmitting(false);
     }
@@ -409,11 +409,12 @@ function ConversationForm() {
   }
 
   const inlineField =
-    "inline-block max-w-full rounded-none border-0 border-b border-foreground/35 bg-transparent px-1 py-0.5 font-light text-foreground outline-none transition-all duration-300 placeholder:text-muted-foreground/55 hover:border-foreground/70 focus:border-brand focus:shadow-[0_1px_0_hsl(var(--brand))] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive";
+    "inline-block max-w-full rounded-none border-0 border-b border-foreground/35 bg-transparent px-1 py-0.5 font-light text-foreground outline-none transition-[border-color,box-shadow] duration-(--motion-hover) placeholder:text-muted-foreground/55 hover:border-foreground/70 focus:border-brand focus:shadow-[0_1px_0_hsl(var(--brand))] disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-destructive";
 
   const inlineWidth = {
     name: "w-[7.5ch] sm:w-[9ch]",
     phone: "w-[14ch]",
+    email: "w-[17ch] sm:w-[20ch]",
   };
 
   return (
@@ -427,15 +428,12 @@ function ConversationForm() {
             {t("letter.heading")}
           </Eyebrow>
           <p className="mt-2 text-sm text-muted-foreground">
-            {tFounder("name")}{" "}
+            {t("letter.recipient")}{" "}
             <span className="text-muted-foreground/70">
-              — {tFounder("role")}
+              — {t("letter.recipientNote")}
             </span>
           </p>
         </div>
-        <span className="font-mono text-xs tracking-[0.16em] text-muted-foreground">
-          {localizeNumbers("01", locale)}
-        </span>
       </div>
       <form
         onSubmit={handleSubmit}
@@ -517,6 +515,27 @@ function ConversationForm() {
             disabled={isSubmitting}
             className={cn(inlineField, inlineWidth.phone)}
           />
+          <span className="text-muted-foreground">
+            {" "}
+            {t("letter.emailJoin")}{" "}
+          </span>
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            dir="ltr"
+            inputMode="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={update("email")}
+            onBlur={validateOnBlur("email")}
+            placeholder={t("letter.emailPlaceholder")}
+            aria-label={t("letter.emailLabel")}
+            aria-required
+            aria-invalid={Boolean(errors.email)}
+            disabled={isSubmitting}
+            className={cn(inlineField, inlineWidth.email)}
+          />
           <span className="text-muted-foreground">.</span>
         </div>
         <div
@@ -558,7 +577,7 @@ function ConversationForm() {
             aria-required
             aria-invalid={Boolean(errors.message)}
             disabled={isSubmitting}
-            className="mt-4 min-h-[11rem] resize-y rounded-none border-0 border-b border-border-subtle bg-transparent px-0 py-4 text-[clamp(1.125rem,2vw,1.5rem)] leading-[1.65] text-foreground shadow-none transition-colors placeholder:text-muted-foreground/50 focus-visible:border-brand focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-4 min-h-[11rem] resize-y rounded-none border-0 border-b border-border-subtle bg-transparent px-0 py-4 text-[clamp(1.125rem,2vw,1.5rem)] leading-[1.65] text-foreground shadow-none transition-colors duration-(--motion-hover) placeholder:text-muted-foreground/50 focus-visible:border-brand focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
           />
           {errors.message ? (
             <FieldError field="message" message={errors.message} />
@@ -599,8 +618,17 @@ function ConversationForm() {
         >
           <div className="max-w-sm">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              {t("letter.assurance")}
+              {t("letter.assurance")} {t("letter.requiredNote")}
             </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {t("letter.privacy")}
+            </p>
+            <DirectionalLink
+              href="/privacy"
+              className="mt-2 text-sm text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+            >
+              {t("letter.privacyLink")}
+            </DirectionalLink>
           </div>
           <MagneticButton
             type="submit"
@@ -622,8 +650,9 @@ function ConversationForm() {
 function DirectChannels() {
   const t = useTranslations("contactPage");
   const tContact = useTranslations("contact");
+  const tCta = useTranslations("commercial.ctas");
 
-  const cairoTime = useCairoTime();
+  const studioTime = useStudioTime();
 
   const email = tContact("emailValue");
   const phone = t("phoneValue");
@@ -631,25 +660,20 @@ function DirectChannels() {
   return (
     <div className="lg:sticky lg:top-24">
       <div className="border-t-2 border-foreground pt-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <Eyebrow className="m-0">
-              {t("lines.heading")}
-            </Eyebrow>
-            <p className="mt-3 max-w-[24ch] text-sm leading-relaxed text-muted-foreground">
-              {t("lines.address1")} · {t("lines.address2")}
-            </p>
-          </div>
-          <span className="font-mono text-xs text-muted-foreground">
-            {localizeNumbers("02", useLocale())}
-          </span>
-        </div>
+        <Eyebrow className="m-0">
+          {t("lines.heading")}
+        </Eyebrow>
+        <p className="mt-3 max-w-[24ch] text-sm leading-relaxed text-muted-foreground">
+          {t("lines.address2")}
+        </p>
+        <p className="mt-2 max-w-[24ch] text-sm leading-relaxed text-foreground">
+          {t("lines.replyTime")}
+        </p>
       </div>
       <div className="mt-8 divide-y divide-border-subtle border-y border-border-subtle">
         <Channel
           icon={MessageCircle}
           label={t("lines.whatsappLabel")}
-          note={t("lines.whatsappNote")}
           value={t("lines.whatsappValue")}
           href={`https://wa.me/${phone.replace(/\D/g, "")}`}
           external
@@ -666,18 +690,31 @@ function DirectChannels() {
           value={phone}
           href={`tel:${phone.replace(/\s/g, "")}`}
         />
-        <Channel
-          icon={Clock3}
-          label={t("callLead")}
-          value={t("scheduleCall")}
-          href="/schedule"
-        />
       </div>
-      {cairoTime ? (
-        <div className="mt-6 flex items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>{t("lines.localTime", { time: cairoTime })}</span>
-          <span className="font-mono tracking-[0.12em]">
-            CAI
+      <p className="mt-6 text-sm leading-relaxed text-muted-foreground">
+        {t("callLead")}{" "}
+        <Link
+          href={getCommercialCta("technicalCall").href}
+          className={alternateLink}
+        >
+          {tCta("technicalCall")}
+        </Link>
+        <br />
+        {t("costLead")}{" "}
+        <Link
+          href={getCommercialCta("projectRange").href}
+          className={alternateLink}
+        >
+          {tCta("projectRange")}
+        </Link>
+      </p>
+      {studioTime ? (
+        <div className="mt-6 text-xs text-muted-foreground">
+          <span>
+            {t("lines.localTime", {
+              time: studioTime,
+              zone: businessZoneOffsetLabel(),
+            })}
           </span>
         </div>
       ) : null}
@@ -685,61 +722,44 @@ function DirectChannels() {
   );
 }
 
+const alternateLink =
+  "text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current";
+
 function Channel({
   icon: Icon,
   label,
-  note,
   value,
   href,
   external = false,
 }: {
   icon: typeof MessageCircle;
   label: string;
-  note?: string;
   value: string;
   href: string;
   external?: boolean;
 }) {
   const classes =
-    "group block py-5 transition-colors duration-300 hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
+    "group block py-5 transition-colors duration-(--motion-hover) hover:text-brand-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring";
 
   const content = (
-    <>
-      <div className="flex items-start justify-between gap-5">
-        <div className="flex min-w-0 items-start gap-3">
-          <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors duration-300 group-hover:text-brand" />
-          <div className="min-w-0">
-            <Eyebrow className="m-0">
-              {label}
-            </Eyebrow>
-            <span className="mt-2 block wrap-break-word text-sm leading-snug text-foreground">
-              {value}
-            </span>
-            {note ? (
-              <span className="mt-1.5 block text-xs leading-snug text-muted-foreground">
-                {note}
-              </span>
-            ) : null}
-          </div>
-        </div>
-        <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-brand" />
+    <div className="flex min-w-0 items-start gap-3">
+      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors duration-(--motion-hover) group-hover:text-brand" />
+      <div className="min-w-0">
+        <span className="block text-xs text-muted-foreground">
+          {label}
+        </span>
+        <span className="mt-1 block wrap-break-word text-sm leading-snug text-foreground">
+          {value}
+        </span>
       </div>
-    </>
+    </div>
   );
 
   if (external) {
     return (
-      <ExternalDirectionalLink href={href} className={classes}>
+      <a href={href} target="_blank" rel="noreferrer" className={classes}>
         {content}
-      </ExternalDirectionalLink>
-    );
-  }
-
-  if (href === "/schedule") {
-    return (
-      <DirectionalLink href={href} className={classes}>
-        {content}
-      </DirectionalLink>
+      </a>
     );
   }
 
@@ -753,7 +773,7 @@ function Channel({
   );
 }
 
-const RECEIPT_STEPS = ["read", "reply", "call"] as const;
+const RECEIPT_STEPS = ["read", "reply", "call", "after"] as const;
 
 function Receipt({
   receivedAt,
@@ -763,7 +783,6 @@ function Receipt({
   onWriteAnother: () => void;
 }) {
   const t = useTranslations("contactPage.receipt");
-  const tFounder = useTranslations("about.founder");
   const locale = useLocale();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -830,9 +849,7 @@ function Receipt({
         data-receipt-part
         className="mt-5 max-w-[18ch] text-[clamp(2.5rem,5vw,5rem)] font-light leading-[0.98] tracking-[-0.04em] text-foreground outline-none rtl:leading-[1.15] rtl:tracking-normal"
       >
-        {t("title", {
-          founder: tFounder("name"),
-        })}
+        {t("title")}
       </h2>
 
       <p
@@ -840,7 +857,7 @@ function Receipt({
         className="mt-5 text-sm text-muted-foreground"
       >
         {t("sentAt", {
-          time: formatCairoTime(locale, receivedAt),
+          time: formatBusinessTime(locale, receivedAt),
         })}
       </p>
 
@@ -878,7 +895,7 @@ function Receipt({
         type="button"
         data-receipt-part
         onClick={onWriteAnother}
-        className="mt-10 inline-flex items-center gap-2 text-sm text-foreground underline underline-offset-4 decoration-foreground/35 transition-colors hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+        className="mt-10 inline-flex items-center gap-2 text-sm text-foreground underline underline-offset-4 decoration-foreground/35 transition-colors duration-(--motion-hover) hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       >
         {t("another")}
         <ArrowIcon

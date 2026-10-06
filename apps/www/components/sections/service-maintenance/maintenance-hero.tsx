@@ -3,7 +3,7 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
-import { Eyebrow } from "@/components/ui/eyebrow";
+import { Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { getCommercialCta } from "@/lib/config/commercial";
 import {
@@ -20,7 +20,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 const MONTH_PLAN = "professional";
 
-const OURS = ["daily", "weekly", "monthly", "incident"] as const;
+const OURS = ["uptime", "backups", "updates"] as const;
 
 export function MaintenanceHero({
   plans,
@@ -52,7 +52,7 @@ export function MaintenanceHero({
       className="accent-world-green relative pt-(--section-y-top) pb-(--section-y-bottom)"
     >
       <Container>
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:items-end lg:gap-16">
+        <div className="grid gap-8">
           <SectionHeading
             titleAs="h1"
             titleId="maintenance-hero-heading"
@@ -66,17 +66,17 @@ export function MaintenanceHero({
               container: "lg:flex-col lg:items-start",
               titleWrapper: "space-y-6",
               title:
-                "max-w-6xl text-balance text-[clamp(2.75rem,6vw,5.75rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
+                "max-w-6xl text-balance text-[clamp(2.75rem,6vw,6.25rem)] font-light leading-[1.02] tracking-[-0.035em] rtl:tracking-normal",
             }}
           />
-          <div>
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-end lg:gap-10">
             <p
               ref={descRef}
-              className="text-[clamp(1rem,1.1vw,1.125rem)] leading-relaxed text-muted-foreground"
+              className="max-w-[46ch] text-[clamp(1.0625rem,1.05vw,1.125rem)] leading-relaxed text-muted-foreground"
             >
               {t.rich("description", bodyMarks)}
             </p>
-            <div ref={ctaRef} className="mt-8">
+            <div ref={ctaRef} className="lg:justify-self-end">
               <CtaButtonGroup
                 primaryVariant="accent"
                 primary={{
@@ -109,7 +109,7 @@ export function MaintenanceHero({
 
             <div
               ref={splitRef}
-              className="mt-(--heading-gap) grid border-t border-border lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
+              className="mt-(--heading-gap) grid border-t border-border-subtle lg:grid-cols-[minmax(0,7fr)_minmax(0,4fr)]"
             >
               <div data-month-part className="pt-8 lg:pe-[clamp(2rem,4vw,4rem)]">
                 <Eyebrow className="m-0">{t("hero.month.ours.label")}</Eyebrow>
@@ -123,9 +123,9 @@ export function MaintenanceHero({
                       className="grid gap-1 border-b border-border-subtle py-5 sm:grid-cols-[minmax(7.5rem,11rem)_minmax(0,1fr)] sm:items-baseline sm:gap-8"
                     >
                       <span className="text-base text-local-accent-text">
-                        {t(`hero.month.ours.items.${id}.when`)}
+                        {t(`hero.month.ours.items.${id}.label`)}
                       </span>
-                      <span className="text-[1.0625rem] leading-normal text-foreground">
+                      <span className="text-body leading-normal text-foreground">
                         {t(`hero.month.ours.items.${id}.what`)}
                       </span>
                     </li>
@@ -135,7 +135,7 @@ export function MaintenanceHero({
 
               <div
                 data-month-part
-                className="mt-12 pt-8 lg:mt-0 lg:border-s lg:border-border lg:ps-[clamp(2rem,4vw,4rem)]"
+                className="mt-12 pt-8 lg:mt-0 lg:border-s lg:border-border-subtle lg:ps-[clamp(2rem,4vw,4rem)]"
               >
                 <Eyebrow className="m-0">{t("hero.month.yours.label")}</Eyebrow>
                 <h3 className="mt-3 text-[clamp(1.5rem,2.4vw,2rem)] font-light leading-tight tracking-[-0.02em] text-foreground rtl:leading-[1.4] rtl:tracking-normal">
@@ -161,7 +161,7 @@ export function MaintenanceHero({
                     </p>
                   </div>
                 ) : null}
-                <p className="mt-8 max-w-104 text-[0.9375rem] leading-relaxed text-muted-foreground">
+                <p className="mt-8 max-w-104 text-base leading-relaxed text-muted-foreground">
                   {t("hero.month.yours.quiet")}
                 </p>
               </div>

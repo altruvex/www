@@ -110,15 +110,6 @@ Implementation contract, shared by both:
   components the hook owns (`x:0,y:0` / `scale:1`) — not `clearProps:"transform"`,
   which would wipe a sibling hook's state on the same element.
 
-The custom cursor (`components/interactive/custom-cursor.tsx`) follows the same
-contract: the dot is written straight from `pointermove`, the ring trail and
-the hover scales share `MOTION.spring.gentle` (calm, no overshoot), and the
-`[data-magnetic]` lean is measured once per hover. The ring is `.liquid-glass`,
-and that class transitions `transform`; the ring's inline style narrows the
-transition to opacity. A transform transition under a per-frame write restarts
-every frame, and it was the 2026-09 "strange stutter": the ring lagged ~250px
-and moved unevenly.
-
 ### `createSpring(setter, config, initial?)`
 
 ```ts
@@ -201,7 +192,7 @@ with first paint and animate only `opacity` and the individual `translate` /
   sheet lifts off the page (~5.5s); every other new session gets the mark alone
   (~3.2s); the rest of a session gets nothing; no JS gets nothing. The page is
   released on the lift's `animationstart` (`data-initial-load="complete"` plus
-  `LOADER_RELEASE_EVENT` for `LoadingProvider`), and Lenis / the cursor /
+  `LOADER_RELEASE_EVENT` for `LoadingProvider`), and Lenis /
   exit-intent mount only after that, never mid-loader. Transform and opacity
   only: the previous loader was an `ssr: false` client component whose clip-path
   wipe ran on the main thread during hydration and stuttered. Reduced motion:
@@ -268,7 +259,6 @@ that covers Tailwind hover transitions; the hooks below never rely on it.)
 | `useText` | per-word translate/scale(/blur) stagger | whole-element opacity crossfade — the DOM is **not** split |
 | `usePress` | scale spring | opacity dip to `MOTION.reduced.pressOpacity` and back — feedback survives |
 | `useMagnetic` | x/y springs | none (position shift is motion); CSS hover styling remains |
-| custom cursor | dot + spring-trailed ring | not mounted — the native cursor only |
 | scroll scenes (`useWordRead` `useMediaSettle` `useKineticTrack` `useTileAssemble`) | scrubbed sequence | nothing is set — the markup's resting state is the reduced state (sections render a static fallback where the sticky runway would otherwise be empty) |
 | `scrollToY` | Lenis glide | immediate jump |
 | route `template.tsx` | 8px lift + fade | fade only |

@@ -1,34 +1,72 @@
 {
   "eyebrow": "About Altruvex",
-  "title": "Four letters",
-  "titleItalic": "we hold ourselves to.",
-  "description": "Altruvex is a small studio in Cairo building multilingual web systems. The name starts with <strong>altr-, as in altruism</strong>: when your interest and ours disagree, the decision follows yours.",
-  "stage": {
-    "caption": "Cairo. English and Arabic, neither translated."
+  "title": "A web design and development studio",
+  "titleItalic": "that publishes how it works.",
+  "description": "Altruvex designs and builds custom websites and web applications. How projects run, the standards we build to and the price ranges are all published on this site.",
+  "facts": {
+    "title": "What Altruvex is,",
+    "titleItalic": "in plain terms.",
+    "standardsLink": "See the standards",
+    "processLink": "See the process",
+    "items": {
+      "what": {
+        "term": "What we do",
+        "value": "Custom websites and web applications, end to end: website design, website and web app development, technical audits of existing builds, and maintenance after launch."
+      },
+      "shipped": {
+        "term": "What has shipped",
+        "value": "Online stores for two lighting retailers, and this site. Each one is public, so you can open it and check it yourself."
+      },
+      "languages": {
+        "term": "Languages",
+        "value": "Every language your site needs, right-to-left included, designed and engineered together from the first wireframe, not added at the end."
+      },
+      "build": {
+        "term": "How it is built",
+        "value": "Custom code on Next.js, not a theme or a page builder. The performance, accessibility and security targets we build to are published in full."
+      },
+      "process": {
+        "term": "How a project runs",
+        "value": "Five phases: discovery, wireframe, design, development and launch. You approve the structure and then the design before development starts."
+      },
+      "pricing": {
+        "term": "Pricing and ownership",
+        "value": "Ranges are published and every estimate is broken down before the contract. Payment is by milestone, and the code, designs and accounts pass to you at final payment."
+      },
+      "where": {
+        "term": "Where we work",
+        "value": "Working remotely with clients wherever they are."
+      },
+      "name": {
+        "term": "The name",
+        "value": "altr-, as in altruism: when your interest and ours disagree, the decision follows yours."
+      }
+    }
   },
   "principles": {
-    "title": "What that commits us to",
+    "title": "Four commitments,",
+    "titleItalic": "and what each costs us.",
     "count": "{count, plural, one {{n} principle} other {{n} principles}} · open any",
     "costLabel": "What it costs us",
     "items": {
-      "direct": {
-        "title": "You talk to the person who builds it.",
-        "body": "No sales, no account manager, no subcontractor. The founder is on the first call and on the call at launch.",
-        "cost": "We take fewer projects than a studio with a sales team would."
+      "writing": {
+        "title": "Decisions are agreed in writing.",
+        "body": "Scope, changes and approvals are written down before work moves on, so both sides work from the same record.",
+        "cost": "Writing it down takes longer than agreeing on a call."
       },
       "scope": {
-        "title": "We argue you out of scope.",
-        "body": "If a page, a feature, or an entire phase will not earn back what it costs to build, we say so before it is quoted - not after it ships.",
+        "title": "We advise cutting scope that won't pay back.",
+        "body": "If a page, a feature, or an entire phase will not earn back what it costs to build, we say so before it is quoted — not after it ships.",
         "cost": "The recommendation that removes a feature removes a line from our own invoice."
       },
       "pricing": {
-        "title": "The number does not move quietly.",
-        "body": "Estimates are broken down before the contract, not defended after it. If scope changes, the change order arrives before the work starts - not with the final invoice.",
+        "title": "Price changes are agreed before work, never added after.",
+        "body": "Estimates are broken down before the contract, not defended after it. If scope changes, the change order arrives before the work starts — not with the final invoice.",
         "cost": "A number fixed in advance is a bet against our own estimate, and we pay when it is wrong."
       },
       "ownership": {
         "title": "It is yours at final payment.",
-        "body": "Repositories, domains and pipelines in your name, documented for the engineer after us. Nothing is engineered to make leaving difficult.",
+        "body": "At final payment, repositories, domains and pipelines are in your name, documented for the engineer after us. Nothing is engineered to make leaving difficult.",
         "cost": "We keep no leverage over a client who decides to walk."
       }
     }
@@ -39,27 +77,15 @@
     "fitLabel": "A good fit",
     "notLabel": "Not a fit",
     "fitItems": [
-      "A business that needs a system, not a brochure",
-      "Customers in both English and Arabic",
-      "Someone who wants to own the code outright"
+      "A business that needs its site to take orders, bookings or inquiries",
+      "Customers who read more than one language, right-to-left included",
+      "Someone who wants to own the code outright",
+      "A team that can review and approve each phase"
     ],
     "notItems": [
       "A theme with a new logo by Friday",
       "A project with no one to make decisions",
-      "A rebuild meant to lock you in"
+      "A fixed price before anyone has looked at the problem"
     ]
-  },
-  "founderRoute": {
-    "eyebrow": "Between your decision and the code",
-    "from": "Your decision",
-    "to": "The code",
-    "quote": "The goal is not to appear premium. It is to build work others can copy the surface of,",
-    "quoteItalic": "but not the standard behind it."
-  },
-  "founder": {
-    "linkedInLabel": "LinkedIn",
-    "linkedInUrl": "https://www.linkedin.com/in/ali-abdelhadi-65094b283/",
-    "name": "Ali Abdelhadi",
-    "role": "Founder & Lead Engineer"
   }
 }

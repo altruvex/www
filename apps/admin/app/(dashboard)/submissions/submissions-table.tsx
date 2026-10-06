@@ -20,6 +20,7 @@ export interface SubmissionRow {
   id: string;
   name: string;
   phone: string;
+  email: string | null;
   message: string;
   serviceInterest: string | null;
   projectTimeline: string | null;
@@ -89,7 +90,8 @@ export function SubmissionsTable({
         </span>
       ),
       sortValue: (row) => row.name.toLowerCase(),
-      searchValue: (row) => `${row.name} ${row.phone} ${row.message}`,
+      searchValue: (row) =>
+        `${row.name} ${row.phone} ${row.email ?? ""} ${row.message}`,
     },
     {
       id: "message",
@@ -157,6 +159,26 @@ export function SubmissionsTable({
       mono: true,
       cell: (row) => fmtPhone(row.phone),
       searchValue: (row) => row.phone,
+      minWidth: "xl",
+      defaultHidden: true,
+    },
+    {
+      id: "email",
+      header: "Email",
+      width: "200px",
+      cell: (row) =>
+        row.email ? (
+          <a
+            href={`mailto:${row.email}`}
+            className="block truncate text-brand hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {row.email}
+          </a>
+        ) : (
+          "—"
+        ),
+      searchValue: (row) => row.email ?? "",
       minWidth: "xl",
       defaultHidden: true,
     },

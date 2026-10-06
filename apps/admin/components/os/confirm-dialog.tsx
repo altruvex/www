@@ -142,10 +142,10 @@ export function ConfirmDialog({
           {consequence && (
             <p
               className={cn(
-                "flex items-start gap-2 rounded-md border px-2.5 py-2 text-base",
+                "flex items-start gap-2 rounded-ctl-lg border px-2.5 py-2 text-base",
                 tone === "danger"
                   ? "border-danger/25 bg-danger/5 text-foreground"
-                  : "border-border bg-surface text-foreground",
+                  : "border-border-subtle bg-surface text-foreground",
               )}
             >
               {tone === "danger" && (
@@ -179,7 +179,7 @@ export function ConfirmDialog({
             <p
               id={errorId}
               role="alert"
-              className="rounded-md border border-danger/25 bg-danger/5 px-2.5 py-2 text-base text-danger"
+              className="rounded-ctl-lg border border-danger/25 bg-danger/5 px-2.5 py-2 text-base text-danger"
             >
               {error}
             </p>

@@ -1,9 +1,8 @@
 import { HeroSectionServer } from "@/components/sections/hero-section.server";
 import { TransparentByDesign } from "@/components/sections/transparent-by-design";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getAllTestimonials } from "@/lib/data/testimonials";
 import { generateRouteMetadata } from "@/lib/metadata";
-import { buildPageSchemas, buildTestimonialReviewSchemas } from "@/lib/schema";
+import { buildPageSchemas } from "@/lib/schema";
 import { setRequestLocale } from "next-intl/server";
 import { HomeClient } from "./home-client";
 
@@ -27,12 +26,7 @@ export default async function Home({
 
   return (
     <>
-      <JsonLd
-        schemas={[
-          ...buildPageSchemas(locale, "home"),
-          ...buildTestimonialReviewSchemas(locale, getAllTestimonials()),
-        ]}
-      />
+      <JsonLd schemas={buildPageSchemas(locale, "home")} />
       <HeroSectionServer locale={locale} />
       <HomeClient transparency={<TransparentByDesign locale={locale} />} />
     </>

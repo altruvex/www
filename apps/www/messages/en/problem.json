@@ -1,35 +1,33 @@
 {
-  "eyebrow": "The Industry Problem",
-  "title": "Most businesses aren't getting engineering.",
-  "titleItalic": "They're getting templates.",
-  "subtitle": "The Egyptian and Arab web market is full of agencies charging custom rates for commodity output. This is what that looks like once the site is yours.",
+  "eyebrow": "The problem",
+  "title": "Signs your website is a template,",
+  "titleItalic": "not a custom build.",
+  "subtitle": "Five things owners usually find out only after launch.",
   "items": [
     {
       "number": "01",
-      "title": "A template, sold as custom",
+      "title": "Same theme as your competitors",
       "description": "The same theme your competitors bought, with your logo swapped in. Nothing on it is yours to change."
     },
     {
       "number": "02",
-      "title": "Slow where it counts",
+      "title": "Slow on phones",
       "description": "Fast on the office Wi‑Fi it was demoed on. Your visitors arrive on phones, on mobile data."
     },
     {
       "number": "03",
-      "title": "A handover in name only",
+      "title": "No real handover",
       "description": "A password and a zip file. No documentation, no architecture, no record of why anything was built the way it was."
     },
     {
       "number": "04",
-      "title": "Built for the approval meeting",
+      "title": "Every change costs more",
       "description": "Made to be signed off, not to grow. Every new feature costs more than the one before it."
     },
     {
       "number": "05",
-      "title": "No engineer on the line",
+      "title": "No developer you can reach",
       "description": "A coordinator relays your questions to a team you never meet. Every technical answer waits for the relay."
     }
-  ],
-  "closingPre": "Every row above is what we're built to",
-  "closingHighlight": "undo."
+  ]
 }

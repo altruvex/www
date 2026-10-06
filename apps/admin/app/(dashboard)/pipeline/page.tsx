@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/os/page-header";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyState } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
+import { NewProposalButton } from "@/components/os/new-proposal-button";
 import { FilterChip } from "@/components/os/data-table";
 import {
   PIPELINE_STAGES,
@@ -18,13 +19,16 @@ import {
   percent,
   sumByCurrency,
   scaleByCurrency,
+  when,
 } from "@/lib/format";
+import { roleCanOpen } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
 import { PipelineBoard, type PipelineCardData } from "./pipeline-board";
 import { Button } from "@repo/ui";
+import { PickToOpen } from "@/components/os/pick-to-open";
 
 export const dynamic = "force-dynamic";
 
@@ -122,8 +126,29 @@ export default async function PipelinePage({
     },
   );
 
+  // An empty list offers the submissions waiting to become clients, each
+  // opened on its own page where Convert lives.
+  const pickSubmissions =
+    cards.length === 0 &&
+    can(role, "view", "lead") &&
+    can(role, "create", "client") &&
+    roleCanOpen(role, "/submissions")
+      ? (
+          await prisma.contactSubmission.findMany({
+            where: { client: null, status: { not: "SPAM" } },
+            orderBy: { submittedAt: "desc" },
+            take: 50,
+            select: { id: true, name: true, phone: true, submittedAt: true },
+          })
+        ).map((s) => ({
+          label: s.name || s.phone,
+          href: `/submissions/${s.id}`,
+          hint: `Submitted ${when(s.submittedAt)}`,
+        }))
+      : [];
+
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-[calc(100dvh-6.5rem)] flex-col gap-4">
       <PageHeader
         title="Pipeline"
         description="Every live deal by stage. Stages after Qualified are derived from the proposal and contract records, so they move themselves."
@@ -190,9 +215,18 @@ export default async function PipelinePage({
           title="The pipeline is empty"
           body="Deals appear here as soon as a client record exists. Convert a website submission into a client, and it will show up in the New column."
           action={
-            <Button asChild variant="outline">
-              <Link href="/submissions">Review submissions</Link>
-            </Button>
+            pickSubmissions.length > 0 ? (
+              <PickToOpen
+                label="Convert a submission"
+                options={pickSubmissions}
+                footer={{ href: "/submissions", label: "All submissions" }}
+                searchPlaceholder="Search submissions"
+              />
+            ) : can(role, "create", "client") ? (
+              <Button asChild variant="outline">
+                <Link href="/clients/new">Add a client</Link>
+              </Button>
+            ) : undefined
           }
         />
       ) : (
@@ -200,8 +234,7 @@ export default async function PipelinePage({
           {canMove && (
             <AlertBar
               tone="info"
-              href="/clients"
-              cta="Open a client to send a proposal"
+              action={<NewProposalButton variant="outline">Send a proposal</NewProposalButton>}
             >
               New, Viewed, Contacted, Qualified and Lost are yours to set — drag
               a card, or use the stage menu on it (the only way on a touch
