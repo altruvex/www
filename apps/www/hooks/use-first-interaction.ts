@@ -22,6 +22,7 @@ export function useFirstInteraction() {
       window.addEventListener(eventName, onInteraction, options);
     });
 
+
     return () => {
       INTERACTION_EVENTS.forEach((eventName) => {
         window.removeEventListener(eventName, onInteraction);
