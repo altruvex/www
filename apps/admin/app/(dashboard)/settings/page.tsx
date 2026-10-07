@@ -15,7 +15,7 @@ import { TabNav } from "@/components/os/tab-nav";
 import { MetaList } from "@/components/os/detail-layout";
 import { ToneBadge } from "@/components/ui/badge";
 import { AlertBar } from "@/components/os/error-state";
-import { optionsOf, toneDot } from "@/lib/status";
+import { optionsOf, statusOf, toneDot } from "@/lib/status";
 import { PROJECT_PHASE_ORDER } from "@/lib/status";
 import { PIPELINE_STAGES } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
@@ -192,19 +192,26 @@ export default async function SettingsPage({
         <div className="grid gap-4 lg:grid-cols-2">
           <Panel
             title="Pipeline stages"
-            description="The order a deal moves through. Four of these are computed, not set."
+            description="The order a deal moves through. Six of these are computed from meeting, proposal and contract records, not set. Nurture and Lost sit outside the order."
             flush
           >
             <ul className="rows">
               {PIPELINE_STAGES.map((stage, i) => {
-                const derived = ["PROPOSAL_SENT", "PROPOSAL_READ", "CONTRACT_SENT", "SIGNED"].includes(stage);
+                const derived = [
+                  "CALL_BOOKED",
+                  "CALL_COMPLETED",
+                  "PROPOSAL_SENT",
+                  "PROPOSAL_READ",
+                  "CONTRACT_SENT",
+                  "SIGNED",
+                ].includes(stage);
                 return (
                   <li key={stage} className="flex items-center gap-3 px-3 py-2">
                     <span className="font-mono text-micro tabular-nums text-subtle-foreground">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="min-w-0 flex-1 text-base">
-                      {stage.replace(/_/g, " ").toLowerCase()}
+                      {statusOf("pipelineStage", stage).label}
                     </span>
                     {derived ? (
                       <ToneBadge tone="info">derived</ToneBadge>

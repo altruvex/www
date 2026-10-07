@@ -18,6 +18,8 @@ import {
   unexpectedError,
 } from "@/lib/server/api-error";
 import { toLocale } from "@/i18n/locale-meta";
+import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
+import { createStepToken } from "@/lib/server/contact/step-token";
 
 const SERVICE_TYPE_MAP: Record<
   NonNullable<Prisma.ContactSubmissionCreateInput["serviceInterest"]>,
@@ -48,13 +50,12 @@ const BUDGET_RANGE_MAP: Record<
   B_10K_25K: BudgetRange.B_10K_25K,
   B_25K_50K: BudgetRange.B_25K_50K,
   OVER_50K: BudgetRange.OVER_50K,
+  FLOOR_TO_2X: BudgetRange.FLOOR_TO_2X,
+  X2_TO_5X: BudgetRange.X2_TO_5X,
+  X5_TO_10X: BudgetRange.X5_TO_10X,
+  OVER_10X: BudgetRange.OVER_10X,
+  UNSURE: BudgetRange.UNSURE,
 };
-
-function boundedAttribution(value: unknown): string | undefined {
-  if (typeof value !== "string") return undefined;
-  const trimmed = value.trim();
-  return trimmed ? trimmed.slice(0, 100) : undefined;
-}
 
 export async function handleContactSubmission(request: NextRequest) {
   try {
@@ -98,7 +99,8 @@ export async function handleContactSubmission(request: NextRequest) {
     const ipAddress = forwardedFor
       ? forwardedFor.split(",")[0].trim()
       : undefined;
-    const referer = request.headers.get("referer") || undefined;
+    const referer = externalReferer(request);
+    const attribution = parseAttribution(body);
 
     const serviceInterestKey = validatedData.serviceInterest
       ?.toUpperCase()
@@ -125,10 +127,11 @@ export async function handleContactSubmission(request: NextRequest) {
       locale,
       userAgent,
       ipAddress,
-      referrer: referer,
-      utmSource: boundedAttribution(body.utmSource),
-      utmMedium: boundedAttribution(body.utmMedium),
-      utmCampaign: boundedAttribution(body.utmCampaign),
+      referrer: attribution.referrer ?? referer,
+      utmSource: attribution.utmSource,
+      utmMedium: attribution.utmMedium,
+      utmCampaign: attribution.utmCampaign,
+      landingPath: attribution.landingPath,
       priority:
         validatedData.projectTimeline === "immediate"
           ? "URGENT"
@@ -137,11 +140,12 @@ export async function handleContactSubmission(request: NextRequest) {
             : "MEDIUM",
     };
 
+    const { raw: stepToken, ...stepTokenFields } = createStepToken();
     const submission = await prisma.contactSubmission.create({
-      data: submissionData,
+      data: { ...submissionData, ...stepTokenFields },
     });
 
-    await linkClientToLead({
+    const client = await linkClientToLead({
       phone: validatedData.phone,
       name: validatedData.name,
       email: validatedData.email,
@@ -197,7 +201,7 @@ export async function handleContactSubmission(request: NextRequest) {
         0,
       );
 
-      await prisma.meeting.create({
+      const meeting = await prisma.meeting.create({
         data: {
           title: `Discovery Call - ${validatedData.name}`,
           type: "DISCOVERY",
@@ -205,6 +209,7 @@ export async function handleContactSubmission(request: NextRequest) {
           scheduledTime: validatedData.preferredTime,
           guestName: validatedData.name,
           submissionId: submission.id,
+          clientId: client?.id,
           notes: validatedData.message,
         },
       });
@@ -217,7 +222,7 @@ export async function handleContactSubmission(request: NextRequest) {
                 userId: admin.id,
                 type: "NEW_MEETING",
                 entityType: "meeting",
-                entityId: submission.id,
+                entityId: meeting.id,
               },
               select: { id: true },
             })
@@ -230,7 +235,7 @@ export async function handleContactSubmission(request: NextRequest) {
                   message: `${validatedData.name} requested a meeting`,
                   userId: admin.id,
                   entityType: "meeting",
-                  entityId: submission.id,
+                  entityId: meeting.id,
                 },
               });
             }),
@@ -240,7 +245,8 @@ export async function handleContactSubmission(request: NextRequest) {
 
     return NextResponse.json(
       // The visitor-facing confirmation is the localized receipt on the form.
-      { ok: true, code: "received", submissionId: submission.id },
+      // stepToken unlocks the optional qualify step (POST /api/contact/qualify).
+      { ok: true, code: "received", submissionId: submission.id, stepToken },
       { status: 201 },
     );
   } catch (error: unknown) {

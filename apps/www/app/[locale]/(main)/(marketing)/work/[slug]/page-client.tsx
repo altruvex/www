@@ -9,6 +9,7 @@ import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import type { ServiceSlug } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { CASE_STUDIES, getCaseStudyBySlug } from "@/lib/data/case-studies";
 import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { getDomainName } from "@/lib/utils/utils";
@@ -288,6 +289,7 @@ function CaseStudyEndCta({ slug }: { slug: string }) {
   const tCS = useTranslations("caseStudies");
 
   const position = CASE_STUDIES.findIndex((cs) => cs.slug === slug);
+  const current = CASE_STUDIES[position];
   const next =
     CASE_STUDIES.length > 1
       ? CASE_STUDIES[(position + 1) % CASE_STUDIES.length]
@@ -295,11 +297,17 @@ function CaseStudyEndCta({ slug }: { slug: string }) {
 
   return (
     <SectionEndCta
-      title={t("title")}
-      titleAccent={t("titleAccent")}
-      body={t("body")}
+      title={tCS("endCta.title")}
+      body={tCS("endCta.body")}
       primary="describeTheBuild"
-      secondary="technicalCall"
+      secondary={
+        current
+          ? {
+              href: `${getCommercialCta("projectRange").href}?projectType=${current.projectType}`,
+              label: tCS("endCta.estimate"),
+            }
+          : "projectRange"
+      }
       aside={
         next && (
           <Link

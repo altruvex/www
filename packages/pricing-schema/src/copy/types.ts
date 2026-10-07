@@ -113,9 +113,15 @@ export interface InvestmentCopy {
   readonly weeksValue: string;
 }
 
+export interface BudgetCopy {
+  /** Label for the "not sure yet" budget answer. */
+  readonly unsure: string;
+}
+
 export interface PricingCopy {
   readonly services: Readonly<Record<ServiceId, ServiceCopy>>;
   readonly bands: Readonly<Record<ComplexityId, string>>;
+  readonly budget: BudgetCopy;
   readonly maintenance: Readonly<Record<MaintenancePlanId, MaintenanceCopy>>;
   readonly maintenanceTemplates: MaintenanceTemplates;
   readonly consulting: Readonly<Record<ConsultingPackageId, ConsultingCopy>>;

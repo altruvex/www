@@ -16,4 +16,12 @@ export const CRON_JOBS: CronJob[] = [
     scheduleText: "Daily at 06:00 UTC",
     source: "app/api/cron/service-renewals/route.ts",
   },
+  {
+    id: "lead-follow-ups",
+    name: "Lead follow-up sweep",
+    path: "/api/cron/lead-follow-ups",
+    schedule: "0 6 * * *",
+    scheduleText: "Daily at 06:00 UTC",
+    source: "app/api/cron/lead-follow-ups/route.ts",
+  },
 ];

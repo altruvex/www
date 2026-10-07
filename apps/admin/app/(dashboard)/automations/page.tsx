@@ -106,6 +106,19 @@ const WIRED: Wired[] = [
     note: "The sweep writes no activity event of its own; the Integrations screen infers its last run from the newest renewal notification. Reminding the client is still a person's decision, sent from the service's page.",
   },
   {
+    id: "lead-follow-up-sweep",
+    name: "Scheduled sweep → lead follow-up alerts",
+    trigger: `${CRON_JOBS[1]!.scheduleText} (${CRON_JOBS[1]!.schedule}), called by the platform cron with CRON_SECRET`,
+    does: [
+      "Finds leads whose next follow-up date has arrived or passed",
+      "Finds new website leads still waiting on the first reply the contact page promises",
+      "Alerts the lead's owner (every admin when nobody owns it), keyed so a re-run never duplicates it, and posts to Slack",
+    ],
+    source: CRON_JOBS[1]!.source,
+    actions: [],
+    note: "The sweep writes no activity event of its own and never contacts a lead. Follow-ups are sent by a person from the lead's page — by email, or recorded after sending on WhatsApp.",
+  },
+  {
     id: "pricing-revalidate",
     name: "Price changed → public site cache dropped",
     trigger: "A price override is saved on the pricing screen",

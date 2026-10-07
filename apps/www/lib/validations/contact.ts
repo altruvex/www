@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isBudgetAnswerId } from "@repo/pricing-schema";
 import { normalizeNumeralsToEnglish } from "../utils/number";
 
 type ValidationTranslator = (key: string) => string;
@@ -135,4 +136,61 @@ export const createStandaloneMeetingSchema = (t: ValidationTranslator) =>
     scheduledTime: z
       .string()
       .regex(/^\d{2}:\d{2}$/, t("contact.scheduled-time-format")),
+  });
+
+// The optional follow-up steps after a successful submit. Each carries the
+// step token from the first response; answers are ids only, never free text
+// except the pre-call brief.
+const stepTokenField = z.string().min(20).max(100);
+
+export const QUALIFY_SITUATIONS = [
+  "new-build",
+  "replace-existing",
+  "improve-existing",
+] as const;
+export const QUALIFY_TIMELINES = [
+  "immediate",
+  "soon",
+  "planning",
+  "exploring",
+] as const;
+export const QUALIFY_DECISION_ROLES = ["decides", "shared", "advises"] as const;
+
+export const qualifySchema = z
+  .object({
+    token: stepTokenField,
+    situation: z.enum(QUALIFY_SITUATIONS).optional(),
+    budget: z.string().refine(isBudgetAnswerId).optional(),
+    projectTimeline: z.enum(QUALIFY_TIMELINES).optional(),
+    decisionRole: z.enum(QUALIFY_DECISION_ROLES).optional(),
+  })
+  .refine(
+    (data) =>
+      Boolean(
+        data.situation ||
+          data.budget ||
+          data.projectTimeline ||
+          data.decisionRole,
+      ),
+    { path: ["form"], message: "contact.step-empty" },
+  );
+
+export const PRECALL_BRIEF_MAX = 600;
+
+const briefText = z
+  .string()
+  .trim()
+  .max(PRECALL_BRIEF_MAX, "contact.brief-max")
+  .default("");
+
+export const preCallBriefSchema = z
+  .object({
+    token: stepTokenField,
+    current: briefText,
+    change: briefText,
+    stakes: briefText,
+  })
+  .refine((data) => Boolean(data.current || data.change || data.stakes), {
+    path: ["form"],
+    message: "contact.step-empty",
   });

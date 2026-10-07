@@ -32,6 +32,23 @@ export const ADDON_IDS = [
 ] as const;
 export type AddonId = (typeof ADDON_IDS)[number];
 
+/**
+ * Budget bands a lead can pick, as multiples of the published minimum
+ * engagement (see `budgetBands`). Never a fixed currency figure, so the bands
+ * move with the schema and no band sits below the floor.
+ */
+export const BUDGET_BAND_IDS = [
+  "floor-2x",
+  "2x-5x",
+  "5x-10x",
+  "over-10x",
+] as const;
+export type BudgetBandId = (typeof BUDGET_BAND_IDS)[number];
+
+/** A budget answer: one of the bands, or "unsure". */
+export const BUDGET_ANSWER_IDS = [...BUDGET_BAND_IDS, "unsure"] as const;
+export type BudgetAnswerId = (typeof BUDGET_ANSWER_IDS)[number];
+
 export const LEGACY_BAND_IDS = [
   "small",
   "medium",
@@ -54,4 +71,8 @@ export function isServiceId(value: string): value is ServiceId {
 
 export function isComplexityId(value: string): value is ComplexityId {
   return (COMPLEXITY_IDS as readonly string[]).includes(value);
+}
+
+export function isBudgetAnswerId(value: string): value is BudgetAnswerId {
+  return (BUDGET_ANSWER_IDS as readonly string[]).includes(value);
 }

@@ -1,5 +1,5 @@
 import { prisma } from "@repo/database";
-import { deriveClientStage } from "@/lib/dashboard-data";
+import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { scaleByCurrency, sumByCurrency } from "@/lib/format";
 import { paymentCurrency } from "@/lib/payment-source";
 import { PROJECT_CURRENCY_SELECT } from "@/lib/project-currency";
@@ -16,6 +16,28 @@ function lastMonths(count: number) {
     const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - i), 1);
     return { key: monthKey(d), label: d.toLocaleDateString("en-US", { month: "short" }) };
   });
+}
+
+/** Derived stages that count as qualified (and beyond). */
+const QUALIFIED_STAGES = [
+  "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+  "PROPOSAL_SENT",
+  "PROPOSAL_READ",
+  "CONTRACT_SENT",
+  "SIGNED",
+];
+const TOP_LANDING_PAGES = 8;
+const DIRECT = "direct / unknown";
+const NOT_RECORDED = "not recorded";
+
+type AttributionStats = { leads: number; qualified: number; won: number };
+
+function rankAttribution(map: Map<string, AttributionStats>) {
+  return [...map.entries()]
+    .map(([key, stats]) => ({ key, ...stats }))
+    .sort((a, b) => b.leads - a.leads || b.won - a.won || a.key.localeCompare(b.key));
 }
 
 export async function getAnalytics() {
@@ -45,6 +67,9 @@ export async function getAnalytics() {
             select: { status: true, signedAt: true },
             orderBy: { createdAt: "desc" },
           },
+          ...STAGE_MEETINGS_SELECT,
+          contactSubmission: { select: { utmSource: true, landingPath: true } },
+          transparencyLead: { select: { utmSource: true, landingPath: true } },
         },
       }),
       prisma.proposal.findMany({
@@ -149,6 +174,29 @@ export async function getAnalytics() {
     sourceStats.set(client.source, entry);
   }
 
+  // Attribution: the submission's first-touch fields, else the estimator run's.
+  const utmStats = new Map<string, AttributionStats>();
+  const landingStats = new Map<string, AttributionStats>();
+  const qualifiedIds = new Set<string>();
+  for (const client of clients) {
+    const touch = client.contactSubmission ?? client.transparencyLead;
+    const utm = touch?.utmSource?.trim() || DIRECT;
+    const landing = touch?.landingPath?.trim() || NOT_RECORDED;
+    const qualified = QUALIFIED_STAGES.includes(deriveClientStage(client));
+    if (qualified) qualifiedIds.add(client.id);
+    const won = client.contracts.some((c) => c.status === "SIGNED");
+    for (const [map, key] of [
+      [utmStats, utm],
+      [landingStats, landing],
+    ] as const) {
+      const entry = map.get(key) ?? { leads: 0, qualified: 0, won: 0 };
+      entry.leads += 1;
+      if (qualified) entry.qualified += 1;
+      if (won) entry.won += 1;
+      map.set(key, entry);
+    }
+  }
+
   const typeStats = new Map<
     string,
     { quoted: number; won: number; value: Record<string, number> }
@@ -204,11 +252,7 @@ export async function getAnalytics() {
     leadsByMonth,
     sales: {
       leads: clients.length,
-      qualified: clients.filter((c) =>
-        ["QUALIFIED", "PROPOSAL_SENT", "PROPOSAL_READ", "CONTRACT_SENT", "SIGNED"].includes(
-          deriveClientStage(c),
-        ),
-      ).length,
+      qualified: qualifiedIds.size,
       proposalsSent: sentProposals.length,
       accepted: acceptedProposals.length,
       rejected: rejectedProposals.length,
@@ -232,6 +276,8 @@ export async function getAnalytics() {
     sources: [...sourceStats.entries()]
       .map(([source, stats]) => ({ source, ...stats }))
       .sort((a, b) => b.leads - a.leads),
+    utmSources: rankAttribution(utmStats),
+    landingPages: rankAttribution(landingStats).slice(0, TOP_LANDING_PAGES),
     projectTypes: [...typeStats.entries()]
       .map(([type, stats]) => ({ type, ...stats }))
       .sort((a, b) => b.quoted - a.quoted),

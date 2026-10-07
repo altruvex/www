@@ -21,6 +21,7 @@ import { RowActions, useRecordDelete } from "@/components/os/delete-record";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar, DropdownMenuItem, Hint } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
 import { inspectHref } from "@/components/os/inspect-sheet";
 import {
   InlineSelect,
@@ -29,7 +30,7 @@ import {
 import { cn } from "@/lib/utils";
 import { when, phone as fmtPhone, money } from "@/lib/format";
 import { optionsOf, statusOf, WRITABLE_STATUSES } from "@/lib/status";
-import { scoreTone } from "@/lib/lead-score";
+import { scoreTone, type ScoreBand } from "@/lib/lead-score";
 import {
   bulkChangeClientStatus,
   changeClientPriority,
@@ -71,6 +72,8 @@ export interface LeadRow {
   estimateMax: number | null;
   stage: string;
   score: number;
+  scoreBand: ScoreBand;
+  recommendedAction: string;
   scoreReasons: string[];
   messageCount: number;
   inboundCount: number;
@@ -101,6 +104,8 @@ export function LeadsTable({
     row: LeadRow;
     settle: (result: InlineCommitResult) => void;
   } | null>(null);
+  const lostOne = useLostInput();
+  const lostMany = useLostInput();
 
   function runBulk(status: string) {
     return (selected: LeadRow[]) => {
@@ -147,7 +152,10 @@ export function LeadsTable({
             label: "Mark lost",
             icon: XCircle,
             destructive: true,
-            onRun: (selected: LeadRow[]) => setLosing(selected),
+            onRun: (selected: LeadRow[]) => {
+              lostMany.reset();
+              setLosing(selected);
+            },
           },
         ]
       : []),
@@ -191,7 +199,7 @@ export function LeadsTable({
     {
       id: "score",
       header: "Score",
-      width: "76px",
+      width: "150px",
       cell: (row) => (
         <Hint
           label={
@@ -199,6 +207,7 @@ export function LeadsTable({
               <span className="block font-medium">
                 How this score was built
               </span>
+              <span className="block">{row.recommendedAction}</span>
               {row.scoreReasons.map((reason) => (
                 <span key={reason} className="block font-mono text-micro">
                   {reason}
@@ -224,6 +233,9 @@ export function LeadsTable({
             <span className="font-mono text-meta tabular-nums">
               {row.score}
             </span>
+            <span className="truncate text-meta text-muted-foreground">
+              {row.scoreBand}
+            </span>
           </span>
         </Hint>
       ),
@@ -248,9 +260,10 @@ export function LeadsTable({
             )}
             onCommit={(next) =>
               next === "LOST"
-                ? new Promise<InlineCommitResult>((settle) =>
-                    setLosingOne({ row, settle }),
-                  )
+                ? new Promise<InlineCommitResult>((settle) => {
+                    lostOne.reset();
+                    setLosingOne({ row, settle });
+                  })
                 : commit(changeClientStatus(row.id, next))
             }
           />
@@ -499,10 +512,11 @@ export function LeadsTable({
         title="Mark this lead lost?"
         consequence="It leaves the open leads. Its history stays, and the status can be changed back from the client page."
         confirmLabel="Mark lost"
+        confirmDisabled={!lostOne.ready}
         onConfirm={async () => {
           if (!losingOne) return;
           const { row, settle } = losingOne;
-          const result = await changeClientStatus(row.id, "LOST");
+          const result = await changeClientStatus(row.id, "LOST", lostOne.value);
           if (result.ok) {
             settle({ ok: true, message: result.message ?? "Saved." });
             setLosingOne(null);
@@ -510,7 +524,9 @@ export function LeadsTable({
           }
           return result;
         }}
-      />
+      >
+        <LostReasonFields value={lostOne.value} onChange={lostOne.setValue} />
+      </ConfirmDialog>
       <ConfirmDialog
         open={losing !== null}
         onOpenChange={(open) => !open && setLosing(null)}
@@ -518,10 +534,12 @@ export function LeadsTable({
         title={`Mark ${losing?.length ?? 0} lead${losing?.length === 1 ? "" : "s"} lost?`}
         consequence="They leave the open leads. Their history stays, and the status can be changed back from the client page."
         confirmLabel="Mark lost"
+        confirmDisabled={!lostMany.ready}
         onConfirm={async () => {
           const result = await bulkChangeClientStatus(
             (losing ?? []).map((r) => r.id),
             "LOST",
+            lostMany.value,
           );
           if (result.ok) {
             setLosing(null);
@@ -529,7 +547,9 @@ export function LeadsTable({
           }
           return result;
         }}
-      />
+      >
+        <LostReasonFields value={lostMany.value} onChange={lostMany.setValue} />
+      </ConfirmDialog>
     </>
   );
 }

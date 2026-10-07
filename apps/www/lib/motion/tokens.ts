@@ -1,5 +1,5 @@
 import { THEME_CROSSFADE } from "@repo/ui/theme-switch";
-import { ACCENT_SHIMMER } from "@repo/ui/www";
+import { ACCENT_SHIMMER } from "@repo/ui/www/emphasis";
 
 export interface SpringConfig {
   stiffness: number;

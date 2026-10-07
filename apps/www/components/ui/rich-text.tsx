@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Dim, Strong } from "@repo/ui/www";
+import { Dim, Strong } from "@repo/ui/www/emphasis";
 
 export const bodyMarks = {
   strong: (chunks: ReactNode) => <Strong>{chunks}</Strong>,

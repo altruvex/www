@@ -4,9 +4,10 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { useFillPricingTokens } from "@/components/providers/pricing-tokens-provider";
 import { Eyebrow } from "@repo/ui/www";
 import { trackEvent } from "@/lib/analytics";
+import { attributionPayload } from "@/lib/attribution";
 import { FORM_ERROR_KEY, readApiResult } from "@/lib/api-errors";
 import { cn } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface AuditLeadCaptureProps {
@@ -18,6 +19,7 @@ export function AuditLeadCapture({
   source = "article_audit_cta",
   className,
 }: AuditLeadCaptureProps) {
+  const locale = useLocale();
   const t = useTranslations("auditLead");
   const tValidations = useTranslations("validations");
   const fillTokens = useFillPricingTokens();
@@ -46,13 +48,18 @@ export function AuditLeadCapture({
       const response = await fetch("/api/exit-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, source }),
+        body: JSON.stringify({
+          phone,
+          source,
+          locale,
+          ...attributionPayload(),
+        }),
       });
 
       const result = await readApiResult(response);
       if (result.ok) {
         setIsSuccess(true);
-        trackEvent("audit_lead_captured", { source });
+        trackEvent("audit_lead_submitted", { locale, source });
       } else if (result.code === "validation") {
         setError(t("phoneError"));
       } else {

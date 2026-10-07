@@ -37,6 +37,7 @@ export const NOTIFIED_ACTIONS: Record<string, string> = {
   "deployment.failed": ":red_circle:",
   "deployment.rolled_back": ":rewind:",
   "service.renewal_due": ":hourglass_flowing_sand:",
+  "lead.follow_up_due": ":alarm_clock:",
 };
 
 const DELETED_SUFFIX = ".deleted";

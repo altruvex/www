@@ -14,6 +14,11 @@
     "./styles": "./src/styles/globals.css",
     "./styles/tokens": "./src/styles/tokens.css",
     "./styles/liquid-glass": "./src/styles/liquid-glass.css",
+    "./lib/direction": "./src/lib/direction.tsx",
+    "./lib/utils": "./src/lib/utils.ts",
+    "./www/emphasis": "./src/www/emphasis.tsx",
+    "./www/eyebrow": "./src/www/eyebrow.tsx",
+    "./components/primitives/arrow-icon": "./src/components/primitives/arrow-icon.tsx",
     "./palette": "./src/palette.ts",
     "./theme-switch": "./src/theme-switch.ts"
   },

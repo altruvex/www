@@ -1,7 +1,8 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
-import { Eyebrow, Highlight } from "@repo/ui/www";
+import { Highlight } from "@repo/ui/www/emphasis";
+import { Eyebrow } from "@repo/ui/www/eyebrow";
 import { getCommercialCta } from "@/lib/config/commercial";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";

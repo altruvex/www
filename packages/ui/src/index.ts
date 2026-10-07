@@ -1,3 +1,10 @@
+// Client components import from this barrel freely. A Server Component must not: Next
+// registers every "use client" module the barrel reaches as a client reference, so one
+// server import ships all of them (Radix, Sonner, vaul…) on every page under it. Server
+// files import the one module by path instead, through the subpaths in package.json
+// "exports" (e.g. @repo/ui/lib/utils, @repo/ui/www/eyebrow). Measured 2026-10-07: the
+// root layout importing DirectionProvider from here cost the homepage ~84KB gzipped JS.
+
 export * from "./lib/utils";
 export * from "./lib/direction";
 

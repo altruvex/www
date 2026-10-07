@@ -110,5 +110,34 @@
   },
   "subtitle": "The initial project consultation call has no charge, and it is separate from the paid technical audit. Use it to decide whether a custom build is the right move and what it would involve, before any proposal. You leave with <strong>a clearer scope and an honest next step.</strong>",
   "title": "Schedule a 30-minute project consultation.",
-  "writeLead": "Prefer to write first?"
+  "writeLead": "Prefer to write first?",
+  "confirm": {
+    "eyebrow": "Booked",
+    "title": "Your call is requested."
+  },
+  "brief": {
+    "eyebrow": "Optional",
+    "title": "Before the call",
+    "intro": "Three short answers let the call start with your project instead of background. Skip any of them.",
+    "current": {
+      "label": "What exists today?",
+      "placeholder": "A site, a spreadsheet, a manual process, or nothing yet."
+    },
+    "change": {
+      "label": "What needs to change?",
+      "placeholder": "The part that is not working, or what is missing."
+    },
+    "stakes": {
+      "label": "What happens if nothing changes?",
+      "placeholder": "What it costs you in time, money or customers."
+    },
+    "count": "{count}/{max}",
+    "submit": "Add to the call notes",
+    "submitting": "Sending…",
+    "skipNote": "Write in any box to send, or leave this for the call.",
+    "success": "Added to your call notes. We will read them before we call.",
+    "error": "Your answers did not go through.",
+    "retry": "Try again",
+    "expired": "This step has closed. Your booking stands; bring these points to the call."
+  }
 }

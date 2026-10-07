@@ -3,7 +3,7 @@ import {
   Highlight,
   Strong,
   type AccentGradient,
-} from "@repo/ui/www";
+} from "@repo/ui/www/emphasis";
 import { MDXComponents } from "mdx/types";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";

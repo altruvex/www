@@ -9,6 +9,8 @@ import {
   tooManyRequests,
   unexpectedError,
 } from "@/lib/server/api-error";
+import { toLocale } from "@/i18n/locale-meta";
+import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
 
 const exitIntentSchema = z.object({
   phone: z
@@ -45,6 +47,8 @@ export async function POST(request: NextRequest) {
     const body = await readJsonBody(request);
     if (!body) return apiError("bad_request");
     const { phone, source } = exitIntentSchema.parse(body);
+    const locale = toLocale(body.locale);
+    const attribution = parseAttribution(body);
 
     const submission = await prisma.contactSubmission.create({
       data: {
@@ -52,7 +56,12 @@ export async function POST(request: NextRequest) {
         phone,
         message: `Captured via ${source}`,
         priority: "HIGH",
-        locale: "en",
+        locale,
+        referrer: attribution.referrer ?? externalReferer(request),
+        utmSource: attribution.utmSource,
+        utmMedium: attribution.utmMedium,
+        utmCampaign: attribution.utmCampaign,
+        landingPath: attribution.landingPath,
       },
       select: { id: true },
     });

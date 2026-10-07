@@ -8,6 +8,7 @@ import {
   FileText,
   Globe,
   MessageCircle,
+  PhoneForwarded,
   RefreshCw,
   Rocket,
   Server,
@@ -29,7 +30,7 @@ import { entityHref } from "@/lib/entity-links";
 import type { Tone } from "@/lib/status";
 import { canSeeFinance, type Role } from "@/lib/nav";
 import { pageDecision, ROUTE_GATES, type RouteGate } from "@/lib/route-gates";
-import { UNCONTACTED_WHERE } from "@/lib/dashboard-data";
+import { uncontactedWhere } from "@/lib/dashboard-data";
 
 export interface ActionItem {
   id: string;
@@ -88,7 +89,10 @@ async function buildActionCentre(): Promise<ActionItem[]> {
   const now = new Date();
   const in7Days = new Date(now.getTime() + 7 * DAY);
 
+  const endOfToday = new Date(overdueCutoff(now).getTime() + DAY);
+
   const [
+    dueFollowUps,
     coldLeads,
     awaitingResponse,
     expiringProposals,
@@ -105,7 +109,23 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     expiringServices,
   ] = await Promise.all([
     prisma.client.findMany({
-      where: UNCONTACTED_WHERE,
+      where: {
+        nextActionAt: { lt: endOfToday },
+        status: { notIn: ["LOST", "SPAM"] },
+      },
+      select: {
+        id: true,
+        name: true,
+        company: true,
+        status: true,
+        nextActionAt: true,
+        nextActionNote: true,
+      },
+      orderBy: { nextActionAt: "asc" },
+      take: 25,
+    }),
+    prisma.client.findMany({
+      where: uncontactedWhere(),
       select: { id: true, name: true, company: true, phone: true, createdAt: true },
       orderBy: { createdAt: "asc" },
       take: 25,
@@ -267,7 +287,29 @@ async function buildActionCentre(): Promise<ActionItem[]> {
   const label = (c: { name: string | null; company: string | null }) =>
     c.company || c.name || "Unnamed client";
 
+  const followedUp = new Set<string>();
+  for (const client of dueFollowUps) {
+    if (!client.nextActionAt) continue;
+    followedUp.add(client.id);
+    const overdue = Math.max(0, -calendarDaysUntil(client.nextActionAt, now));
+    const note = client.nextActionNote?.replace(/\s+/g, " ").trim();
+    items.push({
+      id: `next-${client.id}`,
+      kind: "lead",
+      icon: PhoneForwarded,
+      tone: overdue > 0 ? "danger" : "warning",
+      title: `Follow up with ${label(client)}${note ? ` — ${note.slice(0, 80)}` : ""}`,
+      detail: `${overdue === 0 ? "Due today" : `${overdue}d overdue`}${client.status === "NURTURE" ? " · back from nurture" : ""}`,
+      href: `/clients/${client.id}#lead-record`,
+      cta: "Open lead",
+      // Above every cold-lead item (max 116): a follow-up someone scheduled.
+      score: 118 + Math.min(overdue, 10) * 2,
+      ageDays: overdue,
+    });
+  }
+
   for (const lead of coldLeads) {
+    if (followedUp.has(lead.id)) continue;
     const age = ageInDays(lead.createdAt);
     items.push({
       id: `lead-${lead.id}`,

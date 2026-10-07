@@ -311,11 +311,11 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
 
   const cronMissing = present("CRON_SECRET");
   const lastRenewalNotice = await prisma.notification.findFirst({
-    where: { type: "RENEWAL_DUE" },
+    where: { type: { in: ["RENEWAL_DUE", "FOLLOW_UP_DUE"] } },
     orderBy: { createdAt: "desc" },
     select: { createdAt: true },
   });
-  const cronJob = CRON_JOBS[0];
+  const jobCount = `${CRON_JOBS.length} ${CRON_JOBS.length === 1 ? "job" : "jobs"} scheduled`;
   checks.push({
     id: "cron",
     name: "Scheduled jobs",
@@ -325,21 +325,23 @@ export async function getHealthChecks(): Promise<HealthCheck[]> {
       cronMissing.length > 0
         ? "No CRON_SECRET set — every scheduled call is refused"
         : lastRenewalNotice
-          ? `${CRON_JOBS.length} job scheduled; last renewal notice ${lastRenewalNotice.createdAt.toISOString().slice(0, 10)}`
-          : `${CRON_JOBS.length} job scheduled; no run has left a trace yet`,
+          ? `${jobCount}; last notice ${lastRenewalNotice.createdAt.toISOString().slice(0, 10)}`
+          : `${jobCount}; no run has left a trace yet`,
     impact:
-      "The renewal sweep is what turns an expiring service into a notification and a Slack line. Without it, expiries are only noticed when someone opens the Services screen.",
+      "The sweeps are what turn an expiring service or a due lead follow-up into a notification and a Slack line. Without them, both are only noticed when someone opens the Services screen or the action centre.",
     remedy:
       cronMissing.length > 0
         ? "Set CRON_SECRET (16+ characters) in the environment and in the platform's cron configuration, then redeploy."
         : lastRenewalNotice
           ? undefined
-          : "Nothing to fix until a service comes within a renewal window — the sweep only writes when something is due.",
+          : "Nothing to fix until a service comes within a renewal window or a lead follow-up falls due — the sweeps only write when something is due.",
     setup: { href: "/services", label: "Services" },
     lastChecked: at,
     metrics: [
-      { label: "Job", value: cronJob.path },
-      { label: "Schedule", value: `${cronJob.schedule} (${cronJob.scheduleText})` },
+      ...CRON_JOBS.map((job) => ({
+        label: job.name,
+        value: `${job.path} · ${job.schedule} (${job.scheduleText})`,
+      })),
       { label: "Secret", value: cronMissing.length > 0 ? "not configured" : "configured" },
       {
         label: "Last notice written",

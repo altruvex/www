@@ -16,6 +16,7 @@ import {
 } from "@repo/ui/www";
 import { Num } from "@/components/ui/num";
 import { InquiryGuide } from "./inquiry-guide";
+import { QualifyStep, type BudgetChoice } from "./qualify-step";
 import {
   FORM_ERROR_KEY,
   fieldErrorMessage,
@@ -32,6 +33,8 @@ import {
   useSectionEyebrow,
   useSectionTitle,
 } from "@/lib/motion";
+import { trackEvent } from "@/lib/analytics";
+import { attributionPayload } from "@/lib/attribution";
 import { gsap } from "@/lib/utils/gsap";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
@@ -58,7 +61,7 @@ import {
   useState,
   useSyncExternalStore,
   type ChangeEvent,
-  type FormEvent
+  type FormEvent,
 } from "react";
 
 const MESSAGE_MAX = 1000;
@@ -133,15 +136,23 @@ function useStudioTime(): string | null {
   );
 }
 
-export default function ContactPage() {
+export default function ContactPage({
+  budgetOptions,
+}: {
+  budgetOptions: readonly BudgetChoice[];
+}) {
   return (
     <div className="relative min-h-screen w-full overflow-x-clip bg-background text-foreground">
-      <ContactExperience />
+      <ContactExperience budgetOptions={budgetOptions} />
     </div>
   );
 }
 
-function ContactExperience() {
+function ContactExperience({
+  budgetOptions,
+}: {
+  budgetOptions: readonly BudgetChoice[];
+}) {
   const t = useTranslations("contactPage");
 
   const eyebrowRef = useSectionEyebrow();
@@ -177,7 +188,7 @@ function ContactExperience() {
           <div className="mt-16 border-t-2 border-foreground pt-8 md:mt-24 md:pt-10">
             <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-20 xl:gap-28">
               <div className="min-w-0">
-                <ConversationForm />
+                <ConversationForm budgetOptions={budgetOptions} />
               </div>
               <aside className="mt-16 lg:mt-0">
                 <DirectChannels />
@@ -190,7 +201,11 @@ function ContactExperience() {
   );
 }
 
-function ConversationForm() {
+function ConversationForm({
+  budgetOptions,
+}: {
+  budgetOptions: readonly BudgetChoice[];
+}) {
   const t = useTranslations("contactPage");
   const tValidations = useTranslations("validations");
 
@@ -215,25 +230,23 @@ function ConversationForm() {
       message:
         incoming === "maintenance" && plan
           ? t("letter.planMessage", {
-            plan: pricingCopy(locale as Locale).maintenance[plan].name,
-            billing:
-              searchParams.get("billing") === "annual"
-                ? "annual"
-                : "monthly",
-          })
+              plan: pricingCopy(locale as Locale).maintenance[plan].name,
+              billing:
+                searchParams.get("billing") === "annual" ? "annual" : "monthly",
+            })
           : "",
     };
   });
 
   const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [touched, setTouched] = useState<
-    Partial<Record<Field, boolean>>
-  >({});
+  const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receivedAt, setReceivedAt] = useState<Date | null>(null);
+  const [stepToken, setStepToken] = useState<string | null>(null);
 
+  const startedRef = useRef(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useIsomorphicLayoutEffect(() => {
@@ -286,7 +299,15 @@ function ConversationForm() {
     return found;
   };
 
-  const update = (field: keyof Values) =>
+  // First field focus, once per visit; focus bubbles up to the form.
+  const markStarted = () => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackEvent("contact_started", { locale });
+  };
+
+  const update =
+    (field: keyof Values) =>
     (
       event: ChangeEvent<
         HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -335,9 +356,7 @@ function ConversationForm() {
     if (firstInvalid) {
       setErrors(found);
       setFormError(t("letter.errorFix"));
-      document
-        .getElementById(`contact-${firstInvalid}`)
-        ?.focus();
+      document.getElementById(`contact-${firstInvalid}`)?.focus();
       return;
     }
 
@@ -353,16 +372,21 @@ function ConversationForm() {
         body: JSON.stringify({
           ...schema.parse(payloadOf(values)),
           locale,
+          ...attributionPayload(),
         }),
       });
 
-      const result = await readApiResult(response);
+      const result = await readApiResult<{ stepToken?: string }>(response);
 
       if (result.ok) {
+        setStepToken(
+          typeof result.stepToken === "string" ? result.stepToken : null,
+        );
         setValues(EMPTY);
         setTouched({});
         setErrors({});
         setReceivedAt(new Date());
+        trackEvent("contact_submitted", { locale });
         return;
       }
 
@@ -402,7 +426,12 @@ function ConversationForm() {
       <div ref={rootRef}>
         <Receipt
           receivedAt={receivedAt}
-          onWriteAnother={() => setReceivedAt(null)}
+          stepToken={stepToken}
+          budgetOptions={budgetOptions}
+          onWriteAnother={() => {
+            setReceivedAt(null);
+            setStepToken(null);
+          }}
         />
       </div>
     );
@@ -437,6 +466,7 @@ function ConversationForm() {
       </div>
       <form
         onSubmit={handleSubmit}
+        onFocus={markStarted}
         noValidate
         className="relative pt-10 md:pt-14"
       >
@@ -463,8 +493,7 @@ function ConversationForm() {
             className={cn(inlineField, inlineWidth.name)}
           />
           <span className="text-muted-foreground">
-            ,{" "}
-            {t("letter.aboutLabel")}{" "}
+            , {t("letter.aboutLabel")}{" "}
           </span>
           <Select
             name="service"
@@ -495,8 +524,7 @@ function ConversationForm() {
             </SelectContent>
           </Select>
           <span className="text-muted-foreground">
-            .{" "}
-            {t("letter.replyLabel")}{" "}
+            . {t("letter.replyLabel")}{" "}
           </span>
           <input
             id="contact-phone"
@@ -552,15 +580,11 @@ function ConversationForm() {
             <span
               className={cn(
                 "font-mono text-xs tabular-nums text-muted-foreground",
-                values.message.length > MESSAGE_MAX &&
-                "text-destructive",
+                values.message.length > MESSAGE_MAX && "text-destructive",
               )}
             >
               {t("letter.count", {
-                count: localizeNumbers(
-                  String(values.message.length),
-                  locale,
-                ),
+                count: localizeNumbers(String(values.message.length), locale),
                 max: localizeNumbers(String(MESSAGE_MAX), locale),
               })}
             </span>
@@ -598,16 +622,10 @@ function ConversationForm() {
             onChange={(event) => setWebsite(event.target.value)}
           />
         </div>
-        <div
-          aria-live="assertive"
-          className="mt-5 min-h-5 empty:hidden"
-        >
+        <div aria-live="assertive" className="mt-5 min-h-5 empty:hidden">
           {formError ? (
             <p className="flex items-start gap-2 text-sm leading-snug text-destructive">
-              <AlertCircle
-                aria-hidden
-                className="mt-0.5 size-4 shrink-0"
-              />
+              <AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0" />
               {formError}
             </p>
           ) : null}
@@ -637,9 +655,7 @@ function ConversationForm() {
             disabled={isSubmitting}
             aria-busy={isSubmitting}
           >
-            {isSubmitting
-              ? t("letter.submitting")
-              : t("letter.submit")}
+            {isSubmitting ? t("letter.submitting") : t("letter.submit")}
           </MagneticButton>
         </div>
       </form>
@@ -660,9 +676,7 @@ function DirectChannels() {
   return (
     <div className="lg:sticky lg:top-24">
       <div className="border-t-2 border-foreground pt-6">
-        <Eyebrow className="m-0">
-          {t("lines.heading")}
-        </Eyebrow>
+        <Eyebrow className="m-0">{t("lines.heading")}</Eyebrow>
         <p className="mt-3 max-w-[24ch] text-sm leading-relaxed text-muted-foreground">
           {t("lines.address2")}
         </p>
@@ -745,9 +759,7 @@ function Channel({
     <div className="flex min-w-0 items-start gap-3">
       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors duration-(--motion-hover) group-hover:text-brand" />
       <div className="min-w-0">
-        <span className="block text-xs text-muted-foreground">
-          {label}
-        </span>
+        <span className="block text-xs text-muted-foreground">{label}</span>
         <span className="mt-1 block wrap-break-word text-sm leading-snug text-foreground">
           {value}
         </span>
@@ -764,10 +776,7 @@ function Channel({
   }
 
   return (
-    <a
-      href={href}
-      className={cn(classes, "dir-ltr rtl:text-end")}
-    >
+    <a href={href} className={cn(classes, "dir-ltr rtl:text-end")}>
       {content}
     </a>
   );
@@ -777,12 +786,17 @@ const RECEIPT_STEPS = ["read", "reply", "call", "after"] as const;
 
 function Receipt({
   receivedAt,
+  stepToken,
+  budgetOptions,
   onWriteAnother,
 }: {
   receivedAt: Date;
+  stepToken: string | null;
+  budgetOptions: readonly BudgetChoice[];
   onWriteAnother: () => void;
 }) {
   const t = useTranslations("contactPage.receipt");
+  const tCta = useTranslations("commercial.ctas");
   const locale = useLocale();
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -824,72 +838,81 @@ function Receipt({
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      role="status"
-      className="max-w-4xl pt-6"
-    >
-      <span
-        aria-hidden
-        data-receipt-rule
-        className="absolute inset-x-0 top-0 h-0.5 bg-local-accent"
-      />
+    <div ref={rootRef} className="max-w-4xl pt-6">
+      {/* The live region is the receipt itself; the optional step below has its own. */}
+      <div role="status">
+        <span
+          aria-hidden
+          data-receipt-rule
+          className="absolute inset-x-0 top-0 h-0.5 bg-local-accent"
+        />
 
-      <Eyebrow
-        tone="accent"
-        data-receipt-part
-        className="m-0"
-      >
-        {t("eyebrow")}
-      </Eyebrow>
+        <Eyebrow tone="accent" data-receipt-part className="m-0">
+          {t("eyebrow")}
+        </Eyebrow>
 
-      <h2
-        ref={headingRef}
-        tabIndex={-1}
-        data-receipt-part
-        className="mt-5 max-w-[18ch] text-[clamp(2.5rem,5vw,5rem)] font-light leading-[0.98] tracking-[-0.04em] text-foreground outline-none rtl:leading-[1.15] rtl:tracking-normal"
-      >
-        {t("title")}
-      </h2>
+        <h2
+          ref={headingRef}
+          tabIndex={-1}
+          data-receipt-part
+          className="mt-5 max-w-[18ch] text-[clamp(2.5rem,5vw,5rem)] font-light leading-[0.98] tracking-[-0.04em] text-foreground outline-none rtl:leading-[1.15] rtl:tracking-normal"
+        >
+          {t("title")}
+        </h2>
+
+        <p data-receipt-part className="mt-5 text-sm text-muted-foreground">
+          {t("sentAt", {
+            time: formatBusinessTime(locale, receivedAt),
+          })}
+        </p>
+
+        <div
+          data-receipt-part
+          className="mt-16 border-t border-border-subtle pt-6"
+        >
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="size-4 text-brand" />
+
+            <h3 className="text-sm font-medium text-foreground">
+              {t("nextLabel")}
+            </h3>
+          </div>
+
+          <ol className="mt-7 space-y-7">
+            {RECEIPT_STEPS.map((step, index) => (
+              <li
+                key={step}
+                className="grid grid-cols-[3rem_minmax(0,1fr)] items-start gap-3 border-b border-border-subtle pb-7 last:border-b-0"
+              >
+                <span className="font-mono text-xs tabular-nums text-local-accent-text">
+                  <Num value={index + 1} pad={2} />
+                </span>
+
+                <span className="max-w-[52ch] text-base leading-relaxed text-foreground">
+                  {t(`steps.${step}`)}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
 
       <p
         data-receipt-part
-        className="mt-5 text-sm text-muted-foreground"
+        className="mt-10 text-sm leading-relaxed text-muted-foreground"
       >
-        {t("sentAt", {
-          time: formatBusinessTime(locale, receivedAt),
-        })}
+        {t("scheduleLead")}{" "}
+        <DirectionalLink
+          href={getCommercialCta("technicalCall").href}
+          className={alternateLink}
+        >
+          {tCta("technicalCall")}
+        </DirectionalLink>
       </p>
 
-      <div
-        data-receipt-part
-        className="mt-16 border-t border-border-subtle pt-6"
-      >
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="size-4 text-brand" />
-
-          <h3 className="text-sm font-medium text-foreground">
-            {t("nextLabel")}
-          </h3>
-        </div>
-
-        <ol className="mt-7 space-y-7">
-          {RECEIPT_STEPS.map((step, index) => (
-            <li
-              key={step}
-              className="grid grid-cols-[3rem_minmax(0,1fr)] items-start gap-3 border-b border-border-subtle pb-7 last:border-b-0"
-            >
-              <span className="font-mono text-xs tabular-nums text-local-accent-text">
-                <Num value={index + 1} pad={2} />
-              </span>
-
-              <span className="max-w-[52ch] text-base leading-relaxed text-foreground">
-                {t(`steps.${step}`)}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
+      {stepToken ? (
+        <QualifyStep token={stepToken} budgetOptions={budgetOptions} />
+      ) : null}
 
       <button
         type="button"
@@ -898,22 +921,13 @@ function Receipt({
         className="mt-10 inline-flex items-center gap-2 text-sm text-foreground underline underline-offset-4 decoration-foreground/35 transition-colors duration-(--motion-hover) hover:decoration-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
       >
         {t("another")}
-        <ArrowIcon
-          direction="forward"
-          className="size-3.5"
-        />
+        <ArrowIcon direction="forward" className="size-3.5" />
       </button>
     </div>
   );
 }
 
-function FieldError({
-  field,
-  message,
-}: {
-  field: Field;
-  message?: string;
-}) {
+function FieldError({ field, message }: { field: Field; message?: string }) {
   if (!message) return null;
 
   return (
@@ -921,11 +935,8 @@ function FieldError({
       id={`contact-${field}-error`}
       className="mt-3 flex items-start gap-1.5 text-sm leading-snug text-destructive"
     >
-      <AlertCircle
-        aria-hidden
-        className="mt-0.5 size-3.5 shrink-0"
-      />
+      <AlertCircle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
       {message}
     </p>
   );
-} 
+}

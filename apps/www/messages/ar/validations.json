@@ -1,5 +1,6 @@
 {
   "contact": {
+    "brief-max": "يجب ألا تتجاوز كل إجابة 600 حرف.",
     "budget-invalid": "يرجى اختيار نطاق ميزانية صالح.",
     "email-invalid": "أدخل بريدًا إلكترونيًا صالحًا.",
     "email-max": "يجب ألا يتجاوز البريد الإلكتروني 160 حرفًا.",
@@ -23,6 +24,7 @@
     "scheduled-time-format": "يجب إدخال الوقت بصيغة ساعة:دقيقة (HH:MM).",
     "scheduled-time-outside-hours": "اختر وقتًا ضمن ساعات العمل.",
     "service-interest-invalid": "يرجى اختيار خدمة صالحة.",
+    "step-empty": "أجب عن سؤال واحد على الأقل، أو تخطَّ هذه الخطوة.",
     "submission-id-invalid": "مرجع الإرسال غير صالح."
   },
   "transparency-lead": {

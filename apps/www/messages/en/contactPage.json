@@ -59,7 +59,49 @@
       "call": "If the project fits what we build, we suggest the 30-minute initial project consultation call. If it does not, we say so, and why.",
       "after": "After the call, we recommend one next step: a technical audit, a written proposal, a project estimate, or a decision not to build yet."
     },
-    "another": "Send another inquiry"
+    "another": "Send another inquiry",
+    "scheduleLead": "Rather talk it through now?",
+    "qualify": {
+      "eyebrow": "Optional",
+      "title": "Help us prepare",
+      "intro": "Four quick questions so our first reply is already useful. Answer what you can and skip the rest.",
+      "situation": {
+        "legend": "Where does the project stand?",
+        "options": {
+          "new-build": "Starting from scratch",
+          "replace-existing": "Replacing a site or system",
+          "improve-existing": "Improving what we have"
+        }
+      },
+      "budget": {
+        "legend": "What budget are you working with?"
+      },
+      "timeline": {
+        "legend": "When would you like to start?",
+        "options": {
+          "immediate": "Right away",
+          "soon": "Within a month or two",
+          "planning": "Later this year",
+          "exploring": "Just exploring"
+        }
+      },
+      "role": {
+        "legend": "Who makes the decision?",
+        "options": {
+          "decides": "I do",
+          "shared": "I decide with others",
+          "advises": "I advise, someone else decides"
+        }
+      },
+      "submit": "Add to my inquiry",
+      "submitting": "Adding…",
+      "skipNote": "Pick any answer to send, or leave this as it is.",
+      "success": "Added to your inquiry.",
+      "successNote": "We will read it alongside your message.",
+      "error": "Your answers did not go through.",
+      "retry": "Try again",
+      "expired": "This step has closed. Your inquiry is safe; tell us the rest when we reply."
+    }
   },
   "guide": {
     "title": "What to include in your message",

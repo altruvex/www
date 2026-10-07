@@ -9,6 +9,8 @@ import { Timeline } from "@/components/os/timeline";
 import { EntityAudit } from "@/components/os/entity-audit";
 import { EntityLink } from "@/components/os/entity-link";
 import { NextSteps } from "@/components/os/next-steps";
+import { BeforeTheCall } from "@/components/os/before-the-call";
+import { loadPreCall } from "@/lib/precall";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
 import { currentRole } from "@/lib/authorize";
@@ -61,6 +63,8 @@ export default async function SubmissionDetailPage({
     },
   });
   if (!submission) notFound();
+
+  const preCall = await loadPreCall({ submissionId: submission.id });
 
   const activity = buildActivity({
     submission,
@@ -315,6 +319,27 @@ export default async function SubmissionDetailPage({
           canWrite={canTriage}
           canDelete={can(role, "delete", "note")}
         />
+
+        {preCall && (
+          <section aria-labelledby="before-the-call" className="space-y-3">
+            <h2 id="before-the-call" className="text-md font-semibold">
+              Before the call
+            </h2>
+            {preCall.clientId && (
+              <p className="text-base text-muted-foreground">
+                Owner and next action are edited on the{" "}
+                <Link
+                  href={`/clients/${preCall.clientId}#lead-record`}
+                  className="underline underline-offset-2"
+                >
+                  client record
+                </Link>
+                .
+              </p>
+            )}
+            <BeforeTheCall view={preCall} />
+          </section>
+        )}
 
         <Panel title="Activity" flush bodyClassName="p-2">
           <Timeline

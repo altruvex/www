@@ -12,14 +12,12 @@ import { bodyMarks } from "@/components/ui/rich-text";
 import type { ProjectType } from "@/hooks/use-transparency";
 import type { EstimatorPricing } from "@/components/sections/transparency-estimator/span";
 import {
-  scrollToY,
   useSectionDescription,
   useSectionElement,
 } from "@/lib/motion";
 import { getCommercialCta } from "@/lib/config/commercial";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import type { MouseEvent } from "react";
 
 const PROJECT_TYPES = ["website", "webapp", "ecommerce", "pwa"] as const;
 
@@ -57,45 +55,19 @@ export default function TransparencyPageClient({
   );
 }
 
-// The visitor who has a range asks for the proposal from the result panel,
-// where their answers travel with the request. The primary scrolls there
-// (Lenis owns the scroll, so the hash jump is done by hand) — or to the top
-// of the estimator while the result is not on screen yet.
-function goToEstimate(event: MouseEvent<HTMLDivElement>) {
-  const link = (event.target as HTMLElement).closest("a");
-  if (!link || !link.hash) return;
-  const target =
-    document.getElementById(RESULT_HEADING_ID) ??
-    document.getElementById(ESTIMATOR_ID);
-  if (!target) return;
-  event.preventDefault();
-  scrollToY(
-    target.getBoundingClientRect().top +
-      window.scrollY -
-      parseFloat(getComputedStyle(target).scrollMarginTop || "0"),
-  );
-}
-
-const RESULT_HEADING_ID = "estimate-result-heading";
-const ESTIMATOR_ID = "transparency-estimator";
-
+// The proposal itself is requested from the result panel, where the answers
+// travel with it; this close never links back to /transparency.
 function TransparencyEndCta() {
   const t = useTranslations("transparency.close");
-  const tPM = useTranslations("pricingModel.result");
 
   return (
-    <div onClickCapture={goToEstimate}>
-      <SectionEndCta
-        title={t("title")}
-        titleAccent={t("titleAccent")}
-        body={t("body")}
-        primary={{
-          href: `${getCommercialCta("projectRange").href}#${RESULT_HEADING_ID}`,
-          label: tPM("requestProposal"),
-        }}
-        secondary="technicalCall"
-      />
-    </div>
+    <SectionEndCta
+      title={t("title")}
+      titleAccent={t("titleAccent")}
+      body={t("body")}
+      primary="technicalCall"
+      secondary="describeTheBuild"
+    />
   );
 }
 

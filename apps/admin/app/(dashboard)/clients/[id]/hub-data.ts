@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { prisma, type Prisma } from "@repo/database";
 import { clientPayments, type ClientPayment } from "@/lib/client-payments";
 import { listServices, type ServiceRow } from "@/lib/client-services";
-import { deriveClientStage } from "@/lib/dashboard-data";
+import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { entityHref } from "@/lib/entity-links";
 import { dueLabel, when } from "@/lib/format";
 import { isPaymentOverdue } from "@/lib/payment-overdue";
@@ -91,6 +91,8 @@ export const CLIENT_HUB_INCLUDE = {
   messages: { orderBy: { createdAt: "desc" }, take: 60 },
   emails: { orderBy: { createdAt: "desc" }, take: 60 },
   notes: { orderBy: [{ pinned: "desc" }, { createdAt: "desc" }] },
+  ...STAGE_MEETINGS_SELECT,
+  owner: { select: { id: true, name: true, email: true } },
 } satisfies Prisma.ClientInclude;
 
 export type HubClient = Prisma.ClientGetPayload<{

@@ -23,6 +23,7 @@ put down what they are doing.
 | `payment.status_changed` | money moved, or did not |
 | `subscription.created`, `subscription.cancelled` | a retainer began or ended |
 | `incident.opened` | something is down |
+| `lead.follow_up_due` | a lead's follow-up date arrived, or a new website lead is still waiting on the promised first reply (daily sweep) |
 | `build.failed`, `deployment.failed`, `deployment.rolled_back` | a release went wrong |
 | any `*.deleted` | a record was destroyed |
 

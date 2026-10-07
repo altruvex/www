@@ -1,4 +1,4 @@
-import { Strong } from "@repo/ui/www";
+import { Strong } from "@repo/ui/www/emphasis";
 import { cn } from "@/lib/utils/utils";
 import type { ReactNode } from "react";
 

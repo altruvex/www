@@ -52,8 +52,24 @@ const updateClientSchema = z.object({
   billingEmail: z.email().optional().or(z.literal("")),
   taxId: optionalText(80),
   status: z
-    .enum(["NEW", "VIEWED", "CONTACTED", "QUALIFIED", "PROPOSAL_SENT", "WON", "LOST", "SPAM"])
+    .enum([
+      "NEW",
+      "VIEWED",
+      "CONTACTED",
+      "QUALIFYING",
+      "QUALIFIED",
+      "NURTURE",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST",
+      "SPAM",
+    ])
     .optional(),
+  // Required with status LOST: why the lead was lost.
+  lostReason: z
+    .enum(["BUDGET", "TIMING", "FIT", "COMPETITOR", "NO_RESPONSE", "OTHER"])
+    .optional(),
+  lostNote: optionalText(1000),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
 });
 
@@ -76,6 +92,12 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
   if (input.status !== undefined && !WRITABLE_STATUSES.has(input.status)) {
     throw conflict(derivedStatusMessage(input.status));
   }
+  if (input.status === "LOST" && !input.lostReason) {
+    throw conflict("Pick a reason before marking this lost (lostReason).");
+  }
+  if (input.lostReason && input.status !== "LOST") {
+    throw badRequest("lostReason is only accepted together with status LOST.");
+  }
 
   const before = await prisma.client.findUnique({
     where: { id },
@@ -92,6 +114,8 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
       taxId: true,
       status: true,
       priority: true,
+      lostReason: true,
+      lostNote: true,
     },
   });
   if (!before) throw notFound("Client not found");
@@ -126,6 +150,10 @@ export const PATCH = withAdmin<{ id: string }>(async (request, { actor, params }
     if (value !== undefined) updateData[key] = value || null;
   }
   if (input.status !== undefined) updateData.status = input.status as SubmissionStatus;
+  if (input.status === "LOST" && input.lostReason) {
+    updateData.lostReason = input.lostReason;
+    updateData.lostNote = input.lostNote || null;
+  }
   if (input.priority !== undefined) updateData.priority = input.priority as Priority;
 
   const client = await prisma.client.update({ where: { id }, data: updateData });

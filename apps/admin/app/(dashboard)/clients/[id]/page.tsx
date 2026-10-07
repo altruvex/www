@@ -13,6 +13,7 @@ import {
   MessageCircle,
   NotebookPen,
   Phone,
+  PhoneCall,
   Rocket,
   Wallet,
 } from "lucide-react";
@@ -30,6 +31,10 @@ import {
 } from "@/components/os/section-index";
 import { ServicesList } from "@/components/os/services/services-list";
 import { Timeline } from "@/components/os/timeline";
+import { BeforeTheCall } from "@/components/os/before-the-call";
+import { FollowUpSheet } from "@/components/os/follow-up-sheet";
+import { LeadRecordEditor } from "@/components/os/lead-record-editor";
+import { dayString, loadOwnerOptions, loadPreCall } from "@/lib/precall";
 import { StatusPill } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
 import { currentRole } from "@/lib/authorize";
@@ -39,6 +44,7 @@ import { redactMoney } from "@/lib/client-services";
 import { emailTransport } from "@/lib/email";
 import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
 import { httpUrl } from "@/lib/http-url";
+import { scheduleLink } from "@/lib/lead-follow-up";
 import { canSeeFinance, type Role } from "@/lib/nav";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
@@ -165,6 +171,10 @@ export default async function ClientDetailPage({
 
   const canEdit = can(role, "edit", "client");
   const canAudit = role === "OWNER" || role === "ADMIN";
+  const [preCall, owners] = await Promise.all([
+    loadPreCall({ clientId: client.id }),
+    canEdit ? loadOwnerOptions() : Promise.resolve([]),
+  ]);
 
   const sections: DossierSectionDef[] = [
     {
@@ -173,6 +183,7 @@ export default async function ClientDetailPage({
       icon: <LayoutDashboard />,
       count: scopedHub.attention.length || undefined,
     },
+    { id: "lead-record", label: "Before the call", icon: <PhoneCall /> },
     {
       id: "deals",
       label: "Deals",
@@ -329,6 +340,50 @@ export default async function ClientDetailPage({
           <div className="space-y-4">
             <OverviewTab hub={scopedHub} showMoney={showMoney} role={role} />
           </div>
+        </DossierSection>
+
+        <DossierSection
+          id="lead-record"
+          title="Before the call"
+          description="Score, answers, the booked call and who follows up"
+        >
+          {preCall && (
+            <BeforeTheCall
+              view={preCall}
+              editor={
+                canEdit ? (
+                  <div className="space-y-4">
+                    {/* Sales follow-ups stop once the client signs; delivery has its own channels. */}
+                    {can(role, "send", "message") && stage !== "SIGNED" && stage !== "SPAM" && (
+                      <FollowUpSheet
+                        lead={{
+                          id: client.id,
+                          label: name,
+                          name: client.name,
+                          email: client.email,
+                          phone: client.phone,
+                          stage,
+                        }}
+                        emailConfigured={emailTransport() !== "none"}
+                        scheduleLink={scheduleLink()}
+                      />
+                    )}
+                    <LeadRecordEditor
+                      // A sent follow-up moves the date on the server; remount so the form shows it.
+                      key={`${client.ownerId}:${dayString(client.nextActionAt)}:${client.nextActionNote ?? ""}`}
+                      clientId={client.id}
+                      admins={owners}
+                      initial={{
+                        ownerId: client.ownerId,
+                        nextActionAt: dayString(client.nextActionAt),
+                        nextActionNote: client.nextActionNote ?? "",
+                      }}
+                    />
+                  </div>
+                ) : undefined
+              }
+            />
+          )}
         </DossierSection>
 
         <DossierSection

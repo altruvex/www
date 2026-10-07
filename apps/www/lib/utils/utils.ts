@@ -1,5 +1,5 @@
 // The one cn (and its tailwind-merge registry) lives in @repo/ui; www reads it from there.
-export { cn } from "@repo/ui";
+export { cn } from "@repo/ui/lib/utils";
 
 export function splitHeadline(value: string): {
   first: string;

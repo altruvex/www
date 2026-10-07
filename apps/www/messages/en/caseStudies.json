@@ -128,5 +128,10 @@
       "PWA",
       "PostgreSQL + Prisma"
     ]
+  },
+  "endCta": {
+    "title": "Facing a similar problem?",
+    "body": "Same process, same standards. Describe what you are building, or see what a similar build costs in the estimator first.",
+    "estimate": "Estimate a similar build"
   }
 }

@@ -7,7 +7,7 @@
     "facts": {
       "start": {
         "label": "Where it starts",
-        "note": "The published floor for any build."
+        "note": "Custom engagements start here."
       },
       "estimate": {
         "label": "Your estimate",
@@ -59,7 +59,7 @@
     "scope": {
       "name": "Scope",
       "does": "What gets designed, engineered and integrated sets the project type.",
-      "cap": "Published floor"
+      "cap": "Custom engagements start here"
     },
     "complexity": {
       "name": "Complexity",
@@ -89,7 +89,7 @@
       "title": "Moves your estimate",
       "lead": "The estimator prices these four. Its range opens wide and narrows with every answer.",
       "opening": "Opening range",
-      "floorNote": "Any website or web app",
+      "floorNote": "Custom engagements start here",
       "byBand": "{name}, by complexity"
     },
     "review": {
@@ -150,7 +150,8 @@
       "name": "Website design",
       "covers": "Interface and experience design, delivered as screens and a working design system.",
       "how": "Per project, from the screens and flows involved",
-      "figure": "Scoped per project"
+      "figure": "Scoped per project",
+      "link": "Website design in detail"
     },
     "development": {
       "name": "Website and web app development",
@@ -158,17 +159,20 @@
       "how": "Published range by project type and complexity; fixed in the proposal",
       "figure": "From {floor}",
       "allPrices": "All {count} prices, by project type and complexity",
-      "matrixHead": "Project type"
+      "matrixHead": "Project type",
+      "link": "Development in detail"
     },
     "audit": {
       "name": "Technical audit",
       "covers": "Architecture, performance and security review with a remediation roadmap, in {duration}.",
-      "how": "Fixed fee, credited to the build"
+      "how": "Fixed fee, credited to the build",
+      "link": "The technical audit in detail"
     },
     "maintenance": {
       "name": "Website maintenance",
       "covers": "Updates, monitoring, backups and edit requests after launch.",
-      "how": "Monthly or yearly plan"
+      "how": "Monthly or yearly plan",
+      "link": "Maintenance in detail"
     }
   },
   "terms": {
@@ -225,7 +229,25 @@
     "confirmed": "confirmed in scope review",
     "monthly": "billed monthly or yearly, outside this range",
     "disclaimer": "Indicative only — not a quotation. The final price is set in a written proposal after scope review, valid for {days} days. {vat}",
-    "requestProposal": "Request a formal proposal"
+    "requestProposal": "Request a formal proposal",
+    "read": {
+      "title": "Preliminary read",
+      "basis": "Based on what you've entered — a likely reading, not a verdict.",
+      "engagementLabel": "Likely engagement",
+      "engagementValue": "{service} · {band} complexity",
+      "driversLabel": "What drives the range",
+      "drivers": {
+        "complexity": "The {band} complexity band",
+        "brand": "A brand identity built from scratch",
+        "timeline": "An urgent timeline"
+      },
+      "noDrivers": "Mostly the project type and complexity you chose; none of your other answers pushes it up.",
+      "nextLabel": "Recommended next step",
+      "next": {
+        "consultation": "Likely a consultation first. Web apps, extensive builds, payments or integrations, and urgent timelines are easier to scope in a conversation than in a form.",
+        "review": "Likely a written scope review. Send these answers, we confirm scope with you, then fix one figure."
+      }
+    }
   },
   "form": {
     "intro": "We review your answers, confirm scope with you, and send one written figure.",

@@ -54,9 +54,11 @@ export const submissionStatus: Registry = {
   NEW: { label: "New", tone: "info", hint: "Nobody has looked at this yet" },
   VIEWED: { label: "Viewed", tone: "neutral", hint: "Seen, not yet contacted" },
   CONTACTED: { label: "Contacted", tone: "progress" },
+  QUALIFYING: { label: "Qualifying", tone: "progress", hint: "Checking fit before a call" },
   QUALIFIED: { label: "Qualified", tone: "progress", hint: "Real opportunity" },
   PROPOSAL_SENT: { label: "Proposal sent", tone: "warning", hint: "Waiting on the client" },
   WON: { label: "Won", tone: "success" },
+  NURTURE: { label: "Nurture", tone: "neutral", hint: "Parked for a later follow-up" },
   LOST: { label: "Lost", tone: "danger" },
   SPAM: { label: "Spam", tone: "neutral" },
 };
@@ -65,10 +67,35 @@ export const WRITABLE_STATUSES: ReadonlySet<string> = new Set([
   "NEW",
   "VIEWED",
   "CONTACTED",
+  "QUALIFYING",
   "QUALIFIED",
+  "NURTURE",
   "LOST",
   "SPAM",
 ]);
+
+export const lostReason: Registry = {
+  BUDGET: { label: "Budget", tone: "neutral" },
+  TIMING: { label: "Timing", tone: "neutral" },
+  FIT: { label: "Not a fit", tone: "neutral" },
+  COMPETITOR: { label: "Went elsewhere", tone: "neutral" },
+  NO_RESPONSE: { label: "No response", tone: "neutral" },
+  OTHER: { label: "Other", tone: "neutral" },
+};
+
+export const LOST_REASONS = Object.keys(lostReason) as readonly string[];
+
+export const projectSituation: Registry = {
+  NEW_BUILD: { label: "New build", tone: "neutral" },
+  REPLACE_EXISTING: { label: "Replacing an existing system", tone: "neutral" },
+  IMPROVE_EXISTING: { label: "Improving an existing system", tone: "neutral" },
+};
+
+export const decisionRole: Registry = {
+  DECIDES: { label: "Decides", tone: "success" },
+  SHARED: { label: "Shares the decision", tone: "info" },
+  ADVISES: { label: "Advises", tone: "neutral" },
+};
 
 export function derivedStatusMessage(status: string): string {
   return (
@@ -220,17 +247,26 @@ export const budgetRange: Registry = {
   B_10K_25K: { label: "10k – 25k", tone: "info" },
   B_25K_50K: { label: "25k – 50k", tone: "progress" },
   OVER_50K: { label: "Over 50k", tone: "success" },
+  FLOOR_TO_2X: { label: "Floor – 2×", tone: "info" },
+  X2_TO_5X: { label: "2× – 5×", tone: "progress" },
+  X5_TO_10X: { label: "5× – 10×", tone: "success" },
+  OVER_10X: { label: "Over 10×", tone: "success" },
+  UNSURE: { label: "Not sure", tone: "neutral" },
 };
 
 export const pipelineStage: Registry = {
   NEW: { label: "New", tone: "info" },
   VIEWED: { label: "Viewed", tone: "neutral" },
   CONTACTED: { label: "Contacted", tone: "progress" },
+  QUALIFYING: { label: "Qualifying", tone: "progress" },
   QUALIFIED: { label: "Qualified", tone: "progress" },
+  CALL_BOOKED: { label: "Call booked", tone: "progress" },
+  CALL_COMPLETED: { label: "Call done", tone: "progress" },
   PROPOSAL_SENT: { label: "Proposal sent", tone: "warning" },
-  PROPOSAL_READ: { label: "Proposal read", tone: "warning" },
+  PROPOSAL_READ: { label: "Negotiation", tone: "warning" },
   CONTRACT_SENT: { label: "Contract sent", tone: "warning" },
   SIGNED: { label: "Signed", tone: "success" },
+  NURTURE: { label: "Nurture", tone: "neutral" },
   LOST: { label: "Lost", tone: "danger" },
   SPAM: { label: "Spam", tone: "neutral" },
 };
@@ -339,6 +375,7 @@ export const notificationType: Registry = {
   STATUS_CHANGE: { label: "Status change", tone: "neutral" },
   ASSIGNMENT: { label: "Assigned to you", tone: "warning" },
   RENEWAL_DUE: { label: "Renewal due", tone: "danger" },
+  FOLLOW_UP_DUE: { label: "Follow-up due", tone: "warning" },
 };
 
 export const REGISTRIES = {
@@ -363,6 +400,9 @@ export const REGISTRIES = {
   projectTimeline: projectTimelineLabels,
   budgetRange,
   pipelineStage,
+  lostReason,
+  projectSituation,
+  decisionRole,
   productStatus,
   productKind,
   deployEnvironment,

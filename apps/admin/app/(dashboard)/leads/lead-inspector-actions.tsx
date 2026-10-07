@@ -30,7 +30,7 @@ export function LeadInspectorActions({
 
   return (
     <>
-      {status !== "CONTACTED" && status !== "QUALIFIED" && (
+      {!["CONTACTED", "QUALIFYING", "QUALIFIED"].includes(status) && (
         <Button
           variant="outline"
           onClick={() => apply("CONTACTED")}

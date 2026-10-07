@@ -125,3 +125,76 @@ export function paymentReminderDraft(input: {
     ].join("\n"),
   };
 }
+
+/**
+ * Lead follow-ups. Defaults only: the operator edits every one before it goes,
+ * and nothing here is sent on a timer. No price, date or promise appears that
+ * the record does not hold — those are the operator's to add.
+ */
+export type LeadTemplateId = "first-reply" | "after-call" | "check-in";
+
+export const LEAD_TEMPLATES: { id: LeadTemplateId; label: string }[] = [
+  { id: "first-reply", label: "First reply" },
+  { id: "after-call", label: "After the call" },
+  { id: "check-in", label: "Check in" },
+];
+
+/** The template that fits a lead's derived stage. */
+export function leadTemplateFor(stage: string | null): LeadTemplateId {
+  if (stage === "NEW" || stage === "VIEWED") return "first-reply";
+  if (stage === "CALL_COMPLETED") return "after-call";
+  return "check-in";
+}
+
+export function leadFollowUpDraft(
+  template: LeadTemplateId,
+  input: { clientName: string | null; scheduleLink: string | null },
+): EmailDraft {
+  const hello = sign(input.clientName || "there");
+  if (template === "first-reply") {
+    return {
+      subject: "Your enquiry to Altruvex",
+      body: [
+        ...hello,
+        "Thank you for getting in touch. Before we talk, three things help us come prepared:",
+        "",
+        "- what you have today, if anything",
+        "- what has to change, and by when",
+        "- who else is part of the decision",
+        "",
+        "Rough answers are fine — reply to this message with whatever you know.",
+        ...(input.scheduleLink
+          ? ["", "Or pick a time for a 30-minute call here:", input.scheduleLink]
+          : []),
+        "",
+        "Altruvex",
+      ].join("\n"),
+    };
+  }
+  if (template === "after-call") {
+    return {
+      subject: "Following up on our call",
+      body: [
+        ...hello,
+        "Thank you for the time on the call.",
+        "",
+        "As agreed, the next step is a written proposal with the scope, the timeline and the price.",
+        "If anything we discussed has changed since, reply to this message before we send it.",
+        "",
+        "Altruvex",
+      ].join("\n"),
+    };
+  }
+  return {
+    subject: "Checking in on your project",
+    body: [
+      ...hello,
+      "We spoke a while ago about your project, and I wanted to see where things stand.",
+      "",
+      "If the timing works better now, reply to this message and we will pick it up from there.",
+      "If the project has moved on, there is no need to reply — we will not keep writing.",
+      "",
+      "Altruvex",
+    ].join("\n"),
+  };
+}

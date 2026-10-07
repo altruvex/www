@@ -6,10 +6,11 @@ import { Eyebrow, Highlight } from "@repo/ui/www";
 import { markAsConverted, useExitIntent } from "@/hooks/use-exit-intent";
 import { usePathname } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
+import { attributionPayload } from "@/lib/attribution";
 import { FORM_ERROR_KEY, readApiResult } from "@/lib/api-errors";
 import { cn } from "@/lib/utils/utils";
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 
@@ -17,6 +18,7 @@ import { useCallback, useRef, useState } from "react";
 const SUPPRESSED_ROUTES = ["/contact", "/schedule"];
 
 export const ExitIntentModal = () => {
+  const locale = useLocale();
   const t = useTranslations("exitIntent");
   const tValidations = useTranslations("validations");
   const pathname = usePathname();
@@ -31,7 +33,7 @@ export const ExitIntentModal = () => {
   const handleExit = () => {
     if (suppressed) return;
     setIsVisible(true);
-    trackEvent("exit_intent_shown");
+    trackEvent("exit_intent_shown", { locale });
   };
 
   useExitIntent(handleExit, {
@@ -60,14 +62,22 @@ export const ExitIntentModal = () => {
       const response = await fetch("/api/exit-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, source: "exit_intent_modal" }),
+        body: JSON.stringify({
+          phone,
+          source: "exit_intent_modal",
+          locale,
+          ...attributionPayload(),
+        }),
       });
 
       const result = await readApiResult(response);
       if (result.ok) {
         setIsSuccess(true);
         markAsConverted();
-        trackEvent("exit_intent_captured");
+        trackEvent("exit_intent_submitted", {
+          locale,
+          source: "exit_intent_modal",
+        });
         setTimeout(() => setIsVisible(false), 3000);
       } else if (result.code === "validation") {
         setError(t("phoneError"));
@@ -84,7 +94,6 @@ export const ExitIntentModal = () => {
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
-    trackEvent("exit_intent_dismissed");
   }, []);
 
   const panelRef = useRef<HTMLDivElement>(null);

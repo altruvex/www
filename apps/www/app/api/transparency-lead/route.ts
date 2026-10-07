@@ -14,6 +14,7 @@ import {
   unexpectedError,
 } from "@/lib/server/api-error";
 import { toLocale } from "@/i18n/locale-meta";
+import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
 
 const REFERENCE_ALPHABET = "ACDEFGHJKMNPQRTVWXY2346789";
 
@@ -26,21 +27,36 @@ function newReference() {
   return `AX-${out}`;
 }
 
-function readAttribution(request: NextRequest) {
+// First-touch values from the body win; the Referer header fills what is empty.
+function readAttribution(request: NextRequest, body: unknown) {
+  const first = parseAttribution(body);
   const referer = request.headers.get("referer");
-  if (!referer) return {};
-
-  try {
-    const url = new URL(referer);
-    return {
-      referrer: referer.slice(0, 500),
-      utmSource: url.searchParams.get("utm_source")?.slice(0, 120) ?? null,
-      utmMedium: url.searchParams.get("utm_medium")?.slice(0, 120) ?? null,
-      utmCampaign: url.searchParams.get("utm_campaign")?.slice(0, 120) ?? null,
-    };
-  } catch {
-    return {};
+  let fromHeader: {
+    referrer?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+  } = {};
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      fromHeader = {
+        referrer: externalReferer(request),
+        utmSource: url.searchParams.get("utm_source")?.slice(0, 120) || undefined,
+        utmMedium: url.searchParams.get("utm_medium")?.slice(0, 120) || undefined,
+        utmCampaign: url.searchParams.get("utm_campaign")?.slice(0, 120) || undefined,
+      };
+    } catch {
+      // An unparseable Referer adds nothing.
+    }
   }
+  return {
+    referrer: first.referrer ?? fromHeader.referrer,
+    utmSource: first.utmSource ?? fromHeader.utmSource,
+    utmMedium: first.utmMedium ?? fromHeader.utmMedium,
+    utmCampaign: first.utmCampaign ?? fromHeader.utmCampaign,
+    landingPath: first.landingPath,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -67,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     const validatedData = transparencyLeadSchema.parse(body);
-    const attribution = readAttribution(request);
+    const attribution = readAttribution(request, body);
 
     const pricing = await getPublicPricing();
     const estimate = calculateEstimate(
@@ -118,6 +134,7 @@ export async function POST(request: NextRequest) {
     await linkClientToLead({
       phone: validatedData.phone,
       name: validatedData.name,
+      email: validatedData.email,
       source: "TRANSPARENCY_ESTIMATOR",
       transparencyLeadId: lead.id,
     });

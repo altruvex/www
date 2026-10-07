@@ -1,4 +1,4 @@
-import { ArrowIcon } from "@repo/ui";
+import { ArrowIcon } from "@repo/ui/components/primitives/arrow-icon";
 import { cn } from "@/lib/utils/utils";
 import type { PricingDriverView } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";

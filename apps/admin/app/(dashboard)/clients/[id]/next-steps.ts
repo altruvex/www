@@ -31,7 +31,15 @@ import { statusOf } from "@/lib/status";
 import { deriveStatus } from "@/lib/subscription-lifecycle";
 import type { ClientHub } from "./hub-data";
 
-const LEAD_STAGES = ["NEW", "VIEWED", "CONTACTED", "QUALIFIED"];
+const LEAD_STAGES = [
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+];
 const LIVE_PROPOSAL = ["SENT", "DELIVERED", "READ", "VIEWED"];
 const LIVE_MEETING = ["PENDING", "APPROVED", "RESCHEDULED"];
 const ENDED_RETAINER = ["CANCELLED", "EXPIRED"];

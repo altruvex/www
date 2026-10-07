@@ -11,6 +11,7 @@ import { EntityLink } from "@/components/os/entity-link";
 import { StatusPill } from "@/components/ui/badge";
 import { Avatar, DropdownMenuItem, Hint } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
 import { money, phone as fmtPhone, when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { bulkChangeClientStatus } from "@/app/(dashboard)/_actions/clients";
@@ -58,6 +59,7 @@ export function ClientsTable({
   const router = useRouter();
   const [, startTransition] = React.useTransition();
   const [losing, setLosing] = React.useState<ClientRow[] | null>(null);
+  const lost = useLostInput();
 
   const allColumns: Column<ClientRow>[] = [
     {
@@ -253,7 +255,10 @@ export function ClientsTable({
             label: "Mark lost",
             icon: Archive,
             destructive: true,
-            onRun: (selected: ClientRow[]) => setLosing(selected),
+            onRun: (selected: ClientRow[]) => {
+              lost.reset();
+              setLosing(selected);
+            },
           },
         ]
       : []),
@@ -335,10 +340,12 @@ export function ClientsTable({
         title={`Mark ${losing?.length ?? 0} client${losing?.length === 1 ? "" : "s"} lost?`}
         consequence="They leave the pipeline board. Their proposals, contracts and history stay, and the status can be changed back."
         confirmLabel="Mark lost"
+        confirmDisabled={!lost.ready}
         onConfirm={async () => {
           const result = await bulkChangeClientStatus(
             (losing ?? []).map((r) => r.id),
             "LOST",
+            lost.value,
           );
           if (result.ok) {
             setLosing(null);
@@ -346,7 +353,9 @@ export function ClientsTable({
           }
           return result;
         }}
-      />
+      >
+        <LostReasonFields value={lost.value} onChange={lost.setValue} />
+      </ConfirmDialog>
     </>
   );
 }

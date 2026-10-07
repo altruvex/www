@@ -28,6 +28,9 @@ export const AR_COPY: PricingCopy = {
     standard: "قياسي",
     premium: "واسع",
   },
+  budget: {
+    unsure: "لم أحدد بعد",
+  },
   maintenance: {
     essential: {
       name: "الأساسية",

@@ -5,7 +5,7 @@ import {
   createStandaloneMeetingSchema,
 } from "@/lib/validations/contact";
 import { isBusinessSlot } from "@/lib/config/business-hours";
-import { prisma } from "@repo/database";
+import { linkClientToLead, prisma } from "@repo/database";
 import { NextRequest, NextResponse } from "next/server";
 import {
   apiError,
@@ -15,6 +15,8 @@ import {
   unexpectedError,
 } from "@/lib/server/api-error";
 import { toLocale } from "@/i18n/locale-meta";
+import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
+import { createStepToken } from "@/lib/server/contact/step-token";
 
 export async function POST(request: NextRequest) {
   try {
@@ -72,8 +74,10 @@ export async function POST(request: NextRequest) {
       const ipAddress = forwardedFor
         ? forwardedFor.split(",")[0].trim()
         : undefined;
-      const referer = request.headers.get("referer") || undefined;
+      const referer = externalReferer(request);
+      const attribution = parseAttribution(body);
 
+      const { raw: stepToken, ...stepTokenFields } = createStepToken();
       const submission = await prisma.contactSubmission.create({
         data: {
           name: validatedData.name,
@@ -83,9 +87,21 @@ export async function POST(request: NextRequest) {
           locale,
           userAgent,
           ipAddress,
-          referrer: referer,
+          referrer: attribution.referrer ?? referer,
+          utmSource: attribution.utmSource,
+          utmMedium: attribution.utmMedium,
+          utmCampaign: attribution.utmCampaign,
+          landingPath: attribution.landingPath,
           priority: "HIGH",
+          ...stepTokenFields,
         },
+      });
+
+      const client = await linkClientToLead({
+        phone: validatedData.phone,
+        name: validatedData.name,
+        source: "WEBSITE_CONTACT_FORM",
+        contactSubmissionId: submission.id,
       });
 
       const meeting = await prisma.meeting.create({
@@ -96,6 +112,7 @@ export async function POST(request: NextRequest) {
           scheduledTime: validatedData.scheduledTime,
           guestName: validatedData.name,
           submissionId: submission.id,
+          clientId: client?.id,
           notes: validatedData.message,
         },
       });
@@ -133,7 +150,8 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        { ok: true, code: "scheduled", meetingId: meeting.id },
+        // stepToken unlocks the optional pre-call brief (POST /api/schedule/brief).
+        { ok: true, code: "scheduled", meetingId: meeting.id, stepToken },
         { status: 201 },
       );
     } else {
@@ -174,6 +192,18 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // A fresh token for this meeting's brief replaces any earlier one.
+      const { raw: stepToken, ...stepTokenFields } = createStepToken();
+      await prisma.contactSubmission.update({
+        where: { id: submission.id },
+        data: stepTokenFields,
+      });
+
+      const linkedClient = await prisma.client.findFirst({
+        where: { contactSubmissionId: submission.id },
+        select: { id: true },
+      });
+
       const meeting = await prisma.meeting.create({
         data: {
           title: `Meeting with ${submission.name}`,
@@ -182,6 +212,7 @@ export async function POST(request: NextRequest) {
           scheduledTime: validatedData.preferredTime,
           guestName: submission.name,
           submissionId: submission.id,
+          clientId: linkedClient?.id,
           notes: validatedData.notes,
         },
       });
@@ -220,7 +251,8 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(
-        { ok: true, code: "scheduled", meetingId: meeting.id },
+        // stepToken unlocks the optional pre-call brief (POST /api/schedule/brief).
+        { ok: true, code: "scheduled", meetingId: meeting.id, stepToken },
         { status: 201 },
       );
     }

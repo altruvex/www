@@ -1,3 +1,5 @@
+// Server Components import these by path (@repo/ui/www/eyebrow, …), not from this
+// barrel — see the note at the top of ../index.ts.
 export * from "./accordion";
 export * from "./button";
 export * from "./calendar";

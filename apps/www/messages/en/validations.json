@@ -1,5 +1,6 @@
 {
   "contact": {
+    "brief-max": "Each answer must not exceed 600 characters.",
     "budget-invalid": "Please select a valid budget range.",
     "email-invalid": "Enter a valid email address.",
     "email-max": "Email address must not exceed 160 characters.",
@@ -23,6 +24,7 @@
     "scheduled-time-format": "Time must be in HH:MM format.",
     "scheduled-time-outside-hours": "Pick a time within business hours.",
     "service-interest-invalid": "Please select a valid service.",
+    "step-empty": "Answer at least one question, or skip this step.",
     "submission-id-invalid": "Invalid submission reference."
   },
   "transparency-lead": {

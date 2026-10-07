@@ -1,19 +1,30 @@
 import Link from "next/link";
 import { prisma } from "@repo/database";
-import { deriveClientStage } from "@/lib/dashboard-data";
+import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
 import { Hint } from "@repo/ui";
 
 export type IntakeTab = "leads" | "submissions" | "estimator";
 
-export const LEAD_STAGES = ["NEW", "VIEWED", "CONTACTED", "QUALIFIED"] as const;
+/** Derived stages that count as an active lead (before a proposal goes out). */
+export const LEAD_STAGES = [
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+] as const;
 
+/** Stored statuses that can derive to a lead stage — narrows the query only. */
 export const LEAD_STATUS_PREFILTER: (
   | "NEW"
   | "VIEWED"
   | "CONTACTED"
+  | "QUALIFYING"
   | "QUALIFIED"
-)[] = ["NEW", "VIEWED", "CONTACTED", "QUALIFIED"];
+)[] = ["NEW", "VIEWED", "CONTACTED", "QUALIFYING", "QUALIFIED"];
 
 const TABS: { id: IntakeTab; label: string; href: string }[] = [
   { id: "leads", label: "Leads", href: "/leads" },
@@ -38,6 +49,7 @@ async function intakeCounts() {
           orderBy: { createdAt: "desc" },
           take: 1,
         },
+        ...STAGE_MEETINGS_SELECT,
       },
     }),
     prisma.contactSubmission.count({

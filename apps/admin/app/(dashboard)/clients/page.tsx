@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/os/empty-state";
 import { StatTile } from "@/components/os/stat-tile";
 import { FilterBar, FilterChip } from "@/components/os/filter-bar";
 import { currentRole } from "@/lib/authorize";
-import { deriveClientStage } from "@/lib/dashboard-data";
+import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { canSeeFinance } from "@/lib/nav";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
@@ -21,11 +21,15 @@ const STAGES = [
   "NEW",
   "VIEWED",
   "CONTACTED",
+  "QUALIFYING",
   "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
   "PROPOSAL_SENT",
   "PROPOSAL_READ",
   "CONTRACT_SENT",
   "SIGNED",
+  "NURTURE",
   "LOST",
   "SPAM",
 ] as const;
@@ -71,6 +75,7 @@ export default async function ClientsPage({
       },
       contracts: { select: { status: true }, orderBy: { createdAt: "desc" } },
       projects: { select: { id: true, name: true, status: true, phase: true } },
+      ...STAGE_MEETINGS_SELECT,
       _count: {
         select: {
           messages: true,

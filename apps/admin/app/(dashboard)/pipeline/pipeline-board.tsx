@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Board, type BoardColumn } from "@/components/os/board";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
 import { StatusPill } from "@/components/ui/badge";
 import { money, moneyByCurrency, sumByCurrency } from "@/lib/format";
 import type { Tone } from "@/lib/status";
@@ -20,9 +21,19 @@ export interface PipelineCardData {
   currency: string;
 }
 
-const WRITABLE = new Set(["NEW", "VIEWED", "CONTACTED", "QUALIFIED", "LOST"]);
+const WRITABLE = new Set([
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "NURTURE",
+  "LOST",
+]);
 
 const DERIVED_REASON: Record<string, string> = {
+  CALL_BOOKED: "Set by a booked call that has not happened yet",
+  CALL_COMPLETED: "Set by a completed call, until a proposal goes out",
   PROPOSAL_SENT: "Set by sending a proposal",
   PROPOSAL_READ: "Set when the client opens it",
   CONTRACT_SENT: "Set by generating a contract",
@@ -46,6 +57,7 @@ export function PipelineBoard({
     title: string;
     settle: (go: boolean) => void;
   } | null>(null);
+  const lost = useLostInput();
 
   const columnsWithTotals: BoardColumn[] = columns.map((column) => {
     const totals = sumByCurrency(
@@ -68,19 +80,20 @@ export function PipelineBoard({
     if (from && !WRITABLE.has(from)) {
       toast.error("This deal's stage is derived", {
         description:
-          "It sits where the proposal and contract records put it. Change the documents, not the card.",
+          "It sits where the meeting, proposal and contract records put it. Change those records, not the card.",
       });
       throw new Error("derived stage");
     }
     if (!WRITABLE.has(toColumnId)) {
       toast.error("That stage is derived", {
         description:
-          "Proposal, Contract and Signed reflect the documents that exist. Send a proposal or generate a contract instead.",
+          "Call, Proposal, Contract and Signed reflect the records that exist. Book the call, send a proposal or generate a contract instead.",
       });
       throw new Error("derived stage");
     }
     if (toColumnId === "LOST") {
       const title = cards.find((c) => c.id === cardId)?.title ?? "this deal";
+      lost.reset();
       const go = await new Promise<boolean>((settle) =>
         setLosing({ cardId, title, settle }),
       );
@@ -134,10 +147,15 @@ export function PipelineBoard({
         title={`Mark ${losing?.title ?? "this deal"} lost?`}
         consequence="The deal leaves the live pipeline. Its proposals, contracts and history stay, and it can be dragged back."
         confirmLabel="Mark lost"
+        confirmDisabled={!lost.ready}
         onConfirm={async () => {
           if (!losing) return;
           const pendingLoss = losing;
-          const result = await moveClientOnBoard(pendingLoss.cardId, "LOST");
+          const result = await moveClientOnBoard(
+            pendingLoss.cardId,
+            "LOST",
+            lost.value,
+          );
           if (result.ok) {
             pendingLoss.settle(true);
             setLosing(null);
@@ -145,7 +163,9 @@ export function PipelineBoard({
           }
           return result;
         }}
-      />
+      >
+        <LostReasonFields value={lost.value} onChange={lost.setValue} />
+      </ConfirmDialog>
     </>
   );
 }

@@ -107,6 +107,7 @@ const ACTION_ICONS = {
   "client.updated": UserPen,
   "client.stage_moved": ArrowRightLeft,
   "client.status_changed": Flag,
+  "client.lead_record_updated": UserCheck,
   "client.priority_changed": Gauge,
   "client.note_added": StickyNote,
   "client.note_edited": NotebookPen,

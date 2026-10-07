@@ -15,6 +15,7 @@ import {
   LoadingIcon,
 } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
+import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
 import { optionsOf, statusOf, WRITABLE_STATUSES } from "@/lib/status";
 import {
   changeClientPriority,
@@ -39,6 +40,7 @@ export function StatusMenu({
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
   const [closing, setClosing] = React.useState<string | null>(null);
+  const lost = useLostInput();
 
   function apply(kind: "status" | "priority", value: string) {
     startTransition(async () => {
@@ -80,7 +82,7 @@ export function StatusMenu({
                 disabled={option.value === status}
                 onSelect={() =>
                   CLOSING.has(option.value)
-                    ? setClosing(option.value)
+                    ? (lost.reset(), setClosing(option.value))
                     : apply("status", option.value)
                 }
                 destructive={CLOSING.has(option.value)}
@@ -123,13 +125,22 @@ export function StatusMenu({
             : "It leaves the open pipeline. Its proposals, notes and history stay, and the status can be set back."
         }
         confirmLabel={closing === "SPAM" ? "Mark spam" : "Mark lost"}
+        confirmDisabled={closing === "LOST" && !lost.ready}
         onConfirm={async () => {
           if (!closing) return;
-          const result = await changeClientStatus(clientId, closing);
+          const result = await changeClientStatus(
+            clientId,
+            closing,
+            closing === "LOST" ? lost.value : undefined,
+          );
           if (result.ok) router.refresh();
           return result;
         }}
-      />
+      >
+        {closing === "LOST" && (
+          <LostReasonFields value={lost.value} onChange={lost.setValue} />
+        )}
+      </ConfirmDialog>
     </>
   );
 }

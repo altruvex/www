@@ -1,9 +1,9 @@
 import { localizeNumbers } from "@/lib/utils/number";
-import { ArrowIcon } from "@repo/ui";
+import { ArrowIcon } from "@repo/ui/components/primitives/arrow-icon";
 import { Container } from "@/components/shared/container";
 import { Breadcrumbs } from "@/components/seo/breadcrumbs";
 import { JsonLd } from "@/components/seo/json-ld";
-import { Eyebrow } from "@repo/ui/www";
+import { Eyebrow } from "@repo/ui/www/eyebrow";
 import { mdxComponents } from "@/components/mdx/mdx-components";
 import { AuditLeadCapture } from "@/components/sections/audit-lead-capture";
 import { SectionEndCta } from "@/components/sections/section-end-cta";

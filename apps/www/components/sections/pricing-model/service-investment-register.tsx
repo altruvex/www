@@ -1,3 +1,6 @@
+import { DirectionalLink } from "@/components/shared/directional-link";
+import type { ServiceSlug } from "@/lib/config/accent-world";
+import { getCommercialCta } from "@/lib/config/commercial";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
@@ -19,6 +22,16 @@ const COPY_KEY: Record<ServiceInvestmentId, string> = {
   audit: "audit",
   maintenance: "maintenance",
 };
+
+const SERVICE_PAGE: Record<ServiceInvestmentId, ServiceSlug> = {
+  design: "interface-design",
+  development: "development",
+  audit: "consulting",
+  maintenance: "maintenance",
+};
+
+const ROW_LINK =
+  "text-sm font-medium text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current";
 
 const ROW_Y = "py-[clamp(3rem,7vh,5rem)]";
 
@@ -143,6 +156,7 @@ export async function ServiceInvestmentRegister({
 }) {
   const { locale, rows } = await loadRows(givenRows);
   const t = await getTranslations({ locale, namespace: "pricingModel.register" });
+  const tCta = await getTranslations({ locale, namespace: "commercial.ctas" });
 
   const figureFor = (row: ServiceInvestmentRowView) => {
     if (row.id === "maintenance" && row.plans) {
@@ -209,6 +223,22 @@ export async function ServiceInvestmentRegister({
                   </p>
                 ) : null}
                 <p className={cn(LABEL, "mt-5 max-w-[40ch]")}>{t(`${key}.how`)}</p>
+                <p className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
+                  <DirectionalLink
+                    href={`/services/${SERVICE_PAGE[row.id]}`}
+                    className={ROW_LINK}
+                  >
+                    {t(`${key}.link`)}
+                  </DirectionalLink>
+                  {row.id === "development" ? (
+                    <DirectionalLink
+                      href={getCommercialCta("realBuild").href}
+                      className={ROW_LINK}
+                    >
+                      {tCta("realBuild")}
+                    </DirectionalLink>
+                  ) : null}
+                </p>
               </div>
 
               <div className="flex min-w-0 flex-col items-start min-[1000px]:items-end min-[1000px]:text-end">

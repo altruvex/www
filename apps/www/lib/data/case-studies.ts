@@ -1,5 +1,6 @@
 import type { ServiceSlug } from "@/lib/config/accent-world";
 import type { SupportedLocale } from "@/lib/metadata";
+import type { ServiceId } from "@repo/pricing-schema";
 
 type LocalizedValue = Record<SupportedLocale, string>;
 
@@ -18,6 +19,8 @@ export type CaseStudyRecord = {
   slug: CaseStudySlug;
   summary: LocalizedValue;
   services: readonly ServiceSlug[];
+  /** The estimator project type a similar build starts from. */
+  projectType: ServiceId;
   externalUrl?: string;
 };
 
@@ -50,6 +53,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "Altruvex.com — a bilingual Next.js studio website",
     },
     slug: "altruvex-site",
+    projectType: "website",
     summary: {
       ar: "موقع ثنائي اللغة بالعربية والإنجليزية على Next.js، باتجاه عربي أصيل من اليمين إلى اليسار وأداة عامة لتقدير تكلفة المشروع.",
       en: "A bilingual English and Arabic website on Next.js, with native right-to-left layout and a public project cost estimator.",
@@ -87,6 +91,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "Art Lighting: Custom Lighting Store Case Study",
     },
     slug: "art-lighting-store",
+    projectType: "ecommerce",
     summary: {
       ar: "متجر إلكتروني مخصص على Next.js لبائع إضاءة فاخرة، بالعربية والإنجليزية: كتالوج حسب الفئة وصور منتجات عالية الدقة.",
       en: "A custom Next.js online store for a premium lighting retailer, in Arabic and English: a catalog by category and high-resolution product images.",
@@ -124,6 +129,7 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
       en: "NewLight: First Online Store for a Lighting Brand",
     },
     slug: "newlight-lighting-store",
+    projectType: "ecommerce",
     summary: {
       ar: "أول متجر إلكتروني لنيو لايت: متجر مخصص ثنائي اللغة بمسار شراء منظم، يعمل على كل جهاز ويمكن تثبيته على الهاتف.",
       en: "NewLight's first online store: a custom bilingual storefront with a structured checkout, built for every device and installable on a phone.",

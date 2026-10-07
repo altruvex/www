@@ -11,6 +11,7 @@ import {
   moveClientStage,
   setClientPriority,
   setClientStatus,
+  type LostDetails,
 } from "./records";
 
 type Result = { ok: true; message?: string } | { ok: false; message: string };
@@ -159,7 +160,9 @@ const STATUS_WORDS: Record<string, string> = {
   NEW: "new",
   VIEWED: "viewed",
   CONTACTED: "contacted",
+  QUALIFYING: "qualifying",
   QUALIFIED: "qualified",
+  NURTURE: "nurture",
   PROPOSAL_SENT: "proposal sent",
   WON: "won",
   LOST: "lost",
@@ -185,9 +188,10 @@ function statusWord(status: string) {
 export async function changeClientStatus(
   clientId: string,
   status: string,
+  lost?: LostDetails,
 ): Promise<Result> {
   try {
-    await setClientStatus(clientId, status);
+    await setClientStatus(clientId, status, lost);
     return { ok: true, message: `Marked ${statusWord(status)}.` };
   } catch (err) {
     return { ok: false, message: refusal(err, "The status did not change.") };
@@ -209,11 +213,12 @@ export async function changeClientPriority(
 export async function bulkChangeClientStatus(
   clientIds: string[],
   status: string,
+  lost?: LostDetails,
 ): Promise<Result> {
   if (clientIds.length === 0)
     return { ok: false, message: "Select at least one record first." };
   try {
-    const n = await bulkSetClientStatus(clientIds, status);
+    const n = await bulkSetClientStatus(clientIds, status, lost);
     if (n === 0)
       return {
         ok: false,
@@ -232,9 +237,10 @@ export async function bulkChangeClientStatus(
 export async function moveClientOnBoard(
   clientId: string,
   stage: string,
+  lost?: LostDetails,
 ): Promise<Result> {
   try {
-    await moveClientStage(clientId, stage);
+    await moveClientStage(clientId, stage, lost);
     return { ok: true, message: `Moved to ${statusWord(stage)}.` };
   } catch (err) {
     return { ok: false, message: refusal(err, "The card did not move.") };

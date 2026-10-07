@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarClock, Check, Inbox, RefreshCw, UserCheck, Workflow } from "lucide-react";
+import { AlarmClock, CalendarClock, Check, Inbox, RefreshCw, UserCheck, Workflow } from "lucide-react";
 import { markNotificationRead } from "@/app/(dashboard)/_actions/records";
 import { List, ListRow } from "@/components/os/list-row";
 import { DeleteRecordButton } from "@/components/os/delete-record";
@@ -29,6 +29,7 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   STATUS_CHANGE: <Workflow />,
   ASSIGNMENT: <UserCheck />,
   RENEWAL_DUE: <RefreshCw />,
+  FOLLOW_UP_DUE: <AlarmClock />,
 };
 
 function errorMessage(error: unknown) {

@@ -34,6 +34,7 @@ import {
   type ReactNode,
 } from "react";
 import { CONDITION_QUESTIONS, ESTIMATE_METHOD_ID } from "./constants";
+import { recommend, type EstimateDriver, type EstimateRead } from "./recommend";
 import type { HeadingLevel } from "./questions";
 import type { AnswerMap, MoneyFormats, QuestionKey, Translator } from "./types";
 import { toLocale } from "@/i18n/locale-meta";
@@ -144,6 +145,86 @@ function ScopeDrivers({
         );
       })}
     </dl>
+  );
+}
+
+function PreliminaryRead({
+  read,
+  locale,
+  tPM,
+  Subheading,
+}: {
+  read: EstimateRead;
+  locale: Locale;
+  tPM: ReturnType<typeof useTranslations<"pricingModel">>;
+  Subheading: "h3" | "h4";
+}) {
+  const copy = pricingCopy(locale);
+  const noteNames = new Map(scopeNoteViews(locale).map((n) => [n.id, n.name]));
+  const band = copy.bands[read.complexity];
+  const driverLabel = (driver: EstimateDriver) => {
+    switch (driver.kind) {
+      case "note":
+        return noteNames.get(driver.id) ?? driver.id;
+      case "complexity":
+        return tPM("result.read.drivers.complexity", { band });
+      default:
+        return tPM(`result.read.drivers.${driver.kind}`);
+    }
+  };
+
+  return (
+    <div className="mt-10 border-t border-border-subtle pt-9 lg:grid lg:grid-cols-12 lg:gap-12 xl:gap-16">
+      <div className="lg:col-span-4">
+        <Subheading className="text-base font-medium text-foreground">
+          {tPM("result.read.title")}
+        </Subheading>
+        <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-muted-foreground">
+          {tPM("result.read.basis")}
+        </p>
+      </div>
+      <dl className="mt-6 divide-y divide-border-subtle border-y border-border-subtle lg:col-span-8 lg:mt-0">
+        <DriverRow label={tPM("result.read.engagementLabel")}>
+          <span className="text-sm font-medium text-foreground">
+            {tPM("result.read.engagementValue", {
+              service: copy.services[read.service].name,
+              band,
+            })}
+          </span>
+        </DriverRow>
+        <div className="py-3">
+          <dt className="text-xs text-muted-foreground">
+            {tPM("result.read.driversLabel")}
+          </dt>
+          <dd className="mt-2">
+            {read.drivers.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {read.drivers.map((driver) => (
+                  <li
+                    key={driver.kind === "note" ? driver.id : driver.kind}
+                    className="rounded-full border border-border-subtle px-3 py-1 text-xs text-foreground"
+                  >
+                    {driverLabel(driver)}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {tPM("result.read.noDrivers")}
+              </p>
+            )}
+          </dd>
+        </div>
+        <div className="py-3">
+          <dt className="text-xs text-muted-foreground">
+            {tPM("result.read.nextLabel")}
+          </dt>
+          <dd className="mt-2 max-w-[60ch] text-sm leading-relaxed text-foreground">
+            {tPM(`result.read.next.${read.nextStep}`)}
+          </dd>
+        </div>
+      </dl>
+    </div>
   );
 }
 
@@ -353,6 +434,8 @@ export function ResultPanel({
     scopeNotes.includes(n.id),
   );
   const technicalCallHref = getCommercialCta("technicalCall").href;
+  const read = recommend(answers, scopeNotes);
+  const consultFirst = read?.nextStep === "consultation";
 
   const scopeRef = useSectionCardGrid<HTMLUListElement>({
     ...motion.listItems(),
@@ -507,6 +590,15 @@ export function ResultPanel({
         })}
       </p>
 
+      {read ? (
+        <PreliminaryRead
+          read={read}
+          locale={locale}
+          tPM={tPM}
+          Subheading={Subheading}
+        />
+      ) : null}
+
       {submitted ? (
         <div className="mt-10 grid gap-x-16 gap-y-9 border-t border-border-subtle pt-9 animate-in fade-in duration-(--motion-fast) lg:grid-cols-12">
           <div className="lg:col-span-5">
@@ -581,20 +673,47 @@ export function ResultPanel({
         <div className="mt-10 border-t border-border-subtle pt-9">
           {!formOpen ? (
             <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-8">
-              <MagneticButton
-                variant="primary"
-                size="lg"
-                onClick={() => setFormOpen(true)}
-                aria-expanded={false}
-                aria-controls="estimate-request-form"
-                className="w-full sm:w-auto"
-              >
-                {tPM("result.requestProposal")}
-              </MagneticButton>
-              <SecondaryLink
-                href={technicalCallHref}
-                label={tCta("technicalCall")}
-              />
+              {consultFirst ? (
+                <>
+                  <MagneticButton
+                    asChild
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto"
+                  >
+                    <Link href={technicalCallHref}>
+                      {tCta("technicalCall")}
+                    </Link>
+                  </MagneticButton>
+                  <button
+                    type="button"
+                    onClick={() => setFormOpen(true)}
+                    aria-expanded={false}
+                    aria-controls="estimate-request-form"
+                    className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text"
+                  >
+                    <span>{tPM("result.requestProposal")}</span>
+                    <ArrowIcon />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <MagneticButton
+                    variant="primary"
+                    size="lg"
+                    onClick={() => setFormOpen(true)}
+                    aria-expanded={false}
+                    aria-controls="estimate-request-form"
+                    className="w-full sm:w-auto"
+                  >
+                    {tPM("result.requestProposal")}
+                  </MagneticButton>
+                  <SecondaryLink
+                    href={technicalCallHref}
+                    label={tCta("technicalCall")}
+                  />
+                </>
+              )}
               <SecondaryLink
                 href={`#${ESTIMATE_METHOD_ID}`}
                 label={t("results.howCalculated")}

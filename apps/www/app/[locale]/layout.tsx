@@ -11,7 +11,7 @@ import { LOADER_CSS, LOADER_SCRIPT } from "@/lib/motion/utils/loader";
 import { buildGlobalSchemas } from "@/lib/schema";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { pricingTokens } from "@repo/pricing-schema";
-import { DirectionProvider } from "@repo/ui";
+import { DirectionProvider } from "@repo/ui/lib/direction";
 import { cn } from "@/lib/utils/utils";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";

@@ -5,13 +5,15 @@ import { prisma } from "@repo/database";
 import { PALETTE } from "@repo/ui/palette";
 import { authorize } from "@/lib/authorize";
 import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
-import { derivedStatusMessage, WRITABLE_STATUSES } from "@/lib/status";
+import { derivedStatusMessage, LOST_REASONS, WRITABLE_STATUSES } from "@/lib/status";
 
 const CLIENT_STATUSES = [
   "NEW",
   "VIEWED",
   "CONTACTED",
+  "QUALIFYING",
   "QUALIFIED",
+  "NURTURE",
   "PROPOSAL_SENT",
   "WON",
   "LOST",
@@ -30,19 +32,45 @@ function refuseDerivedStage(stage: string) {
   if (!WRITABLE_STATUSES.has(stage)) throw new Error(derivedStatusMessage(stage));
 }
 
+/** Why a lead was lost, collected by every "Mark lost" dialog. */
+export interface LostDetails {
+  reason: string;
+  note?: string;
+}
+
+type LostReasonValue = "BUDGET" | "TIMING" | "FIT" | "COMPETITOR" | "NO_RESPONSE" | "OTHER";
+
+/**
+ * Moving to LOST needs a reason; any other status leaves the reason alone.
+ * Returns the fields to write (empty when the status is not LOST).
+ */
+function lostFields(status: string, lost?: LostDetails) {
+  if (status !== "LOST") return {};
+  if (!lost || !LOST_REASONS.includes(lost.reason)) {
+    throw new Error("Pick a reason before marking this lost.");
+  }
+  const note = lost.note?.trim().slice(0, 1000) || null;
+  return { lostReason: lost.reason as LostReasonValue, lostNote: note };
+}
+
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 type PriorityValue = (typeof PRIORITIES)[number];
 
-export async function setClientStatus(clientId: string, status: string) {
+export async function setClientStatus(
+  clientId: string,
+  status: string,
+  lost?: LostDetails,
+) {
   const session = await authorize("edit", "client");
   refuseDerivedStatus(status);
+  const lostData = lostFields(status, lost);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
-    select: { status: true, name: true, company: true },
+    select: { status: true, name: true, company: true, lostReason: true, lostNote: true },
   });
   await prisma.client.update({
     where: { id: clientId },
-    data: { status: status as ClientStatus },
+    data: { status: status as ClientStatus, ...lostData },
   });
   await recordChange({
     action: "client.status_changed",
@@ -51,8 +79,8 @@ export async function setClientStatus(clientId: string, status: string) {
     entityId: clientId,
     entityLabel: before?.company || before?.name,
     summary: `Status moved to ${status.replace("_", " ").toLowerCase()}`,
-    before: { status: before?.status },
-    after: { status },
+    before: { status: before?.status, ...(status === "LOST" ? { lostReason: before?.lostReason, lostNote: before?.lostNote } : {}) },
+    after: { status, ...lostData },
   });
   revalidatePath("/clients");
   revalidatePath("/leads");
@@ -87,16 +115,21 @@ export async function setClientPriority(clientId: string, priority: string) {
   revalidatePath(`/clients/${clientId}`);
 }
 
-export async function bulkSetClientStatus(clientIds: string[], status: string) {
+export async function bulkSetClientStatus(
+  clientIds: string[],
+  status: string,
+  lost?: LostDetails,
+) {
   const session = await authorize("edit", "client");
   refuseDerivedStatus(status);
+  const lostData = lostFields(status, lost);
   const before = await prisma.client.findMany({
     where: { id: { in: clientIds } },
-    select: { id: true, status: true, name: true, company: true },
+    select: { id: true, status: true, name: true, company: true, lostReason: true, lostNote: true },
   });
   const { count } = await prisma.client.updateMany({
     where: { id: { in: clientIds } },
-    data: { status: status as ClientStatus },
+    data: { status: status as ClientStatus, ...lostData },
   });
   const actor = userActor(session);
   await Promise.all(
@@ -108,8 +141,8 @@ export async function bulkSetClientStatus(clientIds: string[], status: string) {
         entityId: client.id,
         entityLabel: client.company || client.name,
         summary: `Status moved to ${status.replace("_", " ").toLowerCase()} (bulk)`,
-        before: { status: client.status },
-        after: { status },
+        before: { status: client.status, ...(status === "LOST" ? { lostReason: client.lostReason, lostNote: client.lostNote } : {}) },
+        after: { status, ...lostData },
       }),
     ),
   );
@@ -119,16 +152,21 @@ export async function bulkSetClientStatus(clientIds: string[], status: string) {
   return count;
 }
 
-export async function moveClientStage(clientId: string, stage: string) {
+export async function moveClientStage(
+  clientId: string,
+  stage: string,
+  lost?: LostDetails,
+) {
   const session = await authorize("edit", "client");
   refuseDerivedStage(stage);
+  const lostData = lostFields(stage, lost);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
-    select: { status: true, name: true, company: true },
+    select: { status: true, name: true, company: true, lostReason: true, lostNote: true },
   });
   await prisma.client.update({
     where: { id: clientId },
-    data: { status: stage as ClientStatus },
+    data: { status: stage as ClientStatus, ...lostData },
   });
   await recordChange({
     action: "client.stage_moved",
@@ -137,8 +175,8 @@ export async function moveClientStage(clientId: string, stage: string) {
     entityId: clientId,
     entityLabel: before?.company || before?.name,
     summary: `Dragged to ${stage.replace("_", " ").toLowerCase()} on the pipeline board`,
-    before: { status: before?.status },
-    after: { status: stage },
+    before: { status: before?.status, ...(stage === "LOST" ? { lostReason: before?.lostReason, lostNote: before?.lostNote } : {}) },
+    after: { status: stage, ...lostData },
   });
   revalidatePath("/pipeline");
   revalidatePath("/clients");

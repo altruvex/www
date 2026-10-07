@@ -32,6 +32,9 @@ export const EN_COPY: PricingCopy = {
     standard: "Standard",
     premium: "Extensive",
   },
+  budget: {
+    unsure: "Not sure yet",
+  },
   maintenance: {
     essential: {
       name: "Essential",

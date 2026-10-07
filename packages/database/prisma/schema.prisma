@@ -44,6 +44,7 @@ model User {
   assignedTasks      ProjectTask[]       @relation("TaskAssignee")
   twoFactors         TwoFactor[]
   clientNotes        ClientNote[]
+  ownedClients       Client[]            @relation("ClientOwner")
 
   opsRole ProductRole?
 
@@ -139,6 +140,10 @@ enum SubmissionStatus {
   WON
   LOST
   SPAM
+  // Sales machine (2026-10-07): a lead being qualified before it is worth a
+  // call, and a lead parked for later follow-up rather than lost.
+  QUALIFYING
+  NURTURE
 }
 
 enum Priority {
@@ -164,10 +169,40 @@ enum ProjectTimeline {
 }
 
 enum BudgetRange {
+  // Deprecated (2026-10-07): fixed-currency bands. Kept so old rows still
+  // read; new code never writes them. Readers map them for the lead score.
   UNDER_10K
   B_10K_25K
   B_25K_50K
   OVER_50K
+  // Multiples of the published minimum engagement (packages/pricing-schema
+  // budget bands): [1,2), [2,5), [5,10), [10,inf).
+  FLOOR_TO_2X
+  X2_TO_5X
+  X5_TO_10X
+  OVER_10X
+  UNSURE
+}
+
+enum ProjectSituation {
+  NEW_BUILD
+  REPLACE_EXISTING
+  IMPROVE_EXISTING
+}
+
+enum DecisionRole {
+  DECIDES
+  SHARED
+  ADVISES
+}
+
+enum LostReason {
+  BUDGET
+  TIMING
+  FIT
+  COMPETITOR
+  NO_RESPONSE
+  OTHER
 }
 
 model ContactSubmission {
@@ -195,6 +230,18 @@ model ContactSubmission {
   utmSource   String?
   utmMedium   String?
   utmCampaign String?
+  // First page the visitor landed on this session (path only, no query).
+  landingPath String?
+
+  // Optional qualification step answered after a successful submit.
+  situation    ProjectSituation?
+  decisionRole DecisionRole?
+  qualifiedAt  DateTime?
+
+  // One-time follow-up token (qualify step / pre-call brief). Only the
+  // sha256 hex is stored; the raw token goes back in the JSON response.
+  stepTokenHash      String?   @unique
+  stepTokenExpiresAt DateTime?
 
   user   User?   @relation(fields: [userId], references: [id])
   userId String?
@@ -299,6 +346,10 @@ model Meeting {
   notes      String?
   adminNotes String?
 
+  // Pre-call brief from the guest: { current, change, stakes }.
+  preCallBrief   Json?
+  preCallBriefAt DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   approvedAt  DateTime?
@@ -318,6 +369,7 @@ enum NotificationType {
   STATUS_CHANGE
   ASSIGNMENT
   RENEWAL_DUE
+  FOLLOW_UP_DUE
 }
 
 model Notification {
@@ -367,6 +419,7 @@ model TransparencyLead {
   utmSource        String?
   utmMedium        String?
   utmCampaign      String?
+  landingPath      String?
   convertedAt      DateTime?
   createdAt        DateTime  @default(now())
 
@@ -405,6 +458,13 @@ model Client {
   status   SubmissionStatus @default(NEW)
   priority Priority         @default(MEDIUM)
 
+  owner          User?       @relation("ClientOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId        String?
+  nextActionAt   DateTime?
+  nextActionNote String?
+  lostReason     LostReason?
+  lostNote       String?
+
   contactSubmission   ContactSubmission? @relation(fields: [contactSubmissionId], references: [id])
   contactSubmissionId String?            @unique
 
@@ -428,6 +488,8 @@ model Client {
   @@index([phone])
   @@index([status])
   @@index([priority])
+  @@index([ownerId])
+  @@index([nextActionAt])
   @@map("clients")
 }
 
@@ -596,7 +658,7 @@ enum ProjectOrigin {
 }
 
 model Project {
-  id String @id @default(uuid())
+  id         String        @id @default(uuid())
   contract   Contract?     @relation(fields: [contractId], references: [id], onDelete: Restrict)
   contractId String?       @unique
   origin     ProjectOrigin @default(CONTRACT)

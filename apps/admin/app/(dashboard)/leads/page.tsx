@@ -1,3 +1,4 @@
+import type * as React from "react";
 import Link from "next/link";
 import { prisma } from "@repo/database";
 import { CalendarPlus, FilePlus2, Phone, Target } from "lucide-react";
@@ -7,7 +8,7 @@ import { PageHeader } from "@/components/os/page-header";
 import { StatusPill } from "@/components/ui/badge";
 import { roleCanOpen } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
-import { money, phone as fmtPhone, when } from "@/lib/format";
+import { date, money, phone as fmtPhone, when } from "@/lib/format";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
@@ -15,8 +16,22 @@ import { EmptyInline, EmptyState } from "@/components/os/empty-state";
 import { ActiveFilters } from "@/components/os/filter-bar";
 import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
-import { scoreLead } from "@/lib/lead-score";
-import { deriveClientStage, isUncontacted } from "@/lib/dashboard-data";
+import { bandTone, recommendedAction, scoreBand, scoreLead } from "@/lib/lead-score";
+import { ToneBadge } from "@/components/ui/badge";
+import { LeadRecordEditor } from "@/components/os/lead-record-editor";
+import { getPricing } from "@/lib/pricing-store";
+import {
+  SCORE_SUBMISSION_SELECT,
+  budgetLabel,
+  dayString,
+  loadOwnerOptions,
+  scoreInputFor,
+} from "@/lib/precall";
+import {
+  STAGE_MEETINGS_SELECT,
+  deriveClientStage,
+  isUncontacted,
+} from "@/lib/dashboard-data";
 import { IntakeTabs, LEAD_STAGES, LEAD_STATUS_PREFILTER } from "./intake-tabs";
 import { LeadInspectorActions } from "./lead-inspector-actions";
 import { LeadsTable, type LeadRow } from "./leads-table";
@@ -43,11 +58,13 @@ export default async function LeadsPage({
   };
   const { inspect, stage } = await searchParams;
   const uncontactedOnly = stage === "new";
+  // Nurture and lost leads sit outside the working list; each has its own filter.
+  const parked = stage === "nurture" ? "NURTURE" : stage === "lost" ? "LOST" : null;
 
-  const [clients, unconvertedSubmissions, unconvertedEstimates] =
+  const [clients, unconvertedSubmissions, unconvertedEstimates, owners, pricing] =
     await Promise.all([
       prisma.client.findMany({
-        where: { status: { in: LEAD_STATUS_PREFILTER } },
+        where: { status: { in: parked ? [parked] : LEAD_STATUS_PREFILTER } },
         select: {
           id: true,
           name: true,
@@ -60,14 +77,14 @@ export default async function LeadsPage({
           priority: true,
           createdAt: true,
           updatedAt: true,
+          ownerId: true,
+          owner: { select: { name: true, email: true } },
+          nextActionAt: true,
+          nextActionNote: true,
+          lostReason: true,
+          lostNote: true,
           contactSubmission: {
-            select: {
-              budget: true,
-              projectTimeline: true,
-              serviceInterest: true,
-              message: true,
-              utmSource: true,
-            },
+            select: { ...SCORE_SUBMISSION_SELECT, utmSource: true },
           },
           transparencyLead: {
             select: {
@@ -93,6 +110,7 @@ export default async function LeadsPage({
             orderBy: { createdAt: "desc" },
             take: 1,
           },
+          ...STAGE_MEETINGS_SELECT,
           messages: { where: { direction: "INBOUND" }, select: { id: true } },
           _count: { select: { messages: true } },
         },
@@ -102,29 +120,22 @@ export default async function LeadsPage({
         where: { client: null, status: { not: "SPAM" } },
       }),
       prisma.transparencyLead.count({ where: { client: null } }),
+      canEdit ? loadOwnerOptions() : Promise.resolve([]),
+      getPricing(),
     ]);
+
+  const stageFilter: readonly string[] = parked ? [parked] : LEAD_STAGES;
 
   const rows: LeadRow[] = clients
     .filter((client) =>
-      (LEAD_STAGES as readonly string[]).includes(deriveClientStage(client)),
+      stageFilter.includes(deriveClientStage(client)),
     )
     .map((client) => {
-      const { score, reasons } = scoreLead({
-        budget: client.contactSubmission?.budget ?? null,
-        timeline:
-          client.contactSubmission?.projectTimeline ??
-          client.transparencyLead?.timeline ??
-          null,
-        source: client.source,
-        serviceInterest: client.contactSubmission?.serviceInterest ?? null,
-        hasCompany: Boolean(client.company),
-        hasEmail: Boolean(client.email),
-        messageLength: client.contactSubmission?.message?.length ?? 0,
-        estimatorPriceMax: client.transparencyLead?.priceMax ?? null,
-        proposalCount: client.proposals.length,
-        readProposal: Boolean(client.proposals[0]?.readAt),
-        inboundMessages: client.messages.length,
-      });
+      const { score, reasons } = scoreLead(
+        scoreInputFor({ ...client, inboundMessages: client.messages.length }),
+      );
+      const stage = deriveClientStage(client);
+      const band = scoreBand(score, client.contactSubmission?.budget ?? null);
 
       return {
         id: client.id,
@@ -147,8 +158,10 @@ export default async function LeadsPage({
         utmSource: client.contactSubmission?.utmSource ?? null,
         estimateMin: client.transparencyLead?.priceMin ?? null,
         estimateMax: client.transparencyLead?.priceMax ?? null,
-        stage: deriveClientStage(client),
+        stage,
         score,
+        scoreBand: band,
+        recommendedAction: recommendedAction(band, stage),
         scoreReasons: reasons,
         messageCount: client._count.messages,
         inboundCount: client.messages.length,
@@ -158,14 +171,14 @@ export default async function LeadsPage({
   const inspected = inspect
     ? (rows.find((r) => r.id === inspect) ?? null)
     : null;
-  const inspectedMessage = inspected
-    ? (clients.find((c) => c.id === inspected.id)?.contactSubmission?.message ??
-      null)
+  const inspectedClient = inspected
+    ? (clients.find((c) => c.id === inspected.id) ?? null)
     : null;
+  const inspectedMessage = inspectedClient?.contactSubmission?.message ?? null;
 
   const uncontacted = rows.filter((r) => isUncontacted(r.stage)).length;
   const qualified = rows.filter((r) => r.stage === "QUALIFIED").length;
-  const hot = rows.filter((r) => r.score >= 65).length;
+  const hot = rows.filter((r) => r.scoreBand === "High intent").length;
   const shown = uncontactedOnly ? rows.filter((r) => isUncontacted(r.stage)) : rows;
 
   // An empty list offers the submissions waiting to become clients, each
@@ -213,9 +226,9 @@ export default async function LeadsPage({
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
-          label="Open leads"
+          label={parked ? `${statusOf("pipelineStage", parked).label} leads` : "Open leads"}
           value={rows.length}
-          sub="Pre-proposal"
+          sub={parked ? "Outside the working list" : "Pre-proposal"}
           href="/pipeline"
         />
         <StatTile
@@ -232,16 +245,29 @@ export default async function LeadsPage({
           tone={qualified ? "progress" : "neutral"}
         />
         <StatTile
-          label="Score ≥ 65"
+          label="High intent"
           value={hot}
           sub="Worth calling today"
           tone={hot ? "success" : "neutral"}
         />
       </div>
 
+      <p className="text-meta text-muted-foreground">
+        Parked:{" "}
+        <Link href="/leads?stage=nurture" className="text-brand hover:underline">
+          Nurture
+        </Link>{" "}
+        ·{" "}
+        <Link href="/leads?stage=lost" className="text-brand hover:underline">
+          Lost
+        </Link>
+      </p>
+
       <ActiveFilters
         labels={{ stage: "Stage" }}
-        valueLabels={{ stage: { new: "Uncontacted" } }}
+        valueLabels={{
+          stage: { new: "Uncontacted", nurture: "Nurture", lost: "Lost" },
+        }}
       />
 
       {rows.length > 0 && shown.length === 0 ? (
@@ -295,6 +321,36 @@ export default async function LeadsPage({
         <LeadInspector
           row={inspected}
           message={inspectedMessage}
+          budget={
+            inspected.budget ? budgetLabel(inspected.budget, pricing) : null
+          }
+          editor={
+            canEdit && inspectedClient ? (
+              <LeadRecordEditor
+                key={inspectedClient.id}
+                clientId={inspectedClient.id}
+                admins={owners}
+                initial={{
+                  ownerId: inspectedClient.ownerId,
+                  nextActionAt: dayString(inspectedClient.nextActionAt),
+                  nextActionNote: inspectedClient.nextActionNote ?? "",
+                }}
+              />
+            ) : null
+          }
+          record={
+            inspectedClient
+              ? {
+                  owner: inspectedClient.owner
+                    ? inspectedClient.owner.name || inspectedClient.owner.email
+                    : null,
+                  nextActionAt: inspectedClient.nextActionAt,
+                  nextActionNote: inspectedClient.nextActionNote,
+                  lostReason: inspectedClient.lostReason,
+                  lostNote: inspectedClient.lostNote,
+                }
+              : null
+          }
           canEdit={canEdit}
           canSchedule={shortcuts.canSchedule}
           canPropose={shortcuts.canPropose}
@@ -307,12 +363,24 @@ export default async function LeadsPage({
 function LeadInspector({
   row,
   message,
+  budget,
+  editor,
+  record,
   canEdit,
   canSchedule,
   canPropose,
 }: {
   row: LeadRow;
   message: string | null;
+  budget: string | null;
+  editor: React.ReactNode;
+  record: {
+    owner: string | null;
+    nextActionAt: Date | null;
+    nextActionNote: string | null;
+    lostReason: string | null;
+    lostNote: string | null;
+  } | null;
   canEdit: boolean;
   canSchedule: boolean;
   canPropose: boolean;
@@ -362,9 +430,13 @@ function LeadInspector({
       }
     >
       <section aria-label="Score" className="space-y-1.5">
-        <p className="telemetry text-subtle-foreground">
-          Score {row.score} / 100
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="telemetry text-subtle-foreground">
+            Score {row.score} / 100
+          </p>
+          <ToneBadge tone={bandTone(row.scoreBand)}>{row.scoreBand}</ToneBadge>
+        </div>
+        <p className="text-base font-medium">{row.recommendedAction}</p>
         {row.scoreReasons.length > 0 ? (
           <ul className="space-y-0.5">
             {row.scoreReasons.map((reason) => (
@@ -420,12 +492,7 @@ function LeadInspector({
               />
             ),
           },
-          {
-            label: "Budget",
-            value: row.budget
-              ? statusOf("budgetRange", row.budget).label
-              : null,
-          },
+          { label: "Budget", value: budget },
           {
             label: "Timeline",
             value: row.timeline
@@ -451,6 +518,33 @@ function LeadInspector({
           { label: "Arrived", value: when(row.createdAt) },
         ]}
       />
+
+      {record && (
+        <section aria-label="Lead record" className="space-y-2">
+          <p className="telemetry text-subtle-foreground">Lead record</p>
+          <MetaList
+            className="rounded-panel-sm border border-border-subtle"
+            items={[
+              { label: "Owner", value: record.owner ?? "Nobody yet" },
+              {
+                label: "Next action",
+                value: record.nextActionAt
+                  ? `${date(record.nextActionAt)}${record.nextActionNote ? ` — ${record.nextActionNote}` : ""}`
+                  : "None set",
+              },
+              ...(record.lostReason
+                ? [
+                    {
+                      label: "Lost because",
+                      value: `${statusOf("lostReason", record.lostReason).label}${record.lostNote ? ` — ${record.lostNote}` : ""}`,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+          {editor}
+        </section>
+      )}
 
       {message && (
         <section aria-label="Their message" className="space-y-1.5">

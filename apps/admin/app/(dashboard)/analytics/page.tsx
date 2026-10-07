@@ -293,6 +293,21 @@ export default async function AnalyticsPage() {
             )}
           </Panel>
         </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          <AttributionTable
+            title="By campaign source"
+            description="UTM source on the first touch; none recorded counts as direct / unknown"
+            heading="Source"
+            rows={data.utmSources}
+          />
+          <AttributionTable
+            title="Top landing pages"
+            description="Where leads first landed on the site"
+            heading="Landing page"
+            rows={data.landingPages}
+            mono
+          />
+        </div>
       </section>
 
       <section className="space-y-3">
@@ -419,5 +434,57 @@ export default async function AnalyticsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function AttributionTable({
+  title,
+  description,
+  heading,
+  rows,
+  mono = false,
+}: {
+  title: string;
+  description: string;
+  heading: string;
+  rows: { key: string; leads: number; qualified: number; won: number }[];
+  mono?: boolean;
+}) {
+  return (
+    <Panel title={title} description={description}>
+      {rows.length === 0 ? (
+        <EmptyInline>No leads recorded yet.</EmptyInline>
+      ) : (
+        <table className="w-full border-collapse text-start">
+          <thead>
+            <tr className="border-b border-border-subtle">
+              {[heading, "Leads", "Qualified", "Won"].map((h) => (
+                <th
+                  key={h}
+                  className="py-2 pe-3 text-meta uppercase tracking-wider text-muted-foreground"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key} className="border-b border-border-subtle last:border-0">
+                <td
+                  className={`max-w-0 truncate py-2 pe-3 text-foreground ${mono ? "font-mono text-meta" : "text-base"}`}
+                  title={row.key}
+                >
+                  {row.key}
+                </td>
+                <td className="py-2 pe-3 font-mono text-meta tabular-nums">{row.leads}</td>
+                <td className="py-2 pe-3 font-mono text-meta tabular-nums">{row.qualified}</td>
+                <td className="py-2 font-mono text-meta tabular-nums">{row.won}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Panel>
   );
 }

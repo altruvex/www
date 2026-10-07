@@ -1,11 +1,11 @@
 import {
   Accent,
   type AccentAnimation,
-  Eyebrow,
   type GradientDirection,
   type HeadingAccent,
   Highlight,
-} from "@repo/ui/www";
+} from "@repo/ui/www/emphasis";
+import { Eyebrow } from "@repo/ui/www/eyebrow";
 import { cn } from "@/lib/utils/utils";
 import { ReactNode, RefObject } from "react";
 

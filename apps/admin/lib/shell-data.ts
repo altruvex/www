@@ -2,7 +2,7 @@ import { cache } from "react";
 import { prisma } from "@repo/database";
 import { getActionCentre } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
-import { UNCONTACTED_WHERE } from "@/lib/dashboard-data";
+import { uncontactedWhere } from "@/lib/dashboard-data";
 import type { BadgeKey } from "@/lib/nav";
 import { overdueCutoff } from "@/lib/payment-overdue";
 import { countRenewalsNeedingAttention } from "@/lib/renewals";
@@ -27,7 +27,7 @@ async function buildShellBadges(userId: string): Promise<{
     servicesDue,
     attention,
   ] = await Promise.all([
-    prisma.client.count({ where: UNCONTACTED_WHERE }),
+    prisma.client.count({ where: uncontactedWhere() }),
     prisma.proposal.count({ where: { status: { in: ["SENT", "DELIVERED", "READ", "VIEWED"] } } }),
     prisma.contract.count({ where: { status: "SENT" } }),
     prisma.meeting.count({ where: { status: "PENDING" } }),

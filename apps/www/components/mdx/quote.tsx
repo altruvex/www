@@ -1,4 +1,4 @@
-import { Highlight, Strong } from "@repo/ui/www";
+import { Highlight, Strong } from "@repo/ui/www/emphasis";
 
 interface QuoteProps {
   author: string;

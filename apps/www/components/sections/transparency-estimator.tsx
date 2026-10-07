@@ -35,7 +35,9 @@ import {
 } from "@/lib/api-errors";
 import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
+import { attributionPayload } from "@/lib/attribution";
 import {
   BUILD_QUESTIONS,
   CONDITION_QUESTIONS,
@@ -208,6 +210,31 @@ export function TransparencyEstimator({
     ],
   );
 
+  // Funnel: first answer the visitor gives (a preset project type is not one),
+  // then the moment the last question is answered.
+  const answeredAtMount = useRef(answeredCount);
+  const startedTracked = useRef(false);
+  useEffect(() => {
+    if (startedTracked.current || answeredCount <= answeredAtMount.current) return;
+    startedTracked.current = true;
+    trackEvent("estimator_started", { locale: schemaLocale });
+  }, [answeredCount, schemaLocale]);
+
+  const completedTracked = useRef(false);
+  useEffect(() => {
+    if (!complete) {
+      completedTracked.current = false;
+      return;
+    }
+    if (completedTracked.current) return;
+    completedTracked.current = true;
+    trackEvent("estimator_completed", {
+      locale: schemaLocale,
+      projectType: projectType ?? undefined,
+      complexity: complexity ?? undefined,
+    });
+  }, [complete, schemaLocale, projectType, complexity]);
+
   useEffect(() => {
     if (!delta) return;
     const id = window.setTimeout(() => setDelta(null), 2600);
@@ -265,6 +292,7 @@ export function TransparencyEstimator({
           priceMax: estimate.maxPrice,
           weeksMin: estimate.minWeeks,
           weeksMax: estimate.maxWeeks,
+          ...attributionPayload(),
         }),
       });
       const result = await readApiResult<{ reference?: unknown }>(res);
@@ -290,6 +318,11 @@ export function TransparencyEstimator({
 
       setReference(typeof result.reference === "string" ? result.reference : null);
       setSubmitted(true);
+      trackEvent("estimator_submitted", {
+        locale: schemaLocale,
+        projectType,
+        complexity,
+      });
     } catch {
       setPhoneError(tValidations(FORM_ERROR_KEY.network));
     } finally {

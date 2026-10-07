@@ -25,39 +25,55 @@ import {
   formatBusinessHoursRange,
 } from "@/lib/config/business-hours";
 import { getCommercialCta } from "@/lib/config/commercial";
-import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
+import {
+  HeroHeadline,
+  HeroReveal,
+} from "@/components/sections/hero-motion-wrappers";
 import { cn } from "@/lib/utils/utils";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { bodyMarks } from "@/components/ui/rich-text";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
+import { attributionPayload } from "@/lib/attribution";
 import { localeMeta } from "@/i18n/locale-meta";
+import { PreCallBrief } from "./precall-brief";
 
 export default function SchedulePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const t = useTranslations("schedule");
   const tValidations = useTranslations("validations");
   const tCta = useTranslations("commercial.ctas");
   const locale = useLocale();
 
+  // Never prefilled from the URL: a name or phone in a query string leaks
+  // into logs, analytics and the Referer header.
   const [formData, setFormData] = useState({
-    name: searchParams.get("name") || "",
-    phone: searchParams.get("phone") || "",
+    name: "",
+    phone: "",
     date: undefined as Date | undefined,
     time: "",
   });
+  const startedRef = useRef(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [stepToken, setStepToken] = useState<string | null>(null);
+  const confirmRef = useRef<HTMLHeadingElement>(null);
 
+  useEffect(() => {
+    if (submitSuccess) confirmRef.current?.focus();
+  }, [submitSuccess]);
 
   const handleInputChange = (
     field: string,
     value: string | Date | undefined,
   ) => {
+    if (!startedRef.current) {
+      startedRef.current = true;
+      trackEvent("schedule_started", { locale });
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field])
       setErrors((prev) => {
@@ -111,11 +127,16 @@ export default function SchedulePage() {
           locale,
           scheduledDate: dt.toISOString(),
           scheduledTime: formData.time,
+          ...attributionPayload(),
         }),
       });
-      const result = await readApiResult(res);
+      const result = await readApiResult<{ stepToken?: string }>(res);
       if (result.ok) {
+        setStepToken(
+          typeof result.stepToken === "string" ? result.stepToken : null,
+        );
         setSubmitSuccess(true);
+        trackEvent("schedule_completed", { locale });
         return;
       }
       // The server sends codes, never copy: each maps to a localized line.
@@ -123,13 +144,17 @@ export default function SchedulePage() {
         const fallback: Record<string, [string, string]> = {
           name: ["name", t("form.name.error")],
           phone: ["phone", t("form.phone.error")],
-          scheduledDate: ["date", tValidations("contact.scheduled-datetime-invalid")],
+          scheduledDate: [
+            "date",
+            tValidations("contact.scheduled-datetime-invalid"),
+          ],
           scheduledTime: ["time", t("form.time.error")],
         };
         const next: Record<string, string> = {};
         for (const [key, code] of Object.entries(result.fields)) {
           const target = fallback[key];
-          if (target) next[target[0]] = fieldErrorMessage(tValidations, code, target[1]);
+          if (target)
+            next[target[0]] = fieldErrorMessage(tValidations, code, target[1]);
         }
         if (Object.keys(next).length > 0) {
           setErrors(next);
@@ -159,7 +184,12 @@ export default function SchedulePage() {
     range: formatBusinessHoursRange(),
     zone: businessZoneOffsetLabel(),
   });
-  const fieldErrors = [errors.name, errors.phone, errors.date, errors.time].filter(Boolean);
+  const fieldErrors = [
+    errors.name,
+    errors.phone,
+    errors.date,
+    errors.time,
+  ].filter(Boolean);
 
   return (
     <>
@@ -189,13 +219,22 @@ export default function SchedulePage() {
               {t.rich("subtitle", bodyMarks)}
             </p>
             <ul className="mt-7 flex flex-wrap gap-x-7 gap-y-2 text-sm text-muted-foreground">
-              <li className="font-medium text-foreground">{t("facts.duration")}</li>
-              <li className="font-medium text-foreground">{t("facts.noCharge")}</li>
-              <li className="font-medium text-foreground">{t("facts.noCommitment")}</li>
+              <li className="font-medium text-foreground">
+                {t("facts.duration")}
+              </li>
+              <li className="font-medium text-foreground">
+                {t("facts.noCharge")}
+              </li>
+              <li className="font-medium text-foreground">
+                {t("facts.noCommitment")}
+              </li>
               <li>{hoursLine}</li>
             </ul>
           </HeroReveal>
-          <HeroReveal delay={0.65} className="mt-12 border-t-2 border-foreground pt-10 md:mt-16 md:pt-14">
+          <HeroReveal
+            delay={0.65}
+            className="mt-12 border-t-2 border-foreground pt-10 md:mt-16 md:pt-14"
+          >
             <form onSubmit={onSubmit} noValidate>
               <p className="max-w-[46ch] font-sans text-[clamp(1.625rem,3.6vw,3.375rem)] leading-[1.5] font-light tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal">
                 {t.rich("sentence", {
@@ -204,12 +243,17 @@ export default function SchedulePage() {
                       type="text"
                       autoComplete="name"
                       value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
                       placeholder={t("form.name.placeholder")}
                       aria-label={t("form.name.label")}
                       aria-invalid={!!errors.name}
                       disabled={locked}
-                      className={cn(blank, "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
+                      className={cn(
+                        blank,
+                        "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
+                      )}
                     />
                   ),
                   phone: () => (
@@ -218,12 +262,17 @@ export default function SchedulePage() {
                       dir="ltr"
                       autoComplete="tel"
                       value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
                       placeholder={t("form.phone.placeholder")}
                       aria-label={t("form.phone.label")}
                       aria-invalid={!!errors.phone}
                       disabled={locked}
-                      className={cn(blank, "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto")}
+                      className={cn(
+                        blank,
+                        "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
+                      )}
                     />
                   ),
                   date: () => (
@@ -241,7 +290,8 @@ export default function SchedulePage() {
                       })()}
                       className={cn(
                         blankTrigger,
-                        !formData.date && "text-muted-foreground/70 hover:text-muted-foreground",
+                        !formData.date &&
+                          "text-muted-foreground/70 hover:text-muted-foreground",
                         errors.date && "border-destructive",
                       )}
                     />
@@ -254,7 +304,10 @@ export default function SchedulePage() {
                     >
                       <SelectTrigger
                         aria-label={t("form.time.label")}
-                        className={cn(blankTrigger, errors.time && "border-destructive")}
+                        className={cn(
+                          blankTrigger,
+                          errors.time && "border-destructive",
+                        )}
                       >
                         <SelectValue placeholder={t("form.time.placeholder")} />
                       </SelectTrigger>
@@ -280,43 +333,72 @@ export default function SchedulePage() {
                 </div>
               )}
               <div className="mt-10 flex flex-wrap items-center gap-6 md:mt-14">
-                <MagneticButton type="submit" variant="primary" size="lg" disabled={locked}>
+                <MagneticButton
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  disabled={locked}
+                >
                   {isSubmitting ? t("submit.submitting") : t("submit.button")}
                 </MagneticButton>
-                {submitSuccess && (
-                  <p role="status" className="flex items-center gap-2 text-sm text-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
-                    {t("submit.success")}
-                  </p>
-                )}
                 {submitError && (
-                  <p role="alert" className="flex items-center gap-2 text-sm text-foreground">
-                    <AlertCircle className="h-4 w-4 text-destructive" aria-hidden />
+                  <p
+                    role="alert"
+                    className="flex items-center gap-2 text-sm text-foreground"
+                  >
+                    <AlertCircle
+                      className="h-4 w-4 text-destructive"
+                      aria-hidden
+                    />
                     {submitError}
                   </p>
                 )}
               </div>
-              <div className="mt-8 max-w-xl space-y-3 border-t border-border-subtle pt-6 text-sm leading-relaxed text-muted-foreground">
-                <p>
-                  {t("privacy")}{" "}
-                  <DirectionalLink
-                    href="/privacy"
-                    className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
-                  >
-                    {t("privacyLink")}
-                  </DirectionalLink>
-                </p>
-                <p>
-                  {t("writeLead")}{" "}
-                  <DirectionalLink
-                    href={getCommercialCta("describeTheBuild").href}
-                    className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
-                  >
-                    {tCta("describeTheBuild")}
-                  </DirectionalLink>
-                </p>
-              </div>
             </form>
+            {submitSuccess && (
+              <div className="mt-12 border-t border-border-subtle pt-8 md:mt-16">
+                <div role="status">
+                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2
+                      className="h-4 w-4 text-success"
+                      aria-hidden
+                    />
+                    {t("confirm.eyebrow")}
+                  </p>
+                  <h2
+                    ref={confirmRef}
+                    tabIndex={-1}
+                    className="mt-3 max-w-[24ch] text-[clamp(1.75rem,3.2vw,2.75rem)] font-light leading-[1.1] tracking-[-0.03em] text-foreground outline-none rtl:leading-[1.35] rtl:tracking-normal"
+                  >
+                    {t("confirm.title")}
+                  </h2>
+                  <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
+                    {t("submit.success")}
+                  </p>
+                </div>
+                {stepToken ? <PreCallBrief token={stepToken} /> : null}
+              </div>
+            )}
+            <div className="mt-8 max-w-xl space-y-3 border-t border-border-subtle pt-6 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                {t("privacy")}{" "}
+                <DirectionalLink
+                  href="/privacy"
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                >
+                  {t("privacyLink")}
+                </DirectionalLink>
+              </p>
+              <p>
+                {t("writeLead")}{" "}
+                <DirectionalLink
+                  href={getCommercialCta("describeTheBuild").href}
+                  className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                >
+                  {tCta("describeTheBuild")}
+                </DirectionalLink>
+              </p>
+            </div>
           </HeroReveal>
         </Container>
       </section>

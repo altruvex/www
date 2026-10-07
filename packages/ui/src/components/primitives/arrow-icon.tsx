@@ -1,6 +1,6 @@
 import { cn } from "../../lib/utils";
 
-const ARROW_BASE = "h-4 w-4 shrink-0 transition-all duration-(--motion-hover) ease-default";
+const ARROW_BASE = "h-4 w-4 shrink-0 transition-transform duration-(--motion-hover) ease-default";
 
 const ARROW_ROTATE = {
   forward: "rtl:-rotate-180",

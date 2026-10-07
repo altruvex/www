@@ -163,6 +163,11 @@ export function Nav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isIndexOpen, setIsIndexOpen] = useState(false);
+  // The Index panel's links stay out of the DOM until the visitor shows intent (hover,
+  // focus) or opens it, so every page doesn't ship ~150 hidden nodes. Once mounted it
+  // stays mounted, so the open/close transitions run on content that already exists.
+  const [indexMounted, setIndexMounted] = useState(false);
+  if (isIndexOpen && !indexMounted) setIndexMounted(true);
   const [isNavInverted, setIsNavInverted] = useState(false);
   const [isOverStage, setIsOverStage] = useState(false);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -462,6 +467,8 @@ export function Nav() {
                 aria-expanded={isIndexOpen}
                 aria-controls="site-index"
                 onClick={() => setIsIndexOpen((open) => !open)}
+                onPointerEnter={() => setIndexMounted(true)}
+                onFocus={() => setIndexMounted(true)}
                 className={cn(
                   "flex h-11 items-center gap-2 rounded-ctl-lg px-3 text-sm font-medium text-foreground/70 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground aria-expanded:text-foreground",
                   focusRing,
@@ -502,178 +509,180 @@ export function Nav() {
             )}
           >
             <div className="min-h-0 overflow-hidden">
-              <div
-                className={cn(
-                  "grid max-h-[calc(100svh-4rem)] grid-cols-[1.3fr_1fr_1.2fr] overflow-y-auto overscroll-contain border-t border-border-subtle pt-10 pb-12 transition-opacity duration-(--motion-drawer) ease-smooth",
-                  isIndexOpen ? "opacity-100" : "opacity-0",
-                )}
-              >
-                <nav aria-label={t("pages")} className="pe-10">
-                  <Eyebrow>{t("pages")}</Eyebrow>
-                  <ol className="mt-5 border-t border-border-subtle">
-                    {NAV_ITEMS.map((item, idx) => {
-                      const active = item.key === currentKey;
-                      const subs = subItems[item.key];
-                      return (
-                        <li
-                          key={item.key}
-                          className="border-b border-border-subtle"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Link
-                              href={item.href}
-                              onClick={() => closeIndex()}
-                              aria-current={active ? "page" : undefined}
-                              className={cn(
-                                "group grid flex-1 grid-cols-[2.5rem_1fr_auto] items-baseline gap-x-2 rounded-ctl-sm py-3.5",
-                                focusRing,
+              {indexMounted ? (
+                <div
+                  className={cn(
+                    "grid max-h-[calc(100svh-4rem)] grid-cols-[1.3fr_1fr_1.2fr] overflow-y-auto overscroll-contain border-t border-border-subtle pt-10 pb-12 transition-opacity duration-(--motion-drawer) ease-smooth",
+                    isIndexOpen ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  <nav aria-label={t("pages")} className="pe-10">
+                    <Eyebrow>{t("pages")}</Eyebrow>
+                    <ol className="mt-5 border-t border-border-subtle">
+                      {NAV_ITEMS.map((item, idx) => {
+                        const active = item.key === currentKey;
+                        const subs = subItems[item.key];
+                        return (
+                          <li
+                            key={item.key}
+                            className="border-b border-border-subtle"
+                          >
+                            <div className="flex items-center gap-3">
+                              <Link
+                                href={item.href}
+                                onClick={() => closeIndex()}
+                                aria-current={active ? "page" : undefined}
+                                className={cn(
+                                  "group grid flex-1 grid-cols-[2.5rem_1fr_auto] items-baseline gap-x-2 rounded-ctl-sm py-3.5",
+                                  focusRing,
+                                )}
+                              >
+                                <span
+                                  aria-hidden
+                                  className={cn(
+                                    "text-sm tabular-nums",
+                                    active
+                                      ? "text-brand-text"
+                                      : "text-muted-foreground",
+                                  )}
+                                >
+                                  <Num value={idx + 1} pad={2} />
+                                </span>
+                                <span
+                                  className={cn(
+                                    "text-2xl font-semibold tracking-tight transition-colors duration-(--motion-instant) ease-smooth",
+                                    active
+                                      ? "text-foreground"
+                                      : "text-foreground/75 group-hover:text-foreground",
+                                  )}
+                                >
+                                  {t(item.key)}
+                                </span>
+                                <span className="text-sm text-foreground/60">
+                                  {t(`desc.${item.key}`)}
+                                </span>
+                              </Link>
+                              {subs ? (
+                                <GroupToggle
+                                  open={expandedKey === item.key}
+                                  controls={`index-group-${item.key}`}
+                                  label={t("subpages", { name: t(item.key) })}
+                                  onToggle={() => toggleGroup(item.key)}
+                                  className="size-9"
+                                />
+                              ) : (
+                                <span aria-hidden className="size-9 shrink-0" />
                               )}
-                            >
-                              <span
-                                aria-hidden
-                                className={cn(
-                                  "text-sm tabular-nums",
-                                  active
-                                    ? "text-brand-text"
-                                    : "text-muted-foreground",
-                                )}
-                              >
-                                <Num value={idx + 1} pad={2} />
-                              </span>
-                              <span
-                                className={cn(
-                                  "text-2xl font-semibold tracking-tight transition-colors duration-(--motion-instant) ease-smooth",
-                                  active
-                                    ? "text-foreground"
-                                    : "text-foreground/75 group-hover:text-foreground",
-                                )}
-                              >
-                                {t(item.key)}
-                              </span>
-                              <span className="text-sm text-foreground/60">
-                                {t(`desc.${item.key}`)}
-                              </span>
-                            </Link>
-                            {subs ? (
-                              <GroupToggle
+                            </div>
+                            {subs && (
+                              <GroupReveal
+                                id={`index-group-${item.key}`}
                                 open={expandedKey === item.key}
-                                controls={`index-group-${item.key}`}
-                                label={t("subpages", { name: t(item.key) })}
-                                onToggle={() => toggleGroup(item.key)}
-                                className="size-9"
-                              />
-                            ) : (
-                              <span aria-hidden className="size-9 shrink-0" />
+                              >
+                                <ul className="flex flex-wrap gap-x-5 pb-3.5 ps-12">
+                                  {subs.map((sub) => (
+                                    <li key={sub.href}>
+                                      <Link
+                                        href={sub.href}
+                                        onClick={() => closeIndex()}
+                                        aria-current={
+                                          pathname === sub.href
+                                            ? "page"
+                                            : undefined
+                                        }
+                                        className={cn(
+                                          "flex min-h-8 items-center rounded-ctl-xs text-sm text-foreground/65 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground aria-[current=page]:text-foreground",
+                                          focusRing,
+                                        )}
+                                      >
+                                        {sub.label}
+                                        {sub.hint && (
+                                          <span className="ms-2 text-foreground/60">
+                                            {sub.hint}
+                                          </span>
+                                        )}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </GroupReveal>
                             )}
-                          </div>
-                          {subs && (
-                            <GroupReveal
-                              id={`index-group-${item.key}`}
-                              open={expandedKey === item.key}
-                            >
-                              <ul className="flex flex-wrap gap-x-5 pb-3.5 ps-12">
-                                {subs.map((sub) => (
-                                  <li key={sub.href}>
-                                    <Link
-                                      href={sub.href}
-                                      onClick={() => closeIndex()}
-                                      aria-current={
-                                        pathname === sub.href
-                                          ? "page"
-                                          : undefined
-                                      }
-                                      className={cn(
-                                        "flex min-h-8 items-center rounded-ctl-xs text-sm text-foreground/65 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground aria-[current=page]:text-foreground",
-                                        focusRing,
-                                      )}
-                                    >
-                                      {sub.label}
-                                      {sub.hint && (
-                                        <span className="ms-2 text-foreground/60">
-                                          {sub.hint}
-                                        </span>
-                                      )}
-                                    </Link>
-                                  </li>
-                                ))}
-                              </ul>
-                            </GroupReveal>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </nav>
+                  <div className="border-s border-border-subtle px-10">
+                    <Eyebrow>{t("directLines")}</Eyebrow>
+                    <ul className="mt-5 grid gap-1">
+                      <li>
+                        <a
+                          href={`mailto:${SITE_CONFIG.email}`}
+                          className={cn(
+                            "group flex min-h-10 items-center gap-2.5 rounded-ctl-sm text-base text-foreground/75 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
+                            focusRing,
                           )}
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </nav>
-                <div className="border-s border-border-subtle px-10">
-                  <Eyebrow>{t("directLines")}</Eyebrow>
-                  <ul className="mt-5 grid gap-1">
-                    <li>
-                      <a
-                        href={`mailto:${SITE_CONFIG.email}`}
-                        className={cn(
-                          "group flex min-h-10 items-center gap-2.5 rounded-ctl-sm text-base text-foreground/75 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
-                          focusRing,
-                        )}
-                      >
-                        <Mail
-                          aria-hidden
-                          className="size-4 shrink-0 text-foreground/55"
-                        />
-                        <bdi>{SITE_CONFIG.email}</bdi>
-                      </a>
-                    </li>
-                    <li>
-                      <Link
-                        href={CALL_HREF}
-                        onClick={() => closeIndex()}
-                        className={cn(
-                          "group flex min-h-10 items-center gap-2.5 rounded-ctl-sm text-base text-foreground/75 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
-                          focusRing,
-                        )}
-                      >
-                        <Calendar
-                          aria-hidden
-                          className="size-4 shrink-0 text-foreground/55"
-                        />
-                        {t("schedule")}
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                <div className="flex flex-col border-s border-border-subtle ps-10">
-                  <Eyebrow>{t("settings")}</Eyebrow>
-                  <div className="mt-5 grid gap-5">
-                    <div className="grid gap-2">
-                      <span className="text-sm font-medium text-foreground/70">
-                        {t("language")}
-                      </span>
-                      <LanguageSwitcherBase
-                        variant="segmented"
-                        className="w-full [&>button]:flex-1"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <span className="text-sm font-medium text-foreground/70">
-                        {t("theme")}
-                      </span>
-                      <ThemeChanger
-                        variant="segmented"
-                        className="w-full [&>button]:flex-1"
-                      />
-                    </div>
+                        >
+                          <Mail
+                            aria-hidden
+                            className="size-4 shrink-0 text-foreground/55"
+                          />
+                          <bdi>{SITE_CONFIG.email}</bdi>
+                        </a>
+                      </li>
+                      <li>
+                        <Link
+                          href={CALL_HREF}
+                          onClick={() => closeIndex()}
+                          className={cn(
+                            "group flex min-h-10 items-center gap-2.5 rounded-ctl-sm text-base text-foreground/75 transition-colors duration-(--motion-instant) ease-smooth hover:text-foreground",
+                            focusRing,
+                          )}
+                        >
+                          <Calendar
+                            aria-hidden
+                            className="size-4 shrink-0 text-foreground/55"
+                          />
+                          {t("schedule")}
+                        </Link>
+                      </li>
+                    </ul>
                   </div>
-                  <MagneticButton
-                    asChild
-                    variant="primary"
-                    size="lg"
-                    className="mt-8 h-12 w-full leading-none lg:min-h-12"
-                  >
-                    <Link href={CTA_HREF} onClick={() => closeIndex()}>
-                      {t("getStarted")}
-                    </Link>
-                  </MagneticButton>
+                  <div className="flex flex-col border-s border-border-subtle ps-10">
+                    <Eyebrow>{t("settings")}</Eyebrow>
+                    <div className="mt-5 grid gap-5">
+                      <div className="grid gap-2">
+                        <span className="text-sm font-medium text-foreground/70">
+                          {t("language")}
+                        </span>
+                        <LanguageSwitcherBase
+                          variant="segmented"
+                          className="w-full [&>button]:flex-1"
+                        />
+                      </div>
+                      <div className="grid gap-2">
+                        <span className="text-sm font-medium text-foreground/70">
+                          {t("theme")}
+                        </span>
+                        <ThemeChanger
+                          variant="segmented"
+                          className="w-full [&>button]:flex-1"
+                        />
+                      </div>
+                    </div>
+                    <MagneticButton
+                      asChild
+                      variant="primary"
+                      size="lg"
+                      className="mt-8 h-12 w-full leading-none lg:min-h-12"
+                    >
+                      <Link href={CTA_HREF} onClick={() => closeIndex()}>
+                        {t("getStarted")}
+                      </Link>
+                    </MagneticButton>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
           <div className="flex h-14 w-full items-center justify-between lg:hidden">

@@ -11,6 +11,7 @@ import { FilterChip } from "@/components/os/data-table";
 import {
   PIPELINE_STAGES,
   STAGE_PROBABILITY,
+  STAGE_MEETINGS_SELECT,
   STAGE_TONE,
   deriveClientStage,
 } from "@/lib/dashboard-data";
@@ -71,6 +72,7 @@ export default async function PipelinePage({
         orderBy: { createdAt: "desc" },
         take: 1,
       },
+      ...STAGE_MEETINGS_SELECT,
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -81,6 +83,7 @@ export default async function PipelinePage({
       label: statusOf("pipelineStage", stage).label,
       tone: STAGE_TONE[stage],
     })),
+    { id: "NURTURE", label: "Nurture", tone: STAGE_TONE.NURTURE },
     { id: "LOST", label: "Lost", tone: STAGE_TONE.LOST },
   ];
   const focus = columns.find((c) => c.id === stageParam);
@@ -95,7 +98,10 @@ export default async function PipelinePage({
     currency: client.proposals[0]?.currency ?? "EGP",
   }));
 
-  const live = cards.filter((c) => c.stage !== "LOST" && c.stage !== "SPAM");
+  // Parked (Nurture) and closed (Lost) deals are not live pipeline.
+  const live = cards.filter(
+    (c) => c.stage !== "LOST" && c.stage !== "SPAM" && c.stage !== "NURTURE",
+  );
   const openCards = live.filter((c) => c.stage !== "SIGNED" && c.value != null);
 
   const openValue = sumByCurrency(
@@ -151,7 +157,7 @@ export default async function PipelinePage({
     <div className="flex min-h-[calc(100dvh-6.5rem)] flex-col gap-4">
       <PageHeader
         title="Pipeline"
-        description="Every live deal by stage. Stages after Qualified are derived from the proposal and contract records, so they move themselves."
+        description="Every live deal by stage. Call, proposal and contract stages are derived from the meeting, proposal and contract records, so they move themselves."
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -173,7 +179,7 @@ export default async function PipelinePage({
             <StatTile
               label="Live deals"
               value={live.length}
-              sub="Every stage except Lost"
+              sub="Every stage except Nurture and Lost"
             />
             <StatTile
               label="Proposal out"
@@ -236,11 +242,11 @@ export default async function PipelinePage({
               tone="info"
               action={<NewProposalButton variant="outline">Send a proposal</NewProposalButton>}
             >
-              New, Viewed, Contacted, Qualified and Lost are yours to set — drag
-              a card, or use the stage menu on it (the only way on a touch
-              screen). The locked columns are computed from the documents
-              themselves: send a proposal or generate a contract to move a deal
-              into them.
+              New, Viewed, Contacted, Qualifying, Qualified, Nurture and Lost
+              are yours to set — drag a card, or use the stage menu on it (the
+              only way on a touch screen). The locked columns are computed from
+              the records themselves: book or complete a call, send a proposal
+              or generate a contract to move a deal into them.
             </AlertBar>
           )}
           {focus && (

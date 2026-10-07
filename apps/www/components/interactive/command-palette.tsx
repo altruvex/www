@@ -242,7 +242,6 @@ export function CommandPalette({
         );
       }
     }
-    trackEvent("command_palette_opened");
   }, []);
 
   const animateClose = useCallback(() => {
@@ -274,7 +273,7 @@ export function CommandPalette({
 
   const runItem = useCallback(
     (item: PaletteItem) => {
-      trackEvent("command_palette_select", { id: item.id });
+      trackEvent("cta_clicked", { ctaId: item.id, source: "command_palette" });
       if (item.action === "theme") {
         switchTheme(resolvedTheme === "dark" ? "light" : "dark");
         return;
