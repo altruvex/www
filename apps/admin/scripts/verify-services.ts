@@ -9,7 +9,7 @@ import { buildDefaultProposalContent } from "../lib/proposal-defaults";
 import { ProposalQaError } from "../lib/proposal-qa";
 import { investmentTotal, netTotal, validateProposalContent } from "../lib/proposal-schema";
 import { normaliseDomain, parseRdapDomain } from "../lib/rdap";
-import { reminderDraftFor, whatsappLink } from "../lib/service-reminder";
+import { reminderDraftFor, whatsappLink, whatsappNumber } from "../lib/service-reminder";
 import {
   annualised,
   remindedThisCycle,
@@ -140,6 +140,21 @@ async function main() {
   const wa = whatsappLink("+20 100 123 4567", "Hi Mona");
   check(wa === "https://wa.me/201001234567?text=Hi%20Mona", "the WhatsApp link carries digits only and the encoded text");
   check(whatsappLink("n/a", "x") === null, "no usable phone, no link");
+  check(whatsappNumber("01000000877") === "201000000877", "an Egyptian local mobile (01…) gains +20");
+  check(whatsappNumber("0100 123 4567") === "201001234567", "a spaced Egyptian local mobile gains +20");
+  check(whatsappNumber("+201001234567") === "201001234567", "+20 keeps its code");
+  check(whatsappNumber("00201001234567") === "201001234567", "00 20 reads as +20");
+  check(whatsappNumber("+20 0100 123 4567") === "201001234567", "a trunk 0 after +20 is dropped");
+  check(whatsappNumber("201001234567") === "201001234567", "a stored E.164 number with no + keeps its code");
+  check(whatsappNumber("+44 7911 123456") === "447911123456", "a UK number keeps +44");
+  check(whatsappNumber("00971 50 123 4567") === "971501234567", "00 971 keeps +971");
+  check(whatsappNumber("+1 415 555 0123") === "14155550123", "a US number keeps +1");
+  check(whatsappNumber("07911 123456") === null, "an ambiguous local number gets no invented code");
+  check(whatsappNumber("050 123 4567") === null, "a non-Egyptian local mobile gets no invented code");
+  check(whatsappNumber("1001234567") === null, "an Egyptian number missing its 0 is not read as +1");
+  check(whatsappNumber("01300000877") === null, "01 + a non-mobile prefix is not read as Egyptian");
+  check(whatsappNumber("+999 123 4567") === null, "an unknown country code gets no link");
+  check(whatsappLink("07911 123456", "x") === null, "no wa.me link for a number of unknown country");
 
   console.log("\nRegistry (RDAP)");
   check(normaliseDomain("https://www.Nile.com/about") === "www.nile.com", "a pasted URL normalises to its domain");

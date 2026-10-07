@@ -6,7 +6,7 @@ import { recordActivity, recordChange } from "@/lib/activity-log";
 import { EmailNotConfiguredError, EmailSendError } from "@/lib/email";
 import { ClientHasNoAddressError, sendDocumentEmail } from "@/lib/email-sender";
 import { leadFollowUpDraft } from "@/lib/email-templates";
-import { scheduleLink } from "@/lib/lead-follow-up";
+import { followUpClosedReason, scheduleLink } from "@/lib/lead-follow-up";
 import { can } from "@/lib/rbac";
 import { badRequest, HttpError, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
 
@@ -48,9 +48,13 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, role, par
       status: true,
       nextActionAt: true,
       nextActionNote: true,
+      contracts: { select: { status: true } },
+      projects: { select: { id: true } },
     },
   });
   if (!client) throw notFound("That client no longer exists.");
+  const closed = followUpClosedReason(client);
+  if (closed) throw new HttpError(409, closed);
 
   const nextActionAt = input.nextActionAt ? new Date(`${input.nextActionAt}T00:00:00`) : null;
   if (nextActionAt && Number.isNaN(nextActionAt.getTime()))

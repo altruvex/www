@@ -3,7 +3,6 @@ import {
   DecisionRole,
   ProjectSituation,
   ProjectTimeline,
-  prisma,
 } from "@repo/database";
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -13,8 +12,8 @@ import {
   unexpectedError,
 } from "@/lib/server/api-error";
 import {
+  consumeStepToken,
   invalidStepToken,
-  submissionIdForStepToken,
 } from "@/lib/server/contact/step-token";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
@@ -76,27 +75,33 @@ export async function POST(request: NextRequest) {
 
     const data = qualifySchema.parse(body);
 
-    const submissionId = await submissionIdForStepToken(data.token);
-    if (!submissionId) return invalidStepToken();
-
-    // Answers left out stay as they were, so a correction can be partial.
-    await prisma.contactSubmission.update({
-      where: { id: submissionId },
-      data: {
-        situation: data.situation ? SITUATION_MAP[data.situation] : undefined,
-        budget:
-          data.budget && isBudgetAnswerId(data.budget)
-            ? BUDGET_ANSWER_TO_DB[data.budget]
-            : undefined,
-        projectTimeline: data.projectTimeline
-          ? TIMELINE_MAP[data.projectTimeline]
-          : undefined,
-        decisionRole: data.decisionRole
-          ? DECISION_ROLE_MAP[data.decisionRole]
-          : undefined,
-        qualifiedAt: new Date(),
+    // Answers left out are not written; the token is spent by this write.
+    const saved = await consumeStepToken(
+      data.token,
+      async (tx, submissionId) => {
+        await tx.contactSubmission.update({
+          where: { id: submissionId },
+          data: {
+            situation: data.situation
+              ? SITUATION_MAP[data.situation]
+              : undefined,
+            budget:
+              data.budget && isBudgetAnswerId(data.budget)
+                ? BUDGET_ANSWER_TO_DB[data.budget]
+                : undefined,
+            projectTimeline: data.projectTimeline
+              ? TIMELINE_MAP[data.projectTimeline]
+              : undefined,
+            decisionRole: data.decisionRole
+              ? DECISION_ROLE_MAP[data.decisionRole]
+              : undefined,
+            qualifiedAt: new Date(),
+          },
+        });
+        return true;
       },
-    });
+    );
+    if (!saved) return invalidStepToken();
 
     return NextResponse.json({ ok: true, code: "qualified" }, { status: 200 });
   } catch (error: unknown) {

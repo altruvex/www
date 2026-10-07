@@ -29,18 +29,50 @@ export function scheduleLink(): string | null {
   return site ? new URL("/schedule", site).toString() : null;
 }
 
+/**
+ * Sales follow-ups stop at spam and at signing. Read from the stored record,
+ * not the derived stage: the stage ranks proposals above status, so a spam
+ * lead with a sent proposal would read PROPOSAL_SENT. The client page and the
+ * follow-up route and the reminder sweep all ask this, so none can drift.
+ */
+export function followUpClosedReason(client: {
+  status: string;
+  contracts: { status: string }[];
+  projects: unknown[];
+}): string | null {
+  if (client.status === "SPAM") return "This lead is marked spam.";
+  if (
+    client.status === "WON" ||
+    client.projects.length > 0 ||
+    client.contracts.some((c) => c.status === "SIGNED")
+  )
+    return "This client has signed; sales follow-ups have stopped.";
+  return null;
+}
+
 /** One alert per lead per follow-up date — moving the date re-arms it. */
 export function followUpAlertKey(clientId: string, nextActionAt: Date): string {
   return `follow-up:${clientId}:${nextActionAt.toISOString().slice(0, 10)}`;
 }
 
-/** One reply alert per lead, ever. */
-export function replyAlertKey(clientId: string): string {
-  return `reply-due:${clientId}`;
+/**
+ * At most two reply alerts per lead: one while the promised window is still
+ * open, one when it lapses. A single key would swallow the lapse for any lead
+ * the sweep first saw inside its window.
+ */
+export function replyAlertKey(clientId: string, lapsed: boolean): string {
+  return `${lapsed ? "reply-lapsed" : "reply-due"}:${clientId}`;
 }
 
 const label = (client: { name: string | null; company: string | null; phone: string }) =>
   client.name || client.company || client.phone;
+
+/** What followUpClosedReason reads, for queries that feed it. */
+const CLOSED_FIELDS = {
+  status: true,
+  contracts: { select: { status: true } },
+  projects: { select: { id: true } },
+} as const;
 
 export interface FollowUpSweepResult {
   due: number;
@@ -61,7 +93,9 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
 
   const [due, awaiting, admins] = await Promise.all([
     prisma.client.findMany({
-      where: { nextActionAt: { lt: endOfToday }, status: { notIn: ["LOST", "SPAM"] } },
+      // LOST is quiet for alerts only: a person may still send a win-back
+      // follow-up, so it is not part of followUpClosedReason.
+      where: { nextActionAt: { lt: endOfToday }, status: { not: "LOST" } },
       select: {
         id: true,
         name: true,
@@ -70,6 +104,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
         ownerId: true,
         nextActionAt: true,
         nextActionNote: true,
+        ...CLOSED_FIELDS,
       },
       orderBy: { nextActionAt: "asc" },
     }),
@@ -80,7 +115,15 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
           { source: { not: "MANUAL" }, createdAt: { gte: replySince } },
         ],
       },
-      select: { id: true, name: true, company: true, phone: true, ownerId: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        company: true,
+        phone: true,
+        ownerId: true,
+        createdAt: true,
+        ...CLOSED_FIELDS,
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.user.findMany({
@@ -98,7 +141,9 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
   let awaitingAlerted = 0;
   let notifications = 0;
 
-  for (const client of due) {
+  // A signed or spam client keeps whatever nextActionAt it had; that date
+  // must not raise an alert.
+  for (const client of due.filter((c) => !followUpClosedReason(c))) {
     if (!client.nextActionAt) continue;
     const who = label(client);
     const overdue = client.nextActionAt.getTime() < overdueCutoff(now).getTime();
@@ -135,7 +180,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
     });
   }
 
-  for (const client of awaiting) {
+  for (const client of awaiting.filter((c) => !followUpClosedReason(c))) {
     const who = label(client);
     const deadline = new Date(client.createdAt.getTime() + REPLY_PROMISE_HOURS * 3_600_000);
     const lapsed = deadline.getTime() <= now.getTime();
@@ -152,7 +197,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
         userId,
         entityType: "client",
         entityId: client.id,
-        dedupeKey: replyAlertKey(client.id),
+        dedupeKey: replyAlertKey(client.id, lapsed),
       })),
       skipDuplicates: true,
     });

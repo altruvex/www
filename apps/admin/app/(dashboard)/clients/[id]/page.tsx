@@ -44,7 +44,7 @@ import { redactMoney } from "@/lib/client-services";
 import { emailTransport } from "@/lib/email";
 import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
 import { httpUrl } from "@/lib/http-url";
-import { scheduleLink } from "@/lib/lead-follow-up";
+import { followUpClosedReason, scheduleLink } from "@/lib/lead-follow-up";
 import { canSeeFinance, type Role } from "@/lib/nav";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
@@ -354,7 +354,7 @@ export default async function ClientDetailPage({
                 canEdit ? (
                   <div className="space-y-4">
                     {/* Sales follow-ups stop once the client signs; delivery has its own channels. */}
-                    {can(role, "send", "message") && stage !== "SIGNED" && stage !== "SPAM" && (
+                    {can(role, "send", "message") && !followUpClosedReason(client) && (
                       <FollowUpSheet
                         lead={{
                           id: client.id,

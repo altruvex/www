@@ -1,4 +1,3 @@
-import { prisma } from "@repo/database";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   apiError,
@@ -7,8 +6,8 @@ import {
   unexpectedError,
 } from "@/lib/server/api-error";
 import {
+  consumeStepToken,
   invalidStepToken,
-  submissionIdForStepToken,
 } from "@/lib/server/contact/step-token";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
@@ -37,23 +36,24 @@ export async function POST(request: NextRequest) {
 
     const { token, current, change, stakes } = preCallBriefSchema.parse(body);
 
-    const submissionId = await submissionIdForStepToken(token);
-    if (!submissionId) return invalidStepToken();
-
-    const meeting = await prisma.meeting.findFirst({
-      where: { submissionId },
-      orderBy: { createdAt: "desc" },
-      select: { id: true },
+    // The token is spent only when there is a meeting to write the brief on.
+    const saved = await consumeStepToken(token, async (tx, submissionId) => {
+      const meeting = await tx.meeting.findFirst({
+        where: { submissionId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      if (!meeting) return false;
+      await tx.meeting.update({
+        where: { id: meeting.id },
+        data: {
+          preCallBrief: { current, change, stakes },
+          preCallBriefAt: new Date(),
+        },
+      });
+      return true;
     });
-    if (!meeting) return invalidStepToken();
-
-    await prisma.meeting.update({
-      where: { id: meeting.id },
-      data: {
-        preCallBrief: { current, change, stakes },
-        preCallBriefAt: new Date(),
-      },
-    });
+    if (!saved) return invalidStepToken();
 
     return NextResponse.json({ ok: true, code: "briefed" }, { status: 200 });
   } catch (error: unknown) {

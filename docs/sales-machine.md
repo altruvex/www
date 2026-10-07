@@ -147,10 +147,10 @@ Referer header. `landingPath` is stored on ContactSubmission and TransparencyLea
 - **Sweep:** `sweepLeadFollowUps` (`apps/admin/lib/lead-follow-up.ts`), daily from `GET /api/cron/lead-follow-ups`
   (06:00 UTC, `CRON_SECRET`, fails closed; listed in `lib/cron-jobs.ts`). It writes `FOLLOW_UP_DUE`
   notifications and a Slack `lead.follow_up_due` line for (a) any lead whose `nextActionAt` is today or
-  earlier (not LOST/SPAM) and (b) a non-MANUAL lead from the last 7 days still uncontacted — the
-  contact page promises a reply within 24 hours on business days (`REPLY_PROMISE_HOURS`). The owner gets
+  earlier (not LOST, and not closed per `followUpClosedReason`: spam or signed) and (b) a non-MANUAL
+  lead from the last 7 days still uncontacted — the contact page promises a reply within 24 hours on business days (`REPLY_PROMISE_HOURS`). The owner gets
   it; with no owner, every admin. Dedupe keys: `follow-up:<client>:<date>` (moving the date re-arms it)
-  and `reply-due:<client>` (once per lead). It never contacts a client.
+  and `reply-due:<client>` / `reply-lapsed:<client>` (at most once each per lead). It never contacts a client.
 - **Drafts:** `LEAD_TEMPLATES` / `leadFollowUpDraft` in `lib/email-templates.ts` — First reply, After the
   call, Check in; default picked from the derived stage. English only, no prices, no dates; the schedule
   link appears only when `PUBLIC_SITE_URL` is set.
