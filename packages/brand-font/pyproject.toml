@@ -16,7 +16,7 @@ dev = [
     "freetype-py==2.5.1",
     "numpy==2.5.3",
     "playwright>=1.50,<2",
-    "pytest>=8,<9",
+    "pytest>=9.0.3,<10",
     "uharfbuzz==0.56.2",
 ]
 
