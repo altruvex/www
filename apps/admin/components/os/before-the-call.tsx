@@ -7,6 +7,7 @@ import { date, money, when } from "@/lib/format";
 import { bandTone } from "@/lib/lead-score";
 import type { PreCallView } from "@/lib/precall";
 import { statusOf } from "@/lib/status";
+import { nextStepLabel } from "@/lib/transparency-lead-labels";
 
 /**
  * "Before the call": what the operator should know before speaking to a lead.
@@ -16,9 +17,12 @@ import { statusOf } from "@/lib/status";
 export function BeforeTheCall({
   view,
   editor,
+  showEstimate = true,
 }: {
   view: PreCallView;
   editor?: React.ReactNode;
+  /** False where the page already shows the estimator record (the client aside). */
+  showEstimate?: boolean;
 }) {
   const q = view.qualification;
   const brief = view.meeting?.brief ?? null;
@@ -89,13 +93,14 @@ export function BeforeTheCall({
       </Panel>
 
       <Panel title="Qualification answers">
-        {!q || (!q.situation && !q.budget && !q.timeline && !q.decisionRole) ? (
+        {!q || (!q.service && !q.situation && !q.budget && !q.timeline && !q.decisionRole) ? (
           <EmptyInline>
             They have not answered the qualification questions.
           </EmptyInline>
         ) : (
           <MetaList
             items={[
+              { label: "Interested in", value: q.service },
               {
                 label: "Situation",
                 value: q.situation ? statusOf("projectSituation", q.situation).label : null,
@@ -153,28 +158,54 @@ export function BeforeTheCall({
         )}
       </Panel>
 
-      <Panel title="Estimator">
-        {view.estimate ? (
-          <MetaList
-            items={[
-              {
-                label: "Range shown",
-                hint: "What the public estimator showed this visitor, not a stated budget",
-                value: (
-                  <span className="font-mono tabular-nums">
-                    {money(view.estimate.min, "EGP", { compact: true })}–
-                    {money(view.estimate.max, "EGP", { compact: true })}
-                  </span>
-                ),
-              },
-            ]}
-          />
-        ) : (
-          <EmptyInline>No estimator run is linked to this lead.</EmptyInline>
-        )}
-      </Panel>
+      {showEstimate && (
+        <Panel title="Estimator">
+          {view.estimate ? (
+            <MetaList
+              items={[
+                {
+                  label: "Range shown",
+                  hint: "What the public estimator showed this visitor, not a stated budget",
+                  value: (
+                    <span className="font-mono tabular-nums">
+                      {money(view.estimate.min, "EGP", { compact: true })}–
+                      {money(view.estimate.max, "EGP", { compact: true })}
+                    </span>
+                  ),
+                },
+                // Runs stored before the read was kept have no next step: no row.
+                ...(view.estimate.nextStep
+                  ? [
+                      {
+                        label: "Next step",
+                        hint: "The preliminary read their result showed",
+                        value: nextStepLabel(view.estimate.nextStep),
+                      },
+                    ]
+                  : []),
+                // The contact form's answer, when there is one, already sits
+                // under Qualification answers.
+                ...(!q?.situation && view.estimate.situation
+                  ? [
+                      {
+                        label: "Situation",
+                        hint: "What they chose before the estimate",
+                        value: statusOf("projectSituation", view.estimate.situation).label,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          ) : (
+            <EmptyInline>No estimator run is linked to this lead.</EmptyInline>
+          )}
+        </Panel>
+      )}
 
-      <Panel title="Where they came from">
+      <Panel
+        title="Where they came from"
+        description={a ? `First touch: the ${a.origin}` : undefined}
+      >
         {hasAttribution && a ? (
           <MetaList
             items={[

@@ -30,7 +30,7 @@ function StudioHero() {
   const s = useTranslations("serviceDetails.development.studio");
   const tCTAs = useTranslations("commercial.ctas");
   const primary = getCommercialCta("describeTheBuild");
-  const secondary = getCommercialCta("projectRange");
+  const secondary = getCommercialCta("projectRange", { projectType: "webapp" });
   const mediaRef = useMediaSettle<HTMLDivElement>();
 
   return (
@@ -59,7 +59,12 @@ function StudioHero() {
             <CtaButtonGroup
               primaryVariant="accent"
               primary={{ href: primary.href, label: tCTAs("describeTheBuild") }}
-              secondary={{ href: `${secondary.href}?projectType=webapp`, label: tCTAs("projectRange") }}
+              secondary={{
+                href: secondary.href,
+                label: tCTAs("projectRange"),
+                cta: "projectRange",
+                context: { projectType: "webapp" },
+              }}
               secondaryArrow
             />
           </HeroReveal>

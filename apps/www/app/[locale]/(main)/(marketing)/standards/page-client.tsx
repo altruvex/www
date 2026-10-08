@@ -194,10 +194,10 @@ function LeadNumeral({ standard, check }: { standard: string; check: Check }) {
 
   return (
     <>
-      <span aria-hidden className="mt-[clamp(0.5rem,1.4vw,1.25rem)] block overflow-clip pt-[0.04em] pb-[0.02em]">
+      <span aria-hidden className="mt-[clamp(0.5rem,1.4vw,1.25rem)] block overflow-x-clip">
         <span
           className={cn(
-            "block text-[24vw] leading-[0.82] font-extralight tracking-[-0.055em] whitespace-nowrap tabular-nums [clip-path:inset(0_0_0_0)] sm:text-[clamp(3rem,20vw,22rem)] rtl:tracking-[-0.02em]",
+            "block text-[24vw] leading-[0.82] font-extralight tracking-[-0.055em] whitespace-nowrap tabular-nums [clip-path:inset(-0.2em_0_-0.1em_0)] sm:text-[clamp(3rem,20vw,22rem)] rtl:tracking-[-0.02em]",
             "group-data-[reveal=armed]/chapter:translate-y-[102%] group-data-[reveal=armed]/chapter:[clip-path:inset(0_0_100%_0)]",
             "group-data-[reveal=in]/chapter:transition-[translate,clip-path] group-data-[reveal=in]/chapter:duration-(--motion-text) group-data-[reveal=in]/chapter:ease-strong",
           )}

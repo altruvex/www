@@ -13,7 +13,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { LOCALE_META, nextLocale } from "@/i18n/locale-meta";
 
-const WORDMARK_EM = 3.547;
+const WORDMARK_EM = 3.747;
 const WORDMARK_FONT_SIZE = `${Math.floor((100 / WORDMARK_EM) * 10) / 10}cqi`;
 
 const linkClass =
@@ -226,7 +226,7 @@ export const Footer = memo(function Footer() {
         <div
           ref={markRef}
           aria-hidden="true"
-          className="overflow-clip pt-[0.08em] pb-[0.012em] text-center leading-[0.74] select-none"
+          className="overflow-clip pt-[0.04em] pb-[0.05em] text-center leading-[0.74] select-none"
           style={{ fontSize: WORDMARK_FONT_SIZE }}
         >
           <AltruvexWordmark

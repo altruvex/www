@@ -131,7 +131,7 @@
   },
   "endCta": {
     "title": "Facing a similar problem?",
-    "body": "Same process, same standards. Describe what you are building, or see what a similar build costs in the estimator first.",
+    "body": "Same process, same standards. The estimator shows what a similar build costs before any call.",
     "estimate": "Estimate a similar build"
   }
 }

@@ -14,7 +14,7 @@ export function CtaSection() {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("body")}
-      primary="describeTheBuild"
+      primary="projectRange"
       secondary="technicalCall"
     />
   );

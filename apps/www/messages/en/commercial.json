@@ -1,6 +1,6 @@
 {
   "cta": {
-    "body": "Tell us what it must do, who uses it and when it needs to be live. If it fits what we build, the next step is a consultation to scope it.",
+    "body": "Put your answers into the estimator for a price range in a few minutes. If it fits what we build, the next step is a consultation to scope it.",
     "eyebrow": "Next step",
     "sectionAriaLabel": "Call to action",
     "title": "Have a website or web application to build?",
@@ -22,6 +22,11 @@
     "startDevelopment": "Start a development project",
     "viewStandards": "View the standards",
     "paymentTerms": "Read the terms"
+  },
+  "ctasAlternative": {
+    "projectRange": "or estimate it first",
+    "technicalCall": "or talk it through first",
+    "realBuild": "or see the work first"
   },
   "trust": {
     "body": "You should not have to take our word for it. Prices, quality thresholds, contract terms and shipped work are all published on this site. <strong>Check them before any call.</strong>",

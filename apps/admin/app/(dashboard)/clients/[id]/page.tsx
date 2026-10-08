@@ -54,8 +54,13 @@ import { statusOf } from "@/lib/status";
 import { documentUrl } from "@/lib/storage";
 import {
   brandLabel,
+  complexityName,
   contentLabel,
+  driverNames,
+  nextStepLabel,
+  projectTypeName,
   scopeNoteNames,
+  timelineLabel,
 } from "@/lib/transparency-lead-labels";
 import { LifecycleButton, StatusMenu } from "./client-actions";
 import { ClientNotes } from "./client-notes";
@@ -350,6 +355,7 @@ export default async function ClientDetailPage({
           {preCall && (
             <BeforeTheCall
               view={preCall}
+              showEstimate={false}
               editor={
                 canEdit ? (
                   <div className="space-y-4">
@@ -723,8 +729,14 @@ function Aside({
           }
         >
           <dl className="space-y-1.5 text-base">
-            <Row label="Project">{lead.projectType}</Row>
-            <Row label="Complexity">{lead.complexity}</Row>
+            <Row label="Reference">
+              <span className="font-mono text-meta">{lead.reference}</span>
+            </Row>
+            <Row label="Project">{projectTypeName(lead.projectType)}</Row>
+            <Row label="Complexity">{complexityName(lead.complexity)}</Row>
+            {timelineLabel(lead.timeline) && (
+              <Row label="Pace">{timelineLabel(lead.timeline)}</Row>
+            )}
             <Row label="Quoted">
               <span className="font-mono text-meta tabular-nums">
                 {money(lead.priceMin)} – {money(lead.priceMax)}
@@ -741,7 +753,45 @@ function Aside({
             {contentLabel(lead.contentReadiness) && (
               <Row label="Content">{contentLabel(lead.contentReadiness)}</Row>
             )}
+            {lead.situation && (
+              <Row label="Situation">
+                {statusOf("projectSituation", lead.situation).label}
+              </Row>
+            )}
+            {lead.company && <Row label="Company">{lead.company}</Row>}
+            <Row label="Locale">
+              <span className="font-mono text-meta uppercase">{lead.locale}</span>
+            </Row>
           </dl>
+          {(lead.nextStep || lead.drivers.length > 0) && (
+            <div className="mt-3 border-t border-border-subtle pt-3">
+              <p className="telemetry text-subtle-foreground">
+                Preliminary read · what their result showed
+              </p>
+              {lead.nextStep && (
+                <dl className="mt-1.5 text-base">
+                  <Row label="Next step">{nextStepLabel(lead.nextStep)}</Row>
+                </dl>
+              )}
+              {lead.drivers.length > 0 && (
+                <p className="mt-1.5 telemetry text-subtle-foreground">
+                  What drives the range
+                </p>
+              )}
+              {lead.drivers.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {driverNames(lead.drivers).map((driver) => (
+                    <span
+                      key={driver}
+                      className="rounded-ctl-xs border border-border-subtle bg-surface px-1.5 py-0.5 text-meta text-muted-foreground"
+                    >
+                      {driver}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           {lead.scopeNotes.length > 0 && (
             <div className="mt-3 border-t border-border-subtle pt-3">
               <p className="telemetry text-subtle-foreground">

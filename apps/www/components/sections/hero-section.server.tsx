@@ -1,4 +1,5 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
+import { IntentLinks } from "@/components/interactive/intent-links";
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { Highlight } from "@repo/ui/www/emphasis";
@@ -91,6 +92,19 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             <p data-arrive="element" className="max-w-[44ch] text-sm text-pretty text-foreground/72 xl:max-w-[36ch] rtl:max-w-[40ch] rtl:xl:max-w-[34ch]">
               {t("note")}
             </p>
+          </div>
+          <div data-arrive="element" className="xl:col-span-2">
+            <IntentLinks
+              source="home-hero"
+              question={t("intent.question")}
+              labels={{
+                "new-build": t("intent.new-build"),
+                "replace-existing": t("intent.replace-existing"),
+                "improve-existing": t("intent.improve-existing"),
+                unsure: t("intent.unsure"),
+              }}
+              className="text-sm leading-[1.9] text-pretty text-foreground/72"
+            />
           </div>
         </Container>
       </HeroStage>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { linkClientToLead, prisma } from "@repo/database";
+import { ClientSource, linkClientToLead, prisma } from "@repo/database";
 import { enforceRateLimit } from "@/lib/utils/rate-limit";
 import { isTrustedOrigin } from "@/lib/utils/origin-check";
 import {
@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
 
     const submission = await prisma.contactSubmission.create({
       data: {
+        // The submission row requires a name and this form asks for none; the
+        // placeholder stays here and is never passed on to the Client.
         name: "Exit Intent Lead",
         phone,
         message: `Captured via ${source}`,
@@ -68,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     await linkClientToLead({
       phone,
-      source: "WEBSITE_CONTACT_FORM",
+      source: ClientSource.EXIT_INTENT,
       contactSubmissionId: submission.id,
     });
 

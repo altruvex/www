@@ -18,8 +18,19 @@ export interface ScoreInput {
   inboundMessages: number;
   /** ContactSubmission.decisionRole — DECIDES | SHARED | ADVISES. */
   decisionRole?: string | null;
-  /** ContactSubmission.situation — NEW_BUILD | REPLACE_EXISTING | IMPROVE_EXISTING. */
+  /**
+   * NEW_BUILD | REPLACE_EXISTING | IMPROVE_EXISTING | UNSURE — the contact
+   * submission's answer, else the estimator's (scoreInputFor picks).
+   */
   situation?: string | null;
+  /**
+   * TransparencyLead.timeline — the estimator's delivery pace
+   * (urgent | standard | flexible). Scores only when `timeline` (the contact
+   * form's start date) is absent; see ESTIMATOR_TIMELINE.
+   */
+  estimatorTimeline?: string | null;
+  /** TransparencyLead.nextStep — "consultation" | "review"; null before 2026-10-08. */
+  estimatorNextStep?: string | null;
   /** Answered the qualification step (ContactSubmission.qualifiedAt is set). */
   qualified?: boolean;
   /** Derived from Meeting rows: a call ahead, or one that happened. */
@@ -52,6 +63,7 @@ const BUDGET_ANSWER_WORDS: Record<BudgetAnswerId, string> = {
 };
 
 const DECISION_POINTS: Record<string, number> = { DECIDES: 12, SHARED: 6 };
+/** UNSURE and NEW_BUILD score nothing: only an existing system to replace or improve does. */
 const SITUATION_POINTS: Record<string, number> = {
   REPLACE_EXISTING: 6,
   IMPROVE_EXISTING: 6,
@@ -64,11 +76,29 @@ const TIMELINE_POINTS: Record<string, number> = {
   EXPLORING: 3,
 };
 
+/**
+ * The estimator asks for a delivery *pace*, the contact form for a *start*
+ * date, so the two vocabularies only partly overlap. Only "urgent"
+ * ("compressed, high-intensity build") says the work is wanted now; "standard"
+ * ("no artificial pressure") carries no start signal beyond a plan; "flexible"
+ * ("extra time … durability over speed") says time is not the constraint.
+ */
+export const ESTIMATOR_TIMELINE: Record<string, string> = {
+  urgent: "IMMEDIATE",
+  standard: "PLANNING",
+  flexible: "EXPLORING",
+};
+
+/** The visitor's own result told them a conversation fits before a figure. */
+const CONSULTATION_STEP_POINTS = 4;
+
 const SOURCE_POINTS: Record<string, number> = {
   REFERRAL: 15,
   TRANSPARENCY_ESTIMATOR: 12,
   WEBSITE_CONTACT_FORM: 8,
   WHATSAPP_INBOUND: 8,
+  // A phone number left on the way out: below a written contact form.
+  EXIT_INTENT: 5,
   MANUAL: 5,
 };
 
@@ -99,8 +129,16 @@ export function scoreLead(input: ScoreInput): { score: number; reasons: string[]
     add(points, "estimator quote size");
   }
 
+  // The contact form's start date wins; the estimator's pace fills in.
   if (input.timeline && TIMELINE_POINTS[input.timeline] != null)
     add(TIMELINE_POINTS[input.timeline], `timeline ${input.timeline.toLowerCase()}`);
+  else if (input.estimatorTimeline && ESTIMATOR_TIMELINE[input.estimatorTimeline]) {
+    const mapped = ESTIMATOR_TIMELINE[input.estimatorTimeline];
+    add(
+      TIMELINE_POINTS[mapped],
+      `estimator pace ${input.estimatorTimeline} (read as ${mapped.toLowerCase()})`,
+    );
+  }
 
   add(SOURCE_POINTS[input.source] ?? 4, `source ${input.source.replace(/_/g, " ").toLowerCase()}`);
 
@@ -116,6 +154,8 @@ export function scoreLead(input: ScoreInput): { score: number; reasons: string[]
     );
   if (input.situation && SITUATION_POINTS[input.situation] != null)
     add(SITUATION_POINTS[input.situation], "has an existing system to replace or improve");
+  if (input.estimatorNextStep === "consultation")
+    add(CONSULTATION_STEP_POINTS, "estimator pointed them to a consultation");
   if (input.qualified) add(4, "answered the qualification step");
   if (input.call === "COMPLETED") add(10, "call completed");
   else if (input.call === "BOOKED") add(8, "call booked");
@@ -125,6 +165,22 @@ export function scoreLead(input: ScoreInput): { score: number; reasons: string[]
   if (input.inboundMessages > 0) add(Math.min(input.inboundMessages * 2, 8), "replies on WhatsApp");
 
   return { score: Math.min(100, score), reasons };
+}
+
+export type TouchOrigin = "contact form" | "estimator";
+
+/**
+ * First-touch attribution: of a client's contact submission and estimator
+ * run, the one that arrived first. A tie keeps the contact submission.
+ */
+export function firstTouch<T>(
+  contact: { at: Date; record: T } | null,
+  estimator: { at: Date; record: T } | null,
+): { origin: TouchOrigin; record: T } | null {
+  if (contact && (!estimator || contact.at.getTime() <= estimator.at.getTime()))
+    return { origin: "contact form", record: contact.record };
+  if (estimator) return { origin: "estimator", record: estimator.record };
+  return null;
 }
 
 export function scoreTone(score: number): "success" | "warning" | "neutral" {

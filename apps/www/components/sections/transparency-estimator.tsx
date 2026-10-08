@@ -38,6 +38,7 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { attributionPayload } from "@/lib/attribution";
+import { intentPayload } from "@/lib/intent";
 import {
   BUILD_QUESTIONS,
   CONDITION_QUESTIONS,
@@ -293,6 +294,7 @@ export function TransparencyEstimator({
           weeksMin: estimate.minWeeks,
           weeksMax: estimate.maxWeeks,
           ...attributionPayload(),
+          ...intentPayload(),
         }),
       });
       const result = await readApiResult<{ reference?: unknown }>(res);

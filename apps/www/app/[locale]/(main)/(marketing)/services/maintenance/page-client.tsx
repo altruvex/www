@@ -40,7 +40,7 @@ export default function MaintenancePage({
         titleAccent={t("titleAccent")}
         body={t("body")}
         primary="maintenanceEnquiry"
-        secondary="technicalCall"
+        secondary="projectRange"
       />
     </div>
   );

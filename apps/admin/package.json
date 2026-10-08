@@ -20,7 +20,9 @@
     "verify:whatsapp": "bun scripts/verify-whatsapp-signature.ts",
     "verify:admin-api": "bun scripts/verify-admin-api.ts",
     "verify:invoice-number": "bun scripts/verify-invoice-number.ts",
+    "verify:phone-match": "bun scripts/verify-phone-match.ts",
     "check-types": "node node_modules/typescript7/bin/tsc --noEmit",
+    "verify:lead-context": "bun scripts/verify-lead-context.ts",
     "verify:security": "bun scripts/verify-security.ts"
   },
   "dependencies": {

@@ -73,7 +73,15 @@ export const createContactFormSchema = (t: ValidationTranslator) =>
 
       serviceInterest: z
         .enum(
-          ["web-development", "ecommerce", "multilingual", "ui-ux", "other"],
+          [
+            "web-development",
+            "ecommerce",
+            "multilingual",
+            "ui-ux",
+            "technical-audit",
+            "maintenance",
+            "other",
+          ],
           { error: t("contact.service-interest-invalid") },
         )
         .optional(),

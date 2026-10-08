@@ -3,14 +3,22 @@
 import { Container } from "@/components/shared/container";
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
 import { accentWorldClass, type AccentPalette } from "@/lib/config/accent-world";
-import { getCommercialCta, type CommercialCtaKey } from "@/lib/config/commercial";
+import {
+  getCommercialCta,
+  type CommercialCtaKey,
+  type CtaContext,
+} from "@/lib/config/commercial";
 import { useSectionDescription, useSectionElement, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { SectionHeading } from "./section-heading";
 
-type EndCtaAction = CommercialCtaKey | { href: string; label: string };
+// A registry key, or an explicit link; an explicit link that names its `cta`
+// (and the `context` it carries) is measured like a key.
+type EndCtaAction =
+  | CommercialCtaKey
+  | { href: string; label: string; cta?: CommercialCtaKey; context?: CtaContext };
 
 type SectionEndCtaProps = {
   eyebrow?: ReactNode;
@@ -43,6 +51,7 @@ export function SectionEndCta({
 }: SectionEndCtaProps) {
   const t = useTranslations("common.endCta");
   const tCTAs = useTranslations("commercial.ctas");
+  const tAlternative = useTranslations("commercial.ctasAlternative");
 
   const eyebrowRef = useSectionEyebrow();
   const titleRef = useSectionTitle();
@@ -51,8 +60,14 @@ export function SectionEndCta({
 
   const resolve = (action: EndCtaAction) =>
     typeof action === "string"
-      ? { href: getCommercialCta(action).href, label: tCTAs(action) }
+      ? { href: getCommercialCta(action).href, label: tCTAs(action), cta: action }
       : action;
+  // The second route reads as an alternative ("or estimate it first") when
+  // its key has one; otherwise it keeps the registry label.
+  const resolveSecondary = (action: EndCtaAction) =>
+    typeof action === "string" && tAlternative.has(action)
+      ? { ...resolve(action), label: tAlternative(action) }
+      : resolve(action);
 
   return (
     <section
@@ -100,8 +115,8 @@ export function SectionEndCta({
             <CtaButtonGroup
               primaryVariant="accent"
               primary={resolve(primary)}
-              secondary={secondary ? resolve(secondary) : undefined}
-              secondaryArrow
+              secondary={secondary ? resolveSecondary(secondary) : undefined}
+              secondaryAs="link"
               stacked
             />
           </div>

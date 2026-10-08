@@ -3,5 +3,12 @@
   "title_line1": "Custom websites",
   "title_line2": "and digital products.",
   "sub": "We design and engineer digital experiences for established businesses, from interface to production.",
-  "note": "Tell us what you’re building. We reply within 24 hours on business days."
+  "note": "Tell us what you’re building. We reply within 24 hours on business days.",
+  "intent": {
+    "question": "Where are you?",
+    "new-build": "Starting something new",
+    "replace-existing": "Replacing a site that isn’t working",
+    "improve-existing": "Improving a live site",
+    "unsure": "Not sure yet"
+  }
 }

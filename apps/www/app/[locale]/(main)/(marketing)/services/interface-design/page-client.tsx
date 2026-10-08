@@ -35,8 +35,8 @@ export default function InterfaceDesignPage({ investment }: { investment: ReactN
         title={t("title")}
         titleAccent={t("titleAccent")}
         body={t("body")}
-        primary="describeTheBuild"
-        secondary="technicalCall"
+        primary="startDesign"
+        secondary="realBuild"
       />
     </div>
   );

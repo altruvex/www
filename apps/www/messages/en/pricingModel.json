@@ -246,6 +246,10 @@
       "next": {
         "consultation": "Likely a consultation first. Web apps, extensive builds, payments or integrations, and urgent timelines are easier to scope in a conversation than in a form.",
         "review": "Likely a written scope review. Send these answers, we confirm scope with you, then fix one figure."
+      },
+      "related": {
+        "label": "Built like this before",
+        "service": "Development in detail"
       }
     }
   },

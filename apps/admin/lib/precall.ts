@@ -12,11 +12,13 @@ import {
   type DerivedStage,
 } from "@/lib/dashboard-data";
 import {
+  firstTouch,
   recommendedAction,
   scoreBand,
   scoreLead,
   type ScoreBand,
   type ScoreInput,
+  type TouchOrigin,
 } from "@/lib/lead-score";
 import { getPricing } from "@/lib/pricing-store";
 import { statusOf } from "@/lib/status";
@@ -49,15 +51,23 @@ export function scoreInputFor(client: {
     decisionRole: string | null;
     qualifiedAt: Date | null;
   } | null;
-  transparencyLead: { timeline: string | null; priceMax: number } | null;
+  transparencyLead: {
+    timeline: string | null;
+    priceMax: number;
+    situation: string | null;
+    nextStep: string | null;
+  } | null;
   proposals: { readAt: Date | null }[];
   meetings: { status: string; scheduledDate: Date }[];
   inboundMessages: number;
 }): ScoreInput {
   const sub = client.contactSubmission;
+  const lead = client.transparencyLead;
   return {
     budget: sub?.budget ?? null,
-    timeline: sub?.projectTimeline ?? client.transparencyLead?.timeline ?? null,
+    timeline: sub?.projectTimeline ?? null,
+    estimatorTimeline: lead?.timeline ?? null,
+    estimatorNextStep: lead?.nextStep ?? null,
     source: client.source,
     serviceInterest: sub?.serviceInterest ?? null,
     hasCompany: Boolean(client.company),
@@ -68,7 +78,7 @@ export function scoreInputFor(client: {
     readProposal: Boolean(client.proposals[0]?.readAt),
     inboundMessages: client.inboundMessages,
     decisionRole: sub?.decisionRole ?? null,
-    situation: sub?.situation ?? null,
+    situation: sub?.situation ?? lead?.situation ?? null,
     qualified: Boolean(sub?.qualifiedAt),
     call: callState(client.meetings),
   };
@@ -112,6 +122,8 @@ export interface PreCallView {
   lostReason: string | null;
   lostNote: string | null;
   qualification: {
+    /** ContactSubmission.serviceInterest as its admin label. */
+    service: string | null;
     situation: string | null;
     budget: string | null;
     timeline: string | null;
@@ -126,8 +138,16 @@ export interface PreCallView {
     brief: PreCallBrief | null;
     briefAt: Date | null;
   } | null;
-  estimate: { min: number; max: number } | null;
+  estimate: {
+    min: number;
+    max: number;
+    /** "consultation" | "review"; null on a run stored before the read was kept. */
+    nextStep: string | null;
+    situation: string | null;
+  } | null;
   attribution: {
+    /** Which record the first touch came from. */
+    origin: TouchOrigin;
     utmSource: string | null;
     utmMedium: string | null;
     utmCampaign: string | null;
@@ -156,6 +176,7 @@ export async function loadPreCall(
       utmCampaign: true,
       referrer: true,
       landingPath: true,
+      submittedAt: true,
       email: true,
       client: { select: { id: true } },
       meetings: {
@@ -186,6 +207,9 @@ export async function loadPreCall(
               timeline: true,
               priceMin: true,
               priceMax: true,
+              situation: true,
+              nextStep: true,
+              createdAt: true,
               utmSource: true,
               utmMedium: true,
               utmCampaign: true,
@@ -272,7 +296,17 @@ export async function loadPreCall(
     band = scoreBand(score, sub.budget);
   }
 
-  const attributionSource = sub ?? lead;
+  type Touch = {
+    utmSource: string | null;
+    utmMedium: string | null;
+    utmCampaign: string | null;
+    referrer: string | null;
+    landingPath: string | null;
+  };
+  const touch = firstTouch<Touch>(
+    sub ? { at: sub.submittedAt, record: sub } : null,
+    lead ? { at: lead.createdAt, record: lead } : null,
+  );
   return {
     clientId,
     score,
@@ -287,6 +321,9 @@ export async function loadPreCall(
     lostNote: client?.lostNote ?? null,
     qualification: sub
       ? {
+          service: sub.serviceInterest
+            ? statusOf("serviceType", sub.serviceInterest).label
+            : null,
           situation: sub.situation,
           budget: sub.budget ? budgetLabel(sub.budget, pricing) : null,
           timeline: sub.projectTimeline,
@@ -304,14 +341,22 @@ export async function loadPreCall(
           briefAt: meeting.preCallBriefAt,
         }
       : null,
-    estimate: lead ? { min: lead.priceMin, max: lead.priceMax } : null,
-    attribution: attributionSource
+    estimate: lead
       ? {
-          utmSource: attributionSource.utmSource,
-          utmMedium: attributionSource.utmMedium,
-          utmCampaign: attributionSource.utmCampaign,
-          referrer: attributionSource.referrer,
-          landingPath: attributionSource.landingPath,
+          min: lead.priceMin,
+          max: lead.priceMax,
+          nextStep: lead.nextStep,
+          situation: lead.situation,
+        }
+      : null,
+    attribution: touch
+      ? {
+          origin: touch.origin,
+          utmSource: touch.record.utmSource,
+          utmMedium: touch.record.utmMedium,
+          utmCampaign: touch.record.utmCampaign,
+          referrer: touch.record.referrer,
+          landingPath: touch.record.landingPath,
         }
       : null,
   };

@@ -35,11 +35,13 @@ import {
 } from "@/lib/motion";
 import { trackEvent } from "@/lib/analytics";
 import { attributionPayload } from "@/lib/attribution";
+import { intentPayload } from "@/lib/intent";
 import { gsap } from "@/lib/utils/gsap";
 import { localizeNumbers } from "@/lib/utils/number";
 import { cn } from "@/lib/utils/utils";
 import { createContactFormSchema } from "@/lib/validations/contact";
 import {
+  isServiceId,
   MAINTENANCE_PLAN_IDS,
   pricingCopy,
   type Locale,
@@ -111,10 +113,26 @@ function isService(value: string | null): value is Service {
   return SERVICES.some((service) => service === value);
 }
 
-function toServiceInterest(service: Values["service"]) {
+// Registry and case-study links name a service indirectly; the explicit
+// `service` param still wins. Unknown values pre-select nothing.
+function serviceFromQuery(params: { get(name: string): string | null }): Service | "" {
+  const service = params.get("service");
+  if (isService(service)) return service;
+  if (params.get("package") === "audit") return "consulting";
+  if (params.get("track") === "architecture") return "development";
+  const projectType = params.get("projectType");
+  if (projectType && isServiceId(projectType)) return "development";
+  return "";
+}
+
+function toServiceInterest(service: Values["service"], projectType: string | null) {
+  if (service === "development" && projectType === "ecommerce") return "ecommerce";
   if (service === "development") return "web-development";
   if (service === "interface-design") return "ui-ux";
-  return service ? "other" : undefined;
+  // The "consulting" option is the Technical Audit (`letter.serviceConsulting`).
+  if (service === "consulting") return "technical-audit";
+  if (service === "maintenance") return "maintenance";
+  return undefined;
 }
 
 function isField(key: string): key is Field {
@@ -218,7 +236,7 @@ function ConversationForm({
   );
 
   const [values, setValues] = useState<Values>(() => {
-    const incoming = searchParams.get("service");
+    const incoming = serviceFromQuery(searchParams);
 
     const plan = MAINTENANCE_PLAN_IDS.find(
       (id) => id === searchParams.get("plan"),
@@ -226,7 +244,7 @@ function ConversationForm({
 
     return {
       ...EMPTY,
-      service: isService(incoming) ? incoming : "",
+      service: incoming,
       message:
         incoming === "maintenance" && plan
           ? t("letter.planMessage", {
@@ -238,6 +256,7 @@ function ConversationForm({
     };
   });
 
+  const [incomingProjectType] = useState(() => searchParams.get("projectType"));
   const [website, setWebsite] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Partial<Record<Field, boolean>>>({});
@@ -277,7 +296,7 @@ function ConversationForm({
     phone: next.phone,
     email: next.email,
     message: next.message,
-    serviceInterest: toServiceInterest(next.service),
+    serviceInterest: toServiceInterest(next.service, incomingProjectType),
     website,
   });
 
@@ -373,6 +392,7 @@ function ConversationForm({
           ...schema.parse(payloadOf(values)),
           locale,
           ...attributionPayload(),
+          ...intentPayload(),
         }),
       });
 

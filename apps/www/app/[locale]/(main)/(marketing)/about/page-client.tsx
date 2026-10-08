@@ -46,7 +46,7 @@ function AboutEndCta() {
       titleAccent={t("titleAccent")}
       body={t("body")}
       primary="describeTheBuild"
-      secondary="technicalCall"
+      secondary="realBuild"
     />
   );
 }

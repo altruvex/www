@@ -299,12 +299,16 @@ function CaseStudyEndCta({ slug }: { slug: string }) {
     <SectionEndCta
       title={tCS("endCta.title")}
       body={tCS("endCta.body")}
-      primary="describeTheBuild"
-      secondary={
+      secondary="technicalCall"
+      primary={
         current
           ? {
-              href: `${getCommercialCta("projectRange").href}?projectType=${current.projectType}`,
+              href: getCommercialCta("projectRange", {
+                projectType: current.projectType,
+              }).href,
               label: tCS("endCta.estimate"),
+              cta: "projectRange",
+              context: { projectType: current.projectType },
             }
           : "projectRange"
       }

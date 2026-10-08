@@ -4,7 +4,10 @@ import { MagneticButton } from "@/components/magnetic-button";
 import { ArrowIcon, Input, Label, Textarea } from "@repo/ui";
 import { Eyebrow } from "@repo/ui/www";
 import { Link } from "@/i18n/navigation";
-import { getCommercialCta } from "@/lib/config/commercial";
+import { trackEvent } from "@/lib/analytics";
+import { ctaContextQuery, getCommercialCta } from "@/lib/config/commercial";
+import { CASE_STUDIES } from "@/lib/data/case-studies";
+import { TrackedCtaLink } from "@/components/interactive/tracked-cta-link";
 import { motion, scrollToY, useSectionCardGrid } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
 import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
@@ -47,6 +50,10 @@ const FACTOR_GROUP: Partial<Record<QuestionKey, FactorGroupId>> = {
   timeline: "timeline",
 };
 
+
+// The text-link idiom the homepage services rows use.
+const RELATED_LINK =
+  "min-h-6 rounded-ctl-sm text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:decoration-current focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11";
 
 function DriverRow({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -223,6 +230,35 @@ function PreliminaryRead({
             {tPM(`result.read.next.${read.nextStep}`)}
           </dd>
         </div>
+        <div className="py-3">
+          <dt className="text-xs text-muted-foreground">
+            {tPM("result.read.related.label")}
+          </dt>
+          <dd className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            {CASE_STUDIES.filter((study) => study.projectType === read.service).map(
+              (study) => (
+                <TrackedCtaLink
+                  key={study.slug}
+                  href={`/work/${study.slug}`}
+                  ctaKey="relatedCaseStudy"
+                  ctaContext={ctaContextQuery({ projectType: read.service, source: "estimator-read" })}
+                  className={RELATED_LINK}
+                >
+                  {study.client[locale]} — {study.industry[locale]}
+                </TrackedCtaLink>
+              ),
+            )}
+            <TrackedCtaLink
+              href="/services/development"
+              ctaKey="relatedService"
+              ctaContext={ctaContextQuery({ projectType: read.service, source: "estimator-read" })}
+              className={cn(RELATED_LINK, "group inline-flex items-center gap-2 text-muted-foreground")}
+            >
+              <span>{tPM("result.read.related.service")}</span>
+              <ArrowIcon />
+            </TrackedCtaLink>
+          </dd>
+        </div>
       </dl>
     </div>
   );
@@ -318,10 +354,12 @@ function SecondaryLink({
   href,
   label,
   external = false,
+  onClick,
 }: {
   href: string;
   label: string;
   external?: boolean;
+  onClick?: () => void;
 }) {
   const className =
     "group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text";
@@ -340,12 +378,12 @@ function SecondaryLink({
   }
 
   return external ? (
-    <a href={href} target="_blank" rel="noreferrer" className={className}>
+    <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className}>
       <span>{label}</span>
       <ArrowIcon />
     </a>
   ) : (
-    <Link href={href} className={className}>
+    <Link href={href} onClick={onClick} className={className}>
       <span>{label}</span>
       <ArrowIcon />
     </Link>
@@ -436,6 +474,27 @@ export function ResultPanel({
   const technicalCallHref = getCommercialCta("technicalCall").href;
   const read = recommend(answers, scopeNotes);
   const consultFirst = read?.nextStep === "consultation";
+
+  // The read is reported once per distinct read; acting on it reports which
+  // action the visitor took. Ids only.
+  const viewedRead = useRef<string | null>(null);
+  useEffect(() => {
+    if (!read) return;
+    const key = `${read.nextStep}:${read.service}`;
+    if (viewedRead.current === key) return;
+    viewedRead.current = key;
+    trackEvent("recommendation_viewed", {
+      nextStep: read.nextStep,
+      projectType: read.service,
+    });
+  }, [read]);
+  const accept = (action: "consultation" | "proposal" | "whatsapp" | "pdf") => {
+    if (read) trackEvent("recommendation_accepted", { nextStep: read.nextStep, action });
+  };
+  const openForm = () => {
+    accept("proposal");
+    setFormOpen(true);
+  };
 
   const scopeRef = useSectionCardGrid<HTMLUListElement>({
     ...motion.listItems(),
@@ -617,7 +676,10 @@ export function ResultPanel({
               <MagneticButton
                 variant="primary"
                 size="lg"
-                onClick={onDownload}
+                onClick={() => {
+                  accept("pdf");
+                  onDownload();
+                }}
                 isLoading={downloading}
                 className="w-full sm:w-auto"
               >
@@ -660,11 +722,13 @@ export function ResultPanel({
               <SecondaryLink
                 href={technicalCallHref}
                 label={tCta("technicalCall")}
+                onClick={() => accept("consultation")}
               />
               <SecondaryLink
                 href={whatsappHref}
                 external
                 label={t("results.talkNow")}
+                onClick={() => accept("whatsapp")}
               />
             </div>
           </div>
@@ -681,13 +745,13 @@ export function ResultPanel({
                     size="lg"
                     className="w-full sm:w-auto"
                   >
-                    <Link href={technicalCallHref}>
+                    <Link href={technicalCallHref} onClick={() => accept("consultation")}>
                       {tCta("technicalCall")}
                     </Link>
                   </MagneticButton>
                   <button
                     type="button"
-                    onClick={() => setFormOpen(true)}
+                    onClick={openForm}
                     aria-expanded={false}
                     aria-controls="estimate-request-form"
                     className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text"
@@ -701,7 +765,7 @@ export function ResultPanel({
                   <MagneticButton
                     variant="primary"
                     size="lg"
-                    onClick={() => setFormOpen(true)}
+                    onClick={openForm}
                     aria-expanded={false}
                     aria-controls="estimate-request-form"
                     className="w-full sm:w-auto"
@@ -711,6 +775,7 @@ export function ResultPanel({
                   <SecondaryLink
                     href={technicalCallHref}
                     label={tCta("technicalCall")}
+                    onClick={() => accept("consultation")}
                   />
                 </>
               )}

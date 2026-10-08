@@ -35,8 +35,8 @@ function WritingEndCta() {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("body")}
-      primary="projectRange"
-      secondary="technicalAudit"
+      primary="describeTheBuild"
+      secondary="projectRange"
     />
   );
 }

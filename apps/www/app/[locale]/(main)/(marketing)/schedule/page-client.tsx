@@ -1,6 +1,7 @@
 "use client";
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
+import { TrackedCtaLink } from "@/components/interactive/tracked-cta-link";
 import {
   ArrowIcon,
   DatePicker,
@@ -36,6 +37,7 @@ import { bodyMarks } from "@/components/ui/rich-text";
 import { useEffect, useRef, useState } from "react";
 import { trackEvent } from "@/lib/analytics";
 import { attributionPayload } from "@/lib/attribution";
+import { intentPayload } from "@/lib/intent";
 import { localeMeta } from "@/i18n/locale-meta";
 import { PreCallBrief } from "./precall-brief";
 
@@ -128,6 +130,7 @@ export default function SchedulePage() {
           scheduledDate: dt.toISOString(),
           scheduledTime: formData.time,
           ...attributionPayload(),
+          ...intentPayload(),
         }),
       });
       const result = await readApiResult<{ stepToken?: string }>(res);
@@ -173,7 +176,7 @@ export default function SchedulePage() {
     "rounded-none border-0 border-b border-foreground/45 bg-transparent px-[0.12em] py-0 font-light text-brand-text outline-none transition-colors duration-(--motion-drawer) placeholder:text-muted-foreground/70 focus-visible:border-brand focus-visible:shadow-[0_1px_0_hsl(var(--brand))] aria-invalid:border-destructive";
   const blankTrigger = cn(
     blank,
-    "inline-flex h-auto! w-auto gap-0 align-baseline text-[length:inherit]! leading-[inherit] shadow-none focus-visible:ring-0 hover:text-brand-text [&_svg]:hidden data-placeholder:text-muted-foreground/70",
+    "inline-flex h-auto! w-auto gap-0 align-baseline text-[length:inherit]! leading-[inherit] shadow-none focus-visible:ring-0 hover:text-brand-text [&_svg]:hidden data-[placeholder]:text-muted-foreground/70",
   );
   const timeLabel = new Intl.DateTimeFormat(localeMeta(locale).intl, {
     hour: "numeric",
@@ -235,174 +238,234 @@ export default function SchedulePage() {
             delay={0.65}
             className="mt-12 border-t-2 border-foreground pt-10 md:mt-16 md:pt-14"
           >
-            <form onSubmit={onSubmit} noValidate>
-              <p className="max-w-[46ch] font-sans text-[clamp(1.625rem,3.6vw,3.375rem)] leading-[1.5] font-light tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal">
-                {t.rich("sentence", {
-                  name: () => (
-                    <input
-                      type="text"
-                      autoComplete="name"
-                      value={formData.name}
-                      onChange={(e) =>
-                        handleInputChange("name", e.target.value)
-                      }
-                      placeholder={t("form.name.placeholder")}
-                      aria-label={t("form.name.label")}
-                      aria-invalid={!!errors.name}
-                      disabled={locked}
-                      className={cn(
-                        blank,
-                        "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
-                      )}
-                    />
-                  ),
-                  phone: () => (
-                    <input
-                      type="tel"
-                      dir="ltr"
-                      autoComplete="tel"
-                      value={formData.phone}
-                      onChange={(e) =>
-                        handleInputChange("phone", e.target.value)
-                      }
-                      placeholder={t("form.phone.placeholder")}
-                      aria-label={t("form.phone.label")}
-                      aria-invalid={!!errors.phone}
-                      disabled={locked}
-                      className={cn(
-                        blank,
-                        "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
-                      )}
-                    />
-                  ),
-                  date: () => (
-                    <DatePicker
-                      date={formData.date}
-                      onDateChange={(date) => handleInputChange("date", date)}
-                      disabled={locked}
-                      placeholder={t("form.date.placeholder")}
-                      locale={locale}
-                      minDate={new Date()}
-                      maxDate={(() => {
-                        const d = new Date();
-                        d.setMonth(d.getMonth() + 3);
-                        return d;
-                      })()}
-                      className={cn(
-                        blankTrigger,
-                        !formData.date &&
-                          "text-muted-foreground/70 hover:text-muted-foreground",
-                        errors.date && "border-destructive",
-                      )}
-                    />
-                  ),
-                  time: () => (
-                    <Select
-                      value={formData.time}
-                      onValueChange={(time) => handleInputChange("time", time)}
+            <div className="grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-20 xl:gap-28">
+              <div className="min-w-0">
+                <form onSubmit={onSubmit} noValidate>
+                  <p className="max-w-[46ch] font-sans text-[clamp(1.625rem,3.6vw,3.375rem)] leading-[1.5] font-light tracking-[-0.025em] text-foreground rtl:leading-[1.8] rtl:tracking-normal">
+                    {t.rich("sentence", {
+                      name: () => (
+                        <input
+                          type="text"
+                          autoComplete="name"
+                          value={formData.name}
+                          onChange={(e) =>
+                            handleInputChange("name", e.target.value)
+                          }
+                          placeholder={t("form.name.placeholder")}
+                          aria-label={t("form.name.label")}
+                          aria-invalid={!!errors.name}
+                          disabled={locked}
+                          className={cn(
+                            blank,
+                            "w-[7ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
+                          )}
+                        />
+                      ),
+                      phone: () => (
+                        <input
+                          type="tel"
+                          dir="ltr"
+                          autoComplete="tel"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            handleInputChange("phone", e.target.value)
+                          }
+                          placeholder={t("form.phone.placeholder")}
+                          aria-label={t("form.phone.label")}
+                          aria-invalid={!!errors.phone}
+                          disabled={locked}
+                          className={cn(
+                            blank,
+                            "w-[11.5ch] min-w-[4ch] max-w-full field-sizing-content supports-[field-sizing:content]:w-auto",
+                          )}
+                        />
+                      ),
+                      date: () => (
+                        <DatePicker
+                          date={formData.date}
+                          onDateChange={(date) => handleInputChange("date", date)}
+                          disabled={locked}
+                          placeholder={t("form.date.placeholder")}
+                          locale={locale}
+                          minDate={new Date()}
+                          maxDate={(() => {
+                            const d = new Date();
+                            d.setMonth(d.getMonth() + 3);
+                            return d;
+                          })()}
+                          className={cn(
+                            blankTrigger,
+                            !formData.date &&
+                              "text-muted-foreground/70 hover:text-muted-foreground",
+                            errors.date && "border-destructive",
+                          )}
+                        />
+                      ),
+                      time: () => (
+                        <Select
+                          value={formData.time}
+                          onValueChange={(time) => handleInputChange("time", time)}
+                          disabled={locked}
+                        >
+                          <SelectTrigger
+                            aria-label={t("form.time.label")}
+                            className={cn(
+                              blankTrigger,
+                              errors.time && "border-destructive",
+                            )}
+                          >
+                            <SelectValue placeholder={t("form.time.placeholder")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {BUSINESS_SLOTS.map((time) => {
+                              const [h, m] = time.split(":").map(Number);
+                              return (
+                                <SelectItem key={time} value={time}>
+                                  {timeLabel.format(new Date(2000, 0, 1, h, m))}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                      ),
+                    })}
+                  </p>
+                  {fieldErrors.length > 0 && (
+                    <div className="mt-6 space-y-1">
+                      {fieldErrors.map((msg) => (
+                        <FieldError key={msg} msg={msg} />
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-10 flex flex-wrap items-center gap-6 md:mt-14">
+                    <MagneticButton
+                      type="submit"
+                      variant="primary"
+                      size="lg"
                       disabled={locked}
                     >
-                      <SelectTrigger
-                        aria-label={t("form.time.label")}
-                        className={cn(
-                          blankTrigger,
-                          errors.time && "border-destructive",
-                        )}
+                      {isSubmitting ? t("submit.submitting") : t("submit.button")}
+                    </MagneticButton>
+                    {submitError && (
+                      <p
+                        role="alert"
+                        className="flex items-center gap-2 text-sm text-foreground"
                       >
-                        <SelectValue placeholder={t("form.time.placeholder")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BUSINESS_SLOTS.map((time) => {
-                          const [h, m] = time.split(":").map(Number);
-                          return (
-                            <SelectItem key={time} value={time}>
-                              {timeLabel.format(new Date(2000, 0, 1, h, m))}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  ),
-                })}
-              </p>
-              {fieldErrors.length > 0 && (
-                <div className="mt-6 space-y-1">
-                  {fieldErrors.map((msg) => (
-                    <FieldError key={msg} msg={msg} />
-                  ))}
-                </div>
-              )}
-              <div className="mt-10 flex flex-wrap items-center gap-6 md:mt-14">
-                <MagneticButton
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  disabled={locked}
-                >
-                  {isSubmitting ? t("submit.submitting") : t("submit.button")}
-                </MagneticButton>
-                {submitError && (
-                  <p
-                    role="alert"
-                    className="flex items-center gap-2 text-sm text-foreground"
-                  >
-                    <AlertCircle
-                      className="h-4 w-4 text-destructive"
-                      aria-hidden
-                    />
-                    {submitError}
-                  </p>
+                        <AlertCircle
+                          className="h-4 w-4 text-destructive"
+                          aria-hidden
+                        />
+                        {submitError}
+                      </p>
+                    )}
+                  </div>
+                </form>
+                {submitSuccess && (
+                  <div className="mt-12 border-t border-border-subtle pt-8 md:mt-16">
+                    <div role="status">
+                      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2
+                          className="h-4 w-4 text-success"
+                          aria-hidden
+                        />
+                        {t("confirm.eyebrow")}
+                      </p>
+                      <h2
+                        ref={confirmRef}
+                        tabIndex={-1}
+                        className="mt-3 max-w-[24ch] text-[clamp(1.75rem,3.2vw,2.75rem)] font-light leading-[1.1] tracking-[-0.03em] text-foreground outline-none rtl:leading-[1.35] rtl:tracking-normal"
+                      >
+                        {t("confirm.title")}
+                      </h2>
+                      <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
+                        {t("submit.success")}
+                      </p>
+                    </div>
+                    {stepToken ? <PreCallBrief token={stepToken} /> : null}
+                  </div>
                 )}
-              </div>
-            </form>
-            {submitSuccess && (
-              <div className="mt-12 border-t border-border-subtle pt-8 md:mt-16">
-                <div role="status">
-                  <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2
-                      className="h-4 w-4 text-success"
-                      aria-hidden
-                    />
-                    {t("confirm.eyebrow")}
+                <div className="mt-8 max-w-xl space-y-3 border-t border-border-subtle pt-6 text-sm leading-relaxed text-muted-foreground">
+                  <p>
+                    {t("privacy")}{" "}
+                    <DirectionalLink
+                      href="/privacy"
+                      className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                    >
+                      {t("privacyLink")}
+                    </DirectionalLink>
                   </p>
-                  <h2
-                    ref={confirmRef}
-                    tabIndex={-1}
-                    className="mt-3 max-w-[24ch] text-[clamp(1.75rem,3.2vw,2.75rem)] font-light leading-[1.1] tracking-[-0.03em] text-foreground outline-none rtl:leading-[1.35] rtl:tracking-normal"
-                  >
-                    {t("confirm.title")}
-                  </h2>
-                  <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-muted-foreground">
-                    {t("submit.success")}
+                  <p>
+                    {t("writeLead")}{" "}
+                    <DirectionalLink
+                      href={getCommercialCta("describeTheBuild").href}
+                      className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
+                    >
+                      {tCta("describeTheBuild")}
+                    </DirectionalLink>
                   </p>
                 </div>
-                {stepToken ? <PreCallBrief token={stepToken} /> : null}
               </div>
-            )}
-            <div className="mt-8 max-w-xl space-y-3 border-t border-border-subtle pt-6 text-sm leading-relaxed text-muted-foreground">
-              <p>
-                {t("privacy")}{" "}
-                <DirectionalLink
-                  href="/privacy"
-                  className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
-                >
-                  {t("privacyLink")}
-                </DirectionalLink>
-              </p>
-              <p>
-                {t("writeLead")}{" "}
-                <DirectionalLink
-                  href={getCommercialCta("describeTheBuild").href}
-                  className="text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current"
-                >
-                  {tCta("describeTheBuild")}
-                </DirectionalLink>
-              </p>
+              <aside className="mt-16 lg:mt-0">
+                <CallPrep />
+              </aside>
             </div>
           </HeroReveal>
         </Container>
       </section>
     </>
+  );
+}
+
+const SIDE_LINK =
+  "text-foreground underline decoration-border underline-offset-4 transition-colors duration-(--motion-hover) hover:text-brand-text hover:decoration-current";
+
+/** What is worth having to hand for the call, then the two other doors. */
+function CallPrep() {
+  const t = useTranslations("schedule.prep");
+  const tCta = useTranslations("commercial.ctas");
+  const items = t.raw("items") as string[];
+
+  return (
+    <div className="lg:sticky lg:top-24">
+      <Eyebrow className="m-0">{t("heading")}</Eyebrow>
+      <ol className="mt-5 divide-y divide-border-subtle border-y border-border-subtle">
+        {items.map((item, index) => (
+          <li key={item} className="flex items-baseline gap-4 py-3 text-sm leading-relaxed text-foreground">
+            <span aria-hidden className="font-mono text-xs tabular-nums text-muted-foreground">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+        {t("enough")}
+      </p>
+      <div className="mt-8 space-y-3 text-sm leading-relaxed text-muted-foreground">
+        <p>
+          {t("notReady")}{" "}
+          <TrackedCtaLink
+            href={getCommercialCta("projectRange").href}
+            ctaKey="projectRange"
+            ctaContext="source=schedule-prep"
+            className={SIDE_LINK}
+          >
+            {tCta("projectRange")}
+          </TrackedCtaLink>
+        </p>
+        <p>
+          {t("liveBuild")}{" "}
+          <TrackedCtaLink
+            href={getCommercialCta("technicalAudit").href}
+            ctaKey="technicalAudit"
+            ctaContext="source=schedule-prep"
+            className={SIDE_LINK}
+          >
+            {tCta("technicalAudit")}
+          </TrackedCtaLink>
+        </p>
+      </div>
+    </div>
   );
 }
 

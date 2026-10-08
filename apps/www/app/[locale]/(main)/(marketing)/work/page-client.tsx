@@ -202,8 +202,8 @@ function WorkEndCta({ nextIndex }: { nextIndex: number }) {
       title={t("title")}
       titleAccent={t("titleAccent")}
       body={t("body")}
-      primary="describeTheBuild"
-      secondary="projectRange"
+      primary="projectRange"
+      secondary="technicalCall"
       world="green"
       aside={
         <div className="flex max-w-xl items-baseline gap-4 border-t border-dashed border-foreground/25 pt-6">

@@ -139,5 +139,16 @@
     "error": "Your answers did not go through.",
     "retry": "Try again",
     "expired": "This step has closed. Your booking stands; bring these points to the call."
+  },
+  "prep": {
+    "heading": "Worth having to hand",
+    "items": [
+      "The business goal, in a sentence.",
+      "The current site or system, if there is one.",
+      "Any deadline or budget limit."
+    ],
+    "enough": "A rough brief is enough.",
+    "notReady": "Not ready to talk?",
+    "liveBuild": "Reviewing a live build?"
   }
 }

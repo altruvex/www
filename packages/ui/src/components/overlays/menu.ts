@@ -10,7 +10,9 @@ export const menuItem =
   "focus:bg-foreground/10 focus:text-foreground data-[highlighted]:bg-foreground/10 data-[highlighted]:text-foreground active:bg-foreground/15 " +
   // cmdk marks its active item data-selected; Radix marks its own data-highlighted.
   "data-[selected=true]:bg-foreground/10 data-[selected=true]:text-foreground " +
-  "data-[disabled]:pointer-events-none data-[disabled]:opacity-40 " +
+  // Radix sets data-disabled="" when disabled; cmdk sets data-disabled="false" on EVERY item,
+  // so a bare data-[disabled] variant would dim the whole list. Match the two values explicitly.
+  "data-[disabled='']:pointer-events-none data-[disabled='']:opacity-40 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-40 " +
   "[&_svg]:size-3.5 [&_svg]:shrink-0 [&_svg:not([class*='text-'])]:text-subtle-foreground";
 
 export const menuItemDestructive =

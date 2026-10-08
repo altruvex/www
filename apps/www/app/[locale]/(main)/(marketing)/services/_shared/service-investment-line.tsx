@@ -1,7 +1,7 @@
 import { Container } from "@/components/shared/container";
 import { DirectionalLink } from "@/components/shared/directional-link";
 import { Eyebrow } from "@repo/ui/www/eyebrow";
-import { getCommercialCta } from "@/lib/config/commercial";
+import { getCommercialCta, type CtaContext } from "@/lib/config/commercial";
 import { getPublicPricing } from "@/lib/server/pricing";
 import { cn } from "@/lib/utils/utils";
 import { serviceInvestmentViews, type Locale } from "@repo/pricing-schema";
@@ -9,9 +9,9 @@ import { getTranslations } from "next-intl/server";
 
 type LineServiceId = "design" | "development";
 
-const ESTIMATOR_QUERY: Record<LineServiceId, string> = {
-  design: "",
-  development: "?projectType=webapp",
+const ESTIMATOR_CONTEXT: Record<LineServiceId, CtaContext> = {
+  design: {},
+  development: { projectType: "webapp" },
 };
 
 export async function ServiceInvestmentLine({
@@ -57,7 +57,7 @@ export async function ServiceInvestmentLine({
             {row.figureLabel}
           </p>
           <DirectionalLink
-            href={`${getCommercialCta("projectRange").href}${ESTIMATOR_QUERY[serviceId]}`}
+            href={getCommercialCta("projectRange", ESTIMATOR_CONTEXT[serviceId]).href}
             className="min-h-6 text-base font-medium text-foreground underline decoration-border underline-offset-4 transition-colors hover:text-brand-text hover:decoration-brand-text pointer-coarse:min-h-11 md:col-start-1 lg:col-start-4"
           >
             {tCTAs("projectRange")}

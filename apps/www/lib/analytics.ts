@@ -19,6 +19,16 @@ type EventMap = {
   exit_intent_submitted: { locale?: string; source?: string };
   audit_lead_submitted: { locale?: string; source?: string };
   cta_clicked: { ctaId: string; source?: string };
+  // A registry CTA on a page: its key, the path without locale, and the typed
+  // context it carried as a query string (ids only).
+  contextual_cta_clicked: { key: string; page: string; context?: string };
+  intent_selected: { situation: string };
+  // The estimator's preliminary read: shown, then acted on.
+  recommendation_viewed: { nextStep: string; projectType: string };
+  recommendation_accepted: {
+    nextStep: string;
+    action: "consultation" | "proposal" | "whatsapp" | "pdf";
+  };
 };
 
 export const trackEvent = <K extends keyof EventMap>(

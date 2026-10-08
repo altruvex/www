@@ -20,8 +20,8 @@ export default function DevelopmentPage({ investment }: { investment: ReactNode 
         title={t("title")}
         titleAccent={t("titleAccent")}
         body={t("body")}
-        primary="describeTheBuild"
-        secondary="architecture"
+        primary="startDevelopment"
+        secondary="projectRange"
       />
     </div>
   );

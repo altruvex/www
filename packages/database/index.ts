@@ -43,6 +43,48 @@ export function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, "");
 }
 
+const EGYPT_LOCAL_MOBILE = /^01[0125]\d{8}$/;
+const EGYPT_E164_MOBILE = /^20(1[0125]\d{8})$/;
+
+/**
+ * The one stored shape of a client's phone: international digits, no `+`.
+ *
+ * It agrees with `whatsappNumber` in apps/admin/lib/service-reminder.ts:
+ * - spaces, brackets, dots and dashes are ignored;
+ * - a leading `+` or `00` is already international — keep its digits
+ *   (the `00` is dropped);
+ * - `01[0125]` + 8 digits is an Egyptian mobile written locally, the only
+ *   local shape that names its own country, so it becomes `20` + the number
+ *   without its leading 0;
+ * - any other number keeps its digits as typed. A country is never invented.
+ *
+ * Kept pure and dependency-free: both apps import it, and the admin app's
+ * full parser (libphonenumber) must not become a dependency of this package.
+ */
+export function canonicalPhone(raw: string): string {
+  const compact = raw.trim().replace(/[\s().-]/g, "");
+  if (EGYPT_LOCAL_MOBILE.test(compact)) return `20${compact.slice(1)}`;
+  if (compact.startsWith("+")) return compact.slice(1).replace(/\D/g, "");
+  if (compact.startsWith("00")) return compact.slice(2).replace(/\D/g, "");
+  return compact.replace(/\D/g, "");
+}
+
+/**
+ * Every stored shape the same number may already have. Clients created
+ * before `canonicalPhone` were stored as the typed digits (`normalizePhone`),
+ * so a lead is matched against the canonical form, the plain digits, the
+ * `00` form and — for an Egyptian mobile — the local `0` form.
+ */
+export function phoneMatchKeys(raw: string): string[] {
+  const canonical = canonicalPhone(raw);
+  if (!canonical) return [];
+  const keys = new Set<string>([canonical, normalizePhone(raw), `00${canonical}`]);
+  const egypt = EGYPT_E164_MOBILE.exec(canonical);
+  if (egypt) keys.add(`0${egypt[1]}`);
+  keys.delete("");
+  return [...keys];
+}
+
 interface LinkClientToLeadInput {
   phone: string;
   name?: string | null;
@@ -53,10 +95,15 @@ interface LinkClientToLeadInput {
 }
 
 export async function linkClientToLead(input: LinkClientToLeadInput) {
-  const phone = normalizePhone(input.phone);
+  const phone = canonicalPhone(input.phone);
   if (!phone) return null;
 
-  const existing = await prisma.client.findFirst({ where: { phone } });
+  // Match every shape the number may already be stored in; when several
+  // clients share it, the oldest one is the client.
+  const existing = await prisma.client.findFirst({
+    where: { phone: { in: phoneMatchKeys(input.phone) } },
+    orderBy: { createdAt: "asc" },
+  });
 
   if (existing) {
     const data: Record<string, unknown> = {};

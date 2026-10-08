@@ -23,7 +23,7 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
     pay: t("home.facts.pay.value"),
   };
 
-  const estimateCta = getCommercialCta("projectRange");
+  const estimateCta = getCommercialCta("projectRange", {}, "transparency-estimator");
   const transparencyCta = getCommercialCta("viewTransparency");
   const linkClass =
     "min-h-6 rounded-ctl-sm text-base text-foreground transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:text-local-accent-text focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11";
@@ -78,8 +78,9 @@ export async function TransparentByDesign({ locale }: { locale: string }) {
         <div className="mt-(--section-block) flex flex-col items-start gap-x-8 gap-y-4 sm:flex-row sm:items-center">
           <CtaButtonGroup
             primary={{
-              href: `${estimateCta.href}#transparency-estimator`,
+              href: estimateCta.href,
               label: tCTAs("projectRange"),
+              cta: "projectRange",
             }}
           />
           <DirectionalLink href={transparencyCta.href} className={linkClass}>

@@ -11,7 +11,8 @@ import type { AnswerMap } from "./types";
  * A preliminary read of a finished estimate: what the answers point to, what
  * moves the range, and which next step fits. Pure and rule-based — every line
  * traces back to an answer the visitor gave, so the panel never claims more
- * than the form knows.
+ * than the form knows. The transparency-lead route imports it too, so the
+ * stored read is recomputed on the server from the validated answers.
  */
 
 export type EstimateDriver =
@@ -77,4 +78,12 @@ export function recommend(
       ? "consultation"
       : "review",
   };
+}
+
+/**
+ * A driver as a stable stored id: "complexity", "brand", "timeline", or the
+ * bare scope-note id (the admin's driver labels read these forms).
+ */
+export function driverId(driver: EstimateDriver): string {
+  return driver.kind === "note" ? driver.id : driver.kind;
 }

@@ -158,6 +158,8 @@ enum ServiceType {
   ECOMMERCE
   MULTILINGUAL
   UI_UX
+  TECHNICAL_AUDIT
+  MAINTENANCE
   OTHER
 }
 
@@ -188,6 +190,7 @@ enum ProjectSituation {
   NEW_BUILD
   REPLACE_EXISTING
   IMPROVE_EXISTING
+  UNSURE
 }
 
 enum DecisionRole {
@@ -420,6 +423,12 @@ model TransparencyLead {
   utmMedium        String?
   utmCampaign      String?
   landingPath      String?
+  // What the visitor said they were facing before the estimate (the site's
+  // intent choice), and the preliminary read the result showed them. Both are
+  // recomputed or validated on the server, never trusted from the client.
+  situation        ProjectSituation?
+  nextStep         String?
+  drivers          String[]  @default([])
   convertedAt      DateTime?
   createdAt        DateTime  @default(now())
 
@@ -436,6 +445,7 @@ enum ClientSource {
   MANUAL
   WHATSAPP_INBOUND
   REFERRAL
+  EXIT_INTENT
 }
 
 model Client {

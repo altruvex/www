@@ -97,8 +97,8 @@ export default function FAQPageClient() {
         title={tEnd("title")}
         titleAccent={tEnd("titleAccent")}
         body={tEnd("body")}
-        primary="describeTheBuild"
-        secondary="technicalCall"
+        primary="technicalCall"
+        secondary="projectRange"
       />
     </>
   );

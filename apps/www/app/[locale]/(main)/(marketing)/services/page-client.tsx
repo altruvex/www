@@ -22,7 +22,7 @@ export default memo(function ServicesPage() {
         titleAccent={t("titleAccent")}
         body={t("body")}
         primary="describeTheBuild"
-        secondary="realBuild"
+        secondary="projectRange"
       />
     </div>
   );

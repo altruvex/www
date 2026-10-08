@@ -89,6 +89,7 @@ export const projectSituation: Registry = {
   NEW_BUILD: { label: "New build", tone: "neutral" },
   REPLACE_EXISTING: { label: "Replacing an existing system", tone: "neutral" },
   IMPROVE_EXISTING: { label: "Improving an existing system", tone: "neutral" },
+  UNSURE: { label: "Not sure yet", tone: "neutral" },
 };
 
 export const decisionRole: Registry = {
@@ -214,6 +215,7 @@ export const meetingType: Registry = {
 export const clientSource: Registry = {
   WEBSITE_CONTACT_FORM: { label: "Contact form", tone: "info" },
   TRANSPARENCY_ESTIMATOR: { label: "Estimator", tone: "progress" },
+  EXIT_INTENT: { label: "Exit-intent capture", tone: "info" },
   MANUAL: { label: "Added manually", tone: "neutral" },
   WHATSAPP_INBOUND: { label: "WhatsApp", tone: "success" },
   REFERRAL: { label: "Referral", tone: "warning" },
@@ -232,6 +234,8 @@ export const serviceType: Registry = {
   ECOMMERCE: { label: "E-commerce", tone: "neutral" },
   MULTILINGUAL: { label: "Multilingual", tone: "neutral" },
   UI_UX: { label: "UI / UX", tone: "neutral" },
+  TECHNICAL_AUDIT: { label: "Technical audit", tone: "neutral" },
+  MAINTENANCE: { label: "Maintenance", tone: "neutral" },
   OTHER: { label: "Other", tone: "neutral" },
 };
 

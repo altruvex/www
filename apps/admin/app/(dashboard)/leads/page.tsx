@@ -35,6 +35,7 @@ import {
 import { IntakeTabs, LEAD_STAGES, LEAD_STATUS_PREFILTER } from "./intake-tabs";
 import { LeadInspectorActions } from "./lead-inspector-actions";
 import { LeadsTable, type LeadRow } from "./leads-table";
+import { projectTypeName } from "@/lib/transparency-lead-labels";
 import { Button } from "@repo/ui";
 import { PickToOpen } from "@/components/os/pick-to-open";
 
@@ -92,6 +93,9 @@ export default async function LeadsPage({
               priceMax: true,
               projectType: true,
               timeline: true,
+              situation: true,
+              nextStep: true,
+              utmSource: true,
             },
           },
           proposals: {
@@ -154,8 +158,16 @@ export default async function LeadsPage({
           client.contactSubmission?.projectTimeline ??
           client.transparencyLead?.timeline ??
           null,
-        serviceInterest: client.contactSubmission?.serviceInterest ?? null,
-        utmSource: client.contactSubmission?.utmSource ?? null,
+        // An estimator-only lead has no stated interest; the project type it
+        // chose in the estimator is the nearest true answer.
+        serviceInterest: client.contactSubmission?.serviceInterest
+          ? statusOf("serviceType", client.contactSubmission.serviceInterest).label
+          : client.transparencyLead
+            ? projectTypeName(client.transparencyLead.projectType)
+            : null,
+        utmSource: client.contactSubmission
+          ? client.contactSubmission.utmSource
+          : (client.transparencyLead?.utmSource ?? null),
         estimateMin: client.transparencyLead?.priceMin ?? null,
         estimateMax: client.transparencyLead?.priceMax ?? null,
         stage,

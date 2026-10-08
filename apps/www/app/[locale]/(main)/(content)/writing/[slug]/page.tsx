@@ -239,8 +239,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           title={tEnd("title")}
           titleAccent={tEnd("titleAccent")}
           body={tEnd("body")}
-          primary="projectRange"
-          secondary="technicalAudit"
+          primary="describeTheBuild"
+          secondary="projectRange"
         />
       </div>
     </>

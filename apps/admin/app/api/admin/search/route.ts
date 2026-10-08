@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { normalizePhone, prisma } from "@repo/database";
+import { normalizePhone, phoneMatchKeys, prisma } from "@repo/database";
 import { entityHref, entityNoun, type EntityKind } from "@/lib/entity-links";
 import { money } from "@/lib/format";
 import { canSeeFinance } from "@/lib/nav";
@@ -33,6 +33,8 @@ export const GET = withAdmin(async (request, { role }) => {
   if (digits.length >= 4) {
     phoneTerms.add(digits);
     phoneTerms.add(digits.slice(-9));
+    // "0100…" must find a client stored canonically as "20100…", and back.
+    for (const key of phoneMatchKeys(q)) phoneTerms.add(key);
   }
   const phoneMatch = [...phoneTerms].map((t) => ({ phone: { contains: t } }));
   const ref = /^[0-9a-f-]{4,36}$/i.test(q) ? q.toLowerCase() : null;

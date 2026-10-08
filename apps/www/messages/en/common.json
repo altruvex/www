@@ -3,7 +3,7 @@
     "eyebrow": "Next step",
     "pages": {
       "about": {
-        "body": "Describe what you need, or schedule a consultation. The first conversation is about your project and what it needs, not about us.",
+        "body": "Describe what you need. The first conversation is about your project and what it needs, not about us.",
         "title": "Tell us what",
         "titleAccent": "you want built."
       },
@@ -14,7 +14,7 @@
         "titleAccent": "you can inspect like this one?"
       },
       "faq": {
-        "body": "Describe the project and add your question. You get a direct answer, not a sales script.",
+        "body": "Bring your question to a consultation. You get a direct answer, not a sales script.",
         "eyebrow": "Not answered here?",
         "title": "Your question is not here?",
         "titleAccent": "Send it with your project."
@@ -30,7 +30,7 @@
         "titleAccent": "to these numbers."
       },
       "work": {
-        "body": "Describe what you need. We reply with whether it fits what we build, and what the next step is.",
+        "body": "The estimator gives a price range for a build like these in a few minutes, with no call and no contact details.",
         "nextLabel": "Your build",
         "nextStatus": "Starts with a short description of what you need.",
         "title": "Want yours built",

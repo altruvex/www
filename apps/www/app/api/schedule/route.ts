@@ -17,6 +17,7 @@ import {
 import { toLocale } from "@/i18n/locale-meta";
 import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
 import { createStepToken } from "@/lib/server/contact/step-token";
+import { situationFromBody } from "@/lib/server/intent";
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,6 +93,8 @@ export async function POST(request: NextRequest) {
           utmMedium: attribution.utmMedium,
           utmCampaign: attribution.utmCampaign,
           landingPath: attribution.landingPath,
+          // Stated intent (lib/intent.ts); a later qualify answer would win.
+          situation: situationFromBody(body),
           priority: "HIGH",
           ...stepTokenFields,
         },

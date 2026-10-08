@@ -20,6 +20,34 @@ import {
 import { toLocale } from "@/i18n/locale-meta";
 import { externalReferer, parseAttribution } from "@/lib/validations/attribution";
 import { createStepToken } from "@/lib/server/contact/step-token";
+import { situationFromBody } from "@/lib/server/intent";
+
+// Plain-English labels for the admin notification (admin is English-only).
+const SERVICE_INTEREST_LABEL: Record<string, string> = {
+  "web-development": "web development",
+  ecommerce: "e-commerce",
+  multilingual: "multilingual site",
+  "ui-ux": "interface design",
+  "technical-audit": "technical audit",
+  maintenance: "maintenance",
+  other: "other service",
+};
+
+/** "Contact form · web development · timeline soon · via google": ids the form sent, no contact details. */
+function contactNotificationDetails(input: {
+  serviceInterest?: string;
+  projectTimeline?: string;
+  utmSource?: string;
+}) {
+  return [
+    "Contact form",
+    input.serviceInterest && SERVICE_INTEREST_LABEL[input.serviceInterest],
+    input.projectTimeline && `timeline ${input.projectTimeline}`,
+    input.utmSource && `via ${input.utmSource}`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 const SERVICE_TYPE_MAP: Record<
   NonNullable<Prisma.ContactSubmissionCreateInput["serviceInterest"]>,
@@ -29,6 +57,8 @@ const SERVICE_TYPE_MAP: Record<
   ECOMMERCE: ServiceType.ECOMMERCE,
   MULTILINGUAL: ServiceType.MULTILINGUAL,
   UI_UX: ServiceType.UI_UX,
+  TECHNICAL_AUDIT: ServiceType.TECHNICAL_AUDIT,
+  MAINTENANCE: ServiceType.MAINTENANCE,
   OTHER: ServiceType.OTHER,
 };
 
@@ -132,6 +162,9 @@ export async function handleContactSubmission(request: NextRequest) {
       utmMedium: attribution.utmMedium,
       utmCampaign: attribution.utmCampaign,
       landingPath: attribution.landingPath,
+      // The visitor's stated intent; the optional qualify step overwrites it
+      // later when answered, so the qualify answer wins.
+      situation: situationFromBody(body),
       priority:
         validatedData.projectTimeline === "immediate"
           ? "URGENT"
@@ -176,7 +209,13 @@ export async function handleContactSubmission(request: NextRequest) {
               data: {
                 type: "NEW_CONTACT",
                 title: "New Contact Submission",
-                message: `${validatedData.name} submitted a contact form (${validatedData.email})`,
+                message: `${validatedData.name} submitted a contact form (${validatedData.email}). ${contactNotificationDetails(
+                  {
+                    serviceInterest: validatedData.serviceInterest,
+                    projectTimeline: validatedData.projectTimeline,
+                    utmSource: attribution.utmSource,
+                  },
+                )}`,
                 userId: admin.id,
                 entityType: "contact",
                 entityId: submission.id,
