@@ -121,8 +121,8 @@ export const ExitIntentModal = () => {
         }}
         data-lenis-prevent
         className={cn(
-          "accent-world-orange grid max-w-[30rem] grid-rows-[88px_1fr] outline-none",
-          "max-h-[88vh] overflow-y-auto lg:max-h-none lg:max-w-[44rem] lg:grid-cols-[38%_1fr] lg:grid-rows-none lg:overflow-visible",
+          "accent-world-orange grid max-w-[30rem] grid-rows-[72px_1fr] outline-none sm:max-w-[34rem] sm:grid-rows-[88px_1fr]",
+          "max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain lg:max-w-[44rem] lg:grid-cols-[38%_1fr] lg:grid-rows-none 2xl:max-w-[52rem]",
           "animate-in fade-in slide-in-from-bottom-3 zoom-in-98 duration-(--motion-fast) ease-strong motion-reduce:animate-none",
         )}
       >
@@ -143,7 +143,7 @@ export const ExitIntentModal = () => {
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center justify-between gap-4 px-6 pt-5 sm:px-8 sm:pt-6">
+          <div className="flex items-center justify-between gap-4 px-5 pt-4 sm:px-8 sm:pt-6 2xl:px-10 2xl:pt-8">
             <Eyebrow className="flex items-center gap-2.5 text-muted-foreground">
               <span
                 aria-hidden
@@ -160,11 +160,11 @@ export const ExitIntentModal = () => {
           </div>
 
           {isSuccess ? (
-            <div className="px-6 pb-8 pt-6 sm:px-8">
-              <DialogTitle className="text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground">
+            <div className="px-5 pb-6 pt-5 sm:px-8 sm:pb-8 sm:pt-6 2xl:px-10">
+              <DialogTitle className="text-2xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground sm:text-3xl 2xl:text-4xl">
                 {t("successTitle")}
               </DialogTitle>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base 2xl:text-lg text-muted-foreground">
                 {t("successDescription")}
               </p>
               <div className="mt-8 flex items-baseline justify-between gap-4 border-y border-border-subtle py-4">
@@ -175,20 +175,20 @@ export const ExitIntentModal = () => {
               </div>
             </div>
           ) : (
-            <div className="px-6 pb-6 pt-6 sm:px-8 sm:pb-8">
-              <DialogTitle className="text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground sm:text-4xl">
+            <div className="px-5 pb-5 pt-4 sm:px-8 sm:pb-8 sm:pt-6 2xl:px-10 2xl:pb-10">
+              <DialogTitle className="text-2xl font-semibold leading-[1.08] tracking-[-0.02em] text-foreground sm:text-3xl lg:text-[1.75rem] xl:text-4xl 2xl:text-[2.5rem]">
                 {t.rich("title", { h: (chunks) => <Highlight className="whitespace-nowrap">{chunks}</Highlight> })}
               </DialogTitle>
-              <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+              <p className="mt-2 text-sm leading-relaxed sm:mt-3 sm:text-base 2xl:text-lg text-muted-foreground">
                 {t("description")}
               </p>
 
-              <dl className="mt-7 border-b border-border-subtle">
+              <dl className="mt-5 border-b sm:mt-7 border-border-subtle">
                 {terms.map(({ value, label }, i) => (
                   <div
                     key={label}
                     style={{ animationDelay: `${120 + i * 70}ms` }}
-                    className="grid grid-cols-[1fr_auto] items-baseline gap-x-2 border-t border-border-subtle py-3 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-(--motion-fast) ease-strong motion-reduce:animate-none"
+                    className="grid grid-cols-[1fr_auto] items-baseline gap-x-2 border-t border-border-subtle py-2 sm:py-3 animate-in fade-in slide-in-from-bottom-1 fill-mode-both duration-(--motion-fast) ease-strong motion-reduce:animate-none"
                   >
                     <dt className="text-sm text-muted-foreground">{label}</dt>
                     <dd className="text-sm font-medium text-foreground">{value}</dd>
@@ -196,7 +196,7 @@ export const ExitIntentModal = () => {
                 ))}
               </dl>
 
-              <form onSubmit={handleSubmit} className="mt-7">
+              <form onSubmit={handleSubmit} className="mt-5 sm:mt-7">
                 <label htmlFor="exit-intent-phone">
                   <Eyebrow>{t("phoneLabel")}</Eyebrow>
                 </label>
@@ -221,7 +221,7 @@ export const ExitIntentModal = () => {
                       setError("");
                     }}
                     disabled={isSubmitting}
-                    className="h-12 w-full bg-transparent text-lg text-foreground outline-none placeholder:text-foreground/40 rtl:text-right"
+                    className="h-11 w-full bg-transparent text-base sm:h-12 sm:text-lg 2xl:h-14 2xl:text-xl text-foreground outline-none placeholder:text-foreground/40 rtl:text-right"
                   />
                 </div>
                 <p
