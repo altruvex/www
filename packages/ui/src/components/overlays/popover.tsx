@@ -22,7 +22,7 @@ const popoverMotion =
 
 // "panel" is the glass overlay for free content. "menu" is for a list of choices (a cmdk
 // picker): it takes the one menu surface, so it matches DropdownMenu and Select exactly.
-// The glass is left off there, because its `background` shorthand would fight bg-popover.
+// Both wear liquid-glass-menu, which sets no radius, so rounded-menu holds.
 const popoverSurface = {
   panel: "liquid-glass text-popover-foreground w-72 rounded-overlay p-4",
   menu: menuSurface,

@@ -493,7 +493,7 @@ function ConversationForm({
             className={cn(inlineField, inlineWidth.name)}
           />
           <span className="text-muted-foreground">
-            , {t("letter.aboutLabel")}{" "}
+            {t("letter.aboutLead")}{" "}
           </span>
           <Select
             name="service"
@@ -524,7 +524,7 @@ function ConversationForm({
             </SelectContent>
           </Select>
           <span className="text-muted-foreground">
-            . {t("letter.replyLabel")}{" "}
+            {t("letter.replyLead")}{" "}
           </span>
           <input
             id="contact-phone"
@@ -551,7 +551,6 @@ function ConversationForm({
             id="contact-email"
             name="email"
             type="email"
-            dir="ltr"
             inputMode="email"
             autoComplete="email"
             value={values.email}
@@ -564,7 +563,7 @@ function ConversationForm({
             disabled={isSubmitting}
             className={cn(inlineField, inlineWidth.email)}
           />
-          <span className="text-muted-foreground">.</span>
+          <span className="text-muted-foreground">{t("letter.closing")}</span>
         </div>
         <div
           data-contact-part

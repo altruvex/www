@@ -178,6 +178,16 @@
     background: var(--glass-clear-sheen), var(--glass-clear-background-dense);
   }
 
+  /* A list of choices (Select, DropdownMenu, picker popovers). Dense clear fill so
+     row text stays AA; radius and padding belong to menuSurface, so none are set here. */
+  .liquid-glass-menu {
+    -webkit-backdrop-filter: var(--glass-clear-filter);
+    backdrop-filter: var(--glass-clear-filter);
+    background: var(--glass-clear-sheen), var(--glass-clear-background-dense);
+    border: 1px solid var(--glass-clear-border);
+    box-shadow: var(--glass-clear-shadow);
+  }
+
   .liquid-glass-nav {
     background: var(--glass-background-flat);
     border-bottom: 1px solid var(--glass-border);
@@ -207,7 +217,8 @@
     backdrop-filter: var(--glass-blur-soft);
   }
 
-  .liquid-glass-clear {
+  .liquid-glass-clear,
+  .liquid-glass-menu {
     -webkit-backdrop-filter: blur(14px) saturate(110%);
     backdrop-filter: blur(14px) saturate(110%);
   }
@@ -216,6 +227,7 @@
 @media (prefers-reduced-transparency: reduce) {
   .liquid-glass-clear,
   .liquid-glass-clear-dense,
+  .liquid-glass-menu,
   .liquid-glass,
   .liquid-glass-flat,
   .liquid-glass-panel,
