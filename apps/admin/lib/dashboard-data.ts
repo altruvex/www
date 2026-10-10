@@ -1,5 +1,5 @@
 import { prisma, type Prisma } from "@repo/database";
-import { SPELLINGS } from "@/components/os/entity-audit";
+import { SPELLINGS } from "@/lib/entity-spellings";
 import { overdueCutoff } from "@/lib/payment-overdue";
 import type { DerivedStage, Tone } from "@/lib/status";
 import { PROJECT_CURRENCY_SELECT } from "@/lib/project-currency";

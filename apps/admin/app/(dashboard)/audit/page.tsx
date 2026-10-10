@@ -10,7 +10,7 @@ import { StatTile } from "@/components/os/stat-tile";
 import { EmptyInline } from "@/components/os/empty-state";
 import { FilterChip } from "@/components/os/data-table";
 import { EventList } from "@/components/os/event-row";
-import { SPELLINGS } from "@/components/os/entity-audit";
+import { SPELLINGS } from "@/lib/entity-spellings";
 import { normalizeEntityType } from "@/lib/entity-links";
 import { gateRoute } from "@/lib/page-gate";
 import { resolveRole } from "@/lib/rbac";

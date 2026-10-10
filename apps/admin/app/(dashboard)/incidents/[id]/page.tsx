@@ -19,7 +19,7 @@ import { AttachPicker } from "@/components/os/attach-picker";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { MetaList, QuickActions } from "@/components/os/detail-layout";
 import { EmptyInline } from "@/components/os/empty-state";
-import { SPELLINGS } from "@/components/os/entity-audit";
+import { SPELLINGS } from "@/lib/entity-spellings";
 import { EntityLink } from "@/components/os/entity-link";
 import { EventList } from "@/components/os/event-row";
 import { PageHeader } from "@/components/os/page-header";
