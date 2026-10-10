@@ -10,6 +10,7 @@
     "check-types": "turbo run check-types",
     "validate:pricing": "node scripts/validate-pricing-literals.mjs",
     "report:pricing": "bun scripts/pricing-parity-report.mjs",
+    "site-map": "bun run --cwd apps/www site-map",
     "validate": "node scripts/validate-pricing-literals.mjs && bun scripts/pricing-parity-report.mjs && bun scripts/verify-billing-cycles.ts",
     "verify:rendered": "node scripts/verify-rendered-pricing.mjs",
     "verify:cycles": "bun scripts/verify-billing-cycles.ts",

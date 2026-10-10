@@ -13,6 +13,7 @@
     "indexnow:submit": "bun scripts/indexnow-submit.js",
     "check:font-licenses": "node scripts/font-licenses.mjs --check",
     "check:bidi": "node scripts/check-bidi.mjs",
+    "site-map": "node scripts/site-map/build.mjs",
     "check:line-height": "node scripts/check-line-height.mjs"
   },
   "dependencies": {
