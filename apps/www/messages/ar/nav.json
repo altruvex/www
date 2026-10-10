@@ -29,6 +29,7 @@
   "directLines": "تواصل مباشر",
   "standards": "معاييرنا",
   "faq": "الأسئلة الشائعة",
+  "thisSite": "كيف بنينا هذا الموقع",
   "settings": "الإعدادات",
   "darkMode": "الوضع الداكن",
   "desc": {
@@ -44,5 +45,6 @@
     "services": "كل الخدمات"
   },
   "subpages": "صفحات {name}",
-  "transparencyHint": "أداة تقدير التكلفة"
+  "transparencyHint": "أداة تقدير التكلفة",
+  "back": "رجوع"
 }

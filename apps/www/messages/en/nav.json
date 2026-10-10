@@ -29,6 +29,7 @@
   "directLines": "Direct lines",
   "standards": "Standards",
   "faq": "FAQ",
+  "thisSite": "How we built this site",
   "settings": "Settings",
   "darkMode": "Dark theme",
   "desc": {
@@ -44,5 +45,6 @@
     "services": "All services"
   },
   "subpages": "{name} pages",
-  "transparencyHint": "Cost estimator"
+  "transparencyHint": "Cost estimator",
+  "back": "Back"
 }
