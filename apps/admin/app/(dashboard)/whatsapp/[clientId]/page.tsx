@@ -14,7 +14,7 @@ import { currentRole } from "@/lib/authorize";
 import { roleCanOpen } from "@/lib/action-center";
 import { statusOf } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import { dateTime, money, phone as fmtPhone, when } from "@/lib/format";
+import { contactLabel, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
 import { Button } from "@repo/ui";
 import { EntityLink } from "@/components/os/entity-link";
 import { ChannelTabs } from "../../inbox/channel-tabs";
@@ -43,7 +43,7 @@ export default async function ThreadPage({
   if (!client) notFound();
 
   const now = new Date();
-  const name = client.company || client.name || client.phone;
+  const name = contactLabel(client);
   const lastInbound = [...client.messages].reverse().find((m) => m.direction === "INBOUND");
   const lastOutbound = [...client.messages].reverse().find((m) => m.direction === "OUTBOUND");
   const unanswered = Boolean(
@@ -136,7 +136,7 @@ export default async function ThreadPage({
               reached the client. Resend from the record it belongs to, or check the
               Cloud API credentials.
             </AlertBar>
-          ) : unanswered ? (
+          ) : unanswered && client.phone ? (
             <AlertBar
               tone="warning"
               href={`https://wa.me/${client.phone.replace(/\D/g, "")}`}
@@ -180,7 +180,7 @@ export default async function ThreadPage({
                       </EntityLink>
                     ),
                   },
-                  { label: "Phone", value: <span className="font-mono text-meta">{client.phone}</span> },
+                  { label: "Phone", value: <span className="font-mono text-meta">{client.phone ?? "—"}</span> },
                   { label: "Source", value: statusOf("clientSource", client.source).label },
                   { label: "Proposals", value: client.proposals.length },
                   { label: "Contracts", value: client.contracts.length },

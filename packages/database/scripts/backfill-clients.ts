@@ -36,7 +36,7 @@ async function main() {
   }
 
   for (const lead of leads) {
-    const key = normalizePhone(lead.phone);
+    const key = normalizePhone(lead.phone ?? "");
     if (!key) continue;
     const group = groups.get(key) ?? {};
     group.lead = lead;

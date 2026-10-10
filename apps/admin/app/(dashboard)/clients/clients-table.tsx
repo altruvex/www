@@ -12,7 +12,7 @@ import { StatusPill } from "@/components/ui/badge";
 import { Avatar, DropdownMenuItem, Hint } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
-import { money, phone as fmtPhone, when } from "@/lib/format";
+import { contactLabel, money, phone as fmtPhone, when } from "@/lib/format";
 import { statusOf } from "@/lib/status";
 import { bulkChangeClientStatus } from "@/app/(dashboard)/_actions/clients";
 
@@ -20,7 +20,7 @@ export interface ClientRow {
   id: string;
   name: string | null;
   company: string | null;
-  phone: string;
+  phone: string | null;
   email: string | null;
   industry: string | null;
   source: string;
@@ -68,10 +68,10 @@ export function ClientsTable({
       hideable: false,
       cell: (row) => (
         <span className="flex items-center gap-2">
-          <Avatar name={row.company ?? row.name ?? row.phone} size="sm" />
+          <Avatar name={contactLabel(row)} size="sm" />
           <span className="min-w-0">
             <span className="block truncate">
-              {row.company || row.name || "Unnamed"}
+              {row.company || row.name || row.email || "Unnamed"}
             </span>
             {row.company && row.name && (
               <span className="block truncate text-meta font-normal text-subtle-foreground">
@@ -196,15 +196,18 @@ export function ClientsTable({
       header: "Phone",
       width: "148px",
       mono: true,
-      cell: (row) => (
-        <a
-          href={`tel:${row.phone}`}
-          className="text-muted-foreground hover:text-brand"
-        >
-          {fmtPhone(row.phone)}
-        </a>
-      ),
-      searchValue: (row) => row.phone,
+      cell: (row) =>
+        row.phone ? (
+          <a
+            href={`tel:${row.phone}`}
+            className="text-muted-foreground hover:text-brand"
+          >
+            {fmtPhone(row.phone)}
+          </a>
+        ) : (
+          <span className="text-subtle-foreground">—</span>
+        ),
+      searchValue: (row) => row.phone ?? "",
       minWidth: "xl",
       defaultHidden: true,
     },
@@ -272,7 +275,7 @@ export function ClientsTable({
               del.request(
                 selected.map((row) => ({
                   id: row.id,
-                  label: row.company || row.name || row.phone,
+                  label: contactLabel(row),
                 })),
               ),
           },
@@ -309,7 +312,7 @@ export function ClientsTable({
                       ? () =>
                           del.request({
                             id: row.id,
-                            label: row.company || row.name || row.phone,
+                            label: contactLabel(row),
                           })
                       : undefined
                   }

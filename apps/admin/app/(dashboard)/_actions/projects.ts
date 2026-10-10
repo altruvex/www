@@ -14,6 +14,8 @@ import {
   userActor,
 } from "@/lib/activity-log";
 import { httpUrl } from "@/lib/http-url";
+import { markClientWon } from "@/lib/client-won";
+import { clearFollowUpAlerts } from "@/app/(dashboard)/clients/[id]/follow-up-alerts";
 
 export type ProjectActionResult =
   | { ok: true; changed: boolean; message: string }
@@ -250,6 +252,12 @@ export async function recordPastProject(
         },
         select: { id: true },
       });
+      // A project on the client, recorded or not, means the deal is won
+      // (docs/sales-os.md R1) — same transaction, so the two cannot disagree.
+      await markClientWon(tx, client.id, userActor(session), {
+        cause: "project_linked",
+        projectId: created.id,
+      });
       const looseProducts = await tx.product.findMany({
         where: {
           id: { in: data.attachProductIds },
@@ -319,6 +327,9 @@ export async function recordPastProject(
     },
     metadata: { manual: true, origin: "RECORDED", clientId: client.id },
   });
+
+  // The client is WON now, so a chase alert from before is answered.
+  await clearFollowUpAlerts(client.id, "recordPastProject");
 
   revalidatePath("/projects");
   revalidatePath(`/projects/${project.id}`);

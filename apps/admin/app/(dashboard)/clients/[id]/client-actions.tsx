@@ -16,6 +16,7 @@ import {
 } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { LostReasonFields, useLostInput } from "@/components/os/lost-reason-fields";
+import { NurtureReasonFields, useNurtureInput } from "@/components/os/nurture-reason-fields";
 import { optionsOf, statusOf, WRITABLE_STATUSES } from "@/lib/status";
 import {
   changeClientPriority,
@@ -41,6 +42,8 @@ export function StatusMenu({
   const [busy, startTransition] = React.useTransition();
   const [closing, setClosing] = React.useState<string | null>(null);
   const lost = useLostInput();
+  const [parking, setParking] = React.useState(false);
+  const nurture = useNurtureInput();
 
   function apply(kind: "status" | "priority", value: string) {
     startTransition(async () => {
@@ -83,7 +86,9 @@ export function StatusMenu({
                 onSelect={() =>
                   CLOSING.has(option.value)
                     ? (lost.reset(), setClosing(option.value))
-                    : apply("status", option.value)
+                    : option.value === "NURTURE"
+                      ? (nurture.reset(), setParking(true))
+                      : apply("status", option.value)
                 }
                 destructive={CLOSING.has(option.value)}
               >
@@ -140,6 +145,22 @@ export function StatusMenu({
         {closing === "LOST" && (
           <LostReasonFields value={lost.value} onChange={lost.setValue} />
         )}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={parking}
+        onOpenChange={setParking}
+        title={`Move ${clientLabel} to nurture?`}
+        consequence="It is parked until the review date, when it comes back as a follow-up. The status can be set back at any time."
+        confirmLabel="Move to nurture"
+        confirmDisabled={!nurture.ready}
+        onConfirm={async () => {
+          const result = await changeClientStatus(clientId, "NURTURE", undefined, nurture.value);
+          if (result.ok) router.refresh();
+          return result;
+        }}
+      >
+        <NurtureReasonFields value={nurture.value} onChange={nurture.setValue} />
       </ConfirmDialog>
     </>
   );

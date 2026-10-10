@@ -23,23 +23,15 @@ import {
   Wrench,
 } from "lucide-react";
 import type { NextStep } from "@/components/os/next-steps";
+import type { NextAction, NextActionKind } from "@/lib/sales-intel";
 import { roleCanOpen } from "@/lib/action-center";
 import { date, money, when } from "@/lib/format";
 import { canSeeFinance, type Role } from "@/lib/nav";
 import { can } from "@/lib/rbac";
-import { statusOf } from "@/lib/status";
+import { LEAD_STAGES, statusOf } from "@/lib/status";
 import { deriveStatus } from "@/lib/subscription-lifecycle";
 import type { ClientHub } from "./hub-data";
 
-const LEAD_STAGES = [
-  "NEW",
-  "VIEWED",
-  "CONTACTED",
-  "QUALIFYING",
-  "QUALIFIED",
-  "CALL_BOOKED",
-  "CALL_COMPLETED",
-];
 const LIVE_PROPOSAL = ["SENT", "DELIVERED", "READ", "VIEWED"];
 const LIVE_MEETING = ["PENDING", "APPROVED", "RESCHEDULED"];
 const ENDED_RETAINER = ["CANCELLED", "EXPIRED"];
@@ -121,7 +113,7 @@ export function proposalFollowUp(
   return null;
 }
 
-export function projectWorkSteps(
+function projectWorkSteps(
   project: { id: string; name: string; clientId: string },
   allowed: { task: boolean; change: boolean; charge: boolean },
 ): NextStep[] {
@@ -156,10 +148,18 @@ export function projectWorkSteps(
   return steps;
 }
 
+/** What a proposal still needs on file, in words for a step hint. */
+export function readinessHint(readiness: { ready: boolean; missing: string[] }): string {
+  return readiness.ready
+    ? "Ready: budget, scope, timeline and a call on file"
+    : `Not ready: missing ${readiness.missing.join(", ").toLowerCase()}`;
+}
+
 export function planNextSteps(
   hub: ClientHub,
   role: Role | undefined,
   now: Date = new Date(),
+  readiness?: { ready: boolean; missing: string[] },
 ): ClientPlan {
   const { client, stage, services, meetings } = hub;
   const name = client.company || client.name || "the client";
@@ -192,7 +192,8 @@ export function planNextSteps(
       );
     }
   }
-  if (overdue.length > 0 && can(role, "view", "message")) {
+  // A client reached by email only has no WhatsApp thread to open.
+  if (overdue.length > 0 && client.phone && can(role, "view", "message")) {
     add({
       key: "message-overdue",
       label: `${name} on WhatsApp`,
@@ -354,7 +355,7 @@ export function planNextSteps(
     }
   }
 
-  const isLead = LEAD_STAGES.includes(stage);
+  const isLead = (LEAD_STAGES as readonly string[]).includes(stage);
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
   const upcoming = meetings
@@ -385,11 +386,18 @@ export function planNextSteps(
         href: `/calendar?new=meeting&client=${client.id}`,
       }
     : null;
-  const proposalStep: NextStep | null = can(role, "create", "proposal")
+  // A spam client gets no proposal step: POST /api/admin/proposals refuses it (409).
+  const proposalStep: NextStep | null =
+    can(role, "create", "proposal") && client.status !== "SPAM"
     ? {
         key: "new-proposal",
         label: "New proposal",
-        hint: stage === "QUALIFIED" ? "Qualified, ready to quote" : undefined,
+        // Readiness informs, it never blocks: the operator may still proceed.
+        hint: readiness
+          ? readinessHint(readiness)
+          : stage === "QUALIFIED"
+            ? "Qualified, ready to quote"
+            : undefined,
         icon: FilePlus2,
         href: `/clients/${client.id}/new-proposal`,
       }
@@ -445,4 +453,78 @@ export function planNextSteps(
       ? { proposalId: generateId, primary: primaryKey === "generate" }
       : null,
   };
+}
+
+/**
+ * How the client page carries out the engine's next action
+ * (lib/sales-intel.ts). The engine decides what is next; this only picks the
+ * control already on the page that does it. "follow-up" opens the follow-up
+ * sheet, "record" the lead record (dates, owner), "status" the status menu
+ * (closing a lead is a status change), a step one of the plan's links. NONE (closed or signed) hands over to the plan's own primary step,
+ * which is delivery work once a client has signed.
+ */
+export type LeadControl =
+  | { kind: "step"; step: NextStep }
+  | { kind: "generate"; proposalId: string }
+  | { kind: "follow-up" }
+  | { kind: "record" }
+  | { kind: "status" }
+  | null;
+
+const STEP_FOR: Partial<Record<NextActionKind, string[]>> = {
+  SEND_PROPOSAL: ["send-proposal"],
+  REVISE_OR_CLOSE: ["new-version", "quote-again"],
+  WRITE_PROPOSAL: ["new-proposal"],
+  BOOK_CALL: ["schedule-meeting"],
+  PREPARE_CALL: ["open-meeting"],
+};
+
+const FOLLOW_UP_KINDS = new Set<NextActionKind>([
+  "REPLY",
+  "FOLLOW_UP",
+  "CHASE_PROPOSAL",
+  "CHASE_SIGNATURE",
+  "QUALIFY",
+  "CLARIFY",
+]);
+
+export function leadControl(
+  plan: ClientPlan,
+  next: Pick<NextAction, "kind" | "due">,
+  allowed: { followUp: boolean; record: boolean; meetingHref: string | null },
+): LeadControl {
+  const { kind } = next;
+  if (kind === "NONE") {
+    if (plan.generate?.primary) return { kind: "generate", proposalId: plan.generate.proposalId };
+    const step = plan.steps.find((s) => s.primary);
+    return step ? { kind: "step", step } : null;
+  }
+  if (kind === "GENERATE_CONTRACT")
+    return plan.generate ? { kind: "generate", proposalId: plan.generate.proposalId } : null;
+  if (kind === "RECORD_OUTCOME") {
+    if (!allowed.meetingHref) return null;
+    return {
+      kind: "step",
+      step: {
+        key: "record-outcome",
+        label: "Open the call to record it",
+        icon: CalendarClock,
+        href: allowed.meetingHref,
+      },
+    };
+  }
+  // Closing the lead (after "no further action") is a status change.
+  if (kind === "CLOSE") return allowed.record ? { kind: "status" } : null;
+  // "Set a follow-up date": no date yet, so the date editor, not the message sheet.
+  if (kind === "FOLLOW_UP" && next.due == null)
+    return allowed.record ? { kind: "record" } : null;
+  if (FOLLOW_UP_KINDS.has(kind) && allowed.followUp) return { kind: "follow-up" };
+  const keys = STEP_FOR[kind];
+  if (keys) {
+    const step = plan.steps.find((s) => keys.includes(s.key));
+    if (step) return { kind: "step", step };
+  }
+  if ((kind === "REVIEW_NURTURE" || kind === "FOLLOW_UP") && allowed.record)
+    return { kind: "record" };
+  return null;
 }

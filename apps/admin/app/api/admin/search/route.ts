@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { normalizePhone, phoneMatchKeys, prisma } from "@repo/database";
+import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { entityHref, entityNoun, type EntityKind } from "@/lib/entity-links";
 import { money } from "@/lib/format";
 import { canSeeFinance } from "@/lib/nav";
+import { statusOf } from "@/lib/status";
 import { withAdmin } from "@/lib/with-admin";
 
 type Result = {
@@ -46,7 +48,20 @@ export const GET = withAdmin(async (request, { role }) => {
     where: q
       ? { OR: [{ name: like }, { company: like }, { email: like }, ...phoneMatch] }
       : {},
-    select: { id: true, name: true, company: true, phone: true, email: true },
+    select: {
+      id: true,
+      name: true,
+      company: true,
+      phone: true,
+      email: true,
+      status: true,
+      owner: { select: { name: true } },
+      // What deriveClientStage needs: every contract (no take), newest first.
+      proposals: { select: { status: true, readAt: true }, orderBy: { createdAt: "desc" } },
+      contracts: { select: { status: true }, orderBy: { createdAt: "desc" } },
+      projects: { where: { status: { not: "CANCELLED" } }, select: { status: true }, take: 1 },
+      ...STAGE_MEETINGS_SELECT,
+    },
     take: onlyClients ? 10 : 6,
     orderBy: { updatedAt: "desc" },
   });
@@ -58,7 +73,21 @@ export const GET = withAdmin(async (request, { role }) => {
     results.push({ id, kind, noun: entityNoun(kind), title, subtitle: subtitle ?? undefined, href });
   };
 
-  for (const c of clients) push("client", c.id, label(c), c.phone || c.email);
+  const now = new Date();
+  for (const c of clients) {
+    push(
+      "client",
+      c.id,
+      label(c),
+      [
+        statusOf("pipelineStage", deriveClientStage(c, now)).label,
+        c.owner?.name ? `Owner: ${c.owner.name}` : "No owner",
+        c.phone || c.email,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+  }
   if (onlyClients) return NextResponse.json({ results });
 
   const [

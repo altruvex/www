@@ -3,12 +3,21 @@ import { Panel } from "@/components/os/panel";
 import { StatTile } from "@/components/os/stat-tile";
 import { EmptyInline } from "@/components/os/empty-state";
 import { BarChart, ColumnChart, HeroNumber } from "@/components/os/chart";
-import { getAnalytics } from "@/lib/analytics-data";
+import { FunnelBars } from "@/components/os/funnel";
+import { FilterChip } from "@/components/os/filter-bar";
+import {
+  ANALYTICS_PERIODS,
+  DEFAULT_PERIOD,
+  NO_LOST_REASON,
+  getAnalytics,
+  parsePeriod,
+} from "@/lib/analytics-data";
 import { currentRole } from "@/lib/authorize";
 import { canSeeFinance } from "@/lib/nav";
 import { gateRoute } from "@/lib/page-gate";
 import { ANNUAL_BILLING_NOTE, getRevenueMetrics } from "@/lib/revenue-metrics";
 import { RETAINER_CURRENCY } from "@/lib/payment-source";
+import { BUSINESS_TIME_ZONE } from "@/lib/payment-overdue";
 import { statusOf } from "@/lib/status";
 import { money, moneyByCurrency, percent } from "@/lib/format";
 
@@ -17,13 +26,41 @@ export const dynamic = "force-dynamic";
 const FINANCE_ONLY = "Finance only";
 const FINANCE_ONLY_SUB = "Shown to finance roles";
 
-export default async function AnalyticsPage() {
+const PERIOD_LABEL: Record<(typeof ANALYTICS_PERIODS)[number], string> = {
+  30: "Last 30 days",
+  90: "Last 90 days",
+  365: "Last 12 months",
+  all: "All time",
+};
+
+const RANGE_DATE = new Intl.DateTimeFormat("en-GB", {
+  timeZone: BUSINESS_TIME_ZONE,
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+function rangeText(period: string | number, start: Date | null, end: Date) {
+  if (period !== "all") return `${RANGE_DATE.format(start!)} – ${RANGE_DATE.format(end)}`;
+  return start
+    ? `All time — since ${RANGE_DATE.format(start)} (first record) to ${RANGE_DATE.format(end)}`
+    : "All time — no records yet";
+}
+
+export default async function AnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string | string[] }>;
+}) {
   const denied = await gateRoute("/analytics");
   if (denied) return denied;
 
+  const period = parsePeriod((await searchParams).period);
+  const periodLabel = PERIOD_LABEL[period];
+
   const showMoney = canSeeFinance(await currentRole());
   const [data, revenue] = await Promise.all([
-    getAnalytics(),
+    getAnalytics(period),
     showMoney ? getRevenueMetrics() : null,
   ]);
 
@@ -136,25 +173,60 @@ export default async function AnalyticsPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="telemetry text-subtle-foreground">Sales</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="telemetry text-subtle-foreground">Sales · {periodLabel}</h2>
+          <div role="group" aria-label="Period" className="flex flex-wrap gap-1.5">
+            {ANALYTICS_PERIODS.map((days) => (
+              <FilterChip
+                key={days}
+                param="period"
+                value={days === DEFAULT_PERIOD ? undefined : String(days)}
+                label={PERIOD_LABEL[days]}
+              />
+            ))}
+          </div>
+        </div>
+        <p className="text-meta text-muted-foreground">
+          <span className="font-mono tabular-nums text-foreground">
+            {rangeText(period, data.rangeStart, data.rangeEnd)}
+          </span>
+          . Leads created and proposals issued in this window; proposals count
+          once per client (the latest sent version), with no probability
+          weighting. The monthly charts always span twelve months; client,
+          delivery and website totals are all time. Open deals older than the
+          window stay in the pipeline and work queue.
+        </p>
+        {data.truncated && (
+          <p className="text-meta text-warning">
+            More leads arrived in this window than one page reads; the counts
+            below cover the newest {data.sales.leads} of them only. Pick a
+            shorter period for an exact figure.
+          </p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <StatTile
             label="Win rate"
             value={percent(data.sales.winRate)}
-            sub={`${data.sales.accepted} of ${data.sales.proposalsSent} sent`}
+            sub={`${data.sales.accepted} of ${data.sales.proposalsSent} quoted clients`}
             tone={data.sales.winRate >= 50 ? "success" : "warning"}
           />
           <StatTile
-            label="Average deal"
+            label="Average won deal"
             value={showMoney ? moneyByCurrency(data.sales.avgDealByCurrency, true) : FINANCE_ONLY}
-            sub={showMoney ? "Accepted proposals only" : FINANCE_ONLY_SUB}
+            sub={showMoney ? "Latest accepted quote per won client" : FINANCE_ONLY_SUB}
           />
           <StatTile
             label="Sales cycle"
             value={
-              data.sales.avgCycle != null ? `${data.sales.avgCycle}d` : "—"
+              data.sales.avgCycle != null ? `${data.sales.avgCycle}d` : "Not enough data"
             }
-            sub="Sent to accepted"
+            sub={
+              data.sales.avgCycle != null
+                ? `Proposal sent to contract signed, based on ${data.sales.cycleSample} of ${data.sales.cycleOf} won deals`
+                : data.sales.cycleOf === 0
+                  ? "No won deals in this window"
+                  : `Unavailable: ${data.sales.cycleSample} of ${data.sales.cycleOf} won deals have a signed contract (at least ${data.sales.cycleMin} needed)`
+            }
             tone={
               data.sales.avgCycle != null && data.sales.avgCycle > 21
                 ? "warning"
@@ -164,7 +236,7 @@ export default async function AnalyticsPage() {
           <StatTile
             label="Won value"
             value={showMoney ? moneyByCurrency(data.sales.wonValueByCurrency, true) : FINANCE_ONLY}
-            sub={showMoney ? "All time" : FINANCE_ONLY_SUB}
+            sub={showMoney ? "Accepted proposals in the window" : FINANCE_ONLY_SUB}
             tone={showMoney ? "success" : "neutral"}
           />
         </div>
@@ -236,12 +308,54 @@ export default async function AnalyticsPage() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Panel
+            title="Where these leads stand"
+            description="Current derived stage of every lead created in the window — a count, not a forecast"
+          >
+            {data.sales.leads === 0 ? (
+              <EmptyInline>No leads were created in this window.</EmptyInline>
+            ) : (
+              <FunnelBars
+                stages={data.stages
+                  .filter((s) => s.count > 0)
+                  .map((s) => {
+                    const def = statusOf("pipelineStage", s.stage);
+                    return { id: s.stage, label: def.label, count: s.count, tone: def.tone };
+                  })}
+              />
+            )}
+          </Panel>
+
+          <Panel
+            title="Why deals were lost"
+            description="Reason recorded on leads from the window that are now lost"
+          >
+            {data.lostReasons.total === 0 ? (
+              <EmptyInline>No lead from this window is marked lost.</EmptyInline>
+            ) : (
+              <BarChart
+                data={data.lostReasons.rows.map((row, i) => ({
+                  id: row.reason,
+                  label:
+                    row.reason === NO_LOST_REASON
+                      ? "Not recorded"
+                      : statusOf("lostReason", row.reason).label,
+                  value: row.count,
+                  display: `${row.count} · ${Math.round((row.count / data.lostReasons.total) * 100)}%`,
+                  seriesIndex: i,
+                }))}
+              />
+            )}
+          </Panel>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Panel
             title="Where the money comes from"
             description="Leads by source, and how many closed"
           >
             {data.sources.length === 0 ? (
               <EmptyInline>
-                No clients yet, so no source has a track record.
+                No leads in this window, so no source has a track record.
               </EmptyInline>
             ) : (
               <div className="space-y-3">
@@ -276,10 +390,10 @@ export default async function AnalyticsPage() {
 
           <Panel
             title="What actually closes"
-            description="Proposals quoted vs accepted, by project type"
+            description="Clients quoted vs won, by project type — one proposal per client"
           >
             {data.projectTypes.length === 0 ? (
-              <EmptyInline>No proposals issued yet.</EmptyInline>
+              <EmptyInline>No proposals issued in this window.</EmptyInline>
             ) : (
               <BarChart
                 data={data.projectTypes.map((type, i) => ({
@@ -293,6 +407,12 @@ export default async function AnalyticsPage() {
             )}
           </Panel>
         </div>
+        <AttributionTable
+          title="By first touch"
+          description="How each lead first reached the site: the earlier of its form submission and estimator run"
+          heading="First touch"
+          rows={data.firstTouch}
+        />
         <div className="grid gap-3 lg:grid-cols-2">
           <AttributionTable
             title="By campaign source"
@@ -337,7 +457,11 @@ export default async function AnalyticsPage() {
           <StatTile
             label="Average client value"
             value={showMoney ? moneyByCurrency(data.clientsMetrics.avgValueByCurrency, true) : FINANCE_ONLY}
-            sub={showMoney ? "Accepted value per won client" : FINANCE_ONLY_SUB}
+            sub={
+              showMoney
+                ? `Latest accepted proposal per client, ${data.clientsMetrics.valueBasis} of ${data.clientsMetrics.won} won clients`
+                : FINANCE_ONLY_SUB
+            }
           />
         </div>
 
@@ -381,9 +505,15 @@ export default async function AnalyticsPage() {
             value={
               data.delivery.avgDurationWeeks != null
                 ? `${data.delivery.avgDurationWeeks}w`
-                : "—"
+                : "Not enough data"
             }
-            sub="Project start to launch"
+            sub={
+              data.delivery.avgDurationWeeks != null
+                ? `Project opened to launch, based on ${data.delivery.durationSample} of ${data.delivery.launched} launched projects. Recorded projects and projects with no valid span are left out.`
+                : data.delivery.launched === 0
+                  ? "No launched projects yet"
+                  : `Unavailable: none of ${data.delivery.launched} launched projects has a valid opened-to-launch span (recorded projects have no start date)`
+            }
           />
           <StatTile
             label="Active projects"
@@ -453,7 +583,7 @@ function AttributionTable({
   return (
     <Panel title={title} description={description}>
       {rows.length === 0 ? (
-        <EmptyInline>No leads recorded yet.</EmptyInline>
+        <EmptyInline>No leads in this window.</EmptyInline>
       ) : (
         <table className="w-full border-collapse text-start">
           <thead>

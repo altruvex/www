@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@repo/database";
 import { authorize } from "@/lib/authorize";
 import { recordChange, userActor } from "@/lib/activity-log";
+import { clearFollowUpAlerts } from "../clients/[id]/follow-up-alerts";
 
 type Result = { ok: true; message?: string } | { ok: false; message: string };
 
@@ -80,7 +81,7 @@ export async function updateLeadRecord(
     data: { ownerId, nextActionAt, nextActionNote: note },
   });
 
-  const label = before.company || before.name || before.phone;
+  const label = before.company || before.name || before.phone || "Unnamed client";
   const ownerChanged = before.ownerId !== ownerId;
   await recordChange({
     action: "client.lead_record_updated",
@@ -124,6 +125,10 @@ export async function updateLeadRecord(
       console.error("[lead-record] owner notification failed", err);
     }
   }
+
+  // A moved or cleared date answers the chase that was due; the sweep re-arms
+  // it on the new date. Best-effort, like the notification above.
+  if (!sameDate) await clearFollowUpAlerts(clientId, "lead-record");
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/leads");

@@ -15,7 +15,7 @@ import { TabNav } from "@/components/os/tab-nav";
 import { MetaList } from "@/components/os/detail-layout";
 import { ToneBadge } from "@/components/ui/badge";
 import { AlertBar } from "@/components/os/error-state";
-import { optionsOf, statusOf, toneDot } from "@/lib/status";
+import { DERIVED_ONLY_STAGES, optionsOf, statusOf, toneDot } from "@/lib/status";
 import { PROJECT_PHASE_ORDER } from "@/lib/status";
 import { PIPELINE_STAGES } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
@@ -197,14 +197,7 @@ export default async function SettingsPage({
           >
             <ul className="rows">
               {PIPELINE_STAGES.map((stage, i) => {
-                const derived = [
-                  "CALL_BOOKED",
-                  "CALL_COMPLETED",
-                  "PROPOSAL_SENT",
-                  "PROPOSAL_READ",
-                  "CONTRACT_SENT",
-                  "SIGNED",
-                ].includes(stage);
+                const derived = (DERIVED_ONLY_STAGES as readonly string[]).includes(stage);
                 return (
                   <li key={stage} className="flex items-center gap-3 px-3 py-2">
                     <span className="font-mono text-micro tabular-nums text-subtle-foreground">

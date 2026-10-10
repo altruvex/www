@@ -8,22 +8,19 @@ import { EmptyState } from "@/components/os/empty-state";
 import { AlertBar } from "@/components/os/error-state";
 import { NewProposalButton } from "@/components/os/new-proposal-button";
 import { FilterChip } from "@/components/os/data-table";
+import { PIPELINE_STAGES, STAGE_TONE } from "@/lib/dashboard-data";
 import {
-  PIPELINE_STAGES,
-  STAGE_PROBABILITY,
-  STAGE_MEETINGS_SELECT,
-  STAGE_TONE,
-  deriveClientStage,
-} from "@/lib/dashboard-data";
-import {
-  moneyByCurrency,
-  percent,
-  sumByCurrency,
-  scaleByCurrency,
-  when,
-} from "@/lib/format";
+  SALES_SIGNALS_SELECT,
+  loadActivityTimes,
+  readSignals,
+  toSalesSignals,
+} from "@/lib/sales-signals";
+import { moneyByCurrency, percent, when } from "@/lib/format";
+import { openQuoteMetrics } from "@/lib/pipeline-metrics";
 import { roleCanOpen } from "@/lib/action-center";
-import { currentRole } from "@/lib/authorize";
+import { isOverdue } from "@/lib/sales-intel";
+import { isLiveQuote } from "@/lib/quotes";
+import { getOperator } from "@/lib/authorize";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { statusOf } from "@/lib/status";
@@ -33,49 +30,40 @@ import { PickToOpen } from "@/components/os/pick-to-open";
 
 export const dynamic = "force-dynamic";
 
+/** The board reads at most this many deals, newest activity first. */
+const PIPELINE_TAKE = 400;
+
 export default async function PipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ stage?: string }>;
+  searchParams: Promise<{ stage?: string; health?: string }>;
 }) {
   const denied = await gateRoute("/pipeline", "the pipeline");
   if (denied) return denied;
-  const role = await currentRole();
+  const operator = await getOperator();
+  const role = operator?.role;
+  const viewerId = operator?.session.user.id ?? null;
   const showMoney = can(role, "view", "proposal");
   const canMove = can(role, "edit", "client");
 
-  const { stage: stageParam } = await searchParams;
+  const { stage: stageParam, health: healthParam } = await searchParams;
   if (stageParam?.toUpperCase() === "SPAM") redirect("/clients?stage=SPAM");
-  const clients = await prisma.client.findMany({
-    where: { status: { notIn: ["SPAM"] } },
-    select: {
-      id: true,
-      name: true,
-      company: true,
-      status: true,
-      priority: true,
-      source: true,
-      updatedAt: true,
-      proposals: {
-        select: {
-          status: true,
-          readAt: true,
-          totalPrice: true,
-          currency: true,
-        },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-      projects: { select: { id: true }, take: 1 },
-      contracts: {
-        select: { status: true },
-        orderBy: { createdAt: "desc" },
-        take: 1,
-      },
-      ...STAGE_MEETINGS_SELECT,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const healthFilter = healthParam === "risk" ? "risk" : null;
+  const now = new Date();
+  // Bounded: the most recently touched deals, every contract kept (the stage
+  // reads the newest issued one). When more exist the page says so.
+  const where = { status: { notIn: ["SPAM" as const] } };
+  const [clients, total] = await Promise.all([
+    prisma.client.findMany({
+      where,
+      select: SALES_SIGNALS_SELECT,
+      orderBy: { updatedAt: "desc" },
+      take: PIPELINE_TAKE,
+    }),
+    prisma.client.count({ where }),
+  ]);
+  const capped = total > clients.length;
+  const times = await loadActivityTimes(clients.map((c) => c.id));
 
   const columns = [
     ...PIPELINE_STAGES.map((stage) => ({
@@ -88,32 +76,55 @@ export default async function PipelinePage({
   ];
   const focus = columns.find((c) => c.id === stageParam);
 
-  const cards: PipelineCardData[] = clients.map((client) => ({
-    id: client.id,
-    stage: deriveClientStage(client),
-    title: client.company || client.name || "Unnamed client",
-    subtitle: statusOf("clientSource", client.source).label,
-    priority: client.priority,
-    value: showMoney ? (client.proposals[0]?.totalPrice ?? null) : null,
-    currency: client.proposals[0]?.currency ?? "EGP",
-  }));
+  const cards: PipelineCardData[] = clients.map((client) => {
+    const signals = toSalesSignals(client, now, viewerId, times.get(client.id));
+    const reading = readSignals(signals, now);
+    return {
+      id: client.id,
+      stage: signals.stage,
+      title: client.company || client.name || "Unnamed client",
+      subtitle: statusOf("clientSource", client.source).label,
+      priority: reading.priority,
+      value: showMoney ? (client.proposals[0]?.totalPrice ?? null) : null,
+      currency: client.proposals[0]?.currency ?? "EGP",
+      health: reading.health,
+      next:
+        reading.next.kind === "NONE"
+          ? null
+          : {
+              label: reading.next.label,
+              due: reading.next.due?.toISOString() ?? null,
+              // The engine's business-day rule, decided here so render never reads the clock.
+              overdue: isOverdue(reading.next.due, now),
+            },
+      owner: client.owner ? client.owner.name || client.owner.email : null,
+    };
+  });
+  const atRisk = (c: PipelineCardData) =>
+    c.health.state === "AT_RISK" || c.health.state === "STALLED";
+  const atRiskCount = cards.filter(atRisk).length;
+  const boardCards = healthFilter ? cards.filter(atRisk) : cards;
+  const stageQuery = focus ? `?stage=${focus.id}` : "";
+  const riskHref = `/pipeline?${new URLSearchParams({
+    ...(focus ? { stage: focus.id } : {}),
+    health: "risk",
+  }).toString()}`;
 
   // Parked (Nurture) and closed (Lost) deals are not live pipeline.
   const live = cards.filter(
     (c) => c.stage !== "LOST" && c.stage !== "SPAM" && c.stage !== "NURTURE",
   );
-  const openCards = live.filter((c) => c.stage !== "SIGNED" && c.value != null);
-
-  const openValue = sumByCurrency(
-    openCards.map((c) => ({ amount: c.value!, currency: c.currency })),
+  // A rejected, expired or lapsed quote is a decision owed, not money on the table
+  // (isLiveQuote, the same rule /leads uses for a row's value).
+  const liveQuote = new Set(
+    clients.filter((c) => isLiveQuote(c.proposals[0], now)).map((c) => c.id),
   );
-  const weighted: Record<string, number> = {};
-  for (const card of openCards) {
-    const p =
-      STAGE_PROBABILITY[card.stage as (typeof PIPELINE_STAGES)[number]] ?? 0;
-    weighted[card.currency] =
-      (weighted[card.currency] ?? 0) + Math.round(card.value! * p);
-  }
+  // The "Live deals" tile counts open work only: signed deals are won, not live.
+  const openDealCount = live.filter((c) => c.stage !== "SIGNED").length;
+  // Quoted and its average read the same active opportunities (lib/pipeline-metrics.ts):
+  // open stage, one card per client, its latest live proposal. No stage
+  // probability is applied — a forecast would be invented.
+  const { open: openCards, quoted, average: avgOpenQuote } = openQuoteMetrics(cards, liveQuote);
 
   const proposalOut = cards.filter(
     (c) => c.stage === "PROPOSAL_SENT" || c.stage === "PROPOSAL_READ",
@@ -121,16 +132,6 @@ export default async function PipelinePage({
   const qualified = cards.filter((c) => c.stage === "QUALIFIED").length;
   const won = cards.filter((c) => c.stage === "SIGNED").length;
   const lost = cards.filter((c) => c.stage === "LOST").length;
-  const withValue = live.filter((c) => c.value != null);
-  const avgDeal = scaleByCurrency(
-    sumByCurrency(
-      withValue.map((c) => ({ amount: c.value!, currency: c.currency })),
-    ),
-    (currency) => {
-      const n = withValue.filter((c) => c.currency === currency).length;
-      return n ? 1 / n : 0;
-    },
-  );
 
   // An empty list offers the submissions waiting to become clients, each
   // opened on its own page where Convert lives.
@@ -164,22 +165,22 @@ export default async function PipelinePage({
         {showMoney ? (
           <>
             <StatTile
-              label="Weighted value"
-              value={moneyByCurrency(weighted, true)}
-              sub="Stage probability × deal size"
+              label="Quoted"
+              value={moneyByCurrency(quoted, true)}
+              sub={`Latest live proposal on ${openCards.length} open ${openCards.length === 1 ? "deal" : "deals"}`}
             />
             <StatTile
-              label="Open value"
-              value={moneyByCurrency(openValue, true)}
-              sub={`${live.length} live deals`}
+              label="Live deals"
+              value={openDealCount}
+              sub="Every stage except Signed, Nurture and Lost"
             />
           </>
         ) : (
           <>
             <StatTile
               label="Live deals"
-              value={live.length}
-              sub="Every stage except Nurture and Lost"
+              value={openDealCount}
+              sub="Every stage except Signed, Nurture and Lost"
             />
             <StatTile
               label="Proposal out"
@@ -200,9 +201,9 @@ export default async function PipelinePage({
         />
         {showMoney ? (
           <StatTile
-            label="Average deal"
-            value={moneyByCurrency(avgDeal, true)}
-            sub="Across proposed work"
+            label="Average open quote"
+            value={moneyByCurrency(avgOpenQuote, true)}
+            sub={`Latest live proposal per open deal · ${openCards.length} ${openCards.length === 1 ? "deal" : "deals"}`}
           />
         ) : (
           <StatTile
@@ -240,7 +241,11 @@ export default async function PipelinePage({
           {canMove && (
             <AlertBar
               tone="info"
-              action={<NewProposalButton variant="outline">Send a proposal</NewProposalButton>}
+              action={
+                <NewProposalButton variant="outline">
+                  Send a proposal
+                </NewProposalButton>
+              }
             >
               New, Viewed, Contacted, Qualifying, Qualified, Nurture and Lost
               are yours to set — drag a card, or use the stage menu on it (the
@@ -249,15 +254,38 @@ export default async function PipelinePage({
               or generate a contract to move a deal into them.
             </AlertBar>
           )}
-          {focus && (
-            <FilterChip
-              label="Stage"
-              value={focus.label}
-              clearHref="/pipeline"
-            />
+          {capped && (
+            <p className="text-meta text-muted-foreground" role="status">
+              Showing the {clients.length} most recently updated of {total}{" "}
+              deals. The tiles and columns count only those shown.
+            </p>
           )}
+          <div className="flex flex-wrap items-center gap-2">
+            {focus && (
+              <FilterChip
+                label="Stage"
+                value={focus.label}
+                clearHref={healthFilter ? "/pipeline?health=risk" : "/pipeline"}
+              />
+            )}
+            {healthFilter ? (
+              <FilterChip
+                label="Health"
+                value="At risk or stalled"
+                clearHref={`/pipeline${stageQuery}`}
+              />
+            ) : (
+              atRiskCount > 0 && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={riskHref}>
+                    At risk or stalled · {atRiskCount}
+                  </Link>
+                </Button>
+              )
+            )}
+          </div>
           <PipelineBoard
-            cards={cards}
+            cards={boardCards}
             columns={columns}
             focusColumnId={focus?.id}
             canMove={canMove}

@@ -73,6 +73,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
           summary: `Sent the proposal to ${proposal.client.email} by email`,
           before: { status: proposal.status },
           after: { status: updated.status },
+          metadata: { clientId: proposal.clientId },
         });
 
         return NextResponse.json({ success: true, proposal: updated, emailId: sent.id });
@@ -98,10 +99,21 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       }
     }
 
+    const phone = proposal.client.phone;
+    if (!phone) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This client has no phone number. Send the proposal by email instead.",
+        },
+        { status: 400 },
+      );
+    }
+
     try {
       const result = await sendTemplateMessage({
         clientId: proposal.clientId,
-        phone: proposal.client.phone,
+        phone,
         templateName: "proposal_ready",
         bodyParams: [
           proposal.client.name || "there",
@@ -128,6 +140,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
         summary: `Sent the proposal to ${proposal.client.name || proposal.client.company || "the client"} via WhatsApp`,
         before: { status: proposal.status },
         after: { status: updated.status },
+        metadata: { clientId: proposal.clientId },
       });
 
       return NextResponse.json({ success: true, proposal: updated });

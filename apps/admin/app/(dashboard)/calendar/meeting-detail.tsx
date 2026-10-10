@@ -12,8 +12,12 @@ import { clientLabel, dayKey } from "@/lib/calendar-data";
 import { date as fmtDate } from "@/lib/format";
 import { httpUrl } from "@/lib/http-url";
 import { roleCanOpen } from "@/lib/action-center";
+import { CLOSED_FIELDS, followUpClosedReason } from "@/lib/lead-follow-up";
+import { CALL_OUTCOME_LABELS, type CallOutcomeValue } from "@/lib/status";
+import { RecordCallSheet } from "@/components/os/record-call-sheet";
 import { currentRole } from "@/lib/authorize";
 import { can } from "@/lib/rbac";
+import { meetingStart } from "@/lib/sales-signals";
 import { MeetingActions } from "./meeting-actions";
 import {
   AdminNotesForm,
@@ -34,7 +38,7 @@ export async function MeetingDetail({
     prisma.meeting.findUnique({
       where: { id },
       include: {
-        client: { select: { id: true, name: true, company: true } },
+        client: { select: { id: true, name: true, company: true, ...CLOSED_FIELDS } },
         contactSubmission: {
           select: {
             id: true,
@@ -113,6 +117,15 @@ export async function MeetingDetail({
   }
 
   const day = dayKey(meeting.scheduledDate);
+  const callClient = meeting.client ? { label: clientLabel(meeting.client) } : null;
+  const closedReason = meeting.client ? followUpClosedReason(meeting.client) : null;
+  // A call that took place and has no recorded outcome owes one (docs/sales-os.md R7):
+  // only once its start has passed, not earlier on the same day.
+  const outcomeOwed =
+    canApprove &&
+    !meeting.outcome &&
+    (meeting.status === "COMPLETED" || agreed) &&
+    meetingStart(meeting).getTime() <= new Date().getTime();
   const items: { label: string; value: React.ReactNode }[] = [
     {
       label: "Type",
@@ -155,6 +168,13 @@ export async function MeetingDetail({
       ),
     },
   ];
+  if (meeting.outcome) {
+    const outcome = CALL_OUTCOME_LABELS[meeting.outcome as CallOutcomeValue];
+    items.push({
+      label: "Outcome",
+      value: `${outcome?.label ?? meeting.outcome}${meeting.outcomeAt ? ` · recorded ${fmtDate(meeting.outcomeAt)}` : ""}`,
+    });
+  }
   if (meeting.contactSubmission) {
     items.push({
       label: "Lead",
@@ -211,6 +231,27 @@ export async function MeetingDetail({
         <MetaList items={items} />
       </Panel>
 
+      {outcomeOwed && (
+        <div className="flex flex-wrap items-center gap-2 text-meta text-muted-foreground">
+          {/* An agreed meeting records its call through "Mark completed" under
+              Status; only a completed one needs its own button here. */}
+          {agreed ? (
+            <span>No outcome recorded for this call yet. Use Mark completed below.</span>
+          ) : (
+            <>
+              <span>No outcome recorded for this call yet.</span>
+              <RecordCallSheet
+                meetingId={meeting.id}
+                meetingTitle={meeting.title}
+                client={callClient}
+                closedReason={closedReason}
+                triggerVariant="brand"
+              />
+            </>
+          )}
+        </div>
+      )}
+
       <NextSteps steps={nextSteps} />
 
       {linkable && canEdit && (
@@ -240,6 +281,8 @@ export async function MeetingDetail({
           afterDeleteHref={closeHref}
           canApprove={canApprove}
           canDelete={can(role, "delete", "meeting")}
+          client={callClient}
+          closedReason={closedReason}
         />
         {!canApprove && (
           <p className="text-meta text-subtle-foreground">

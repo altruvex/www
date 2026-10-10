@@ -1,9 +1,10 @@
 import { prisma } from "@repo/database";
+import { contactLabel } from "@/lib/format";
 
 export interface Thread {
   clientId: string;
   clientName: string;
-  phone: string;
+  phone: string | null;
   lastMessage: string;
   lastAt: Date;
   lastDirection: "INBOUND" | "OUTBOUND";
@@ -21,6 +22,7 @@ export async function getThreads(): Promise<Thread[]> {
       name: true,
       company: true,
       phone: true,
+      email: true,
       status: true,
       messages: {
         orderBy: { createdAt: "desc" },
@@ -42,7 +44,7 @@ export async function getThreads(): Promise<Thread[]> {
 
       return {
         clientId: client.id,
-        clientName: client.company || client.name || client.phone,
+        clientName: contactLabel(client),
         phone: client.phone,
         lastMessage: last.body.replace(/\s+/g, " ").trim(),
         lastAt: last.createdAt,
@@ -76,6 +78,7 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
       name: true,
       company: true,
       phone: true,
+      email: true,
       status: true,
       messages: {
         orderBy: { createdAt: "desc" },
@@ -110,7 +113,7 @@ export async function getConversationThreads(): Promise<ConversationThread[]> {
 
     return {
       clientId: client.id,
-      clientName: client.company || client.name || client.phone,
+      clientName: contactLabel(client),
       phone: client.phone,
       lastMessage: lastMessage.replace(/\s+/g, " ").trim(),
       lastAt,
@@ -236,7 +239,7 @@ export async function getClientConversation(clientId: string) {
   return {
     client: {
       id: client.id,
-      name: client.company || client.name || client.phone,
+      name: contactLabel(client),
       phone: client.phone,
       status: client.status,
     },

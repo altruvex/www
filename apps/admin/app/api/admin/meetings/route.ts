@@ -160,6 +160,13 @@ export const PATCH = withAdmin(async (request, { actor }) => {
 
   const before = await prisma.meeting.findUnique({ where: { id: input.id } });
   if (!before) throw notFound("Meeting not found.");
+  // A call is completed by recording what it decided (docs/sales-os.md R7), never by status alone.
+  if (input.status === "COMPLETED" && before.status !== "COMPLETED") {
+    throw new HttpError(
+      400,
+      "A meeting is completed by recording the call. Use “Record the call” on the meeting to pick what it decided.",
+    );
+  }
 
   let linkedClientName: string | null = null;
   if (input.clientId !== undefined) {
@@ -176,7 +183,6 @@ export const PATCH = withAdmin(async (request, { actor }) => {
   if (input.status) {
     data.status = input.status;
     if (input.status === "APPROVED" && !before.approvedAt) data.approvedAt = new Date();
-    if (input.status === "COMPLETED" && !before.completedAt) data.completedAt = new Date();
   }
   if (input.assignedToId !== undefined) {
     data.assignedTo = input.assignedToId
@@ -246,7 +252,9 @@ export const PATCH = withAdmin(async (request, { actor }) => {
           : `Updated "${before.title}"`,
     before: pick(was),
     after: pick(sent),
-    metadata: linkedClientName && input.clientId !== was.clientId ? { clientId: input.clientId } : null,
+    // Every meeting event carries its client so it reaches that client's History.
+    metadata:
+      (input.clientId ?? was.clientId) ? { clientId: input.clientId ?? was.clientId } : null,
   });
 
   return ok({ meeting: updated });

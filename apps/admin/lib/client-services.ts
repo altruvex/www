@@ -32,7 +32,7 @@ export interface ServiceRow {
   clientId: string;
   clientLabel: string;
   clientEmail: string | null;
-  clientPhone: string;
+  clientPhone: string | null;
   projectId: string | null;
   projectName: string | null;
   productId: string | null;

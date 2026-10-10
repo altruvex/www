@@ -69,14 +69,14 @@ export function NewClientForm() {
       </Field>
       <Field
         label="Phone"
-        hint="WhatsApp reaches this number. Pick the country code, or paste the full +… number."
+        hint="WhatsApp reaches this number. Pick the country code, or paste the full +… number. Phone or email is required."
       >
-        <PhoneInput name="phone" required />
+        <PhoneInput name="phone" />
       </Field>
       <Field label="Company">
         <Input name="company" placeholder="Nile Logistics" autoComplete="off" />
       </Field>
-      <Field label="Email" hint="Optional — WhatsApp is the primary channel">
+      <Field label="Email" hint="Required if there is no phone">
         <Input
           name="email"
           type="email"

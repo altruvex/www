@@ -68,6 +68,29 @@ export type BadgeKey =
   | "incidents"
   | "renewals";
 
+/**
+ * What each shell badge counts. Only the Actions badge is the viewer's own
+ * (Mine); every other one is a team-wide queue size. Kept beside BadgeKey so a
+ * new badge cannot ship without saying which it is.
+ */
+export const BADGE_SCOPE: Record<BadgeKey, "mine" | "team"> = {
+  actions: "mine",
+  leads: "team",
+  proposals: "team",
+  contracts: "team",
+  meetings: "team",
+  inbox: "team",
+  payments: "team",
+  incidents: "team",
+  renewals: "team",
+};
+
+export function badgeLabel(key: BadgeKey, count: number): string {
+  return BADGE_SCOPE[key] === "mine"
+    ? `${count} assigned to you`
+    : `${count} across the team`;
+}
+
 const FINANCE_ROLES: Role[] = ["OWNER", "ADMIN", "FINANCE"];
 const ADMIN_ROLES: Role[] = ["OWNER", "ADMIN"];
 

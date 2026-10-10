@@ -6,7 +6,8 @@ import {
   SubmissionStatus,
   Priority,
   ClientSource,
-  normalizePhone,
+  canonicalPhone,
+  phoneMatchKeys,
 } from "@repo/database";
 import { recordActivity } from "@/lib/activity-log";
 import { badRequest, ok, readJson, withAdmin } from "@/lib/with-admin";
@@ -84,7 +85,7 @@ export const GET = withAdmin(async (request) => {
 
 const createClientSchema = z.object({
   name: z.string().trim().min(1).optional(),
-  phone: z.string().trim().min(1),
+  phone: z.string().trim().optional(),
   email: z.string().trim().email().optional().or(z.literal("")),
   company: z.string().trim().optional(),
   industry: z.string().trim().optional(),
@@ -93,13 +94,24 @@ const createClientSchema = z.object({
 
 export const POST = withAdmin(async (request, { session, actor }) => {
   const validatedData = await readJson(request, createClientSchema);
-  const phone = normalizePhone(validatedData.phone);
-  if (!phone) throw badRequest("Enter a valid phone number");
+  // A website lead may be email-only, so a manual add needs either channel.
+  const rawPhone = validatedData.phone || "";
+  if (!rawPhone && !validatedData.email) {
+    throw badRequest("Enter a phone number or an email");
+  }
+  // Stored canonical; matched against every shape the number may already be
+  // stored in, as linkClientToLead does, so a manual add cannot duplicate a lead.
+  // No phone means null, never an empty string.
+  const phone = rawPhone ? canonicalPhone(rawPhone) : null;
+  if (rawPhone && !phone) throw badRequest("Enter a valid phone number");
 
-  const existing = await prisma.client.findFirst({
-    where: { phone },
-    select: { id: true, name: true, company: true },
-  });
+  const existing = phone
+    ? await prisma.client.findFirst({
+        where: { phone: { in: phoneMatchKeys(rawPhone) } },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, company: true },
+      })
+    : null;
   if (existing) {
     return NextResponse.json(
       {

@@ -43,7 +43,7 @@ export interface FollowUpLead {
   label: string;
   name: string | null;
   email: string | null;
-  phone: string;
+  phone: string | null;
   /** Derived stage; picks the default draft. */
   stage: string | null;
 }
@@ -88,7 +88,7 @@ export function FollowUpSheet({
     : !emailConfigured
       ? "No mail transport is configured (RESEND_API_KEY or SMTP)."
       : null;
-  const waHref = whatsappLink(lead.phone, body);
+  const waHref = lead.phone ? whatsappLink(lead.phone, body) : null;
 
   async function record(channel: "email" | "whatsapp-manual") {
     setBusy(channel);

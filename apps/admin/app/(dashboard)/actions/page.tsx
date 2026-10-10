@@ -1,7 +1,14 @@
 import Link from "next/link";
-import { getActionCentre, type ActionItem } from "@/lib/action-center";
+import {
+  getActionCentre,
+  resolveActionView,
+  scopeActions,
+  type ActionItem,
+  type ActionView,
+} from "@/lib/action-center";
 import { getOperator } from "@/lib/authorize";
 import { gateRoute } from "@/lib/page-gate";
+import { can } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
@@ -29,6 +36,7 @@ const KIND_LABEL: Record<ActionItem["kind"], string> = {
 };
 
 const LEVEL_LABEL = { late: "Already late", attention: "Needs attention" } as const;
+const VIEW_LABEL: Record<ActionView, string> = { mine: "Mine", unassigned: "Unassigned", all: "All" };
 type Level = keyof typeof LEVEL_LABEL;
 
 function isKind(value: string | undefined): value is ActionItem["kind"] {
@@ -44,13 +52,21 @@ function matchesLevel(item: ActionItem, level: Level | undefined) {
 export default async function ActionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kind?: string; level?: string }>;
+  searchParams: Promise<{ kind?: string; level?: string; view?: string }>;
 }) {
   const denied = await gateRoute("/actions");
   if (denied) return denied;
 
   const [operator, params] = await Promise.all([getOperator(), searchParams]);
-  const items = await getActionCentre(operator?.role);
+  // Same scope as home: Mine (the viewer's own) by default, Unassigned for
+  // everyone, All only for roles that can view the team (scopeActions).
+  const canSeeAll = can(operator?.role, "view", "team");
+  const view = resolveActionView(params.view, canSeeAll);
+  const items = scopeActions(
+    await getActionCentre(operator?.role),
+    view,
+    operator?.session.user.id ?? "",
+  );
 
   const kind = isKind(params.kind) ? params.kind : undefined;
   const level = params.level === "late" || params.level === "attention" ? params.level : undefined;
@@ -75,6 +91,7 @@ export default async function ActionsPage({
     const l = changes.level === undefined ? level : changes.level;
     if (k) next.set("kind", k);
     if (l) next.set("level", l);
+    if (view !== "mine") next.set("view", view);
     const query = next.toString();
     return query ? `/actions?${query}` : "/actions";
   };
@@ -102,10 +119,19 @@ export default async function ActionsPage({
           tone={attention ? "warning" : "neutral"}
           href={hrefWith({ level: "attention", kind: null })}
         />
-        <StatTile label="Total open" value={items.length} sub="Across every area" href="/actions" />
+        <StatTile
+          label="Total open"
+          value={items.length}
+          sub={`${VIEW_LABEL[view]} · across every area`}
+          href={hrefWith({ level: null, kind: null })}
+        />
       </div>
 
       <FilterBar label="Filter the queue">
+        <FilterChip param="view" label={VIEW_LABEL.mine} />
+        <FilterChip param="view" value="unassigned" label={VIEW_LABEL.unassigned} />
+        {canSeeAll && <FilterChip param="view" value="all" label={VIEW_LABEL.all} />}
+        <span className="mx-1 h-4 w-px shrink-0 bg-border" aria-hidden />
         <FilterChip param="level" label="Any urgency" />
         <FilterChip param="level" value="late" label="Late" count={late} />
         <FilterChip param="level" value="attention" label="Attention" count={attention} />
@@ -123,7 +149,13 @@ export default async function ActionsPage({
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
         <Panel
           title={filtered ? `${shown.length} of ${items.length}` : "Ranked by urgency"}
-          description="Each row opens the record where the decision is made"
+          description={
+            view === "mine"
+              ? "Records you own plus team duties nobody owns by nature; each row opens its record"
+              : view === "unassigned"
+                ? "Records nobody owns yet; each row opens its record"
+                : "Everyone's records; each row opens the record where the decision is made"
+          }
           action={
             <SoonButton reason="Snooze and dismiss need a store of dismissed or snoozed action items; today every row stays until its record changes.">
               Snooze
@@ -140,7 +172,7 @@ export default async function ActionsPage({
                 <EmptyInline
                   action={
                     <Button asChild variant="outline" size="sm">
-                      <Link href="/actions">Show the whole queue</Link>
+                      <Link href={hrefWith({ level: null, kind: null })}>Show the whole queue</Link>
                     </Button>
                   }
                 >

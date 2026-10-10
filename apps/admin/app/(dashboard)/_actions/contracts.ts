@@ -39,6 +39,7 @@ export async function createProjectFromContract(contractId: string): Promise<Con
   try {
     project = await openContractProject(contract, actor.label, {
       recreateBilling,
+      actor,
     });
   } catch (error) {
     if ((error as { code?: string }).code === "P2002") {

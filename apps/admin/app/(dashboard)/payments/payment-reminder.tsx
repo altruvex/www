@@ -69,7 +69,7 @@ function PaymentReminderSheet({
     : !emailConfigured
       ? "No mail transport is configured (RESEND_API_KEY or SMTP). Nothing will be sent."
       : null;
-  const waHref = whatsappLink(client.phone, body);
+  const waHref = client.phone ? whatsappLink(client.phone, body) : null;
 
   async function record(channel: "email" | "whatsapp-manual") {
     setBusy(channel);

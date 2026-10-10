@@ -66,11 +66,13 @@ import {
   type ProposalContent,
   type ValidationIssue,
 } from "@/lib/proposal-schema";
+import { contactLabel } from "@/lib/format";
 
 interface ClientSummary {
   id: string;
   name: string | null;
-  phone: string;
+  email?: string | null;
+  phone: string | null;
   company: string | null;
   industry: string | null;
 }
@@ -290,7 +292,7 @@ export function NewProposalClient({
         ? {
             clientName: client.name
               ? `${client.name}${client.company ? ` – ${client.company}` : ""}`
-              : client.company || client.phone,
+              : client.company || client.email || client.phone || "Client",
             clientCompany: client.company || client.name || "Client",
           }
         : null,
@@ -623,7 +625,7 @@ export function NewProposalClient({
     );
   }
 
-  const clientLabel = client.company || client.name || client.phone;
+  const clientLabel = contactLabel(client);
   const subtotal = content ? investmentTotal(content.investmentItems) : 0;
   const reduction = content
     ? discountAmount(content.investmentItems, content.discount)

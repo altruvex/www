@@ -53,6 +53,7 @@ export default async function TransparencyPage({
   const rows: EstimateRow[] = leads.map((lead) => ({
     id: lead.id,
     name: lead.name,
+    email: lead.email,
     phone: lead.phone,
     projectType: lead.projectType,
     complexity: lead.complexity,
@@ -218,7 +219,7 @@ function EstimateInspector({
   return (
     <InspectSheet
       open
-      title={target.name || fmtPhone(target.phone)}
+      title={target.name || target.email || fmtPhone(target.phone)}
       subtitle={`Estimate completed ${dateTime(target.createdAt)}`}
       fullHref={target.clientId ? `/clients/${target.clientId}` : undefined}
       footer={
@@ -242,6 +243,7 @@ function EstimateInspector({
               </span>
             ),
           },
+          ...(target.email ? [{ label: "Email", value: target.email }] : []),
           {
             label: "Project",
             value: `${target.projectType} · ${target.complexity}`,

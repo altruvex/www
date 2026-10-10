@@ -33,7 +33,7 @@ export interface PaymentReminderTarget {
     name: string | null;
     company: string | null;
     email: string | null;
-    phone: string;
+    phone: string | null;
   } | null;
   link: string | null;
   draft: EmailDraft;

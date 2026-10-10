@@ -7,6 +7,7 @@ import { Check, X } from "lucide-react";
 import { Button, LoadingIcon } from "@repo/ui";
 import { ConfirmDialog } from "@/components/os/confirm-dialog";
 import { RowActions, useRecordDelete } from "@/components/os/delete-record";
+import { RecordCallSheet } from "@/components/os/record-call-sheet";
 import { setMeetingStatus } from "@/app/(dashboard)/_actions/records";
 
 async function moveMeeting(
@@ -25,7 +26,7 @@ async function moveMeeting(
   }
 }
 
-type Pending = { next: "REJECTED" | "COMPLETED" | "CANCELLED" } | null;
+type Pending = { next: "REJECTED" | "CANCELLED" } | null;
 
 const CONFIRM: Record<
   NonNullable<Pending>["next"],
@@ -44,13 +45,6 @@ const CONFIRM: Record<
     done: "Request declined.",
     tone: "danger",
   },
-  COMPLETED: {
-    title: (t) => `Mark “${t}” as completed?`,
-    body: "Records that the meeting took place, stamped with today’s date.",
-    label: "Mark completed",
-    done: "Meeting marked completed.",
-    tone: "default",
-  },
   CANCELLED: {
     title: (t) => `Cancel “${t}”?`,
     body: "The meeting leaves the calendar but stays on the record as cancelled. Nothing is sent to the guest — tell them yourself.",
@@ -67,6 +61,8 @@ export function MeetingActions({
   afterDeleteHref,
   canApprove = true,
   canDelete = true,
+  client = null,
+  closedReason = null,
 }: {
   meetingId: string;
   title: string;
@@ -74,6 +70,10 @@ export function MeetingActions({
   afterDeleteHref?: string;
   canApprove?: boolean;
   canDelete?: boolean;
+  /** The linked client, for "Record the call"; null when there is none. */
+  client?: { label: string } | null;
+  /** Why the client takes no sales moves (signed, spam), or null. */
+  closedReason?: string | null;
 }) {
   const router = useRouter();
   const [busy, startTransition] = React.useTransition();
@@ -129,16 +129,14 @@ export function MeetingActions({
       )}
       {canApprove && agreed && (
         <>
-          <Button
-            size="sm"
-            variant="outline"
-            className="pointer-coarse:h-11"
-            disabled={busy}
-            onClick={() => setPending({ next: "COMPLETED" })}
-          >
-            <Check className="size-3.5" />
-            Mark completed
-          </Button>
+          {/* Completing a call means recording what it decided (docs/sales-os.md R7). */}
+          <RecordCallSheet
+            meetingId={meetingId}
+            meetingTitle={title}
+            client={client}
+            closedReason={closedReason}
+            triggerLabel="Mark completed"
+          />
           <Button
             size="sm"
             variant="ghost"

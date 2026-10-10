@@ -222,7 +222,7 @@ export async function loadPreCall(
             orderBy: { createdAt: "desc" },
           },
           contracts: { select: { status: true }, orderBy: { createdAt: "desc" } },
-          projects: { select: { id: true }, take: 1 },
+          projects: { where: { status: { not: "CANCELLED" } }, select: { status: true }, take: 1 },
           ...STAGE_MEETINGS_SELECT,
           _count: { select: { messages: { where: { direction: "INBOUND" } } } },
         },

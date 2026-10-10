@@ -1,4 +1,8 @@
+import Link from "next/link";
 import { prisma } from "@repo/database";
+import { Ban } from "lucide-react";
+import { Button } from "@repo/ui";
+import { EmptyState } from "@/components/os/empty-state";
 import { isComplexityId, isServiceId } from "@repo/pricing-schema";
 import { getPricing } from "@/lib/pricing-store";
 import { gateRoute } from "@/lib/page-gate";
@@ -24,6 +28,25 @@ export default async function NewProposalPage({
     params,
     searchParams,
   ]);
+  // POST /api/admin/proposals refuses a SPAM client (409); do not open a builder that cannot save.
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { status: true },
+  });
+  if (client?.status === "SPAM") {
+    return (
+      <EmptyState
+        icon={Ban}
+        title="This client is marked as spam"
+        body="This client is marked as spam. Change its status before creating a proposal."
+        action={
+          <Button asChild variant="outline">
+            <Link href={`/clients/${clientId}`}>Back to client</Link>
+          </Button>
+        }
+      />
+    );
+  }
   const [pricing, initial] = await Promise.all([
     getPricing(),
     loadSource(clientId, from),

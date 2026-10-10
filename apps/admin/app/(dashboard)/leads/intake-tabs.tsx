@@ -1,30 +1,10 @@
 import Link from "next/link";
 import { prisma } from "@repo/database";
-import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
+import { openWorkWhere } from "@/lib/sales-signals";
 import { cn } from "@/lib/utils";
 import { Hint } from "@repo/ui";
 
 export type IntakeTab = "leads" | "submissions" | "estimator";
-
-/** Derived stages that count as an active lead (before a proposal goes out). */
-export const LEAD_STAGES = [
-  "NEW",
-  "VIEWED",
-  "CONTACTED",
-  "QUALIFYING",
-  "QUALIFIED",
-  "CALL_BOOKED",
-  "CALL_COMPLETED",
-] as const;
-
-/** Stored statuses that can derive to a lead stage — narrows the query only. */
-export const LEAD_STATUS_PREFILTER: (
-  | "NEW"
-  | "VIEWED"
-  | "CONTACTED"
-  | "QUALIFYING"
-  | "QUALIFIED"
-)[] = ["NEW", "VIEWED", "CONTACTED", "QUALIFYING", "QUALIFIED"];
 
 const TABS: { id: IntakeTab; label: string; href: string }[] = [
   { id: "leads", label: "Leads", href: "/leads" },
@@ -32,35 +12,17 @@ const TABS: { id: IntakeTab; label: string; href: string }[] = [
   { id: "estimator", label: "Estimator", href: "/transparency" },
 ];
 
+// Database-side counts only. "Leads" is the /leads queue's "All open work"
+// total (the same openWorkWhere), so the tab and the page never disagree.
 async function intakeCounts() {
-  const [clients, submissions, estimates] = await Promise.all([
-    prisma.client.findMany({
-      where: { status: { in: LEAD_STATUS_PREFILTER } },
-      select: {
-        status: true,
-        proposals: {
-          select: { status: true, readAt: true },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-        projects: { select: { id: true }, take: 1 },
-        contracts: {
-          select: { status: true },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-        ...STAGE_MEETINGS_SELECT,
-      },
-    }),
+  const [leads, submissions, estimator] = await Promise.all([
+    prisma.client.count({ where: openWorkWhere() }),
     prisma.contactSubmission.count({
       where: { client: null, status: { not: "SPAM" } },
     }),
     prisma.transparencyLead.count({ where: { client: null } }),
   ]);
-  const leads = clients.filter((c) =>
-    (LEAD_STAGES as readonly string[]).includes(deriveClientStage(c)),
-  ).length;
-  return { leads, submissions, estimator: estimates };
+  return { leads, submissions, estimator };
 }
 
 export async function IntakeTabs({ active }: { active: IntakeTab }) {
@@ -91,7 +53,7 @@ export async function IntakeTabs({ active }: { active: IntakeTab }) {
               <Hint
                 label={
                   tab.id === "leads"
-                    ? "Open leads"
+                    ? "Open work in the sales queue"
                     : tab.id === "submissions"
                       ? "Not yet converted"
                       : "Estimates not yet converted"

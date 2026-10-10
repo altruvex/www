@@ -49,7 +49,7 @@ export function ReminderSheet({
     : !emailConfigured
       ? "No mail transport is configured (RESEND_API_KEY or SMTP)."
       : null;
-  const waHref = whatsappLink(service.clientPhone, body);
+  const waHref = service.clientPhone ? whatsappLink(service.clientPhone, body) : null;
 
   async function record(channel: "email" | "whatsapp-manual") {
     setBusy(channel);

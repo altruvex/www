@@ -81,7 +81,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       (!channel || t.channels.includes(channel)) &&
       (!q ||
         t.clientName.toLowerCase().includes(q) ||
-        t.phone.toLowerCase().includes(q) ||
+        (t.phone ?? "").toLowerCase().includes(q) ||
         t.lastMessage.toLowerCase().includes(q)),
   );
   const scoped = Boolean(filter || channel || q);

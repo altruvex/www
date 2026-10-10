@@ -1,5 +1,6 @@
 import { prisma } from "@repo/database";
 import { paymentSourceLabel } from "@/lib/payment-source";
+import { contactLabel } from "@/lib/format";
 
 import type { Subject } from "@/lib/rbac";
 
@@ -121,7 +122,7 @@ export const DELETABLES: Record<string, Deletable> = {
       return {
         entity: "client",
         id,
-        label: row.company || row.name || row.phone,
+        label: contactLabel(row),
         impact: impacts(
           ["Proposals", row._count.proposals],
           ["Contracts", row._count.contracts],
@@ -1067,14 +1068,14 @@ export const DELETABLES: Record<string, Deletable> = {
           authorLabel: true,
           createdAt: true,
           clientId: true,
-          client: { select: { company: true, name: true, phone: true } },
+          client: { select: { company: true, name: true, email: true, phone: true } },
         },
       });
       if (!row) return null;
       return {
         entity: "clientNote",
         id,
-        label: `Note on ${row.client.company || row.client.name || row.client.phone}`,
+        label: `Note on ${contactLabel(row.client)}`,
         impact: [],
         block: null,
         snapshot: {

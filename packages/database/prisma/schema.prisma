@@ -301,6 +301,15 @@ model ContactTag {
   @@map("contact_tags")
 }
 
+/// The decision a discovery/consultation call ended with (docs/sales-os.md R7).
+enum CallOutcome {
+  PROPOSAL_REQUIRED
+  FOLLOW_UP
+  NURTURE
+  LOST
+  NO_FURTHER_ACTION
+}
+
 enum MeetingStatus {
   PENDING
   APPROVED
@@ -358,6 +367,11 @@ model Meeting {
   approvedAt  DateTime?
   completedAt DateTime?
 
+  // What the call decided, recorded by a person after it (docs/sales-os.md R7).
+  // Never inferred: a completed call with no outcome stays "outcome owed".
+  outcome   CallOutcome?
+  outcomeAt DateTime?
+
   @@index([scheduledDate])
   @@index([status])
   @@index([assignedToId])
@@ -402,7 +416,8 @@ model Notification {
 model TransparencyLead {
   id               String    @id @default(uuid())
   reference        String    @unique
-  phone            String
+  // Null for an email-only estimate request (no number was given).
+  phone            String?
   name             String?
   email            String?
   company          String?
@@ -451,7 +466,8 @@ enum ClientSource {
 model Client {
   id       String  @id @default(uuid())
   name     String?
-  phone    String
+  // Null for a client reached by email only (an email-only estimate lead).
+  phone    String?
   email    String?
   company  String?
   industry String?
@@ -474,6 +490,8 @@ model Client {
   nextActionNote String?
   lostReason     LostReason?
   lostNote       String?
+  // Why a lead is parked in NURTURE; its review date is nextActionAt (docs/sales-os.md R8).
+  nurtureReason  LostReason?
 
   contactSubmission   ContactSubmission? @relation(fields: [contactSubmissionId], references: [id])
   contactSubmissionId String?            @unique

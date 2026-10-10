@@ -189,23 +189,25 @@ export function scoreTone(score: number): "success" | "warning" | "neutral" {
   return "neutral";
 }
 
-export type ScoreBand = "High intent" | "Qualified" | "Nurture" | "Poor fit";
+export type ScoreBand = "High intent" | "Medium intent" | "Low intent" | "Poor fit";
 
 /**
  * The label shown next to every score. "Poor fit" is reserved for the one
  * legacy answer that sat under the floor (UNDER_10K); a low score alone is
- * "Nurture", not a judgement on fit.
+ * "Low intent", not a judgement on fit. Band labels describe lead quality only
+ * and never reuse a lifecycle stage label (Qualified, Nurture…): a band never
+ * moves a lead to a stage.
  */
 export function scoreBand(score: number, budget?: string | null): ScoreBand {
   if (budget === "UNDER_10K") return "Poor fit";
   if (score >= 65) return "High intent";
-  if (score >= 35) return "Qualified";
-  return "Nurture";
+  if (score >= 35) return "Medium intent";
+  return "Low intent";
 }
 
 export function bandTone(band: ScoreBand): "success" | "warning" | "neutral" | "danger" {
   if (band === "High intent") return "success";
-  if (band === "Qualified") return "warning";
+  if (band === "Medium intent") return "warning";
   if (band === "Poor fit") return "danger";
   return "neutral";
 }
@@ -224,11 +226,11 @@ export function recommendedAction(band: ScoreBand, stage: string): string {
   if (stage === "PROPOSAL_SENT") return "Follow up on the proposal";
   if (stage === "SPAM") return "Marked as spam";
   if (stage === "LOST") return "Closed as lost";
-  if (stage === "NURTURE") return "Nurture";
+  if (stage === "NURTURE") return "Parked — check in at the follow-up date";
   if (stage === "CALL_BOOKED") return "Prepare for the booked call";
   if (stage === "CALL_COMPLETED") return "Send a proposal";
   if (CALL_STAGES.has(stage)) return "Prioritise for consultation";
   if (band === "High intent") return "Prioritise for consultation";
-  if (band === "Qualified") return "Qualify by phone";
-  return "Nurture";
+  if (band === "Medium intent") return "Qualify by phone";
+  return "Reply briefly; low priority until they engage";
 }

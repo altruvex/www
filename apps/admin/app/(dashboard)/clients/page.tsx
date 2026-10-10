@@ -10,29 +10,14 @@ import { STAGE_MEETINGS_SELECT, deriveClientStage } from "@/lib/dashboard-data";
 import { canSeeFinance } from "@/lib/nav";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
-import { statusOf } from "@/lib/status";
+import { ALL_STAGES, statusOf } from "@/lib/status";
 import { moneyByCurrency, sumByCurrency } from "@/lib/format";
 import { ClientsTable, type ClientRow } from "./clients-table";
 import { Button } from "@repo/ui";
 
 export const dynamic = "force-dynamic";
 
-const STAGES = [
-  "NEW",
-  "VIEWED",
-  "CONTACTED",
-  "QUALIFYING",
-  "QUALIFIED",
-  "CALL_BOOKED",
-  "CALL_COMPLETED",
-  "PROPOSAL_SENT",
-  "PROPOSAL_READ",
-  "CONTRACT_SENT",
-  "SIGNED",
-  "NURTURE",
-  "LOST",
-  "SPAM",
-] as const;
+const STAGES = ALL_STAGES;
 
 export default async function ClientsPage({
   searchParams,
@@ -165,9 +150,9 @@ export default async function ClientsPage({
           href="/clients"
         />
         <StatTile
-          label="Signed"
+          label="Won"
           value={signed}
-          sub="At least one signed contract"
+          sub="Signed contract, marked won, or a live project"
           tone={signed ? "success" : "neutral"}
           href="/clients?stage=SIGNED"
         />

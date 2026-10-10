@@ -7,6 +7,7 @@ import {
   type SignVerificationChannel,
 } from "@repo/database";
 import { clientActor, recordActivity, type Actor } from "./activity-log";
+import { markClientWon } from "./client-won";
 import { proposalContentSchema } from "./proposal-schema";
 import { servicesFromProposal } from "./service-lifecycle";
 import { sendTemplateMessage } from "./whatsapp-api";
@@ -31,9 +32,12 @@ export async function openContractProject(
   createdBy: string,
   options: {
     recreateBilling?: boolean;
+    /** Who opened it, for the client's WON audit event; defaults to the signer as a client. */
+    actor?: Actor;
   } = {},
 ) {
   const recreateBilling = options.recreateBilling !== false;
+  const actor = options.actor ?? clientActor(createdBy);
   const split = contract.proposal.paymentSplit as unknown as {
     first: number;
     second: number;
@@ -49,6 +53,12 @@ export async function openContractProject(
         name: `${contract.client.company || contract.client.name || "Client"} — ${contract.proposal.projectType}`,
         phase: "DISCOVERY",
       },
+    });
+
+    // A live project means the deal is won (docs/sales-os.md R1) — same transaction.
+    await markClientWon(tx, contract.clientId, actor, {
+      cause: "project_linked",
+      projectId: created.id,
     });
 
     if (recreateBilling) {
@@ -126,24 +136,36 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
     throw new Error("Contract not found");
   }
 
+  const signer = input.recordedBy?.actor ?? clientActor(input.signedByName);
+
   let updatedContract = contract;
   if (contract.status !== "SIGNED") {
-    updatedContract = await prisma.contract.update({
-      where: { id: contract.id },
-      data: {
-        status: "SIGNED",
-        signedAt: new Date(),
-        signedByName: input.signedByName,
-        signedIp: input.signedIp,
-        signatureMethod: input.signatureMethod,
-        ...(input.verification
-          ? {
-              signerVerifiedVia: input.verification.via,
-              signerVerifiedTo: input.verification.to,
-            }
-          : {}),
-      },
-      include: { client: true, proposal: true },
+    // The signature and the client's move to WON are one write (docs/sales-os.md
+    // R1): a signed contract on a LOST or NURTURE client is a contradiction, so
+    // neither lands without the other.
+    updatedContract = await prisma.$transaction(async (tx) => {
+      const signed = await tx.contract.update({
+        where: { id: contract.id },
+        data: {
+          status: "SIGNED",
+          signedAt: new Date(),
+          signedByName: input.signedByName,
+          signedIp: input.signedIp,
+          signatureMethod: input.signatureMethod,
+          ...(input.verification
+            ? {
+                signerVerifiedVia: input.verification.via,
+                signerVerifiedTo: input.verification.to,
+              }
+            : {}),
+        },
+        include: { client: true, proposal: true },
+      });
+      await markClientWon(tx, contract.clientId, signer, {
+        cause: "contract_signed",
+        contractId: contract.id,
+      });
+      return signed;
     });
   }
 
@@ -154,10 +176,35 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
   const isNewProject = project == null;
 
   if (!project) {
-    project = await openContractProject(contract, input.signedByName);
+    project = await openContractProject(contract, input.signedByName, { actor: signer });
   }
 
-  const signer = input.recordedBy?.actor ?? clientActor(input.signedByName);
+  // Signing ends the sales chase (docs/sales-os.md R4): the follow-up date and
+  // note go, and any unread "follow up" alert for this client is marked read.
+  // Best effort — a failure here must never undo or block the signature.
+  let clearedFollowUp = false;
+  if (contract.status !== "SIGNED") {
+    try {
+      if (contract.client.nextActionAt || contract.client.nextActionNote) {
+        await prisma.client.update({
+          where: { id: contract.clientId },
+          data: { nextActionAt: null, nextActionNote: null },
+        });
+        clearedFollowUp = true;
+      }
+      await prisma.notification.updateMany({
+        where: {
+          type: "FOLLOW_UP_DUE",
+          entityType: "client",
+          entityId: contract.clientId,
+          read: false,
+        },
+        data: { read: true, readAt: new Date() },
+      });
+    } catch (error) {
+      console.error("[contract-signing] clearing the follow-up failed", error);
+    }
+  }
 
   if (contract.status !== "SIGNED") {
     await recordActivity({
@@ -173,6 +220,14 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
         signatureMethod: input.signatureMethod,
         signedByName: input.signedByName,
         clientId: contract.clientId,
+        ...(clearedFollowUp
+          ? {
+              clearedFollowUp: {
+                nextActionAt: contract.client.nextActionAt?.toISOString() ?? null,
+                nextActionNote: contract.client.nextActionNote,
+              },
+            }
+          : {}),
         ...(input.recordedBy?.metadata ?? {}),
         ...(input.verification
           ? { verifiedVia: input.verification.via, verifiedTo: input.verification.hint }
@@ -194,14 +249,16 @@ export async function handleContractSigned(input: HandleContractSignedInput) {
     });
   }
 
-  if (!contract.onboardingMessageSentAt) {
+  // A client reached by email only has no number to welcome on WhatsApp.
+  if (!contract.onboardingMessageSentAt && contract.client.phone) {
+    const phone = contract.client.phone;
     const portalUrl = `${input.baseUrl.replace(/\/$/, "")}/portal/${project.portalToken}`;
     const firstName = (contract.client.name ?? "there").split(" ")[0];
 
     try {
       await sendTemplateMessage({
         clientId: contract.clientId,
-        phone: contract.client.phone,
+        phone,
         templateName: "onboarding_welcome",
         bodyParams: [firstName, portalUrl],
         relatedContractId: contract.id,

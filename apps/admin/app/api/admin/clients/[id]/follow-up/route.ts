@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { contactLabel } from "@/lib/format";
 
 import { prisma } from "@repo/database";
 
@@ -9,6 +10,7 @@ import { leadFollowUpDraft } from "@/lib/email-templates";
 import { followUpClosedReason, scheduleLink } from "@/lib/lead-follow-up";
 import { can } from "@/lib/rbac";
 import { badRequest, HttpError, notFound, ok, readJson, withAdmin } from "@/lib/with-admin";
+import { clearFollowUpAlerts } from "@/app/(dashboard)/clients/[id]/follow-up-alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +51,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, role, par
       nextActionAt: true,
       nextActionNote: true,
       contracts: { select: { status: true } },
-      projects: { select: { id: true } },
+      projects: { select: { status: true } },
     },
   });
   if (!client) throw notFound("That client no longer exists.");
@@ -60,6 +62,10 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, role, par
   if (nextActionAt && Number.isNaN(nextActionAt.getTime()))
     throw badRequest("Pick a valid date for the next follow-up.");
   const note = nextActionAt ? input.nextActionNote?.trim() || null : null;
+  // R8: a parked lead keeps a review date; clearing it would leave NURTURE with none.
+  if (client.status === "NURTURE" && !nextActionAt) {
+    throw badRequest("A nurture lead keeps a review date. Pick the next date, or move it out of nurture first.");
+  }
 
   const draft = leadFollowUpDraft(input.template, {
     clientName: client.name,
@@ -84,10 +90,19 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, role, par
   const status = NOT_YET_CONTACTED.has(client.status) ? "CONTACTED" : client.status;
   await prisma.client.update({
     where: { id: client.id },
-    data: { status, nextActionAt, nextActionNote: note },
+    data: {
+      status,
+      nextActionAt,
+      nextActionNote: note,
+      // A status write away from LOST or NURTURE never keeps their reasons.
+      ...(status !== client.status ? { lostReason: null, lostNote: null, nurtureReason: null } : {}),
+    },
   });
 
-  const label = client.company || client.name || client.phone;
+  // The follow-up the alert asked for has been sent; a new date re-arms it.
+  await clearFollowUpAlerts(client.id, "follow-up");
+
+  const label = contactLabel(client);
   await recordActivity({
     action: "lead.follow_up_sent",
     actor,

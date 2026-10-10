@@ -4,6 +4,20 @@ import { CheckCircle2 } from "lucide-react";
 import type { ActionItem } from "@/lib/action-center";
 import { List, ListRow } from "@/components/os/list-row";
 
+/**
+ * The engine's reasons as a muted line. Every reason is printed and the line
+ * wraps: the row is a link, so a "+N more" behind hover or a nested control
+ * would leave keyboard and touch users without the rest.
+ */
+function WhyLine({ why }: { why: string[] }) {
+  return (
+    <span className="basis-full text-subtle-foreground">
+      <span className="sr-only">Why: </span>
+      {why.join(" · ")}
+    </span>
+  );
+}
+
 export function ActionCenter({
   items,
   limit = 8,
@@ -44,7 +58,12 @@ export function ActionCenter({
               icon={<Icon />}
               tone={item.tone}
               title={item.title}
-              meta={<span className="truncate">{item.detail}</span>}
+              meta={
+                <>
+                  <span className="truncate">{item.detail}</span>
+                  {item.why && item.why.length > 0 ? <WhyLine why={item.why} /> : null}
+                </>
+              }
               trailing={
                 <span className="hidden text-subtle-foreground transition-colors duration-[var(--dur-state)] group-hover:text-foreground sm:inline">
                   {item.cta}

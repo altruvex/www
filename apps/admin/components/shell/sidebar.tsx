@@ -3,6 +3,7 @@
 import { CountBadge } from "@/components/ui/badge";
 import {
   GROUPS,
+  badgeLabel,
   PRIMARY,
   canSee,
   type BadgeKey,
@@ -249,8 +250,15 @@ function SidebarLink({
           {planned && (
             <span className="telemetry ms-auto text-subtle-foreground">soon</span>
           )}
-          {!planned && badge != null && badge > 0 && (
-            <CountBadge count={badge} tone={active ? "info" : "neutral"} />
+          {!planned && item.badgeKey && badge != null && badge > 0 && (
+            <span
+              className="ms-auto inline-flex"
+              title={badgeLabel(item.badgeKey, badge)}
+              aria-label={badgeLabel(item.badgeKey, badge)}
+              role="img"
+            >
+              <CountBadge count={badge} tone={active ? "info" : "neutral"} />
+            </span>
           )}
         </>
       )}

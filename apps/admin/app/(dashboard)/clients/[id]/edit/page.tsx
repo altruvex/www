@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@repo/database";
 import { gateRoute } from "@/lib/page-gate";
+import { contactLabel } from "@/lib/format";
 import { PageHeader } from "@/components/os/page-header";
 import { Panel } from "@/components/os/panel";
 import { EditClientForm } from "./edit-client-form";
@@ -36,7 +37,7 @@ export default async function EditClientPage({
 
   if (!client) notFound();
 
-  const displayName = client.company || client.name || client.phone;
+  const displayName = contactLabel(client);
 
   return (
     <div className="space-y-4">
@@ -55,7 +56,7 @@ export default async function EditClientPage({
             clientId={client.id}
             initial={{
               name: client.name ?? "",
-              phone: client.phone,
+              phone: client.phone ?? "",
               email: client.email ?? "",
               company: client.company ?? "",
               industry: client.industry ?? "",

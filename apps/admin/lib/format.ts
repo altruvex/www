@@ -99,6 +99,20 @@ export function phone(value?: string | null) {
   return value;
 }
 
+/**
+ * How a client or lead is named on screen and in audit labels: company, then
+ * name, then email, then phone. A client reached by email only has no phone,
+ * so the phone is the last resort, never assumed.
+ */
+export function contactLabel(party: {
+  company?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+}): string {
+  return party.company || party.name || party.email || party.phone || "Unnamed client";
+}
+
 export function truncate(value: string | null | undefined, max = 80) {
   if (!value) return "";
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;

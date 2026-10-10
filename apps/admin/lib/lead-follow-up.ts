@@ -9,6 +9,7 @@ import { date } from "@/lib/format";
 import { overdueCutoff } from "@/lib/payment-overdue";
 import { notifySlack } from "@/lib/slack";
 import { DAY_MS } from "@/lib/subscription-lifecycle";
+import { addWorkingHours, isDueByWorkingDay, isOverdueByWorkingDay } from "@/lib/working-days";
 
 /**
  * The reply window the public contact page promises ("We reply within 24
@@ -38,12 +39,13 @@ export function scheduleLink(): string | null {
 export function followUpClosedReason(client: {
   status: string;
   contracts: { status: string }[];
-  projects: unknown[];
+  projects: { status: string }[];
 }): string | null {
   if (client.status === "SPAM") return "This lead is marked spam.";
+  // Mirrors deriveClientStage: a cancelled project does not make a client signed.
   if (
     client.status === "WON" ||
-    client.projects.length > 0 ||
+    client.projects.some((p) => p.status !== "CANCELLED") ||
     client.contracts.some((c) => c.status === "SIGNED")
   )
     return "This client has signed; sales follow-ups have stopped.";
@@ -64,14 +66,18 @@ export function replyAlertKey(clientId: string, lapsed: boolean): string {
   return `${lapsed ? "reply-lapsed" : "reply-due"}:${clientId}`;
 }
 
-const label = (client: { name: string | null; company: string | null; phone: string }) =>
-  client.name || client.company || client.phone;
+const label = (client: {
+  name: string | null;
+  company: string | null;
+  email?: string | null;
+  phone: string | null;
+}) => client.name || client.company || client.email || client.phone || "Unnamed client";
 
 /** What followUpClosedReason reads, for queries that feed it. */
-const CLOSED_FIELDS = {
+export const CLOSED_FIELDS = {
   status: true,
   contracts: { select: { status: true } },
-  projects: { select: { id: true } },
+  projects: { select: { status: true } },
 } as const;
 
 export interface FollowUpSweepResult {
@@ -88,6 +94,9 @@ export interface FollowUpSweepResult {
  * the cron and a manual run can overlap safely.
  */
 export async function sweepLeadFollowUps(now: Date = new Date()): Promise<FollowUpSweepResult> {
+  // A coarse database cut (dated today or earlier); the working-day rule in
+  // lib/working-days.ts then decides what is due, so a Friday or Saturday date
+  // waits for Sunday — the same rule the engine applies on every screen.
   const endOfToday = new Date(overdueCutoff(now).getTime() + DAY_MS);
   const replySince = new Date(now.getTime() - REPLY_LOOKBACK_DAYS * DAY_MS);
 
@@ -100,6 +109,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
         id: true,
         name: true,
         company: true,
+        email: true,
         phone: true,
         ownerId: true,
         nextActionAt: true,
@@ -119,6 +129,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
         id: true,
         name: true,
         company: true,
+        email: true,
         phone: true,
         ownerId: true,
         createdAt: true,
@@ -144,9 +155,9 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
   // A signed or spam client keeps whatever nextActionAt it had; that date
   // must not raise an alert.
   for (const client of due.filter((c) => !followUpClosedReason(c))) {
-    if (!client.nextActionAt) continue;
+    if (!isDueByWorkingDay(client.nextActionAt, now) || !client.nextActionAt) continue;
     const who = label(client);
-    const overdue = client.nextActionAt.getTime() < overdueCutoff(now).getTime();
+    const overdue = isOverdueByWorkingDay(client.nextActionAt, now);
     const title = `${overdue ? "Follow-up overdue" : "Follow up today"} · ${who}`;
     const message = client.nextActionNote
       ? `${client.nextActionNote} (set for ${date(client.nextActionAt)})`
@@ -182,7 +193,7 @@ export async function sweepLeadFollowUps(now: Date = new Date()): Promise<Follow
 
   for (const client of awaiting.filter((c) => !followUpClosedReason(c))) {
     const who = label(client);
-    const deadline = new Date(client.createdAt.getTime() + REPLY_PROMISE_HOURS * 3_600_000);
+    const deadline = addWorkingHours(client.createdAt, REPLY_PROMISE_HOURS);
     const lapsed = deadline.getTime() <= now.getTime();
     const title = `${lapsed ? "Reply promise lapsed" : "Reply due"} · ${who}`;
     const message = lapsed

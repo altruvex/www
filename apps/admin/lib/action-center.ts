@@ -8,6 +8,7 @@ import {
   FileText,
   Globe,
   MessageCircle,
+  PhoneCall,
   PhoneForwarded,
   RefreshCw,
   Rocket,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { calendarDaysUntil, overdueCutoff } from "@/lib/payment-overdue";
+import { isDueByWorkingDay, isOverdueByWorkingDay, workingDaysOverdue } from "@/lib/working-days";
 import { deriveStatus, renewalView } from "@/lib/subscription-lifecycle";
 import {
   daysUntilExpiry,
@@ -30,7 +32,14 @@ import { entityHref } from "@/lib/entity-links";
 import type { Tone } from "@/lib/status";
 import { canSeeFinance, type Role } from "@/lib/nav";
 import { pageDecision, ROUTE_GATES, type RouteGate } from "@/lib/route-gates";
-import { uncontactedWhere } from "@/lib/dashboard-data";
+import { CLOSED_FIELDS, followUpClosedReason } from "@/lib/lead-follow-up";
+import { loadWorkRows, meetingStart, openWorkWhere } from "@/lib/sales-signals";
+import {
+  businessDayKey,
+  MEETING_OUTCOME_GRACE_HOURS,
+  type NextActionKind,
+  type Priority,
+} from "@/lib/sales-intel";
 
 export interface ActionItem {
   id: string;
@@ -54,9 +63,18 @@ export interface ActionItem {
   cta: string;
   score: number;
   ageDays: number;
+  /** The engine's reasons, worst first (sales items only). */
+  why?: string[];
+  /**
+   * The opportunity owner (Client.ownerId) for owner-scoped items, null when
+   * nobody owns it (the Unassigned view); undefined for team duties that have
+   * no owner by nature (incidents, payments, …). See `scopeActions`.
+   */
+  ownerId?: string | null;
 }
 
 const DAY = 86_400_000;
+const HOUR = 3_600_000;
 
 function ageInDays(from: Date | null | undefined) {
   if (!from) return 0;
@@ -72,6 +90,81 @@ export function roleCanOpen(role: Role | undefined, href: string): boolean {
   const gate = (ROUTE_GATES as Record<string, RouteGate | undefined>)[key];
   if (!gate) return true;
   return pageDecision(role, gate.required, gate.roles);
+}
+
+/**
+ * Whose work a list shows (Ali's ruling, 2026-10-09):
+ * - "mine": items whose owner is the viewer, plus team duties (`ownerId`
+ *   undefined — incidents, payments, renewals, services: nothing to own, so
+ *   whoever's role can open them sees them in every view).
+ * - "unassigned": owner-scoped items nobody owns yet (`ownerId === null`) — a
+ *   separate view, never folded into every operator's Mine.
+ * - "all": everything; only for roles that can `view team`.
+ * The owner of a sales item is the opportunity owner, Client.ownerId. A call
+ * owed an outcome follows the same rule when the meeting has a client (an
+ * unowned client's call is Unassigned even if the meeting has an assignee);
+ * only a meeting with no client falls back to Meeting.assignedToId.
+ */
+export type ActionView = "mine" | "unassigned" | "all";
+
+export function resolveActionView(raw: string | undefined, canSeeAll: boolean): ActionView {
+  if (raw === "unassigned") return "unassigned";
+  if (raw === "all" && canSeeAll) return "all";
+  return "mine";
+}
+
+export function scopeActions(items: ActionItem[], view: ActionView, viewerId: string): ActionItem[] {
+  if (view === "all") return items;
+  if (view === "unassigned") return items.filter((item) => item.ownerId === null);
+  return items.filter((item) => item.ownerId === undefined || (Boolean(viewerId) && item.ownerId === viewerId));
+}
+
+/** Bounded like /leads: the engine reads at most this many open leads. */
+const SALES_TAKE = 200;
+/** Calls owed an outcome listed at most; one more is loaded to know when there are more. */
+const CALLS_TAKE = 25;
+
+/** Proposal statuses still awaiting the client's answer. */
+const LIVE_PROPOSAL_STATUSES: ReadonlySet<string> = new Set(["SENT", "DELIVERED", "READ", "VIEWED"]);
+/** Lost, spam and nurture leads raise no document rows. */
+const PARKED_STATUSES: ReadonlySet<string> = new Set(["LOST", "SPAM", "NURTURE"]);
+
+/** Where an engine chase points: the document itself when the loaded signals carry its id. */
+function documentTarget(
+  kind: NextActionKind,
+  client: { id: string; proposals: { id: string }[]; contracts: { id: string; status: string }[] },
+): Pick<ActionItem, "kind" | "icon" | "href" | "cta"> | null {
+  if (kind === "CHASE_PROPOSAL") {
+    const p = client.proposals[0];
+    return {
+      kind: "proposal",
+      icon: FileText,
+      href: p ? `/proposals/${p.id}#engagement` : `/clients/${client.id}`,
+      cta: "Open proposal",
+    };
+  }
+  if (kind === "CHASE_SIGNATURE") {
+    const c = client.contracts.find((x) => x.status !== "DRAFT");
+    return {
+      kind: "contract",
+      icon: FileSignature,
+      href: c ? `/contracts/${c.id}#signature` : `/clients/${client.id}`,
+      cta: "Open contract",
+    };
+  }
+  return null;
+}
+
+/** Nothing to do yet — the date or the client is what is awaited. */
+const IDLE_KINDS: ReadonlySet<NextActionKind> = new Set(["NONE", "WAIT", "PREPARE_CALL"]);
+
+/**
+ * The engine's priority placed on this list's ranking scale (not a second
+ * score: it only interleaves sales rows with the other kinds). HIGH sits where
+ * a scheduled follow-up sat, MEDIUM where an uncontacted lead sat.
+ */
+function salesRank(level: Priority, lateDays: number): number {
+  return level === "HIGH" ? 118 + Math.min(lateDays, 10) * 2 : 60 + Math.min(lateDays, 14) * 4;
 }
 
 const MONEY_KINDS: ReadonlySet<ActionItem["kind"]> = new Set(["payment", "renewal"]);
@@ -92,11 +185,8 @@ async function buildActionCentre(): Promise<ActionItem[]> {
   const endOfToday = new Date(overdueCutoff(now).getTime() + DAY);
 
   const [
-    dueFollowUps,
-    coldLeads,
-    awaitingResponse,
-    expiringProposals,
-    unsignedContracts,
+    salesRows,
+    callsOwed,
     latePayments,
     duePayments,
     pendingMeetings,
@@ -108,62 +198,44 @@ async function buildActionCentre(): Promise<ActionItem[]> {
     renewableSubscriptions,
     expiringServices,
   ] = await Promise.all([
-    prisma.client.findMany({
+    // Open sales work read by the engine (lib/sales-intel.ts), the same
+    // bounded, owed-first load /leads uses; closed leads are left out by its
+    // where. Rows only: the queue's scope and won counts are never shown here,
+    // and this runs on every dashboard navigation (lib/shell-data.ts).
+    loadWorkRows({ where: openWorkWhere(now), now, viewerId: null, take: SALES_TAKE }),
+    // Calls whose time has passed while still agreed: the outcome is owed (R7)
+    // — unless the client is closed (followUpClosedReason in SQL) or the deal
+    // has moved past the call (a sent proposal or live contract), the engine's
+    // own rule in lib/sales-intel.ts pastMeetingWithoutOutcome.
+    prisma.meeting.findMany({
       where: {
-        nextActionAt: { lt: endOfToday },
-        status: { notIn: ["LOST", "SPAM"] },
+        status: { in: ["APPROVED", "RESCHEDULED"] },
+        outcome: null,
+        scheduledDate: { lt: endOfToday },
+        OR: [
+          { clientId: null },
+          {
+            client: {
+              status: { notIn: ["SPAM", "WON", "LOST"] },
+              projects: { none: { status: { not: "CANCELLED" } } },
+              contracts: { none: { status: { in: ["SENT", "SIGNED"] } } },
+              proposals: { none: { status: { not: "DRAFT" } } },
+            },
+          },
+        ],
       },
       select: {
         id: true,
-        name: true,
-        company: true,
+        title: true,
         status: true,
-        nextActionAt: true,
-        nextActionNote: true,
+        scheduledDate: true,
+        scheduledTime: true,
+        assignedToId: true,
+        clientId: true,
+        client: { select: { name: true, company: true, ownerId: true, ...CLOSED_FIELDS } },
       },
-      orderBy: { nextActionAt: "asc" },
-      take: 25,
-    }),
-    prisma.client.findMany({
-      where: uncontactedWhere(),
-      select: { id: true, name: true, company: true, phone: true, createdAt: true },
-      orderBy: { createdAt: "asc" },
-      take: 25,
-    }),
-    prisma.proposal.findMany({
-      where: { status: { in: ["SENT", "DELIVERED", "READ", "VIEWED"] } },
-      select: {
-        id: true,
-        sentAt: true,
-        readAt: true,
-        totalPrice: true,
-        currency: true,
-        client: { select: { id: true, name: true, company: true } },
-      },
-      orderBy: { sentAt: "asc" },
-      take: 25,
-    }),
-    prisma.proposal.findMany({
-      where: {
-        status: { in: ["SENT", "DELIVERED", "READ", "VIEWED"] },
-        validUntil: { lte: in7Days },
-      },
-      select: {
-        id: true,
-        validUntil: true,
-        client: { select: { name: true, company: true } },
-      },
-      take: 25,
-    }),
-    prisma.contract.findMany({
-      where: { status: "SENT" },
-      select: {
-        id: true,
-        createdAt: true,
-        client: { select: { id: true, name: true, company: true } },
-      },
-      orderBy: { createdAt: "asc" },
-      take: 25,
+      orderBy: [{ scheduledDate: "asc" }, { id: "asc" }],
+      take: CALLS_TAKE + 1,
     }),
     prisma.payment.findMany({
       where: { status: { in: ["PENDING", "OVERDUE"] }, dueDate: { lt: overdueCutoff(now) } },
@@ -287,95 +359,107 @@ async function buildActionCentre(): Promise<ActionItem[]> {
   const label = (c: { name: string | null; company: string | null }) =>
     c.company || c.name || "Unnamed client";
 
-  const followedUp = new Set<string>();
-  for (const client of dueFollowUps) {
-    if (!client.nextActionAt) continue;
-    followedUp.add(client.id);
-    const overdue = Math.max(0, -calendarDaysUntil(client.nextActionAt, now));
-    const note = client.nextActionNote?.replace(/\s+/g, " ").trim();
+  // A call with its outcome owed is raised once, from the meeting itself.
+  const callOwedClients = new Set<string>();
+  for (const m of callsOwed.slice(0, CALLS_TAKE)) {
+    if (m.client && followUpClosedReason(m.client)) continue;
+    const start = meetingStart(m);
+    if (now.getTime() < start.getTime() + MEETING_OUTCOME_GRACE_HOURS * HOUR) continue;
+    if (m.clientId) callOwedClients.add(m.clientId);
+    const late = Math.max(0, -calendarDaysUntil(start, now));
     items.push({
-      id: `next-${client.id}`,
-      kind: "lead",
-      icon: PhoneForwarded,
-      tone: overdue > 0 ? "danger" : "warning",
-      title: `Follow up with ${label(client)}${note ? ` — ${note.slice(0, 80)}` : ""}`,
-      detail: `${overdue === 0 ? "Due today" : `${overdue}d overdue`}${client.status === "NURTURE" ? " · back from nurture" : ""}`,
-      href: `/clients/${client.id}#lead-record`,
-      cta: "Open lead",
-      // Above every cold-lead item (max 116): a follow-up someone scheduled.
-      score: 118 + Math.min(overdue, 10) * 2,
-      ageDays: overdue,
+      id: `call-${m.id}`,
+      kind: "meeting",
+      icon: PhoneCall,
+      tone: "danger",
+      title: `Record the call · ${m.client ? label(m.client) : m.title}`,
+      detail: `${m.title} · ${businessDayKey(start)} ${m.scheduledTime} · no outcome recorded`,
+      href: entityHref("meeting", m.id) ?? "/calendar",
+      cta: "Record the call",
+      score: 100 + Math.min(late, 10) * 2,
+      ageDays: late,
+      why: [`Call time has passed and the meeting is still ${m.status.toLowerCase()}`],
+      // The opportunity owner when there is a client; the assignee only without one (scopeActions).
+      ownerId: m.client ? m.client.ownerId : (m.assignedToId ?? null),
+    });
+  }
+  if (callsOwed.length > CALLS_TAKE) {
+    items.push({
+      id: "call-more",
+      kind: "meeting",
+      icon: PhoneCall,
+      tone: "danger",
+      title: "More calls are waiting for an outcome",
+      detail: `Only the oldest ${CALLS_TAKE} are listed here; the calendar has the rest`,
+      href: "/calendar",
+      cta: "Open calendar",
+      score: 100,
+      ageDays: 0,
+      // No ownerId: an overflow pointer, not a record, so it shows in every view.
     });
   }
 
-  for (const lead of coldLeads) {
-    if (followedUp.has(lead.id)) continue;
-    const age = ageInDays(lead.createdAt);
+  for (const { client, reading } of salesRows) {
+    // R3: the one closed test, kept as the last word over the queue's where.
+    if (followUpClosedReason(client)) continue;
+    const { next, priority, replySla } = reading;
+    if (priority.level === "LOW" || IDLE_KINDS.has(next.kind)) continue;
+    if (next.kind === "RECORD_OUTCOME" && callOwedClients.has(client.id)) continue;
+    // Only what is owed by today's working day (lib/working-days.ts, the
+    // engine's rule); a step with no date is owed now.
+    if (next.due && !isDueByWorkingDay(next.due, now)) continue;
+    const late = replySla.state === "OVERDUE" || isOverdueByWorkingDay(next.due, now);
+    const lateDays = next.due ? workingDaysOverdue(next.due, now) : 0;
+    const when = next.due
+      ? late
+        ? lateDays > 0
+          ? `${lateDays}d overdue`
+          : "Overdue"
+        : "Due today"
+      : "Owed now";
+    const owner = client.owner ? client.owner.name || client.owner.email : "Unassigned";
+    // A chase is one row per client (R6): the engine reads the latest live
+    // proposal version and the newest issued contract, and its reasons are
+    // the detail — Contract has no sentAt, so no "sent N days ago" is shown.
+    const doc = documentTarget(next.kind, client);
     items.push({
-      id: `lead-${lead.id}`,
-      kind: "lead",
-      icon: Target,
-      tone: age >= 2 ? "danger" : "warning",
-      title: `Follow up with ${label(lead)}`,
-      detail:
-        age === 0
-          ? "Arrived today, nobody has replied yet"
-          : `Uncontacted for ${age} day${age === 1 ? "" : "s"}`,
-      href: `/clients/${lead.id}#conversations`,
-      cta: "Open lead",
-      score: 60 + Math.min(age, 14) * 4,
-      ageDays: age,
+      id: `sales-${client.id}`,
+      kind: doc?.kind ?? "lead",
+      icon: doc?.icon ?? (next.kind === "FOLLOW_UP" || next.kind === "REVIEW_NURTURE" ? PhoneForwarded : Target),
+      tone: late ? "danger" : "warning",
+      title: `${next.label} · ${label(client)}`,
+      detail: doc
+        ? `${next.why[0] ?? when} · ${owner}`
+        : `${priority.level === "HIGH" ? "High" : "Medium"} priority · ${when} · ${owner}`,
+      href: doc?.href ?? `/clients/${client.id}#lead-record`,
+      cta: doc?.cta ?? "Open lead",
+      score: salesRank(priority.level, lateDays),
+      ageDays: lateDays,
+      why: [...new Set([...next.why, ...priority.why])],
+      ownerId: client.ownerId,
     });
   }
 
-  for (const p of awaitingResponse) {
-    const age = ageInDays(p.sentAt);
-    if (age < 2) continue;
-    items.push({
-      id: `prop-${p.id}`,
-      kind: "proposal",
-      icon: FileText,
-      tone: age >= 7 ? "danger" : "warning",
-      title: `Chase proposal · ${label(p.client)}`,
-      detail: p.readAt
-        ? `Read ${ageInDays(p.readAt)}d ago, no answer`
-        : `Sent ${age}d ago, not opened`,
-      href: `/proposals/${p.id}#engagement`,
-      cta: "Open proposal",
-      score: 55 + Math.min(age, 21) * 3 + (p.readAt ? 10 : 0),
-      ageDays: age,
-    });
-  }
-
-  for (const p of expiringProposals) {
-    const days = Math.ceil((new Date(p.validUntil).getTime() - Date.now()) / DAY);
+  // Expiry, once per client: only the latest non-draft proposal (R6), only a
+  // live one, and never for a closed or parked lead.
+  for (const { client } of salesRows) {
+    if (followUpClosedReason(client) || PARKED_STATUSES.has(client.status)) continue;
+    const p = client.proposals[0];
+    if (!p?.validUntil || !LIVE_PROPOSAL_STATUSES.has(p.status)) continue;
+    const days = calendarDaysUntil(p.validUntil, now);
+    if (days > 7) continue;
     items.push({
       id: `exp-${p.id}`,
       kind: "proposal",
       icon: CalendarClock,
       tone: days <= 0 ? "danger" : "warning",
       title: `Proposal ${days <= 0 ? "has expired" : `expires in ${days}d`}`,
-      detail: label(p.client),
+      detail: label(client),
       href: `/proposals/${p.id}`,
       cta: "Extend or close",
       score: 70 + Math.max(0, 7 - days) * 4,
       ageDays: Math.max(0, -days),
-    });
-  }
-
-  for (const c of unsignedContracts) {
-    const age = ageInDays(c.createdAt);
-    items.push({
-      id: `con-${c.id}`,
-      kind: "contract",
-      icon: FileSignature,
-      tone: age >= 5 ? "danger" : "warning",
-      title: `Contract awaiting signature · ${label(c.client)}`,
-      detail: `Sent ${age}d ago, not signed`,
-      href: `/contracts/${c.id}#signature`,
-      cta: "Open contract",
-      score: 75 + Math.min(age, 14) * 3,
-      ageDays: age,
+      ownerId: client.ownerId,
     });
   }
 
@@ -418,7 +502,7 @@ async function buildActionCentre(): Promise<ActionItem[]> {
       icon: CalendarClock,
       tone: "warning",
       title: `Meeting request awaiting approval`,
-      detail: `${m.title} · ${m.scheduledDate.toISOString().slice(0, 10)} ${m.scheduledTime}`,
+      detail: `${m.title} · ${businessDayKey(meetingStart(m))} ${m.scheduledTime}`,
       href: entityHref("meeting", m.id) ?? "/calendar",
       cta: "Approve or decline",
       score: 65 + Math.min(ageInDays(m.createdAt), 5) * 5,

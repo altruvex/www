@@ -3,6 +3,7 @@
 import { CountBadge } from "@/components/ui/badge";
 import {
   ALL_NAV_ITEMS,
+  badgeLabel,
   GROUPS,
   NOTIFICATIONS_ITEM,
   PRIMARY,
@@ -39,8 +40,10 @@ interface Slot {
 const SLOTS: Slot[] = [
   { chain: ["/"], badge: { key: "actions", href: "/actions" } },
   { chain: ["/inbox", "/calendar", "/payments", "/notifications"] },
+  // Sales slot: /leads first (the daily work queue), /clients when a role
+  // cannot open leads. canSee applies the same ROUTE_GATES as the page.
   {
-    chain: ["/clients", "/leads", "/projects", "/tasks"],
+    chain: ["/leads", "/clients", "/projects", "/tasks"],
     group: "clients",
     badge: { key: "leads", href: "/leads" },
   },
@@ -134,12 +137,19 @@ export function MobileBottomBar({
           >
             <span className="relative">
               <NavIcon icon={tab.icon} active={active} size={22} />
-              {count != null && count > 0 && (
-                <CountBadge
-                  count={count}
-                  tone={tab.badgeKey === "incidents" ? "danger" : "neutral"}
-                  className="absolute -top-1.5 start-3.5 ms-0 ring-2 ring-background"
-                />
+              {tab.badgeKey && count != null && count > 0 && (
+                <span
+                  className="absolute -top-1.5 start-3.5"
+                  title={badgeLabel(tab.badgeKey, count)}
+                  aria-label={badgeLabel(tab.badgeKey, count)}
+                  role="img"
+                >
+                  <CountBadge
+                    count={count}
+                    tone={tab.badgeKey === "incidents" ? "danger" : "neutral"}
+                    className="ms-0 ring-2 ring-background"
+                  />
+                </span>
               )}
             </span>
             <span className="max-w-full truncate px-1">{tab.label}</span>
@@ -231,7 +241,16 @@ export function MobileNavDrawer({
                               soon
                             </span>
                           ) : (
-                            count != null && <CountBadge count={count} />
+                            item.badgeKey && count != null && count > 0 && (
+                              <span
+                                className="ms-auto inline-flex"
+                                title={badgeLabel(item.badgeKey, count)}
+                                aria-label={badgeLabel(item.badgeKey, count)}
+                                role="img"
+                              >
+                                <CountBadge count={count} />
+                              </span>
+                            )
                           )}
                         </Link>
                       </li>

@@ -1,25 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@repo/database";
+import { canonicalPhone, phoneMatchKeys, prisma } from "@repo/database";
 import { PALETTE } from "@repo/ui/palette";
 import { authorize } from "@/lib/authorize";
 import { recordActivity, recordChange, userActor } from "@/lib/activity-log";
-import { derivedStatusMessage, LOST_REASONS, WRITABLE_STATUSES } from "@/lib/status";
+import { markClientWon } from "@/lib/client-won";
+import { clearFollowUpAlerts, closesFollowUp } from "../clients/[id]/follow-up-alerts";
+import {
+  CLIENT_STATUSES,
+  derivedStatusMessage,
+  isLostReason,
+  WRITABLE_STATUSES,
+  type ClientStatusValue,
+  type LostReasonValue,
+} from "@/lib/status";
+import { startOfBusinessDay } from "@/lib/payment-overdue";
 
-const CLIENT_STATUSES = [
-  "NEW",
-  "VIEWED",
-  "CONTACTED",
-  "QUALIFYING",
-  "QUALIFIED",
-  "NURTURE",
-  "PROPOSAL_SENT",
-  "WON",
-  "LOST",
-  "SPAM",
-] as const;
-type ClientStatus = (typeof CLIENT_STATUSES)[number];
+type ClientStatus = ClientStatusValue;
 
 function refuseDerivedStatus(status: string) {
   if (!CLIENT_STATUSES.includes(status as ClientStatus)) {
@@ -38,20 +36,88 @@ export interface LostDetails {
   note?: string;
 }
 
-type LostReasonValue = "BUDGET" | "TIMING" | "FIT" | "COMPETITOR" | "NO_RESPONSE" | "OTHER";
-
 /**
- * Moving to LOST needs a reason; any other status leaves the reason alone.
- * Returns the fields to write (empty when the status is not LOST).
+ * Moving to LOST needs a reason; any other status clears it, so a lead that
+ * leaves LOST does not carry a stale reason. Returns the fields to write.
  */
 function lostFields(status: string, lost?: LostDetails) {
-  if (status !== "LOST") return {};
-  if (!lost || !LOST_REASONS.includes(lost.reason)) {
+  if (status !== "LOST") return { lostReason: null, lostNote: null };
+  if (!lost || !isLostReason(lost.reason)) {
     throw new Error("Pick a reason before marking this lost.");
   }
   const note = lost.note?.trim().slice(0, 1000) || null;
-  return { lostReason: lost.reason as LostReasonValue, lostNote: note };
+  return { lostReason: lost.reason, lostNote: note };
 }
+
+/** Why a lead is parked and when to look at it again (docs/sales-os.md R8). */
+export interface NurtureDetails {
+  reason: string;
+  /** "YYYY-MM-DD": the review date, stored as the client's next action. */
+  reviewAt: string;
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * R8: moving to NURTURE needs a reason and a review date (today or later);
+ * a lead already in NURTURE keeps its own. Any other status clears the
+ * nurture reason. Returns the fields to write.
+ */
+type NurtureData =
+  | { nurtureReason: null }
+  | Record<string, never>
+  | { nurtureReason: LostReasonValue; nextActionAt: Date; nextActionNote: string };
+
+function nurtureFields(status: string, entering: boolean, nurture?: NurtureDetails): NurtureData {
+  if (status !== "NURTURE") return { nurtureReason: null };
+  if (!entering && !nurture) return {};
+  if (!nurture || !isLostReason(nurture.reason)) {
+    throw new Error("Pick why this lead is parked before moving it to nurture.");
+  }
+  const day = DATE_RE.test(nurture.reviewAt) ? new Date(`${nurture.reviewAt}T00:00:00`) : null;
+  if (!day || Number.isNaN(day.getTime())) {
+    throw new Error("Pick the date to review this lead again before moving it to nurture.");
+  }
+  if (startOfBusinessDay(day).getTime() < startOfBusinessDay(new Date()).getTime()) {
+    throw new Error("The nurture review date must be today or later.");
+  }
+  return { nurtureReason: nurture.reason, nextActionAt: day, nextActionNote: "Review nurture" };
+}
+
+/** The status fields a status change reads before writing, for its audit event. */
+const BEFORE_SELECT = {
+  status: true,
+  name: true,
+  company: true,
+  lostReason: true,
+  lostNote: true,
+  nurtureReason: true,
+  nextActionAt: true,
+  nextActionNote: true,
+} as const;
+
+type BeforeStatus = {
+  status: string;
+  lostReason: string | null;
+  lostNote: string | null;
+  nurtureReason: string | null;
+  nextActionAt: Date | null;
+  nextActionNote: string | null;
+} | null | undefined;
+
+const beforeAudit = (before: BeforeStatus) => ({
+  status: before?.status,
+  lostReason: before?.lostReason,
+  lostNote: before?.lostNote,
+  nurtureReason: before?.nurtureReason,
+  nextActionAt: before?.nextActionAt?.toISOString() ?? null,
+  nextActionNote: before?.nextActionNote,
+});
+
+const afterAudit = (nurtureData: NurtureData) =>
+  "nextActionAt" in nurtureData
+    ? { ...nurtureData, nextActionAt: nurtureData.nextActionAt.toISOString() }
+    : nurtureData;
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 type PriorityValue = (typeof PRIORITIES)[number];
@@ -60,18 +126,23 @@ export async function setClientStatus(
   clientId: string,
   status: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ) {
   const session = await authorize("edit", "client");
   refuseDerivedStatus(status);
   const lostData = lostFields(status, lost);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
-    select: { status: true, name: true, company: true, lostReason: true, lostNote: true },
+    select: { ...BEFORE_SELECT },
   });
+  const nurtureData = nurtureFields(status, before?.status !== status, nurture);
   await prisma.client.update({
     where: { id: clientId },
-    data: { status: status as ClientStatus, ...lostData },
+    data: { status: status as ClientStatus, ...lostData, ...nurtureData },
   });
+  if ((before?.status !== status && closesFollowUp(status)) || "nextActionAt" in nurtureData) {
+    await clearFollowUpAlerts(clientId, "records.setClientStatus");
+  }
   await recordChange({
     action: "client.status_changed",
     actor: userActor(session),
@@ -79,8 +150,8 @@ export async function setClientStatus(
     entityId: clientId,
     entityLabel: before?.company || before?.name,
     summary: `Status moved to ${status.replace("_", " ").toLowerCase()}`,
-    before: { status: before?.status, ...(status === "LOST" ? { lostReason: before?.lostReason, lostNote: before?.lostNote } : {}) },
-    after: { status, ...lostData },
+    before: beforeAudit(before),
+    after: { status, ...lostData, ...afterAudit(nurtureData) },
   });
   revalidatePath("/clients");
   revalidatePath("/leads");
@@ -119,18 +190,32 @@ export async function bulkSetClientStatus(
   clientIds: string[],
   status: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ) {
   const session = await authorize("edit", "client");
   refuseDerivedStatus(status);
   const lostData = lostFields(status, lost);
   const before = await prisma.client.findMany({
     where: { id: { in: clientIds } },
-    select: { id: true, status: true, name: true, company: true, lostReason: true, lostNote: true },
+    select: { id: true, ...BEFORE_SELECT },
   });
+  const nurtureData = nurtureFields(
+    status,
+    before.some((c) => c.status !== status),
+    nurture,
+  );
   const { count } = await prisma.client.updateMany({
     where: { id: { in: clientIds } },
-    data: { status: status as ClientStatus, ...lostData },
+    data: { status: status as ClientStatus, ...lostData, ...nurtureData },
   });
+  if (closesFollowUp(status) || "nextActionAt" in nurtureData) {
+    await clearFollowUpAlerts(
+      before
+        .filter((c) => c.status !== status || "nextActionAt" in nurtureData)
+        .map((c) => c.id),
+      "records.bulkSetClientStatus",
+    );
+  }
   const actor = userActor(session);
   await Promise.all(
     before.map((client) =>
@@ -141,8 +226,8 @@ export async function bulkSetClientStatus(
         entityId: client.id,
         entityLabel: client.company || client.name,
         summary: `Status moved to ${status.replace("_", " ").toLowerCase()} (bulk)`,
-        before: { status: client.status, ...(status === "LOST" ? { lostReason: client.lostReason, lostNote: client.lostNote } : {}) },
-        after: { status, ...lostData },
+        before: beforeAudit(client),
+        after: { status, ...lostData, ...afterAudit(nurtureData) },
       }),
     ),
   );
@@ -156,18 +241,23 @@ export async function moveClientStage(
   clientId: string,
   stage: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ) {
   const session = await authorize("edit", "client");
   refuseDerivedStage(stage);
   const lostData = lostFields(stage, lost);
   const before = await prisma.client.findUnique({
     where: { id: clientId },
-    select: { status: true, name: true, company: true, lostReason: true, lostNote: true },
+    select: { ...BEFORE_SELECT },
   });
+  const nurtureData = nurtureFields(stage, before?.status !== stage, nurture);
   await prisma.client.update({
     where: { id: clientId },
-    data: { status: stage as ClientStatus, ...lostData },
+    data: { status: stage as ClientStatus, ...lostData, ...nurtureData },
   });
+  if ((before?.status !== stage && closesFollowUp(stage)) || "nextActionAt" in nurtureData) {
+    await clearFollowUpAlerts(clientId, "records.moveClientStage");
+  }
   await recordChange({
     action: "client.stage_moved",
     actor: userActor(session),
@@ -175,8 +265,8 @@ export async function moveClientStage(
     entityId: clientId,
     entityLabel: before?.company || before?.name,
     summary: `Dragged to ${stage.replace("_", " ").toLowerCase()} on the pipeline board`,
-    before: { status: before?.status, ...(stage === "LOST" ? { lostReason: before?.lostReason, lostNote: before?.lostNote } : {}) },
-    after: { status: stage, ...lostData },
+    before: beforeAudit(before),
+    after: { status: stage, ...lostData, ...afterAudit(nurtureData) },
   });
   revalidatePath("/pipeline");
   revalidatePath("/clients");
@@ -225,21 +315,25 @@ const MEETING_STATUSES = [
 ] as const;
 type MeetingStatusValue = (typeof MEETING_STATUSES)[number];
 
+const COMPLETE_THROUGH_OUTCOME =
+  "A meeting is completed by recording the call. Use “Record the call” (Mark completed) to pick what it decided.";
+
 export async function setMeetingStatus(meetingId: string, status: string) {
   const session = await authorize("approve", "meeting");
   if (!MEETING_STATUSES.includes(status as MeetingStatusValue)) {
     throw new Error(`Unknown meeting status: ${status}`);
   }
+  // A call is completed by recording what it decided (docs/sales-os.md R7), never by status alone.
+  if (status === "COMPLETED") throw new Error(COMPLETE_THROUGH_OUTCOME);
   const before = await prisma.meeting.findUnique({
     where: { id: meetingId },
-    select: { status: true, title: true },
+    select: { status: true, title: true, clientId: true },
   });
   await prisma.meeting.update({
     where: { id: meetingId },
     data: {
       status: status as MeetingStatusValue,
       ...(status === "APPROVED" ? { approvedAt: new Date() } : {}),
-      ...(status === "COMPLETED" ? { completedAt: new Date() } : {}),
     },
   });
   await recordChange({
@@ -251,8 +345,13 @@ export async function setMeetingStatus(meetingId: string, status: string) {
     summary: `Status moved to ${status.toLowerCase()}`,
     before: { status: before?.status },
     after: { status },
+    ...(before?.clientId ? { metadata: { clientId: before.clientId } } : {}),
   });
   revalidatePath("/calendar");
+  revalidatePath("/pipeline");
+  revalidatePath("/leads");
+  revalidatePath("/");
+  if (before?.clientId) revalidatePath(`/clients/${before.clientId}`);
 }
 
 const PROJECT_PHASES = [
@@ -309,14 +408,24 @@ export async function setProjectStatus(projectId: string, status: string) {
   }
   const before = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { status: true, name: true },
+    select: { status: true, name: true, clientId: true },
   });
-  await prisma.project.update({
-    where: { id: projectId },
-    data: {
-      status: status as ProjectStatusValue,
-      ...(before?.status === "COMPLETED" ? { completedAt: null } : {}),
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.project.update({
+      where: { id: projectId },
+      data: {
+        status: status as ProjectStatusValue,
+        ...(before?.status === "COMPLETED" ? { completedAt: null } : {}),
+      },
+    });
+    // Reviving a cancelled project makes it a live project on the client again,
+    // which is a won deal (docs/sales-os.md R1) — same transaction.
+    if (before?.status === "CANCELLED" && status !== "CANCELLED") {
+      await markClientWon(tx, before.clientId, userActor(session), {
+        cause: "project_linked",
+        projectId,
+      });
+    }
   });
   await recordChange({
     action: "project.status_changed",
@@ -412,8 +521,11 @@ export async function convertSubmissionToClient(submissionId: string) {
     throw new Error("This submission is marked as spam. Change its status before converting it.");
   }
 
+  // Same matching as linkClientToLead: every stored shape of the number,
+  // oldest client first, so a differently written phone is not a new client.
   const existing = await prisma.client.findFirst({
-    where: { phone: submission.phone },
+    where: { phone: { in: phoneMatchKeys(submission.phone) } },
+    orderBy: { createdAt: "asc" },
     select: { id: true, contactSubmissionId: true },
   });
 
@@ -443,7 +555,7 @@ export async function convertSubmissionToClient(submissionId: string) {
   const client = await prisma.client.create({
     data: {
       name: submission.name,
-      phone: submission.phone,
+      phone: canonicalPhone(submission.phone) || submission.phone,
       source: "WEBSITE_CONTACT_FORM",
       contactSubmissionId: submission.id,
       status: "NEW",
@@ -473,13 +585,26 @@ export async function convertEstimateToClient(leadId: string) {
 
   const lead = await prisma.transparencyLead.findUnique({
     where: { id: leadId },
-    select: { id: true, name: true, phone: true, client: { select: { id: true } } },
+    select: { id: true, name: true, phone: true, email: true, client: { select: { id: true } } },
   });
   if (!lead) throw new Error("Estimate not found");
   if (lead.client) return { clientId: lead.client.id, created: false, linked: true };
 
+  // An email-only estimate request has no phone: it is matched and created by
+  // its email instead.
+  const email = lead.email?.trim() || null;
+  if (!lead.phone && !email) {
+    throw new Error("This estimate has neither a phone nor an email, so it cannot become a client.");
+  }
+
+  // Same matching as linkClientToLead: every stored shape of the number (or,
+  // with no number, the email case-insensitively), oldest client first, so a
+  // differently written phone is not a new client.
   const existing = await prisma.client.findFirst({
-    where: { phone: lead.phone },
+    where: lead.phone
+      ? { phone: { in: phoneMatchKeys(lead.phone) } }
+      : { email: { equals: email ?? "", mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
     select: { id: true, transparencyLeadId: true },
   });
 
@@ -496,7 +621,7 @@ export async function convertEstimateToClient(leadId: string) {
         entityType: "client",
         entityId: existing.id,
         entityLabel: lead.name,
-        summary: "Linked an estimator lead to this existing client (same phone)",
+        summary: `Linked an estimator lead to this existing client (same ${lead.phone ? "phone" : "email"})`,
         before: { transparencyLeadId: null },
         after: { transparencyLeadId: lead.id },
       });
@@ -513,7 +638,9 @@ export async function convertEstimateToClient(leadId: string) {
   const client = await prisma.client.create({
     data: {
       name: lead.name,
-      phone: lead.phone,
+      ...(lead.phone
+        ? { phone: canonicalPhone(lead.phone) || lead.phone }
+        : { phone: null, email }),
       source: "TRANSPARENCY_ESTIMATOR",
       transparencyLeadId: lead.id,
       status: "NEW",

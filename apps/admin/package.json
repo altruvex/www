@@ -11,6 +11,8 @@
     "verify:maintenance": "bun scripts/verify-maintenance.ts",
     "verify:delete": "bun scripts/verify-delete.ts",
     "verify:lifecycle": "bun scripts/verify-lifecycle.ts",
+    "verify:sales-intel": "bun scripts/verify-sales-intel.ts",
+    "verify:sales-db": "bun scripts/verify-sales-db.ts",
     "verify:services": "bun scripts/verify-services.ts",
     "verify:change-requests": "bun scripts/verify-change-requests.ts",
     "verify:engineering": "bun scripts/verify-engineering.ts",

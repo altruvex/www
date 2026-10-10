@@ -13,7 +13,7 @@ import { ToneBadge } from "@/components/ui/badge";
 import { roleCanOpen } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
 import { emailTransport, fromAddress } from "@/lib/email";
-import { dateTime } from "@/lib/format";
+import { contactLabel, dateTime } from "@/lib/format";
 import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { prisma } from "@repo/database";
@@ -71,7 +71,7 @@ export default async function EmailPage({
   const scopedClient = params.client
     ? await prisma.client.findUnique({
         where: { id: params.client },
-        select: { id: true, name: true, company: true, phone: true },
+        select: { id: true, name: true, company: true, email: true, phone: true },
       })
     : null;
   const scoped = Boolean(scopedClient || status || q);
@@ -123,7 +123,7 @@ export default async function EmailPage({
   const countOf = new Map(byStatus.map((row) => [row.status, row._count._all]));
   const failed = countOf.get("FAILED") ?? 0;
   const scopedName = scopedClient
-    ? scopedClient.company || scopedClient.name || scopedClient.phone
+    ? contactLabel(scopedClient)
     : null;
   const from = transport === "none" ? "—" : senderOrReason();
 

@@ -285,6 +285,9 @@ export async function sendChangeRequestQuote(
         if (!env?.WHATSAPP_ACCESS_TOKEN || !env?.WHATSAPP_PHONE_NUMBER_ID) {
           throw new Refusal("WhatsApp is not configured, so nothing can be sent over it.");
         }
+        if (!client.phone) {
+          throw new Refusal("This client has no phone number, so nothing can be sent over WhatsApp.");
+        }
         await sendTextMessage({ clientId: client.id, phone: client.phone, body });
         sentTo = client.phone;
       }

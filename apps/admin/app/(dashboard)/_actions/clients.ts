@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@repo/database";
+import { contactLabel } from "@/lib/format";
 import { authorize } from "@/lib/authorize";
 import { recordActivity, userActor } from "@/lib/activity-log";
+import { submissionStatus } from "@/lib/status";
 import {
   bulkSetClientStatus,
   convertEstimateToClient,
@@ -12,6 +14,7 @@ import {
   setClientPriority,
   setClientStatus,
   type LostDetails,
+  type NurtureDetails,
 } from "./records";
 
 type Result = { ok: true; message?: string } | { ok: false; message: string };
@@ -29,9 +32,10 @@ async function permitted() {
 function clientLabel(client: {
   company: string | null;
   name: string | null;
-  phone: string;
+  email?: string | null;
+  phone: string | null;
 }) {
-  return client.company || client.name || client.phone;
+  return contactLabel(client);
 }
 
 export async function addClientNote(
@@ -53,7 +57,7 @@ export async function addClientNote(
 
   const client = await prisma.client.findUnique({
     where: { id: clientId },
-    select: { id: true, company: true, name: true, phone: true },
+    select: { id: true, company: true, name: true, email: true, phone: true },
   });
   if (!client) return { ok: false, message: "That client no longer exists." };
 
@@ -97,7 +101,7 @@ export async function editClientNote(
   const note = await prisma.clientNote.findUnique({
     where: { id: noteId },
     include: {
-      client: { select: { id: true, company: true, name: true, phone: true } },
+      client: { select: { id: true, company: true, name: true, email: true, phone: true } },
     },
   });
   if (!note) return { ok: false, message: "That note no longer exists." };
@@ -132,7 +136,7 @@ export async function setClientNotePinned(
   const note = await prisma.clientNote.findUnique({
     where: { id: noteId },
     include: {
-      client: { select: { id: true, company: true, name: true, phone: true } },
+      client: { select: { id: true, company: true, name: true, email: true, phone: true } },
     },
   });
   if (!note) return { ok: false, message: "That note no longer exists." };
@@ -156,19 +160,6 @@ export async function setClientNotePinned(
   return { ok: true };
 }
 
-const STATUS_WORDS: Record<string, string> = {
-  NEW: "new",
-  VIEWED: "viewed",
-  CONTACTED: "contacted",
-  QUALIFYING: "qualifying",
-  QUALIFIED: "qualified",
-  NURTURE: "nurture",
-  PROPOSAL_SENT: "proposal sent",
-  WON: "won",
-  LOST: "lost",
-  SPAM: "spam",
-};
-
 function refusal(err: unknown, fallback: string): string {
   const message = err instanceof Error ? err.message : "";
   if (message.startsWith("Not permitted:")) {
@@ -182,16 +173,19 @@ function refusal(err: unknown, fallback: string): string {
 }
 
 function statusWord(status: string) {
-  return STATUS_WORDS[status] ?? status.replace(/_/g, " ").toLowerCase();
+  return (
+    submissionStatus[status]?.label.toLowerCase() ?? status.replace(/_/g, " ").toLowerCase()
+  );
 }
 
 export async function changeClientStatus(
   clientId: string,
   status: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ): Promise<Result> {
   try {
-    await setClientStatus(clientId, status, lost);
+    await setClientStatus(clientId, status, lost, nurture);
     return { ok: true, message: `Marked ${statusWord(status)}.` };
   } catch (err) {
     return { ok: false, message: refusal(err, "The status did not change.") };
@@ -214,11 +208,12 @@ export async function bulkChangeClientStatus(
   clientIds: string[],
   status: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ): Promise<Result> {
   if (clientIds.length === 0)
     return { ok: false, message: "Select at least one record first." };
   try {
-    const n = await bulkSetClientStatus(clientIds, status, lost);
+    const n = await bulkSetClientStatus(clientIds, status, lost, nurture);
     if (n === 0)
       return {
         ok: false,
@@ -238,9 +233,10 @@ export async function moveClientOnBoard(
   clientId: string,
   stage: string,
   lost?: LostDetails,
+  nurture?: NurtureDetails,
 ): Promise<Result> {
   try {
-    await moveClientStage(clientId, stage, lost);
+    await moveClientStage(clientId, stage, lost, nurture);
     return { ok: true, message: `Moved to ${statusWord(stage)}.` };
   } catch (err) {
     return { ok: false, message: refusal(err, "The card did not move.") };

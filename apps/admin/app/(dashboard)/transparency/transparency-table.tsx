@@ -18,7 +18,8 @@ import { ConvertEstimateButton } from "./convert-estimate-button";
 export interface EstimateRow {
   id: string;
   name: string | null;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   projectType: string;
   complexity: string;
   timeline: string;
@@ -98,13 +99,14 @@ export function TransparencyTable({
               className="size-1.5 shrink-0 rounded-full bg-foreground"
               aria-hidden
             />
-            <span className="truncate">{row.name || fmtPhone(row.phone)}</span>
+            <span className="truncate">{row.name || row.email || fmtPhone(row.phone)}</span>
           </span>
         ) : (
-          <span className="truncate">{row.name || fmtPhone(row.phone)}</span>
+          <span className="truncate">{row.name || row.email || fmtPhone(row.phone)}</span>
         ),
-      sortValue: (row) => (row.name ?? row.phone).toLowerCase(),
-      searchValue: (row) => `${row.name ?? ""} ${row.phone} ${row.projectType}`,
+      sortValue: (row) => (row.name || row.email || row.phone || "").toLowerCase(),
+      searchValue: (row) =>
+        `${row.name ?? ""} ${row.email ?? ""} ${row.phone ?? ""} ${row.projectType}`,
     },
     {
       id: "project",
@@ -282,7 +284,7 @@ export function TransparencyTable({
                     del.request(
                       selected.map((row) => ({
                         id: row.id,
-                        label: row.name ?? row.phone,
+                        label: row.name || row.email || row.phone || "Estimate lead",
                       })),
                     ),
                 },
@@ -300,7 +302,7 @@ export function TransparencyTable({
               onDelete={
                 canDelete
                   ? () =>
-                      del.request({ id: row.id, label: row.name ?? row.phone })
+                      del.request({ id: row.id, label: row.name || row.email || row.phone || "Estimate lead" })
                   : undefined
               }
             >

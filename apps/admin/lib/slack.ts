@@ -120,6 +120,12 @@ export function buildDigestMessage(items: ActionItem[]): SlackMessage {
 
   const shown = items.slice(0, 10);
   const rest = items.length - shown.length;
+  // The channel is the team's, so the digest is the whole team's list (All);
+  // owner-scoped items are split so unowned work is not read as anyone's.
+  const owned = items.filter((item) => typeof item.ownerId === "string").length;
+  const unassigned = items.filter((item) => item.ownerId === null).length;
+  const split =
+    owned + unassigned > 0 ? ` · whole team: ${owned} owned, ${unassigned} unassigned` : "";
 
   const lines = shown.map((item) => {
     const url = base ? `${base}${item.href}` : null;
@@ -135,7 +141,7 @@ export function buildDigestMessage(items: ActionItem[]): SlackMessage {
         text: {
           type: "mrkdwn",
           text: truncate(
-            `:clipboard: *Action centre — ${items.length} item${items.length === 1 ? "" : "s"}*\n${lines.join("\n")}`,
+            `:clipboard: *Action centre — ${items.length} item${items.length === 1 ? "" : "s"}*${split}\n${lines.join("\n")}`,
           ),
         },
       },

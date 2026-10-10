@@ -108,6 +108,7 @@ const ACTION_ICONS = {
   "client.stage_moved": ArrowRightLeft,
   "client.status_changed": Flag,
   "client.lead_record_updated": UserCheck,
+  "client.call_outcome_applied": ArrowRightLeft,
   "client.priority_changed": Gauge,
   "client.note_added": StickyNote,
   "client.note_edited": NotebookPen,
@@ -237,6 +238,7 @@ const ACTION_ICONS = {
   "meeting.created": CalendarPlus,
   "meeting.updated": CalendarDays,
   "meeting.status_changed": CalendarCheck,
+  "meeting.outcome_recorded": CalendarCheck,
   "meeting.rescheduled": CalendarClock,
   "meeting.deleted": Trash2,
 

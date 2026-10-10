@@ -80,6 +80,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
           summary: `Sent the contract to ${contract.client.email} by email`,
           before: { status: contract.status },
           after: { status: updated.status },
+          metadata: { clientId: contract.clientId },
         });
 
         return NextResponse.json({ success: true, contract: updated, emailId: sent.id });
@@ -105,10 +106,21 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
       }
     }
 
+    const phone = contract.client.phone;
+    if (!phone) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This client has no phone number. Send the contract by email instead.",
+        },
+        { status: 400 },
+      );
+    }
+
     try {
       const result = await sendTemplateMessage({
         clientId: contract.clientId,
-        phone: contract.client.phone,
+        phone,
         templateName: "contract_ready",
         bodyParams: [contract.client.name || "there", signUrl],
         relatedContractId: contract.id,
@@ -128,6 +140,7 @@ export const POST = withAdmin<{ id: string }>(async (request, { actor, params })
         summary: `Sent the contract to ${contract.client.name || contract.client.company || "the client"} for signing`,
         before: { status: contract.status },
         after: { status: updated.status },
+        metadata: { clientId: contract.clientId },
       });
 
       return NextResponse.json({

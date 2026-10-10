@@ -86,7 +86,7 @@ export function phoneMatchKeys(raw: string): string[] {
 }
 
 interface LinkClientToLeadInput {
-  phone: string;
+  phone?: string | null;
   name?: string | null;
   email?: string | null;
   source: ClientSource;
@@ -94,16 +94,28 @@ interface LinkClientToLeadInput {
   transparencyLeadId?: string;
 }
 
+/**
+ * Finds or creates the client a lead belongs to. A phone is the key when there
+ * is one (every stored shape of the number is matched). A lead with no usable
+ * phone but an email — an email-only estimate request — matches an existing
+ * client by email, case-insensitively, and otherwise becomes a client with no
+ * phone. With neither, there is no client. When several clients match, the
+ * oldest one is the client; an existing client only gains fields it lacks.
+ */
 export async function linkClientToLead(input: LinkClientToLeadInput) {
-  const phone = canonicalPhone(input.phone);
-  if (!phone) return null;
+  const phone = input.phone ? canonicalPhone(input.phone) : "";
+  const email = input.email?.trim() || null;
+  if (!phone && !email) return null;
 
-  // Match every shape the number may already be stored in; when several
-  // clients share it, the oldest one is the client.
-  const existing = await prisma.client.findFirst({
-    where: { phone: { in: phoneMatchKeys(input.phone) } },
-    orderBy: { createdAt: "asc" },
-  });
+  const existing = phone
+    ? await prisma.client.findFirst({
+        where: { phone: { in: phoneMatchKeys(input.phone ?? "") } },
+        orderBy: { createdAt: "asc" },
+      })
+    : await prisma.client.findFirst({
+        where: { email: { equals: email ?? "", mode: "insensitive" } },
+        orderBy: { createdAt: "asc" },
+      });
 
   if (existing) {
     const data: Record<string, unknown> = {};
@@ -125,7 +137,7 @@ export async function linkClientToLead(input: LinkClientToLeadInput) {
 
   return prisma.client.create({
     data: {
-      phone,
+      phone: phone || null,
       name: input.name ?? undefined,
       email: input.email ?? undefined,
       source: input.source,

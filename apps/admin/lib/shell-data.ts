@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { prisma } from "@repo/database";
-import { getActionCentre } from "@/lib/action-center";
+import { getActionCentre, scopeActions } from "@/lib/action-center";
 import { currentRole } from "@/lib/authorize";
 import { uncontactedWhere } from "@/lib/dashboard-data";
 import type { BadgeKey } from "@/lib/nav";
@@ -67,7 +67,10 @@ async function buildShellBadges(userId: string): Promise<{
       payments: overduePayments,
       incidents: openIncidents,
       renewals: servicesDue,
-      actions: attention.length,
+      // The viewer's Mine — the same list /actions opens on by default. The other
+      // badges are team-wide queue sizes (every admin works the same inbox,
+      // proposals, payments, incidents), so they are not owner-scoped.
+      actions: scopeActions(attention, "mine", userId).length,
     },
     unread: unreadNotifications,
   };

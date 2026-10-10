@@ -74,6 +74,22 @@ export const WRITABLE_STATUSES: ReadonlySet<string> = new Set([
   "SPAM",
 ]);
 
+/** The one list of lost/nurture reasons; the `lostReason` registry is checked against it. */
+export const LOST_REASON_VALUES = [
+  "BUDGET",
+  "TIMING",
+  "FIT",
+  "COMPETITOR",
+  "NO_RESPONSE",
+  "OTHER",
+] as const;
+export type LostReasonValue = (typeof LOST_REASON_VALUES)[number];
+
+export function isLostReason(value: unknown): value is LostReasonValue {
+  return typeof value === "string" && (LOST_REASON_VALUES as readonly string[]).includes(value);
+}
+
+// `satisfies` fails the build if a reason is missing from, or added only to, this registry.
 export const lostReason: Registry = {
   BUDGET: { label: "Budget", tone: "neutral" },
   TIMING: { label: "Timing", tone: "neutral" },
@@ -81,9 +97,7 @@ export const lostReason: Registry = {
   COMPETITOR: { label: "Went elsewhere", tone: "neutral" },
   NO_RESPONSE: { label: "No response", tone: "neutral" },
   OTHER: { label: "Other", tone: "neutral" },
-};
-
-export const LOST_REASONS = Object.keys(lostReason) as readonly string[];
+} satisfies Record<LostReasonValue, StatusDef>;
 
 export const projectSituation: Registry = {
   NEW_BUILD: { label: "New build", tone: "neutral" },
@@ -99,8 +113,15 @@ export const decisionRole: Registry = {
 };
 
 export function derivedStatusMessage(status: string): string {
+  const label = pipelineStage[status]?.label ?? submissionStatus[status]?.label ?? status;
+  if (status === "CALL_BOOKED" || status === "CALL_COMPLETED") {
+    return (
+      `“${label}” is derived from the meeting records and cannot be set directly. ` +
+      `Book the call, or mark it completed on the calendar, instead.`
+    );
+  }
   return (
-    `“${status}” is derived from proposals and contracts and cannot be set directly. ` +
+    `“${label}” is derived from proposals and contracts and cannot be set directly. ` +
     `Send a proposal or generate a contract instead.`
   );
 }
@@ -265,15 +286,76 @@ export const pipelineStage: Registry = {
   QUALIFYING: { label: "Qualifying", tone: "progress" },
   QUALIFIED: { label: "Qualified", tone: "progress" },
   CALL_BOOKED: { label: "Call booked", tone: "progress" },
-  CALL_COMPLETED: { label: "Call done", tone: "progress" },
+  CALL_COMPLETED: { label: "Call completed", tone: "progress" },
   PROPOSAL_SENT: { label: "Proposal sent", tone: "warning" },
   PROPOSAL_READ: { label: "Negotiation", tone: "warning" },
   CONTRACT_SENT: { label: "Contract sent", tone: "warning" },
-  SIGNED: { label: "Signed", tone: "success" },
+  SIGNED: { label: "Won", tone: "success" },
   NURTURE: { label: "Nurture", tone: "neutral" },
   LOST: { label: "Lost", tone: "danger" },
   SPAM: { label: "Spam", tone: "neutral" },
 };
+
+/*
+ * The one stage-list module. Every screen that lists stages or stored client
+ * statuses imports these; labels come from the registries above.
+ */
+
+/** Stored Client.status values (the ClientStatus enum). */
+export const CLIENT_STATUSES = [
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "NURTURE",
+  "PROPOSAL_SENT",
+  "WON",
+  "LOST",
+  "SPAM",
+] as const;
+export type ClientStatusValue = (typeof CLIENT_STATUSES)[number];
+
+/** The ordered pipeline a live deal moves through. */
+export const PIPELINE_STAGES = [
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+  "PROPOSAL_SENT",
+  "PROPOSAL_READ",
+  "CONTRACT_SENT",
+  "SIGNED",
+] as const;
+export type PipelineStage = (typeof PIPELINE_STAGES)[number];
+export type DerivedStage = PipelineStage | "NURTURE" | "LOST" | "SPAM";
+
+/** Every derived stage, pipeline order first, then the parked/closed ones. */
+export const ALL_STAGES = [...PIPELINE_STAGES, "NURTURE", "LOST", "SPAM"] as const;
+
+/** Stages computed from meeting, proposal and contract records — never set by hand. */
+export const DERIVED_ONLY_STAGES = [
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+  "PROPOSAL_SENT",
+  "PROPOSAL_READ",
+  "CONTRACT_SENT",
+  "SIGNED",
+] as const satisfies readonly PipelineStage[];
+
+/** Derived stages that count as an active lead (before a proposal goes out). */
+export const LEAD_STAGES = [
+  "NEW",
+  "VIEWED",
+  "CONTACTED",
+  "QUALIFYING",
+  "QUALIFIED",
+  "CALL_BOOKED",
+  "CALL_COMPLETED",
+] as const satisfies readonly PipelineStage[];
 
 export const productStatus: Registry = {
   PLANNED: { label: "Planned", tone: "neutral", hint: "Agreed, not started" },
@@ -446,3 +528,31 @@ export function optionsOf(registry: RegistryName) {
     tone: def.tone,
   }));
 }
+
+/** Meeting.outcome values (the CallOutcome enum, docs/sales-os.md R7). */
+export const CALL_OUTCOMES = [
+  "PROPOSAL_REQUIRED",
+  "FOLLOW_UP",
+  "NURTURE",
+  "LOST",
+  "NO_FURTHER_ACTION",
+] as const;
+export type CallOutcomeValue = (typeof CALL_OUTCOMES)[number];
+
+/** What a person picks after a call; the outcome is recorded, never inferred. */
+export const CALL_OUTCOME_LABELS: Record<CallOutcomeValue, { label: string; hint: string }> = {
+  PROPOSAL_REQUIRED: {
+    label: "Proposal required",
+    hint: "They want a proposal. Sets the next action to send it.",
+  },
+  FOLLOW_UP: { label: "Follow up", hint: "Not decided yet. Sets the date to follow up." },
+  NURTURE: {
+    label: "Nurture",
+    hint: "Not now. Parks the lead with a reason and a review date.",
+  },
+  LOST: { label: "Lost", hint: "Not going ahead. Marks the lead lost with a reason." },
+  NO_FURTHER_ACTION: {
+    label: "No further action",
+    hint: "Nothing to do after this call. Clears the next action date.",
+  },
+};

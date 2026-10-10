@@ -21,7 +21,8 @@ import { Avatar, Button } from "@repo/ui";
 import { DeleteRecordButton } from "@/components/os/delete-record";
 import { MetaList, QuickActions } from "@/components/os/detail-layout";
 import { EventList, type EventRowData } from "@/components/os/event-row";
-import { NextSteps } from "@/components/os/next-steps";
+import { NextActionPanel, NextSteps, WhyList } from "@/components/os/next-steps";
+import { WhyHint } from "@/components/os/why-hint";
 import { MetaItem, PageHeader } from "@/components/os/page-header";
 import { Panel, PanelLink } from "@/components/os/panel";
 import {
@@ -35,14 +36,15 @@ import { BeforeTheCall } from "@/components/os/before-the-call";
 import { FollowUpSheet } from "@/components/os/follow-up-sheet";
 import { LeadRecordEditor } from "@/components/os/lead-record-editor";
 import { dayString, loadOwnerOptions, loadPreCall } from "@/lib/precall";
-import { StatusPill } from "@/components/ui/badge";
+import { StatusPill, ToneBadge } from "@/components/ui/badge";
 import { buildActivity } from "@/lib/activity";
-import { currentRole } from "@/lib/authorize";
+import { currentRole, getOperator } from "@/lib/authorize";
 import { roleCanOpen } from "@/lib/action-center";
 import { entityHref } from "@/lib/entity-links";
 import { redactMoney } from "@/lib/client-services";
 import { emailTransport } from "@/lib/email";
-import { date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
+import { contactLabel, date, dateTime, money, phone as fmtPhone, when } from "@/lib/format";
+import { workingDueLabel } from "@/lib/working-days";
 import { httpUrl } from "@/lib/http-url";
 import { followUpClosedReason, scheduleLink } from "@/lib/lead-follow-up";
 import { canSeeFinance, type Role } from "@/lib/nav";
@@ -50,7 +52,8 @@ import { gateRoute } from "@/lib/page-gate";
 import { can } from "@/lib/rbac";
 import { projectCurrency } from "@/lib/project-currency";
 import { whatsappConfigured } from "@/lib/sign-verification";
-import { statusOf } from "@/lib/status";
+import { LEAD_STAGES, statusOf } from "@/lib/status";
+import { loadSalesRow, meetingStart, type SalesReading } from "@/lib/sales-signals";
 import { documentUrl } from "@/lib/storage";
 import {
   brandLabel,
@@ -66,7 +69,19 @@ import { LifecycleButton, StatusMenu } from "./client-actions";
 import { ClientNotes } from "./client-notes";
 import { EditClientSheet } from "./edit-sheet";
 import { HISTORY_TAKE, loadClientHub, type ClientHub } from "./hub-data";
-import { planNextSteps, type ClientPlan } from "./next-steps";
+import {
+  HEALTH_DISPLAY,
+  PRIORITY_DISPLAY,
+  SLA_DISPLAY,
+  WHY_VISIBLE,
+} from "@/components/os/sales-display";
+import {
+  leadControl,
+  planNextSteps,
+  readinessHint,
+  type ClientPlan,
+  type LeadControl,
+} from "./next-steps";
 import {
   ConversationsTab,
   DealsTab,
@@ -139,7 +154,7 @@ export default async function ClientDetailPage({
   const hub = await loadClientHub(id);
   if (!hub) notFound();
   const { client, stage, services } = hub;
-  const name = client.company || client.name || "Unnamed client";
+  const name = contactLabel(client);
 
   const scopedHub: ClientHub = showMoney
     ? hub
@@ -167,14 +182,74 @@ export default async function ClientDetailPage({
     meetings: hub.meetings,
   });
 
-  const links = await dealLinks(hub);
-  const plan = planNextSteps(hub, role);
+  const now = new Date();
+  const operator = await getOperator();
+  const [links, sales] = await Promise.all([
+    dealLinks(hub),
+    loadSalesRow(client.id, operator?.session.user.id ?? null, now),
+  ]);
+  const reading = sales?.reading ?? null;
+  const isLead =
+    sales !== null &&
+    (LEAD_STAGES as readonly string[]).includes(sales.signals.stage);
+  // Readiness only means something before a proposal exists to be read.
+  const readiness = isLead && reading ? reading.readiness : undefined;
+  const plan = planNextSteps(hub, role, now, readiness);
   const channels = {
     emailConfigured: emailTransport() !== "none",
     whatsappConfigured: whatsappConfigured(),
   };
 
   const canEdit = can(role, "edit", "client");
+  // Sales follow-ups stop once the client signs; delivery has its own channels.
+  const canFollowUp =
+    canEdit && can(role, "send", "message") && !followUpClosedReason(client);
+  const keyMeeting = sales?.signals.meeting
+    ? hub.meetings.find(
+        (m) =>
+          meetingStart(m).getTime() ===
+          sales.signals.meeting!.scheduledAt.getTime(),
+      )
+    : undefined;
+  const control: LeadControl = reading
+    ? leadControl(plan, reading.next, {
+        followUp: canFollowUp,
+        record: canEdit,
+        // The link opens the call to record its outcome: the operator must be able
+        // to open /calendar and to record (approve) a meeting, not only view one.
+        meetingHref:
+          keyMeeting &&
+          roleCanOpen(role, "/calendar") &&
+          can(role, "view", "meeting") &&
+          can(role, "approve", "meeting")
+            ? `/calendar?meeting=${keyMeeting.id}`
+            : null,
+      })
+    : null;
+  // CLOSE's control is the header's status menu, rendered again beside the next action.
+  const statusMenu = (
+    <StatusMenu
+      clientId={client.id}
+      clientLabel={name}
+      status={client.status}
+      priority={client.priority}
+      canEdit={canEdit}
+    />
+  );
+  const followUpSheet = canFollowUp ? (
+    <FollowUpSheet
+      lead={{
+        id: client.id,
+        label: name,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        stage,
+      }}
+      emailConfigured={emailTransport() !== "none"}
+      scheduleLink={scheduleLink()}
+    />
+  ) : null;
   const canAudit = role === "OWNER" || role === "ADMIN";
   const [preCall, owners] = await Promise.all([
     loadPreCall({ clientId: client.id }),
@@ -268,7 +343,8 @@ export default async function ClientDetailPage({
         status={
           <>
             <StatusPill registry="pipelineStage" value={stage} />
-            <StatusPill registry="priority" value={client.priority} />
+            {reading && <HeaderPriority reading={reading} />}
+            {reading && <HealthChips reading={reading} />}
           </>
         }
         meta={
@@ -290,13 +366,7 @@ export default async function ClientDetailPage({
         }
         actions={
           <>
-            <StatusMenu
-              clientId={client.id}
-              clientLabel={name}
-              status={client.status}
-              priority={client.priority}
-              canEdit={canEdit}
-            />
+            {statusMenu}
             {can(role, "view", "message") && (
               <Button asChild variant="outline">
                 <Link href={`/inbox?client=${client.id}`}>
@@ -311,7 +381,7 @@ export default async function ClientDetailPage({
                 clientLabel={name}
                 initial={{
                   name: client.name ?? "",
-                  phone: client.phone,
+                  phone: client.phone ?? "",
                   email: client.email ?? "",
                   company: client.company ?? "",
                   industry: client.industry ?? "",
@@ -327,18 +397,29 @@ export default async function ClientDetailPage({
               <DeleteRecordButton
                 entity="client"
                 id={client.id}
-                label={client.company || client.name || client.phone}
+                label={name}
                 redirectTo="/clients"
               />
             )}
-            <PrimaryAction plan={plan} />
           </>
         }
       />
 
+      {reading && (
+        <NextActionBlock
+          reading={reading}
+          control={control}
+          followUpSheet={followUpSheet}
+          statusMenu={statusMenu}
+          clientId={client.id}
+          canPropose={can(role, "create", "proposal")}
+          showReadiness={isLead}
+        />
+      )}
+
       <Dossier
         sections={sections}
-        aside={<Aside hub={hub} role={role} plan={plan} />}
+        aside={<Aside hub={hub} role={role} plan={plan} control={control} />}
         label={`${name} sections`}
       >
         <DossierSection id="overview" title="Overview">
@@ -359,21 +440,8 @@ export default async function ClientDetailPage({
               editor={
                 canEdit ? (
                   <div className="space-y-4">
-                    {/* Sales follow-ups stop once the client signs; delivery has its own channels. */}
-                    {can(role, "send", "message") && !followUpClosedReason(client) && (
-                      <FollowUpSheet
-                        lead={{
-                          id: client.id,
-                          label: name,
-                          name: client.name,
-                          email: client.email,
-                          phone: client.phone,
-                          stage,
-                        }}
-                        emailConfigured={emailTransport() !== "none"}
-                        scheduleLink={scheduleLink()}
-                      />
-                    )}
+                    {/* One follow-up control per page: here unless the next action carries it. */}
+                    {control?.kind !== "follow-up" && followUpSheet}
                     <LeadRecordEditor
                       // A sent follow-up moves the date on the server; remount so the form shows it.
                       key={`${client.ownerId}:${dayString(client.nextActionAt)}:${client.nextActionNote ?? ""}`}
@@ -531,18 +599,160 @@ export default async function ClientDetailPage({
   );
 }
 
-function PrimaryAction({ plan }: { plan: ClientPlan }) {
-  if (plan.generate?.primary) {
-    return <GenerateContract proposalId={plan.generate.proposalId} primary />;
+/** The engine's priority (R5), the same reading the queue and pipeline show, not the stored field. */
+function HeaderPriority({ reading }: { reading: SalesReading }) {
+  const p = PRIORITY_DISPLAY[reading.priority.level] ?? PRIORITY_DISPLAY.LOW;
+  return (
+    <WhyHint title={`${p.label} priority`} why={reading.priority.why}>
+      <ToneBadge tone={p.tone}>{p.label}</ToneBadge>
+    </WhyHint>
+  );
+}
+
+/** Health in words, its reasons behind the chip (hover, tap or keyboard); the reply promise when it asks something. */
+function HealthChips({ reading }: { reading: SalesReading }) {
+  const h = HEALTH_DISPLAY[reading.health.state] ?? HEALTH_DISPLAY.HEALTHY;
+  const sla = SLA_DISPLAY[reading.replySla.state];
+  return (
+    <>
+      <WhyHint title={`Health: ${h.label}`} why={reading.health.why}>
+        <ToneBadge tone={h.tone}>{h.label}</ToneBadge>
+      </WhyHint>
+      {sla && reading.replySla.dueAt && (
+        <WhyHint
+          title={sla.label}
+          why={[`First reply promised by ${dateTime(reading.replySla.dueAt)}`]}
+        >
+          <ToneBadge tone={sla.tone}>
+            {sla.label} · {when(reading.replySla.dueAt)}
+          </ToneBadge>
+        </WhyHint>
+      )}
+    </>
+  );
+}
+
+/**
+ * The one next action, from the sales engine (lib/sales-intel.ts) through
+ * loadSalesRow, so this page and /leads say the same thing. Replaces the old
+ * header primary button; the aside keeps the remaining steps.
+ */
+function NextActionBlock({
+  reading,
+  control,
+  followUpSheet,
+  statusMenu,
+  clientId,
+  canPropose,
+  showReadiness,
+}: {
+  reading: SalesReading;
+  control: LeadControl;
+  followUpSheet: React.ReactNode;
+  statusMenu: React.ReactNode;
+  clientId: string;
+  canPropose: boolean;
+  showReadiness: boolean;
+}) {
+  const p = PRIORITY_DISPLAY[reading.priority.level] ?? PRIORITY_DISPLAY.LOW;
+  const next = reading.next;
+  const proposalIsAction =
+    control?.kind === "step" && control.step.key === "new-proposal";
+  return (
+    <NextActionPanel
+      label={next.label}
+      due={next.due && next.kind !== "NONE" ? workingDueLabel(next.due) : undefined}
+      why={next.why}
+      blockers={reading.blockers}
+      visible={WHY_VISIBLE}
+      badges={
+        <WhyHint title={`${p.label} priority`} why={reading.priority.why}>
+          <ToneBadge tone={p.tone}>{p.label} priority</ToneBadge>
+        </WhyHint>
+      }
+      action={
+        <>
+          <ControlButton
+            control={control}
+            followUpSheet={followUpSheet}
+            statusMenu={statusMenu}
+          />
+          {showReadiness && canPropose && !proposalIsAction && (
+            <Button asChild variant="outline">
+              <Link href={`/clients/${clientId}/new-proposal`}>
+                <FileText className="size-3.5" aria-hidden />
+                New proposal
+              </Link>
+            </Button>
+          )}
+        </>
+      }
+    >
+      {showReadiness && (
+        <div className="mt-3 space-y-1 border-t border-border-subtle pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="telemetry text-subtle-foreground">
+              Proposal readiness
+            </p>
+            <ToneBadge tone={reading.readiness.ready ? "success" : "warning"}>
+              {reading.readiness.ready ? "Ready" : "Not ready"}
+            </ToneBadge>
+          </div>
+          {reading.readiness.ready ? (
+            <p className="text-meta text-muted-foreground">
+              {readinessHint(reading.readiness)}
+            </p>
+          ) : (
+            <>
+              <WhyList
+                label="Missing before a proposal"
+                why={reading.readiness.missing}
+                visible={WHY_VISIBLE}
+              />
+              <p className="text-meta text-muted-foreground">
+                You can still build a proposal; these gaps go into it as
+                assumptions.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </NextActionPanel>
+  );
+}
+
+function ControlButton({
+  control,
+  followUpSheet,
+  statusMenu,
+}: {
+  control: LeadControl;
+  followUpSheet: React.ReactNode;
+  statusMenu: React.ReactNode;
+}) {
+  if (!control) return null;
+  if (control.kind === "follow-up") return <>{followUpSheet}</>;
+  // Closing the lead is a status change: the same menu the header carries.
+  if (control.kind === "status") return <>{statusMenu}</>;
+  if (control.kind === "generate") {
+    return <GenerateContract proposalId={control.proposalId} primary />;
   }
-  const step = plan.steps.find((s) => s.primary);
-  if (!step) return null;
-  const Icon = step.icon;
+  if (control.kind === "record") {
+    return (
+      <Button asChild variant="brand">
+        <Link href="#lead-record">
+          <CalendarDays className="size-3.5" aria-hidden />
+          Set the date
+        </Link>
+      </Button>
+    );
+  }
+  const Icon = control.step.icon;
   return (
     <Button asChild variant="brand">
-      <Link href={step.href}>
+      <Link href={control.step.href}>
         <Icon className="size-3.5" aria-hidden />
-        {step.label}
+        {control.step.label}
       </Link>
     </Button>
   );
@@ -571,10 +781,12 @@ function Aside({
   hub,
   role,
   plan,
+  control,
 }: {
   hub: ClientHub;
   role: Role | undefined;
   plan: ClientPlan;
+  control: LeadControl;
 }) {
   const { client } = hub;
   const website =
@@ -585,11 +797,17 @@ function Aside({
 
   return (
     <>
-      <NextSteps steps={plan.steps}>
-        {plan.generate && (
+      {/* The next action sits above the sections; this lists everything else. */}
+      <NextSteps
+        title="More steps"
+        steps={plan.steps
+          .filter((s) => control?.kind !== "step" || s.key !== control.step.key)
+          .map((s) => ({ ...s, primary: false }))}
+      >
+        {plan.generate && control?.kind !== "generate" && (
           <GenerateContract
             proposalId={plan.generate.proposalId}
-            primary={plan.generate.primary}
+            primary={false}
           />
         )}
       </NextSteps>
@@ -599,13 +817,15 @@ function Aside({
           items={[
             {
               label: "Phone",
-              value: (
+              value: client.phone ? (
                 <a
                   href={`tel:${client.phone}`}
                   className="font-mono text-meta hover:text-brand"
                 >
                   {fmtPhone(client.phone)}
                 </a>
+              ) : (
+                "—"
               ),
             },
             {
@@ -683,12 +903,14 @@ function Aside({
 
       <Panel title="Quick actions" flush>
         <QuickActions>
-          <Button asChild variant="outline">
-            <a href={`tel:${client.phone}`}>
-              <Phone className="size-3.5 text-subtle-foreground" />
-              Call {fmtPhone(client.phone)}
-            </a>
-          </Button>
+          {client.phone && (
+            <Button asChild variant="outline">
+              <a href={`tel:${client.phone}`}>
+                <Phone className="size-3.5 text-subtle-foreground" />
+                Call {fmtPhone(client.phone)}
+              </a>
+            </Button>
+          )}
           {can(role, "view", "message") && (
             <Button asChild variant="outline">
               <Link href={`/inbox?client=${client.id}`}>

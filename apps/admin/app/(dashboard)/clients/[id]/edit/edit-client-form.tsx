@@ -57,7 +57,9 @@ export function EditClientForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: text("name"),
-          phone: text("phone"),
+          // A client reached by email only may still have no number; an
+          // empty field then leaves the phone as it is.
+          phone: text("phone") || undefined,
           email: text("email"),
           company: text("company"),
           industry: text("industry"),
@@ -102,7 +104,7 @@ export function EditClientForm({
         label="Phone"
         hint="WhatsApp reaches this number. Pick the country code, or paste the full +… number."
       >
-        <PhoneInput name="phone" required defaultValue={initial.phone} />
+        <PhoneInput name="phone" required={Boolean(initial.phone)} defaultValue={initial.phone} />
       </Field>
       <Field label="Company">
         <Input
