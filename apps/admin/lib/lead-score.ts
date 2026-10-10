@@ -219,7 +219,7 @@ const CALL_STAGES = new Set(["CALL_BOOKED", "CALL_COMPLETED"]);
  * One line telling the operator what to do next, from the band and the
  * derived stage. Never a promise: it reads only what the record holds.
  */
-export function recommendedAction(band: ScoreBand, stage: string): string {
+export function recommendedAction(band: ScoreBand, stage: string, hasPhone = true): string {
   if (stage === "SIGNED") return "Won — deliver the work";
   if (stage === "CONTRACT_SENT") return "Chase the signature";
   if (stage === "PROPOSAL_READ") return "Answer questions on the proposal";
@@ -231,6 +231,6 @@ export function recommendedAction(band: ScoreBand, stage: string): string {
   if (stage === "CALL_COMPLETED") return "Send a proposal";
   if (CALL_STAGES.has(stage)) return "Prioritise for consultation";
   if (band === "High intent") return "Prioritise for consultation";
-  if (band === "Medium intent") return "Qualify by phone";
+  if (band === "Medium intent") return hasPhone ? "Qualify by phone" : "Qualify by email";
   return "Reply briefly; low priority until they engage";
 }

@@ -441,6 +441,8 @@ console.log("\nScore band labels (lead quality, never a stage)");
   check(scoreBand(64) === "Medium intent" && scoreBand(65) === "High intent" && scoreBand(34) === "Low intent" && scoreBand(35) === "Medium intent", "band thresholds unchanged (35 / 65)");
   const low = recommendedAction("Low intent", "NEW");
   check(!/nurture|park/i.test(low), `low band's action does not suggest a stage move ("${low}")`);
+  check(recommendedAction("Medium intent", "NEW") === "Qualify by phone", "medium intent with a phone is qualified by phone");
+  check(recommendedAction("Medium intent", "NEW", false) === "Qualify by email", "medium intent with no phone is qualified by email");
   check(recommendedAction("Low intent", "NURTURE").startsWith("Parked"), "a lead actually in NURTURE still reads as parked");
 }
 
