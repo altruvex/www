@@ -14,6 +14,7 @@ import {
   type Locale as PricingLocale,
   type ResolvedPricing,
 } from "@repo/pricing-schema";
+import { getWhatsAppUrl } from "@/lib/utils/whatsapp";
 
 export type JsonLdSchema = Record<string, unknown>;
 type FaqEntry = { answer: string; question: string };
@@ -46,6 +47,12 @@ const WEBSITE_ID = `${SITE_CONFIG.url}#website`;
 const FOUNDER_ID = `${SITE_CONFIG.url}#founder`;
 
 const AREA_SERVED = ["Worldwide"];
+
+/** The founder's own profiles; the company's profiles stay on the Organization. */
+const FOUNDER_PROFILES = [
+  SITE_CONFIG.founder.linkedin,
+  SITE_CONFIG.founder.github,
+];
 
 const KNOWS_ABOUT = [
   "Altruvex",
@@ -163,20 +170,32 @@ function buildOrganizationSchema(): JsonLdSchema {
       slogan: SITE_CONFIG.slogan,
       url: SITE_CONFIG.url,
     },
-    contactPoint: {
-      "@type": "ContactPoint",
-      areaServed: AREA_SERVED,
-      availableLanguage: [...SUPPORTED_LOCALES],
-      contactType: "sales",
-      email: SITE_CONFIG.email,
-      telephone: SITE_CONFIG.phone,
-    },
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        areaServed: AREA_SERVED,
+        availableLanguage: [...SUPPORTED_LOCALES],
+        contactType: "sales",
+        email: SITE_CONFIG.email,
+        telephone: SITE_CONFIG.phone,
+      },
+      {
+        "@type": "ContactPoint",
+        areaServed: AREA_SERVED,
+        availableLanguage: [...SUPPORTED_LOCALES],
+        contactType: "customer support",
+        name: "WhatsApp",
+        telephone: SITE_CONFIG.phone,
+        url: getWhatsAppUrl(),
+      },
+    ],
     description: SITE_CONFIG.description.en,
     email: SITE_CONFIG.email,
     founder: {
+      "@id": FOUNDER_ID,
       "@type": "Person",
       name: SITE_CONFIG.founder.name,
-      sameAs: SITE_CONFIG.founder.linkedin,
+      sameAs: FOUNDER_PROFILES,
     },
     foundingLocation: {
       "@type": "Place",
@@ -327,7 +346,7 @@ function buildFounderSchema(locale: SupportedLocale): JsonLdSchema {
     jobTitle: SITE_CONFIG.founder.jobTitle[locale],
     knowsAbout: KNOWS_ABOUT,
     name: SITE_CONFIG.founder.name,
-    sameAs: [SITE_CONFIG.founder.linkedin],
+    sameAs: FOUNDER_PROFILES,
     url: SITE_CONFIG.founder.linkedin,
     worksFor: {
       "@id": ORGANIZATION_ID,
@@ -559,12 +578,12 @@ function buildArticleSchema(
       "@id": FOUNDER_ID,
       "@type": "Person",
       name: SITE_CONFIG.founder.name,
-      sameAs: SITE_CONFIG.founder.linkedin,
+      sameAs: FOUNDER_PROFILES,
     },
     creator: {
       "@type": "Person",
       name: SITE_CONFIG.founder.name,
-      sameAs: SITE_CONFIG.founder.linkedin,
+      sameAs: FOUNDER_PROFILES,
     },
     dateModified: article.frontmatter.updated ?? article.frontmatter.date,
     datePublished: article.frontmatter.date,

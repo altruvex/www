@@ -93,5 +93,22 @@
       "percent": "{value}%",
       "ratio": "{value}:1"
     }
+  },
+  "measured": {
+    "eyebrow": "Measured",
+    "title": "Measured on",
+    "titleItalic": "our own shipped work.",
+    "description": "Lighthouse results for live sites we built, taken on the date shown. Nothing here is estimated.",
+    "measuredOn": "Measured on {date}",
+    "caption": "Measured results for our own shipped work",
+    "project": "Site",
+    "performance": "Performance",
+    "accessibility": "Accessibility",
+    "bestPractices": "Best practices",
+    "seo": "SEO",
+    "lcp": "LCP",
+    "cls": "CLS",
+    "tbt": "TBT",
+    "ms": "{value} ms"
   }
 }

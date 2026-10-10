@@ -62,6 +62,7 @@ const DisciplineRow = memo(function DisciplineRow({
   onToggle: () => void;
 }) {
   const t = useTranslations("services.action");
+  const tServices = useTranslations("services");
   const tCTAs = useTranslations("commercial.ctas");
   const tPage = useTranslations("servicesPage");
   const action = ROW_ACTION[service.id];
@@ -137,7 +138,11 @@ const DisciplineRow = memo(function DisciplineRow({
                   })}
                 </Link>
               </div>
-
+              {service.id === "audit" && (
+                <p className="mt-4 text-sm leading-normal text-muted-foreground">
+                  {tServices("auditCredit")}
+                </p>
+              )}
             </div>
 
             <figure

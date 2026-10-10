@@ -8,8 +8,11 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { Accent, Eyebrow } from "@repo/ui/www";
 import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
-import { HOMEPAGE_SUPPORTING_CASE_STUDIES } from "@/lib/config/commercial";
-import { getCaseStudyBySlug, type CaseStudyRecord } from "@/lib/data/case-studies";
+import {
+  getClientCaseStudies,
+  type CaseStudyRecord,
+  type CaseStudySlug,
+} from "@/lib/data/case-studies";
 import { HeroHeadline, HeroReveal } from "@/components/sections/hero-motion-wrappers";
 import {
   useMediaSettle,
@@ -23,17 +26,14 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { memo } from "react";
 
-const STAGE_PHOTOS: Record<CaseStudyRecord["slug"], string> = {
+const STAGE_PHOTOS: Partial<Record<CaseStudySlug, string>> = {
   "newlight-lighting-store": "/brand/mood/single-lamp-dark-wall.webp",
   "art-lighting-store": "/brand/mood/blue-light-streaks.webp",
-  "altruvex-site": "/brand/mood/green-folds.webp",
 };
 
-const OWN_SITE: CaseStudyRecord["slug"] = "altruvex-site";
-
-const STAGES = [...HOMEPAGE_SUPPORTING_CASE_STUDIES, OWN_SITE]
-  .map(getCaseStudyBySlug)
-  .filter((cs): cs is CaseStudyRecord => cs !== null);
+/** Client work only; our own site is linked separately below, never counted as a client build. */
+const STAGES = getClientCaseStudies();
+const OWN_SITE_HREF = "/work/altruvex-site";
 
 const LINK =
   "inline-flex min-h-6 items-center gap-2 rounded-ctl-sm text-base outline-none transition-colors duration-(--motion-drawer) ease-smooth focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11";
@@ -67,6 +67,7 @@ export default memo(function WorkIndexPage() {
               <WorkStage key={cs.slug} build={cs} first={index === 0} />
             ))}
           </ol>
+          <OwnSiteRow />
         </Container>
       </section>
       <CheckSection />
@@ -80,25 +81,28 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
   const t = useTranslations("work");
   const tCase = useTranslations("caseStudies");
   const stageRef = useMediaSettle<HTMLDivElement>({ open: first, delay: 0.6 });
+  const photo = STAGE_PHOTOS[slug];
 
   return (
     <li>
       <div
         ref={stageRef}
-        className="relative aspect-[4/5] overflow-hidden rounded-panel-lg sm:aspect-[16/10] lg:aspect-[21/9]"
+        className="relative aspect-[4/5] overflow-hidden rounded-panel-lg bg-muted sm:aspect-[16/10] lg:aspect-[21/9]"
       >
-        <div data-settle-img className="absolute inset-0 will-change-transform">
-          <Image
-            src={STAGE_PHOTOS[slug]}
-            alt=""
-            fill
-            priority={first}
-            sizes="(min-width: 1408px) 1280px, 100vw"
-            quality={75}
-            draggable={false}
-            className="select-none object-cover"
-          />
-        </div>
+        {photo && (
+          <div data-settle-img className="absolute inset-0 will-change-transform">
+            <Image
+              src={photo}
+              alt=""
+              fill
+              priority={first}
+              sizes="(min-width: 1408px) 1280px, 100vw"
+              quality={75}
+              draggable={false}
+              className="select-none object-cover"
+            />
+          </div>
+        )}
         <div aria-hidden className="photo-title-scrim" />
         <div className="absolute inset-x-5 bottom-5 sm:inset-x-8 sm:bottom-8">
           <p className="eyebrow text-white/80">
@@ -148,6 +152,29 @@ function WorkStage({ build, first }: { build: CaseStudyRecord; first: boolean })
   );
 }
 
+/** Our own site, kept apart from client work and labelled as such. */
+function OwnSiteRow() {
+  const t = useTranslations("work.ownSite");
+
+  return (
+    <div className="mt-20 flex flex-col gap-4 border-t border-border-subtle pt-6 md:mt-28 md:flex-row md:items-baseline md:justify-between md:gap-10">
+      <div className="max-w-[58ch]">
+        <Eyebrow>{t("eyebrow")}</Eyebrow>
+        <p className="mt-3 text-[clamp(1rem,1.02vw,1.0625rem)] leading-relaxed text-muted-foreground">
+          {t("body")}
+        </p>
+      </div>
+      <Link
+        href={OWN_SITE_HREF}
+        className={`group ${LINK} shrink-0 text-foreground hover:text-local-accent-text`}
+      >
+        {t("link")}
+        <ArrowIcon className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
 /** Portfolio claims are only as good as what a visitor can verify: the checks anyone can run on the live builds. */
 function CheckSection() {
   const t = useTranslations("work.check");
@@ -183,7 +210,7 @@ function CheckSection() {
               <span className="pt-2 text-md text-muted-foreground tabular-nums">
                 <Num value={index + 1} pad={2} />
               </span>
-              <p className="max-w-[48ch] text-[clamp(1.1875rem,1.8vw,1.625rem)] leading-snug tracking-[-0.015em] text-foreground rtl:tracking-normal">
+              <p className="text-[clamp(1.1875rem,1.8vw,1.625rem)] leading-snug tracking-[-0.015em] text-foreground rtl:tracking-normal">
                 {item}
               </p>
             </li>

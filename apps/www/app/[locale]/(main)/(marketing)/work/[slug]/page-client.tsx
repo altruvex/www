@@ -10,10 +10,16 @@ import { bodyMarks } from "@/components/ui/rich-text";
 import { Link } from "@/i18n/navigation";
 import type { ServiceSlug } from "@/lib/config/accent-world";
 import { getCommercialCta } from "@/lib/config/commercial";
-import { CASE_STUDIES, getCaseStudyBySlug } from "@/lib/data/case-studies";
+import {
+  getCaseStudyBySlug,
+  getClientCaseStudies,
+  type CaseStudyQuote,
+  type CaseStudyResult,
+} from "@/lib/data/case-studies";
+import { normalizeLocale } from "@/lib/metadata";
 import { useSectionCardGrid, useSectionDescription, useSectionEyebrow, useSectionTitle } from "@/lib/motion";
 import { getDomainName } from "@/lib/utils/utils";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 /** Footer namespace already names every service; reuse it so labels stay single-sourced. */
 const SERVICE_LABEL_KEY: Record<ServiceSlug, string> = {
@@ -98,6 +104,7 @@ export default function WorkCaseStudyPageClient({
   const csData = getCaseStudyBySlug(slug);
   const externalUrl = csData?.externalUrl;
   const services = csData?.services ?? [];
+  const isOwnSite = csData?.kind === "own";
 
   return (
     <>
@@ -105,7 +112,9 @@ export default function WorkCaseStudyPageClient({
       <Container>
         <div>
           <div className="mb-(--heading-gap)">
-            <Eyebrow ref={eyebrowRef} className="mb-4 block">{tLabels("caseStudy")}</Eyebrow>
+            <Eyebrow ref={eyebrowRef} className="mb-4 block">
+              {tLabels(isOwnSite ? "ownSite" : "caseStudy")}
+            </Eyebrow>
             <h1
               ref={titleRef}
               className="mb-4 font-sans font-normal text-primary leading-[1.03] tracking-tight text-[clamp(36px,6vw,72px)]"
@@ -115,6 +124,11 @@ export default function WorkCaseStudyPageClient({
             <p className="font-mono text-sm leading-normal tracking-wider uppercase text-s-low mb-5">
               {tCS(slug + ".client")} · {tCS(slug + ".industry")}
             </p>
+            {isOwnSite && (
+              <p className="mb-5 max-w-[65ch] border-s-2 border-local-accent ps-4 text-base text-foreground leading-relaxed">
+                {tLabels("ownSiteNote")}
+              </p>
+            )}
             <p ref={descRef} className="max-w-[65ch] text-base text-s-mid leading-relaxed">
               {tCS(slug + ".summary")}
             </p>
@@ -191,6 +205,10 @@ export default function WorkCaseStudyPageClient({
                 <h2 className={SECTION_H2}>{tLabels("results")}</h2>
                 <p className={BODY}>{tCS.rich(slug + ".outcome", bodyMarks)}</p>
               </section>
+              {csData?.results && csData.results.length > 0 && (
+                <MeasuredResults results={csData.results} />
+              )}
+              {csData?.quote && <ClientQuote quote={csData.quote} />}
             </div>
             <aside className="space-y-8">
               <div className="border-t border-border-subtle pt-5">
@@ -284,16 +302,81 @@ export default function WorkCaseStudyPageClient({
   );
 }
 
+/** Before/after pairs, rendered only from real measurements on the record. */
+function MeasuredResults({ results }: { results: readonly CaseStudyResult[] }) {
+  const tLabels = useTranslations("work.labels");
+  const withUnit = (value: string, unit?: string) =>
+    unit ? `${value} ${unit}` : value;
+
+  return (
+    <section>
+      <h2 className={SECTION_H2}>{tLabels("measuredResults")}</h2>
+      <dl className="mt-6">
+        {results.map((result) => (
+          <div
+            key={result.metric}
+            className="grid gap-2 border-t border-border-subtle py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-8"
+          >
+            <dt className="text-base text-foreground">
+              {tLabels(`metrics.${result.metric}`)}
+            </dt>
+            <dd className="flex items-baseline gap-6 tabular-nums">
+              {result.before && (
+                <span className="flex flex-col">
+                  <span className="eyebrow text-muted-foreground">{tLabels("before")}</span>
+                  <bdi className="text-lg text-muted-foreground">
+                    {withUnit(result.before, result.unit)}
+                  </bdi>
+                </span>
+              )}
+              <span className="flex flex-col">
+                <span className="eyebrow text-local-accent-text">{tLabels("after")}</span>
+                <bdi className="text-[clamp(1.375rem,2.2vw,1.875rem)] font-light leading-tight tracking-[-0.02em] text-foreground rtl:tracking-normal">
+                  {withUnit(result.after, result.unit)}
+                </bdi>
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+/** A quote the client approved, with their real name and role. */
+function ClientQuote({ quote }: { quote: CaseStudyQuote }) {
+  const tLabels = useTranslations("work.labels");
+  const lang = normalizeLocale(useLocale());
+
+  return (
+    <section>
+      <h2 className={SECTION_H2}>{tLabels("clientQuote")}</h2>
+      <figure className="mt-6 border-t border-border-subtle pt-6">
+        <blockquote className="max-w-[48ch] text-[clamp(1.25rem,2vw,1.75rem)] leading-snug tracking-[-0.015em] text-foreground rtl:leading-relaxed rtl:tracking-normal">
+          <p>{quote.text[lang]}</p>
+        </blockquote>
+        <figcaption className="mt-4 text-sm text-muted-foreground">
+          <span className="text-foreground">{quote.name}</span> · {quote.role[lang]}
+        </figcaption>
+      </figure>
+    </section>
+  );
+}
+
 function CaseStudyEndCta({ slug }: { slug: string }) {
   const t = useTranslations("common.endCta.pages.caseStudy");
   const tCS = useTranslations("caseStudies");
 
-  const position = CASE_STUDIES.findIndex((cs) => cs.slug === slug);
-  const current = CASE_STUDIES[position];
+  // "Next" walks client work only; from our own site it leads into the first client build.
+  const current = getCaseStudyBySlug(slug);
+  const clientWork = getClientCaseStudies();
+  const position = clientWork.findIndex((cs) => cs.slug === slug);
   const next =
-    CASE_STUDIES.length > 1
-      ? CASE_STUDIES[(position + 1) % CASE_STUDIES.length]
-      : null;
+    position === -1
+      ? (clientWork[0] ?? null)
+      : clientWork.length > 1
+        ? clientWork[(position + 1) % clientWork.length]
+        : null;
 
   return (
     <SectionEndCta

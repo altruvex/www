@@ -49,5 +49,10 @@
   },
   "loader": {
     "welcome": "أهلاً بك."
+  },
+  "mobileContactBar": {
+    "label": "تواصل سريع",
+    "whatsapp": "واتساب",
+    "whatsappMessage": "أهلًا Altruvex، حابب أتكلم معاكم عن مشروع."
   }
 }

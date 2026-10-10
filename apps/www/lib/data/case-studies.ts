@@ -4,12 +4,43 @@ import type { ServiceId } from "@repo/pricing-schema";
 
 type LocalizedValue = Record<SupportedLocale, string>;
 
-type CaseStudySlug =
+export type CaseStudySlug =
   | "altruvex-site"
   | "art-lighting-store"
   | "newlight-lighting-store";
 
+/**
+ * `client` = work done for a paying client; `own` = Altruvex's own site. Only client
+ * records may be counted or listed as portfolio work.
+ */
+type CaseStudyKind = "client" | "own";
+
+/** Each metric's label lives at `work.labels.metrics.<metric>` in both locales. */
+export type CaseStudyResultMetric =
+  | "loadTime"
+  | "lighthousePerformance"
+  | "lighthouseAccessibility"
+  | "lighthouseSeo"
+  | "conversionRate"
+  | "monthlyOrders";
+
+/** One measured before/after pair. Only real measurements, never estimates. */
+export type CaseStudyResult = {
+  metric: CaseStudyResultMetric;
+  before?: string;
+  after: string;
+  unit?: string;
+};
+
+/** A client quote that the client approved for publication, with their real name and role. */
+export type CaseStudyQuote = {
+  text: LocalizedValue;
+  name: string;
+  role: LocalizedValue;
+};
+
 export type CaseStudyRecord = {
+  kind: CaseStudyKind;
   client: LocalizedValue;
   industry: LocalizedValue;
   keywords: Record<SupportedLocale, string[]>;
@@ -22,46 +53,55 @@ export type CaseStudyRecord = {
   /** The estimator project type a similar build starts from. */
   projectType: ServiceId;
   externalUrl?: string;
+  /** Rendered only when present. */
+  results?: readonly CaseStudyResult[];
+  /** Rendered only when present. */
+  quote?: CaseStudyQuote;
 };
 
 export const CASE_STUDIES: CaseStudyRecord[] = [
   {
+    kind: "client",
     client: {
-      ar: "Altruvex (موقعنا)",
-      en: "Altruvex (our own site)",
+      ar: "نيو لايت",
+      en: "NewLight",
     },
     industry: {
-      ar: "تطوير مواقع ويب مخصصة",
-      en: "Custom web development",
+      ar: "إضاءة وتجارة إلكترونية",
+      en: "Lighting & e-commerce",
     },
     keywords: {
       ar: [
-        "دراسة حالة ألتروفيكس",
-        "موقع وكالة Next.js",
-        "موقع ثنائي اللغة",
-        "تطوير مواقع ويب مخصصة",
+        "بناء أول متجر إلكتروني",
+        "تجارة إلكترونية للإضاءة",
+        "متجر Next.js مخصص",
       ],
       en: [
-        "altruvex case study",
-        "next.js agency website",
-        "bilingual website case study",
-        "custom web development",
+        "first e-commerce build",
+        "lighting online store",
+        "custom next.js shop",
       ],
     },
     name: {
-      ar: "Altruvex.com — موقع شركة ثنائي اللغة على Next.js",
-      en: "Altruvex.com — a bilingual Next.js studio website",
+      ar: "نيو لايت — أول متجر إلكتروني لعلامة إضاءة",
+      en: "NewLight — a first online store for a lighting brand",
     },
-    slug: "altruvex-site",
-    projectType: "website",
+    seoTitle: {
+      ar: "نيو لايت: أول متجر إلكتروني لعلامة إضاءة",
+      en: "NewLight: First Online Store for a Lighting Brand",
+    },
+    slug: "newlight-lighting-store",
+    projectType: "ecommerce",
     summary: {
-      ar: "موقع ثنائي اللغة بالعربية والإنجليزية على Next.js، باتجاه عربي أصيل من اليمين إلى اليسار وأداة عامة لتقدير تكلفة المشروع.",
-      en: "A bilingual English and Arabic website on Next.js, with native right-to-left layout and a public project cost estimator.",
+      ar: "أول متجر إلكتروني لنيو لايت: متجر مخصص بالعربية والإنجليزية بمسار شراء منظم، يعمل على كل جهاز ويمكن تثبيته على الهاتف.",
+      en: "NewLight's first online store: a custom storefront in Arabic and English with a structured checkout, built for every device and installable on a phone.",
     },
     services: ["interface-design", "development"],
-    externalUrl: "https://altruvex.com",
+    externalUrl: "https://www.newlight-eg.com/",
+    // TODO(ali): real measured results (before/after load time, Lighthouse, orders/conversion) and a client quote with name and role.
   },
   {
+    kind: "client",
     client: {
       ar: "متجر آرت لايتنج",
       en: "Art Lighting Store",
@@ -98,49 +138,54 @@ export const CASE_STUDIES: CaseStudyRecord[] = [
     },
     services: ["interface-design", "development"],
     externalUrl: "https://www.artlighting-eg.com",
+    // TODO(ali): real measured results (before/after load time, Lighthouse, orders/conversion) and a client quote with name and role.
   },
   {
+    kind: "own",
     client: {
-      ar: "نيو لايت",
-      en: "NewLight",
+      ar: "Altruvex (موقعنا)",
+      en: "Altruvex (our own site)",
     },
     industry: {
-      ar: "إضاءة وتجارة إلكترونية",
-      en: "Lighting & e-commerce",
+      ar: "تطوير مواقع ويب مخصصة",
+      en: "Custom web development",
     },
     keywords: {
       ar: [
-        "بناء أول متجر إلكتروني",
-        "تجارة إلكترونية للإضاءة",
-        "متجر Next.js مخصص",
+        "دراسة حالة ألتروفيكس",
+        "موقع وكالة Next.js",
+        "كيف بنينا موقعنا",
+        "تطوير مواقع ويب مخصصة",
       ],
       en: [
-        "first e-commerce build",
-        "lighting online store",
-        "custom next.js shop",
+        "altruvex case study",
+        "next.js agency website",
+        "how we built our site",
+        "custom web development",
       ],
     },
     name: {
-      ar: "نيو لايت — أول متجر إلكتروني لعلامة إضاءة",
-      en: "NewLight — a first online store for a lighting brand",
+      ar: "Altruvex.com — كيف بنينا موقعنا على Next.js",
+      en: "Altruvex.com — how we built our own site on Next.js",
     },
-    seoTitle: {
-      ar: "نيو لايت: أول متجر إلكتروني لعلامة إضاءة",
-      en: "NewLight: First Online Store for a Lighting Brand",
-    },
-    slug: "newlight-lighting-store",
-    projectType: "ecommerce",
+    slug: "altruvex-site",
+    projectType: "website",
     summary: {
-      ar: "أول متجر إلكتروني لنيو لايت: متجر مخصص ثنائي اللغة بمسار شراء منظم، يعمل على كل جهاز ويمكن تثبيته على الهاتف.",
-      en: "NewLight's first online store: a custom bilingual storefront with a structured checkout, built for every device and installable on a phone.",
+      ar: "موقعنا نفسه، وليس مشروعًا لعميل: مبني على Next.js، بتخطيط ينعكس كاملًا من اليمين إلى اليسار وأداة عامة لتقدير تكلفة المشروع.",
+      en: "Our own site, not a client project: built on Next.js, with a layout that mirrors fully right to left and a public project cost estimator.",
     },
     services: ["interface-design", "development"],
-    externalUrl: "https://www.newlight-eg.com/",
+    externalUrl: "https://altruvex.com",
   },
 ];
 
 export function getAllCaseStudies() {
   return CASE_STUDIES;
+}
+
+/** Portfolio work only: every list or count of client work reads this, never CASE_STUDIES. */
+export function getClientCaseStudies() {
+  return CASE_STUDIES.filter((caseStudy) => caseStudy.kind === "client");
 }
 
 export function getCaseStudyBySlug(slug: string): CaseStudyRecord | null {

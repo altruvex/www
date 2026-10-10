@@ -31,14 +31,14 @@ export function IntentLinks({
   className,
 }: {
   question: string;
-  labels: Record<IntentSituation, string>;
+  labels: Partial<Record<IntentSituation, string>>;
   source: string;
   className?: string;
 }) {
   return (
     <p className={className}>
       <span>{question}</span>{" "}
-      {SITUATIONS.map((situation, index) => (
+      {SITUATIONS.filter((situation) => labels[situation]).map((situation, index) => (
         <Fragment key={situation}>
           {index > 0 && <span aria-hidden> · </span>}
           <TrackedCtaLink

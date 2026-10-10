@@ -9,6 +9,7 @@
     "new-build": "Starting something new",
     "replace-existing": "Replacing a site that isn’t working",
     "improve-existing": "Improving a live site",
-    "unsure": "Not sure yet"
-  }
+    "auditStart": "Not sure yet? <link>Start with a technical audit</link>. The {fee} fee is credited toward your build."
+  },
+  "capacity": "Taking on {count, plural, one {{count} project} other {{count} projects}} this quarter."
 }

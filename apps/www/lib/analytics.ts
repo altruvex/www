@@ -6,6 +6,9 @@ type Props = Record<string, string | number | boolean | null>;
 // primitives only: never a name, phone number or email.
 type EventMap = {
   estimator_started: { locale?: string };
+  // One per estimator question, the first time it is answered. `step` is the
+  // question's 0-based index in QUESTIONS (transparency-estimator/constants).
+  estimator_step_complete: { step: number; locale?: string };
   estimator_completed: { locale?: string; projectType?: string; complexity?: string };
   estimator_submitted: { locale?: string; projectType?: string; complexity?: string };
   contact_started: { locale?: string };
@@ -27,7 +30,7 @@ type EventMap = {
   recommendation_viewed: { nextStep: string; projectType: string };
   recommendation_accepted: {
     nextStep: string;
-    action: "consultation" | "proposal" | "whatsapp" | "pdf";
+    action: "consultation" | "proposal" | "send" | "whatsapp" | "pdf";
   };
 };
 

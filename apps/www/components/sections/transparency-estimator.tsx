@@ -15,7 +15,6 @@ import { useReveal } from "@/lib/motion";
 import { formatIndex, localizeNumbers } from "@/lib/utils/number";
 import {
   fillScopeTokens,
-  isValidPhone,
   mapProjectType,
   type TransparencyTranslator,
 } from "@/lib/utils/transparency-utils";
@@ -44,6 +43,7 @@ import {
   CONDITION_QUESTIONS,
   COMPLEXITY_TIER,
   ESTIMATOR_STEP,
+  QUESTIONS,
   TOTAL,
 } from "./transparency-estimator/constants";
 import { useReached } from "./transparency-estimator/hooks";
@@ -121,6 +121,8 @@ export function TransparencyEstimator({
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
   const [note, setNote] = useState("");
+  // Honeypot: hidden from people; a value here means a bot filled the form.
+  const [website, setWebsite] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -221,6 +223,19 @@ export function TransparencyEstimator({
     trackEvent("estimator_started", { locale: schemaLocale });
   }, [answeredCount, schemaLocale]);
 
+  // One step event per question, the first time the visitor answers it. A
+  // re-answer never fires again; a preset project type is not an answer.
+  const stepsTracked = useRef(
+    new Set<QuestionKey>(QUESTIONS.filter((q) => answers[q.key]).map((q) => q.key)),
+  );
+  useEffect(() => {
+    QUESTIONS.forEach((question, step) => {
+      if (!answers[question.key] || stepsTracked.current.has(question.key)) return;
+      stepsTracked.current.add(question.key);
+      trackEvent("estimator_step_complete", { step, locale: schemaLocale });
+    });
+  }, [answers, schemaLocale]);
+
   const completedTracked = useRef(false);
   useEffect(() => {
     if (!complete) {
@@ -249,6 +264,7 @@ export function TransparencyEstimator({
     setEmail("");
     setCompany("");
     setNote("");
+    setWebsite("");
     setPhoneError(null);
     setEmailError(null);
     setSubmitted(false);
@@ -257,12 +273,20 @@ export function TransparencyEstimator({
   }, [reset]);
 
   const submit = useCallback(async () => {
-    if (!phone.trim()) {
-      setPhoneError(tPM("form.errors.phoneEmpty"));
-      return;
-    }
-    if (!isValidPhone(phone)) {
-      setPhoneError(tPM("form.errors.phoneInvalid"));
+    // Same schema as the route: an email, a WhatsApp number, or both.
+    // Loaded on submit so zod stays out of the estimator's first load.
+    const { createEstimateContactSchema } = await import(
+      "@/lib/validations/transparency-lead"
+    );
+    const contact = createEstimateContactSchema((key) => tValidations(key)).safeParse({
+      phone,
+      email,
+    });
+    if (!contact.success) {
+      const issueFor = (field: "phone" | "email") =>
+        contact.error.issues.find((issue) => issue.path[0] === field)?.message ?? null;
+      setEmailError(issueFor("email"));
+      setPhoneError(issueFor("phone"));
       return;
     }
 
@@ -278,7 +302,7 @@ export function TransparencyEstimator({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           locale: schemaLocale,
-          phone,
+          phone: phone.trim() || undefined,
           name: name || undefined,
           email: email || undefined,
           company: company || undefined,
@@ -289,6 +313,7 @@ export function TransparencyEstimator({
           contentReadiness: contentReadiness ?? undefined,
           scopeNotes,
           note: note.trim() || undefined,
+          website: website || undefined,
           priceMin: estimate.minPrice,
           priceMax: estimate.maxPrice,
           weeksMin: estimate.minWeeks,
@@ -310,7 +335,7 @@ export function TransparencyEstimator({
         }
         if (fields.phone) {
           setPhoneError(
-            fieldErrorMessage(tValidations, fields.phone, tPM("form.errors.phoneInvalid")),
+            fieldErrorMessage(tValidations, fields.phone, tValidations("transparency-lead.phone")),
           );
         } else if (!fields.email) {
           setPhoneError(tValidations(FORM_ERROR_KEY[result.code]));
@@ -344,8 +369,8 @@ export function TransparencyEstimator({
     schemaLocale,
     scopeNotes,
     timeline,
-    tPM,
     tValidations,
+    website,
   ]);
 
   const downloadPdf = useCallback(async () => {
@@ -515,6 +540,8 @@ export function TransparencyEstimator({
               setCompany={setCompany}
               note={note}
               setNote={setNote}
+              website={website}
+              setWebsite={setWebsite}
               phoneError={phoneError}
               emailError={emailError}
               submitting={submitting}

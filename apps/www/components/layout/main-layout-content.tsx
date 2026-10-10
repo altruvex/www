@@ -2,9 +2,16 @@
 
 import { Nav } from "@/components/layout/nav";
 import { useLoading } from "@/components/providers/loading-provider";
+import { usePathname } from "@/i18n/navigation";
+import { cn } from "@/lib/utils/utils";
 import { layoutChildren } from "@/types";
 import { useEffect } from "react";
 import { Footer } from "./footer";
+import {
+  MOBILE_CONTACT_BAR_SPACE,
+  MobileContactBar,
+  showsMobileContactBar,
+} from "./mobile-contact-bar";
 
 function AnimationController() {
   const { isInitialLoadComplete } = useLoading();
@@ -34,6 +41,7 @@ function AnimationController() {
 }
 
 export function MainLayoutContent({ children }: layoutChildren) {
+  const hasContactBar = showsMobileContactBar(usePathname());
   return (
     <main
       id="main-content"
@@ -42,8 +50,16 @@ export function MainLayoutContent({ children }: layoutChildren) {
     >
       <AnimationController />
       <Nav />
-      <div className="relative z-10 rounded-b-panel-lg bg-background">{children}</div>
+      <div
+        className={cn(
+          "relative z-10 rounded-b-panel-lg bg-background",
+          hasContactBar && MOBILE_CONTACT_BAR_SPACE,
+        )}
+      >
+        {children}
+      </div>
       <Footer />
+      <MobileContactBar />
     </main>
   );
 }

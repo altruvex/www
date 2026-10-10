@@ -49,5 +49,10 @@
   },
   "loader": {
     "welcome": "Welcome."
+  },
+  "mobileContactBar": {
+    "label": "Quick contact",
+    "whatsapp": "WhatsApp",
+    "whatsappMessage": "Hi Altruvex, I'd like to talk about a project."
   }
 }

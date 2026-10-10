@@ -111,6 +111,12 @@ export const Footer = memo(function Footer() {
     [t, navT],
   );
 
+  // Profiles come from config; an empty value is skipped rather than rendered.
+  const socialLinks = [
+    { href: SITE_CONFIG.founder.linkedin, label: "LinkedIn" },
+    { href: SITE_CONFIG.founder.github, label: "GitHub" },
+  ].filter(({ href }) => Boolean(href));
+
   const legalLinks = [
     { href: "/privacy", label: t("privacy") },
     { href: "/terms", label: t("terms") },
@@ -143,7 +149,7 @@ export const Footer = memo(function Footer() {
 
         <nav
           aria-label={t("navLabel")}
-          className="mt-(--section-block) grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border-subtle pt-8 lg:grid-cols-4"
+          className="mt-(--section-block) grid grid-cols-2 gap-x-6 gap-y-9 border-t border-border-subtle pt-8 lg:grid-cols-5"
         >
           {linkColumns.map(({ title, links }) => (
             <div key={title}>
@@ -160,6 +166,25 @@ export const Footer = memo(function Footer() {
               </ul>
             </div>
           ))}
+          {socialLinks.length > 0 && (
+            <div>
+              <h3 className="eyebrow mb-3.5 text-muted-foreground">{t("socialTitle")}</h3>
+              <ul>
+                {socialLinks.map(({ href, label }) => (
+                  <li key={href}>
+                    <a
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={linkClass}
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div>
             <h3 className="eyebrow mb-3.5 text-muted-foreground">{t("directLines")}</h3>
             <dl>

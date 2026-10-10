@@ -57,6 +57,7 @@ export const SITE_CONFIG = {
       ar: "المؤسس والمهندس الرئيسي",
       en: "Founder & Lead Engineer",
     },
+    github: "https://github.com/ALiAbdelhadi",
     linkedin: "https://www.linkedin.com/in/ali-abdelhadi-65094b283/",
     name: "Ali Abdelhadi",
   },

@@ -2,8 +2,8 @@
   "altruvex-site": {
     "client": "Altruvex (our own site)",
     "industry": "Custom web development",
-    "name": "Altruvex.com — a bilingual Next.js studio website",
-    "summary": "A bilingual English and Arabic website on Next.js, with native right-to-left layout and a public project cost estimator.",
+    "name": "Altruvex.com — how we built our own site on Next.js",
+    "summary": "Our own site, not a client project: built on Next.js, with a layout that mirrors fully right to left and a public project cost estimator.",
     "scope": "Studio website · Arabic and English · Next.js",
     "glance": {
       "build": "Studio website",
@@ -13,7 +13,7 @@
     },
     "context": "Altruvex’s own website: the first place a prospective client checks how we build, in Arabic and in English.",
     "problem": "In a market where studios compete on price, the site had to show technical quality through what a visitor can open and test, without borrowing credibility it had not yet earned.",
-    "solution": "We built a bilingual site on a custom Next.js stack, with right-to-left layout designed in from the start and a public estimator that shows scope and a cost range before the first conversation.",
+    "solution": "We built the site on a custom Next.js stack, with right-to-left layout designed in from the start and a public estimator that shows scope and a cost range before the first conversation.",
     "decisions": [
       {
         "title": "Arabic designed in, not translated on top",
@@ -92,7 +92,7 @@
     "client": "NewLight",
     "industry": "Lighting & e-commerce",
     "name": "NewLight — a first online store for a lighting brand",
-    "summary": "NewLight's first online store: a custom bilingual storefront with a structured checkout, built for every device and installable on a phone.",
+    "summary": "NewLight's first online store: a custom storefront in Arabic and English with a structured checkout, built for every device and installable on a phone.",
     "scope": "First online store · Arabic and English · Next.js",
     "glance": {
       "build": "Online store",
@@ -120,7 +120,7 @@
       "Wishlist and product compare",
       "Installable as a web app"
     ],
-    "outcome": "NewLight’s first online store, live on custom architecture with <strong>bilingual journeys and a structured checkout.</strong>",
+    "outcome": "NewLight’s first online store, live on custom architecture with <strong>journeys in both languages and a structured checkout.</strong>",
     "techStack": [
       "Next.js App Router",
       "next-intl (EN/AR)",

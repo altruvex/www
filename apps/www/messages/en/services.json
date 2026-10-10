@@ -20,5 +20,6 @@
       "reply": "We read it and reply with questions or a proposed next step.",
       "call": "If it fits what we build, we schedule the initial project consultation call to scope it. If it does not, we say so, and why."
     }
-  }
+  },
+  "auditCredit": "The audit fee is credited toward your build."
 }

@@ -1,6 +1,6 @@
 {
   "allLive": "Live work you can inspect",
-  "description": "Two online stores for lighting retailers, and the site you are reading. <strong>Each one is public, so you can open it and test it</strong> instead of trusting screenshots. <dim>Each case study sets out the problem, what we built and the stack.</dim>",
+  "description": "Two online stores for lighting retailers, built for clients. <strong>Each one is public, so you can open it and test it</strong> instead of trusting screenshots. <dim>Each case study sets out the problem, what we built and the stack.</dim>",
   "labels": {
     "approach": "What we built",
     "backLink": "Back to all work",
@@ -23,14 +23,30 @@
     "glanceBuild": "Build",
     "glanceLanguages": "Languages",
     "glancePlatform": "Platform",
-    "glanceStatus": "Live at"
+    "glanceStatus": "Live at",
+    "ownSite": "Our own site",
+    "ownSiteNote": "Not client work. This page explains how we built the site you are reading.",
+    "measuredResults": "Measured results",
+    "before": "Before",
+    "after": "After",
+    "clientQuote": "In the client’s words",
+    "metrics": {
+      "loadTime": "Load time",
+      "lighthousePerformance": "Lighthouse performance",
+      "lighthouseAccessibility": "Lighthouse accessibility",
+      "lighthouseSeo": "Lighthouse SEO",
+      "conversionRate": "Conversion rate",
+      "monthlyOrders": "Orders per month"
+    }
   },
   "selectedWork": "Our work",
+  "ownSite": {
+    "eyebrow": "Not client work",
+    "body": "The site you are reading is ours. We keep it apart from client work, and wrote up how we built it.",
+    "link": "How we built this site"
+  },
   "sentence": "We built <newlight>NewLight's first online store</newlight>, a storefront for <art>Art Lighting Store</art> where fixtures can be seen <em>up close</em>, and <site>the site you are reading</site>.",
   "stages": {
-    "altruvex-site": {
-      "title": "Our own site"
-    },
     "art-lighting-store": {
       "title": "A storefront for fixtures you need to see up close"
     },

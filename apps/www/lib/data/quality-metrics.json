@@ -1,0 +1,28 @@
+{
+  "measuredOn": "2026-10-09",
+  "tool": "Lighthouse 12.8.2 (mobile, simulated throttling)",
+  "projects": [
+    {
+      "name": "Altruvex",
+      "url": "https://www.altruvex.com/",
+      "performance": 97,
+      "accessibility": 100,
+      "bestPractices": 96,
+      "seo": 92,
+      "lcpMs": 2376,
+      "cls": 0,
+      "tbtMs": 3
+    },
+    {
+      "name": "Art Lighting",
+      "url": "https://www.artlighting-eg.com/",
+      "performance": 84,
+      "accessibility": 86,
+      "bestPractices": 93,
+      "seo": 91,
+      "lcpMs": 4134,
+      "cls": 0,
+      "tbtMs": 20
+    }
+  ]
+}

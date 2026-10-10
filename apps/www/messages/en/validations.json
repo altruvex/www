@@ -35,7 +35,8 @@
     "phone": "Enter a phone or WhatsApp number — digits, spaces, + and - only.",
     "projectType": "Project type is required.",
     "scopeNotes": "Choose scope notes from the list.",
-    "timeline": "Timeline is required."
+    "timeline": "Timeline is required.",
+    "contactRequired": "Add an email or a WhatsApp number so we can send your estimate."
   },
   "errors": {
     "validation": "Some details need checking. Correct the marked fields, then send again.",

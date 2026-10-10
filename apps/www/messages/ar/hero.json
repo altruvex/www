@@ -9,6 +9,7 @@
     "new-build": "أبدأ مشروعًا جديدًا",
     "replace-existing": "أستبدل موقعًا لا يؤدي دوره",
     "improve-existing": "أطوّر موقعًا يعمل بالفعل",
-    "unsure": "لست متأكدًا بعد"
-  }
+    "auditStart": "لست متأكدًا بعد؟ <link>ابدأ بمراجعة تقنية</link>. رسوم المراجعة ({fee}) تُخصم من تكلفة التنفيذ."
+  },
+  "capacity": "نستقبل {count, plural, zero {{count} مشروع} one {مشروعًا واحدًا} two {مشروعين} few {{count} مشروعات} many {{count} مشروعًا} other {{count} مشروع}} هذا الربع."
 }

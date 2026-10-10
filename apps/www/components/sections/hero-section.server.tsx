@@ -1,10 +1,13 @@
 import { CtaButtonGroup } from "@/components/interactive/cta-button-group";
-import { IntentLinks } from "@/components/interactive/intent-links";
 import { Container } from "@/components/shared/container";
-import { DirectionalLink } from "@/components/shared/directional-link";
 import { Highlight } from "@repo/ui/www/emphasis";
+import { IntentLinks } from "@/components/interactive/intent-links";
 import { Eyebrow } from "@repo/ui/www/eyebrow";
+import { TrackedCtaLink } from "@/components/interactive/tracked-cta-link";
+import { CAPACITY } from "@/lib/config/capacity";
 import { getCommercialCta } from "@/lib/config/commercial";
+import { getPublicPricing } from "@/lib/server/pricing";
+import { consultingView, type Locale } from "@repo/pricing-schema";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { HeroStage } from "./hero-stage";
@@ -12,6 +15,11 @@ import { HeroStage } from "./hero-stage";
 export async function HeroSectionServer({ locale }: { locale: string }) {
   const t = await getTranslations({ locale, namespace: "hero" });
   const tCTAs = await getTranslations({ locale, namespace: "commercial.ctas" });
+
+  const pricing = await getPublicPricing();
+  const auditFee = consultingView("technical-audit", locale as Locale, pricing).creditAmountLabel;
+  const auditCta = getCommercialCta("technicalAudit");
+  const capacity = CAPACITY.projects !== null && CAPACITY.projects > 0 ? CAPACITY.projects : null;
 
   const primaryCta = getCommercialCta("describeTheBuild");
   const secondaryCta = getCommercialCta("projectRange");
@@ -22,7 +30,10 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
       aria-labelledby="home-heading"
       className="relative z-10"
     >
-      <HeroStage className="hero-stage relative isolate flex h-[88svh] min-h-150 flex-col justify-end overflow-clip text-foreground md:h-[calc(100svh-1.5rem)] md:min-h-160">
+      {/* Below md the stage grows with its content (min-h, not h): the stacked
+          phone hero is taller than 88svh, and a fixed height pushed the eyebrow
+          and title up under the header. pt-24 keeps them clear of the 56px bar. */}
+      <HeroStage className="hero-stage relative isolate flex min-h-[max(88svh,37.5rem)] flex-col justify-end overflow-clip pt-24 text-foreground md:h-[calc(100svh-1.5rem)] md:min-h-160 md:pt-0">
         <div data-hero-photo aria-hidden className="hero-photo">
           <div data-hero-zoom className="absolute inset-0">
             <Image
@@ -81,17 +92,18 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
             >
               <CtaButtonGroup
                 primary={{ href: primaryCta.href, label: tCTAs("describeTheBuild") }}
+                secondary={{ href: secondaryCta.href, label: tCTAs("projectRange") }}
+                secondaryArrow
               />
-              <DirectionalLink
-                href={secondaryCta.href}
-                className="min-h-6 rounded-ctl-sm text-base text-foreground/80 transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
-              >
-                {tCTAs("projectRange")}
-              </DirectionalLink>
             </div>
             <p data-arrive="element" className="max-w-[44ch] text-sm text-pretty text-foreground/72 xl:max-w-[36ch] rtl:max-w-[40ch] rtl:xl:max-w-[34ch]">
               {t("note")}
             </p>
+            {capacity !== null && (
+              <p data-arrive="element" className="max-w-[44ch] text-sm text-pretty text-foreground/72 xl:max-w-[36ch] rtl:max-w-[40ch] rtl:xl:max-w-[34ch]">
+                {t("capacity", { count: capacity })}
+              </p>
+            )}
           </div>
           <div data-arrive="element" className="xl:col-span-2">
             <IntentLinks
@@ -101,10 +113,26 @@ export async function HeroSectionServer({ locale }: { locale: string }) {
                 "new-build": t("intent.new-build"),
                 "replace-existing": t("intent.replace-existing"),
                 "improve-existing": t("intent.improve-existing"),
-                unsure: t("intent.unsure"),
               }}
-              className="text-sm leading-[1.9] text-pretty text-foreground/72"
+              className="hidden text-sm leading-[1.9] text-pretty text-foreground/72 md:block"
             />
+            {auditFee !== null && (
+              <p className="text-sm leading-[1.9] md:mt-1 text-pretty text-foreground/72">
+                {t.rich("intent.auditStart", {
+                  fee: auditFee,
+                  link: (chunks) => (
+                    <TrackedCtaLink
+                      href={auditCta.href}
+                      ctaKey="technicalAudit"
+                      ctaContext="source=home-hero-audit"
+                      className="min-h-6 rounded-ctl-sm text-foreground underline decoration-foreground/30 underline-offset-4 transition-colors duration-(--motion-drawer) ease-smooth outline-none hover:decoration-current focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background pointer-coarse:min-h-11"
+                    >
+                      {chunks}
+                    </TrackedCtaLink>
+                  ),
+                })}
+              </p>
+            )}
           </div>
         </Container>
       </HeroStage>

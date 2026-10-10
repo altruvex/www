@@ -109,6 +109,12 @@ export async function POST(request: NextRequest) {
       return tooManyRequests(rl.retryAfterSeconds);
     }
 
+    // Honeypot: a field people never see. A bot that fills it gets the same
+    // shape as a real success and nothing is stored (as the contact form).
+    if (typeof body.website === "string" && body.website.trim().length > 0) {
+      return NextResponse.json({ ok: true, code: "received" }, { status: 200 });
+    }
+
     const validatedData = transparencyLeadSchema.parse(body);
     const attribution = readAttribution(request, body);
 
@@ -143,7 +149,8 @@ export async function POST(request: NextRequest) {
         lead = await prisma.transparencyLead.create({
           data: {
             reference: newReference(),
-            phone: validatedData.phone,
+            // An email-only request stores no number.
+            phone: validatedData.phone || null,
             name: validatedData.name,
             email: validatedData.email,
             company: validatedData.company,
@@ -174,13 +181,16 @@ export async function POST(request: NextRequest) {
 
     if (!lead) throw new Error("Could not allocate an estimate reference");
 
-    await linkClientToLead({
-      phone: validatedData.phone,
-      name: validatedData.name,
-      email: validatedData.email,
-      source: "TRANSPARENCY_ESTIMATOR",
-      transparencyLeadId: lead.id,
-    });
+    // A client is keyed by phone, or by email for an email-only request.
+    if (validatedData.phone || validatedData.email) {
+      await linkClientToLead({
+        phone: validatedData.phone || null,
+        name: validatedData.name,
+        email: validatedData.email,
+        source: "TRANSPARENCY_ESTIMATOR",
+        transparencyLeadId: lead.id,
+      });
+    }
 
     await notifyAdmins({
       leadId: lead.id,
@@ -191,6 +201,7 @@ export async function POST(request: NextRequest) {
         `${formatWeeks(estimate.minWeeks, estimate.maxWeeks, "en")} weeks`,
         `timeline ${validatedData.timeline}`,
         read && `next step ${read.nextStep}`,
+        validatedData.phone ? "reply by WhatsApp" : "reply by email only",
         attribution.utmSource && `via ${attribution.utmSource}`,
       ]
         .filter(Boolean)

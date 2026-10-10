@@ -93,5 +93,22 @@
       "percent": "{value}%",
       "ratio": "{value}:1"
     }
+  },
+  "measured": {
+    "eyebrow": "قياس فعلي",
+    "title": "نتائج مقاسة",
+    "titleItalic": "على أعمالنا المنشورة.",
+    "description": "نتائج Lighthouse لمواقع منشورة بنيناها، بتاريخ القياس الموضح. لا يوجد هنا أي رقم تقديري.",
+    "measuredOn": "تاريخ القياس: {date}",
+    "caption": "نتائج مقاسة على أعمالنا المنشورة",
+    "project": "الموقع",
+    "performance": "الأداء",
+    "accessibility": "إتاحة الوصول",
+    "bestPractices": "أفضل الممارسات",
+    "seo": "SEO",
+    "lcp": "LCP",
+    "cls": "CLS",
+    "tbt": "TBT",
+    "ms": "{value} ms"
   }
 }

@@ -261,7 +261,17 @@
     "title": "Your indicative range",
     "nextScopeReview": "We review your answers and scope notes, and confirm scope with you.",
     "nextProposal": "You receive one written proposal with the binding figure, valid for {days} days.",
-    "howCalculated": "How is this estimate calculated?"
+    "howCalculated": "How is this estimate calculated?",
+    "send": {
+      "open": "Send me this estimate",
+      "intro": "Leave an email or a WhatsApp number and we'll send you this estimate within 24 hours on business days. Before any proposal, we confirm scope with you.",
+      "contactHint": "Email or WhatsApp — one is enough.",
+      "whatsapp": "WhatsApp number",
+      "email": "Email",
+      "consent": "We'll use this only to send your estimate and follow up about it. See our <privacy>privacy policy</privacy>.",
+      "honeypot": "Leave this field empty",
+      "success": "Received. We'll send your estimate within 24 hours on business days, then confirm scope with you."
+    }
   },
   "startOver": "Start over",
   "steps": {

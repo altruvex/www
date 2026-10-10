@@ -5,6 +5,7 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { Container } from "@/components/shared/container";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { Eyebrow } from "@repo/ui/www";
+import { MeasuredBlock } from "./measured-block";
 import { Num } from "@/components/ui/num";
 import { bodyMarks } from "@/components/ui/rich-text";
 import {
@@ -32,6 +33,9 @@ export default function StandardsPage() {
         {STANDARDS.map((standard, index) => (
           <Chapter key={standard.id} standard={standard} index={index} />
         ))}
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <MeasuredBlock />
       </ErrorBoundary>
       <ErrorBoundary>
         <GateSection />

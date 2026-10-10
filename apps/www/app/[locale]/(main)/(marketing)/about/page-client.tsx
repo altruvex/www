@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { memo } from "react";
 import { FitRegisterSection } from "./fit-register";
+import { FounderBlockSection } from "./founder-block";
 import { PrincipleIndexSection } from "./principle-index";
 import { StudioFactsSection } from "./studio-facts";
 
@@ -25,6 +26,9 @@ export default memo(function AboutPageClient() {
       <PhotoStage />
       <ErrorBoundary>
         <StudioFactsSection />
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <FounderBlockSection />
       </ErrorBoundary>
       <ErrorBoundary>
         <PrincipleIndexSection />

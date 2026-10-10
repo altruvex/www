@@ -3,10 +3,10 @@
 import { MagneticButton } from "@/components/magnetic-button";
 import { ArrowIcon, Input, Label, Textarea } from "@repo/ui";
 import { Eyebrow } from "@repo/ui/www";
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { ctaContextQuery, getCommercialCta } from "@/lib/config/commercial";
-import { CASE_STUDIES } from "@/lib/data/case-studies";
+import { getClientCaseStudies } from "@/lib/data/case-studies";
 import { TrackedCtaLink } from "@/components/interactive/tracked-cta-link";
 import { motion, scrollToY, useSectionCardGrid } from "@/lib/motion";
 import { cn } from "@/lib/utils/utils";
@@ -235,7 +235,7 @@ function PreliminaryRead({
             {tPM("result.read.related.label")}
           </dt>
           <dd className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-            {CASE_STUDIES.filter((study) => study.projectType === read.service).map(
+            {getClientCaseStudies().filter((study) => study.projectType === read.service).map(
               (study) => (
                 <TrackedCtaLink
                   key={study.slug}
@@ -275,6 +275,7 @@ function Field({
   required = false,
   autoComplete,
   inputRef,
+  describedBy,
 }: {
   id: string;
   label: string;
@@ -286,8 +287,12 @@ function Field({
   required?: boolean;
   autoComplete?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+  /** Id of a hint shared by several fields. */
+  describedBy?: string;
 }) {
   const messageId = `${id}-error`;
+  const describedByIds =
+    [describedBy, error ? messageId : null].filter(Boolean).join(" ") || undefined;
 
   return (
     <div>
@@ -308,7 +313,7 @@ function Field({
         normalize={type === "tel"}
         aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? messageId : undefined}
+        aria-describedby={describedByIds}
       />
       {error ? (
         <p
@@ -368,7 +373,10 @@ function SecondaryLink({
     return (
       <a
         href={href}
-        onClick={(event) => goToSection(event, href.slice(1))}
+        onClick={(event) => {
+          onClick?.();
+          goToSection(event, href.slice(1));
+        }}
         className={className}
       >
         <span>{label}</span>
@@ -411,6 +419,8 @@ export function ResultPanel({
   setCompany,
   note,
   setNote,
+  website,
+  setWebsite,
   phoneError,
   emailError,
   submitting,
@@ -441,6 +451,8 @@ export function ResultPanel({
   setCompany: (v: string) => void;
   note: string;
   setNote: (v: string) => void;
+  website: string;
+  setWebsite: (v: string) => void;
   phoneError: string | null;
   emailError: string | null;
   submitting: boolean;
@@ -454,17 +466,20 @@ export function ResultPanel({
   const tPM = useTranslations("pricingModel");
   const tCta = useTranslations("commercial.ctas");
   const locale: Locale = toLocale(useLocale());
+  const page = usePathname();
   const Heading = headingLevel === 2 ? "h2" : "h3";
   const Subheading = headingLevel === 2 ? "h3" : "h4";
 
   const [formOpen, setFormOpen] = useState(false);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (formOpen) phoneRef.current?.focus();
+    if (formOpen) emailRef.current?.focus();
   }, [formOpen]);
   useEffect(() => {
     if (phoneError) phoneRef.current?.focus();
-  }, [phoneError]);
+    else if (emailError) emailRef.current?.focus();
+  }, [phoneError, emailError]);
 
   const matrixWindow = deliveryWindowFrom(pricing);
   const schedule = paymentScheduleView(locale, pricing);
@@ -488,12 +503,19 @@ export function ResultPanel({
       projectType: read.service,
     });
   }, [read]);
-  const accept = (action: "consultation" | "proposal" | "whatsapp" | "pdf") => {
+  const accept = (action: "consultation" | "proposal" | "send" | "whatsapp" | "pdf") => {
     if (read) trackEvent("recommendation_accepted", { nextStep: read.nextStep, action });
   };
-  const openForm = () => {
-    accept("proposal");
+  // Result-panel controls that are not an answer to the read.
+  const trackPanelCta = (key: string) =>
+    trackEvent("contextual_cta_clicked", { key, page, context: "source=estimator-result" });
+  const openForm = (action: "proposal" | "send") => {
+    accept(action);
     setFormOpen(true);
+  };
+  const startOver = () => {
+    trackPanelCta("estimatorStartOver");
+    onStartOver();
   };
 
   const scopeRef = useSectionCardGrid<HTMLUListElement>({
@@ -510,8 +532,8 @@ export function ResultPanel({
     t("results.whatsappMessage", { reference: reference ?? "—" }),
   )}`;
 
-  const labelFor = (key: "phone" | "name" | "email" | "company" | "note") =>
-    `${tPM(`form.${key}`)} — ${tPM(key === "phone" ? "form.required" : "form.optional")}`;
+  const labelFor = (key: "name" | "company" | "note") =>
+    `${tPM(`form.${key}`)} — ${tPM("form.optional")}`;
 
   return (
     <section
@@ -670,7 +692,7 @@ export function ResultPanel({
                 strokeWidth={2}
                 className="mt-1 size-4 shrink-0 text-local-accent"
               />
-              {tPM("form.success")}
+              {t("results.send.success")}
             </p>
             <div className="mt-7 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
               <MagneticButton
@@ -692,7 +714,7 @@ export function ResultPanel({
                   </>
                 )}
               </MagneticButton>
-              <StartOverButton label={t("startOver")} onClick={onStartOver} />
+              <StartOverButton label={t("startOver")} onClick={startOver} />
             </div>
           </div>
           <div className="lg:col-span-7 lg:border-s lg:border-border-subtle lg:ps-16">
@@ -751,7 +773,7 @@ export function ResultPanel({
                   </MagneticButton>
                   <button
                     type="button"
-                    onClick={openForm}
+                    onClick={() => openForm("proposal")}
                     aria-expanded={false}
                     aria-controls="estimate-request-form"
                     className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text"
@@ -765,7 +787,7 @@ export function ResultPanel({
                   <MagneticButton
                     variant="primary"
                     size="lg"
-                    onClick={openForm}
+                    onClick={() => openForm("proposal")}
                     aria-expanded={false}
                     aria-controls="estimate-request-form"
                     className="w-full sm:w-auto"
@@ -779,11 +801,22 @@ export function ResultPanel({
                   />
                 </>
               )}
+              <button
+                type="button"
+                onClick={() => openForm("send")}
+                aria-expanded={false}
+                aria-controls="estimate-request-form"
+                className="group inline-flex min-h-11 items-center gap-2 text-sm font-medium text-foreground transition-colors ease-smooth hover:text-local-accent-text"
+              >
+                <span>{t("results.send.open")}</span>
+                <ArrowIcon />
+              </button>
               <SecondaryLink
                 href={`#${ESTIMATE_METHOD_ID}`}
                 label={t("results.howCalculated")}
+                onClick={() => trackPanelCta("estimateMethod")}
               />
-              <StartOverButton label={t("startOver")} onClick={onStartOver} />
+              <StartOverButton label={t("startOver")} onClick={startOver} />
             </div>
           ) : (
             <form
@@ -796,20 +829,38 @@ export function ResultPanel({
               }}
             >
               <p className="max-w-[56ch] text-sm leading-relaxed text-muted-foreground">
-                {tPM("form.intro")}
+                {t("results.send.intro")}
               </p>
-              <div className="mt-7 grid gap-5 sm:grid-cols-2">
+              <p
+                id="estimate-contact-hint"
+                className="mt-5 text-xs font-medium leading-relaxed text-foreground"
+              >
+                {t("results.send.contactHint")}
+              </p>
+              <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                <Field
+                  id="estimate-email"
+                  label={t("results.send.email")}
+                  value={email}
+                  onChange={setEmail}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  error={emailError}
+                  inputRef={emailRef}
+                  describedBy="estimate-contact-hint"
+                />
                 <Field
                   id="estimate-phone"
-                  label={labelFor("phone")}
+                  label={t("results.send.whatsapp")}
                   value={phone}
                   onChange={setPhone}
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
-                  required
                   error={phoneError}
                   inputRef={phoneRef}
+                  describedBy="estimate-contact-hint"
                 />
                 <Field
                   id="estimate-name"
@@ -817,16 +868,6 @@ export function ResultPanel({
                   value={name}
                   onChange={setName}
                   autoComplete="name"
-                />
-                <Field
-                  id="estimate-email"
-                  label={labelFor("email")}
-                  value={email}
-                  onChange={setEmail}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  error={emailError}
                 />
                 <Field
                   id="estimate-company"
@@ -851,8 +892,33 @@ export function ResultPanel({
                   />
                 </div>
               </div>
+              {/* Honeypot: off-screen and out of the tab order; people never fill it. */}
+              <div aria-hidden className="sr-only">
+                <label htmlFor="estimate-website">{t("results.send.honeypot")}</label>
+                <input
+                  id="estimate-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
+              </div>
               <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
                 {tPM("form.attached")}
+              </p>
+              <p className="mt-2 max-w-[64ch] text-xs leading-relaxed text-muted-foreground">
+                {t.rich("results.send.consent", {
+                  privacy: (chunks) => (
+                    <Link
+                      href="/privacy"
+                      className={RELATED_LINK}
+                    >
+                      {chunks}
+                    </Link>
+                  ),
+                })}
               </p>
               <div className="mt-7 flex flex-col items-stretch gap-4 sm:flex-row sm:items-center">
                 <MagneticButton
@@ -864,7 +930,7 @@ export function ResultPanel({
                 >
                   {tPM("form.send")}
                 </MagneticButton>
-                <StartOverButton label={t("startOver")} onClick={onStartOver} />
+                <StartOverButton label={t("startOver")} onClick={startOver} />
               </div>
             </form>
           )}

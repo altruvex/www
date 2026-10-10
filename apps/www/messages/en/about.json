@@ -87,5 +87,14 @@
       "A project with no one to make decisions",
       "A fixed price before anyone has looked at the problem"
     ]
+  },
+  "founder": {
+    "title": "Who runs it",
+    "titleItalic": "and where.",
+    "founderTitle": "Founder",
+    "photoAlt": "{name}, {role}",
+    "location": "Based in Cairo, Egypt.",
+    "registry": "Commercial registry",
+    "taxId": "Tax ID"
   }
 }
