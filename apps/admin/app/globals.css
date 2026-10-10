@@ -52,9 +52,6 @@
   --sidebar-accent: var(--muted);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
-
-  --glass-blur: blur(8px) saturate(118%);
-  --glass-blur-soft: blur(6px) saturate(110%);
 }
 
 .dark {

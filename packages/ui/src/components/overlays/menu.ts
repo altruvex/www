@@ -8,6 +8,9 @@ export const menuItem =
   "transition-colors duration-[var(--dur-state)] " +
   // A translucent tint, not a solid fill: it reads on the glass surface in both themes.
   "focus:bg-foreground/10 focus:text-foreground data-[highlighted]:bg-foreground/10 data-[highlighted]:text-foreground active:bg-foreground/15 " +
+  // Plain :hover as well. Radix paints a row from focus (data-highlighted); inside a modal dialog
+  // its focus trap can take that focus back, which left hovered rows with no tint at all.
+  "hover:bg-foreground/10 hover:text-foreground " +
   // cmdk marks its active item data-selected; Radix marks its own data-highlighted.
   "data-[selected=true]:bg-foreground/10 data-[selected=true]:text-foreground " +
   // Radix sets data-disabled="" when disabled; cmdk sets data-disabled="false" on EVERY item,
@@ -16,7 +19,7 @@ export const menuItem =
   "[&_svg]:size-3.5 [&_svg]:shrink-0 [&_svg:not([class*='text-'])]:text-subtle-foreground";
 
 export const menuItemDestructive =
-  "text-danger focus:bg-danger/10 focus:text-danger active:bg-danger/15 data-[highlighted]:bg-danger/10 data-[highlighted]:text-danger data-[selected=true]:bg-danger/10 data-[selected=true]:text-danger [&_svg]:text-danger";
+  "text-danger hover:bg-danger/10 hover:text-danger focus:bg-danger/10 focus:text-danger active:bg-danger/15 data-[highlighted]:bg-danger/10 data-[highlighted]:text-danger data-[selected=true]:bg-danger/10 data-[selected=true]:text-danger [&_svg]:text-danger";
 
 export const menuItemIndented = "ps-7";
 
