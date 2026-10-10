@@ -107,6 +107,11 @@ def hook(x):
 BOWL_A = stroke(arc(278, 235, 201, 210, 0, 360), ring=True)
 BOWL_G = stroke(arc(277, 243, 201, 204, 0, 360), ring=True)
 F_TOP = arc(309.5, 550, 134, 134, 44, 180)
+# The upright t has a longer crossbar (tools/glyph_edits.py); the drawn t follows it: the bar keeps
+# its left end, the stem and the right end move by one and two extensions of the 307-unit bar.
+import config as _config
+_bw = _config.load().bar_widening
+T_EXT = _bw.percent / 200 * 307 if _bw else 0.0
 bar = lambda x0, x1: ("bar", [(x0, 438.5), (x1, 438.5)], None, None, 31.5)
 
 
@@ -150,7 +155,7 @@ def glyphs():
         "q": ([BOWL_A, stem(479.5, -198, XH)], False, "q"),
         "r": ([stem(106), stroke(arc(270, 282, 164, 165, 180, 50))], False, "r"),
         "s": ("s", False, "s"),
-        "t": ([leg(179, 710, 668), bar(25, 332)], True, "|t"),
+        "t": ([leg(179 + T_EXT, 710, 668), bar(25, 332 + 2 * T_EXT)], True, "|t"),
         "u": ([stroke(u_cup, hi=XH), leg(420, 510, XH)], True, "u"),
         "y": ([stroke(u_cup, hi=XH), stroke(hook(420), hi=XH)], "g", "u"),  # u on the left, g on the right
     }
@@ -683,7 +688,18 @@ def jsonable(v):
     return list(v) if isinstance(v, tuple) else v
 
 
+# Frozen (Ali, 2026-10-10): the Latin upright moved to Inter, but the italic stays the drawn italic
+# exactly as it was built on Outfit (frozen/italic-outfit-2026-10-03/, the files committed before
+# the rebase; tools/italic_fit.py scales them to the Inter x-height). The drawing above reads the built upright, so running it on Inter would change every
+# glyph; the script refuses instead of overwriting the frozen files.
+FROZEN_ON = "inter"
+
+
 if __name__ == "__main__":
+    if _config.load().families["latin"].source == FROZEN_ON:
+        raise SystemExit("italic.py: the drawn italic is frozen (Ali, 2026-10-10) in "
+                         "frozen/italic-outfit-2026-10-03/; tools/italic_fit.py scales it to the "
+                         "Inter upright and writes dist/web.")
     m3 = Measures(300)
     report = {}
     for w in WEIGHTS:

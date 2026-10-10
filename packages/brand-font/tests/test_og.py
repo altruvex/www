@@ -26,9 +26,12 @@ def _og(cfg, out_dir, key, weight):
 
 
 def _shape(blob: bytes, text: str, weight: int | None) -> list[tuple[int, int]]:
-    font = hb.Font(hb.Face(blob))
+    face = hb.Face(blob)
+    font = hb.Font(face)
     if weight is not None:
-        font.set_variations({"wght": weight})
+        # An opsz axis (the Latin, since 2026-10-10) is drawn at the cut the OG instance pins.
+        opsz = {"opsz": build_mod.OG_OPSZ} if any(a.tag == "opsz" for a in face.axis_infos) else {}
+        font.set_variations({"wght": weight, **opsz})
     buf = hb.Buffer()
     buf.add_str(text)
     buf.guess_segment_properties()

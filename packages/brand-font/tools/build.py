@@ -20,6 +20,7 @@ from fontTools.ttLib import TTFont
 from fontTools.ttLib.scaleUpem import scale_upem
 from fontTools.varLib import instancer
 
+import glyph_edits
 import integrity
 import licensing
 import measure
@@ -49,11 +50,11 @@ def requested_unicodes(fam: Family) -> set[int]:
     return parse_unicodes(fam.unicodes + fam.required_unicodes)
 
 
-def subset_font(font: TTFont, unicodes: set[int]) -> None:
-    """Keep the requested codepoints, every glyph they reach through GSUB, and all layout
-    features and names. Glyphs are removed, never added or changed."""
+def subset_font(font: TTFont, unicodes: set[int], features: list[str] | None = None) -> None:
+    """Keep the requested codepoints, every glyph they reach through GSUB, the layout features
+    asked for (all when None) and all names. Glyphs are removed, never added or changed."""
     opts = subset.Options()
-    opts.layout_features = ["*"]
+    opts.layout_features = features if features is not None else ["*"]
     opts.name_IDs = ["*"]
     opts.name_languages = ["*"]
     opts.notdef_outline = True
@@ -131,6 +132,25 @@ def rename(font: TTFont, fam: Family, version: str) -> None:
     name.removeNames(platformID=1)
 
 
+def drop_opsz_axis_values(font: TTFont) -> None:
+    """Inter's STAT names its opsz stops ("16pt", "32pt"), and "Altruvex Sans Latin 16pt ExtraBold"
+    passes the 31-character limit some apps hold family + style to. The opsz axis record and its
+    elidable default ("14pt", flag 2, never shown) stay; the named stops go, so the weight names
+    are the only styles a menu builds."""
+    if "STAT" not in font or "fvar" not in font:
+        return
+    stat = font["STAT"].table
+    tags = [a.AxisTag for a in stat.DesignAxisRecord.Axis]
+    if "opsz" not in tags or not stat.AxisValueArray:
+        return
+    opsz = tags.index("opsz")
+    keep = [v for v in stat.AxisValueArray.AxisValue
+            if (v.Flags & 2 or getattr(v, "AxisIndex", None) != opsz)
+            and all(r.AxisIndex != opsz for r in getattr(v, "AxisValueRecord", []))]
+    stat.AxisValueArray.AxisValue = keep
+    stat.AxisValueCount = len(keep)
+
+
 def save_woff2(font: TTFont, path: Path, timestamp: int) -> None:
     font["head"].modified = timestamp
     font.recalcTimestamp = False
@@ -148,8 +168,10 @@ def build_family(cfg: Config, key: str, out_dir: Path) -> tuple[Path, list[str]]
     # the output depends on the inputs only, not on what else is installed.
     font = TTFont(src.path(fam.source, "font"), cfg=PACKER)
     if fam.unicodes is not None:
-        subset_font(font, requested_unicodes(fam))
+        subset_font(font, requested_unicodes(fam), fam.layout_features)
     glyph_map = font.getGlyphOrder()  # still the source's names; dropped only on save
+    if key == "latin" and cfg.bar_widening:
+        glyph_edits.widen_bars(font, cfg.bar_widening.percent)
     if fam.scale:
         sc = fam.scale
         if font["head"].unitsPerEm != sc.source_upm:
@@ -160,10 +182,14 @@ def build_family(cfg: Config, key: str, out_dir: Path) -> tuple[Path, list[str]]
         remap_weight(font, pairs)
     if fam.unicodes is not None or fam.scale:
         font["OS/2"].recalcAvgCharWidth(font)  # the subset and the scale both change it
+    drop_opsz_axis_values(font)
     rename(font, fam, cfg.build.version)
     path = out_dir / fam.output
     save_woff2(font, path, ot_timestamp(cfg.build.timestamp))
     return path, glyph_map
+
+
+OG_OPSZ = 32
 
 
 def og_filename(fam: Family, weight: int) -> str:
@@ -180,6 +206,10 @@ def build_og(cfg: Config, key: str, vf_path: Path, og_dir: Path) -> list[Path]:
     paths = []
     for weight in OG_WEIGHTS:
         vf = TTFont(vf_path, cfg=PACKER)
+        if any(a.axisTag == "opsz" for a in vf["fvar"].axes):
+            # OG cards are headline text: the display cut. Pinned on its own first because Inter's
+            # STAT names no opsz 32 value, which updateFontNames would refuse.
+            vf = instancer.instantiateVariableFont(vf, {"opsz": OG_OPSZ})
         font = instancer.instantiateVariableFont(vf, {"wght": weight}, updateFontNames=True)
         font["head"].modified = ot_timestamp(cfg.build.timestamp)
         font.recalcTimestamp = False
@@ -311,7 +341,8 @@ def build(out_dir: Path, report_path: Path | None, og_dir: Path | None = None) -
         requested = requested_unicodes(fam) if fam.unicodes is not None else None
         k = fam.scale.k if fam.scale else 1.0
         tol = fam.scale.rounding_tolerance_units if fam.scale else 0.0
-        rep["glyphs"][key] = g = integrity.compare(upstream, out, glyph_map, k, tol, requested)
+        edited = set(glyph_edits.EDITED) if key == "latin" and cfg.bar_widening else set()
+        rep["glyphs"][key] = g = integrity.compare(upstream, out, glyph_map, k, tol, requested, edited)
         if fam.unicodes is not None:
             cmap = out.getBestCmap()
             g["required_missing"] = [f"U+{c:04X}" for c in sorted(parse_unicodes(fam.required_unicodes))

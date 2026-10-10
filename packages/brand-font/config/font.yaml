@@ -1,6 +1,6 @@
 # Altruvex Sans (Track A) — build configuration.
 #
-# Track A is an interim OFL derivative of Outfit and Vazirmatn. It is not a proprietary or
+# Track A is an interim OFL derivative of Inter (Latin; Outfit until 2026-10-10) and Vazirmatn. It is not a proprietary or
 # custom-drawn typeface. Every value that shapes the output lives here; tools/build.py reads
 # nothing else.
 
@@ -11,22 +11,26 @@ build:
   timestamp: "2026-09-29T00:00:00Z"
 
 # Pinned upstream sources. fetch.py downloads them into sources/<key>/ and the build refuses to
-# run if a SHA-256 does not match. Both files are taken from google/fonts at one commit, which is
-# also what next/font/google serves to apps/www today.
+# run if a SHA-256 does not match. Files are taken from google/fonts at a pinned commit.
+#
+# Latin rebased from Outfit v1.100 to Inter 4 (Ali, 2026-10-10): "the closest open font to Apple's
+# SF Pro", picked from docs/prototypes/2026-10-apple-type/. SF Pro itself is Apple-licensed and can
+# be neither shipped nor used as a base. Inter keeps its opsz axis (14 text .. 32 display), the same
+# Text/Display split SF Pro has; browsers pick the cut from the font size (font-optical-sizing).
 sources:
-  outfit:
-    version: "1.100"
-    upstream_repository: https://github.com/Outfitio/Outfit-Fonts
-    upstream_commit: 902773808eb372f70fb34e8946dd1ffe604efc79
+  inter:
+    version: "4.001"
+    upstream_repository: https://github.com/rsms/inter
+    upstream_commit: google/fonts@0b58fb370093f9a9f4ff785d94405710b79de67c
     files:
       font:
-        filename: "Outfit[wght].ttf"
-        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/outfit/Outfit%5Bwght%5D.ttf
-        sha256: fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade
+        filename: "Inter[opsz,wght].ttf"
+        url: https://raw.githubusercontent.com/google/fonts/0b58fb370093f9a9f4ff785d94405710b79de67c/ofl/inter/Inter%5Bopsz%2Cwght%5D.ttf
+        sha256: 29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031
       license:
         filename: OFL.txt
-        url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/outfit/OFL.txt
-        sha256: c676351bf8576b9aba743cd5eaa8c0e7ee0d51f805d720447b4df4ddb6a2e416
+        url: https://raw.githubusercontent.com/google/fonts/0b58fb370093f9a9f4ff785d94405710b79de67c/ofl/inter/OFL.txt
+        sha256: 5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57
   vazirmatn:
     version: "33.003"
     upstream_repository: https://github.com/rastikerdar/vazirmatn
@@ -41,15 +45,77 @@ sources:
         url: https://raw.githubusercontent.com/google/fonts/8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5/ofl/vazirmatn/OFL.txt
         sha256: 17e355067c8284f47743a1ee3b1ef7ff684ff0601eda357f9353b10b3016ab31
 
+# OFF (Ali, 2026-10-10: he will redraw the t himself). Setting `bar_widening: {percent: N}` makes
+# tools/glyph_edits.py lengthen the crossbar of t and T by N% (and the drawn italic t follows); with
+# the key absent the upright is the source's, untouched. (The edit was drawn for Outfit's t and T;
+# it does not apply to Inter.) Do not enable without Ali's approval.
+# bar_widening:
+#   percent: 50
+
 families:
   latin:
-    source: outfit
+    source: inter
     family: Altruvex Sans Latin
     postscript: AltruvexSansLatin
     output: AltruvexSansLatin-VF.woff2
-    # null = keep every upstream glyph. The Latin file is renamed only.
-    unicodes: null
+    # The characters Outfit v1.100 covered (its cmap, 2026-10-10), so no character the site set in
+    # the Outfit build loses its glyph. Inter lacks U+000D, U+030B, U+0312, U+2215, U+FB01-FB02;
+    # they are skipped and counted, never synthesized (fi/fl still form through liga).
+    unicodes:
+      - U+000D
+      - U+0020-007E
+      - U+00A0-00AC
+      - U+00AE-0107
+      - U+010A-0113
+      - U+0116-011B
+      - U+011E-0123
+      - U+0126-0127
+      - U+012A-012B
+      - U+012E-0133
+      - U+0136-0137
+      - U+0139-013E
+      - U+0141-0148
+      - U+014A-014D
+      - U+0150-015B
+      - U+015E-0161
+      - U+0164-0165
+      - U+016A-017E
+      - U+01CD-01CE
+      - U+0218-021B
+      - U+0237
+      - U+02BC
+      - U+02C6-02C7
+      - U+02D8-02DD
+      - U+0300-0304
+      - U+0306-0308
+      - U+030A-030C
+      - U+0312
+      - U+0326-0328
+      - U+1E80-1E85
+      - U+1E9E
+      - U+1EF2-1EF3
+      - U+2013-2014
+      - U+2018-201A
+      - U+201C-201E
+      - U+2022
+      - U+2026
+      - U+2039-203A
+      - U+2044
+      - U+2074
+      - U+20AC
+      - U+2120
+      - U+2122
+      - U+2190-2193
+      - U+2196-2199
+      - U+2212
+      - U+2215
+      - U+2713
+      - U+FB01-FB02
     required_unicodes: []
+    # What the site and the browser's defaults use (the site sets only tabular-nums). Inter's
+    # stylistic sets, character variants, case, fractions and the rest are dropped: with them the
+    # file is 122 KB, with this list about 77 KB (measured 2026-10-10).
+    layout_features: [kern, liga, calt, ccmp, locl, mark, mkmk, tnum]
     scale: null
 
   arabic:
@@ -75,7 +141,7 @@ families:
       - U+25CC        # dotted circle for isolated marks
     # Common characters Arabic text needs in Vazirmatn's own form (prototype 01 dropped them).
     required_unicodes:
-      - U+0020        # space: 0.285em after scaling, against Outfit's 0.208em
+      - U+0020        # space: Vazirmatn's own, scaled by k
       - U+00A0        # no-break space
       - U+2009        # thin space
       - U+202F        # narrow no-break space
@@ -85,19 +151,21 @@ families:
       - U+00AB        # «
       - U+00BB        # »
     scale:
-      # k = Outfit ascender / Vazirmatn alef = 0.714 / 0.672 = 1.0625 (Ali, 2026-09-27).
-      # Do not change without Ali's approval.
-      k: 1.0625
+      # k = Latin ascender ("l" at 400) / Vazirmatn alef. Outfit: 0.714 / 0.672 = 1.0625 (Ali,
+      # 2026-09-27). Inter: 0.7275 / 0.6724 = 1.0820, rounded to 2216 / 2048 = 1.08203125 so the
+      # scaled em is an integer (Ali, 2026-10-10: Arabic shapes stay, only the fit to the new Latin
+      # changes). Do not change without Ali's approval.
+      k: 1.08203125
       source_upm: 2048
       # The em stays 2048 units; outlines, advances, gvar, HVAR, GDEF and GPOS are multiplied by k
-      # (fontTools scale_upem to 2176, then head.unitsPerEm reset to 2048). 2048 x 1.0625 = 2176 is
-      # an integer, so k is exact and the only error is per-value rounding.
+      # (fontTools scale_upem to 2216, then head.unitsPerEm reset to 2048). 2048 x k = 2216 is an
+      # integer, so k is exact and the only error is per-value rounding.
       output_upm: 2048
       # Every stored coordinate, delta and advance must be within this many font units of
       # source x k (0.5 = the rounding of one value to an integer).
       rounding_tolerance_units: 0.5
       # Vertical metrics (hhea, OS/2 typo and win) are the source's, multiplied by k. They are not
-      # replaced with Outfit's: its shallower descender clipped the dots under yeh/beh inside
+      # replaced with the Latin's: Outfit's shallower descender clipped the dots under yeh/beh inside
       # background-clip:text gradients (<Accent>) in prototype 01.
       ascent_policy: source_times_k
       descent_policy: source_times_k
@@ -120,52 +188,64 @@ weights:
 # NOT ENFORCED. The top-level values are the budgets a check would enforce; they stay null (and
 # `enforced` false) until Ali approves a proposal. KB = bytes / 1024.
 budgets:
-  # Enforced (approved by Ali 2026-09-30): tests/test_font_loading.py fails when
-  # dist/payload-report.json exceeds any value here, and tools/payload.py exits non-zero.
-  # Values = `proposed` below (the rule is kept as the record of how they were derived).
+  # Enforced (approved by Ali 2026-09-30; re-based on the Inter build, approved by Ali 2026-10-10):
+  # tests/test_font_loading.py fails when dist/payload-report.json exceeds any value here, and
+  # tools/payload.py exits non-zero. Values = `proposed` below (the rule is kept as the record of
+  # how they were derived).
   enforced: true
-  latin_woff2_kb: 49
+  latin_woff2_kb: 85
   arabic_woff2_kb: 51
   initial_route_font_kb:
-    en: 226
-    ar: 263
-  # Measured by tools/payload.py (2026-09-30) against `next build` + `next start` of apps/www:
-  # every font response Chromium received before window load on `/` and `/ar`, desktop and
-  # mobile width (both widths measured the same). Details: dist/payload-report.json.
-  # Initial EN includes the Arabic brand file (46.0 KB), preloaded on every page today.
+    en: 187
+    ar: 187
+  # Measured by tools/payload.py (2026-10-10, Inter build) against `next build` + `next start` of
+  # apps/www: every font response Chromium received before window load on `/` and `/ar`, desktop
+  # and mobile width (both widths measured the same). Details: dist/payload-report.json.
+  # Both routes load the same four files (Latin VF, Arabic VF, italic 300 and 400). The Latin VF
+  # grew from 43.8 KB (Outfit) to 77.1 KB because Inter carries the opsz axis and more glyphs; the
+  # italics are the frozen drawn Outfit italics, scaled to the Inter x-height (Ali, 2026-10-10), so
+  # the initial routes moved mostly by the Latin VF. (An Inter-italic trial measured 173.8 KB and was set aside the same day.)
+  # Previous baseline (2026-09-30, Outfit): Latin 43.8, Arabic 46.0, initial EN 204.9, AR 238.5.
   baseline_source: dist/payload-report.json
   baseline:
-    latin_woff2_kb: 43.8
-    arabic_woff2_kb: 46.0
+    latin_woff2_kb: 77.1
+    arabic_woff2_kb: 46.1
     initial_route_font_kb:
-      en: 204.9
-      ar: 238.5
-  # How the budgets were derived (proposed, then approved 2026-09-30): baseline + 10 %, rounded up
-  # to a whole KB, so a rebuild that grows a file by more than a tenth has to be looked at.
+      en: 170.0
+      ar: 170.0
+  # How the budgets were derived (proposed, then approved 2026-09-30 and again 2026-10-10):
+  # baseline + 10 %, rounded up to a whole KB, so a rebuild that grows a file by more than a tenth
+  # has to be looked at.
   proposed_rule: baseline x 1.10, rounded up to a whole KB
   proposed:
-    latin_woff2_kb: 49
+    latin_woff2_kb: 85
     arabic_woff2_kb: 51
     initial_route_font_kb:
-      en: 226
-      ar: 263
+      en: 187
+      ar: 187
 
 # Display spacing (phase A.2, ladder re-anchored in A.5). tools/tracking.py turns this into
 # dist/web/tokens.css; it reads the Latin weight factor from the built font, so no per-weight
 # number is typed here.
 spacing:
-  # The ladder is anchored on what apps/www ships today (approved by being live), not on
-  # prototype 01. Each anchor is [font size px, font weight, letter-spacing em, source].
-  # tools/tracking.py back-solves each anchor to weight 400 with weight_model and the factor
-  # measured from the font, then log-interpolates between them; the token at each anchor's
-  # (size, weight) reproduces the live value within bucket_gap_fraction. Anchors are not smoothed:
-  # a reversal (a larger size looser at 400) is reported in dist/spacing-report.json.
+  # The ladder is anchored on Apple's own display tracking (Ali, 2026-10-10: "like Apple"), read
+  # from apple.com's typography classes (www.apple.com/v/homepage/a/styles/main.built.css, fetched
+  # 2026-10-10; SF Pro Display from 19px). Apple gives 400 and 600 the same em, so each anchor is
+  # stated at the weight Apple sets that size in. Beyond the last anchor the ladder holds flat
+  # (tools/tracking.py), so 72-136px stay at -0.005em until a larger Apple value is verified.
+  # Previous anchors (Outfit, live apps/www 2026-09): 24/500 -0.015, 32/600 -0.018, 52/600 -0.020,
+  # 72/700 -0.030, 136/300 -0.035.
   ladder_anchors:
-    - [24, 500, -0.015, "apps/www/app/globals.css:788-793 h4"]
-    - [32, 600, -0.018, "apps/www/app/globals.css:780-786 h3"]
-    - [52, 600, -0.020, "apps/www/app/globals.css:772-778 h2"]
-    - [72, 700, -0.030, "apps/www/app/globals.css:764-770 h1"]
-    - [136, 300, -0.035, "apps/www/components/sections/hero-section.server.tsx:52 home hero (md max 8.5rem)"]
+    - [24, 600, 0.009, "apple.com main.built.css 24px/600"]
+    - [28, 600, 0.007, "apple.com main.built.css 28px/600"]
+    - [32, 600, 0.002, "apple.com main.built.css 32px/600"]
+    - [40, 600, 0.000, "apple.com main.built.css 40px/600"]
+    # Apple's 48px/600 (-0.002) is left out: the site has no 48px size, its bucket is 32, and the
+    # 40 -> 56 interpolation already gives -0.0025 there.
+    - [56, 600, -0.005, "apple.com main.built.css 56px/600"]
+    # Apple's stylesheet publishes nothing above 56px, so the hero holds the 56px value; Inter's
+    # opsz 32 cut already tightens its own spacing at display sizes, as SF Pro Display does.
+    - [136, 300, -0.005, "held from apple.com 56px; hero-section.server.tsx:52"]
   # Display sizes apps/www uses today, as the max of a font-size rule or clamp:
   #   24 h4 (globals.css:790)            32 h3 (globals.css:782)
   #   40 contact/page-client.tsx:606     52 h2, .section-title (globals.css:774, 848)
@@ -198,7 +278,9 @@ spacing:
   arabic_tracking_em: 0
   line_height:
     heading_ar: 1.3   # RUL-147
-    vocalised: 1.5    # prototype 01: fully vocalised Arabic collides at 1.4 and clears at 1.5
+    # prototype 01: fully vocalised Arabic collides at 1.4 and clears at 1.5. Since the Inter rebase
+    # (2026-10-10, k 1.0625 -> 1.0820) the marks touch at 1.5 (52px/700, gap 0), so 1.55.
+    vocalised: 1.55
     # Latin display (decision 6). The value every Latin specimen in the A.4 optical proof was
     # set at (proofs/a4-proof.html:17, stated as "a page value (no Latin token exists)" at :38);
     # apps/www's h4 uses the same 1.2 (globals.css:791). Not measured; now one source.
@@ -218,7 +300,8 @@ pairing:
     text: {namespace: hero, keys: [title_line1, title_line2]}
     source: "apps/www/components/sections/hero-section.server.tsx:52 (font-light, AR rtl:font-semibold)"
   # Step 5: at step 25 the target fell between two steps (300: 0.875, 325: 0.915; target 0.893).
-  ar_weights: {start: 300, stop: 600, step: 5}
+  # Start 250 since the Inter rebase (2026-10-10): at start 300 the argmin sat on the bound.
+  ar_weights: {start: 250, stop: 600, step: 5}
   references:
     - role: h1
       px: 72

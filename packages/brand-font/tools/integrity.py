@@ -62,10 +62,12 @@ def _compare_gvar(sv, ov, k, tol) -> str | None:
 
 
 def compare(source: TTFont, output: TTFont, glyph_map: list[str], k: float, tol: float,
-            requested: set[int] | None) -> dict:
+            requested: set[int] | None, edited: set[str] = frozenset()) -> dict:
     """Compare output against source. glyph_map[i] is the source name of output glyph i.
 
     requested: the explicit subset's codepoints, or None when the whole font is kept.
+    edited: glyphs changed on purpose (tools/glyph_edits.py); they are listed, not counted as
+    tampering.
     """
     out_order = output.getGlyphOrder()
     src_order = source.getGlyphOrder()
@@ -85,6 +87,7 @@ def compare(source: TTFont, output: TTFont, glyph_map: list[str], k: float, tol:
                    if c not in out_cmap or c not in wanted or o2s.get(out_cmap[c]) != src_cmap[c]]
 
     modified: list[dict] = []
+    intended: list[str] = []
     sg_, og_ = source["glyf"], output["glyf"]
     sv_ = source["gvar"].variations if "gvar" in source else {}
     ov_ = output["gvar"].variations if "gvar" in output else {}
@@ -99,14 +102,17 @@ def compare(source: TTFont, output: TTFont, glyph_map: list[str], k: float, tol:
             oa, ol = output["hmtx"][on]
             if not _close(oa, sa, k, tol):
                 why = "advance width"
-        if why:
+        if why and sn in edited:
+            intended.append(sn)
+        elif why:
             modified.append({"glyph": sn, "reason": why})
 
     return {
         "source_glyphs": len(src_order),
-        "preserved": len(glyph_map) - len(modified) - len(unknown),
+        "preserved": len(glyph_map) - len(modified) - len(intended) - len(unknown),
         "added": added + len(unknown),
         "modified": len(modified),
+        "edited_on_purpose": sorted(intended),
         "deleted_outside_subset": deleted,
         # Codepoints inside the configured ranges that Vazirmatn does not have: skipped, never drawn.
         "requested_not_in_source_count": len(not_in_source),

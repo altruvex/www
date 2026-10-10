@@ -2,7 +2,7 @@
 
 Contact is measured on the raster: two consecutive lines drawn one line pitch apart, and any pixel
 where both have ink is an overlap. Plain and mixed Arabic must not touch at --lh-heading-ar (1.3);
-fully vocalised Arabic must not touch at --lh-vocalised (1.5), and is shown to touch at 1.3, which
+fully vocalised Arabic must not touch at --lh-vocalised (1.55), and is shown to touch at 1.3, which
 is why the second token exists.
 """
 import pytest
@@ -39,7 +39,7 @@ def test_heading_line_height_has_no_contact(engine, text):
 
 
 def test_vocalised_clears_at_its_line_height(engine):
-    for row in _rows(engine, "vocalised", 1.5):
+    for row in _rows(engine, "vocalised", 1.55):
         assert row["overlap_px"] == 0, row
         assert row["contact_gap_em"] > 0, row
 

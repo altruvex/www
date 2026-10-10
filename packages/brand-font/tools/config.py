@@ -26,7 +26,7 @@ class Source(Strict):
     version: str
     upstream_repository: str
     upstream_commit: str
-    files: dict[Literal["font", "license"], SourceFile]
+    files: dict[Literal["font", "italic", "license"], SourceFile]
 
     def path(self, key: str, kind: str) -> Path:
         return SOURCES_DIR / key / self.files[kind].filename
@@ -50,6 +50,9 @@ class Family(Strict):
     unicodes: list[str] | None
     required_unicodes: list[str]
     scale: Scale | None
+    # null = every layout feature the source has; a list keeps only those (the subsetter then drops
+    # the glyphs only the others reach). Size, not taste: Inter's full GSUB more than doubles the file.
+    layout_features: list[str] | None = None
 
 
 class Weight(Strict):
@@ -139,8 +142,13 @@ class Build(Strict):
     timestamp: str
 
 
+class BarWidening(Strict):
+    percent: float
+
+
 class Config(Strict):
     build: Build
+    bar_widening: BarWidening | None = None
     sources: dict[str, Source]
     families: dict[Literal["latin", "arabic"], Family]
     weights: dict[str, Weight]

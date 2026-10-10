@@ -12,12 +12,12 @@ Every file is instanced from the files apps/www ships (dist/web), never from the
 document cannot draw a different outline, advance or kern than the site:
 
   Altruvex Sans         300 Light, 400 Regular, 500 Medium, 700 Bold, each with its italic
-                        (the drawn italic of tools/italic.py)
+                        (the drawn italic, fitted by tools/italic_fit.py)
   Altruvex Sans Arabic  300, 400, 500, 700 upright (Arabic has no italic); the avar remap
                         applies, so a requested 700 draws what the site draws at 700
 
 Outputs dist/desktop/*.ttf, the OFL texts beside them, and dist/desktop-report.json.
-Run it after build.py and italic.py; it reads their outputs.
+Run it after build.py and italic_fit.py; it reads their outputs.
 """
 
 from __future__ import annotations
@@ -35,7 +35,8 @@ from config import ROOT, load
 WEB = ROOT / "dist" / "web"
 OUT = ROOT / "dist" / "desktop"
 REPORT = ROOT / "dist" / "desktop-report.json"
-LICENSES = ("OFL-Outfit.txt", "OFL-Vazirmatn.txt", "FONTLOG.txt")
+# OFL-Outfit.txt ships because the frozen drawn italic is derived from Outfit.
+LICENSES = ("OFL-Inter.txt", "OFL-Outfit.txt", "OFL-Vazirmatn.txt", "FONTLOG.txt")
 WEIGHTS = (300, 400, 500, 700)
 STYLE = {300: "Light", 400: "Regular", 500: "Medium", 700: "Bold"}
 # family name, PostScript prefix, upright VF, whether the drawn italic exists
@@ -93,7 +94,10 @@ def load_static(family_file: str, weight: int, italic: bool) -> TTFont:
     if italic:
         f = TTFont(WEB / f"AltruvexSansLatin-Italic-{weight}.woff2", recalcTimestamp=False)
     else:
-        f = instantiateVariableFont(TTFont(WEB / family_file, recalcTimestamp=False), {"wght": weight})
+        vf = TTFont(WEB / family_file, recalcTimestamp=False)
+        # An opsz axis (Inter, since 2026-10-10) is pinned at its default, the text cut.
+        axes = {a.axisTag for a in vf["fvar"].axes}
+        f = instantiateVariableFont(vf, {"wght": weight, **({"opsz": None} if "opsz" in axes else {})})
     f.recalcTimestamp = False
     f.flavor = None
     return f

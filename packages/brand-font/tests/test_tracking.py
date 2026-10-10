@@ -97,4 +97,4 @@ def test_arabic_is_not_tracked_and_line_heights(cfg, generated):
     assert f"--lh-display-latin: {cfg.spacing.line_height.display_latin};" in css
     assert "--lh-display-latin: 1.2;" in css
     assert "--lh-heading-ar: 1.3;" in css
-    assert "--lh-vocalised: 1.5;" in css
+    assert "--lh-vocalised: 1.55;" in css

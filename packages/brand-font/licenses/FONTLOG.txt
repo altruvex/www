@@ -11,15 +11,23 @@ Basic font information
 Altruvex Sans (Track A) is an interim Modified Version of two OFL fonts, published as two
 separate web families:
 
-  Altruvex Sans Latin   derived from Outfit v1.100      (OFL-Outfit.txt)
-  Altruvex Sans Arabic  derived from Vazirmatn v33.003  (OFL-Vazirmatn.txt)
+  Altruvex Sans Latin   upright derived from Inter v4.001 (OFL-Inter.txt)
+                        (from Outfit v1.100 until 2026-10-10)
+                        italic derived from Outfit v1.100  (OFL-Outfit.txt)
+  Altruvex Sans Arabic  derived from Vazirmatn v33.003     (OFL-Vazirmatn.txt)
 
-It is not a proprietary or custom-drawn typeface. No glyph was drawn, synthesized or edited.
+It is not a proprietary typeface. No upright glyph was drawn, synthesized or edited. The Latin
+italic is the exception: its lowercase was drawn from one skeleton and the rest slanted from the
+Outfit upright (2026-10-03), and it is kept frozen as built then (see the ChangeLog).
 Both families remain under the SIL Open Font License 1.1. Neither family uses a Reserved Font
 Name: neither upstream OFL.txt declares one.
 
-Upstream sources, as pinned in config/font.yaml (google/fonts commit
-8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5):
+Upstream sources, as pinned in config/font.yaml:
+
+  Inter[opsz,wght].ttf          sha256 29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031
+                       google/fonts @ 0b58fb370093f9a9f4ff785d94405710b79de67c (upstream rsms/inter)
+
+Until 2026-10-10 (google/fonts commit 8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5):
 
   Outfit[wght].ttf     sha256 fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade
                        upstream Outfitio/Outfit-Fonts @ 902773808eb372f70fb34e8946dd1ffe604efc79
@@ -42,7 +50,30 @@ established, so the Apache License 2.0 text ships alongside as a precaution
 ChangeLog
 ---------
 
-2026-09-29  0.1.0
+2026-10-10  0.1.0 (Latin source changed)
+
+  Altruvex Sans Latin (from Inter v4.001, replacing Outfit)
+  - Subset to the coverage the Outfit build had (config/font.yaml families.latin.unicodes).
+    Codepoints Inter does not have are left out; none are added.
+  - Layout features kept: kern, liga, calt, ccmp, locl, mark, mkmk, tnum. The others are
+    removed with the glyphs only they reach.
+  - STAT: the named opsz stops (16pt ... 28pt) are removed; the opsz axis record and its elidable
+    default stay. Family plus style otherwise exceeds 31 characters in some applications.
+  - Renamed and stamped as for 0.1.0 below (name IDs 0, 1, 3, 4, 6, 16, 25; Mac records removed;
+    fixed head.modified; WOFF2).
+  - Italic: the static italics (300, 400, 500, 700) are the drawn italic built from Outfit on
+    2026-10-03, kept frozen (Ali, 2026-10-10), scaled uniformly per weight so the x-height
+    matches Inter's at opsz 32 (factors 1.097, 1.086, 1.074, 1.061 for 300 to 700). Every
+    outline, advance, kern and anchor is multiplied by the same factor; no shape changes.
+    hhea and OS/2 typo metrics are kept; usWinAscent/Descent grow to the scaled outlines.
+  - Static OG and desktop instances pin opsz (OG 32, desktop the default 14).
+  - Nothing else: every outline, variation delta, advance and kept layout table is Inter's.
+
+  Altruvex Sans Arabic
+  - Scale k changed from 1.0625 to 1.08203125 (2216/2048 units), so the alef matches Inter's
+    ascender (0.7275em) instead of Outfit's. Nothing else changed.
+
+2026-09-29  0.1.0 (the build from Outfit, superseded for Latin on 2026-10-10)
 
   Altruvex Sans Latin (from Outfit v1.100)
   - Renamed: name IDs 1, 4 and 16 (family), 6 and 25 (PostScript), 3 (unique ID).
@@ -78,11 +109,13 @@ ChangeLog
 
 Every build is checked glyph by glyph against the upstream source (tools/integrity.py). The
 check fails on any added, deleted or modified glyph beyond the subset and the k scaling.
+The static italics are drawn, so they are not part of that comparison.
 
 
 Acknowledgements
 ----------------
 
-Outfit: The Outfit Project Authors; designed by Rodrigo Fuenzalida, fragTYPE
+Inter: The Inter Project Authors; designed by Rasmus Andersson (https://github.com/rsms/inter).
+Outfit (until 2026-10-10): The Outfit Project Authors; designed by Rodrigo Fuenzalida, fragTYPE
 (https://github.com/Outfitio/Outfit-Fonts).
 Vazirmatn: The Vazirmatn Project Authors, Saber Rastikerdar (https://github.com/rastikerdar/vazirmatn).

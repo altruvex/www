@@ -11,10 +11,11 @@ def test_sources_match_pins(cfg):
 
 
 def test_wrong_pin_fails(cfg):
-    src = cfg.sources["outfit"]
+    key = cfg.families["latin"].source
+    src = cfg.sources[key]
     bad_font = src.files["font"].model_copy(update={"sha256": "0" * 64})
     bad = cfg.model_copy(update={"sources": {
-        "outfit": src.model_copy(update={"files": {**src.files, "font": bad_font}})}})
+        key: src.model_copy(update={"files": {**src.files, "font": bad_font}})}})
     with pytest.raises(SystemExit, match="SHA-256 mismatch"):
         verify_sources(bad)
 

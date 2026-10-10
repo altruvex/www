@@ -2,7 +2,7 @@
   "name": "@repo/brand-font",
   "version": "0.1.0",
   "private": true,
-  "description": "Altruvex Sans (Track A): interim OFL derivative of Outfit and Vazirmatn. Python tooling runs through uv.",
+  "description": "Altruvex Sans (Track A): interim OFL derivative of Inter, Outfit (italic) and Vazirmatn. Python tooling runs through uv.",
   "license": "OFL-1.1",
   "files": [
     "dist/web",
@@ -19,6 +19,7 @@
   "scripts": {
     "font:fetch": "uv run python tools/fetch.py",
     "font:build": "uv run python tools/build.py",
+    "font:italic": "uv run python tools/italic_fit.py",
     "font:desktop": "uv run python tools/desktop.py",
     "font:fallback": "uv run python tools/fallback.py --browser",
     "font:test": "uv run pytest -q"

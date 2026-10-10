@@ -49,11 +49,9 @@ KNOWN_FAILS = {
 
 DECISIONS = {
     "latin": {
-        "mandatory_avar_table": "accept: Outfit ships without avar (same WARN on the source); adding "
-                                "one would move every weight that tracking and the pairs were "
-                                "measured on.",
-        "unreachable_glyphs": "accept: NULL and i.loclTRK are unreachable in the Outfit source too; "
-                              "removing them changes the glyph set, out of scope for Track A.",
+        "opentype/post_table_version": "accept: post format 3 because build.py drops glyph names "
+                                       "(glyph_names=False) to save bytes in a web font; names "
+                                       "only matter to niche PDF text extraction.",
     },
     "arabic": {
         "arabic_high_hamza": "accept: upstream Vazirmatn outline (same WARN on the source); glyphs "

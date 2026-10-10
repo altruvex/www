@@ -4,8 +4,8 @@ from __future__ import annotations
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.ttLib import TTFont
 
-# Vazirmatn's own space (0.26782em at 2048 UPM) x k 1.0625, the target for Arabic word space.
-ARABIC_WORD_SPACE_REFERENCE_EM = 0.285
+# Vazirmatn's own space (0.26782em at 2048 UPM) x k 1.08203125, the target for Arabic word space.
+ARABIC_WORD_SPACE_REFERENCE_EM = round(0.26782 * 1.08203125, 4)
 
 
 def _glyph(font: TTFont, cp: int, wght: float):

@@ -7,34 +7,29 @@
    lowercase word-to-letter white ratio. Arabic is never tracked.
    --weight-ar-display-light: Arabic weight beside a light (300) Latin display, by ink density. */
 :root {
-  --track-24-300: -0.018em;
-  --track-24-400: -0.016em;
-  --track-24-500: -0.015em;
-  --track-24-600: -0.014em;
-  --track-24-700: -0.013em;
-  --track-32-300: -0.024em;
-  --track-32-400: -0.022em;
-  --track-32-500: -0.02em;
-  --track-32-600: -0.019em;
-  --track-32-700: -0.018em;
-  --track-72-300: -0.039em;
-  --track-72-400: -0.036em;
-  --track-72-500: -0.033em;
-  --track-72-600: -0.031em;
-  --track-72-700: -0.029em;
-  --track-120-300: -0.036em;
-  --track-120-400: -0.033em;
-  --track-120-500: -0.03em;
-  --track-120-600: -0.029em;
-  --track-120-700: -0.027em;
-  --word-caps-120-300: 0.084em;
-  --word-caps-120-400: 0.083em;
-  --word-caps-120-500: 0.083em;
-  --word-caps-120-600: 0.083em;
-  --word-caps-120-700: 0.085em;
+  --track-24-300: 0.011em;
+  --track-24-400: 0.01em;
+  --track-24-500: 0.01em;
+  --track-24-600: 0.009em;
+  --track-24-700: 0.008em;
+  --track-32-300: 0.001em;
+  --track-32-400: 0.001em;
+  --track-32-500: 0.001em;
+  --track-32-600: 0.001em;
+  --track-32-700: 0.001em;
+  --track-52-300: -0.005em;
+  --track-52-400: -0.005em;
+  --track-52-500: -0.004em;
+  --track-52-600: -0.004em;
+  --track-52-700: -0.004em;
+  --word-caps-120-300: 0.043em;
+  --word-caps-120-400: 0.04em;
+  --word-caps-120-500: 0.031em;
+  --word-caps-120-600: 0.022em;
+  --word-caps-120-700: 0.013em;
   --track-ar: 0;
   --lh-display-latin: 1.2;
   --lh-heading-ar: 1.3;
-  --lh-vocalised: 1.5;
-  --weight-ar-display-light: 310;
+  --lh-vocalised: 1.55;
+  --weight-ar-display-light: 295;
 }

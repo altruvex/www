@@ -1,10 +1,14 @@
 # Altruvex Sans (Track A)
 
 Production build of Altruvex Sans for the web. Track A is an **interim OFL derivative** of
-Outfit v1.100 (Latin) and Vazirmatn v33.003 (Arabic). The upright is not a custom-drawn
-typeface: no upright glyph is drawn, synthesized or edited here. The Latin italic is the
-exception: `tools/italic.py` draws its lowercase from one skeleton and slants the rest of the
-upright (2026-10-03). Every output stays under the SIL Open Font License 1.1.
+Inter v4.001 (Latin; Outfit v1.100 until 2026-10-10) and Vazirmatn v33.003 (Arabic). It is not a
+custom-drawn typeface: no upright glyph is drawn, synthesized or edited here. The Latin italic is
+the exception: the drawn italic made from Outfit on 2026-10-03 is kept frozen, byte for byte, in
+`frozen/italic-outfit-2026-10-03/` (Ali, 2026-10-10), and `tools/italic.py` refuses to rebuild it.
+`tools/italic_fit.py` scales those files uniformly per weight so their x-height matches the Inter
+upright at opsz 32 (0.470–0.486em → 0.516em; Ali asked for this in the font, not in CSS). The shapes
+do not change; vertical metrics are kept. (An optional, currently disabled crossbar lengthening for `t`/`T` lives in
+`tools/glyph_edits.py`; see `bar_widening` in `config/font.yaml`.) Every output stays under the SIL Open Font License 1.1.
 
 Prototype 01 (`docs/prototypes/2026-09-altruvex-sans/`) is retained as historical evidence. This
 package is where production builds live.
@@ -17,12 +21,13 @@ package is where production builds live.
 | A.2 | Space and brackets, weight candidates, line-height, tracking, mixed-script matrix | done; weights 675/830 and the sidebearing model chosen by Ali |
 | A.4-web | HarfBuzz and FontBakery regression tests, number/price and Accent regressions, optical proof | done; decisions taken 2026-09-30 (below) |
 | A.5-web | `apps/www` integration through `next/font/local` behind `--font-brand`, fallback metrics, bidi, font-loading and payload measurement | built; decisions taken 2026-09-30 (below); renders waiting for Ali's review |
+| Inter rebase | Latin source Outfit → Inter 4 (opsz kept), Arabic refitted (k, pairing, tracking, vocalised line-height) | built 2026-10-10; payload budgets re-based, approved by Ali 2026-10-10 |
 | Desktop | Installable statics for the proposal deck and contract (`dist/desktop/`) | built and wired into the deck and contract 2026-10-03 (below) |
 
 `apps/www` uses this package for every piece of text: headings, body and labels, in both scripts
 (Ali, 2026-10-01). It is the only web font the site loads; since 2026-10-02 code blocks use it
-too. The Latin emphasis clause in a heading is the drawn italic (`tools/italic.py`), served as static
-files at 300/400/500/700. The fallback, payload and font-loading reports in
+too. The Latin emphasis clause in a heading is the frozen drawn italic (built on Outfit
+2026-10-03, fitted by `tools/italic_fit.py`), served as static files at 300/400/500/700. The fallback, payload and font-loading reports in
 `dist/` were re-run on 2026-10-01 with the font setting all text: no line changes, CLS 0, 89.8 KB of
 fonts per locale. `font_loading.py` probes headings, buttons, form controls and nav links, not body
 paragraphs (whole-page CLS covers those), Firefox could not launch on this machine, and the prose
@@ -36,7 +41,7 @@ in `pyproject.toml` and locked in `uv.lock`.
 ```bash
 uv run python tools/fetch.py    # download the pinned sources into sources/ and check SHA-256
 uv run python tools/build.py    # build dist/web/*.woff2 and dist/build-report.json
-uv run python tools/italic.py   # the drawn Latin italic from the built upright -> dist/web/AltruvexSansLatin-Italic-*.woff2
+uv run python tools/italic_fit.py   # the frozen drawn italic scaled to the Inter x-height -> dist/web/AltruvexSansLatin-Italic-*.woff2
 uv run python tools/tracking.py # dist/web/tokens.css and dist/spacing-report.json from the built Latin font
 uv run python tools/fallback.py --browser # dist/web/fallback.css and dist/fallback-report.json (measured fallback faces)
 uv run python tools/pairing.py  # proofs/a5/pairing.json: live heading anchors and the Arabic weight beside a light Latin display
@@ -67,9 +72,9 @@ monorepo.
 
 | File | Family | Source |
 |---|---|---|
-| `dist/web/AltruvexSansLatin-VF.woff2` | Altruvex Sans Latin | Outfit, every glyph |
+| `dist/web/AltruvexSansLatin-VF.woff2` | Altruvex Sans Latin | Inter (opsz + wght), cut to the configured coverage |
 | `dist/web/AltruvexSansArabic-VF.woff2` | Altruvex Sans Arabic | Vazirmatn, Arabic subset, scaled by k |
-| `dist/web/AltruvexSansLatin-Italic-{300,400,500,700}.woff2` | Altruvex Sans Latin, italic | `tools/italic.py` from the built Latin upright; `apps/www` loads 300 and 400 |
+| `dist/web/AltruvexSansLatin-Italic-{300,400,500,700}.woff2` | Altruvex Sans Latin, italic | frozen drawn italic (built on Outfit 2026-10-03) scaled by `tools/italic_fit.py`; `apps/www` loads 300 and 400 |
 | `dist/italic-report.json` | — | Per italic weight: s against the upright, curve deviation, pairs kerned apart, tt/ff gaps |
 | `dist/og/AltruvexSans{Latin,Arabic}-{400,700}.ttf` | Altruvex Sans Latin / Arabic | Static instances of the two web files (fontTools instancer) for `next/og` |
 | `dist/build-report.json` | — | Sizes, hashes, integrity, licence and metrics, as measured by the build |
@@ -84,8 +89,9 @@ monorepo.
 | `proofs/a4/` | — | Optical proof and browser regressions per engine (JSON and screenshots) |
 
 The two families are separate on purpose. Each script is served in its upstream form, and the
-browser picks per character through the `font-family` stack. Outfit's cmap is not changed: the
-thin and narrow no-break spaces (U+2009, U+202F) that Outfit lacks are not copied into it.
+browser picks per character through the `font-family` stack. The Latin file is Inter's cmap cut to
+the configured coverage; nothing is added, so the thin and narrow no-break spaces (U+2009, U+202F)
+are not copied into it.
 
 ## Sources
 
@@ -93,11 +99,11 @@ All inputs are declared in `config/font.yaml`. The build reads nothing else.
 
 | Source | Version | Upstream commit | File sha256 |
 |---|---|---|---|
-| `Outfit[wght].ttf` | 1.100 | Outfitio/Outfit-Fonts `9027738` | `fc728727…8aeade` |
+| `Inter[opsz,wght].ttf` | 4.001 | rsms/inter (google/fonts `0b58fb37`) | `29160a80…c559031` |
 | `Vazirmatn[wght].ttf` | 33.003 | rastikerdar/vazirmatn `14f8686` | `696249a2…fd49dca` |
 
-Both files come from google/fonts at `8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5`, which is also
-what `next/font/google` serves to `apps/www` today. `sources/` is not committed; `fetch.py`
+Vazirmatn comes from google/fonts at `8b0a1d0f5983c89bc2b93f1b5fb55f9e252744b5`, Inter from
+`0b58fb370093f9a9f4ff785d94405710b79de67c`. `sources/` is not committed; `fetch.py`
 recreates it, and the build refuses to run if a hash does not match.
 
 ## What the build changes
@@ -110,15 +116,16 @@ The full record is `licenses/FONTLOG.txt`.
 
 ### Scaling (Arabic)
 
-`k = 1.0625` (approved by Ali, 2026-09-27; do not change without approval). It sets Vazirmatn's
-alef to Outfit's ascender height: 0.672em × 1.0625 = 0.714em.
+`k = 1.08203125` (2216/2048; set 2026-10-10 with the Inter rebase, replacing Ali's 1.0625 for
+Outfit; do not change without approval). It sets Vazirmatn's alef to Inter's ascender height:
+0.6724em × 1.08203125 = 0.7275em.
 
-The em stays 2048 units. The build runs fontTools `scale_upem` to 2176 (2048 × 1.0625, an integer,
+The em stays 2048 units. The build runs fontTools `scale_upem` to 2216 (2048 × 1.08203125, an integer,
 so k is exact), then resets `unitsPerEm` to 2048. Outlines, advances, variation deltas, HVAR,
 GDEF and GPOS are all multiplied by k. Each stored value is within 0.5 font units of source × k,
 and the integrity check enforces that.
 
-Vertical metrics are Vazirmatn's times k, not Outfit's. Outfit's shallower descender clipped the
+Vertical metrics are Vazirmatn's times k, not the Latin's. Outfit's shallower descender clipped the
 dots under yeh and beh inside `background-clip: text` gradients in prototype 01.
 
 ### Subset policy (Arabic)
@@ -128,7 +135,7 @@ dots under yeh and beh inside `background-clip: text` gradients in prototype 01.
   them.
 - `required_unicodes`: space, no-break space, thin space, narrow no-break space, ( ) [ ] « ».
   These are Vazirmatn's own glyphs, and the build fails if one is missing. Prototype 01 dropped
-  them, so Arabic text fell back to Outfit's narrower space (0.208em against Vazirmatn's 0.285em).
+  them, so Arabic text fell back to the Latin space (Outfit's 0.208em then; Vazirmatn × k is 0.2905em now).
 - No Latin letters are included.
 
 ### Weight mapping
@@ -236,7 +243,7 @@ years rather than the one that saves effort or bytes now.
 |---|---|---|
 | Headings change line count when the font swaps in | `font-display: optional` for both brand files (Ali) | A heading must never reflow after first paint. The fallback is fitted to the corpus average, so a short balanced heading near a wrap boundary can still differ by a line; only not swapping removes that for good |
 | Arabic file preloaded on English pages (46 KB before load) | Both preloads stay on every locale | `optional` shows the brand face only if it is ready at first paint; without the preload the brand face would not appear on a first visit. Next preloads per layout, so per-locale preload would mean splitting the route tree |
-| Payload budgets | Enforced: Latin 49 / Arabic 51 / initial EN 226 / initial AR 263 KB (measured baseline x 1.10, rounded up) | A budget that is not enforced only records growth. The test fails when one is exceeded |
+| Payload budgets | Enforced: Latin 85 / Arabic 51 / initial EN 187 / initial AR 187 KB (measured baseline x 1.10, rounded up; re-based on the Inter build, Ali 2026-10-10; Outfit build was 49 / 51 / 226 / 263) | A budget that is not enforced only records growth. The test fails when one is exceeded |
 | Font-loading pass criteria | Hard fail on any heading line-count change after first paint and on CLS above 0.01; per-string width within ±1.5% and button width within 33px are recorded as diagnostics | The line rule is the spec's. The width numbers explain a failure; they do not replace the line rule |
 | Fallback fit threshold | ±1.5% per string is measured and recorded, not a gate (revised the same day, after measuring) | Arial is off by up to 9.2% and Tahoma by up to 10.1% on single strings, and one `size-adjust` cannot close a spread. Under `optional` a fallback face is never swapped out, so the spread cannot move layout; the gate is the line-count rule in the browser |
 | Caps word-spacing tokens | Kept | Generated from the font by `tools/tracking.py`; the gap they fix is measured |
@@ -280,7 +287,7 @@ Run `tools/build.py` before `tools/fallback.py --browser`, or the fresh-run test
 
 When the fonts are distributed, including served from `apps/www`:
 
-- Ship `licenses/OFL-Outfit.txt`, `licenses/OFL-Vazirmatn.txt` and `licenses/Apache-2.0.txt`
+- Ship `licenses/OFL-Inter.txt`, `licenses/OFL-Outfit.txt` (the frozen italic), `licenses/OFL-Vazirmatn.txt` and `licenses/Apache-2.0.txt`
   with them, or make them available with them. The OFL text is also embedded in each font's name table.
 - Keep the upstream copyright records. The build appends to them and never replaces them.
 - Do not sell the fonts on their own.
@@ -299,7 +306,7 @@ precaution: it costs nothing, and it removes the question.
 
 ## Desktop
 
-`bun run font:desktop` (or `uv run python tools/desktop.py`), after `build.py` and `italic.py`.
+`bun run font:desktop` (or `uv run python tools/desktop.py`), after `build.py` and `italic_fit.py`.
 It instances the files `apps/www` ships, never the sources, so a document draws the site's outlines,
 advances and kerning:
 

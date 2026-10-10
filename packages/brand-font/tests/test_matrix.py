@@ -9,8 +9,8 @@ from browser import ENGINES
 pytestmark = pytest.mark.browser
 
 TOL = 0.003
-# Vazirmatn's own widths x k, in em.
-SPACE_EM = {"U+0020": 0.2852, "U+00A0": 0.2852, "U+2009": 0.2168, "U+202F": 0.0679}
+# Vazirmatn's own widths x k (1.08203125 since the Inter rebase, 2026-10-10), in em.
+SPACE_EM = {"U+0020": 0.2905, "U+00A0": 0.2905, "U+2009": 0.2207, "U+202F": 0.0693}
 
 
 @pytest.fixture(scope="session")

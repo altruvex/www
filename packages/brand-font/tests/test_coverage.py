@@ -1,5 +1,6 @@
 """Subset coverage: the common characters Arabic text needs come from Vazirmatn itself, the
-Latin file is Outfit's cmap unchanged, and nothing absent upstream appears."""
+Latin file is the pinned Latin source cut to the configured coverage, and nothing absent upstream
+appears."""
 import pytest
 from fontTools.ttLib import TTFont
 
@@ -48,13 +49,19 @@ def test_arabic_has_no_latin_letters(cfg, built):
     assert not any(0x41 <= c <= 0x7A for c in out.getBestCmap() if chr(c).isalpha())
 
 
-def test_latin_cmap_is_outfit_unchanged(cfg, built):
+def test_latin_cmap_is_source_cut_to_coverage(cfg, built):
+    """Since 2026-10-10 the source is Inter, cut to Outfit's former coverage (config unicodes);
+    every requested character Inter has is kept, nothing else is added. Glyph names are dropped
+    on save, so code points are compared, not names."""
+    from build import requested_unicodes
+
     up, out = _fonts(cfg, built, "latin")
-    assert out.getBestCmap() == up.getBestCmap()
+    want = set(up.getBestCmap()) & set(requested_unicodes(cfg.families["latin"]))
+    assert set(out.getBestCmap()) == want
     assert 0x2009 not in out.getBestCmap() and 0x202F not in out.getBestCmap()
 
 
 def test_arabic_scale_hits_latin_ascender(built):
     m = built[1]["metrics"]
-    assert m["scale"]["k_effective_alef"] == 1.0625
+    assert m["scale"]["k_effective_alef"] == 1.0821
     assert abs(m["arabic"]["alef"] - m["latin"]["ascender_h"]) < 0.001

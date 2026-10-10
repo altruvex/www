@@ -82,6 +82,10 @@ NOT_MEASURED = {
 
 # ---------------------------------------------------------------- fonts
 
+# apps/www --text-body-base is clamp(17px, 1.05vw, 18px) (globals.css:48).
+TEXT_OPSZ = 17
+
+
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -113,7 +117,10 @@ class Font:
     def hb_font(self, weight: int | None) -> hb.Font:
         f = hb.Font(self.hb_face)
         if self.variable and weight is not None:
-            f.set_variations({"wght": weight})
+            axes = {a.axisTag for a in self.tt["fvar"].axes}
+            # An opsz axis (Inter, since 2026-10-10) is measured at body size, where a swap moves
+            # the most lines; browsers draw headings with the display cut (font-optical-sizing auto).
+            f.set_variations({"wght": weight, **({"opsz": TEXT_OPSZ} if "opsz" in axes else {})})
         return f
 
     def names(self) -> list[str]:
@@ -357,7 +364,7 @@ PAGE = """<!doctype html><html><head><meta charset="utf-8">
 <style>
  body { margin: 0; padding: 16px; }
  .t { white-space: nowrap; display: inline-block; font-size: 40px; line-height: normal; }
- .p { width: 600px; font-size: 20px; line-height: normal; }
+ .p { width: 600px; font-size: 17px; line-height: normal; }
  .brand-en { font-family: "Altruvex Sans Latin", "Altruvex Sans Arabic", sans-serif; }
  .fb-en { font-family: "Altruvex Sans Latin Fallback", "Altruvex Sans Arabic Fallback", sans-serif; }
  .raw-en { font-family: Arial, sans-serif; }
@@ -420,7 +427,7 @@ def browser(rep: dict) -> dict:
     out: dict = {"css_sha256": rep["css"]["sha256"], "engines": {},
                  "method": ("nowrap: 12 longest heading strings at 40px, summed span width, line box = span "
                             "height at line-height normal. para: 8 longest body strings joined, 600px box, "
-                            "20px, line-height normal; lines = distinct client-rect tops. brand = built "
+                            "17px, line-height normal; lines = distinct client-rect tops. brand = built "
                             "faces, fb = fallback.css, raw = the chosen local font with no overrides. "
                             "delta = (fb - brand) / brand.")}
     with serve() as base, engines(("chromium", "webkit")) as it:

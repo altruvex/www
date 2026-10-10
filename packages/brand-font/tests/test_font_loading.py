@@ -214,8 +214,9 @@ def test_payload_report_matches_files(payload):
 def test_budgets_are_enforced_as_approved():
     b = load().budgets
     assert b.enforced is True
-    assert (b.latin_woff2_kb, b.arabic_woff2_kb) == (49, 51)
-    assert b.initial_route_font_kb == {"en": 226, "ar": 263}
+    # Re-based on the Inter build with the frozen drawn italic, Ali 2026-10-10 (was 49 / 51 / 226 / 263, Outfit).
+    assert (b.latin_woff2_kb, b.arabic_woff2_kb) == (85, 51)
+    assert b.initial_route_font_kb == {"en": 187, "ar": 187}
     assert b.proposed_rule == "baseline x 1.10, rounded up to a whole KB"
     assert b.proposed.model_dump() == {k: getattr(b, k) for k in ("latin_woff2_kb", "arabic_woff2_kb",
                                                                   "initial_route_font_kb")}

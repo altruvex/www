@@ -5,6 +5,7 @@ import pytest
 from fontTools.ttLib import TTFont
 
 import build as build_mod
+import glyph_edits
 import integrity
 
 
@@ -17,7 +18,7 @@ def _inputs(cfg, built, key):
     requested = None
     if fam.unicodes is not None:
         requested = build_mod.requested_unicodes(fam)
-        build_mod.subset_font(ref, requested)
+        build_mod.subset_font(ref, requested, fam.layout_features)
     glyph_map = ref.getGlyphOrder()
     k = fam.scale.k if fam.scale else 1.0
     tol = fam.scale.rounding_tolerance_units if fam.scale else 0.0
@@ -26,9 +27,11 @@ def _inputs(cfg, built, key):
 
 @pytest.mark.parametrize("key", ["latin", "arabic"])
 def test_build_passes(cfg, built, key):
-    r = integrity.compare(*_inputs(cfg, built, key))
+    edited = set(glyph_edits.EDITED) if key == "latin" and cfg.bar_widening else set()
+    r = integrity.compare(*_inputs(cfg, built, key), edited)
     assert r["ok"], r
     assert r["added"] == 0 and r["modified"] == 0 and not r["deleted_outside_subset"]
+    assert set(r["edited_on_purpose"]) == edited
 
 
 @pytest.mark.parametrize("key", ["latin", "arabic"])
