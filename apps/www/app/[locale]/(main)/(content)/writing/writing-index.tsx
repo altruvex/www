@@ -259,20 +259,25 @@ export function WritingIndex({ articles, locale }: WritingIndexProps) {
                   >
                     {frontmatter.title}
                   </h2>
-                  <span className="col-start-2 text-sm whitespace-nowrap text-muted-foreground md:col-start-3 md:row-start-1 md:text-end">
+                  <span className="col-start-2 flex flex-wrap items-baseline gap-x-2 text-sm text-muted-foreground md:col-start-3 md:block md:whitespace-nowrap md:row-start-1 md:text-end">
                     {frontmatter.featured && (
-                      <small className="me-2 text-md text-brand-text md:me-0 md:block">
+                      <small className="text-md whitespace-nowrap text-brand-text md:block">
                         {t("index.startHere")}
                       </small>
                     )}
-                    {t("readTime", {
-                      count: frontmatter.readTimeMinutes,
-                      minutes: localizeNumbers(
-                        String(frontmatter.readTimeMinutes),
-                        locale,
-                      ),
-                    })}
-                    <small className="ms-2 text-md text-muted-foreground md:ms-0 md:block">
+                    {/* Below md the three parts share one line and wrap between
+                        parts, not inside one: a single nowrap line ran past the
+                        title column at 320px in Arabic. */}
+                    <span className="whitespace-nowrap">
+                      {t("readTime", {
+                        count: frontmatter.readTimeMinutes,
+                        minutes: localizeNumbers(
+                          String(frontmatter.readTimeMinutes),
+                          locale,
+                        ),
+                      })}
+                    </span>
+                    <small className="text-md whitespace-nowrap text-muted-foreground md:block">
                       {new Date(frontmatter.date).toLocaleDateString(
                         LOCALE_META[locale].intl,
                         { year: "numeric", month: "long" },
