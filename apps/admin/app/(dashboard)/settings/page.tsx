@@ -19,7 +19,9 @@ import { DERIVED_ONLY_STAGES, optionsOf, statusOf, toneDot } from "@/lib/status"
 import { PROJECT_PHASE_ORDER } from "@/lib/status";
 import { PIPELINE_STAGES } from "@/lib/dashboard-data";
 import { cn } from "@/lib/utils";
+import { FULL_RESET_PHRASE, fullResetEnabled, isFullResetOwner } from "@/lib/full-reset";
 import { CompanyProfileEditor } from "./company-profile-editor";
+import { FullReset } from "./full-reset";
 import { InvoicePrefixEditor } from "./invoice-prefix-editor";
 import { EndAllSessionsButton, SessionList, type SessionRow } from "../team/session-list";
 
@@ -91,6 +93,15 @@ export default async function SettingsPage({
 
   const transport = emailTransport();
   const sessionDays = sessionLifeDays();
+
+  // Decided again in the action; this only decides whether the panel is drawn.
+  const showFullReset =
+    tab === "security" &&
+    me !== null &&
+    fullResetEnabled() &&
+    isFullResetOwner(
+      await prisma.user.findUnique({ where: { id: me }, select: { email: true, role: true } }),
+    );
 
   return (
     <div className="space-y-4">
@@ -396,6 +407,21 @@ export default async function SettingsPage({
               </p>
             </Panel>
           </div>
+
+          {showFullReset && (
+            <Panel
+              title="Empty the database"
+              description="Deletes every lead, client, proposal, contract, project, payment, message and audit event. Sign-in accounts and migrations are kept."
+            >
+              <FullReset phrase={FULL_RESET_PHRASE} />
+              <p className="mt-3 max-w-prose text-meta text-subtle-foreground">
+                This cannot be undone and takes the audit trail with it. Only drawn while{" "}
+                <code className="font-mono text-micro">ALLOW_FULL_RESET</code> is on and you are
+                the account named in{" "}
+                <code className="font-mono text-micro">FULL_RESET_EMAIL</code>.
+              </p>
+            </Panel>
+          )}
 
           <Panel title="Known gaps" description="Stated rather than hidden">
             <ul className="space-y-2">

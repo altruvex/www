@@ -45,6 +45,8 @@ const envSchema = z.object({
   PRICING_REVALIDATE_SECRET: z.string().min(16).optional(),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_MFA_REQUIRED: z.enum(["true", "false"]).optional(),
+  ALLOW_FULL_RESET: z.enum(["true", "false"]).optional(),
+  FULL_RESET_EMAIL: z.string().email().optional(),
 });
 
 const withoutBlanks = Object.fromEntries(
